@@ -99,6 +99,13 @@
 		</dependency>
 	</dependencies>
 
+	<scm>
+		<connection>scm:git:git://github.com/fiji/Simple_Neurite_Tracer</connection>
+		<developerConnection>scm:git:git@github.com:fiji/Simple_Neurite_Tracer</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/fiji/Simple_Neurite_Tracer</url>
+	</scm>
+
 	<repositories>
 		<!-- NB: for project parent, in case of partial checkout -->
 		<repository>

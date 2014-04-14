@@ -99,6 +99,11 @@
 		</dependency>
 	</dependencies>
 
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>http://jenkins.imagej.net/job/Simple_Neurite_Tracer/</url>
+	</ciManagement>
+
 	<scm>
 		<connection>scm:git:git://github.com/fiji/Simple_Neurite_Tracer</connection>
 		<developerConnection>scm:git:git@github.com:fiji/Simple_Neurite_Tracer</developerConnection>

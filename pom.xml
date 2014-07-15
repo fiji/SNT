@@ -22,7 +22,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>VIB-lib</artifactId>
-			<version>${fiji.version}</version>
+			<version>${VIB-lib.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>batik</groupId>
@@ -95,7 +95,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>VIB_</artifactId>
-			<version>${fiji.version}</version>
+			<version>${VIB_.version}</version>
 		</dependency>
 	</dependencies>
 

@@ -25,15 +25,19 @@
 
 package tracing;
 
-import java.util.Hashtable;
+import ij.IJ;
+
+import java.io.BufferedReader;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Set;
-import java.io.*;
-import java.util.zip.GZIPOutputStream;
-
-import ij.*;
-
 import java.util.StringTokenizer;
+import java.util.zip.GZIPOutputStream;
 
 public class SinglePathsGraph {
 

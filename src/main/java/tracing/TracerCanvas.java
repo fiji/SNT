@@ -27,13 +27,15 @@
 
 package tracing;
 
-import java.util.*;
-import java.awt.*;
-
 import ij.ImagePlus;
 
-import stacks.ThreePanesCanvas;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.util.ArrayList;
+
 import stacks.PaneOwner;
+import stacks.ThreePanesCanvas;
 
 @SuppressWarnings("serial")
 public class TracerCanvas extends ThreePanesCanvas {

@@ -27,21 +27,19 @@
 
 package tracing;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.KeyEvent;
-import java.awt.Point;
-import java.awt.event.InputEvent;
-
-import javax.swing.SwingUtilities;
-
 import ij.IJ;
-
+import ij.gui.Toolbar;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
 import ij3d.behaviors.InteractiveBehavior;
 import ij3d.behaviors.Picker;
-import ij3d.Image3DUniverse;
-import ij3d.Content;
-import ij.gui.Toolbar;
 
+import java.awt.Point;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+
+import javax.swing.SwingUtilities;
 import javax.vecmath.Point3d;
 
 /* This class is based on Albert Cardona's code in

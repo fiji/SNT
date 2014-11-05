@@ -28,7 +28,6 @@
 package tracing;
 
 import features.ComputeCurvatures;
-
 import ij.ImagePlus;
 
 /* This is the thread that explores between two points in an image,

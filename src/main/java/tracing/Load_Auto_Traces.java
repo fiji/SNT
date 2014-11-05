@@ -25,10 +25,12 @@
 
 package tracing;
 
-import ij.*;
-import ij.plugin.*;
-import ij.io.*;
-import ij.process.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.io.OpenDialog;
+import ij.plugin.PlugIn;
+import ij.process.ByteProcessor;
 
 public class Load_Auto_Traces implements PlugIn, TraceLoaderListener {
 

@@ -25,27 +25,30 @@
 
 package tracing;
 
+import features.TubenessProcessor;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Macro;
+import ij.gui.GenericDialog;
 import ij.io.FileInfo;
 import ij.io.FileSaver;
-import ij.plugin.PlugIn;
 import ij.measure.Calibration;
-import ij.gui.GenericDialog;
-import java.io.*;
-import java.util.PriorityQueue;
-import java.util.Comparator;
-import java.util.ArrayList;
-import java.util.HashSet;
-import features.TubenessProcessor;
-import util.BatchOpener;
+import ij.plugin.PlugIn;
 
 import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.PriorityQueue;
 
-import stacks.ThreePanes;
 import stacks.PaneOwner;
+import stacks.ThreePanes;
+import util.BatchOpener;
 
 public class Auto_Tracer extends ThreePanes implements PlugIn, PaneOwner, SearchProgressCallback {
 

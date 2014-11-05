@@ -13,8 +13,9 @@ import features.ComputeCurvatures;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.plugin.PlugIn;
 import ij.measure.Calibration;
+import ij.plugin.PlugIn;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;

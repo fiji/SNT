@@ -27,30 +27,31 @@
 
 package tracing;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.StackWindow;
+import ij.measure.Calibration;
+import ij.process.FloatProcessor;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
+import ij3d.MeshMaker;
+import ij3d.Pipe;
+
 import java.awt.Color;
 import java.awt.Graphics;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import ij.gui.*;
-import ij.*;
-import ij.process.*;
-import ij.measure.Calibration;
-
-import pal.math.*;
-
-import stacks.ThreePanes;
-
-import ij3d.Image3DUniverse;
-import ij3d.Content;
-import ij3d.Pipe;
-import ij3d.MeshMaker;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Arrays;
-import java.util.List;
+import pal.math.ConjugateDirectionSearch;
+import pal.math.MultivariateFunction;
+import stacks.ThreePanes;
 
 /* This class represents a list of points, and has methods for drawing
  * them onto ThreePanes-style image canvases. */

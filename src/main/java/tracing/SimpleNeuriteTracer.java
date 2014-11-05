@@ -27,43 +27,47 @@
 
 package tracing;
 
-import ij.*;
-import ij.process.*;
-import ij.gui.*;
-import ij.text.*;
-import ij.io.*;
-
-import ij3d.Image3DUniverse;
-import ij3d.Content;
-import ij3d.MeshMaker;
-import javax.vecmath.Color3f;
-import javax.vecmath.Point3f;
-import javax.vecmath.Point3d;
-import java.awt.*;
-import java.awt.event.KeyListener;
-import java.io.*;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
-
-import client.ArchiveClient;
-
-import stacks.ThreePanes;
-
-import features.GaussianGenerationCallback;
-import features.ComputeCurvatures;
-
 import amira.AmiraMeshDecoder;
 import amira.AmiraParameters;
-
+import client.ArchiveClient;
+import features.ComputeCurvatures;
+import features.GaussianGenerationCallback;
 import features.SigmaPalette;
 import features.TubenessProcessor;
-
-import ij.plugin.ZProjector;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.gui.ImageRoi;
+import ij.gui.Overlay;
 import ij.gui.Roi;
+import ij.gui.YesNoCancelDialog;
+import ij.io.FileInfo;
+import ij.io.OpenDialog;
+import ij.plugin.ZProjector;
+import ij.process.ByteProcessor;
+import ij.text.TextWindow;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
+import ij3d.MeshMaker;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.event.KeyListener;
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.vecmath.Color3f;
+import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
+
+import stacks.ThreePanes;
 
 /* Note on terminology:
 

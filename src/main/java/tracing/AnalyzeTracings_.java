@@ -2,23 +2,25 @@
 
 package tracing;
 
-import java.util.Hashtable;
-import java.util.HashSet;
-import java.util.ArrayList;
-import java.io.*;
-import java.util.Enumeration;
-
 import amira.AmiraParameters;
-
-import ij.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
 import ij.plugin.PlugIn;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Hashtable;
+
 import landmarks.Bookstein_From_Landmarks;
-
-import vib.oldregistration.RegistrationAlgorithm;
-
-import util.FileAndChannel;
 import util.BatchOpener;
+import util.FileAndChannel;
+import vib.oldregistration.RegistrationAlgorithm;
 
 class PointInPath {
 

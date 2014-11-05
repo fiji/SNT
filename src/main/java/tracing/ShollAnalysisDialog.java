@@ -27,70 +27,74 @@
 
 package tracing;
 
-import ij.*;
-import ij.io.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.gui.GUI;
+import ij.io.FileInfo;
+import ij.io.SaveDialog;
+import ij.measure.Calibration;
+import ij.measure.ResultsTable;
+import ij.plugin.filter.Analyzer;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
-import java.awt.Dialog;
-import java.awt.Insets;
+import java.awt.BorderLayout;
+import java.awt.Button;
 import java.awt.Checkbox;
-import java.awt.TextField;
+import java.awt.CheckboxGroup;
+import java.awt.Dialog;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Rectangle;
-import java.awt.Label;
-import java.awt.CheckboxGroup;
+import java.awt.TextField;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.TextEvent;
-import java.awt.Button;
-import java.awt.event.WindowListener;
-import java.awt.event.TextListener;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.BorderLayout;
-import java.awt.GridBagLayout;
-import java.awt.GridBagConstraints;
+import java.awt.event.TextEvent;
+import java.awt.event.TextListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.image.IndexColorModel;
-
-import java.io.*;
-
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import ij.gui.GUI;
-import ij.measure.Calibration;
-import ij.process.ShortProcessor;
-import ij.process.ImageProcessor;
-import ij.measure.ResultsTable;
-import ij.plugin.filter.Analyzer;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-import util.FindConnectedRegions;
-
-import org.jfree.chart.JFreeChart;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.chart.plot.XYPlot;
+import org.apache.batik.dom.GenericDOMImplementation;
+import org.apache.batik.svggen.SVGGraphics2D;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.chart.ChartPanel;
-import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.LogAxis;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.chart.renderer.xy.StandardXYBarPainter;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JButton;
-
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.w3c.dom.DOMImplementation;
-import org.apache.batik.dom.GenericDOMImplementation;
-
 import org.w3c.dom.Document;
-import org.apache.batik.svggen.SVGGraphics2D;
 
-import org.apache.commons.math3.stat.regression.SimpleRegression;
+import util.FindConnectedRegions;
 
 @SuppressWarnings("serial")
 public class ShollAnalysisDialog extends Dialog implements WindowListener, ActionListener, TextListener, ItemListener {

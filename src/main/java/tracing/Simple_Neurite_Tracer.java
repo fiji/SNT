@@ -27,26 +27,29 @@
 
 package tracing;
 
-import ij.*;
-import ij.process.*;
-import ij.gui.*;
-import ij.plugin.*;
-import ij.measure.Calibration;
-import ij3d.Image3DUniverse;
-import ij3d.Content;
-
-import javax.vecmath.Color3f;
+import client.ArchiveClient;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Macro;
 import ij.gui.GUI;
+import ij.gui.GenericDialog;
+import ij.gui.YesNoCancelDialog;
+import ij.measure.Calibration;
+import ij.plugin.PlugIn;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.StackConverter;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
 
 import java.applet.Applet;
-
-import java.awt.*;
+import java.awt.Color;
 import java.awt.image.IndexColorModel;
-
-import java.io.*;
+import java.io.File;
 import java.util.concurrent.Callable;
 
-import client.ArchiveClient;
+import javax.vecmath.Color3f;
 
 import util.BatchOpener;
 import util.RGB_to_Luminance;

@@ -27,20 +27,20 @@
 
 package tracing;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import ij.IJ;
 import ij.text.TextWindow;
 
-import stacks.ThreePanes;
-
-import java.util.*;
 import java.awt.Color;
 import java.awt.Graphics;
-
 import java.io.CharArrayWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.PriorityQueue;
+
+import stacks.ThreePanes;
 
 /* This is the thread that explores the image using a variety of
    strategies, for example to trace tubular structures or surfaces. */

@@ -27,36 +27,53 @@
 
 package tracing;
 
-import ij.*;
-import ij.io.*;
-import ij.gui.YesNoCancelDialog;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-
+import Skeletonize3D_.Skeletonize3D_;
 import features.SigmaPalette;
+import ij.IJ;
+import ij.ImageListener;
+import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.YesNoCancelDialog;
+import ij.io.FileInfo;
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
+import ij.measure.Calibration;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.TextEvent;
+import java.awt.event.TextListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import ij.measure.Calibration;
-
-import Skeletonize3D_.Skeletonize3D_;
-import skeleton_analysis. AnalyzeSkeleton_;
+import skeleton_analysis.AnalyzeSkeleton_;
 
 @SuppressWarnings("serial")
 public class NeuriteTracerResultsDialog

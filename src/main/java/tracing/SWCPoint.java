@@ -27,8 +27,8 @@
 
 package tracing;
 
-import java.util.ArrayList;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 
 public class SWCPoint implements Comparable<SWCPoint> {
 	ArrayList<SWCPoint> nextPoints;

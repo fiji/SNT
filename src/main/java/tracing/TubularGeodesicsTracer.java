@@ -27,14 +27,13 @@
 
 package tracing;
 
+import ij.IJ;
+
 import java.awt.Graphics;
 import java.io.File;
-import java.util.ArrayList;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
-import ij.IJ;
+import java.util.ArrayList;
 
 public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 

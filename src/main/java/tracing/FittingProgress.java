@@ -22,6 +22,7 @@
 package tracing;
 
 import ij.IJ;
+
 import java.util.ArrayList;
 
 /** An implementation of the MultiTaskProgress interface that

@@ -27,31 +27,6 @@
 
 package tracing;
 
-import java.awt.Color;
-import java.awt.Graphics;
-
-import ij.gui.*;
-import ij.*;
-import ij.process.*;
-import ij.measure.Calibration;
-
-import pal.math.*;
-
-import stacks.ThreePanes;
-
-import ij3d.Image3DUniverse;
-import ij3d.Content;
-import ij3d.Pipe;
-import ij3d.MeshMaker;
-import javax.vecmath.Color3f;
-import javax.vecmath.Point3f;
-
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Arrays;
-import java.util.List;
-
 import java.util.concurrent.Callable;
 
 /* This class represents a list of points, and has methods for drawing

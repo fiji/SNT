@@ -69,6 +69,13 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
+			<exclusions>
+				<!-- NB: avoid clash with batik -->
+				<exclusion>
+					<groupId>xml-apis</groupId>
+					<artifactId>xml-apis</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- Third party dependencies -->
@@ -113,12 +120,9 @@
 						<banDuplicateClasses>
 							<dependencies>
 								<dependency>
-									<artifactId>batik</artifactId>
+									<artifactId>VIB-lib</artifactId>
 									<ignoreClasses>
-										<ignoreClass>javax/xml/*</ignoreClass>
-										<ignoreClass>org/apache/xmlcommons/*</ignoreClass>
-										<ignoreClass>org/xml/*</ignoreClass>
-										<ignoreClass>org/w3c/dom/*</ignoreClass>
+										<ignoreClass>javax/media/j3d/*</ignoreClass>
 									</ignoreClasses>
 								</dependency>
 							</dependencies>

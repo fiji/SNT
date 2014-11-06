@@ -15,6 +15,25 @@
 	<name>plugins/Simple_Neurite_Tracer.jar</name>
 	<description />
 
+	<scm>
+		<connection>scm:git:git://github.com/fiji/Simple_Neurite_Tracer</connection>
+		<developerConnection>scm:git:git@github.com:fiji/Simple_Neurite_Tracer</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/fiji/Simple_Neurite_Tracer</url>
+	</scm>
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>http://jenkins.imagej.net/job/Simple_Neurite_Tracer/</url>
+	</ciManagement>
+
+	<repositories>
+		<!-- NB: for project parent -->
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<!-- Fiji dependencies -->
 		<dependency>
@@ -85,26 +104,6 @@
 		</dependency>
 	</dependencies>
 
-	<ciManagement>
-		<system>Jenkins</system>
-		<url>http://jenkins.imagej.net/job/Simple_Neurite_Tracer/</url>
-	</ciManagement>
-
-	<scm>
-		<connection>scm:git:git://github.com/fiji/Simple_Neurite_Tracer</connection>
-		<developerConnection>scm:git:git@github.com:fiji/Simple_Neurite_Tracer</developerConnection>
-		<tag>HEAD</tag>
-		<url>https://github.com/fiji/Simple_Neurite_Tracer</url>
-	</scm>
-
-	<repositories>
-		<!-- NB: for project parent -->
-		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
-		</repository>
-	</repositories>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -129,6 +128,5 @@
 			</plugin>
 		</plugins>
 	</build>
-
 
 </project>

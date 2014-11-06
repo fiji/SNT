@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>2.0.0-SNAPSHOT</version>
+		<version>5.0.2</version>
 		<relativePath />
 	</parent>
 
@@ -100,5 +100,31 @@
 			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<configuration>
+					<rules>
+						<banDuplicateClasses>
+							<dependencies>
+								<dependency>
+									<artifactId>batik</artifactId>
+									<ignoreClasses>
+										<ignoreClass>javax/xml/*</ignoreClass>
+										<ignoreClass>org/apache/xmlcommons/*</ignoreClass>
+										<ignoreClass>org/xml/*</ignoreClass>
+										<ignoreClass>org/w3c/dom/*</ignoreClass>
+									</ignoreClasses>
+								</dependency>
+							</dependencies>
+						</banDuplicateClasses>
+					</rules>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 
 </project>

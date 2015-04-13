@@ -731,7 +731,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 			newStack.addSlice( null, thisSlice );
 		}
 
-		return new ImagePlus( "Paths rendered in a Stack", newStack );
+		ImagePlus newImp = new ImagePlus( "Paths rendered in a Stack", newStack );
+		newImp.setCalibration(xy.getCalibration());
+		return newImp;
 	}
 
 	/* If non-null, holds a reference to the currently searching thread: */

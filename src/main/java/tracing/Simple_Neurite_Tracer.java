@@ -49,7 +49,7 @@ import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-import javax.vecmath.Color3f;
+import org.scijava.vecmath.Color3f;
 
 import util.BatchOpener;
 import util.RGB_to_Luminance;

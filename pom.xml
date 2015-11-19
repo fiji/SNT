@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>2.0.5-SNAPSHOT</version>
+	<version>3.0.0-SNAPSHOT</version>
 
 	<name>plugins/Simple_Neurite_Tracer.jar</name>
 	<description />
@@ -25,6 +25,11 @@
 		<system>Jenkins</system>
 		<url>http://jenkins.imagej.net/job/Simple_Neurite_Tracer/</url>
 	</ciManagement>
+
+	<properties>
+		<scijava.jvm.version>1.7</scijava.jvm.version>
+		<ImageJ_3D_Viewer.version>4.0.1</ImageJ_3D_Viewer.version>
+	</properties>
 
 	<repositories>
 		<!-- NB: for project parent -->
@@ -61,7 +66,7 @@
 			<artifactId>VIB-lib</artifactId>
 		</dependency>
 
-			<!-- ImageJ dependencies -->
+		<!-- ImageJ dependencies -->
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
@@ -78,6 +83,20 @@
 			</exclusions>
 		</dependency>
 
+		<!-- Java 3D dependencies -->
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>j3dcore</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>j3dutils</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>vecmath</artifactId>
+		</dependency>
+
 		<!-- Third party dependencies -->
 		<dependency>
 			<groupId>batik</groupId>
@@ -88,25 +107,7 @@
 			<artifactId>commons-math3</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>java3d</groupId>
-			<artifactId>j3d-core</artifactId>
-			<version>1.5.2</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>java3d</groupId>
-			<artifactId>j3d-core-utils</artifactId>
-			<version>1.5.2</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>java3d</groupId>
-			<artifactId>vecmath</artifactId>
-			<version>1.5.2</version>
-			<scope>provided</scope>
-		</dependency>
-
+		<!-- Test dependencies -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

@@ -14,8 +14,8 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.vecmath.Color3f;
-import javax.vecmath.Point3f;
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Point3f;
 
 /* A test for the 3D viewer.  The results are odd at the moment - the
    crossing point of the lines should always appear to be at the

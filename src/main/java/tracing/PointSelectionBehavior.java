@@ -40,7 +40,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 import javax.swing.SwingUtilities;
-import javax.vecmath.Point3d;
+import org.scijava.vecmath.Point3d;
 
 /* This class is based on Albert Cardona's code in
  * Blob_Segmentation_in_3D.java */

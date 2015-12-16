@@ -73,7 +73,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import skeleton_analysis.AnalyzeSkeleton_;
+import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
 
 @SuppressWarnings("serial")
 public class NeuriteTracerResultsDialog

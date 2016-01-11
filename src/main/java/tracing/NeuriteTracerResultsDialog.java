@@ -27,7 +27,7 @@
 
 package tracing;
 
-import Skeletonize3D_.Skeletonize3D_;
+import sc.fiji.skeletonize3D.Skeletonize3D_;
 import features.SigmaPalette;
 import ij.IJ;
 import ij.ImageListener;

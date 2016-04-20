@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>21.0.0</version>
+		<version>22.1.0</version>
 		<relativePath />
 	</parent>
 
@@ -122,13 +122,6 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
-			<exclusions>
-				<!-- NB: avoid clash with batik -->
-				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!-- Java 3D dependencies -->
@@ -147,12 +140,16 @@
 
 		<!-- Third party dependencies -->
 		<dependency>
-			<groupId>batik</groupId>
-			<artifactId>batik</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>batik-dom</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>batik-svggen</artifactId>
 		</dependency>
 
 		<!-- Test dependencies -->

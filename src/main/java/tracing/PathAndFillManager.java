@@ -1665,7 +1665,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		String line;
 		while( (line = br.readLine()) != null ) {
 			Matcher mComment = pComment.matcher(line);
-			line = mComment.replaceAll("$1");
+			line = mComment.replaceAll("$1").trim();
 			Matcher mEmpty = pEmpty.matcher(line);
 			if( mEmpty.matches() )
 				continue;

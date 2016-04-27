@@ -1786,8 +1786,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 						backtrackTo.add( pointToQueue );
 					}
 					currentPoint = newCurrentPoint;
-				} else
+				} else {
+					currentPath.setSWCType(currentPoint.type); // Assign point type to path
 					currentPoint = null;
+				}
 			}
 			currentPath.setGuessedTangents( 2 );
 			addPath( currentPath );

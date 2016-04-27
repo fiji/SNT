@@ -1787,7 +1787,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					}
 					currentPoint = newCurrentPoint;
 				} else {
-					//currentPath.setSWCType(currentPoint.type); // Assign point type to path
+					currentPath.setSWCType(currentPoint.type); // Assign point type to path
 					currentPoint = null;
 				}
 			}

@@ -24,14 +24,6 @@
 				<role>maintainer</role>
 			</roles>
 		</developer>
-		<developer>
-			<id>hinerm</id>
-			<name>Mark Hiner</name>
-			<url>http://imagej.net/User:Hinerm</url>
-			<roles>
-				<role>maintainer</role>
-			</roles>
-		</developer>
 	</developers>
 	<contributors>
 		<contributor>
@@ -59,6 +51,11 @@
 			<name>Tiago Ferreira</name>
 			<url>http://imagej.net/User:Tiago</url>
 			<properties><id>tferr</id></properties>
+		</contributor>
+		<contributor>
+			<name>Mark Hiner</name>
+			<url>http://imagej.net/User:Hinerm</url>
+			<properties><id>hinerm</id></properties>
 		</contributor>
 		<contributor>
 			<name>Fethallah Benmansour</name>

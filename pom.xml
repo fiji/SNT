@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>3.0.3-SNAPSHOT</version>
+	<version>3.0.3</version>
 
 	<name>plugins/Simple_Neurite_Tracer.jar</name>
 	<description />
@@ -65,7 +65,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/fiji/Simple_Neurite_Tracer</connection>
 		<developerConnection>scm:git:git@github.com:fiji/Simple_Neurite_Tracer</developerConnection>
-		<tag>HEAD</tag>
+		<tag>Simple_Neurite_Tracer-3.0.3</tag>
 		<url>https://github.com/fiji/Simple_Neurite_Tracer</url>
 	</scm>
 	<issueManagement>

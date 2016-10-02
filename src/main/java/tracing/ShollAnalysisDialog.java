@@ -104,6 +104,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected CheckboxGroup pathsGroup = new CheckboxGroup();
 	protected Checkbox useAllPathsCheckbox = new Checkbox("Use all paths in analysis?", pathsGroup, false);
 	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup, true);
+	protected ArrayList<String> filteredTypes = Path.getSWCtypeNames();
 	protected Button makeShollImageButton = new Button("Make Sholl image");
 	protected Button drawShollGraphButton = new Button("Draw Graph");
 	protected Button exportDetailAsCSVButton = new Button("Export detailed results as CSV");
@@ -899,7 +900,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	ArrayList<ShollPoint> shollPointsAllPaths;
 	ArrayList<ShollPoint> shollPointsSelectedPaths;
-
+	PathAndFillManager shollpafm;
 	ResultsPanel resultsPanel = new ResultsPanel();
 
 	protected boolean twoDimensional;
@@ -922,31 +923,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		shollPointsAllPaths = new ArrayList<ShollPoint>();
 		shollPointsSelectedPaths = new ArrayList<ShollPoint>();
-
-		numberOfAllPaths = 0;
-		numberOfSelectedPaths = 0;
-
-		for( Path p : pafm.allPaths ) {
-			boolean selected = p.getSelected();
-			if( p.getUseFitted() ) {
-				p = p.fitted;
-			} else if( p.fittedVersionOf != null )
-				continue;
-			addPathPointsToShollList(p,
-						 x_start,
-						 y_start,
-						 z_start,
-						 shollPointsAllPaths);
-			++ numberOfAllPaths;
-			if( selected ) {
-				addPathPointsToShollList(p,
-							 x_start,
-							 y_start,
-							 z_start,
-							 shollPointsSelectedPaths);
-				++ numberOfSelectedPaths;
-			}
-		}
+		shollpafm = pafm;
+		reloadPaths();
 
 		useAllPathsCheckbox.setLabel("Use all "+numberOfAllPaths+" paths in analysis?");
 		useSelectedPathsCheckbox.setLabel("Use only the "+numberOfSelectedPaths+" selected paths in analysis?");
@@ -1043,6 +1021,34 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		setVisible(true);
 
 		updateResults();
+	}
+
+	private void reloadPaths() {
+
+		// Reset analysis
+		numberOfAllPaths = 0;
+		numberOfSelectedPaths = 0;
+		shollPointsAllPaths.clear();
+		shollPointsSelectedPaths.clear();
+
+		// load paths considering only those whose type has been chosen by user
+		for (Path p : shollpafm.allPaths) {
+			final boolean selected = p.getSelected();
+			if (p.getUseFitted()) {
+				p = p.fitted;
+			} else if (p.fittedVersionOf != null)
+				continue;
+
+			if (filteredTypes.contains(Path.getSWCtypeName(p.getSWCType()))) {
+				addPathPointsToShollList(p, x_start, y_start, z_start, shollPointsAllPaths);
+				++numberOfAllPaths;
+				if (selected) {
+					addPathPointsToShollList(p, x_start, y_start, z_start, shollPointsSelectedPaths);
+					++numberOfSelectedPaths;
+				}
+			}
+		}
+
 	}
 
 	public class ResultsPanel extends Panel {

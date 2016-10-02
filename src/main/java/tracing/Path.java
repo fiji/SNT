@@ -1652,11 +1652,9 @@ public class Path implements Comparable<Path> {
 
 	double [] precise_x_positions;
 	double [] precise_y_positions;
-        double [] precise_z_positions;
+	double [] precise_z_positions;
 
-	// Going by the meanings of the types given in:
-	//   http://www.soton.ac.uk/~dales/morpho/morpho_doc/
-
+	// http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
 	public static final int SWC_UNDEFINED       = 0;
 	public static final int SWC_SOMA            = 1;
 	public static final int SWC_AXON            = 2;
@@ -1665,17 +1663,84 @@ public class Path implements Comparable<Path> {
 	public static final int SWC_FORK_POINT      = 5;
 	public static final int SWC_END_POINT       = 6;
 	public static final int SWC_CUSTOM          = 7;
+	public static final String SWC_UNDEFINED_LABEL       = "undefined";
+	public static final String SWC_SOMA_LABEL            = "soma";
+	public static final String SWC_AXON_LABEL            = "axon";
+	public static final String SWC_DENDRITE_LABEL        = "(basal) dendrite";
+	public static final String SWC_APICAL_DENDRITE_LABEL = "apical dendrite";
+	public static final String SWC_FORK_POINT_LABEL      = "fork point";
+	public static final String SWC_END_POINT_LABEL       = "end point";
+	public static final String SWC_CUSTOM_LABEL          = "custom";
 
-	public static final String [] swcTypeNames = { "undefined",
-						       "soma",
-						       "axon",
-						       "dendrite",
-						       "apical dendrite",
-						       "fork point",
-						       "end point",
-						       "custom" };
+	public static final String [] swcTypeNames = getSWCtypeNamesArray();
+
 
 	int swcType = SWC_UNDEFINED;
+
+	private static String[] getSWCtypeNamesArray() {
+		final ArrayList<String> swcTypes = getSWCtypeNames();
+		return swcTypes.toArray(new String[swcTypes.size()]);
+	}
+
+	public static ArrayList<String> getSWCtypeNames() {
+		final ArrayList<String> swcTypes = new ArrayList<String>();
+		swcTypes.add(SWC_UNDEFINED_LABEL);
+		swcTypes.add(SWC_SOMA_LABEL);
+		swcTypes.add(SWC_AXON_LABEL);
+		swcTypes.add(SWC_DENDRITE_LABEL);
+		swcTypes.add(SWC_APICAL_DENDRITE_LABEL);
+		swcTypes.add(SWC_FORK_POINT_LABEL);
+		swcTypes.add(SWC_END_POINT_LABEL);
+		swcTypes.add(SWC_CUSTOM_LABEL);
+		return swcTypes;
+	}
+
+	public static ArrayList<Integer> getSWCtypes() {
+		final ArrayList<Integer> swcTypes = new ArrayList<Integer>();
+		swcTypes.add(SWC_UNDEFINED);
+		swcTypes.add(SWC_SOMA);
+		swcTypes.add(SWC_AXON);
+		swcTypes.add(SWC_DENDRITE);
+		swcTypes.add(SWC_APICAL_DENDRITE);
+		swcTypes.add(SWC_FORK_POINT);
+		swcTypes.add(SWC_END_POINT);
+		swcTypes.add(SWC_CUSTOM);
+		return swcTypes;
+	}
+
+	public static String getSWCtypeName(final int type) {
+		String typeName;
+		switch (type) {
+		case SWC_UNDEFINED:
+			typeName = SWC_UNDEFINED_LABEL;
+			break;
+		case SWC_SOMA:
+			typeName = SWC_SOMA_LABEL;
+			break;
+		case SWC_AXON:
+			typeName = SWC_AXON_LABEL;
+			break;
+		case SWC_DENDRITE:
+			typeName = SWC_DENDRITE_LABEL;
+			break;
+		case SWC_APICAL_DENDRITE:
+			typeName = SWC_APICAL_DENDRITE_LABEL;
+			break;
+		case SWC_FORK_POINT:
+			typeName = SWC_FORK_POINT_LABEL;
+			break;
+		case SWC_END_POINT:
+			typeName = SWC_END_POINT_LABEL;
+			break;
+		case SWC_CUSTOM:
+			typeName = SWC_CUSTOM_LABEL;
+			break;
+		default:
+			typeName = SWC_UNDEFINED_LABEL;
+			break;
+		}
+		return typeName;
+	}
 
 	public boolean circlesOverlap( double n1x, double n1y, double n1z,
 				       double c1x, double c1y, double c1z,

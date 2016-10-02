@@ -50,6 +50,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Label;
 import java.awt.Panel;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
@@ -73,8 +74,12 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
@@ -104,6 +109,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected CheckboxGroup pathsGroup = new CheckboxGroup();
 	protected Checkbox useAllPathsCheckbox = new Checkbox("Use all paths in analysis?", pathsGroup, false);
 	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup, true);
+
+	protected JButton swcTypesButton = new JButton("SWC Type Filtering...");
+	protected JPopupMenu swcTypesMenu = new JPopupMenu();
 	protected ArrayList<String> filteredTypes = Path.getSWCtypeNames();
 	protected Button makeShollImageButton = new Button("Make Sholl image");
 	protected Button drawShollGraphButton = new Button("Draw Graph");
@@ -949,6 +957,15 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		useSelectedPathsCheckbox.addItemListener(this);
 
 		++ c.gridy;
+		c.insets = new Insets(0, margin, 0, margin );
+		buildTypeFilteringMenu();
+		add(swcTypesButton,c);
+		++ c.gridy;
+		c.insets = new Insets(0, margin, margin, margin );
+		add(filteredTypesWarningLabel,c);
+		makePromptInteractive(true);
+
+		++ c.gridy;
 		c.insets = new Insets( margin, margin, 0, margin );
 		add(normalAxes,c);
 		normalAxes.addItemListener(this);
@@ -1047,6 +1064,45 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 					++numberOfSelectedPaths;
 				}
 			}
+		}
+
+	}
+
+	private void buildTypeFilteringMenu() {
+		swcTypesButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				if (!swcTypesMenu.isVisible()) {
+					final Point p = swcTypesButton.getLocationOnScreen();
+					swcTypesMenu.setInvoker(swcTypesButton);
+					swcTypesMenu.setLocation((int) p.getX(), (int) p.getY() + swcTypesButton.getHeight());
+					swcTypesMenu.setVisible(true);
+				} else {
+					swcTypesMenu.setVisible(false);
+				}
+			}
+		});
+		for (final String swcType : Path.getSWCtypeNames()) {
+			final JMenuItem mi = new JCheckBoxMenuItem(swcType, true);
+			mi.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(final ActionEvent e) {
+					swcTypesMenu.show(swcTypesButton, 0, swcTypesButton.getHeight());
+				}
+			});
+			mi.addItemListener(new ItemListener() {
+				@Override
+				public void itemStateChanged(final ItemEvent e) {
+					if (filteredTypes.contains(mi.getText()) && !mi.isSelected()) {
+						filteredTypes.remove(mi.getText());
+					} else if (!filteredTypes.contains(mi.getText()) && mi.isSelected()) {
+						filteredTypes.add(mi.getText());
+					}
+					reloadPaths();
+					updateResults();
+				}
+			});
+			swcTypesMenu.add(mi);
 		}
 
 	}

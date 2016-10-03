@@ -392,7 +392,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 				YesNoCancelDialog d = new YesNoCancelDialog( IJ.getInstance(),
 									     "Confirm",
-									     "Load the default labels file? ("+path+")" );
+									     "Load the default labels file?\n("+path+")" );
 
 				if( d.yesPressed() ) {
 
@@ -453,7 +453,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 					YesNoCancelDialog d = new YesNoCancelDialog( IJ.getInstance(),
 										     "Confirm",
-										     "Load the default traces file? ("+path+")" );
+										     "Load the default traces file?\n("+path+")" );
 
 					if( d.yesPressed() ) {
 

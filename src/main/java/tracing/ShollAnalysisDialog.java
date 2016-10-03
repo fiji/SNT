@@ -494,6 +494,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 		public void addToResultsTable() {
 			ResultsTable rt = Analyzer.getResultsTable();
+			if (!Analyzer.resetCounter())
+				return;
 			rt.incrementCounter();
 			rt.addValue("Filename",getOriginalFilename());
 			rt.addValue("All paths used",String.valueOf(useAllPaths));
@@ -697,7 +699,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				barRenderer.setBarPainter(new StandardXYBarPainter());
 				renderer = barRenderer;
 			}
-
+			renderer.setSeriesVisibleInLegend(0, false);
 			XYPlot plot = new XYPlot(
 				data,
 				xAxis,
@@ -1071,10 +1073,12 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		pack();
 
+		updateResults();
+
 		GUI.center(this);
 		setVisible(true);
+		toFront();
 
-		updateResults();
 	}
 
 	private void reloadPaths() {
@@ -1147,11 +1151,11 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	public class ResultsPanel extends Panel {
 		Label headingLabel = new Label("Results:");
 		String defaultText = "[Not calculated yet]";
-		Label criticalValuesLabel = new Label(defaultText);
-		Label dendriteMaximumLabel = new Label(defaultText);
+		Label criticalValuesLabel = new Label(defaultText, Label.RIGHT);
+		Label dendriteMaximumLabel = new Label(defaultText, Label.RIGHT);
 		// Label schoenenRamificationIndexLabel = new Label(defaultText);
-		Label shollsRegressionCoefficientLabel = new Label(defaultText);
-		Label shollsRegressionInterceptLabel = new Label(defaultText);
+		Label shollsRegressionCoefficientLabel = new Label(defaultText, Label.RIGHT);
+		Label shollsRegressionInterceptLabel = new Label(defaultText, Label.RIGHT);
 		public ResultsPanel() {
 			super();
 			setLayout(new GridBagLayout());
@@ -1191,9 +1195,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 		public void updateFromResults( ShollResults results ) {
 			dendriteMaximumLabel.setText(""+results.getDendriteMaximum());
-			criticalValuesLabel.setText(""+results.getCriticalValue());
-			shollsRegressionCoefficientLabel.setText(""+results.getShollRegressionCoefficient());
-			shollsRegressionInterceptLabel.setText(""+results.getRegressionIntercept());
+			criticalValuesLabel.setText(IJ.d2s(results.getCriticalValue(), 3));
+			shollsRegressionCoefficientLabel.setText(IJ.d2s(results.getShollRegressionCoefficient(), -3));
+			shollsRegressionInterceptLabel.setText(IJ.d2s(results.getRegressionIntercept(), 3));
 		}
 	}
 

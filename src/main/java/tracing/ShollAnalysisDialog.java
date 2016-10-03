@@ -114,6 +114,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected JButton swcTypesButton = new JButton("SWC Type Filtering...");
 	protected JPopupMenu swcTypesMenu = new JPopupMenu();
 	protected ArrayList<String> filteredTypes = Path.getSWCtypeNames();
+	protected JLabel filteredTypesWarningLabel = new JLabel();
+
 	protected Button makeShollImageButton = new Button("Make Sholl image");
 	protected Button drawShollGraphButton = new Button("Draw Graph");
 	protected Button exportDetailAsCSVButton = new Button("Export detailed results as CSV");
@@ -213,6 +215,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		if (numberOfAllPaths <= 0) {
 
+			makePromptInteractive(false);
 			if (graphFrame != null) {
 				chart = graphFrame.chartPanel.getChart();
 				if (chart != null) {
@@ -229,6 +232,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		} else { // valid paths to be analyzed
 
+			makePromptInteractive(true);
 			final ShollResults results = getCurrentResults();
 			resultsPanel.updateFromResults(results);
 			chart = results.createGraph();
@@ -241,6 +245,25 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 
 	}
+
+	private void makePromptInteractive(boolean interactive) {
+		if (!interactive) {
+			final String noData = " ";
+			resultsPanel.criticalValuesLabel.setText(noData);
+			resultsPanel.dendriteMaximumLabel.setText(noData);
+			resultsPanel.shollsRegressionCoefficientLabel.setText(noData);
+			resultsPanel.shollsRegressionInterceptLabel.setText(noData);
+			filteredTypesWarningLabel.setText("No paths matching current filter(s). Please revise choices...");
+			filteredTypesWarningLabel.setForeground(java.awt.Color.RED);
+		} else {
+			filteredTypesWarningLabel.setText("" + filteredTypes.size() + " type(s) are currently selected");
+			filteredTypesWarningLabel.setForeground(java.awt.Color.DARK_GRAY);
+		}
+		addToResultsTableButton.setEnabled(interactive);
+		drawShollGraphButton.setEnabled(interactive);
+		exportDetailAsCSVButton.setEnabled(interactive);
+		exportSummaryAsCSVButton.setEnabled(interactive);
+		makeShollImageButton.setEnabled(interactive);
 	}
 
 	public void itemStateChanged( ItemEvent e ) {

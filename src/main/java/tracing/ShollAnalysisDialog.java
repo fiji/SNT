@@ -494,30 +494,18 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 		public void addToResultsTable() {
 			ResultsTable rt = Analyzer.getResultsTable();
-			String [] headings = {  };
-			rt.setHeading(0,  "Filename");
-			rt.setHeading(1,  "AllPathsUsed");
-			rt.setHeading(2,  "NumberOfPathsUsed");
-			rt.setHeading(3,  "SphereSeparation");
-			rt.setHeading(4,  "Normalization");
-			rt.setHeading(5,  "Axes");
-			rt.setHeading(6,  "CriticalValue");
-			rt.setHeading(7,  "DendriteMaximum");
-			rt.setHeading(8,  "ShollRegressionCoefficient");
-			rt.setHeading(9,  "RegressionGradient");
-			rt.setHeading(10, "RegressionIntercept");
 			rt.incrementCounter();
-			rt.addLabel("Filename",getOriginalFilename());
-			rt.addValue("AllPathsUsed",useAllPaths?1:0);
-			rt.addValue("NumberOfPathsUsed",numberOfPathsUsed);
-			rt.addValue("SphereSeparation",sphereSeparation);
+			rt.addValue("Filename",getOriginalFilename());
+			rt.addValue("All paths used",String.valueOf(useAllPaths));
+			rt.addValue("Paths used",numberOfPathsUsed);
+			rt.addValue("Sphere separation",sphereSeparation);
 			rt.addValue("Normalization",normalization);
 			rt.addValue("Axes",axes);
-			rt.addValue("CriticalValue",getCriticalValue());
-			rt.addValue("DendriteMaximum",getDendriteMaximum());
-			rt.addValue("ShollRegressionCoefficient",getShollRegressionCoefficient());
-			rt.addValue("RegressionGradient",getRegressionGradient());
-			rt.addValue("RegressionIntercept",getRegressionIntercept());
+			rt.addValue("Max inters. radius",getCriticalValue());
+			rt.addValue("Max inters.",getDendriteMaximum());
+			rt.addValue("Regression coefficient",getShollRegressionCoefficient());
+			rt.addValue("Regression gradient",getRegressionGradient());
+			rt.addValue("Regression intercept",getRegressionIntercept());
 			rt.show("Results");
 		}
 		boolean twoDimensional;
@@ -567,8 +555,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				}
 				// System.out.println("Range starting at: "+Math.sqrt(p.distanceSquared)+" has crossings: "+currentCrossings);
 			}
-			xAxisLabel = "Distance in space from ( "+x_start+", "+y_start+", "+z_start+" )";
-			yAxisLabel = "Number of intersections";
+			xAxisLabel = "Distance from ("+ IJ.d2s(x_start,3) +", "+ IJ.d2s(y_start,3) +", "+IJ.d2s(z_start,3) +")";
+			yAxisLabel = "N. of Intersections";
 			if( sphereSeparation > 0 ) {
 				graphPoints = (int)Math.ceil(Math.sqrt(getMaxDistanceSquared()) / sphereSeparation);
 				x_graph_points = new double[graphPoints];
@@ -611,9 +599,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 						y_graph_points[i] /= ((4.0 * Math.PI * x * distanceSquared) / 3.0);
 				}
 				if( twoDimensional )
-					xAxisLabel += " / area enclosed by circle";
+					yAxisLabel = "Inters./Area";
 				else
-					yAxisLabel += " / volume enclosed by sphere";
+					yAxisLabel = "Inters./Volume";
 			}
 
 			SimpleRegression regression = new SimpleRegression();
@@ -691,7 +679,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				xAxis = new LogAxis(xAxisLabel);
 				yAxis = new LogAxis(yAxisLabel);
 			}
-
 
 			xAxis.setRange(minX,maxX);
 			if( axes == AXES_NORMAL )
@@ -807,16 +794,16 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		public void exportSummaryToCSV( File outputFile ) throws IOException {
 			String [] headers = new String[]{ "Filename",
-							  "AllPathsUsed",
-							  "NumberOfPathsUsed",
-							  "SphereSeparation",
-							  "Normlization",
+							  "All paths used",
+							  "Paths used",
+							  "Sphere separation",
+							  "Normalization",
 							  "Axes",
-							  "CriticalValue",
-							  "DendriteMaximum",
-							  "ShollRegressionCoefficient",
-							  "RegressionGradient",
-							  "RegressionIntercept" };
+							  "Max inters. radius",
+							  "Max inters.",
+							  "Regression coefficient",
+							  "Regression gradient",
+							  "Regression intercept" };
 
 			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
 			int columns = headers.length;
@@ -1041,10 +1028,13 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		++ c.gridy;
 		c.gridx = 0;
 		Panel separationPanel = new Panel();
-		separationPanel.add(new Label("Circle / sphere separation (0 for unsampled analysis)"));
+		separationPanel.add(new Label("Radius step size (0 for continuous sampling)"));
 		sampleSeparation.addTextListener(this);
 		separationPanel.add(sampleSeparation);
-		add(separationPanel,c);
+		final String unit = shollpafm.spacing_units;
+		if (unit != null && !unit.equals("unknown") && !unit.equals("pixel"))
+			separationPanel.add(new Label(unit));
+		add(separationPanel, c);
 
 		c.gridx = 0;
 		++ c.gridy;
@@ -1175,12 +1165,12 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			c.gridx = 0;
 			++ c.gridy;
 			c.gridwidth = 1;
-			add(new Label("Critical value(s):"),c);
+			add(new Label("Max inters. radius: "),c);
 			c.gridx = 1;
 			add(criticalValuesLabel,c);
 			c.gridx = 0;
 			++ c.gridy;
-			add(new Label("Dendrite maximum:"),c);
+			add(new Label("Max inters.: "),c);
 			c.gridx = 1;
 			add(dendriteMaximumLabel,c);
 			// c.gridx = 0;
@@ -1190,12 +1180,12 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			// add(schoenenRamificationIndexLabel,c);
 			c.gridx = 0;
 			++ c.gridy;
-			add(new Label("Sholl's Regression Coefficient:"),c);
+			add(new Label("Regression coefficient: "),c);
 			c.gridx = 1;
 			add(shollsRegressionCoefficientLabel,c);
 			c.gridx = 0;
 			++ c.gridy;
-			add(new Label("Sholl's Regression Intercept:"),c);
+			add(new Label("Regression intercept: "),c);
 			c.gridx = 1;
 			add(shollsRegressionInterceptLabel,c);
 		}

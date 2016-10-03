@@ -108,8 +108,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected double x_start, y_start, z_start;
 
 	protected CheckboxGroup pathsGroup = new CheckboxGroup();
-	protected Checkbox useAllPathsCheckbox = new Checkbox("Use all paths in analysis?", pathsGroup, false);
-	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup, true);
+	protected Checkbox useAllPathsCheckbox = new Checkbox("Use all paths in analysis?", pathsGroup, true);
+	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup, false);
 
 	protected JButton swcTypesButton = new JButton("SWC Type Filtering...");
 	protected JPopupMenu swcTypesMenu = new JPopupMenu();

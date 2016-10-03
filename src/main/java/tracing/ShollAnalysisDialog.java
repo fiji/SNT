@@ -470,6 +470,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected String xAxisLabel;
 		protected double regressionGradient = Double.MIN_VALUE;
 		protected double regressionIntercept = Double.MIN_VALUE;
+		protected double regressionRSquare = Double.NaN;
 		String parametersSuffix;
 		public int getDendriteMaximum() {
 			return maxCrossings;
@@ -485,6 +486,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 		public double getRegressionIntercept() {
 			return regressionIntercept;
+		}
+		public double getRegressionRSquare() {
+			return regressionRSquare;
 		}
 		public double getMaxDistanceSquared() {
 			return squaredRangeStarts[n-1];
@@ -635,6 +639,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 			regressionGradient = regression.getSlope();
 			regressionIntercept = regression.getIntercept();
+			// Retrieve r-squared, i.e., the square of the Pearson regression coefficient
+			regressionRSquare = regression.getRSquare();
 
 			if( maxY == Double.MIN_VALUE )
 				throw new RuntimeException("[BUG] Somehow there were no valid points found");
@@ -907,6 +913,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 			pw.close();
 		}
+
 	}
 
 	public static class ShollPoint implements Comparable<ShollPoint> {
@@ -1156,6 +1163,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		// Label schoenenRamificationIndexLabel = new Label(defaultText);
 		Label shollsRegressionCoefficientLabel = new Label(defaultText, Label.RIGHT);
 		Label shollsRegressionInterceptLabel = new Label(defaultText, Label.RIGHT);
+		Label shollsRegressionRSquared = new Label(defaultText, Label.RIGHT);
 		public ResultsPanel() {
 			super();
 			setLayout(new GridBagLayout());
@@ -1192,12 +1200,18 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			add(new Label("Regression intercept: "),c);
 			c.gridx = 1;
 			add(shollsRegressionInterceptLabel,c);
+			c.gridx = 0;
+			++ c.gridy;
+			add(new Label("Regression R2: "),c);
+			c.gridx = 1;
+			add(shollsRegressionRSquared,c);
 		}
 		public void updateFromResults( ShollResults results ) {
 			dendriteMaximumLabel.setText(""+results.getDendriteMaximum());
 			criticalValuesLabel.setText(IJ.d2s(results.getCriticalValue(), 3));
 			shollsRegressionCoefficientLabel.setText(IJ.d2s(results.getShollRegressionCoefficient(), -3));
 			shollsRegressionInterceptLabel.setText(IJ.d2s(results.getRegressionIntercept(), 3));
+			shollsRegressionRSquared.setText(IJ.d2s(results.getRegressionRSquare(), 3));
 		}
 	}
 

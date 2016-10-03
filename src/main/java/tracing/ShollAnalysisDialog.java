@@ -94,6 +94,7 @@ import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.TextTitle;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.w3c.dom.DOMImplementation;
@@ -208,15 +209,38 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	}
 
 	protected synchronized void updateResults() {
-		ShollResults results = getCurrentResults();
-		resultsPanel.updateFromResults(results);
-		JFreeChart chart = results.createGraph();
-		if( chart == null )
-			return;
-		if( graphFrame == null )
-			graphFrame = new GraphFrame( chart, results.getSuggestedSuffix() );
-		else
-			graphFrame.updateWithNewChart( chart, results.getSuggestedSuffix() );
+		JFreeChart chart;
+
+		if (numberOfAllPaths <= 0) {
+
+			if (graphFrame != null) {
+				chart = graphFrame.chartPanel.getChart();
+				if (chart != null) {
+					chart.setNotify(false);
+					final TextTitle currentitle = chart.getTitle();
+					if (currentitle != null)
+						currentitle.setText("");
+					final XYPlot plot = chart.getXYPlot();
+					if (plot != null)
+						plot.setDataset(null);
+					chart.setNotify(true);
+				}
+			}
+
+		} else { // valid paths to be analyzed
+
+			final ShollResults results = getCurrentResults();
+			resultsPanel.updateFromResults(results);
+			chart = results.createGraph();
+			if (chart == null)
+				return;
+			if (graphFrame == null)
+				graphFrame = new GraphFrame(chart, results.getSuggestedSuffix());
+			else
+				graphFrame.updateWithNewChart(chart, results.getSuggestedSuffix());
+		}
+
+	}
 	}
 
 	public void itemStateChanged( ItemEvent e ) {

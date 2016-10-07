@@ -860,69 +860,35 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			pw.close();
 		}
 
-		public void exportDetailToCSV( File outputFile ) throws IOException {
-			String [] headers;
-			if( sphereSeparation > 0 )
-				headers = new String[]{ "Radius",
-							"Crossings",
-							"NormalizedCrossings" };
-			else
-				headers = new String []{ "StartRadius",
-							 "EndRadius",
-							 "Crossings",
-							 "NormalizedCrossings" };
+		public void exportDetailToCSV(File outputFile) throws IOException {
+			String[] headers;
+			headers = new String[] { "Radius", "Inters.", (twoDimensional) ? "Inters./Area" : "Inters./Volume" };
 
-			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
-			int columns = headers.length;
-			for( int c = 0; c < columns; ++c ) {
-				csvQuoteAndPrint(pw,headers[c]);
-				if( c < (columns - 1) )
+			final PrintWriter pw = new PrintWriter(
+					new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+			final int columns = headers.length;
+			for (int c = 0; c < columns; ++c) {
+				csvQuoteAndPrint(pw, headers[c]);
+				if (c < (columns - 1))
 					pw.print(",");
 			}
 			pw.print("\r\n");
-			if( sphereSeparation > 0 ) {
-				int graphPoints = (int)Math.ceil(Math.sqrt(getMaxDistanceSquared()) / sphereSeparation);
-				for( int i = 0; i < graphPoints; ++i ) {
-					double x = i * sphereSeparation;
-					double distanceSquared = x * x;
-					int crossings = crossingsAtDistanceSquared(distanceSquared);
-					double normalizedCrossings = - Double.MIN_VALUE;
-					if( twoDimensional )
-						normalizedCrossings = crossings / (Math.PI * distanceSquared);
-					else
-						normalizedCrossings = crossings / ((4.0 * Math.PI * x * distanceSquared) / 3.0);
-					csvQuoteAndPrint(pw,x);
-					pw.print(",");
-					csvQuoteAndPrint(pw,crossings);
-					pw.print(",");
-					csvQuoteAndPrint(pw,normalizedCrossings);
-					pw.print("\r\n");
-				}
-			} else {
-				for( int i = 0; i < (n - 1); ++i ) {
-					double startXSquared = squaredRangeStarts[i];
-					double endXSquared = squaredRangeStarts[i+1];
-					// Omit the empty ranges, since they're not likely to matter to anyone:
-					if( endXSquared == startXSquared )
-						continue;
-					double startX = Math.sqrt(startXSquared);
-					double endX = Math.sqrt(endXSquared);
-					double midX = (startX + endX) / 2;
-					int crossings = crossingsAtDistanceSquared(midX*midX);
-					double normalizedCrossings = - Double.MIN_VALUE;
-					if( twoDimensional )
-						normalizedCrossings = crossings / (Math.PI * (midX * midX));
-					else
-						normalizedCrossings = crossings / ((4.0 * Math.PI * (midX * midX * midX)) / 3.0);
-					csvQuoteAndPrint(pw,startX);
-					pw.print(",");
-					csvQuoteAndPrint(pw,endX);
-					pw.print(",");
-					csvQuoteAndPrint(pw,crossings);
-					pw.print(",");
-					csvQuoteAndPrint(pw,normalizedCrossings);
-					pw.print("\r\n");
-				}
+
+			for (int i = 0; i < n_samples; ++i) {
+				double normalizedCrossings = -Double.MIN_VALUE;
+				final double x = sampled_distances[i];
+				final double y = sampled_counts[i];
+				final double distanceSquared = x * x;
+				if (twoDimensional)
+					normalizedCrossings = y / (Math.PI * distanceSquared);
+				else
+					normalizedCrossings = y / ((4.0 * Math.PI * x * distanceSquared) / 3.0);
+				csvQuoteAndPrint(pw, x);
+				pw.print(",");
+				csvQuoteAndPrint(pw, y);
+				pw.print(",");
+				csvQuoteAndPrint(pw, normalizedCrossings);
+				pw.print("\r\n");
 			}
 			pw.close();
 		}

@@ -71,6 +71,8 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -471,6 +473,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected double regressionGradient = Double.MIN_VALUE;
 		protected double regressionIntercept = Double.MIN_VALUE;
 		protected double regressionRSquare = Double.NaN;
+		protected int n_samples;
+		protected double[] sampled_distances;
+		protected double[] sampled_counts;
 		String parametersSuffix;
 		public int getDendriteMaximum() {
 			return maxCrossings;
@@ -563,25 +568,35 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 			xAxisLabel = "Distance from ("+ IJ.d2s(x_start,3) +", "+ IJ.d2s(y_start,3) +", "+IJ.d2s(z_start,3) +")";
 			yAxisLabel = "N. of Intersections";
-			if( sphereSeparation > 0 ) {
-				graphPoints = (int)Math.ceil(Math.sqrt(getMaxDistanceSquared()) / sphereSeparation);
-				x_graph_points = new double[graphPoints];
-				y_graph_points = new double[graphPoints];
-				for( int i = 0; i < graphPoints; ++i ) {
+
+			// Retrieve the data points for the sampled profile
+			if (sphereSeparation > 0) { // Discontinuous sampling
+
+				n_samples = (int) Math.ceil(Math.sqrt(getMaxDistanceSquared()) / sphereSeparation);
+				sampled_distances = new double[n_samples];
+				sampled_counts = new double[n_samples];
+				for (int i = 0; i < n_samples; ++i) {
 					double x = i * sphereSeparation;
-					x_graph_points[i] = x;
-					double distanceSquared = x * x;
-					y_graph_points[i] = crossingsAtDistanceSquared(distanceSquared);
+					sampled_distances[i] = x;
+					sampled_counts[i] = crossingsAtDistanceSquared(x * x);
 				}
-			} else {
-				graphPoints = n;
-				x_graph_points = new double[n];
-				y_graph_points = new double[n];
-				for( int i = 0; i < graphPoints; ++i ) {
-					double distanceSquared = squaredRangeStarts[i];
-					double x = Math.sqrt(distanceSquared);
-					x_graph_points[i] = x;
-					y_graph_points[i] = crossingsAtDistanceSquared(distanceSquared);
+
+			} else { // Continuous sampling
+
+				// We'll ensure we are not keeping duplicated data points so
+				// we'll store unique distances in a temporary LinkedHashSet
+				LinkedHashSet<Double> uniqueDistancesSquared = new LinkedHashSet<>();
+				for (int i = 0; i < n; ++i)
+					uniqueDistancesSquared.add(squaredRangeStarts[i]);
+				n_samples = uniqueDistancesSquared.size();
+				sampled_distances = new double[n_samples];
+				sampled_counts = new double[n_samples];
+				Iterator<Double> it = uniqueDistancesSquared.iterator();
+				int idx = 0;
+				while (it.hasNext()) {
+					double distanceSquared = it.next();
+					sampled_distances[idx] = Math.sqrt(distanceSquared);
+					sampled_counts[idx++] = crossingsAtDistanceSquared(distanceSquared);
 				}
 			}
 			if( normalization == NORMALIZED_FOR_SPHERE_VOLUME ) {

@@ -70,6 +70,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -566,8 +567,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				}
 				// System.out.println("Range starting at: "+Math.sqrt(p.distanceSquared)+" has crossings: "+currentCrossings);
 			}
-			xAxisLabel = "Distance from ("+ IJ.d2s(x_start,3) +", "+ IJ.d2s(y_start,3) +", "+IJ.d2s(z_start,3) +")";
-			yAxisLabel = "N. of Intersections";
 
 			// Retrieve the data points for the sampled profile
 			if (sphereSeparation > 0) { // Discontinuous sampling
@@ -599,20 +598,19 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 					sampled_counts[idx++] = crossingsAtDistanceSquared(distanceSquared);
 				}
 			}
+
+			// At this point what has been sampled is what is set to be plotted
+			// in a non-normalized linear plot
+			graphPoints = n_samples;
+			x_graph_points = Arrays.copyOf(sampled_distances, n_samples);
+			y_graph_points = Arrays.copyOf(sampled_counts, n_samples);
+
+			xAxisLabel = "Distance from ("+ IJ.d2s(x_start,3) +", "+ IJ.d2s(y_start,3) +", "+IJ.d2s(z_start,3) +")";
+			yAxisLabel = "N. of Intersections";
+
 			if( normalization == NORMALIZED_FOR_SPHERE_VOLUME ) {
 				for( int i = 0; i < graphPoints; ++i ) {
-					double x;
-					if( sphereSeparation > 0 ) {
-						x = x_graph_points[i];
-					} else {
-						double startX = x_graph_points[i];
-						double endX;
-						if( i < graphPoints - 1 )
-							endX = x_graph_points[i+1];
-						else
-							endX = x_graph_points[i];
-						x = (startX + endX) / 2;
-					}
+					double x = x_graph_points[i];
 					double distanceSquared = x * x;
 					if( twoDimensional )
 						y_graph_points[i] /= (Math.PI * distanceSquared);

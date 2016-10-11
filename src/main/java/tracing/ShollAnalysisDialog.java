@@ -103,6 +103,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
+import sholl.Sholl_Analysis;
 import util.FindConnectedRegions;
 
 @SuppressWarnings("serial")
@@ -503,6 +504,26 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		public String getSuggestedSuffix() {
 			return parametersSuffix;
 		}
+
+		/** Instructs the Sholl Analysis plugin to analyze the profile sampled by . */
+		public void analyzeWithShollAnalysisPlugin(final String exportDir, final double primaryBranches) {
+
+					final Sholl_Analysis sa = new Sholl_Analysis();
+					sa.setDescription("Tracings for " + originalImage.getTitle(), false);
+					final Calibration cal = originalImage.getCalibration();
+					if (cal != null) {
+						final int pX = (int) cal.getRawX(x_start);
+						final int pY = (int) cal.getRawY(y_start, originalImage.getHeight());
+						final int pZ = (int) (z_start / cal.pixelDepth + cal.zOrigin);
+						sa.setCenter(pX, pY, pZ);
+						sa.setUnit(cal.getUnit());
+					}
+					sa.setPrimaryBranches(primaryBranches);
+					sa.setExportPath(exportDir);
+					sa.analyzeProfile(sampled_distances, sampled_counts, !twoDimensional);
+
+		}
+
 		public void addToResultsTable() {
 			ResultsTable rt = Analyzer.getResultsTable();
 			if (!Analyzer.resetCounter())

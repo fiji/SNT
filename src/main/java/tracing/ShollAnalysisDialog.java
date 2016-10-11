@@ -702,11 +702,15 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				yAxis = new LogAxis(yAxisLabel);
 			}
 
-			xAxis.setRange(minX,maxX);
-			if( axes == AXES_NORMAL )
-				yAxis.setRange(0,maxY);
-			else
-				yAxis.setRange(minY,maxY);
+			try {
+				xAxis.setRange(minX, maxX);
+				if (axes == AXES_NORMAL)
+					yAxis.setRange(0, maxY);
+				else
+					yAxis.setRange(minY, maxY);
+			} catch (final IllegalArgumentException iae) {
+				yAxis.setAutoRange(true);
+			}
 
 			XYItemRenderer renderer = null;
 			if( sphereSeparation > 0 ) {

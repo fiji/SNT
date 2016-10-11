@@ -143,6 +143,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	protected ShollResults currentResults;
 	protected ImagePlus originalImage;
+	private String exportPath;
 
 	GraphFrame graphFrame;
 
@@ -163,6 +164,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			boolean detail = (source == exportDetailAsCSVButton);
 
 			SaveDialog sd = new SaveDialog("Export data as...",
+						       getExportPath(),
 						       "sholl-"+(detail?"detail":"summary")+results.getSuggestedSuffix(),
 						       ".csv");
 
@@ -170,7 +172,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				return;
 			}
 
-			File saveFile = new File( sd.getDirectory(),
+			File saveFile = new File( exportPath = sd.getDirectory(),
 						  sd.getFileName() );
 			if ((saveFile!=null)&&saveFile.exists()) {
 				if (!IJ.showMessageWithCancel(
@@ -1231,5 +1233,17 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	public void windowOpened( WindowEvent e ) { }
 	public void windowIconified( WindowEvent e ) { }
 	public void windowDeiconified( WindowEvent e ) { }
+
+	/**
+	 * @return the path to save current profile
+	 */
+	private String getExportPath() {
+		if (this.exportPath == null && originalImage != null) {
+			final FileInfo fi = originalImage.getOriginalFileInfo();
+			if (fi != null && fi.directory != null)
+				this.exportPath = fi.directory;
+		}
+		return this.exportPath;
+	}
 
 }

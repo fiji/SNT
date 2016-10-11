@@ -104,6 +104,7 @@ import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
 import sholl.Sholl_Analysis;
+import sholl.Sholl_Utils;
 import util.FindConnectedRegions;
 
 @SuppressWarnings("serial")
@@ -124,6 +125,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected Button drawShollGraphButton = new Button("Draw Graph");
 	protected Button addToResultsTableButton = new Button("Add to Results Table");
 	protected Button exportProfileButton = new Button("Save Profile...");
+	protected Button analyzeButton = new Button("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
 
 	protected int numberOfSelectedPaths;
 	protected int numberOfAllPaths;
@@ -148,7 +150,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	public void actionPerformed( ActionEvent e ) {
 		Object source = e.getSource();
-		ShollResults results = null;
+		final ShollResults results;
 		synchronized(this) {
 			results = getCurrentResults();
 		}
@@ -158,6 +160,21 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 		if( source == makeShollImageButton ) {
 			results.makeShollCrossingsImagePlus(originalImage);
+
+		} else if (source == analyzeButton) {
+
+			final Thread newThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					analyzeButton.setEnabled(false);
+					analyzeButton.setLabel("Running Analysis. Please wait...");
+					results.analyzeWithShollAnalysisPlugin(getExportPath(), shollpafm.getPathsStructured().length);
+					analyzeButton.setLabel("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
+					analyzeButton.setEnabled(true);
+				}
+			});
+			newThread.start();
+			return;
 
 		} else if( source == exportProfileButton) {
 
@@ -267,6 +284,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		addToResultsTableButton.setEnabled(interactive);
 		drawShollGraphButton.setEnabled(interactive);
 		exportProfileButton.setEnabled(interactive);
+		analyzeButton.setEnabled(interactive);
 		makeShollImageButton.setEnabled(interactive);
 	}
 
@@ -1072,6 +1090,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		bottomRow.add(addToResultsTableButton);
 		addToResultsTableButton.addActionListener(this);
+		middleRow.add(analyzeButton);
+		analyzeButton.addActionListener(this);
 
 		buttonsPanel.add(topRow,BorderLayout.NORTH);
 		buttonsPanel.add(middleRow,BorderLayout.CENTER);

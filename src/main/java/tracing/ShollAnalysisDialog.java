@@ -122,9 +122,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	protected Button makeShollImageButton = new Button("Make Sholl image");
 	protected Button drawShollGraphButton = new Button("Draw Graph");
-	protected Button exportDetailAsCSVButton = new Button("Export detailed results as CSV");
-	protected Button exportSummaryAsCSVButton = new Button("Export summary results as CSV");
 	protected Button addToResultsTableButton = new Button("Add to Results Table");
+	protected Button exportProfileButton = new Button("Save Profile...");
 
 	protected int numberOfSelectedPaths;
 	protected int numberOfAllPaths;
@@ -159,13 +158,15 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 		if( source == makeShollImageButton ) {
 			results.makeShollCrossingsImagePlus(originalImage);
-		} else if( source == exportDetailAsCSVButton || source == exportSummaryAsCSVButton ) {
 
-			boolean detail = (source == exportDetailAsCSVButton);
+		} else if( source == exportProfileButton) {
+
+			// We only only to save the detailed profile. Summary profile will
+			// be handled by sholl.Sholl_Analysis
 
 			SaveDialog sd = new SaveDialog("Export data as...",
 						       getExportPath(),
-						       "sholl-"+(detail?"detail":"summary")+results.getSuggestedSuffix(),
+						       originalImage.getTitle()+"-sholl-"+results.getSuggestedSuffix(),
 						       ".csv");
 
 			if(sd.getFileName()==null) {
@@ -185,10 +186,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			IJ.showStatus("Exporting CSV data to "+saveFile.getAbsolutePath());
 
 			try {
-				if(detail)
 					results.exportDetailToCSV(saveFile);
-				else
-					results.exportSummaryToCSV(saveFile);
 			} catch( IOException ioe) {
 				IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
 				return;
@@ -268,8 +266,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 		addToResultsTableButton.setEnabled(interactive);
 		drawShollGraphButton.setEnabled(interactive);
-		exportDetailAsCSVButton.setEnabled(interactive);
-		exportSummaryAsCSVButton.setEnabled(interactive);
+		exportProfileButton.setEnabled(interactive);
 		makeShollImageButton.setEnabled(interactive);
 	}
 
@@ -1070,11 +1067,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		topRow.add(drawShollGraphButton);
 		drawShollGraphButton.addActionListener(this);
 
-		middleRow.add(exportDetailAsCSVButton);
-		exportDetailAsCSVButton.addActionListener(this);
-
-		middleRow.add(exportSummaryAsCSVButton);
-		exportSummaryAsCSVButton.addActionListener(this);
+		topRow.add(exportProfileButton);
+		exportProfileButton.addActionListener(this);
 
 		bottomRow.add(addToResultsTableButton);
 		addToResultsTableButton.addActionListener(this);

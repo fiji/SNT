@@ -121,10 +121,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected ArrayList<String> filteredTypes = Path.getSWCtypeNames();
 	protected JLabel filteredTypesWarningLabel = new JLabel();
 
-	protected Button makeShollImageButton = new Button("Make Sholl image");
-	protected Button drawShollGraphButton = new Button("Draw Graph");
-	protected Button addToResultsTableButton = new Button("Add to Results Table");
+	protected Button makeShollImageButton = new Button("Sholl Image");
 	protected Button exportProfileButton = new Button("Save Profile...");
+	protected Button drawShollGraphButton = new Button("Plot Profile");
 	protected Button analyzeButton = new Button("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
 
 	protected int numberOfSelectedPaths;
@@ -183,7 +182,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 			SaveDialog sd = new SaveDialog("Export data as...",
 						       getExportPath(),
-						       originalImage.getTitle()+"-sholl-"+results.getSuggestedSuffix(),
+						       originalImage.getTitle()+"-sholl"+results.getSuggestedSuffix(),
 						       ".csv");
 
 			if(sd.getFileName()==null) {
@@ -211,8 +210,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		} else if( source == drawShollGraphButton ) {
 			graphFrame.setVisible(true);
-		} else if( source == addToResultsTableButton ) {
-			results.addToResultsTable();
 		}
 	}
 
@@ -281,7 +278,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			filteredTypesWarningLabel.setText("" + filteredTypes.size() + " type(s) are currently selected");
 			filteredTypesWarningLabel.setForeground(java.awt.Color.DARK_GRAY);
 		}
-		addToResultsTableButton.setEnabled(interactive);
 		drawShollGraphButton.setEnabled(interactive);
 		exportProfileButton.setEnabled(interactive);
 		analyzeButton.setEnabled(interactive);
@@ -1088,8 +1084,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		topRow.add(exportProfileButton);
 		exportProfileButton.addActionListener(this);
 
-		bottomRow.add(addToResultsTableButton);
-		addToResultsTableButton.addActionListener(this);
 		middleRow.add(analyzeButton);
 		analyzeButton.addActionListener(this);
 
@@ -1213,7 +1207,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			// add(schoenenRamificationIndexLabel,c);
 			c.gridx = 0;
 			++ c.gridy;
-			add(new Label("Regression coefficient: "),c);
+			add(new Label("Regression coeff.: "),c);
 			c.gridx = 1;
 			add(shollsRegressionCoefficientLabel,c);
 			c.gridx = 0;

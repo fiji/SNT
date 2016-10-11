@@ -256,6 +256,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			resultsPanel.dendriteMaximumLabel.setText(noData);
 			resultsPanel.shollsRegressionCoefficientLabel.setText(noData);
 			resultsPanel.shollsRegressionInterceptLabel.setText(noData);
+			resultsPanel.shollsRegressionRSquaredLabel.setText(noData);
 			filteredTypesWarningLabel.setText("No paths matching current filter(s). Please revise choices...");
 			filteredTypesWarningLabel.setForeground(java.awt.Color.RED);
 		} else {
@@ -1142,7 +1143,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		// Label schoenenRamificationIndexLabel = new Label(defaultText);
 		Label shollsRegressionCoefficientLabel = new Label(defaultText, Label.RIGHT);
 		Label shollsRegressionInterceptLabel = new Label(defaultText, Label.RIGHT);
-		Label shollsRegressionRSquared = new Label(defaultText, Label.RIGHT);
+		Label shollsRegressionRSquaredLabel = new Label(defaultText, Label.RIGHT);
 		public ResultsPanel() {
 			super();
 			setLayout(new GridBagLayout());
@@ -1183,14 +1184,15 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			++ c.gridy;
 			add(new Label("Regression R2: "),c);
 			c.gridx = 1;
-			add(shollsRegressionRSquared,c);
+			add(shollsRegressionRSquaredLabel,c);
 		}
+
 		public void updateFromResults( ShollResults results ) {
 			dendriteMaximumLabel.setText(""+results.getDendriteMaximum());
 			criticalValuesLabel.setText(IJ.d2s(results.getCriticalValue(), 3));
 			shollsRegressionCoefficientLabel.setText(IJ.d2s(results.getShollRegressionCoefficient(), -3));
 			shollsRegressionInterceptLabel.setText(IJ.d2s(results.getRegressionIntercept(), 3));
-			shollsRegressionRSquared.setText(IJ.d2s(results.getRegressionRSquare(), 3));
+			shollsRegressionRSquaredLabel.setText(IJ.d2s(results.getRegressionRSquare(), 3));
 		}
 	}
 

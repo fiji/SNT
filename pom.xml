@@ -17,6 +17,15 @@
 
 	<developers>
 		<developer>
+			<id>tferr</id>
+			<name>Tiago Ferreira</name>
+			<url>http://imagej.net/User:Tiago</url>
+			<roles>
+				<role>lead</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+		<developer>
 			<id>ctrueden</id>
 			<name>Curtis Rueden</name>
 			<url>http://imagej.net/User:Rueden</url>
@@ -46,11 +55,6 @@
 			<name>Jan Eglinger</name>
 			<url>http://imagej.net/User:Eglinger</url>
 			<properties><id>imagejan</id></properties>
-		</contributor>
-		<contributor>
-			<name>Tiago Ferreira</name>
-			<url>http://imagej.net/User:Tiago</url>
-			<properties><id>tferr</id></properties>
 		</contributor>
 		<contributor>
 			<name>Mark Hiner</name>

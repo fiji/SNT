@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>3.0.4</version>
+	<version>3.0.5-SNAPSHOT</version>
 
 	<name>plugins/Simple_Neurite_Tracer.jar</name>
 	<description />

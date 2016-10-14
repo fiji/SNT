@@ -50,6 +50,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Label;
 import java.awt.Panel;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
@@ -73,8 +74,12 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
@@ -89,6 +94,7 @@ import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.TextTitle;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.w3c.dom.DOMImplementation;
@@ -102,8 +108,14 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected double x_start, y_start, z_start;
 
 	protected CheckboxGroup pathsGroup = new CheckboxGroup();
-	protected Checkbox useAllPathsCheckbox = new Checkbox("Use all paths in analysis?", pathsGroup, false);
-	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup, true);
+	protected Checkbox useAllPathsCheckbox = new Checkbox("Use all paths in analysis?", pathsGroup, true);
+	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup, false);
+
+	protected JButton swcTypesButton = new JButton("SWC Type Filtering...");
+	protected JPopupMenu swcTypesMenu = new JPopupMenu();
+	protected ArrayList<String> filteredTypes = Path.getSWCtypeNames();
+	protected JLabel filteredTypesWarningLabel = new JLabel();
+
 	protected Button makeShollImageButton = new Button("Make Sholl image");
 	protected Button drawShollGraphButton = new Button("Draw Graph");
 	protected Button exportDetailAsCSVButton = new Button("Export detailed results as CSV");
@@ -199,15 +211,59 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	}
 
 	protected synchronized void updateResults() {
-		ShollResults results = getCurrentResults();
-		resultsPanel.updateFromResults(results);
-		JFreeChart chart = results.createGraph();
-		if( chart == null )
-			return;
-		if( graphFrame == null )
-			graphFrame = new GraphFrame( chart, results.getSuggestedSuffix() );
-		else
-			graphFrame.updateWithNewChart( chart, results.getSuggestedSuffix() );
+		JFreeChart chart;
+
+		if (numberOfAllPaths <= 0) {
+
+			makePromptInteractive(false);
+			if (graphFrame != null) {
+				chart = graphFrame.chartPanel.getChart();
+				if (chart != null) {
+					chart.setNotify(false);
+					final TextTitle currentitle = chart.getTitle();
+					if (currentitle != null)
+						currentitle.setText("");
+					final XYPlot plot = chart.getXYPlot();
+					if (plot != null)
+						plot.setDataset(null);
+					chart.setNotify(true);
+				}
+			}
+
+		} else { // valid paths to be analyzed
+
+			makePromptInteractive(true);
+			final ShollResults results = getCurrentResults();
+			resultsPanel.updateFromResults(results);
+			chart = results.createGraph();
+			if (chart == null)
+				return;
+			if (graphFrame == null)
+				graphFrame = new GraphFrame(chart, results.getSuggestedSuffix());
+			else
+				graphFrame.updateWithNewChart(chart, results.getSuggestedSuffix());
+		}
+
+	}
+
+	private void makePromptInteractive(boolean interactive) {
+		if (!interactive) {
+			final String noData = " ";
+			resultsPanel.criticalValuesLabel.setText(noData);
+			resultsPanel.dendriteMaximumLabel.setText(noData);
+			resultsPanel.shollsRegressionCoefficientLabel.setText(noData);
+			resultsPanel.shollsRegressionInterceptLabel.setText(noData);
+			filteredTypesWarningLabel.setText("No paths matching current filter(s). Please revise choices...");
+			filteredTypesWarningLabel.setForeground(java.awt.Color.RED);
+		} else {
+			filteredTypesWarningLabel.setText("" + filteredTypes.size() + " type(s) are currently selected");
+			filteredTypesWarningLabel.setForeground(java.awt.Color.DARK_GRAY);
+		}
+		addToResultsTableButton.setEnabled(interactive);
+		drawShollGraphButton.setEnabled(interactive);
+		exportDetailAsCSVButton.setEnabled(interactive);
+		exportSummaryAsCSVButton.setEnabled(interactive);
+		makeShollImageButton.setEnabled(interactive);
 	}
 
 	public void itemStateChanged( ItemEvent e ) {
@@ -414,6 +470,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected String xAxisLabel;
 		protected double regressionGradient = Double.MIN_VALUE;
 		protected double regressionIntercept = Double.MIN_VALUE;
+		protected double regressionRSquare = Double.NaN;
 		String parametersSuffix;
 		public int getDendriteMaximum() {
 			return maxCrossings;
@@ -430,6 +487,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		public double getRegressionIntercept() {
 			return regressionIntercept;
 		}
+		public double getRegressionRSquare() {
+			return regressionRSquare;
+		}
 		public double getMaxDistanceSquared() {
 			return squaredRangeStarts[n-1];
 		}
@@ -438,30 +498,20 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 		public void addToResultsTable() {
 			ResultsTable rt = Analyzer.getResultsTable();
-			String [] headings = {  };
-			rt.setHeading(0,  "Filename");
-			rt.setHeading(1,  "AllPathsUsed");
-			rt.setHeading(2,  "NumberOfPathsUsed");
-			rt.setHeading(3,  "SphereSeparation");
-			rt.setHeading(4,  "Normalization");
-			rt.setHeading(5,  "Axes");
-			rt.setHeading(6,  "CriticalValue");
-			rt.setHeading(7,  "DendriteMaximum");
-			rt.setHeading(8,  "ShollRegressionCoefficient");
-			rt.setHeading(9,  "RegressionGradient");
-			rt.setHeading(10, "RegressionIntercept");
+			if (!Analyzer.resetCounter())
+				return;
 			rt.incrementCounter();
-			rt.addLabel("Filename",getOriginalFilename());
-			rt.addValue("AllPathsUsed",useAllPaths?1:0);
-			rt.addValue("NumberOfPathsUsed",numberOfPathsUsed);
-			rt.addValue("SphereSeparation",sphereSeparation);
+			rt.addValue("Filename",getOriginalFilename());
+			rt.addValue("All paths used",String.valueOf(useAllPaths));
+			rt.addValue("Paths used",numberOfPathsUsed);
+			rt.addValue("Sphere separation",sphereSeparation);
 			rt.addValue("Normalization",normalization);
 			rt.addValue("Axes",axes);
-			rt.addValue("CriticalValue",getCriticalValue());
-			rt.addValue("DendriteMaximum",getDendriteMaximum());
-			rt.addValue("ShollRegressionCoefficient",getShollRegressionCoefficient());
-			rt.addValue("RegressionGradient",getRegressionGradient());
-			rt.addValue("RegressionIntercept",getRegressionIntercept());
+			rt.addValue("Max inters. radius",getCriticalValue());
+			rt.addValue("Max inters.",getDendriteMaximum());
+			rt.addValue("Regression coefficient",getShollRegressionCoefficient());
+			rt.addValue("Regression gradient",getRegressionGradient());
+			rt.addValue("Regression intercept",getRegressionIntercept());
 			rt.show("Results");
 		}
 		boolean twoDimensional;
@@ -511,8 +561,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				}
 				// System.out.println("Range starting at: "+Math.sqrt(p.distanceSquared)+" has crossings: "+currentCrossings);
 			}
-			xAxisLabel = "Distance in space from ( "+x_start+", "+y_start+", "+z_start+" )";
-			yAxisLabel = "Number of intersections";
+			xAxisLabel = "Distance from ("+ IJ.d2s(x_start,3) +", "+ IJ.d2s(y_start,3) +", "+IJ.d2s(z_start,3) +")";
+			yAxisLabel = "N. of Intersections";
 			if( sphereSeparation > 0 ) {
 				graphPoints = (int)Math.ceil(Math.sqrt(getMaxDistanceSquared()) / sphereSeparation);
 				x_graph_points = new double[graphPoints];
@@ -555,9 +605,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 						y_graph_points[i] /= ((4.0 * Math.PI * x * distanceSquared) / 3.0);
 				}
 				if( twoDimensional )
-					xAxisLabel += " / area enclosed by circle";
+					yAxisLabel = "Inters./Area";
 				else
-					yAxisLabel += " / volume enclosed by sphere";
+					yAxisLabel = "Inters./Volume";
 			}
 
 			SimpleRegression regression = new SimpleRegression();
@@ -589,6 +639,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 			regressionGradient = regression.getSlope();
 			regressionIntercept = regression.getIntercept();
+			// Retrieve r-squared, i.e., the square of the Pearson regression coefficient
+			regressionRSquare = regression.getRSquare();
 
 			if( maxY == Double.MIN_VALUE )
 				throw new RuntimeException("[BUG] Somehow there were no valid points found");
@@ -636,7 +688,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				yAxis = new LogAxis(yAxisLabel);
 			}
 
-
 			xAxis.setRange(minX,maxX);
 			if( axes == AXES_NORMAL )
 				yAxis.setRange(0,maxY);
@@ -654,7 +705,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				barRenderer.setBarPainter(new StandardXYBarPainter());
 				renderer = barRenderer;
 			}
-
+			renderer.setSeriesVisibleInLegend(0, false);
 			XYPlot plot = new XYPlot(
 				data,
 				xAxis,
@@ -751,16 +802,16 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		public void exportSummaryToCSV( File outputFile ) throws IOException {
 			String [] headers = new String[]{ "Filename",
-							  "AllPathsUsed",
-							  "NumberOfPathsUsed",
-							  "SphereSeparation",
-							  "Normlization",
+							  "All paths used",
+							  "Paths used",
+							  "Sphere separation",
+							  "Normalization",
 							  "Axes",
-							  "CriticalValue",
-							  "DendriteMaximum",
-							  "ShollRegressionCoefficient",
-							  "RegressionGradient",
-							  "RegressionIntercept" };
+							  "Max inters. radius",
+							  "Max inters.",
+							  "Regression coefficient",
+							  "Regression gradient",
+							  "Regression intercept" };
 
 			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
 			int columns = headers.length;
@@ -862,6 +913,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 			pw.close();
 		}
+
 	}
 
 	public static class ShollPoint implements Comparable<ShollPoint> {
@@ -899,7 +951,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	ArrayList<ShollPoint> shollPointsAllPaths;
 	ArrayList<ShollPoint> shollPointsSelectedPaths;
-
+	PathAndFillManager shollpafm;
 	ResultsPanel resultsPanel = new ResultsPanel();
 
 	protected boolean twoDimensional;
@@ -922,31 +974,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		shollPointsAllPaths = new ArrayList<ShollPoint>();
 		shollPointsSelectedPaths = new ArrayList<ShollPoint>();
-
-		numberOfAllPaths = 0;
-		numberOfSelectedPaths = 0;
-
-		for( Path p : pafm.allPaths ) {
-			boolean selected = p.getSelected();
-			if( p.getUseFitted() ) {
-				p = p.fitted;
-			} else if( p.fittedVersionOf != null )
-				continue;
-			addPathPointsToShollList(p,
-						 x_start,
-						 y_start,
-						 z_start,
-						 shollPointsAllPaths);
-			++ numberOfAllPaths;
-			if( selected ) {
-				addPathPointsToShollList(p,
-							 x_start,
-							 y_start,
-							 z_start,
-							 shollPointsSelectedPaths);
-				++ numberOfSelectedPaths;
-			}
-		}
+		shollpafm = pafm;
+		reloadPaths();
 
 		useAllPathsCheckbox.setLabel("Use all "+numberOfAllPaths+" paths in analysis?");
 		useSelectedPathsCheckbox.setLabel("Use only the "+numberOfSelectedPaths+" selected paths in analysis?");
@@ -969,6 +998,15 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		c.insets = new Insets( 0, margin, margin, margin );
 		add(useSelectedPathsCheckbox,c);
 		useSelectedPathsCheckbox.addItemListener(this);
+
+		++ c.gridy;
+		c.insets = new Insets(0, margin, 0, margin );
+		buildTypeFilteringMenu();
+		add(swcTypesButton,c);
+		++ c.gridy;
+		c.insets = new Insets(0, margin, margin, margin );
+		add(filteredTypesWarningLabel,c);
+		makePromptInteractive(true);
 
 		++ c.gridy;
 		c.insets = new Insets( margin, margin, 0, margin );
@@ -999,10 +1037,13 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		++ c.gridy;
 		c.gridx = 0;
 		Panel separationPanel = new Panel();
-		separationPanel.add(new Label("Circle / sphere separation (0 for unsampled analysis)"));
+		separationPanel.add(new Label("Radius step size (0 for continuous sampling)"));
 		sampleSeparation.addTextListener(this);
 		separationPanel.add(sampleSeparation);
-		add(separationPanel,c);
+		final String unit = shollpafm.spacing_units;
+		if (unit != null && !unit.equals("unknown") && !unit.equals("pixel"))
+			separationPanel.add(new Label(unit));
+		add(separationPanel, c);
 
 		c.gridx = 0;
 		++ c.gridy;
@@ -1039,20 +1080,90 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		pack();
 
+		updateResults();
+
 		GUI.center(this);
 		setVisible(true);
+		toFront();
 
-		updateResults();
+	}
+
+	private void reloadPaths() {
+
+		// Reset analysis
+		numberOfAllPaths = 0;
+		numberOfSelectedPaths = 0;
+		shollPointsAllPaths.clear();
+		shollPointsSelectedPaths.clear();
+
+		// load paths considering only those whose type has been chosen by user
+		for (Path p : shollpafm.allPaths) {
+			final boolean selected = p.getSelected();
+			if (p.getUseFitted()) {
+				p = p.fitted;
+			} else if (p.fittedVersionOf != null)
+				continue;
+
+			if (filteredTypes.contains(Path.getSWCtypeName(p.getSWCType()))) {
+				addPathPointsToShollList(p, x_start, y_start, z_start, shollPointsAllPaths);
+				++numberOfAllPaths;
+				if (selected) {
+					addPathPointsToShollList(p, x_start, y_start, z_start, shollPointsSelectedPaths);
+					++numberOfSelectedPaths;
+				}
+			}
+		}
+
+	}
+
+	private void buildTypeFilteringMenu() {
+		swcTypesButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				if (!swcTypesMenu.isVisible()) {
+					final Point p = swcTypesButton.getLocationOnScreen();
+					swcTypesMenu.setInvoker(swcTypesButton);
+					swcTypesMenu.setLocation((int) p.getX(), (int) p.getY() + swcTypesButton.getHeight());
+					swcTypesMenu.setVisible(true);
+				} else {
+					swcTypesMenu.setVisible(false);
+				}
+			}
+		});
+		for (final String swcType : Path.getSWCtypeNames()) {
+			final JMenuItem mi = new JCheckBoxMenuItem(swcType, true);
+			mi.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(final ActionEvent e) {
+					swcTypesMenu.show(swcTypesButton, 0, swcTypesButton.getHeight());
+				}
+			});
+			mi.addItemListener(new ItemListener() {
+				@Override
+				public void itemStateChanged(final ItemEvent e) {
+					if (filteredTypes.contains(mi.getText()) && !mi.isSelected()) {
+						filteredTypes.remove(mi.getText());
+					} else if (!filteredTypes.contains(mi.getText()) && mi.isSelected()) {
+						filteredTypes.add(mi.getText());
+					}
+					reloadPaths();
+					updateResults();
+				}
+			});
+			swcTypesMenu.add(mi);
+		}
+
 	}
 
 	public class ResultsPanel extends Panel {
 		Label headingLabel = new Label("Results:");
 		String defaultText = "[Not calculated yet]";
-		Label criticalValuesLabel = new Label(defaultText);
-		Label dendriteMaximumLabel = new Label(defaultText);
+		Label criticalValuesLabel = new Label(defaultText, Label.RIGHT);
+		Label dendriteMaximumLabel = new Label(defaultText, Label.RIGHT);
 		// Label schoenenRamificationIndexLabel = new Label(defaultText);
-		Label shollsRegressionCoefficientLabel = new Label(defaultText);
-		Label shollsRegressionInterceptLabel = new Label(defaultText);
+		Label shollsRegressionCoefficientLabel = new Label(defaultText, Label.RIGHT);
+		Label shollsRegressionInterceptLabel = new Label(defaultText, Label.RIGHT);
+		Label shollsRegressionRSquared = new Label(defaultText, Label.RIGHT);
 		public ResultsPanel() {
 			super();
 			setLayout(new GridBagLayout());
@@ -1066,12 +1177,12 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			c.gridx = 0;
 			++ c.gridy;
 			c.gridwidth = 1;
-			add(new Label("Critical value(s):"),c);
+			add(new Label("Max inters. radius: "),c);
 			c.gridx = 1;
 			add(criticalValuesLabel,c);
 			c.gridx = 0;
 			++ c.gridy;
-			add(new Label("Dendrite maximum:"),c);
+			add(new Label("Max inters.: "),c);
 			c.gridx = 1;
 			add(dendriteMaximumLabel,c);
 			// c.gridx = 0;
@@ -1081,20 +1192,26 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			// add(schoenenRamificationIndexLabel,c);
 			c.gridx = 0;
 			++ c.gridy;
-			add(new Label("Sholl's Regression Coefficient:"),c);
+			add(new Label("Regression coefficient: "),c);
 			c.gridx = 1;
 			add(shollsRegressionCoefficientLabel,c);
 			c.gridx = 0;
 			++ c.gridy;
-			add(new Label("Sholl's Regression Intercept:"),c);
+			add(new Label("Regression intercept: "),c);
 			c.gridx = 1;
 			add(shollsRegressionInterceptLabel,c);
+			c.gridx = 0;
+			++ c.gridy;
+			add(new Label("Regression R2: "),c);
+			c.gridx = 1;
+			add(shollsRegressionRSquared,c);
 		}
 		public void updateFromResults( ShollResults results ) {
 			dendriteMaximumLabel.setText(""+results.getDendriteMaximum());
-			criticalValuesLabel.setText(""+results.getCriticalValue());
-			shollsRegressionCoefficientLabel.setText(""+results.getShollRegressionCoefficient());
-			shollsRegressionInterceptLabel.setText(""+results.getRegressionIntercept());
+			criticalValuesLabel.setText(IJ.d2s(results.getCriticalValue(), 3));
+			shollsRegressionCoefficientLabel.setText(IJ.d2s(results.getShollRegressionCoefficient(), -3));
+			shollsRegressionInterceptLabel.setText(IJ.d2s(results.getRegressionIntercept(), 3));
+			shollsRegressionRSquared.setText(IJ.d2s(results.getRegressionRSquare(), 3));
 		}
 	}
 

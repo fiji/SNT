@@ -489,6 +489,14 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected double[] sampled_counts;
 		String parametersSuffix;
 
+		public double[] getSampledDistances() {
+			return sampled_distances;
+		}
+
+		public double[] getSampledCounts() {
+			return sampled_counts;
+		}
+
 		public int getDendriteMaximum() {
 			return maxCrossings;
 		}

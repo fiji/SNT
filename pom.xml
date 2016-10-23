@@ -137,10 +137,16 @@
 		</dependency>
 
 		<!-- Third party dependencies -->
-        <dependency>
-            <groupId>ca.mcgill</groupId>
-            <artifactId>Sholl_Analysis</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>ca.mcgill</groupId>
+			<artifactId>Sholl_Analysis</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>

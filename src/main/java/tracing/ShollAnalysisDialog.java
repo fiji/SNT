@@ -27,19 +27,6 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.Prefs;
-import ij.gui.GUI;
-import ij.io.FileInfo;
-import ij.io.SaveDialog;
-import ij.measure.Calibration;
-import ij.measure.ResultsTable;
-import ij.plugin.filter.Analyzer;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -70,7 +57,10 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -100,6 +90,20 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.gui.GUI;
+import ij.io.FileInfo;
+import ij.io.SaveDialog;
+import ij.measure.Calibration;
+import ij.measure.ResultsTable;
+import ij.plugin.filter.Analyzer;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import sholl.Sholl_Analysis;
+import sholl.Sholl_Utils;
 import util.FindConnectedRegions;
 
 @SuppressWarnings("serial")
@@ -109,18 +113,18 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	protected CheckboxGroup pathsGroup = new CheckboxGroup();
 	protected Checkbox useAllPathsCheckbox = new Checkbox("Use all paths in analysis?", pathsGroup, true);
-	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup, false);
+	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup,
+			false);
 
 	protected JButton swcTypesButton = new JButton("SWC Type Filtering...");
 	protected JPopupMenu swcTypesMenu = new JPopupMenu();
 	protected ArrayList<String> filteredTypes = Path.getSWCtypeNames();
 	protected JLabel filteredTypesWarningLabel = new JLabel();
 
-	protected Button makeShollImageButton = new Button("Make Sholl image");
-	protected Button drawShollGraphButton = new Button("Draw Graph");
-	protected Button exportDetailAsCSVButton = new Button("Export detailed results as CSV");
-	protected Button exportSummaryAsCSVButton = new Button("Export summary results as CSV");
-	protected Button addToResultsTableButton = new Button("Add to Results Table");
+	protected Button makeShollImageButton = new Button("Sholl Image");
+	protected Button exportProfileButton = new Button("Save Profile...");
+	protected Button drawShollGraphButton = new Button("Plot Profile");
+	protected Button analyzeButton = new Button("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
 
 	protected int numberOfSelectedPaths;
 	protected int numberOfAllPaths;
@@ -132,80 +136,92 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	protected CheckboxGroup normalizationGroup = new CheckboxGroup();
 	protected Checkbox noNormalization = new Checkbox("No normalization of intersections", normalizationGroup, true);
-	protected Checkbox normalizationForSphereVolume = new Checkbox("[BUG: should be set in the constructor]", normalizationGroup, false);
+	protected Checkbox normalizationForSphereVolume = new Checkbox("[BUG: should be set in the constructor]",
+			normalizationGroup, false);
 
 	protected TextField sampleSeparation = new TextField(
-		""+Prefs.get("tracing.ShollAnalysisDialog.sampleSeparation",0));
+			"" + Prefs.get("tracing.ShollAnalysisDialog.sampleSeparation", 0));
 
 	protected ShollResults currentResults;
 	protected ImagePlus originalImage;
+	private String exportPath;
 
 	GraphFrame graphFrame;
 
-	public void actionPerformed( ActionEvent e ) {
-		Object source = e.getSource();
-		ShollResults results = null;
-		synchronized(this) {
+	@Override
+	public void actionPerformed(final ActionEvent e) {
+		final Object source = e.getSource();
+		final ShollResults results;
+		synchronized (this) {
 			results = getCurrentResults();
 		}
-		if( results == null ) {
-			IJ.error("The sphere separation field must be a number, not '"+sampleSeparation.getText()+"'");
+		if (results == null) {
+			IJ.error("The sphere separation field must be a number, not '" + sampleSeparation.getText() + "'");
 			return;
 		}
-		if( source == makeShollImageButton ) {
+		if (source == makeShollImageButton) {
 			results.makeShollCrossingsImagePlus(originalImage);
-		} else if( source == exportDetailAsCSVButton || source == exportSummaryAsCSVButton ) {
 
-			boolean detail = (source == exportDetailAsCSVButton);
+		} else if (source == analyzeButton) {
 
-			SaveDialog sd = new SaveDialog("Export data as...",
-						       "sholl-"+(detail?"detail":"summary")+results.getSuggestedSuffix(),
-						       ".csv");
+			final Thread newThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					analyzeButton.setEnabled(false);
+					analyzeButton.setLabel("Running Analysis. Please wait...");
+					results.analyzeWithShollAnalysisPlugin(getExportPath(), shollpafm.getPathsStructured().length);
+					analyzeButton.setLabel("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
+					analyzeButton.setEnabled(true);
+				}
+			});
+			newThread.start();
+			return;
 
-			if(sd.getFileName()==null) {
+		} else if (source == exportProfileButton) {
+
+			// We only only to save the detailed profile. Summary profile will
+			// be handled by sholl.Sholl_Analysis
+
+			final SaveDialog sd = new SaveDialog("Export data as...", getExportPath(),
+					originalImage.getTitle() + "-sholl" + results.getSuggestedSuffix(), ".csv");
+
+			if (sd.getFileName() == null) {
 				return;
 			}
 
-			File saveFile = new File( sd.getDirectory(),
-						  sd.getFileName() );
-			if ((saveFile!=null)&&saveFile.exists()) {
-				if (!IJ.showMessageWithCancel(
-					    "Export data...", "The file "+
-					    saveFile.getAbsolutePath()+" already exists.\n"+
-					    "Do you want to replace it?"))
+			final File saveFile = new File(exportPath = sd.getDirectory(), sd.getFileName());
+			if ((saveFile != null) && saveFile.exists()) {
+				if (!IJ.showMessageWithCancel("Export data...",
+						"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?"))
 					return;
 			}
 
-			IJ.showStatus("Exporting CSV data to "+saveFile.getAbsolutePath());
+			IJ.showStatus("Exporting CSV data to " + saveFile.getAbsolutePath());
 
 			try {
-				if(detail)
-					results.exportDetailToCSV(saveFile);
-				else
-					results.exportSummaryToCSV(saveFile);
-			} catch( IOException ioe) {
-				IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
+				results.exportDetailToCSV(saveFile);
+			} catch (final IOException ioe) {
+				IJ.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;
 			}
 
-		} else if( source == drawShollGraphButton ) {
+		} else if (source == drawShollGraphButton) {
 			graphFrame.setVisible(true);
-		} else if( source == addToResultsTableButton ) {
-			results.addToResultsTable();
 		}
 	}
 
-	public void textValueChanged( TextEvent e ) {
-		Object source = e.getSource();
-		if( source == sampleSeparation ) {
-			String sampleSeparationText = sampleSeparation.getText();
+	@Override
+	public void textValueChanged(final TextEvent e) {
+		final Object source = e.getSource();
+		if (source == sampleSeparation) {
+			final String sampleSeparationText = sampleSeparation.getText();
 			float s;
 			try {
 				s = Float.parseFloat(sampleSeparationText);
-			} catch( NumberFormatException nfe ) {
+			} catch (final NumberFormatException nfe) {
 				return;
 			}
-			if( s >= 0 )
+			if (s >= 0)
 				updateResults();
 		}
 	}
@@ -246,36 +262,37 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	}
 
-	private void makePromptInteractive(boolean interactive) {
+	private void makePromptInteractive(final boolean interactive) {
 		if (!interactive) {
 			final String noData = " ";
 			resultsPanel.criticalValuesLabel.setText(noData);
 			resultsPanel.dendriteMaximumLabel.setText(noData);
 			resultsPanel.shollsRegressionCoefficientLabel.setText(noData);
 			resultsPanel.shollsRegressionInterceptLabel.setText(noData);
+			resultsPanel.shollsRegressionRSquaredLabel.setText(noData);
 			filteredTypesWarningLabel.setText("No paths matching current filter(s). Please revise choices...");
 			filteredTypesWarningLabel.setForeground(java.awt.Color.RED);
 		} else {
 			filteredTypesWarningLabel.setText("" + filteredTypes.size() + " type(s) are currently selected");
 			filteredTypesWarningLabel.setForeground(java.awt.Color.DARK_GRAY);
 		}
-		addToResultsTableButton.setEnabled(interactive);
 		drawShollGraphButton.setEnabled(interactive);
-		exportDetailAsCSVButton.setEnabled(interactive);
-		exportSummaryAsCSVButton.setEnabled(interactive);
+		exportProfileButton.setEnabled(interactive);
+		analyzeButton.setEnabled(interactive);
 		makeShollImageButton.setEnabled(interactive);
 	}
 
-	public void itemStateChanged( ItemEvent e ) {
+	@Override
+	public void itemStateChanged(final ItemEvent e) {
 		updateResults();
 	}
 
 	public ShollResults getCurrentResults() {
 		List<ShollPoint> pointsToUse;
 		String description = "Sholl analysis ";
-		String postDescription = " for "+originalImage.getTitle();
-		boolean useAllPaths = ! useSelectedPathsCheckbox.getState();
-		if( useAllPaths ) {
+		final String postDescription = " for " + originalImage.getTitle();
+		final boolean useAllPaths = !useSelectedPathsCheckbox.getState();
+		if (useAllPaths) {
 			pointsToUse = shollPointsAllPaths;
 			description += "of all paths" + postDescription;
 		} else {
@@ -284,44 +301,35 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 
 		int axes = 0;
-		if( normalAxes.getState() )
+		if (normalAxes.getState())
 			axes = AXES_NORMAL;
-		else if( semiLogAxes.getState() )
+		else if (semiLogAxes.getState())
 			axes = AXES_SEMI_LOG;
-		else if( logLogAxes.getState() )
+		else if (logLogAxes.getState())
 			axes = AXES_LOG_LOG;
 		else
 			throw new RuntimeException("BUG: somehow no axis checkbox was selected");
 
 		int normalization = 0;
-		if( noNormalization.getState() )
+		if (noNormalization.getState())
 			normalization = NOT_NORMALIZED;
-		else if( normalizationForSphereVolume.getState() )
+		else if (normalizationForSphereVolume.getState())
 			normalization = NORMALIZED_FOR_SPHERE_VOLUME;
 		else
 			throw new RuntimeException("BUG: somehow no normalization checkbox was selected");
 
-		String sphereSeparationString = sampleSeparation.getText();
+		final String sphereSeparationString = sampleSeparation.getText();
 		double sphereSeparation = Double.MIN_VALUE;
 
 		try {
 			sphereSeparation = Double.parseDouble(sphereSeparationString);
-		} catch( NumberFormatException nfe ) {
+		} catch (final NumberFormatException nfe) {
 			return null;
 		}
 
-		ShollResults results = new ShollResults( pointsToUse,
-							 originalImage,
-							 useAllPaths,
-							 useAllPaths ? numberOfAllPaths : numberOfSelectedPaths,
-							 x_start,
-							 y_start,
-							 z_start,
-							 description,
-							 axes,
-							 normalization,
-							 sphereSeparation,
-							 twoDimensional );
+		final ShollResults results = new ShollResults(pointsToUse, originalImage, useAllPaths,
+				useAllPaths ? numberOfAllPaths : numberOfSelectedPaths, x_start, y_start, z_start, description, axes,
+				normalization, sphereSeparation, twoDimensional);
 
 		return results;
 	}
@@ -332,22 +340,26 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		ChartPanel chartPanel = null;
 		JPanel mainPanel;
 		String suggestedSuffix;
-		public void updateWithNewChart( JFreeChart chart, String suggestedSuffix ) {
-			updateWithNewChart( chart, suggestedSuffix, false );
+
+		public void updateWithNewChart(final JFreeChart chart, final String suggestedSuffix) {
+			updateWithNewChart(chart, suggestedSuffix, false);
 		}
-		synchronized public void updateWithNewChart( JFreeChart chart, String suggestedSuffix, boolean setSize ) {
+
+		synchronized public void updateWithNewChart(final JFreeChart chart, final String suggestedSuffix,
+				final boolean setSize) {
 			this.suggestedSuffix = suggestedSuffix;
-			if( chartPanel != null )
+			if (chartPanel != null)
 				remove(chartPanel);
 			chartPanel = null;
 			this.chart = chart;
-			chartPanel = new ChartPanel( chart );
-			if( setSize )
-				chartPanel.setPreferredSize(new java.awt.Dimension(800,600));
-			mainPanel.add(chartPanel,BorderLayout.CENTER);
+			chartPanel = new ChartPanel(chart);
+			if (setSize)
+				chartPanel.setPreferredSize(new java.awt.Dimension(800, 600));
+			mainPanel.add(chartPanel, BorderLayout.CENTER);
 			validate();
 		}
-		public GraphFrame( JFreeChart chart, String suggestedSuffix ) {
+
+		public GraphFrame(final JFreeChart chart, final String suggestedSuffix) {
 			super();
 
 			this.suggestedSuffix = suggestedSuffix;
@@ -355,51 +367,49 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			mainPanel = new JPanel();
 			mainPanel.setLayout(new BorderLayout());
 
-			updateWithNewChart( chart, suggestedSuffix, true );
+			updateWithNewChart(chart, suggestedSuffix, true);
 
-			JPanel buttonsPanel = new JPanel();
+			final JPanel buttonsPanel = new JPanel();
 			exportButton = new JButton("Export graph as SVG");
 			exportButton.addActionListener(this);
 			buttonsPanel.add(exportButton);
-			mainPanel.add(buttonsPanel,BorderLayout.SOUTH);
+			mainPanel.add(buttonsPanel, BorderLayout.SOUTH);
 
 			setContentPane(mainPanel);
 			validate();
 			setSize(new java.awt.Dimension(500, 270));
 			GUI.center(this);
 		}
-		public void actionPerformed( ActionEvent e ) {
-			Object source = e.getSource();
-			if( source == exportButton ) {
+
+		@Override
+		public void actionPerformed(final ActionEvent e) {
+			final Object source = e.getSource();
+			if (source == exportButton) {
 				exportGraphAsSVG();
 			}
 		}
+
 		public void exportGraphAsSVG() {
 
-			SaveDialog sd = new SaveDialog("Export graph as...",
-						       "sholl"+suggestedSuffix,
-						       ".svg");
+			final SaveDialog sd = new SaveDialog("Export graph as...", "sholl" + suggestedSuffix, ".svg");
 
-			if(sd.getFileName()==null) {
+			if (sd.getFileName() == null) {
 				return;
 			}
 
-			File saveFile = new File( sd.getDirectory(),
-						  sd.getFileName() );
-			if ((saveFile!=null)&&saveFile.exists()) {
-				if (!IJ.showMessageWithCancel(
-					    "Export graph...", "The file "+
-					    saveFile.getAbsolutePath()+" already exists.\n"+
-					    "Do you want to replace it?"))
+			final File saveFile = new File(sd.getDirectory(), sd.getFileName());
+			if ((saveFile != null) && saveFile.exists()) {
+				if (!IJ.showMessageWithCancel("Export graph...",
+						"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?"))
 					return;
 			}
 
-			IJ.showStatus("Exporting graph to "+saveFile.getAbsolutePath());
+			IJ.showStatus("Exporting graph to " + saveFile.getAbsolutePath());
 
 			try {
-				exportChartAsSVG( chart, chartPanel.getBounds(), saveFile );
-			} catch( IOException ioe) {
-				IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
+				exportChartAsSVG(chart, chartPanel.getBounds(), saveFile);
+			} catch (final IOException ioe) {
+				IJ.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;
 			}
 
@@ -408,50 +418,53 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		/**
 		 * Exports a JFreeChart to a SVG file.
 		 *
-		 * @param chart JFreeChart to export
-		 * @param bounds the dimensions of the viewport
-		 * @param svgFile the output file.
-		 * @throws IOException if writing the svgFile fails.
-
-		 * This method is taken from:
-		 *    http://dolf.trieschnigg.nl/jfreechart/
+		 * @param chart
+		 *            JFreeChart to export
+		 * @param bounds
+		 *            the dimensions of the viewport
+		 * @param svgFile
+		 *            the output file.
+		 * @throws IOException
+		 *             if writing the svgFile fails.
+		 * 
+		 *             This method is taken from:
+		 *             http://dolf.trieschnigg.nl/jfreechart/
 		 */
-		void exportChartAsSVG(JFreeChart chart, Rectangle bounds, File svgFile) throws IOException {
+		void exportChartAsSVG(final JFreeChart chart, final Rectangle bounds, final File svgFile) throws IOException {
 
 			// Get a DOMImplementation and create an XML document
-			DOMImplementation domImpl =
-				GenericDOMImplementation.getDOMImplementation();
-			Document document = domImpl.createDocument(null, "svg", null);
+			final DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
+			final Document document = domImpl.createDocument(null, "svg", null);
 
 			// Create an instance of the SVG Generator
-			SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+			final SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
 
 			// draw the chart in the SVG generator
 			chart.draw(svgGenerator, bounds);
 
 			// Write svg file
-			OutputStream outputStream = new FileOutputStream(svgFile);
-			Writer out = new OutputStreamWriter(outputStream, "UTF-8");
+			final OutputStream outputStream = new FileOutputStream(svgFile);
+			final Writer out = new OutputStreamWriter(outputStream, "UTF-8");
 			svgGenerator.stream(out, true /* use css */);
 			outputStream.flush();
 			outputStream.close();
 		}
 	}
 
-	public static final int AXES_NORMAL   = 1;
+	public static final int AXES_NORMAL = 1;
 	public static final int AXES_SEMI_LOG = 2;
-	public static final int AXES_LOG_LOG  = 3;
+	public static final int AXES_LOG_LOG = 3;
 
-	public static final String [] axesParameters = { null, "normal", "semi-log", "log-log"  };
+	public static final String[] axesParameters = { null, "normal", "semi-log", "log-log" };
 
 	public static final int NOT_NORMALIZED = 1;
 	public static final int NORMALIZED_FOR_SPHERE_VOLUME = 2;
 
-	public static final String [] normalizationParameters = { null, "not-normalized", "normalized" };
+	public static final String[] normalizationParameters = { null, "not-normalized", "normalized" };
 
 	public static class ShollResults {
-		protected double [] squaredRangeStarts;
-		protected int [] crossingsPastEach;
+		protected double[] squaredRangeStarts;
+		protected int[] crossingsPastEach;
 		protected int n;
 		protected double x_start, y_start, z_start;
 		/* maxCrossings is the same as the "Dendrite Maximum". */
@@ -461,8 +474,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected int axes;
 		protected int normalization;
 		protected double sphereSeparation;
-		protected double [] x_graph_points;
-		protected double [] y_graph_points;
+		protected double[] x_graph_points;
+		protected double[] y_graph_points;
 		protected double minY;
 		protected double maxY;
 		protected int graphPoints;
@@ -471,66 +484,103 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected double regressionGradient = Double.MIN_VALUE;
 		protected double regressionIntercept = Double.MIN_VALUE;
 		protected double regressionRSquare = Double.NaN;
+		protected int n_samples;
+		protected double[] sampled_distances;
+		protected double[] sampled_counts;
 		String parametersSuffix;
+
+		public double[] getSampledDistances() {
+			return sampled_distances;
+		}
+
+		public double[] getSampledCounts() {
+			return sampled_counts;
+		}
+
 		public int getDendriteMaximum() {
 			return maxCrossings;
 		}
+
 		public double getCriticalValue() {
 			return criticalValue;
 		}
+
 		public double getRegressionGradient() {
 			return regressionGradient;
 		}
+
 		public double getShollRegressionCoefficient() {
-			return - regressionGradient;
+			return -regressionGradient;
 		}
+
 		public double getRegressionIntercept() {
 			return regressionIntercept;
 		}
+
 		public double getRegressionRSquare() {
 			return regressionRSquare;
 		}
+
 		public double getMaxDistanceSquared() {
-			return squaredRangeStarts[n-1];
+			return squaredRangeStarts[n - 1];
 		}
+
 		public String getSuggestedSuffix() {
 			return parametersSuffix;
 		}
+
+		/**
+		 * Instructs the Sholl Analysis plugin to analyze the profile sampled by
+		 * .
+		 */
+		public void analyzeWithShollAnalysisPlugin(final String exportDir, final double primaryBranches) {
+
+			final Sholl_Analysis sa = new Sholl_Analysis();
+			sa.setDescription("Tracings for " + originalImage.getTitle(), false);
+			final Calibration cal = originalImage.getCalibration();
+			if (cal != null) {
+				final int pX = (int) cal.getRawX(x_start);
+				final int pY = (int) cal.getRawY(y_start, originalImage.getHeight());
+				final int pZ = (int) (z_start / cal.pixelDepth + cal.zOrigin);
+				sa.setCenter(pX, pY, pZ);
+				sa.setUnit(cal.getUnit());
+			}
+			sa.setPrimaryBranches(primaryBranches);
+			sa.setExportPath(exportDir);
+			sa.analyzeProfile(sampled_distances, sampled_counts, !twoDimensional);
+
+		}
+
 		public void addToResultsTable() {
-			ResultsTable rt = Analyzer.getResultsTable();
+			final ResultsTable rt = Analyzer.getResultsTable();
 			if (!Analyzer.resetCounter())
 				return;
 			rt.incrementCounter();
-			rt.addValue("Filename",getOriginalFilename());
-			rt.addValue("All paths used",String.valueOf(useAllPaths));
-			rt.addValue("Paths used",numberOfPathsUsed);
-			rt.addValue("Sphere separation",sphereSeparation);
-			rt.addValue("Normalization",normalization);
-			rt.addValue("Axes",axes);
-			rt.addValue("Max inters. radius",getCriticalValue());
-			rt.addValue("Max inters.",getDendriteMaximum());
-			rt.addValue("Regression coefficient",getShollRegressionCoefficient());
-			rt.addValue("Regression gradient",getRegressionGradient());
-			rt.addValue("Regression intercept",getRegressionIntercept());
+			rt.addValue("Filename", getOriginalFilename());
+			rt.addValue("All paths used", String.valueOf(useAllPaths));
+			rt.addValue("Paths used", numberOfPathsUsed);
+			rt.addValue("Sphere separation", sphereSeparation);
+			rt.addValue("Normalization", normalization);
+			rt.addValue("Axes", axes);
+			rt.addValue("Max inters. radius", getCriticalValue());
+			rt.addValue("Max inters.", getDendriteMaximum());
+			rt.addValue("Regression coefficient", getShollRegressionCoefficient());
+			rt.addValue("Regression gradient", getRegressionGradient());
+			rt.addValue("Regression intercept", getRegressionIntercept());
 			rt.show("Results");
 		}
+
 		boolean twoDimensional;
 		ImagePlus originalImage;
 		boolean useAllPaths;
 		int numberOfPathsUsed;
-		public ShollResults( List<ShollPoint> shollPoints,
-				     ImagePlus originalImage,
-				     boolean useAllPaths,
-				     int numberOfPathsUsed,
-				     double x_start,
-				     double y_start,
-				     double z_start,
-				     String description,
-				     int axes,
-				     int normalization,
-				     double sphereSeparation,
-				     boolean twoDimensional ) {
-			parametersSuffix = "_"+axesParameters[axes]+"_"+normalizationParameters[normalization]+"_"+sphereSeparation;
+
+		public ShollResults(final List<ShollPoint> shollPoints, final ImagePlus originalImage,
+				final boolean useAllPaths, final int numberOfPathsUsed, final double x_start, final double y_start,
+				final double z_start, final String description, final int axes, final int normalization,
+				final double sphereSeparation, final boolean twoDimensional) {
+			parametersSuffix = "_" + axesParameters[axes] + "_" + normalizationParameters[normalization] + "_"
+					+ sphereSeparation;
 			this.originalImage = originalImage;
 			this.useAllPaths = useAllPaths;
 			this.numberOfPathsUsed = numberOfPathsUsed;
@@ -547,102 +597,113 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			squaredRangeStarts = new double[n];
 			crossingsPastEach = new int[n];
 			int currentCrossings = 0;
-			for( int i = 0; i < n; ++i ) {
-				ShollPoint p = shollPoints.get(i);
-				if( p.nearer )
-					++ currentCrossings;
+			for (int i = 0; i < n; ++i) {
+				final ShollPoint p = shollPoints.get(i);
+				if (p.nearer)
+					++currentCrossings;
 				else
-					-- currentCrossings;
+					--currentCrossings;
 				squaredRangeStarts[i] = p.distanceSquared;
 				crossingsPastEach[i] = currentCrossings;
-				if( currentCrossings > maxCrossings ) {
+				if (currentCrossings > maxCrossings) {
 					maxCrossings = currentCrossings;
 					criticalValue = Math.sqrt(p.distanceSquared);
 				}
-				// System.out.println("Range starting at: "+Math.sqrt(p.distanceSquared)+" has crossings: "+currentCrossings);
+				// System.out.println("Range starting at:
+				// "+Math.sqrt(p.distanceSquared)+" has crossings:
+				// "+currentCrossings);
 			}
-			xAxisLabel = "Distance from ("+ IJ.d2s(x_start,3) +", "+ IJ.d2s(y_start,3) +", "+IJ.d2s(z_start,3) +")";
+
+			// Retrieve the data points for the sampled profile
+			if (sphereSeparation > 0) { // Discontinuous sampling
+
+				n_samples = (int) Math.ceil(Math.sqrt(getMaxDistanceSquared()) / sphereSeparation);
+				sampled_distances = new double[n_samples];
+				sampled_counts = new double[n_samples];
+				for (int i = 0; i < n_samples; ++i) {
+					final double x = i * sphereSeparation;
+					sampled_distances[i] = x;
+					sampled_counts[i] = crossingsAtDistanceSquared(x * x);
+				}
+
+			} else { // Continuous sampling
+
+				// We'll ensure we are not keeping duplicated data points so
+				// we'll store unique distances in a temporary LinkedHashSet
+				final LinkedHashSet<Double> uniqueDistancesSquared = new LinkedHashSet<>();
+				for (int i = 0; i < n; ++i)
+					uniqueDistancesSquared.add(squaredRangeStarts[i]);
+				n_samples = uniqueDistancesSquared.size();
+				sampled_distances = new double[n_samples];
+				sampled_counts = new double[n_samples];
+				final Iterator<Double> it = uniqueDistancesSquared.iterator();
+				int idx = 0;
+				while (it.hasNext()) {
+					final double distanceSquared = it.next();
+					sampled_distances[idx] = Math.sqrt(distanceSquared);
+					sampled_counts[idx++] = crossingsAtDistanceSquared(distanceSquared);
+				}
+			}
+
+			// At this point what has been sampled is what is set to be plotted
+			// in a non-normalized linear plot
+			graphPoints = n_samples;
+			x_graph_points = Arrays.copyOf(sampled_distances, n_samples);
+			y_graph_points = Arrays.copyOf(sampled_counts, n_samples);
+
+			xAxisLabel = "Distance from (" + IJ.d2s(x_start, 3) + ", " + IJ.d2s(y_start, 3) + ", " + IJ.d2s(z_start, 3)
+					+ ")";
 			yAxisLabel = "N. of Intersections";
-			if( sphereSeparation > 0 ) {
-				graphPoints = (int)Math.ceil(Math.sqrt(getMaxDistanceSquared()) / sphereSeparation);
-				x_graph_points = new double[graphPoints];
-				y_graph_points = new double[graphPoints];
-				for( int i = 0; i < graphPoints; ++i ) {
-					double x = i * sphereSeparation;
-					x_graph_points[i] = x;
-					double distanceSquared = x * x;
-					y_graph_points[i] = crossingsAtDistanceSquared(distanceSquared);
-				}
-			} else {
-				graphPoints = n;
-				x_graph_points = new double[n];
-				y_graph_points = new double[n];
-				for( int i = 0; i < graphPoints; ++i ) {
-					double distanceSquared = squaredRangeStarts[i];
-					double x = Math.sqrt(distanceSquared);
-					x_graph_points[i] = x;
-					y_graph_points[i] = crossingsAtDistanceSquared(distanceSquared);
-				}
-			}
-			if( normalization == NORMALIZED_FOR_SPHERE_VOLUME ) {
-				for( int i = 0; i < graphPoints; ++i ) {
-					double x;
-					if( sphereSeparation > 0 ) {
-						x = x_graph_points[i];
-					} else {
-						double startX = x_graph_points[i];
-						double endX;
-						if( i < graphPoints - 1 )
-							endX = x_graph_points[i+1];
-						else
-							endX = x_graph_points[i];
-						x = (startX + endX) / 2;
-					}
-					double distanceSquared = x * x;
-					if( twoDimensional )
+
+			if (normalization == NORMALIZED_FOR_SPHERE_VOLUME) {
+				for (int i = 0; i < graphPoints; ++i) {
+					final double x = x_graph_points[i];
+					final double distanceSquared = x * x;
+					if (twoDimensional)
 						y_graph_points[i] /= (Math.PI * distanceSquared);
 					else
 						y_graph_points[i] /= ((4.0 * Math.PI * x * distanceSquared) / 3.0);
 				}
-				if( twoDimensional )
+				if (twoDimensional)
 					yAxisLabel = "Inters./Area";
 				else
 					yAxisLabel = "Inters./Volume";
 			}
 
-			SimpleRegression regression = new SimpleRegression();
+			final SimpleRegression regression = new SimpleRegression();
 
 			maxY = Double.MIN_VALUE;
 			minY = Double.MAX_VALUE;
-			for( int i = 0; i < graphPoints; ++i ) {
-				double x = x_graph_points[i];
-				double y = y_graph_points[i];
+			for (int i = 0; i < graphPoints; ++i) {
+				final double x = x_graph_points[i];
+				final double y = y_graph_points[i];
 				double x_for_regression = x;
 				double y_for_regression = y;
-				if( ! (Double.isInfinite(y) || Double.isNaN(y)) ) {
-					if( y > maxY )
+				if (!(Double.isInfinite(y) || Double.isNaN(y))) {
+					if (y > maxY)
 						maxY = y;
-					if( y < minY )
+					if (y < minY)
 						minY = y;
-					if( axes == AXES_SEMI_LOG ) {
-						if( y <= 0 )
+					if (axes == AXES_SEMI_LOG) {
+						if (y <= 0)
 							continue;
 						y_for_regression = Math.log(y);
-					} else if( axes == AXES_LOG_LOG ) {
-						if( x <= 0 || y <= 0 )
+					} else if (axes == AXES_LOG_LOG) {
+						if (x <= 0 || y <= 0)
 							continue;
 						x_for_regression = Math.log(x);
 						y_for_regression = Math.log(y);
 					}
-					regression.addData(x_for_regression,y_for_regression);
+					regression.addData(x_for_regression, y_for_regression);
 				}
 			}
 			regressionGradient = regression.getSlope();
 			regressionIntercept = regression.getIntercept();
-			// Retrieve r-squared, i.e., the square of the Pearson regression coefficient
+			// Retrieve r-squared, i.e., the square of the Pearson regression
+			// coefficient
 			regressionRSquare = regression.getRSquare();
 
-			if( maxY == Double.MIN_VALUE )
+			if (maxY == Double.MIN_VALUE)
 				throw new RuntimeException("[BUG] Somehow there were no valid points found");
 		}
 
@@ -654,51 +715,55 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			double maxX = Double.MIN_VALUE;
 
 			final XYSeries series = new XYSeries("Intersections");
-			for( int i = 0; i < graphPoints; ++i ) {
-				double x = x_graph_points[i];
-				double y = y_graph_points[i];
-				if( Double.isInfinite(y) || Double.isNaN(y) )
+			for (int i = 0; i < graphPoints; ++i) {
+				final double x = x_graph_points[i];
+				final double y = y_graph_points[i];
+				if (Double.isInfinite(y) || Double.isNaN(y))
 					continue;
-				if( axes == AXES_SEMI_LOG || axes == AXES_LOG_LOG ) {
-					if( y <= 0 )
+				if (axes == AXES_SEMI_LOG || axes == AXES_LOG_LOG) {
+					if (y <= 0)
 						continue;
 				}
-				if( axes == AXES_LOG_LOG ) {
-					if( x <= 0 )
+				if (axes == AXES_LOG_LOG) {
+					if (x <= 0)
 						continue;
 				}
-				if( x < minX )
+				if (x < minX)
 					minX = x;
-				if( x > maxX )
+				if (x > maxX)
 					maxX = x;
-				series.add(x,y);
+				series.add(x, y);
 			}
 			data = new XYSeriesCollection(series);
 
 			ValueAxis xAxis = null;
 			ValueAxis yAxis = null;
-			if( axes == AXES_NORMAL ) {
+			if (axes == AXES_NORMAL) {
 				xAxis = new NumberAxis(xAxisLabel);
 				yAxis = new NumberAxis(yAxisLabel);
-			} else if( axes == AXES_SEMI_LOG ) {
+			} else if (axes == AXES_SEMI_LOG) {
 				xAxis = new NumberAxis(xAxisLabel);
 				yAxis = new LogAxis(yAxisLabel);
-			} else if( axes == AXES_LOG_LOG ) {
+			} else if (axes == AXES_LOG_LOG) {
 				xAxis = new LogAxis(xAxisLabel);
 				yAxis = new LogAxis(yAxisLabel);
 			}
 
-			xAxis.setRange(minX,maxX);
-			if( axes == AXES_NORMAL )
-				yAxis.setRange(0,maxY);
-			else
-				yAxis.setRange(minY,maxY);
+			try {
+				xAxis.setRange(minX, maxX);
+				if (axes == AXES_NORMAL)
+					yAxis.setRange(0, maxY);
+				else
+					yAxis.setRange(minY, maxY);
+			} catch (final IllegalArgumentException iae) {
+				yAxis.setAutoRange(true);
+			}
 
 			XYItemRenderer renderer = null;
-			if( sphereSeparation > 0 ) {
+			if (sphereSeparation > 0) {
 				renderer = new XYLineAndShapeRenderer();
 			} else {
-				XYBarRenderer barRenderer = new XYBarRenderer();
+				final XYBarRenderer barRenderer = new XYBarRenderer();
 				barRenderer.setShadowVisible(false);
 				barRenderer.setGradientPaintTransformer(null);
 				barRenderer.setDrawBarOutline(false);
@@ -706,30 +771,26 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				renderer = barRenderer;
 			}
 			renderer.setSeriesVisibleInLegend(0, false);
-			XYPlot plot = new XYPlot(
-				data,
-				xAxis,
-				yAxis,
-				renderer );
+			final XYPlot plot = new XYPlot(data, xAxis, yAxis, renderer);
 
-			return new JFreeChart( description, plot );
+			return new JFreeChart(description, plot);
 		}
 
-		public int crossingsAtDistanceSquared( double distanceSquared ) {
+		public int crossingsAtDistanceSquared(final double distanceSquared) {
 
 			int minIndex = 0;
 			int maxIndex = n - 1;
 
-			if( distanceSquared < squaredRangeStarts[minIndex] )
+			if (distanceSquared < squaredRangeStarts[minIndex])
 				return 1;
-			else if( distanceSquared > squaredRangeStarts[maxIndex] )
+			else if (distanceSquared > squaredRangeStarts[maxIndex])
 				return 0;
 
-			while( maxIndex - minIndex > 1 ) {
+			while (maxIndex - minIndex > 1) {
 
-				int midPoint = (maxIndex + minIndex) / 2;
+				final int midPoint = (maxIndex + minIndex) / 2;
 
-				if( distanceSquared < squaredRangeStarts[midPoint] )
+				if (distanceSquared < squaredRangeStarts[midPoint])
 					maxIndex = midPoint;
 				else
 					minIndex = midPoint;
@@ -737,179 +798,133 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			return crossingsPastEach[minIndex];
 		}
 
-		public ImagePlus makeShollCrossingsImagePlus(ImagePlus original) {
-			int width = original.getWidth();
-			int height = original.getHeight();
-			int depth = original.getStackSize();
-			Calibration c = original.getCalibration();
+		public ImagePlus makeShollCrossingsImagePlus(final ImagePlus original) {
+			final int width = original.getWidth();
+			final int height = original.getHeight();
+			final int depth = original.getStackSize();
+			final Calibration c = original.getCalibration();
 			double x_spacing = 1;
 			double y_spacing = 1;
 			double z_spacing = 1;
-			if( c != null ) {
+			if (c != null) {
 				x_spacing = c.pixelWidth;
 				y_spacing = c.pixelHeight;
 				z_spacing = c.pixelDepth;
 			}
-			ImageStack stack = new ImageStack(width,height);
-			for( int z = 0; z < depth; ++z ) {
-				short [] pixels = new short[width*height];
-				for( int y = 0; y < height; ++y ) {
-					for( int x = 0; x < width; ++x ) {
-						double xdiff = x_spacing * x - x_start;
-						double ydiff = y_spacing * y - y_start;
-						double zdiff = z_spacing * z - z_start;
-						double distanceSquared =
-							xdiff * xdiff +
-							ydiff * ydiff +
-							zdiff * zdiff;
-						pixels[y*width+x] = (short)crossingsAtDistanceSquared(distanceSquared);
+			final ImageStack stack = new ImageStack(width, height);
+			for (int z = 0; z < depth; ++z) {
+				final short[] pixels = new short[width * height];
+				for (int y = 0; y < height; ++y) {
+					for (int x = 0; x < width; ++x) {
+						final double xdiff = x_spacing * x - x_start;
+						final double ydiff = y_spacing * y - y_start;
+						final double zdiff = z_spacing * z - z_start;
+						final double distanceSquared = xdiff * xdiff + ydiff * ydiff + zdiff * zdiff;
+						pixels[y * width + x] = (short) crossingsAtDistanceSquared(distanceSquared);
 					}
 				}
-				ShortProcessor sp = new ShortProcessor(width,height);
+				final ShortProcessor sp = new ShortProcessor(width, height);
 				sp.setPixels(pixels);
-				stack.addSlice( "", sp );
+				stack.addSlice("", sp);
 			}
-			ImagePlus result = new ImagePlus( description, stack );
+			final ImagePlus result = new ImagePlus(description, stack);
 			result.show();
-			IndexColorModel icm = FindConnectedRegions.backgroundAndSpectrum(255);
+			final IndexColorModel icm = FindConnectedRegions.backgroundAndSpectrum(255);
 			stack.setColorModel(icm);
-			ImageProcessor ip = result.getProcessor();
-			if( ip != null ) {
+			final ImageProcessor ip = result.getProcessor();
+			if (ip != null) {
 				ip.setColorModel(icm);
-				ip.setMinAndMax( 0, maxCrossings );
+				ip.setMinAndMax(0, maxCrossings);
 			}
 			result.updateAndDraw();
 
-			if( c != null )
+			if (c != null)
 				result.setCalibration(c);
 			return result;
 		}
 
-		public static void csvQuoteAndPrint(PrintWriter pw, Object o) {
-			pw.print(PathAndFillManager.stringForCSV(""+o));
+		public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {
+			pw.print(PathAndFillManager.stringForCSV("" + o));
 		}
 
 		public String getOriginalFilename() {
-			FileInfo originalFileInfo = originalImage.getOriginalFileInfo();
-			if( originalFileInfo.directory == null )
+			final FileInfo originalFileInfo = originalImage.getOriginalFileInfo();
+			if (originalFileInfo.directory == null)
 				return "[unknown]";
 			else
-				return new File(originalFileInfo.directory,
-						originalFileInfo.fileName).getAbsolutePath();
-
+				return new File(originalFileInfo.directory, originalFileInfo.fileName).getAbsolutePath();
 
 		}
 
-		public void exportSummaryToCSV( File outputFile ) throws IOException {
-			String [] headers = new String[]{ "Filename",
-							  "All paths used",
-							  "Paths used",
-							  "Sphere separation",
-							  "Normalization",
-							  "Axes",
-							  "Max inters. radius",
-							  "Max inters.",
-							  "Regression coefficient",
-							  "Regression gradient",
-							  "Regression intercept" };
+		public void exportSummaryToCSV(final File outputFile) throws IOException {
+			final String[] headers = new String[] { "Filename", "All paths used", "Paths used", "Sphere separation",
+					"Normalization", "Axes", "Max inters. radius", "Max inters.", "Regression coefficient",
+					"Regression gradient", "Regression intercept" };
 
-			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
-			int columns = headers.length;
-			for( int c = 0; c < columns; ++c ) {
-				csvQuoteAndPrint(pw,headers[c]);
-				if( c < (columns - 1) )
+			final PrintWriter pw = new PrintWriter(
+					new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+			final int columns = headers.length;
+			for (int c = 0; c < columns; ++c) {
+				csvQuoteAndPrint(pw, headers[c]);
+				if (c < (columns - 1))
 					pw.print(",");
 			}
 			pw.print("\r\n");
-			csvQuoteAndPrint(pw,getOriginalFilename());
+			csvQuoteAndPrint(pw, getOriginalFilename());
 			pw.print(",");
-			csvQuoteAndPrint(pw,useAllPaths);
+			csvQuoteAndPrint(pw, useAllPaths);
 			pw.print(",");
-			csvQuoteAndPrint(pw,numberOfPathsUsed);
+			csvQuoteAndPrint(pw, numberOfPathsUsed);
 			pw.print(",");
-			csvQuoteAndPrint(pw,sphereSeparation);
+			csvQuoteAndPrint(pw, sphereSeparation);
 			pw.print(",");
-			csvQuoteAndPrint(pw,normalizationParameters[normalization]);
+			csvQuoteAndPrint(pw, normalizationParameters[normalization]);
 			pw.print(",");
-			csvQuoteAndPrint(pw,axesParameters[axes]);
+			csvQuoteAndPrint(pw, axesParameters[axes]);
 			pw.print(",");
-			csvQuoteAndPrint(pw,getCriticalValue());
+			csvQuoteAndPrint(pw, getCriticalValue());
 			pw.print(",");
-			csvQuoteAndPrint(pw,getDendriteMaximum());
+			csvQuoteAndPrint(pw, getDendriteMaximum());
 			pw.print(",");
-			csvQuoteAndPrint(pw,getShollRegressionCoefficient());
+			csvQuoteAndPrint(pw, getShollRegressionCoefficient());
 			pw.print(",");
-			csvQuoteAndPrint(pw,getRegressionGradient());
+			csvQuoteAndPrint(pw, getRegressionGradient());
 			pw.print(",");
-			csvQuoteAndPrint(pw,getRegressionIntercept());
+			csvQuoteAndPrint(pw, getRegressionIntercept());
 			pw.print("\r\n");
 
 			pw.close();
 		}
 
-		public void exportDetailToCSV( File outputFile ) throws IOException {
-			String [] headers;
-			if( sphereSeparation > 0 )
-				headers = new String[]{ "Radius",
-							"Crossings",
-							"NormalizedCrossings" };
-			else
-				headers = new String []{ "StartRadius",
-							 "EndRadius",
-							 "Crossings",
-							 "NormalizedCrossings" };
+		public void exportDetailToCSV(final File outputFile) throws IOException {
+			String[] headers;
+			headers = new String[] { "Radius", "Inters.", (twoDimensional) ? "Inters./Area" : "Inters./Volume" };
 
-			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
-			int columns = headers.length;
-			for( int c = 0; c < columns; ++c ) {
-				csvQuoteAndPrint(pw,headers[c]);
-				if( c < (columns - 1) )
+			final PrintWriter pw = new PrintWriter(
+					new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+			final int columns = headers.length;
+			for (int c = 0; c < columns; ++c) {
+				csvQuoteAndPrint(pw, headers[c]);
+				if (c < (columns - 1))
 					pw.print(",");
 			}
 			pw.print("\r\n");
-			if( sphereSeparation > 0 ) {
-				int graphPoints = (int)Math.ceil(Math.sqrt(getMaxDistanceSquared()) / sphereSeparation);
-				for( int i = 0; i < graphPoints; ++i ) {
-					double x = i * sphereSeparation;
-					double distanceSquared = x * x;
-					int crossings = crossingsAtDistanceSquared(distanceSquared);
-					double normalizedCrossings = - Double.MIN_VALUE;
-					if( twoDimensional )
-						normalizedCrossings = crossings / (Math.PI * distanceSquared);
-					else
-						normalizedCrossings = crossings / ((4.0 * Math.PI * x * distanceSquared) / 3.0);
-					csvQuoteAndPrint(pw,x);
-					pw.print(",");
-					csvQuoteAndPrint(pw,crossings);
-					pw.print(",");
-					csvQuoteAndPrint(pw,normalizedCrossings);
-					pw.print("\r\n");
-				}
-			} else {
-				for( int i = 0; i < (n - 1); ++i ) {
-					double startXSquared = squaredRangeStarts[i];
-					double endXSquared = squaredRangeStarts[i+1];
-					// Omit the empty ranges, since they're not likely to matter to anyone:
-					if( endXSquared == startXSquared )
-						continue;
-					double startX = Math.sqrt(startXSquared);
-					double endX = Math.sqrt(endXSquared);
-					double midX = (startX + endX) / 2;
-					int crossings = crossingsAtDistanceSquared(midX*midX);
-					double normalizedCrossings = - Double.MIN_VALUE;
-					if( twoDimensional )
-						normalizedCrossings = crossings / (Math.PI * (midX * midX));
-					else
-						normalizedCrossings = crossings / ((4.0 * Math.PI * (midX * midX * midX)) / 3.0);
-					csvQuoteAndPrint(pw,startX);
-					pw.print(",");
-					csvQuoteAndPrint(pw,endX);
-					pw.print(",");
-					csvQuoteAndPrint(pw,crossings);
-					pw.print(",");
-					csvQuoteAndPrint(pw,normalizedCrossings);
-					pw.print("\r\n");
-				}
+
+			for (int i = 0; i < n_samples; ++i) {
+				double normalizedCrossings = -Double.MIN_VALUE;
+				final double x = sampled_distances[i];
+				final double y = sampled_counts[i];
+				final double distanceSquared = x * x;
+				if (twoDimensional)
+					normalizedCrossings = y / (Math.PI * distanceSquared);
+				else
+					normalizedCrossings = y / ((4.0 * Math.PI * x * distanceSquared) / 3.0);
+				csvQuoteAndPrint(pw, x);
+				pw.print(",");
+				csvQuoteAndPrint(pw, y);
+				pw.print(",");
+				csvQuoteAndPrint(pw, normalizedCrossings);
+				pw.print("\r\n");
 			}
 			pw.close();
 		}
@@ -919,32 +934,34 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	public static class ShollPoint implements Comparable<ShollPoint> {
 		protected boolean nearer;
 		protected double distanceSquared;
-		public int compareTo(ShollPoint other) {
-			return Double.compare(this.distanceSquared,other.distanceSquared);
+
+		@Override
+		public int compareTo(final ShollPoint other) {
+			return Double.compare(this.distanceSquared, other.distanceSquared);
 		}
-		ShollPoint(double distanceSquared,boolean nearer) {
+
+		ShollPoint(final double distanceSquared, final boolean nearer) {
 			this.distanceSquared = distanceSquared;
 			this.nearer = nearer;
 		}
 	}
 
-	public static void addPathPointsToShollList( Path p,
-						     double x_start,
-						     double y_start,
-						     double z_start,
-						     List<ShollPoint> shollPointsList ) {
+	public static void addPathPointsToShollList(final Path p, final double x_start, final double y_start,
+			final double z_start, final List<ShollPoint> shollPointsList) {
 
-		for( int i = 0; i < p.points - 1; ++i ) {
-			double xdiff_first = p.precise_x_positions[i] - x_start;
-			double ydiff_first = p.precise_y_positions[i] - y_start;
-			double zdiff_first = p.precise_z_positions[i] - z_start;
-			double xdiff_second = p.precise_x_positions[i+1] - x_start;
-			double ydiff_second = p.precise_y_positions[i+1] - y_start;
-			double zdiff_second = p.precise_z_positions[i+1] - z_start;
-			double distanceSquaredFirst = xdiff_first*xdiff_first + ydiff_first*ydiff_first + zdiff_first*zdiff_first;
-			double distanceSquaredSecond = xdiff_second*xdiff_second + ydiff_second*ydiff_second + zdiff_second*zdiff_second;
-			shollPointsList.add( new ShollPoint( distanceSquaredFirst, distanceSquaredFirst < distanceSquaredSecond ) );
-			shollPointsList.add( new ShollPoint( distanceSquaredSecond, distanceSquaredFirst >=  distanceSquaredSecond ) );
+		for (int i = 0; i < p.points - 1; ++i) {
+			final double xdiff_first = p.precise_x_positions[i] - x_start;
+			final double ydiff_first = p.precise_y_positions[i] - y_start;
+			final double zdiff_first = p.precise_z_positions[i] - z_start;
+			final double xdiff_second = p.precise_x_positions[i + 1] - x_start;
+			final double ydiff_second = p.precise_y_positions[i + 1] - y_start;
+			final double zdiff_second = p.precise_z_positions[i + 1] - z_start;
+			final double distanceSquaredFirst = xdiff_first * xdiff_first + ydiff_first * ydiff_first
+					+ zdiff_first * zdiff_first;
+			final double distanceSquaredSecond = xdiff_second * xdiff_second + ydiff_second * ydiff_second
+					+ zdiff_second * zdiff_second;
+			shollPointsList.add(new ShollPoint(distanceSquaredFirst, distanceSquaredFirst < distanceSquaredSecond));
+			shollPointsList.add(new ShollPoint(distanceSquaredSecond, distanceSquaredFirst >= distanceSquaredSecond));
 		}
 
 	}
@@ -956,14 +973,10 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	protected boolean twoDimensional;
 
-	public ShollAnalysisDialog( String title,
-				    double x_start,
-				    double y_start,
-				    double z_start,
-				    PathAndFillManager pafm,
-				    ImagePlus originalImage ) {
+	public ShollAnalysisDialog(final String title, final double x_start, final double y_start, final double z_start,
+			final PathAndFillManager pafm, final ImagePlus originalImage) {
 
-		super( IJ.getInstance(), title, false );
+		super(IJ.getInstance(), title, false);
 
 		this.x_start = x_start;
 		this.y_start = y_start;
@@ -972,71 +985,71 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		this.originalImage = originalImage;
 		twoDimensional = (originalImage.getStackSize() == 1);
 
-		shollPointsAllPaths = new ArrayList<ShollPoint>();
-		shollPointsSelectedPaths = new ArrayList<ShollPoint>();
+		shollPointsAllPaths = new ArrayList<>();
+		shollPointsSelectedPaths = new ArrayList<>();
 		shollpafm = pafm;
 		reloadPaths();
 
-		useAllPathsCheckbox.setLabel("Use all "+numberOfAllPaths+" paths in analysis?");
-		useSelectedPathsCheckbox.setLabel("Use only the "+numberOfSelectedPaths+" selected paths in analysis?");
+		useAllPathsCheckbox.setLabel("Use all " + numberOfAllPaths + " paths in analysis?");
+		useSelectedPathsCheckbox.setLabel("Use only the " + numberOfSelectedPaths + " selected paths in analysis?");
 
 		addWindowListener(this);
 
 		setLayout(new GridBagLayout());
 
-		GridBagConstraints c = new GridBagConstraints();
+		final GridBagConstraints c = new GridBagConstraints();
 
 		c.gridx = 0;
 		c.gridy = 0;
 		c.anchor = GridBagConstraints.LINE_START;
-		int margin = 10;
-		c.insets = new Insets( margin, margin, 0, margin );
+		final int margin = 10;
+		c.insets = new Insets(margin, margin, 0, margin);
 		useAllPathsCheckbox.addItemListener(this);
-		add(useAllPathsCheckbox,c);
+		add(useAllPathsCheckbox, c);
 
-		++ c.gridy;
-		c.insets = new Insets( 0, margin, margin, margin );
-		add(useSelectedPathsCheckbox,c);
+		++c.gridy;
+		c.insets = new Insets(0, margin, margin, margin);
+		add(useSelectedPathsCheckbox, c);
 		useSelectedPathsCheckbox.addItemListener(this);
 
-		++ c.gridy;
-		c.insets = new Insets(0, margin, 0, margin );
+		++c.gridy;
+		c.insets = new Insets(0, margin, 0, margin);
 		buildTypeFilteringMenu();
-		add(swcTypesButton,c);
-		++ c.gridy;
-		c.insets = new Insets(0, margin, margin, margin );
-		add(filteredTypesWarningLabel,c);
+		add(swcTypesButton, c);
+		++c.gridy;
+		c.insets = new Insets(0, margin, margin, margin);
+		add(filteredTypesWarningLabel, c);
 		makePromptInteractive(true);
 
-		++ c.gridy;
-		c.insets = new Insets( margin, margin, 0, margin );
-		add(normalAxes,c);
+		++c.gridy;
+		c.insets = new Insets(margin, margin, 0, margin);
+		add(normalAxes, c);
 		normalAxes.addItemListener(this);
-		++ c.gridy;
-		c.insets = new Insets( 0, margin, 0, margin );
-		add(semiLogAxes,c);
+		++c.gridy;
+		c.insets = new Insets(0, margin, 0, margin);
+		add(semiLogAxes, c);
 		semiLogAxes.addItemListener(this);
-		++ c.gridy;
-		c.insets = new Insets( 0, margin, margin, margin );
-		add(logLogAxes,c);
+		++c.gridy;
+		c.insets = new Insets(0, margin, margin, margin);
+		add(logLogAxes, c);
 		logLogAxes.addItemListener(this);
 
-		++ c.gridy;
-		c.insets = new Insets( margin, margin, 0, margin );
-		add(noNormalization,c);
+		++c.gridy;
+		c.insets = new Insets(margin, margin, 0, margin);
+		add(noNormalization, c);
 		noNormalization.addItemListener(this);
-		++ c.gridy;
-		c.insets = new Insets( 0, margin, margin, margin );
-		if( twoDimensional )
+		++c.gridy;
+		c.insets = new Insets(0, margin, margin, margin);
+		if (twoDimensional)
 			normalizationForSphereVolume.setLabel("Normalize for area enclosed by circle");
 		else
 			normalizationForSphereVolume.setLabel("Normalize for volume enclosed by circle");
-		add(normalizationForSphereVolume,c);
+		add(normalizationForSphereVolume, c);
 		normalizationForSphereVolume.addItemListener(this);
 
-		++ c.gridy;
+		++c.gridy;
 		c.gridx = 0;
-		Panel separationPanel = new Panel();
+		final Panel separationPanel = new Panel();
 		separationPanel.add(new Label("Radius step size (0 for continuous sampling)"));
 		sampleSeparation.addTextListener(this);
 		separationPanel.add(sampleSeparation);
@@ -1046,16 +1059,16 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		add(separationPanel, c);
 
 		c.gridx = 0;
-		++ c.gridy;
-		c.insets = new Insets( margin, margin, margin, margin );
-		add(resultsPanel,c);
+		++c.gridy;
+		c.insets = new Insets(margin, margin, margin, margin);
+		add(resultsPanel, c);
 
-		++ c.gridy;
-		Panel buttonsPanel = new Panel();
+		++c.gridy;
+		final Panel buttonsPanel = new Panel();
 		buttonsPanel.setLayout(new BorderLayout());
-		Panel topRow = new Panel();
-		Panel middleRow = new Panel();
-		Panel bottomRow = new Panel();
+		final Panel topRow = new Panel();
+		final Panel middleRow = new Panel();
+		final Panel bottomRow = new Panel();
 
 		topRow.add(makeShollImageButton);
 		makeShollImageButton.addActionListener(this);
@@ -1063,20 +1076,17 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		topRow.add(drawShollGraphButton);
 		drawShollGraphButton.addActionListener(this);
 
-		middleRow.add(exportDetailAsCSVButton);
-		exportDetailAsCSVButton.addActionListener(this);
+		topRow.add(exportProfileButton);
+		exportProfileButton.addActionListener(this);
 
-		middleRow.add(exportSummaryAsCSVButton);
-		exportSummaryAsCSVButton.addActionListener(this);
+		middleRow.add(analyzeButton);
+		analyzeButton.addActionListener(this);
 
-		bottomRow.add(addToResultsTableButton);
-		addToResultsTableButton.addActionListener(this);
+		buttonsPanel.add(topRow, BorderLayout.NORTH);
+		buttonsPanel.add(middleRow, BorderLayout.CENTER);
+		buttonsPanel.add(bottomRow, BorderLayout.SOUTH);
 
-		buttonsPanel.add(topRow,BorderLayout.NORTH);
-		buttonsPanel.add(middleRow,BorderLayout.CENTER);
-		buttonsPanel.add(bottomRow,BorderLayout.SOUTH);
-
-		add(buttonsPanel,c);
+		add(buttonsPanel, c);
 
 		pack();
 
@@ -1163,67 +1173,99 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		// Label schoenenRamificationIndexLabel = new Label(defaultText);
 		Label shollsRegressionCoefficientLabel = new Label(defaultText, Label.RIGHT);
 		Label shollsRegressionInterceptLabel = new Label(defaultText, Label.RIGHT);
-		Label shollsRegressionRSquared = new Label(defaultText, Label.RIGHT);
+		Label shollsRegressionRSquaredLabel = new Label(defaultText, Label.RIGHT);
+
 		public ResultsPanel() {
 			super();
 			setLayout(new GridBagLayout());
-			GridBagConstraints c = new GridBagConstraints();
+			final GridBagConstraints c = new GridBagConstraints();
 			c.anchor = GridBagConstraints.LINE_START;
 			c.gridx = 0;
 			c.gridy = 0;
 			c.gridwidth = 2;
-			add(headingLabel,c);
+			add(headingLabel, c);
 			c.anchor = GridBagConstraints.LINE_END;
 			c.gridx = 0;
-			++ c.gridy;
+			++c.gridy;
 			c.gridwidth = 1;
-			add(new Label("Max inters. radius: "),c);
+			add(new Label("Max inters. radius: "), c);
 			c.gridx = 1;
-			add(criticalValuesLabel,c);
+			add(criticalValuesLabel, c);
 			c.gridx = 0;
-			++ c.gridy;
-			add(new Label("Max inters.: "),c);
+			++c.gridy;
+			add(new Label("Max inters.: "), c);
 			c.gridx = 1;
-			add(dendriteMaximumLabel,c);
+			add(dendriteMaximumLabel, c);
 			// c.gridx = 0;
 			// ++ c.gridy;
 			// add(new Label("Schoenen Ramification Index:"),c);
 			// c.gridx = 1;
 			// add(schoenenRamificationIndexLabel,c);
 			c.gridx = 0;
-			++ c.gridy;
-			add(new Label("Regression coefficient: "),c);
+			++c.gridy;
+			add(new Label("Regression coeff.: "), c);
 			c.gridx = 1;
-			add(shollsRegressionCoefficientLabel,c);
+			add(shollsRegressionCoefficientLabel, c);
 			c.gridx = 0;
-			++ c.gridy;
-			add(new Label("Regression intercept: "),c);
+			++c.gridy;
+			add(new Label("Regression intercept: "), c);
 			c.gridx = 1;
-			add(shollsRegressionInterceptLabel,c);
+			add(shollsRegressionInterceptLabel, c);
 			c.gridx = 0;
-			++ c.gridy;
-			add(new Label("Regression R2: "),c);
+			++c.gridy;
+			add(new Label("Regression R2: "), c);
 			c.gridx = 1;
-			add(shollsRegressionRSquared,c);
+			add(shollsRegressionRSquaredLabel, c);
 		}
-		public void updateFromResults( ShollResults results ) {
-			dendriteMaximumLabel.setText(""+results.getDendriteMaximum());
+
+		public void updateFromResults(final ShollResults results) {
+			dendriteMaximumLabel.setText("" + results.getDendriteMaximum());
 			criticalValuesLabel.setText(IJ.d2s(results.getCriticalValue(), 3));
 			shollsRegressionCoefficientLabel.setText(IJ.d2s(results.getShollRegressionCoefficient(), -3));
 			shollsRegressionInterceptLabel.setText(IJ.d2s(results.getRegressionIntercept(), 3));
-			shollsRegressionRSquared.setText(IJ.d2s(results.getRegressionRSquare(), 3));
+			shollsRegressionRSquaredLabel.setText(IJ.d2s(results.getRegressionRSquare(), 3));
 		}
 	}
 
-	public void windowClosing( WindowEvent e ) {
+	@Override
+	public void windowClosing(final WindowEvent e) {
 		dispose();
 	}
 
-	public void windowActivated( WindowEvent e ) { }
-	public void windowDeactivated( WindowEvent e ) { }
-	public void windowClosed( WindowEvent e ) { }
-	public void windowOpened( WindowEvent e ) { }
-	public void windowIconified( WindowEvent e ) { }
-	public void windowDeiconified( WindowEvent e ) { }
+	@Override
+	public void windowActivated(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowDeactivated(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowClosed(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowOpened(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowIconified(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowDeiconified(final WindowEvent e) {
+	}
+
+	/**
+	 * @return the path to save current profile
+	 */
+	private String getExportPath() {
+		if (this.exportPath == null && originalImage != null) {
+			final FileInfo fi = originalImage.getOriginalFileInfo();
+			if (fi != null && fi.directory != null)
+				this.exportPath = fi.directory;
+		}
+		return this.exportPath;
+	}
 
 }

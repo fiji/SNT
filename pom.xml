@@ -81,10 +81,6 @@
 		<url>http://jenkins.imagej.net/job/Simple_Neurite_Tracer/</url>
 	</ciManagement>
 
-	<properties>
-		<scijava.jvm.version>1.7</scijava.jvm.version>
-	</properties>
-
 	<repositories>
 		<!-- NB: for project parent -->
 		<repository>
@@ -146,6 +142,16 @@
 
 		<!-- Third party dependencies -->
 		<dependency>
+			<groupId>ca.mcgill</groupId>
+			<artifactId>Sholl_Analysis</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
 		</dependency>
@@ -165,4 +171,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<properties>
+		<Sholl_Analysis.version>3.6.7</Sholl_Analysis.version>
+	</properties>
 </project>

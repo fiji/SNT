@@ -63,6 +63,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.scijava.util.VersionUtils;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Point3f;
@@ -81,7 +82,7 @@ import stacks.ThreePanes;
 public class SimpleNeuriteTracer extends ThreePanes
 	implements SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener {
 
-	public static final String PLUGIN_VERSION = "2.0.2";
+	public static final String PLUGIN_VERSION = getVersion();
 	protected static final boolean verbose = false;
 
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
@@ -102,6 +103,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public boolean pathsUnsaved() {
 		return unsavedPaths;
+	}
+
+	private static String getVersion() {
+		return VersionUtils.getVersion(tracing.SimpleNeuriteTracer.class);
 	}
 
 	public PathAndFillManager getPathAndFillManager() {

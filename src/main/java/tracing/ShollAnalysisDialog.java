@@ -545,6 +545,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				sa.setCenter(pX, pY, pZ);
 				sa.setUnit(cal.getUnit());
 			}
+			sa.setStepRadius(sphereSeparation);
 			sa.setPrimaryBranches(primaryBranches);
 			sa.setExportPath(exportDir);
 			sa.analyzeProfile(sampled_distances, sampled_counts, !twoDimensional);

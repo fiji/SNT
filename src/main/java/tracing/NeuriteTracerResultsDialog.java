@@ -34,6 +34,7 @@ import ij.ImageListener;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.WaitForUserDialog;
 import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
@@ -101,7 +102,6 @@ public class NeuriteTracerResultsDialog
 	protected JMenuItem makeLineStackMenuItem;
 	protected JMenuItem exportCSVMenuItemAgain;
 	protected JMenuItem sendToTrakEM2;
-	protected JMenuItem shollAnalysiHelpMenuItem;
 
 	protected JCheckBoxMenuItem mipOverlayMenuItem;
 	protected JCheckBoxMenuItem drawDiametersXYMenuItem;
@@ -714,6 +714,8 @@ public class NeuriteTracerResultsDialog
 		viewMenu = new JMenu("View");
 		menuBar.add(viewMenu);
 
+		menuBar.add(helpMenu());
+
 		loadMenuItem = new JMenuItem("Load traces / SWC file...");
 		loadMenuItem.addActionListener(this);
 		fileMenu.add(loadMenuItem);
@@ -753,10 +755,6 @@ public class NeuriteTracerResultsDialog
 		exportCSVMenuItemAgain = new JMenuItem("Export as CSV...");
 		exportCSVMenuItemAgain.addActionListener(this);
 		analysisMenu.add(exportCSVMenuItemAgain);
-
-		shollAnalysiHelpMenuItem = new JMenuItem("Sholl Analysis help...");
-		shollAnalysiHelpMenuItem.addActionListener(this);
-		analysisMenu.add(shollAnalysiHelpMenuItem);
 
 		String opacityLabel = "Show MIP overlay(s) at "+
 			SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT+
@@ -1287,10 +1285,6 @@ public class NeuriteTracerResultsDialog
 				imagePlus.show();
 			}
 
-		} else if( source == shollAnalysiHelpMenuItem ) {
-
-			IJ.runPlugIn("ij.plugin.BrowserLauncher", "http://fiji.sc/wiki/index.php/Simple_Neurite_Tracer:_Sholl_analysis");
-
 		} else if( source == cancelSearch ) {
 
 			if( currentState == SEARCHING ) {
@@ -1522,4 +1516,65 @@ public class NeuriteTracerResultsDialog
 		plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
 	}
 
+	private JMenu helpMenu() {
+		final JMenu helpMenu = new JMenu("Help");
+		final String URL = "http://imagej.net/Simple_Neurite_Tracer";
+		JMenuItem mi = menuItemTrigerringURL("Main documentation page", URL);
+		helpMenu.add(mi);
+		helpMenu.addSeparator();
+		mi = menuItemTrigerringURL("Tutorials", URL + "#Tutorials");
+		helpMenu.add(mi);
+		mi = menuItemTrigerringURL("Basic instructions", URL + ":_Basic_Instructions");
+		helpMenu.add(mi);
+		mi = menuItemTrigerringURL("Step-by-step instructions", URL + ":_Step-By-Step_Instructions");
+		helpMenu.add(mi);
+		mi = menuItemTrigerringURL("3D interaction", URL + ":_3D_Interaction");
+		helpMenu.add(mi);
+		helpMenu.addSeparator();
+		mi = menuItemTrigerringURL("List of shortcuts", URL + ":_Key_Shortcuts");
+		helpMenu.add(mi);
+		helpMenu.addSeparator();
+		mi = menuItemTrigerringURL("Sholl analysis: Online help", URL + ":_Sholl_analysis");
+		helpMenu.add(mi);
+		mi = new JMenuItem("Sholl analysis: Offline help");
+		mi.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				final Thread newThread = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
+						modKey += "+Shift";
+						final String instructions = "To manually select the center of analysis:\n"
+								+ "    1. Mouse over the path of interest and press \"G\" to activate it\n"
+								+ "    2. Press \"" + modKey + "\" to select a point along the path\n"
+								+ "    3. Press \"" + modKey + "+A\" to initiate Sholl analysis\n \n"
+								+ "For batch processing run \"Sholl Analysis (Tracings)...\".";
+						final WaitForUserDialog wd = new WaitForUserDialog("Sholl Analysis Cheat Sheet", instructions);
+						wd.show();
+					}
+				});
+				newThread.start();
+			}
+		});
+		helpMenu.add(mi);
+		helpMenu.addSeparator();
+		mi = menuItemTrigerringURL("Ask a question", "http://forum.imagej.net");
+		helpMenu.add(mi);
+		helpMenu.addSeparator();
+		mi = menuItemTrigerringURL("Citing SNT...", URL + "#Citing_Simple_Neurite_Tracer");
+		helpMenu.add(mi);
+		return helpMenu;
+	}
+
+	public static JMenuItem menuItemTrigerringURL(final String label, final String URL) {
+		final JMenuItem mi = new JMenuItem(label);
+		mi.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				IJ.runPlugIn("ij.plugin.BrowserLauncher", URL);
+			}
+		});
+		return mi;
+	}
 }

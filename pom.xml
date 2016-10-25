@@ -144,12 +144,6 @@
 		<dependency>
 			<groupId>ca.mcgill</groupId>
 			<artifactId>Sholl_Analysis</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>*</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -172,6 +166,6 @@
 		</dependency>
 	</dependencies>
 	<properties>
-		<Sholl_Analysis.version>3.6.7</Sholl_Analysis.version>
+		<Sholl_Analysis.version>3.6.8</Sholl_Analysis.version>
 	</properties>
 </project>

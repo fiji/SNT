@@ -1719,9 +1719,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if( previous == -1 )
 					primaryPoints.add( p );
 				else {
-					SWCPoint previousPoint = idToSWCPoint.get( previous );
-					p.previousPoint = previousPoint;
-					previousPoint.addNextPoint( p );
+					SWCPoint previousPoint = idToSWCPoint.get(previous);
+					if (previousPoint != null) {
+						p.previousPoint = previousPoint;
+						previousPoint.addNextPoint(p);
+					}
 				}
 			} catch( NumberFormatException nfe ) {
 				IJ.error( "There was a malformed number in line: "+line );
@@ -1796,7 +1798,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		if( alreadySeen.size() > 0 ) {
-			IJ.error( "Malformed file: there are some misconnected points" );
+			IJ.error("Malformed file: there are some misconnected points.\n"
+					+ "(List will now be shown in ImageJ's Console)");
 			for( int i : alreadySeen ) {
 				SWCPoint p = idToSWCPoint.get( i );
 				System.out.println( "  Misconnected: " + p);

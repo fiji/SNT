@@ -162,6 +162,6 @@
 		</dependency>
 	</dependencies>
 	<properties>
-		<Sholl_Analysis.version>3.6.7</Sholl_Analysis.version>
+		<Sholl_Analysis.version>3.6.8</Sholl_Analysis.version>
 	</properties>
 </project>

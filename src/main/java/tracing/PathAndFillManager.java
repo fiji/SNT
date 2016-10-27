@@ -1670,7 +1670,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if( mEmpty.matches() )
 				continue;
 			String [] fields = line.split("\\s+");
-			if( fields.length != 7 ) {
+			if( fields.length < 7 ) {
 				IJ.error("Wrong number of fields ("+fields.length+") in line: "+line);
 				return false;
 			}

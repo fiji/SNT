@@ -489,7 +489,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		OpenDialog od;
 
-		od = new OpenDialog("Select .traces or .swc file...",
+		od = new OpenDialog("Select .traces or .(e)swc file...",
 				    directory,
 				    null );
 

@@ -106,7 +106,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 
 		imp = (impRequired) ? IJ.openImage(imgPath) : null;
 		if (impRequired && imp == null || !validTracesFile(new File(tracesPath))) {
-			IJ.error("Invalid image or invalid Traces/SWC file\n \n" + imgPath + "\n" + tracesPath);
+			IJ.error("Invalid image or invalid Traces/(e)SWC file\n \n" + imgPath + "\n" + tracesPath);
 			return;
 		}
 
@@ -254,7 +254,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			guessInitialPaths();
 
 		gd = new EnhancedGenericDialog("Sholll Analysis (Tracings)...");
-		gd.addFileField("Traces/SWC file", tracesPath, 32);
+		gd.addFileField("Traces/(e)SWC file", tracesPath, 32);
 		gd.addFileField("Image file", imgPath, 32);
 		gd.setInsets(0, 40, 20);
 		gd.addCheckbox("Load tracings without image", !impRequired);
@@ -365,7 +365,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		}
 		if (!validTracesFile(new File(tracesPath))) {
 			enableOK = false;
-			warning += "Not a valid .traces/.swc file";
+			warning += "Not a valid .traces/.(e)swc file";
 		}
 		if (!warning.isEmpty()) {
 			infoMsg.setForeground(Utils.warningColor());
@@ -426,7 +426,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 	}
 
 	private boolean tracingsFile(final File file) {
-		final String[] tracingsExts = new String[] { ".traces", ".swc" };
+		final String[] tracingsExts = new String[] { ".traces", ".swc", ".eswc" };
 		for (final String ext : tracingsExts)
 			if (file.getName().toLowerCase().endsWith(ext))
 				return true;

@@ -716,7 +716,7 @@ public class NeuriteTracerResultsDialog
 
 		menuBar.add(helpMenu());
 
-		loadMenuItem = new JMenuItem("Load traces / SWC file...");
+		loadMenuItem = new JMenuItem("Load traces / (e)SWC file...");
 		loadMenuItem.addActionListener(this);
 		fileMenu.add(loadMenuItem);
 

@@ -41,6 +41,7 @@ import ij.Prefs;
 import ij.gui.ImageRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
+import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
@@ -58,6 +59,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -1668,6 +1670,28 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public boolean getDrawDiametersXY() {
 		return drawDiametersXY;
+	}
+
+	@Override
+	public void closeAndReset() {
+		// Dispose xz/zy windows unless the user stored some annotations (ROIs)
+		// on the image overlay
+		if (!single_pane) {
+			final List<ImagePlus> zyxz = Arrays.asList(xz, zy);
+			for (final ImagePlus imp : zyxz) {
+				final Overlay overlay = imp.getOverlay();
+				removeMIPfromOverlay(overlay);
+				if (imp.getOverlay().size() == 0)
+					imp.close();
+			}
+		}
+		// Restore main view
+		final Overlay overlay = (xy == null) ? null : xy.getOverlay();
+		if (original_xy_canvas != null && xy != null && xy.getImage() != null) {
+			xy_window = new StackWindow(xy, original_xy_canvas);
+			removeMIPfromOverlay(overlay);
+			xy_window.getImagePlus().setOverlay(overlay);
+		}
 	}
 
 }

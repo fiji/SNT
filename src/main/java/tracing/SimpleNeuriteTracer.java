@@ -1610,6 +1610,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	public static final int OVERLAY_OPACITY_PERCENT = 20;
+	private static final String OVERLAY_IDENTIFIER = "SNT-MIP-OVERLAY";
 
 	public void showMIPOverlays(boolean show) {
 		ArrayList<ImagePlus> allImages = new ArrayList<ImagePlus>();
@@ -1619,6 +1620,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			allImages.add(zy);
 		}
 		for( ImagePlus imagePlus : allImages ) {
+			Overlay overlayList = imagePlus.getOverlay();
 			if( show ) {
 
 				// Create a MIP project of the stack:
@@ -1631,16 +1633,27 @@ public class SimpleNeuriteTracer extends ThreePanes
 				// Add display it as an overlay.
 				// (This logic is taken from OverlayCommands.)
 				Roi roi = new ImageRoi(0, 0, overlay.getProcessor());
-				roi.setName(overlay.getShortTitle());
+				roi.setName(OVERLAY_IDENTIFIER);
 				((ImageRoi)roi).setOpacity(OVERLAY_OPACITY_PERCENT/100.0);
-				Overlay overlayList = imagePlus.getOverlay();
 				if (overlayList==null)
 					overlayList = new Overlay();
 				overlayList.add(roi);
-				imagePlus.setOverlay(overlayList);
 
 			} else {
-				imagePlus.setOverlay(null);
+				removeMIPfromOverlay(overlayList);
+			}
+			imagePlus.setOverlay(overlayList);
+		}
+	}
+
+	private void removeMIPfromOverlay(Overlay overlay) {
+		if (overlay != null && overlay.size() > 0) {
+			for (int i = overlay.size() - 1; i >= 0; i--) {
+				final String roiName = overlay.get(i).getName();
+				if (roiName != null && roiName.equals(OVERLAY_IDENTIFIER)) {
+					overlay.remove(i);
+					return;
+				}
 			}
 		}
 	}

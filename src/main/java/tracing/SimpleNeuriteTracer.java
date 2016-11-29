@@ -1701,6 +1701,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			allImages.add(zy);
 		}
 		for( ImagePlus imagePlus : allImages ) {
+			if (imagePlus == null || imagePlus.getImageStackSize() == 1)
+				continue;
 			Overlay overlayList = imagePlus.getOverlay();
 			if( show ) {
 

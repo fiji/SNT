@@ -1105,7 +1105,7 @@ public class NeuriteTracerResultsDialog
 			plugin.uploadTracings();
 		} else if( source == fetchButton ) {
 			plugin.getTracings( true );
-		} else */ if( source == saveMenuItem ) {
+		} else */ if( source == saveMenuItem  && !noPathsError()) {
 
 			FileInfo info = plugin.file_info;
 			SaveDialog sd;
@@ -1179,7 +1179,7 @@ public class NeuriteTracerResultsDialog
 			plugin.loadTracings();
 			changeState( preLoadingState );
 
-		} else if( source == exportAllSWCMenuItem ) {
+		} else if( source == exportAllSWCMenuItem  && !noPathsError()) {
 
 			FileInfo info = plugin.file_info;
 			SaveDialog sd;
@@ -1216,7 +1216,7 @@ public class NeuriteTracerResultsDialog
 				return;
 			pathAndFillManager.exportAllAsSWC( savePath );
 
-		} else if( source == exportCSVMenuItem || source == exportCSVMenuItemAgain ) {
+		} else if( source == exportCSVMenuItem || source == exportCSVMenuItemAgain  && !noPathsError()) {
 
 			FileInfo info = plugin.file_info;
 			SaveDialog sd;

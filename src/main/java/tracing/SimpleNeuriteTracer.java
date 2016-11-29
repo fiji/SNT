@@ -1522,6 +1522,23 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 	}
 
+	public StackWindow getWindow(final int plane) {
+		switch (plane) {
+		case ThreePanes.XY_PLANE:
+			return xy_window;
+		case ThreePanes.XZ_PLANE:
+			return (single_pane) ? null : xz_window;
+		case ThreePanes.ZY_PLANE:
+			return (single_pane) ? null : zy_window;
+		default:
+			return null;
+		}
+	}
+
+	public boolean getSinglePane() {
+		return single_pane;
+	}
+
 	public boolean getShowOnlySelectedPaths() {
 		return showOnlySelectedPaths;
 	}

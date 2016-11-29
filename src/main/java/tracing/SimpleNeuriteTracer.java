@@ -46,6 +46,7 @@ import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.plugin.ZProjector;
+import ij.plugin.frame.RoiManager;
 import ij.process.ByteProcessor;
 import ij.text.TextWindow;
 import ij3d.Content;
@@ -1458,6 +1459,67 @@ public class SimpleNeuriteTracer extends ThreePanes
 		this.showOnlySelectedPaths = showOnlySelectedPaths;
 		update3DViewerContents();
 		repaintAllPanes();
+	}
+
+	public void addPathsToManager(final RoiManager rm) {
+		if (rm != null) {
+			final Overlay overlay = new Overlay();
+			addAllPathsToOverlay(overlay);
+			for (final Roi path : overlay.toArray())
+				rm.addRoi(path);
+			rm.runCommand("sort");
+		}
+	}
+
+	public void addAllPathsToOverlay(final Overlay overlay) {
+		if (overlay != null && pathAndFillManager != null) {
+			for (int i = 0; i < pathAndFillManager.size(); ++i) {
+				final Path p = pathAndFillManager.getPath(i);
+				if (p == null)
+					continue;
+				if (p.fittedVersionOf != null)
+					continue;
+				// Prefer fitted version when drawing path
+				final Path drawPath = (p.useFitted) ? p.fitted : p;
+				drawPath.drawPathAsPoints(overlay, deselectedColor);
+			}
+		}
+	}
+
+	public void addPathsToOverlay() {
+		if (xy != null)
+			addPathsToOverlay(xy, ThreePanes.XY_PLANE);
+	}
+
+	public void addPathsToOverlay(final ImagePlus imp, final int plane) {
+
+		Overlay overlay = imp.getOverlay();
+		if (overlay == null)
+			overlay = new Overlay();
+
+		if (pathAndFillManager != null) {
+			for (int i = 0; i < pathAndFillManager.size(); ++i) {
+
+				final Path p = pathAndFillManager.getPath(i);
+				if (p == null)
+					continue;
+
+				if (p.fittedVersionOf != null)
+					continue;
+
+				// If the path suggests using the fitted version, draw that
+				// instead
+				final Path drawPath = (p.useFitted) ? p.fitted : p;
+
+				Color color = deselectedColor;
+				if (pathAndFillManager.isSelected(p))
+					color = selectedColor;
+				else if (showOnlySelectedPaths)
+					continue;
+				drawPath.drawPathAsPoints(overlay, color, plane);
+			}
+			imp.setOverlay(overlay);
+		}
 	}
 
 	public boolean getShowOnlySelectedPaths() {

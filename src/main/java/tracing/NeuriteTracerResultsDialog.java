@@ -121,6 +121,7 @@ public class NeuriteTracerResultsDialog
 	static final int SAVING                   = 10;
 	static final int LOADING                  = 11;
 	static final int FITTING_PATHS            = 12;
+	static final int IMAGE_CLOSED             = 13;
 
 	static final String [] stateNames = { "WAITING_TO_START_PATH",
 					      "PARTIAL_PATH",
@@ -134,7 +135,8 @@ public class NeuriteTracerResultsDialog
 					      "WAITING_FOR_SIGMA_CHOICE",
 					      "SAVING",
 					      "LOADING",
-					      "FITTING_PATHS" };
+					      "FITTING_PATHS",
+					      "IMAGE CLOSED" };
 
 	static final String SEARCHING_STRING = "Searching for path between points...";
 
@@ -211,10 +213,13 @@ public class NeuriteTracerResultsDialog
 
 	// Called when an image is closed
 	@Override
-	public void imageClosed(ImagePlus imp) {
+	public void imageClosed(final ImagePlus imp) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				updateColorImageChoice();
+				if (plugin.getImagePlus() == imp)
+					changeState(NeuriteTracerResultsDialog.IMAGE_CLOSED);
 			}
 		});
 	}
@@ -455,26 +460,33 @@ public class NeuriteTracerResultsDialog
 		plugin.closeAndReset();
 	}
 
-	protected void disableEverything() {
+	protected void disableImageDependentComponents() {
 		assert SwingUtilities.isEventDispatchThread();
-
-		fw.setEnabledNone();
-		pw.setButtonsEnabled(false);
-
-		statusText.setEnabled(false);
+		loadMenuItem.setEnabled(false);
+		loadLabelsMenuItem.setEnabled(false);
 		keepSegment.setEnabled(false);
 		junkSegment.setEnabled(false);
 		cancelSearch.setEnabled(false);
 		completePath.setEnabled(false);
 		cancelPath.setEnabled(false);
-
 		editSigma.setEnabled(false);
 		sigmaWizard.setEnabled(false);
-
-		viewPathChoice.setEnabled(false);
-		paths3DChoice.setEnabled(false);
 		preprocess.setEnabled(false);
 		useTubularGeodesics.setEnabled(false);
+	}
+
+	protected void disableEverything() {
+
+		assert SwingUtilities.isEventDispatchThread();
+
+		disableImageDependentComponents();
+
+		fw.setEnabledNone();
+		pw.setButtonsEnabled(false);
+
+		statusText.setEnabled(false);
+		viewPathChoice.setEnabled(false);
+		paths3DChoice.setEnabled(false);
 
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
@@ -482,13 +494,10 @@ public class NeuriteTracerResultsDialog
 		sendToTrakEM2.setEnabled(false);
 		analyzeSkeletonMenuItem.setEnabled(false);
 		saveMenuItem.setEnabled(false);
-		loadMenuItem.setEnabled(false);
 		if( uploadButton != null ) {
 			uploadButton.setEnabled(false);
 			fetchButton.setEnabled(false);
 		}
-		loadLabelsMenuItem.setEnabled(false);
-
 		quitMenuItem.setEnabled(false);
 	}
 
@@ -638,6 +647,12 @@ public class NeuriteTracerResultsDialog
 				case SAVING:
 					updateStatusText("Saving...");
 					disableEverything();
+					break;
+
+				case IMAGE_CLOSED:
+					updateStatusText("Tracing image is no longer available...");
+					disableImageDependentComponents();
+					quitMenuItem.setEnabled(true);
 					break;
 
 				default:

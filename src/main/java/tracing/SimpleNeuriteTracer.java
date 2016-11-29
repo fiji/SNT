@@ -1758,12 +1758,18 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// Dispose xz/zy windows unless the user stored some annotations (ROIs)
 		// on the image overlay
 		if (!single_pane) {
-			final List<ImagePlus> zyxz = Arrays.asList(xz, zy);
-			for (final ImagePlus imp : zyxz) {
-				final Overlay overlay = imp.getOverlay();
+			final ImagePlus[] impPanes= {xz, zy};
+			final StackWindow[] winPanes= {xz_window, zy_window};
+			for (int i = 0; i < impPanes.length; ++i) {
+				final Overlay overlay = impPanes[i].getOverlay();
 				removeMIPfromOverlay(overlay);
-				if (imp.getOverlay().size() == 0)
-					imp.close();
+				if (overlay == null || impPanes[i].getOverlay().size() == 0)
+					impPanes[i].close();
+				else {
+					winPanes[i] = new StackWindow(impPanes[i]);
+					removeMIPfromOverlay(overlay);
+					impPanes[i].setOverlay(overlay);
+				}
 			}
 		}
 		// Restore main view
@@ -1771,7 +1777,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		if (original_xy_canvas != null && xy != null && xy.getImage() != null) {
 			xy_window = new StackWindow(xy, original_xy_canvas);
 			removeMIPfromOverlay(overlay);
-			xy_window.getImagePlus().setOverlay(overlay);
+			xy.setOverlay(overlay);
 		}
 	}
 

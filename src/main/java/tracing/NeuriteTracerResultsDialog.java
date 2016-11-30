@@ -53,6 +53,7 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -116,6 +117,8 @@ public class NeuriteTracerResultsDialog
 	protected JCheckBoxMenuItem xyCanvasMenuItem;
 	protected JCheckBoxMenuItem zyCanvasMenuItem;
 	protected JCheckBoxMenuItem xzCanvasMenuItem;
+	protected JMenuItem arrangeWindowsMenuItem;
+
 
 	// These are the states that the UI can be in:
 
@@ -818,6 +821,10 @@ public class NeuriteTracerResultsDialog
 		xzCanvasMenuItem.setEnabled(!plugin.getSinglePane());
 		xzCanvasMenuItem.addItemListener(this);
 		viewMenu.add(xzCanvasMenuItem);
+		viewMenu.addSeparator();
+		arrangeWindowsMenuItem = new JMenuItem("Arrange planes");
+		arrangeWindowsMenuItem.addActionListener(this);
+		viewMenu.add(arrangeWindowsMenuItem);
 
 		setJMenuBar(menuBar);
 
@@ -1466,7 +1473,30 @@ public class NeuriteTracerResultsDialog
 
 			if( ! ignoreColorImageChoiceEvents )
 				checkForColorImageChange();
+
+		} else if (source == arrangeWindowsMenuItem) {
+			arrangeWindows();
 		}
+	}
+
+	private void arrangeWindows() {
+		final StackWindow xy_window = plugin.getWindow(ThreePanes.XY_PLANE);
+		if (xy_window == null)
+			return;
+		if (!plugin.getSinglePane()) {
+			final Point loc = xy_window.getLocation();
+			final StackWindow zy_window = plugin.getWindow(ThreePanes.ZY_PLANE);
+			final StackWindow xz_window = plugin.getWindow(ThreePanes.XZ_PLANE);
+			if (zy_window != null) {
+				zy_window.setLocation(loc.x + xy_window.getWidth(), loc.y);
+				zy_window.toFront();
+			}
+			if (xz_window != null) {
+				xz_window.setLocation(loc.x, loc.y + xy_window.getHeight());
+				xz_window.toFront();
+			}
+		}
+		xy_window.toFront();
 	}
 
 	private void toggleWindowVisibility(final int pane, final JCheckBoxMenuItem menuItem, final boolean setVisible) {

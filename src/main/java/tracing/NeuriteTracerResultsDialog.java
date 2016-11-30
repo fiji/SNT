@@ -1216,7 +1216,7 @@ public class NeuriteTracerResultsDialog
 				return;
 			pathAndFillManager.exportAllAsSWC( savePath );
 
-		} else if( source == exportCSVMenuItem || source == exportCSVMenuItemAgain  && !noPathsError()) {
+		} else if( (source == exportCSVMenuItem || source == exportCSVMenuItemAgain)  && !noPathsError()) {
 
 			FileInfo info = plugin.file_info;
 			SaveDialog sd;

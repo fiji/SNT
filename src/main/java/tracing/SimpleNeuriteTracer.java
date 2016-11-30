@@ -1755,15 +1755,16 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	@Override
 	public void closeAndReset() {
-		// Dispose xz/zy windows unless the user stored some annotations (ROIs)
-		// on the image overlay
+		// Dispose xz/zy images unless the user stored some annotations (ROIs)
+		// on the image overlay or modified them somehow. In that case, restore
+		// them to the user
 		if (!single_pane) {
-			final ImagePlus[] impPanes= {xz, zy};
-			final StackWindow[] winPanes= {xz_window, zy_window};
+			final ImagePlus[] impPanes = { xz, zy };
+			final StackWindow[] winPanes = { xz_window, zy_window };
 			for (int i = 0; i < impPanes.length; ++i) {
 				final Overlay overlay = impPanes[i].getOverlay();
 				removeMIPfromOverlay(overlay);
-				if (overlay == null || impPanes[i].getOverlay().size() == 0)
+				if (!impPanes[i].changes && (overlay == null || impPanes[i].getOverlay().size() == 0))
 					impPanes[i].close();
 				else {
 					winPanes[i] = new StackWindow(impPanes[i]);

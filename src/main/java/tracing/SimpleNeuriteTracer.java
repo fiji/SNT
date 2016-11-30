@@ -41,10 +41,12 @@ import ij.Prefs;
 import ij.gui.ImageRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
+import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.plugin.ZProjector;
+import ij.plugin.frame.RoiManager;
 import ij.process.ByteProcessor;
 import ij.text.TextWindow;
 import ij3d.Content;
@@ -58,6 +60,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -489,7 +492,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		OpenDialog od;
 
-		od = new OpenDialog("Select .traces or .swc file...",
+		od = new OpenDialog("Select .traces or .(e)swc file...",
 				    directory,
 				    null );
 
@@ -1458,6 +1461,84 @@ public class SimpleNeuriteTracer extends ThreePanes
 		repaintAllPanes();
 	}
 
+	public void addPathsToManager(final RoiManager rm) {
+		if (rm != null) {
+			final Overlay overlay = new Overlay();
+			addAllPathsToOverlay(overlay);
+			for (final Roi path : overlay.toArray())
+				rm.addRoi(path);
+			rm.runCommand("sort");
+		}
+	}
+
+	public void addAllPathsToOverlay(final Overlay overlay) {
+		if (overlay != null && pathAndFillManager != null) {
+			for (int i = 0; i < pathAndFillManager.size(); ++i) {
+				final Path p = pathAndFillManager.getPath(i);
+				if (p == null)
+					continue;
+				if (p.fittedVersionOf != null)
+					continue;
+				// Prefer fitted version when drawing path
+				final Path drawPath = (p.useFitted) ? p.fitted : p;
+				drawPath.drawPathAsPoints(overlay, deselectedColor);
+			}
+		}
+	}
+
+	public void addPathsToOverlay() {
+		if (xy != null)
+			addPathsToOverlay(xy, ThreePanes.XY_PLANE);
+	}
+
+	public void addPathsToOverlay(final ImagePlus imp, final int plane) {
+
+		Overlay overlay = imp.getOverlay();
+		if (overlay == null)
+			overlay = new Overlay();
+
+		if (pathAndFillManager != null) {
+			for (int i = 0; i < pathAndFillManager.size(); ++i) {
+
+				final Path p = pathAndFillManager.getPath(i);
+				if (p == null)
+					continue;
+
+				if (p.fittedVersionOf != null)
+					continue;
+
+				// If the path suggests using the fitted version, draw that
+				// instead
+				final Path drawPath = (p.useFitted) ? p.fitted : p;
+
+				Color color = deselectedColor;
+				if (pathAndFillManager.isSelected(p))
+					color = selectedColor;
+				else if (showOnlySelectedPaths)
+					continue;
+				drawPath.drawPathAsPoints(overlay, color, plane);
+			}
+			imp.setOverlay(overlay);
+		}
+	}
+
+	public StackWindow getWindow(final int plane) {
+		switch (plane) {
+		case ThreePanes.XY_PLANE:
+			return xy_window;
+		case ThreePanes.XZ_PLANE:
+			return (single_pane) ? null : xz_window;
+		case ThreePanes.ZY_PLANE:
+			return (single_pane) ? null : zy_window;
+		default:
+			return null;
+		}
+	}
+
+	public boolean getSinglePane() {
+		return single_pane;
+	}
+
 	public boolean getShowOnlySelectedPaths() {
 		return showOnlySelectedPaths;
 	}
@@ -1610,6 +1691,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	public static final int OVERLAY_OPACITY_PERCENT = 20;
+	private static final String OVERLAY_IDENTIFIER = "SNT-MIP-OVERLAY";
 
 	public void showMIPOverlays(boolean show) {
 		ArrayList<ImagePlus> allImages = new ArrayList<ImagePlus>();
@@ -1619,6 +1701,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 			allImages.add(zy);
 		}
 		for( ImagePlus imagePlus : allImages ) {
+			if (imagePlus == null || imagePlus.getImageStackSize() == 1)
+				continue;
+			Overlay overlayList = imagePlus.getOverlay();
 			if( show ) {
 
 				// Create a MIP project of the stack:
@@ -1631,16 +1716,27 @@ public class SimpleNeuriteTracer extends ThreePanes
 				// Add display it as an overlay.
 				// (This logic is taken from OverlayCommands.)
 				Roi roi = new ImageRoi(0, 0, overlay.getProcessor());
-				roi.setName(overlay.getShortTitle());
+				roi.setName(OVERLAY_IDENTIFIER);
 				((ImageRoi)roi).setOpacity(OVERLAY_OPACITY_PERCENT/100.0);
-				Overlay overlayList = imagePlus.getOverlay();
 				if (overlayList==null)
 					overlayList = new Overlay();
 				overlayList.add(roi);
-				imagePlus.setOverlay(overlayList);
 
 			} else {
-				imagePlus.setOverlay(null);
+				removeMIPfromOverlay(overlayList);
+			}
+			imagePlus.setOverlay(overlayList);
+		}
+	}
+
+	private void removeMIPfromOverlay(Overlay overlay) {
+		if (overlay != null && overlay.size() > 0) {
+			for (int i = overlay.size() - 1; i >= 0; i--) {
+				final String roiName = overlay.get(i).getName();
+				if (roiName != null && roiName.equals(OVERLAY_IDENTIFIER)) {
+					overlay.remove(i);
+					return;
+				}
 			}
 		}
 	}
@@ -1655,6 +1751,35 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public boolean getDrawDiametersXY() {
 		return drawDiametersXY;
+	}
+
+	@Override
+	public void closeAndReset() {
+		// Dispose xz/zy images unless the user stored some annotations (ROIs)
+		// on the image overlay or modified them somehow. In that case, restore
+		// them to the user
+		if (!single_pane) {
+			final ImagePlus[] impPanes = { xz, zy };
+			final StackWindow[] winPanes = { xz_window, zy_window };
+			for (int i = 0; i < impPanes.length; ++i) {
+				final Overlay overlay = impPanes[i].getOverlay();
+				removeMIPfromOverlay(overlay);
+				if (!impPanes[i].changes && (overlay == null || impPanes[i].getOverlay().size() == 0))
+					impPanes[i].close();
+				else {
+					winPanes[i] = new StackWindow(impPanes[i]);
+					removeMIPfromOverlay(overlay);
+					impPanes[i].setOverlay(overlay);
+				}
+			}
+		}
+		// Restore main view
+		final Overlay overlay = (xy == null) ? null : xy.getOverlay();
+		if (original_xy_canvas != null && xy != null && xy.getImage() != null) {
+			xy_window = new StackWindow(xy, original_xy_canvas);
+			removeMIPfromOverlay(overlay);
+			xy.setOverlay(overlay);
+		}
 	}
 
 }

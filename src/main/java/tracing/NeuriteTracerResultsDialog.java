@@ -28,26 +28,34 @@
 package tracing;
 
 import sc.fiji.skeletonize3D.Skeletonize3D_;
+import sholl.Sholl_Analysis;
+import stacks.ThreePanes;
 import features.SigmaPalette;
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
+import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.HTMLDialog;
+import ij.gui.StackWindow;
 import ij.gui.WaitForUserDialog;
 import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 import ij.measure.Calibration;
+import ij.plugin.frame.RoiManager;
 
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -60,6 +68,7 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -100,11 +109,18 @@ public class NeuriteTracerResultsDialog
 
 	protected JMenuItem analyzeSkeletonMenuItem;
 	protected JMenuItem makeLineStackMenuItem;
+	protected JMenuItem addPathsToOverlayMenuItem;
+	protected JMenuItem addPathsToManagerMenuItem;
 	protected JMenuItem exportCSVMenuItemAgain;
 	protected JMenuItem sendToTrakEM2;
 
 	protected JCheckBoxMenuItem mipOverlayMenuItem;
 	protected JCheckBoxMenuItem drawDiametersXYMenuItem;
+	protected JCheckBoxMenuItem xyCanvasMenuItem;
+	protected JCheckBoxMenuItem zyCanvasMenuItem;
+	protected JCheckBoxMenuItem xzCanvasMenuItem;
+	protected JMenuItem arrangeWindowsMenuItem;
+
 
 	// These are the states that the UI can be in:
 
@@ -121,6 +137,7 @@ public class NeuriteTracerResultsDialog
 	static final int SAVING                   = 10;
 	static final int LOADING                  = 11;
 	static final int FITTING_PATHS            = 12;
+	static final int IMAGE_CLOSED             = 13;
 
 	static final String [] stateNames = { "WAITING_TO_START_PATH",
 					      "PARTIAL_PATH",
@@ -134,7 +151,8 @@ public class NeuriteTracerResultsDialog
 					      "WAITING_FOR_SIGMA_CHOICE",
 					      "SAVING",
 					      "LOADING",
-					      "FITTING_PATHS" };
+					      "FITTING_PATHS",
+					      "IMAGE CLOSED" };
 
 	static final String SEARCHING_STRING = "Searching for path between points...";
 
@@ -211,10 +229,13 @@ public class NeuriteTracerResultsDialog
 
 	// Called when an image is closed
 	@Override
-	public void imageClosed(ImagePlus imp) {
+	public void imageClosed(final ImagePlus imp) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				updateColorImageChoice();
+				if (plugin.getImagePlus() == imp)
+					changeState(NeuriteTracerResultsDialog.IMAGE_CLOSED);
 			}
 		});
 	}
@@ -455,40 +476,46 @@ public class NeuriteTracerResultsDialog
 		plugin.closeAndReset();
 	}
 
-	protected void disableEverything() {
+	protected void disableImageDependentComponents() {
 		assert SwingUtilities.isEventDispatchThread();
-
-		fw.setEnabledNone();
-		pw.setButtonsEnabled(false);
-
-		statusText.setEnabled(false);
+		loadMenuItem.setEnabled(false);
+		loadLabelsMenuItem.setEnabled(false);
 		keepSegment.setEnabled(false);
 		junkSegment.setEnabled(false);
 		cancelSearch.setEnabled(false);
 		completePath.setEnabled(false);
 		cancelPath.setEnabled(false);
-
 		editSigma.setEnabled(false);
 		sigmaWizard.setEnabled(false);
-
-		viewPathChoice.setEnabled(false);
-		paths3DChoice.setEnabled(false);
 		preprocess.setEnabled(false);
 		useTubularGeodesics.setEnabled(false);
+	}
+
+	protected void disableEverything() {
+
+		assert SwingUtilities.isEventDispatchThread();
+
+		disableImageDependentComponents();
+
+		fw.setEnabledNone();
+		pw.setButtonsEnabled(false);
+
+		statusText.setEnabled(false);
+		viewPathChoice.setEnabled(false);
+		paths3DChoice.setEnabled(false);
 
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
 		exportCSVMenuItemAgain.setEnabled(false);
 		sendToTrakEM2.setEnabled(false);
+		addPathsToManagerMenuItem.setEnabled(false);
+		addPathsToOverlayMenuItem.setEnabled(false);
 		analyzeSkeletonMenuItem.setEnabled(false);
 		saveMenuItem.setEnabled(false);
-		loadMenuItem.setEnabled(false);
 		if( uploadButton != null ) {
 			uploadButton.setEnabled(false);
 			fetchButton.setEnabled(false);
 		}
-		loadLabelsMenuItem.setEnabled(false);
-
 		quitMenuItem.setEnabled(false);
 	}
 
@@ -530,7 +557,9 @@ public class NeuriteTracerResultsDialog
 					exportCSVMenuItemAgain.setEnabled(true);
 					sendToTrakEM2.setEnabled(plugin.anyListeners());
 					analyzeSkeletonMenuItem.setEnabled(true);
-					if( uploadButton != null ) {
+					addPathsToManagerMenuItem.setEnabled(true);
+					addPathsToOverlayMenuItem.setEnabled(true);
+					if (uploadButton != null) {
 						uploadButton.setEnabled(true);
 						fetchButton.setEnabled(true);
 					}
@@ -640,6 +669,12 @@ public class NeuriteTracerResultsDialog
 					disableEverything();
 					break;
 
+				case IMAGE_CLOSED:
+					updateStatusText("Tracing image is no longer available...");
+					disableImageDependentComponents();
+					quitMenuItem.setEnabled(true);
+					break;
+
 				default:
 					IJ.error("BUG: switching to an unknown state");
 					return;
@@ -716,7 +751,7 @@ public class NeuriteTracerResultsDialog
 
 		menuBar.add(helpMenu());
 
-		loadMenuItem = new JMenuItem("Load traces / SWC file...");
+		loadMenuItem = new JMenuItem("Load traces / (e)SWC file...");
 		loadMenuItem.addActionListener(this);
 		fileMenu.add(loadMenuItem);
 
@@ -752,6 +787,17 @@ public class NeuriteTracerResultsDialog
 		makeLineStackMenuItem.addActionListener(this);
 		analysisMenu.add(makeLineStackMenuItem);
 
+		analysisMenu.addSeparator();
+		addPathsToOverlayMenuItem = new JMenuItem("Add paths to overlay...");
+		addPathsToOverlayMenuItem.addActionListener(this);
+		analysisMenu.add(addPathsToOverlayMenuItem);
+		addPathsToManagerMenuItem = new JMenuItem("Export paths to ROI Manager");
+		addPathsToManagerMenuItem.addActionListener(this);
+		analysisMenu.add(addPathsToManagerMenuItem);
+		analysisMenu.addSeparator();
+
+		analysisMenu.add(shollAnalysisHelpMenuItem());
+		analysisMenu.addSeparator();
 		exportCSVMenuItemAgain = new JMenuItem("Export as CSV...");
 		exportCSVMenuItemAgain.addActionListener(this);
 		analysisMenu.add(exportCSVMenuItemAgain);
@@ -766,6 +812,24 @@ public class NeuriteTracerResultsDialog
 		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw diameters in XY plane", plugin.getDrawDiametersXY());
 		drawDiametersXYMenuItem.addItemListener(this);
 		viewMenu.add(drawDiametersXYMenuItem);
+
+		viewMenu.addSeparator();
+		xyCanvasMenuItem = new JCheckBoxMenuItem("Hide XY plane");
+		xyCanvasMenuItem.addItemListener(this);
+		viewMenu.add(xyCanvasMenuItem);
+		zyCanvasMenuItem = new JCheckBoxMenuItem("Hide ZY plane");
+		zyCanvasMenuItem.setEnabled(!plugin.getSinglePane());
+		zyCanvasMenuItem.addItemListener(this);
+		viewMenu.add(zyCanvasMenuItem);
+		xzCanvasMenuItem = new JCheckBoxMenuItem("Hide XZ plane");
+		xzCanvasMenuItem.setEnabled(!plugin.getSinglePane());
+		xzCanvasMenuItem.addItemListener(this);
+		viewMenu.add(xzCanvasMenuItem);
+		viewMenu.addSeparator();
+		arrangeWindowsMenuItem = new JMenuItem("Arrange planes");
+		arrangeWindowsMenuItem.setEnabled(!plugin.getSinglePane());
+		arrangeWindowsMenuItem.addActionListener(this);
+		viewMenu.add(arrangeWindowsMenuItem);
 
 		setJMenuBar(menuBar);
 
@@ -1053,7 +1117,7 @@ public class NeuriteTracerResultsDialog
 			plugin.uploadTracings();
 		} else if( source == fetchButton ) {
 			plugin.getTracings( true );
-		} else */ if( source == saveMenuItem ) {
+		} else */ if( source == saveMenuItem  && !noPathsError()) {
 
 			FileInfo info = plugin.file_info;
 			SaveDialog sd;
@@ -1127,7 +1191,7 @@ public class NeuriteTracerResultsDialog
 			plugin.loadTracings();
 			changeState( preLoadingState );
 
-		} else if( source == exportAllSWCMenuItem ) {
+		} else if( source == exportAllSWCMenuItem  && !noPathsError()) {
 
 			FileInfo info = plugin.file_info;
 			SaveDialog sd;
@@ -1164,7 +1228,7 @@ public class NeuriteTracerResultsDialog
 				return;
 			pathAndFillManager.exportAllAsSWC( savePath );
 
-		} else if( source == exportCSVMenuItem || source == exportCSVMenuItemAgain ) {
+		} else if( (source == exportCSVMenuItem || source == exportCSVMenuItemAgain)  && !noPathsError()) {
 
 			FileInfo info = plugin.file_info;
 			SaveDialog sd;
@@ -1261,29 +1325,79 @@ public class NeuriteTracerResultsDialog
 
 			plugin.loadLabels();
 
-		} else if( source == makeLineStackMenuItem ) {
+		} else if (source == makeLineStackMenuItem && !noPathsError()) {
 
-			if( pathAndFillManager.size() == 0 ) {
-				IJ.error("There are no paths traced yet - the stack would be empty");
+			final ImagePlus imagePlus = plugin.makePathVolume();
+			imagePlus.show();
+
+		} else if (source == analyzeSkeletonMenuItem && !noPathsError()) {
+
+			final ImagePlus imagePlus = plugin.makePathVolume();
+			final Skeletonize3D_ skeletonizer = new Skeletonize3D_();
+			skeletonizer.setup("", imagePlus);
+			skeletonizer.run(imagePlus.getProcessor());
+			final AnalyzeSkeleton_ analyzer = new AnalyzeSkeleton_();
+			analyzer.setup("", imagePlus);
+			analyzer.run(imagePlus.getProcessor());
+			imagePlus.show();
+
+		} else if (source == addPathsToOverlayMenuItem && !noPathsError()) {
+
+			if (plugin.getSinglePane()) {
+				if (currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED) {
+					IJ.error("Image is no longer available.");
+					addPathsToOverlayMenuItem.setEnabled(false);
+				} else
+					plugin.addPathsToOverlay();
 			} else {
-				ImagePlus imagePlus = plugin.makePathVolume();
-				imagePlus.show();
+				final InteractiveTracerCanvas[] canvases = { plugin.xy_tracer_canvas, plugin.xz_tracer_canvas,
+						plugin.zy_tracer_canvas };
+				plugin.xy_tracer_canvas.isShowing();
+				final int[] planes = { ThreePanes.XY_PLANE, ThreePanes.XZ_PLANE, ThreePanes.ZY_PLANE };
+				final String[] options = { "Main (XY) view", "XZ view", "YZ view" };
+				final boolean[] choices = new boolean[3];
+				for (int i = 0; i < planes.length; i++)
+					choices[i] = getImagePlusFromPane(planes[i]) != null;
+				if (!choices[0] && !choices[1] && !choices[2]) {
+					IJ.error("Tracing panes are no longer available.");
+					addPathsToOverlayMenuItem.setEnabled(false);
+					return;
+				}
+				final GenericDialog gd = new GenericDialog("Paths to Overlay");
+				gd.addCheckboxGroup(3, 1, options, choices, new String[] { "Add ROI paths to the overlay of:" });
+				final Vector<?> cbxs = gd.getCheckboxes();
+				for (int i = 0; i < choices.length; i++)
+					((Checkbox) cbxs.get(i)).setEnabled(choices[i]);
+				gd.showDialog();
+				if (gd.wasCanceled())
+					return;
+				int i = 0;
+				for (final InteractiveTracerCanvas canvas : canvases) {
+					if (gd.getNextBoolean() && canvas != null)
+						plugin.addPathsToOverlay(canvas.getImage(), planes[i]);
+					i++;
+				}
 			}
 
-		} else if( source == analyzeSkeletonMenuItem ) {
+		} else if (source == addPathsToManagerMenuItem && !noPathsError()) {
 
-			if( pathAndFillManager.size() == 0 ) {
-				IJ.error("There are no paths traced yet!");
-			} else {
-				ImagePlus imagePlus = plugin.makePathVolume();
-				Skeletonize3D_ skeletonizer = new Skeletonize3D_();
-				skeletonizer.setup("",imagePlus);
-				skeletonizer.run(imagePlus.getProcessor());
-				AnalyzeSkeleton_ analyzer = new AnalyzeSkeleton_();
-				analyzer.setup("",imagePlus);
-				analyzer.run(imagePlus.getProcessor());
-				imagePlus.show();
+			RoiManager rm = RoiManager.getInstance2();
+			if (rm == null)
+				rm = new RoiManager();
+			if (plugin.singleSlice)
+				Prefs.showAllSliceOnly = false;
+			if (rm.getCount() > 0) {
+				final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Reset Manager?",
+						"Delete existing ROIs in the ROI Manager list?");
+				if (d.cancelPressed())
+					return;
+				else if (d.yesPressed())
+					rm.reset();
 			}
+			rm.setEditMode(plugin.getImagePlus(), false);
+			plugin.addPathsToManager(rm);
+			rm.setEditMode(plugin.getImagePlus(), true);
+			rm.runCommand("show all without labels");
 
 		} else if( source == cancelSearch ) {
 
@@ -1364,7 +1478,53 @@ public class NeuriteTracerResultsDialog
 
 			if( ! ignoreColorImageChoiceEvents )
 				checkForColorImageChange();
+
+		} else if (source == arrangeWindowsMenuItem) {
+			arrangeWindows();
 		}
+	}
+
+	private void arrangeWindows() {
+		final StackWindow xy_window = plugin.getWindow(ThreePanes.XY_PLANE);
+		if (xy_window == null)
+			return;
+		if (!plugin.getSinglePane()) {
+			final Point loc = xy_window.getLocation();
+			final StackWindow zy_window = plugin.getWindow(ThreePanes.ZY_PLANE);
+			final StackWindow xz_window = plugin.getWindow(ThreePanes.XZ_PLANE);
+			if (zy_window != null) {
+				zy_window.setLocation(loc.x + xy_window.getWidth(), loc.y);
+				zy_window.toFront();
+			}
+			if (xz_window != null) {
+				xz_window.setLocation(loc.x, loc.y + xy_window.getHeight());
+				xz_window.toFront();
+			}
+		}
+		xy_window.toFront();
+	}
+
+	private void toggleWindowVisibility(final int pane, final JCheckBoxMenuItem menuItem, final boolean setVisible) {
+		if (getImagePlusFromPane(pane) == null) {
+			IJ.error("Image Closed", "Pane is no longer accessible.");
+			menuItem.setEnabled(false);
+			menuItem.setSelected(false);
+		} else { // NB: WindowManager list won't be notified
+			plugin.getWindow(pane).setVisible(setVisible);
+		}
+	}
+
+	private ImagePlus getImagePlusFromPane(final int pane) {
+		final StackWindow win = plugin.getWindow(pane);
+		return (win == null) ? null : win.getImagePlus();
+	}
+
+	private boolean noPathsError() {
+		final boolean noPaths = pathAndFillManager.size() == 0;
+		if (noPaths) {
+			IJ.error("Simple Neurite Tracer", "There are no traced paths.");
+		}
+		return noPaths;
 	}
 
 	@Override
@@ -1468,6 +1628,13 @@ public class NeuriteTracerResultsDialog
 
 		} else if( source == drawDiametersXYMenuItem ) {
 			plugin.setDrawDiametersXY(e.getStateChange() == ItemEvent.SELECTED);
+
+		} else if (source == xyCanvasMenuItem && xyCanvasMenuItem.isEnabled()) {
+			toggleWindowVisibility(ThreePanes.XY_PLANE, xyCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
+		} else if (source == zyCanvasMenuItem && zyCanvasMenuItem.isEnabled()) {
+			toggleWindowVisibility(ThreePanes.ZY_PLANE, zyCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
+		} else if (source == xzCanvasMenuItem && xzCanvasMenuItem.isEnabled()) {
+			toggleWindowVisibility(ThreePanes.XZ_PLANE, xzCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
 		}
 	}
 
@@ -1534,29 +1701,7 @@ public class NeuriteTracerResultsDialog
 		mi = menuItemTrigerringURL("List of shortcuts", URL + ":_Key_Shortcuts");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTrigerringURL("Sholl analysis: Online help", URL + ":_Sholl_analysis");
-		helpMenu.add(mi);
-		mi = new JMenuItem("Sholl analysis: Offline help");
-		mi.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				final Thread newThread = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
-						modKey += "+Shift";
-						final String instructions = "To manually select the center of analysis:\n"
-								+ "    1. Mouse over the path of interest and press \"G\" to activate it\n"
-								+ "    2. Press \"" + modKey + "\" to select a point along the path\n"
-								+ "    3. Press \"" + modKey + "+A\" to initiate Sholl analysis\n \n"
-								+ "For batch processing run \"Sholl Analysis (Tracings)...\".";
-						final WaitForUserDialog wd = new WaitForUserDialog("Sholl Analysis Cheat Sheet", instructions);
-						wd.show();
-					}
-				});
-				newThread.start();
-			}
-		});
+		mi = menuItemTrigerringURL("Sholl analysis walkthrough", URL + ":_Sholl_analysis");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 		mi = menuItemTrigerringURL("Ask a question", "http://forum.imagej.net");
@@ -1565,6 +1710,42 @@ public class NeuriteTracerResultsDialog
 		mi = menuItemTrigerringURL("Citing SNT...", URL + "#Citing_Simple_Neurite_Tracer");
 		helpMenu.add(mi);
 		return helpMenu;
+	}
+
+	private JMenuItem shollAnalysisHelpMenuItem() {
+		JMenuItem mi;
+		mi = new JMenuItem("Sholl Analysis...");
+		mi.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				final Thread newThread = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
+						modKey += "+Shift";
+						final String url1 = Sholl_Analysis.URL + "#Analysis_of_Traced_Cells";
+						final String url2 = "http://imagej.net/Simple_Neurite_Tracer/:_Sholl_analysis";
+						final StringBuilder sb = new StringBuilder();
+						sb.append("<html>");
+						sb.append("<div WIDTH=390>");
+						sb.append("To initiate <a href='").append(Sholl_Analysis.URL).append("'>Sholl Analysis</a>, ");
+						sb.append("you must first select a focal point:");
+						sb.append("<ol>");
+						sb.append("<li>Mouse over the path of interest. Press \"G\" to activate it</li>");
+						sb.append("<li>Press \"").append(modKey).append("\" to select a point along the path</li>");
+						sb.append("<li>Press \"").append(modKey).append("+A\" to start analysis</li>");
+						sb.append("</ol>");
+						sb.append("A detailed walkthrough is also <a href='").append(url2)
+								.append("'>available online</a>. ");
+						sb.append("For batch processing, run <a href='").append(url1)
+								.append("'>Analyze>Sholl>Sholl Analysis (Tracings)...</a>. ");
+						new HTMLDialog("Sholl Analysis How-to", sb.toString(), false);
+					}
+				});
+				newThread.start();
+			}
+		});
+		return mi;
 	}
 
 	public static JMenuItem menuItemTrigerringURL(final String label, final String URL) {

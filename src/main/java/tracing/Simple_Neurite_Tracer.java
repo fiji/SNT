@@ -34,6 +34,7 @@ import ij.ImageStack;
 import ij.Macro;
 import ij.gui.GUI;
 import ij.gui.GenericDialog;
+import ij.gui.Overlay;
 import ij.gui.YesNoCancelDialog;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
@@ -330,7 +331,9 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				}
 			}
 
+			final Overlay currentImageOverlay = currentImage.getOverlay();
 			initialize(currentImage);
+			xy.setOverlay(currentImageOverlay);
 
 			xy_tracer_canvas = (InteractiveTracerCanvas)xy_canvas;
 			xz_tracer_canvas = (InteractiveTracerCanvas)xz_canvas;

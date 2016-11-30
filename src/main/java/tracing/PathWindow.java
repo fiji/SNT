@@ -32,6 +32,8 @@ import ij.gui.GenericDialog;
 import ij.io.SaveDialog;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -61,6 +63,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -525,7 +528,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;
 
-		setBounds(x,y,700,300);
+		setBounds(x,y,600,240);
 		root = new DefaultMutableTreeNode("All Paths");
 		tree = new HelpfulJTree(root);
 		// tree.setRootVisible(false);
@@ -535,6 +538,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		add(scrollPane, BorderLayout.CENTER);
 
 		buttonPanel = new JPanel();
+		buttonPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
 		add(buttonPanel, BorderLayout.PAGE_END);
 
@@ -577,13 +581,12 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		popup.add(swcTypeMenu);
 
 		// Create all the menu items:
-
-		renameButton = new JButton("Rename");
-		fitVolumeButton = new JButton("Fit Volume");
-		fillOutButton = new JButton("Fill Out");
-		makePrimaryButton = new JButton("Make Primary");
-		deleteButton = new JButton("Delete");
-		exportAsSWCButton = new JButton("Export as SWC");
+		renameButton = smallButton("Rename");
+		fitVolumeButton = smallButton("Fit Volume");
+		fillOutButton = smallButton("Fill Out");
+		makePrimaryButton = smallButton("Make Primary");
+		deleteButton = smallButton("Delete");
+		exportAsSWCButton = smallButton("Export as SWC");
 
 		buttonPanel.add(renameButton);
 		buttonPanel.add(fitVolumeButton);
@@ -614,6 +617,17 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			}
 		};
 		tree.addMouseListener(ml);
+	}
+
+	private JButton smallButton(final String text) {
+		final double SCALE = .85;
+		final JButton button = new JButton(text);
+		final Font font = button.getFont();
+		button.setFont(font.deriveFont((float) (font.getSize() * SCALE)));
+		final Insets insets = button.getMargin();
+		button.setMargin(new Insets((int) (insets.top * SCALE), (int) (insets.left * SCALE),
+				(int) (insets.bottom * SCALE), (int) (insets.right * SCALE)));
+		return button;
 	}
 
 	protected void showPopup(MouseEvent me) {

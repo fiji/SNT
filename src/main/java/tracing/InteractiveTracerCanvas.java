@@ -184,7 +184,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		int currentState = tracerPlugin.resultsDialog.getState();
 
 		if( currentState == NeuriteTracerResultsDialog.LOADING ||
-		    currentState == NeuriteTracerResultsDialog.SAVING ) {
+		    currentState == NeuriteTracerResultsDialog.SAVING ||
+		    currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED) {
 
 			// Do nothing
 

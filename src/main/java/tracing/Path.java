@@ -30,8 +30,12 @@ package tracing;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.Overlay;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
+import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
@@ -832,6 +836,76 @@ public class Path implements Comparable<Path> {
 			}
 		}
 
+	}
+	public void drawPathAsPoints(final Overlay overlay, final java.awt.Color c) {
+		drawPathAsPoints(overlay, c, ThreePanes.XY_PLANE);
+	}
+
+	public void drawPathAsPoints(final Overlay overlay, final java.awt.Color c, final int plane) {
+
+		overlay.setStrokeColor(c);
+		FloatPolygon polygon = new FloatPolygon();
+		int current_roi_slice = Integer.MIN_VALUE;
+		int roi_identifier = 1;
+
+		for (int i = 0; i < points; ++i) {
+
+			double x = Integer.MIN_VALUE;
+			double y = Integer.MIN_VALUE;
+			int slice_of_point = Integer.MIN_VALUE;
+
+			switch (plane) {
+			case ThreePanes.XY_PLANE:
+				x = getXUnscaledDouble(i);
+				y = getYUnscaledDouble(i);
+				slice_of_point = getZUnscaled(i);
+				break;
+			case ThreePanes.XZ_PLANE:
+				x = getXUnscaledDouble(i);
+				y = getZUnscaledDouble(i);
+				slice_of_point = getYUnscaled(i);
+				break;
+			case ThreePanes.ZY_PLANE:
+				x = getZUnscaledDouble(i);
+				y = getYUnscaledDouble(i);
+				slice_of_point = getXUnscaled(i);
+				break;
+			default:
+				throw new RuntimeException("BUG: Unknown plane! (" + plane + ")");
+			}
+
+			if (current_roi_slice == slice_of_point || i == 0) {
+				polygon.addPoint(x, y);
+			} else {
+				addPolyLineToOverlay(polygon, current_roi_slice, roi_identifier++, overlay);
+				polygon = new FloatPolygon(); // reset ROI
+				polygon.addPoint(x, y);
+			}
+			current_roi_slice = slice_of_point;
+
+		}
+
+		// Create ROI from any remaining points
+		addPolyLineToOverlay(polygon, current_roi_slice, roi_identifier, overlay);
+
+	}
+
+	private void addPolyLineToOverlay(final FloatPolygon p, final int z_position, final int roi_id,
+			final Overlay overlay) {
+		if (p.npoints > 0) {
+			if (p.npoints == 1) {
+				// create 1-pixel length lines for single points
+				p.xpoints[0] -= 0.5f;
+				p.ypoints[0] -= 0.5f;
+				p.addPoint(p.xpoints[0] + 0.5f, p.ypoints[0] + 0.5f);
+			}
+			final PolygonRoi polyline = new PolygonRoi(p, Roi.FREELINE);
+			polyline.enableSubPixelResolution();
+			// polyline.fitSplineForStraightening();
+			polyline.setName(String.format("Path%04d-%04d-Z%d", id, roi_id, z_position));
+			polyline.setPosition(z_position + 1); // index 1
+			overlay.add(polyline);
+		}
 	}
 
         public int indexNearestTo( double x, double y, double z ) {

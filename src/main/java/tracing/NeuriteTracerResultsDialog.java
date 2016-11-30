@@ -28,6 +28,7 @@
 package tracing;
 
 import sc.fiji.skeletonize3D.Skeletonize3D_;
+import sholl.Sholl_Analysis;
 import stacks.ThreePanes;
 import features.SigmaPalette;
 import ij.IJ;
@@ -36,6 +37,7 @@ import ij.ImagePlus;
 import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.HTMLDialog;
 import ij.gui.StackWindow;
 import ij.gui.WaitForUserDialog;
 import ij.gui.YesNoCancelDialog;
@@ -786,7 +788,7 @@ public class NeuriteTracerResultsDialog
 		analysisMenu.add(makeLineStackMenuItem);
 
 		analysisMenu.addSeparator();
-		addPathsToOverlayMenuItem = new JMenuItem("Add paths to canvas(es) overlay...");
+		addPathsToOverlayMenuItem = new JMenuItem("Add paths to overlay...");
 		addPathsToOverlayMenuItem.addActionListener(this);
 		analysisMenu.add(addPathsToOverlayMenuItem);
 		addPathsToManagerMenuItem = new JMenuItem("Export paths to ROI Manager");
@@ -794,6 +796,8 @@ public class NeuriteTracerResultsDialog
 		analysisMenu.add(addPathsToManagerMenuItem);
 		analysisMenu.addSeparator();
 
+		analysisMenu.add(shollAnalysisHelpMenuItem());
+		analysisMenu.addSeparator();
 		exportCSVMenuItemAgain = new JMenuItem("Export as CSV...");
 		exportCSVMenuItemAgain.addActionListener(this);
 		analysisMenu.add(exportCSVMenuItemAgain);
@@ -810,19 +814,20 @@ public class NeuriteTracerResultsDialog
 		viewMenu.add(drawDiametersXYMenuItem);
 
 		viewMenu.addSeparator();
-		xyCanvasMenuItem = new JCheckBoxMenuItem("Hide XY pane");
+		xyCanvasMenuItem = new JCheckBoxMenuItem("Hide XY plane");
 		xyCanvasMenuItem.addItemListener(this);
 		viewMenu.add(xyCanvasMenuItem);
-		zyCanvasMenuItem = new JCheckBoxMenuItem("Hide ZY pane");
+		zyCanvasMenuItem = new JCheckBoxMenuItem("Hide ZY plane");
 		zyCanvasMenuItem.setEnabled(!plugin.getSinglePane());
 		zyCanvasMenuItem.addItemListener(this);
 		viewMenu.add(zyCanvasMenuItem);
-		xzCanvasMenuItem = new JCheckBoxMenuItem("Hide XZ pane");
+		xzCanvasMenuItem = new JCheckBoxMenuItem("Hide XZ plane");
 		xzCanvasMenuItem.setEnabled(!plugin.getSinglePane());
 		xzCanvasMenuItem.addItemListener(this);
 		viewMenu.add(xzCanvasMenuItem);
 		viewMenu.addSeparator();
 		arrangeWindowsMenuItem = new JMenuItem("Arrange planes");
+		arrangeWindowsMenuItem.setEnabled(!plugin.getSinglePane());
 		arrangeWindowsMenuItem.addActionListener(this);
 		viewMenu.add(arrangeWindowsMenuItem);
 
@@ -1696,29 +1701,7 @@ public class NeuriteTracerResultsDialog
 		mi = menuItemTrigerringURL("List of shortcuts", URL + ":_Key_Shortcuts");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTrigerringURL("Sholl analysis: Online help", URL + ":_Sholl_analysis");
-		helpMenu.add(mi);
-		mi = new JMenuItem("Sholl analysis: Offline help");
-		mi.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				final Thread newThread = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
-						modKey += "+Shift";
-						final String instructions = "To manually select the center of analysis:\n"
-								+ "    1. Mouse over the path of interest and press \"G\" to activate it\n"
-								+ "    2. Press \"" + modKey + "\" to select a point along the path\n"
-								+ "    3. Press \"" + modKey + "+A\" to initiate Sholl analysis\n \n"
-								+ "For batch processing run \"Sholl Analysis (Tracings)...\".";
-						final WaitForUserDialog wd = new WaitForUserDialog("Sholl Analysis Cheat Sheet", instructions);
-						wd.show();
-					}
-				});
-				newThread.start();
-			}
-		});
+		mi = menuItemTrigerringURL("Sholl analysis walkthrough", URL + ":_Sholl_analysis");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 		mi = menuItemTrigerringURL("Ask a question", "http://forum.imagej.net");
@@ -1727,6 +1710,42 @@ public class NeuriteTracerResultsDialog
 		mi = menuItemTrigerringURL("Citing SNT...", URL + "#Citing_Simple_Neurite_Tracer");
 		helpMenu.add(mi);
 		return helpMenu;
+	}
+
+	private JMenuItem shollAnalysisHelpMenuItem() {
+		JMenuItem mi;
+		mi = new JMenuItem("Sholl Analysis...");
+		mi.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				final Thread newThread = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
+						modKey += "+Shift";
+						final String url1 = Sholl_Analysis.URL + "#Analysis_of_Traced_Cells";
+						final String url2 = "http://imagej.net/Simple_Neurite_Tracer/:_Sholl_analysis";
+						final StringBuilder sb = new StringBuilder();
+						sb.append("<html>");
+						sb.append("<div WIDTH=390>");
+						sb.append("To initiate <a href='").append(Sholl_Analysis.URL).append("'>Sholl Analysis</a>, ");
+						sb.append("you must first select a focal point:");
+						sb.append("<ol>");
+						sb.append("<li>Mouse over the path of interest. Press \"G\" to activate it</li>");
+						sb.append("<li>Press \"").append(modKey).append("\" to select a point along the path</li>");
+						sb.append("<li>Press \"").append(modKey).append("+A\" to start analysis</li>");
+						sb.append("</ol>");
+						sb.append("A detailed walkthrough is also <a href='").append(url2)
+								.append("'>available online</a>. ");
+						sb.append("For batch processing, run <a href='").append(url1)
+								.append("'>Analyze>Sholl>Sholl Analysis (Tracings)...</a>. ");
+						new HTMLDialog("Sholl Analysis How-to", sb.toString(), false);
+					}
+				});
+				newThread.start();
+			}
+		});
+		return mi;
 	}
 
 	public static JMenuItem menuItemTrigerringURL(final String label, final String URL) {

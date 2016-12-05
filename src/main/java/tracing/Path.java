@@ -27,6 +27,17 @@
 
 package tracing;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Point3f;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -41,18 +52,6 @@ import ij3d.Content;
 import ij3d.Image3DUniverse;
 import ij3d.MeshMaker;
 import ij3d.Pipe;
-
-import java.awt.Color;
-import java.awt.Graphics;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Point3f;
-
 import pal.math.ConjugateDirectionSearch;
 import pal.math.MultivariateFunction;
 import stacks.ThreePanes;

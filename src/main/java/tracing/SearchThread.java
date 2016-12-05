@@ -27,12 +27,6 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.measure.Calibration;
-import ij.text.TextWindow;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.io.CharArrayWriter;
@@ -40,6 +34,11 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.measure.Calibration;
+import ij.text.TextWindow;
 import stacks.ThreePanes;
 
 /* This is the thread that explores the image using a variety of

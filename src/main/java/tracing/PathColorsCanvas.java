@@ -27,13 +27,13 @@
 
 package tracing;
 
-import ij.gui.ColorChooser;
-
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+
+import ij.gui.ColorChooser;
 
 @SuppressWarnings("serial")
 public class PathColorsCanvas extends Canvas implements MouseListener {

@@ -25,17 +25,6 @@
 
 package tracing;
 
-import features.TubenessProcessor;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.Macro;
-import ij.gui.GenericDialog;
-import ij.io.FileInfo;
-import ij.io.FileSaver;
-import ij.measure.Calibration;
-import ij.plugin.PlugIn;
-
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
@@ -46,6 +35,16 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
+import features.TubenessProcessor;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Macro;
+import ij.gui.GenericDialog;
+import ij.io.FileInfo;
+import ij.io.FileSaver;
+import ij.measure.Calibration;
+import ij.plugin.PlugIn;
 import stacks.PaneOwner;
 import stacks.ThreePanes;
 import util.BatchOpener;

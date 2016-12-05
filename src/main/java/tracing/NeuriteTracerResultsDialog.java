@@ -27,26 +27,6 @@
 
 package tracing;
 
-import sc.fiji.skeletonize3D.Skeletonize3D_;
-import sholl.Sholl_Analysis;
-import stacks.ThreePanes;
-import features.SigmaPalette;
-import ij.IJ;
-import ij.ImageListener;
-import ij.ImagePlus;
-import ij.Prefs;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.HTMLDialog;
-import ij.gui.StackWindow;
-import ij.gui.WaitForUserDialog;
-import ij.gui.YesNoCancelDialog;
-import ij.io.FileInfo;
-import ij.io.OpenDialog;
-import ij.io.SaveDialog;
-import ij.measure.Calibration;
-import ij.plugin.frame.RoiManager;
-
 import java.awt.BorderLayout;
 import java.awt.Checkbox;
 import java.awt.Color;
@@ -84,7 +64,26 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+
+import features.SigmaPalette;
+import ij.IJ;
+import ij.ImageListener;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.HTMLDialog;
+import ij.gui.StackWindow;
+import ij.gui.YesNoCancelDialog;
+import ij.io.FileInfo;
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
+import ij.measure.Calibration;
+import ij.plugin.frame.RoiManager;
 import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
+import sc.fiji.skeletonize3D.Skeletonize3D_;
+import sholl.Sholl_Analysis;
+import stacks.ThreePanes;
 
 @SuppressWarnings("serial")
 public class NeuriteTracerResultsDialog
@@ -1540,7 +1539,7 @@ public class NeuriteTracerResultsDialog
 		}
 	}
 
-	private void arrangeWindows() {
+	protected void arrangeWindows() {
 		final StackWindow xy_window = plugin.getWindow(ThreePanes.XY_PLANE);
 		if (xy_window == null)
 			return;

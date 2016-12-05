@@ -2,6 +2,13 @@
 
 package tracing;
 
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Point3f;
+
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.GUI;
@@ -9,13 +16,6 @@ import ij.plugin.PlugIn;
 import ij.process.ByteProcessor;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
-
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Point3f;
 
 /* A test for the 3D viewer.  The results are odd at the moment - the
    crossing point of the lines should always appear to be at the

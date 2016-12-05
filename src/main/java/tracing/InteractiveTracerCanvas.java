@@ -27,14 +27,13 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.ImagePlus;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
+import ij.IJ;
+import ij.ImagePlus;
 import stacks.ThreePanes;
 
 @SuppressWarnings("serial")

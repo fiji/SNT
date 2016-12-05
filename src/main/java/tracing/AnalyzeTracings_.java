@@ -2,12 +2,6 @@
 
 package tracing;
 
-import amira.AmiraParameters;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.plugin.PlugIn;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -17,6 +11,11 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
 
+import amira.AmiraParameters;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.plugin.PlugIn;
 import landmarks.Bookstein_From_Landmarks;
 import util.BatchOpener;
 import util.FileAndChannel;

@@ -27,15 +27,14 @@
 
 package tracing;
 
+import java.util.ArrayList;
+
 import amira.AmiraParameters;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.PlugIn;
 import ij.process.ColorProcessor;
-
-import java.util.ArrayList;
-
 import landmarks.Bookstein_From_Landmarks;
 import util.BatchOpener;
 import util.FileAndChannel;

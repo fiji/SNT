@@ -27,13 +27,12 @@
 
 package tracing;
 
-import ij.ImagePlus;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.util.ArrayList;
 
+import ij.ImagePlus;
 import stacks.PaneOwner;
 import stacks.ThreePanesCanvas;
 

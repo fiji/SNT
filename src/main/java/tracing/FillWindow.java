@@ -27,9 +27,6 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.io.SaveDialog;
-
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -53,6 +50,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+
+import ij.IJ;
+import ij.io.SaveDialog;
 
 @SuppressWarnings("serial")
 public class FillWindow extends JFrame implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {

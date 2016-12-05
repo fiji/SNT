@@ -27,6 +27,16 @@
 
 package tracing;
 
+import java.applet.Applet;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.image.IndexColorModel;
+import java.io.File;
+import java.util.Vector;
+import java.util.concurrent.Callable;
+
+import org.scijava.vecmath.Color3f;
+
 import client.ArchiveClient;
 import ij.IJ;
 import ij.ImagePlus;
@@ -43,17 +53,6 @@ import ij.process.ImageProcessor;
 import ij.process.StackConverter;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
-
-import java.applet.Applet;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.image.IndexColorModel;
-import java.io.File;
-import java.util.Vector;
-import java.util.concurrent.Callable;
-
-import org.scijava.vecmath.Color3f;
-
 import util.BatchOpener;
 import util.RGB_to_Luminance;
 

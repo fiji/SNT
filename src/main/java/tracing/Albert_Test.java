@@ -9,16 +9,16 @@
 
 package tracing;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Random;
+
 import features.ComputeCurvatures;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Random;
 
 public class Albert_Test implements PlugIn {
 

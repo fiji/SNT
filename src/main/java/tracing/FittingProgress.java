@@ -21,9 +21,9 @@
 
 package tracing;
 
-import ij.IJ;
-
 import java.util.ArrayList;
+
+import ij.IJ;
 
 /** An implementation of the MultiTaskProgress interface that
     updates the ImageJ progress bar */

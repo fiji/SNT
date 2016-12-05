@@ -27,13 +27,13 @@
 
 package tracing;
 
-import ij.ImagePlus;
-import ij.gui.ImageCanvas;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.util.HashMap;
+
+import ij.ImagePlus;
+import ij.gui.ImageCanvas;
 
 @SuppressWarnings("serial")
 class NormalPlaneCanvas extends ImageCanvas {

@@ -27,20 +27,21 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.gui.Toolbar;
-import ij3d.Content;
-import ij3d.Image3DUniverse;
-import ij3d.behaviors.InteractiveBehavior;
-import ij3d.behaviors.Picker;
-
 import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 import javax.swing.SwingUtilities;
+
 import org.scijava.vecmath.Point3d;
+
+import ij.IJ;
+import ij.gui.Toolbar;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
+import ij3d.behaviors.InteractiveBehavior;
+import ij3d.behaviors.Picker;
 
 /* This class is based on Albert Cardona's code in
  * Blob_Segmentation_in_3D.java */

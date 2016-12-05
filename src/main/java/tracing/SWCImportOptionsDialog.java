@@ -27,10 +27,6 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.Prefs;
-import ij.gui.GUI;
-
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -46,6 +42,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+
+import ij.IJ;
+import ij.Prefs;
+import ij.gui.GUI;
 
 @SuppressWarnings("serial")
 public class SWCImportOptionsDialog extends Dialog implements WindowListener, ActionListener, ItemListener {

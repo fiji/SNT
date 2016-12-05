@@ -27,16 +27,10 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.gui.ColorChooser;
-import ij.gui.GenericDialog;
-import ij.io.SaveDialog;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -75,6 +69,11 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+
+import ij.IJ;
+import ij.gui.ColorChooser;
+import ij.gui.GenericDialog;
+import ij.io.SaveDialog;
 
 @SuppressWarnings("serial")
 public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener, ActionListener {

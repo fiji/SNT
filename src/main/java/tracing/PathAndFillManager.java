@@ -27,12 +27,6 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.measure.Calibration;
-import ij3d.Content;
-import ij3d.UniverseListener;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -63,17 +57,21 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import org.scijava.java3d.View;
-import org.scijava.vecmath.Color3f;
-
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.scijava.java3d.View;
+import org.scijava.vecmath.Color3f;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.measure.Calibration;
+import ij3d.Content;
+import ij3d.UniverseListener;
 import util.Bresenham3D;
 import util.XMLFunctions;
 

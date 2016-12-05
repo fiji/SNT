@@ -505,9 +505,13 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			}
 
 			resultsDialog.displayOnStarting();
+			resultsDialog.arrangeWindows();
+			resultsDialog.pw.toBack();
 
 		} finally {
 			IJ.getInstance().addKeyListener( IJ.getInstance() );
+
+
 		}
 	}
 }

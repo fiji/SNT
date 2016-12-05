@@ -28,12 +28,15 @@
 package tracing;
 
 import ij.IJ;
+import ij.gui.ColorChooser;
 import ij.gui.GenericDialog;
 import ij.io.SaveDialog;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -416,6 +419,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		deleteSetEnabled(false);
 		exportAsSWCSetEnabled(false);
 		swcTypeMenu.setEnabled(false);
+		colorMenu.setEnabled(false);
 	}
 
 	protected void updateButtonsOneSelected( Path p ) {
@@ -431,6 +435,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		deleteSetEnabled(true);
 		exportAsSWCSetEnabled(true);
 		swcTypeMenu.setEnabled(true);
+		colorMenu.setEnabled(true);
 	}
 
 	public boolean allSelectedUsingFittedVersion() {
@@ -460,6 +465,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		deleteSetEnabled(true);
 		exportAsSWCSetEnabled(true);
 		swcTypeMenu.setEnabled(true);
+		colorMenu.setEnabled(true);
 	}
 
 	@Override
@@ -492,7 +498,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	protected JPopupMenu popup;
 	protected JMenu swcTypeMenu;
-
+	protected JMenu colorMenu;
 	protected JPanel buttonPanel;
 
 	protected JButton renameButton;
@@ -571,14 +577,17 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		downsampleMenuItem.addActionListener(this);
 
 		// Now also add the SWC types submenu:
-		swcTypeMenu = new JMenu("Set SWC type");
+		swcTypeMenu = new JMenu("Set SWC Type");
 		for( String s : Path.swcTypeNames ) {
 			JMenuItem jmi = new JMenuItem(s);
 			jmi.addActionListener(this);
 			swcTypeMenu.add(jmi);
 			swcTypeMenuItems.add(jmi);
 		}
+		popup.addSeparator();
 		popup.add(swcTypeMenu);
+		colorMenu = colorPopupMenu();
+		popup.add(colorMenu);
 
 		// Create all the menu items:
 		renameButton = smallButton("Rename");
@@ -619,7 +628,65 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		tree.addMouseListener(ml);
 	}
 
-	private JButton smallButton(final String text) {
+	private JMenu colorPopupMenu() {
+		final JMenu menu = new JMenu("Color");
+		JMenuItem jmi;
+		final String[] colors = ij.plugin.Colors.getColors();
+		for (final String color : colors) {
+			jmi = new JMenuItem(color);
+			jmi.setActionCommand(color);
+			menu.add(jmi);
+			jmi.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(final ActionEvent e) {
+					applyColortoSelectPaths(ij.plugin.Colors.getColor(e.getActionCommand(),
+							SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR));
+				}
+			});
+		}
+		menu.addSeparator();
+		jmi = new JMenuItem("Specify...");
+		jmi.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				final ColorChooser chooser = new ColorChooser("Specify color",
+						SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR, false);
+				applyColortoSelectPaths(chooser.getColor());
+			}
+		});
+		menu.add(jmi);
+		jmi = new JMenuItem("(Re)color by SWC Type");
+		jmi.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				final Set<Path> selectedPaths = getSelectedPaths();
+				for (final Path p : selectedPaths)
+					p.setColorBySWCtype();
+				plugin.repaintAllPanes();
+				pathAndFillManager.update3DViewerContents();
+			}
+		});
+		menu.add(jmi);
+		jmi = new JMenuItem("Reset");
+		jmi.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				applyColortoSelectPaths(null);
+			}
+		});
+		menu.add(jmi);
+		return menu;
+	}
+
+	private void applyColortoSelectPaths(final Color color) {
+		final Set<Path> selectedPaths = getSelectedPaths();
+		for (final Path p : selectedPaths)
+			p.setColor(color);
+		plugin.repaintAllPanes();
+		pathAndFillManager.update3DViewerContents();
+	}
+
+	protected static JButton smallButton(final String text) {
 		final double SCALE = .85;
 		final JButton button = new JButton(text);
 		final Font font = button.getFont();

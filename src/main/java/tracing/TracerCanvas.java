@@ -119,16 +119,23 @@ public class TracerCanvas extends ThreePanesCanvas {
 					drawPath = p.fitted;
 				}
 
-				Color color = deselectedColor;
-				if( pathAndFillManager.isSelected(p) ) {
-					color = selectedColor;
-				} else if( showOnlySelectedPaths )
+				final boolean isSelected = pathAndFillManager.isSelected(p);
+				if (!isSelected && showOnlySelectedPaths)
 					continue;
 
-				if( just_near_slices ) {
-					drawPath.drawPathAsPoints( this, g, color, plane, drawDiametersXY, current_z, eitherSide );
-				} else
-					drawPath.drawPathAsPoints( this, g, color, plane, drawDiametersXY );
+				final boolean customColor = (drawPath.hasCustomColor && plugin.displayCustomPathColors);
+				Color color = deselectedColor;
+				if (isSelected && !customColor)
+					color = selectedColor;
+				else if (customColor)
+					color = drawPath.getColor();
+
+				if (just_near_slices) {
+					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected && customColor), drawDiametersXY,
+							current_z, eitherSide);
+				} else {
+					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected && customColor), drawDiametersXY);
+				}
 			}
 		}
 

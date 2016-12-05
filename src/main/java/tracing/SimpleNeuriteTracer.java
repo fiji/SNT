@@ -1461,17 +1461,17 @@ public class SimpleNeuriteTracer extends ThreePanes
 		repaintAllPanes();
 	}
 
-	public void addPathsToManager(final RoiManager rm) {
+	public void addPathsToManager(final RoiManager rm, final boolean SWTColoring) {
 		if (rm != null) {
 			final Overlay overlay = new Overlay();
-			addAllPathsToOverlay(overlay);
+			addAllPathsToOverlay(overlay, SWTColoring);
 			for (final Roi path : overlay.toArray())
 				rm.addRoi(path);
 			rm.runCommand("sort");
 		}
 	}
 
-	public void addAllPathsToOverlay(final Overlay overlay) {
+	public void addAllPathsToOverlay(final Overlay overlay, final boolean SWTColoring) {
 		if (overlay != null && pathAndFillManager != null) {
 			for (int i = 0; i < pathAndFillManager.size(); ++i) {
 				final Path p = pathAndFillManager.getPath(i);
@@ -1481,7 +1481,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 					continue;
 				// Prefer fitted version when drawing path
 				final Path drawPath = (p.useFitted) ? p.fitted : p;
-				drawPath.drawPathAsPoints(overlay, deselectedColor);
+				if (SWTColoring)
+					drawPath.setColorBySWCtype();
+				drawPath.drawPathAsPoints(overlay);
 			}
 		}
 	}
@@ -1516,7 +1518,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 					color = selectedColor;
 				else if (showOnlySelectedPaths)
 					continue;
-				drawPath.drawPathAsPoints(overlay, color, plane);
+				drawPath.drawPathAsPoints(overlay, plane);
 			}
 			imp.setOverlay(overlay);
 		}
@@ -1557,10 +1559,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 		return univ;
 	}
 
-	public Color3f selectedColor3f = new Color3f( Color.green );
-	public Color3f deselectedColor3f = new Color3f( Color.magenta );
-	public Color selectedColor = Color.GREEN;
-	public Color deselectedColor = Color.MAGENTA;
+	public static final Color DEFAULT_SELECTED_COLOR = Color.GREEN;
+	public static final Color DEFAULT_DESELECTED_COLOR = Color.MAGENTA;
+	public static final Color3f DEFAULT_SELECTED_COLOR3F = new Color3f(Color.GREEN);
+	public static final Color3f DEFAULT_DESELECTED_COLOR3F = new Color3f(Color.MAGENTA);
+	public Color3f selectedColor3f = DEFAULT_SELECTED_COLOR3F;
+	public Color3f deselectedColor3f = DEFAULT_DESELECTED_COLOR3F;
+	public Color selectedColor = DEFAULT_SELECTED_COLOR;
+	public Color deselectedColor = DEFAULT_DESELECTED_COLOR;
 	public boolean displayCustomPathColors = true;
 
 	public ImagePlus colorImage;

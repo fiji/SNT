@@ -1382,20 +1382,23 @@ public class NeuriteTracerResultsDialog
 		} else if (source == addPathsToManagerMenuItem && !noPathsError()) {
 
 			RoiManager rm = RoiManager.getInstance2();
+			boolean existingROIs = (rm != null && rm.getCount() > 0);
+			GenericDialog gd = new GenericDialog("Paths to Manager");
+			if (existingROIs)
+				gd.addCheckbox("Delete existing ROIs in the ROI Manager list?", true);
+			gd.addCheckbox("Color code ROIs by SWC type", true);
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return;
+
 			if (rm == null)
 				rm = new RoiManager();
+			if (existingROIs && gd.getNextBoolean())
+				rm.reset();
 			if (plugin.singleSlice)
 				Prefs.showAllSliceOnly = false;
-			if (rm.getCount() > 0) {
-				final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Reset Manager?",
-						"Delete existing ROIs in the ROI Manager list?");
-				if (d.cancelPressed())
-					return;
-				else if (d.yesPressed())
-					rm.reset();
-			}
 			rm.setEditMode(plugin.getImagePlus(), false);
-			plugin.addPathsToManager(rm);
+			plugin.addPathsToManager(rm, gd.getNextBoolean());
 			rm.setEditMode(plugin.getImagePlus(), true);
 			rm.runCommand("show all without labels");
 

@@ -64,6 +64,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.scijava.java3d.View;
+import org.scijava.vecmath.Color3f;
+
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -2379,14 +2381,18 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if( p.fittedVersionOf != null )
 				continue;
 
-			boolean selected = p.getSelected();
+			final boolean selected = p.getSelected();
+			final boolean customColor = (p.hasCustomColor && plugin.displayCustomPathColors);
+			Color3f color3f = plugin.deselectedColor3f;
+			if (selected)
+				color3f = plugin.selectedColor3f;
+			else if (customColor)
+				color3f = new Color3f(p.getColor());
 
-			p.updateContent3D(
-				plugin.univ, // The appropriate 3D universe
-				(selected || ! showOnlySelectedPaths), // Visible at all?
-				plugin.getPaths3DDisplay(), // How to display?
-				selected ? plugin.selectedColor3f : plugin.deselectedColor3f,
-				plugin.colorImage ); // Colour?
+			p.updateContent3D(plugin.univ, // The appropriate 3D universe
+					(selected || !showOnlySelectedPaths), // Visible at all?
+					plugin.getPaths3DDisplay(), // How to display?
+					color3f, plugin.colorImage); // Colour?
 		}
 	}
 

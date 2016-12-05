@@ -1561,6 +1561,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	public Color3f deselectedColor3f = new Color3f( Color.magenta );
 	public Color selectedColor = Color.GREEN;
 	public Color deselectedColor = Color.MAGENTA;
+	public boolean displayCustomPathColors = true;
 
 	public ImagePlus colorImage;
 

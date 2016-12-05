@@ -46,8 +46,10 @@ import ij3d.Image3DUniverse;
 
 import java.applet.Applet;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.image.IndexColorModel;
 import java.io.File;
+import java.util.Vector;
 import java.util.concurrent.Callable;
 
 import org.scijava.vecmath.Color3f;
@@ -66,6 +68,12 @@ import util.RGB_to_Luminance;
 
 public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 		implements PlugIn {
+
+	private boolean forceGrayscale;
+	private boolean look4oofFile;
+	private boolean look4tubesFile = true;
+
+
 	public void run( String ignoredArguments ) {
 
 		/* The useful macro options are:
@@ -171,24 +179,106 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 					spacing_units = "" + calibration.getUnit();
 			}
 
-			pathAndFillManager = new PathAndFillManager(this);
+			single_pane = singleSlice;
+			look4oofFile = !singleSlice;
 
-			file_info = currentImage.getOriginalFileInfo();
+			GenericDialog gd = new GenericDialog("Simple Neurite Tracer (v" +
+					PLUGIN_VERSION + ")");
+			gd.setInsets(0, 0, 0);
+			final Font font = new Font("SansSerif", Font.BOLD, 12);
+			gd.setInsets(0, 0, 0);
+			gd.addMessage("Tracing of "+ currentImage.getTitle() + (singleSlice ? " (2D):" :" (3D):"), font);
+			gd.addCheckbox("Enforce non-inverted grayscale LUT", forceGrayscale);
 
-			// Look for a possible .oof.nrrd file:
-			if (file_info != null) {
-				String beforeExtension = stripExtension(file_info.fileName);
-				if (beforeExtension != null) {
-					File possibleOOFFile = new File(file_info.directory,
-									beforeExtension + ".oof.nrrd");
-					if (possibleOOFFile.exists() && ! singleSlice) {
-						oofFile = possibleOOFFile;
+			String extraMemoryNeeded3P = " (will use an extra: ";
+			int bitDepth = currentImage.getBitDepth();
+			int byteDepth = bitDepth == 24 ? 4 : bitDepth / 8;
+			long megaBytesExtra3P = ( ((long)width) * height * depth * byteDepth * 2 ) / (1024 * 1024);
+			extraMemoryNeeded3P += megaBytesExtra3P + "MiB of memory)";
+			gd.addCheckbox("Use_three_pane view? "+extraMemoryNeeded3P, !single_pane);
+			gd.addCheckbox("Look_for_Tubeness \".tubes.tif\" pre-processed file?", look4tubesFile);
+			gd.addCheckbox("Look_for_Tubular_Geodesics \".oof.ext\" pre-processed file?", look4oofFile);
+
+			boolean showed3DViewerOption = false;
+			Image3DUniverse universeToUse = null;
+			String [] choices3DViewer = null;
+			int defaultResamplingFactor = 1;
+			int resamplingFactor = 1;
+
+			if (!singleSlice) {	
+				boolean java3DAvailable = haveJava3D();
+				defaultResamplingFactor = guessResamplingFactor();
+				resamplingFactor = defaultResamplingFactor;
+				if( !java3DAvailable ) {
+					String message = "(Java3D doesn't seem to be available, so no 3D viewer option is available.)";
+					System.out.println(message);
+					gd.addMessage(message);
+				} else if( currentImage.getBitDepth() != 8 ) {
+					String message = "(3D viewer option is only currently available for 8 bit images)";
+					System.out.println(message);
+					gd.addMessage(message);
+				} else {
+					showed3DViewerOption = true;
+					choices3DViewer = new String[Image3DUniverse.universes.size()+2];
+					String no3DViewerString = "No 3D view";
+					String useNewString = "Create New 3D Viewer";
+					choices3DViewer[choices3DViewer.length-2] = useNewString;
+					choices3DViewer[choices3DViewer.length-1] = no3DViewerString;
+					for( int i = 0; i < choices3DViewer.length - 2; ++i ) {
+						String contentsString = Image3DUniverse.universes.get(i).allContentsString();
+						String shortContentsString;
+						if( contentsString.length() == 0 )
+							shortContentsString = "[Empty]";
+						else
+							shortContentsString = contentsString.substring(0,Math.min(40,contentsString.length()-1));
+						choices3DViewer[i] = "3D viewer ["+i+"] containing " + shortContentsString;
 					}
+					gd.addMessage(""); //spacer
+					gd.addChoice( "Choice of 3D Viewer:", choices3DViewer, single_pane?no3DViewerString:useNewString );
+					gd.addNumericField( "Resampling factor:", defaultResamplingFactor, 0, 3, "(can be left at the default)");
+				}
+			}
+			// Disable options not suitable to 2D images
+			final Vector<?> cbxs = gd.getCheckboxes();
+			((java.awt.Checkbox) cbxs.get(1)).setEnabled(!singleSlice); // three pane
+			((java.awt.Checkbox) cbxs.get(3)).setEnabled(!singleSlice); // tubular geodesics
+
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return;
+
+			forceGrayscale = gd.getNextBoolean();
+			single_pane = !gd.getNextBoolean();
+			look4tubesFile = gd.getNextBoolean();
+			look4oofFile = gd.getNextBoolean();
+
+			if(!singleSlice && showed3DViewerOption ) {
+				String chosenViewer = gd.getNextChoice();
+				int chosenIndex;
+				for( chosenIndex = 0; chosenIndex < choices3DViewer.length; ++chosenIndex )
+					if( choices3DViewer[chosenIndex].equals(chosenViewer) )
+						break;
+				if( chosenIndex == choices3DViewer.length - 2 ) {
+					use3DViewer = true;
+					universeToUse = null;
+				} else if( chosenIndex == choices3DViewer.length - 1 ) {
+					use3DViewer = false;
+					universeToUse = null;
+				} else {
+					use3DViewer = true;
+					universeToUse = Image3DUniverse.universes.get(chosenIndex);;
+				}
+				double rawResamplingFactor = gd.getNextNumber();
+				resamplingFactor = (int)Math.round(rawResamplingFactor);
+				if( resamplingFactor < 1 ) {
+					IJ.error("The resampling factor "+rawResamplingFactor+" was invalid - \n"+
+							"using the default of "+defaultResamplingFactor+" instead.");
+					resamplingFactor = defaultResamplingFactor;
 				}
 			}
 
 			// Turn it grey, since I find that helpful:
-			{
+			if (forceGrayscale) {
 				ImageProcessor imageProcessor = currentImage.getProcessor();
 				byte [] reds = new byte[256];
 				byte [] greens = new byte[256];
@@ -205,7 +295,22 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				currentImage.updateAndRepaintWindow();
 			}
 
-			if( file_info != null ) {
+			pathAndFillManager = new PathAndFillManager(this);
+			file_info = currentImage.getOriginalFileInfo();
+
+			// Look for a possible .oof.nrrd file:
+			if (!singleSlice && look4oofFile && file_info != null) {
+				String beforeExtension = stripExtension(file_info.fileName);
+				if (beforeExtension != null) {
+					File possibleOOFFile = new File(file_info.directory,
+									beforeExtension + ".oof.nrrd");
+					if (possibleOOFFile.exists()) {
+						oofFile = possibleOOFFile;
+					}
+				}
+			}
+
+			if( look4tubesFile && file_info != null ) {
 				String originalFileName=file_info.fileName;
 				if (verbose) System.out.println("originalFileName was: "+originalFileName);
 				if( originalFileName != null ) {
@@ -246,87 +351,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 								}
 							}
 						}
-					}
-				}
-			}
-
-			single_pane = true;
-			Image3DUniverse universeToUse = null;
-			String [] choices3DViewer = null;;
-			int defaultResamplingFactor = guessResamplingFactor();
-			int resamplingFactor = defaultResamplingFactor;
-
-			if( ! singleSlice ) {
-				boolean java3DAvailable = haveJava3D();
-				boolean showed3DViewerOption = false;
-
-				GenericDialog gd = new GenericDialog("Simple Neurite Tracer (v" +
-								     PLUGIN_VERSION + ")");
-				gd.addMessage("Tracing the image: "+currentImage.getTitle());
-				String extraMemoryNeeded = " (will use an extra: ";
-				int bitDepth = currentImage.getBitDepth();
-				int byteDepth = bitDepth == 24 ? 4 : bitDepth / 8;
-				long megaBytesExtra = ( ((long)width) * height * depth * byteDepth * 2 ) / (1024 * 1024);
-				extraMemoryNeeded += megaBytesExtra + "MiB of memory)";
-
-				gd.addCheckbox("Use_three_pane view?"+extraMemoryNeeded, false);
-
-				if( ! java3DAvailable ) {
-					String message = "(Java3D classes don't seem to be available, so no 3D viewer option is available.)";
-					System.out.println(message);
-					gd.addMessage(message);
-				} else if( currentImage.getBitDepth() != 8 ) {
-					String message = "(3D viewer option is only currently available for 8 bit images)";
-					System.out.println(message);
-					gd.addMessage(message);
-				} else {
-					showed3DViewerOption = true;
-					choices3DViewer = new String[Image3DUniverse.universes.size()+2];
-					String no3DViewerString = "No 3D view";
-					String useNewString = "Create New 3D Viewer";
-					choices3DViewer[choices3DViewer.length-2] = useNewString;
-					choices3DViewer[choices3DViewer.length-1] = no3DViewerString;
-					for( int i = 0; i < choices3DViewer.length - 2; ++i ) {
-						String contentsString = Image3DUniverse.universes.get(i).allContentsString();
-						String shortContentsString;
-						if( contentsString.length() == 0 )
-							shortContentsString = "[Empty]";
-						else
-							shortContentsString = contentsString.substring(0,Math.min(40,contentsString.length()-1));
-						choices3DViewer[i] = "Use 3D viewer ["+i+"] containing " + shortContentsString;
-					}
-					gd.addChoice( "Choice of 3D Viewer:", choices3DViewer, useNewString );
-					gd.addMessage( "Advanced option (can be left at the default):");
-					gd.addNumericField( "        Resampling factor:", defaultResamplingFactor, 0 );
-				}
-
-				gd.showDialog();
-				if (gd.wasCanceled())
-					return;
-
-				single_pane = ! gd.getNextBoolean();
-				if( showed3DViewerOption ) {
-					String chosenViewer = gd.getNextChoice();
-					int chosenIndex;
-					for( chosenIndex = 0; chosenIndex < choices3DViewer.length; ++chosenIndex )
-						if( choices3DViewer[chosenIndex].equals(chosenViewer) )
-							break;
-					if( chosenIndex == choices3DViewer.length - 2 ) {
-						use3DViewer = true;
-						universeToUse = null;
-					} else if( chosenIndex == choices3DViewer.length - 1 ) {
-						use3DViewer = false;
-						universeToUse = null;
-					} else {
-						use3DViewer = true;
-						universeToUse = Image3DUniverse.universes.get(chosenIndex);;
-					}
-					double rawResamplingFactor = gd.getNextNumber();
-					resamplingFactor = (int)Math.round(rawResamplingFactor);
-					if( resamplingFactor < 1 ) {
-						IJ.error("The resampling factor "+rawResamplingFactor+" was invalid - \n"+
-							 "using the default of "+defaultResamplingFactor+" instead.");
-						resamplingFactor = defaultResamplingFactor;
 					}
 				}
 			}

@@ -668,10 +668,18 @@ public class Path implements Comparable<Path> {
 	}
 
 	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, boolean drawDiameter ) {
-		drawPathAsPoints( canvas, g, c, plane, drawDiameter, 0, -1 );
+		drawPathAsPoints( canvas, g, c, plane, false, drawDiameter, 0, -1);
+	}
+
+	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, boolean highContrast, boolean drawDiameter ) {
+		drawPathAsPoints( canvas, g, c, plane, highContrast, drawDiameter, 0, -1);
 	}
 
 	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, boolean drawDiameter, int slice, int either_side ) {
+		drawPathAsPoints( canvas, g, c, plane, false, drawDiameter, slice, either_side);
+	}
+
+	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, boolean highContrast, boolean drawDiameter, int slice, int either_side ) {
 
 		/* In addition, if this is a start or end point we
 		   want to represent that with a circle or a square
@@ -825,25 +833,102 @@ public class Path implements Comparable<Path> {
 			if( ((i == 0) && (realStartJoins == null)) ||
 			    ((i == points - 1) && (realEndJoins == null)) ) {
 				// Then draw it as a rectangle...
-				g.fillRect( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
+				fillRect(g, c, x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, highContrast);
+
 			} else if( ((i == 0) && (realStartJoins != null)) ||
 				   ((i == points - 1) && (realEndJoins != null)) ) {
 				// The draw it as an oval...
-				g.fillOval( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
+				fillOval(g, c, x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, highContrast);
 			} else {
 				// Just draw normally...
-				g.fillRect( x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, spotExtra );
+				fillRect(g,c, x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, highContrast );
 			}
 		}
 
 	}
-	public void drawPathAsPoints(final Overlay overlay, final java.awt.Color c) {
-		drawPathAsPoints(overlay, c, ThreePanes.XY_PLANE);
+
+	private void fillOval(final Graphics g, final Color gColor, final int x, final int y, int dim,
+			final boolean highContrast) {
+		if (highContrast) {
+			if (dim < 4)
+				dim = 4;
+			g.fillOval(x, y, dim, dim);
+			g.setColor(Color.BLACK);
+			g.drawOval(x+1, y+1, dim - 4, dim - 4);
+			g.setColor(Color.WHITE);
+			g.drawOval(x+2, y+2, dim - 4, dim - 4);
+			g.setColor(gColor);
+		} else {
+			g.fillOval(x, y, dim, dim);
+		}
 	}
 
-	public void drawPathAsPoints(final Overlay overlay, final java.awt.Color c, final int plane) {
+	private void fillRect(final Graphics g, final Color gColor, final int x, final int y, int dim,
+			final boolean highContrast) {
+		if (highContrast) {
+			if (dim < 4)
+				dim = 4;
+			g.fillRect(x, y, dim, dim);
+			g.setColor(Color.BLACK);
+			g.drawRect(x+1, y+1, dim - 4, dim - 4);
+			g.setColor(Color.WHITE);
+			g.drawRect(x+2, y+2, dim - 4, dim - 4);
+			g.setColor(gColor);
+		} else {
+			g.fillRect(x, y, dim, dim);
+		}
+	}
 
-		overlay.setStrokeColor(c);
+	/* Color definitions */
+	protected Color color;
+	protected Color3f realColor;
+	protected boolean hasCustomColor = false;
+
+	public Color getColor() {
+		return color;
+	}
+
+	public void setColor(Color color) {
+		this.color = color;
+		hasCustomColor = color != null;
+	}
+
+	public void setColorBySWCtype() {
+		setColor(getSWCcolor());
+	}
+
+	public boolean hasCustomColor() {
+		return hasCustomColor && color != null;
+	}
+
+	public Color getSWCcolor() {
+		switch (swcType) {
+		case Path.SWC_SOMA:
+			return Color.BLUE;
+		case Path.SWC_DENDRITE:
+			return Color.GREEN;
+		case Path.SWC_APICAL_DENDRITE:
+			return Color.CYAN;
+		case Path.SWC_AXON:
+			return Color.RED;
+		case Path.SWC_FORK_POINT:
+			return Color.ORANGE;
+		case Path.SWC_END_POINT:
+			return Color.PINK;
+		case Path.SWC_CUSTOM:
+			return Color.YELLOW;
+		case Path.SWC_UNDEFINED:
+		default:
+			return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
+		}
+	}
+
+	public void drawPathAsPoints(final Overlay overlay) {
+		drawPathAsPoints(overlay, ThreePanes.XY_PLANE);
+	}
+
+	public void drawPathAsPoints(final Overlay overlay, final int plane) {
+
 		FloatPolygon polygon = new FloatPolygon();
 		int current_roi_slice = Integer.MIN_VALUE;
 		int roi_identifier = 1;
@@ -903,6 +988,7 @@ public class Path implements Comparable<Path> {
 			polyline.enableSubPixelResolution();
 			// polyline.fitSplineForStraightening();
 			polyline.setName(String.format("Path%04d-%04d-Z%d", id, roi_id, z_position));
+			polyline.setStrokeColor(getColor());
 			polyline.setPosition(z_position + 1); // index 1
 			overlay.add(polyline);
 		}
@@ -2287,8 +2373,6 @@ public class Path implements Comparable<Path> {
 			throw new RuntimeException("In addTo3DViewer, Color can no longer be null");
 		addTo3DViewer(univ, new Color3f(c), colorImage);
 	}
-
-	protected Color3f realColor;
 
 	synchronized public void addTo3DViewer(Image3DUniverse univ, Color3f c, ImagePlus colorImage ) {
 		if( c == null )

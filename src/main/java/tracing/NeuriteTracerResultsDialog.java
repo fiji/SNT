@@ -181,6 +181,7 @@ public class NeuriteTracerResultsDialog
 
 	protected PathColorsCanvas pathColorsCanvas;
 
+	protected JCheckBox enforceDefaultColors;
 	protected JComboBox colorImageChoice;
 	protected String noColorImageString = "[None]";
 	protected ImagePlus currentColorImage;
@@ -990,6 +991,8 @@ public class NeuriteTracerResultsDialog
 
 			++ c.gridy;
 			getContentPane().add(viewOptionsPanel,c);
+			enforceDefaultColors = new JCheckBox("Enforce default colors (ignore customizations)");
+			enforceDefaultColors.addItemListener( this );
 		}
 
 		{ /* Add the panel with other options - preprocessing and the view of paths */
@@ -1593,9 +1596,16 @@ public class NeuriteTracerResultsDialog
 
 		Object source = e.getSource();
 
-		if( source == viewPathChoice ) {
+		if( source == enforceDefaultColors ) {
+
+			plugin.displayCustomPathColors = !enforceDefaultColors.isSelected();
+			plugin.repaintAllPanes();
+			plugin.update3DViewerContents();
+
+		} else if( source == viewPathChoice ) {
 
 			plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
+			nearbyField.setEnabled(nearbySlices());
 
 		} else if( source == useTubularGeodesics ) {
 

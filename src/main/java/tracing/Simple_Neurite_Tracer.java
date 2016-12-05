@@ -52,9 +52,10 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.StackConverter;
 import ij3d.Content;
+import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
 import util.BatchOpener;
-import util.RGB_to_Luminance;
+import util.RGBToLuminance;
 
 /* Note on terminology:
 
@@ -65,102 +66,98 @@ import util.RGB_to_Luminance;
 
  */
 
-public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
-		implements PlugIn {
+public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn {
 
 	private boolean forceGrayscale;
 	private boolean look4oofFile;
 	private boolean look4tubesFile = true;
 
+	@Override
+	public void run(final String ignoredArguments) {
 
-	public void run( String ignoredArguments ) {
+		/*
+		 * The useful macro options are:
+		 *
+		 * imagefilename=<FILENAME> tracesfilename=<FILENAME> use_3d
+		 * use_three_pane
+		 */
 
-		/* The useful macro options are:
-
-		     imagefilename=<FILENAME>
-		     tracesfilename=<FILENAME>
-		     use_3d
-		     use_three_pane
-		*/
-
-		String macroOptions = Macro.getOptions();
+		final String macroOptions = Macro.getOptions();
 
 		String macroImageFilename = null;
 		String macroTracesFilename = null;
 
-		if( macroOptions != null ) {
-			macroImageFilename = Macro.getValue(
-				macroOptions, "imagefilename", null );
-			macroTracesFilename = Macro.getValue(
-				macroOptions, "tracesfilename", null );
+		if (macroOptions != null) {
+			macroImageFilename = Macro.getValue(macroOptions, "imagefilename", null);
+			macroTracesFilename = Macro.getValue(macroOptions, "tracesfilename", null);
 		}
 
 		final Applet applet = IJ.getApplet();
-		if( applet != null ) {
-			archiveClient = new ArchiveClient( applet, macroOptions );
+		if (applet != null) {
+			archiveClient = new ArchiveClient(applet, macroOptions);
 		}
 
-		if( archiveClient != null )
+		if (archiveClient != null)
 			archiveClient.closeChannelsWithTag("nc82");
 
 		try {
 
 			ImagePlus currentImage = null;
-			if( macroImageFilename == null ) {
+			if (macroImageFilename == null) {
 				currentImage = IJ.getImage();
 			} else {
-				currentImage = BatchOpener.openFirstChannel( macroImageFilename );
-				if( currentImage == null ) {
-					IJ.error("Opening the image file specified in the macro parameters ("+macroImageFilename+") failed.");
+				currentImage = BatchOpener.openFirstChannel(macroImageFilename);
+				if (currentImage == null) {
+					IJ.error("Opening the image file specified in the macro parameters (" + macroImageFilename
+							+ ") failed.");
 					return;
 				}
 				currentImage.show();
 			}
 
-			if( currentImage == null ) {
-				IJ.error( "There's no current image to trace." );
+			if (currentImage == null) {
+				IJ.error("There's no current image to trace.");
 				return;
 			}
 
 			// Check this isn't a composite image or hyperstack:
-			if( currentImage.getNFrames() > 1 ) {
+			if (currentImage.getNFrames() > 1) {
 				IJ.error("This plugin only works with single images, not multiple images in a time series.");
 				return;
 			}
 
-			if( currentImage.getNChannels() > 1 ) {
-				IJ.error("This plugin only works with single channel images: use 'Image>Color>Split Channels' and choose a channel");
+			if (currentImage.getNChannels() > 1) {
+				IJ.error(
+						"This plugin only works with single channel images: use 'Image>Color>Split Channels' and choose a channel");
 				return;
 			}
 
-			if( currentImage.getStackSize() == 1 )
+			if (currentImage.getStackSize() == 1)
 				singleSlice = true;
 
 			imageType = currentImage.getType();
 
-			if( imageType == ImagePlus.COLOR_RGB ) {
-				YesNoCancelDialog queryRGB = new YesNoCancelDialog( IJ.getInstance(),
-										    "Convert RGB image",
-										    "Convert this RGB image to an 8 bit luminance image first?\n" +
-										    "(If you want to trace a particular channel instead, cancel and \"Split Channels\" first.)" );
+			if (imageType == ImagePlus.COLOR_RGB) {
+				final YesNoCancelDialog queryRGB = new YesNoCancelDialog(IJ.getInstance(), "Convert RGB image",
+						"Convert this RGB image to an 8 bit luminance image first?\n"
+								+ "(If you want to trace a particular channel instead, cancel and \"Split Channels\" first.)");
 
-				if( ! queryRGB.yesPressed() ) {
+				if (!queryRGB.yesPressed()) {
 					return;
 				}
 
-				currentImage = RGB_to_Luminance.convertToLuminance(currentImage);
+				currentImage = RGBToLuminance.convertToLuminance(currentImage);
 				currentImage.show();
 				imageType = currentImage.getType();
-			} else if( imageType == ImagePlus.GRAY16 ) {
-				YesNoCancelDialog query16to8 = new YesNoCancelDialog( IJ.getInstance(),
-										      "Convert 16 bit image",
-										      "This image is 16-bit. You can still trace this using 16-bit values,\n"+
-										      "but if you want to use the 3D viewer, you must convert it to\n"+
-										      "8-bit first.  Convert stack to 8 bit?");
-				if( query16to8.yesPressed() ) {
+			} else if (imageType == ImagePlus.GRAY16) {
+				final YesNoCancelDialog query16to8 = new YesNoCancelDialog(IJ.getInstance(), "Convert 16 bit image",
+						"This image is 16-bit. You can still trace this using 16-bit values,\n"
+								+ "but if you want to use the 3D viewer, you must convert it to\n"
+								+ "8-bit first.  Convert stack to 8 bit?");
+				if (query16to8.yesPressed()) {
 					new StackConverter(currentImage).convertToGray8();
 					imageType = currentImage.getType();
-				} else if( query16to8.cancelPressed() )
+				} else if (query16to8.cancelPressed())
 					return;
 			}
 
@@ -168,79 +165,83 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			height = currentImage.getHeight();
 			depth = currentImage.getStackSize();
 
-			Calibration calibration = currentImage.getCalibration();
-			if( calibration != null ) {
+			final Calibration calibration = currentImage.getCalibration();
+			if (calibration != null) {
 				x_spacing = calibration.pixelWidth;
 				y_spacing = calibration.pixelHeight;
 				z_spacing = calibration.pixelDepth;
 				spacing_units = calibration.getUnits();
-				if( spacing_units == null || spacing_units.length() == 0 )
+				if (spacing_units == null || spacing_units.length() == 0)
 					spacing_units = "" + calibration.getUnit();
 			}
 
 			single_pane = singleSlice;
 			look4oofFile = !singleSlice;
 
-			GenericDialog gd = new GenericDialog("Simple Neurite Tracer (v" +
-					PLUGIN_VERSION + ")");
+			final GenericDialog gd = new GenericDialog("Simple Neurite Tracer (v" + PLUGIN_VERSION + ")");
 			gd.setInsets(0, 0, 0);
 			final Font font = new Font("SansSerif", Font.BOLD, 12);
 			gd.setInsets(0, 0, 0);
-			gd.addMessage("Tracing of "+ currentImage.getTitle() + (singleSlice ? " (2D):" :" (3D):"), font);
+			gd.addMessage("Tracing of " + currentImage.getTitle() + (singleSlice ? " (2D):" : " (3D):"), font);
 			gd.addCheckbox("Enforce non-inverted grayscale LUT", forceGrayscale);
 
 			String extraMemoryNeeded3P = " (will use an extra: ";
-			int bitDepth = currentImage.getBitDepth();
-			int byteDepth = bitDepth == 24 ? 4 : bitDepth / 8;
-			long megaBytesExtra3P = ( ((long)width) * height * depth * byteDepth * 2 ) / (1024 * 1024);
+			final int bitDepth = currentImage.getBitDepth();
+			final int byteDepth = bitDepth == 24 ? 4 : bitDepth / 8;
+			final long megaBytesExtra3P = (((long) width) * height * depth * byteDepth * 2) / (1024 * 1024);
 			extraMemoryNeeded3P += megaBytesExtra3P + "MiB of memory)";
-			gd.addCheckbox("Use_three_pane view? "+extraMemoryNeeded3P, !single_pane);
+			gd.addCheckbox("Use_three_pane view? " + extraMemoryNeeded3P, !single_pane);
 			gd.addCheckbox("Look_for_Tubeness \".tubes.tif\" pre-processed file?", look4tubesFile);
 			gd.addCheckbox("Look_for_Tubular_Geodesics \".oof.ext\" pre-processed file?", look4oofFile);
 
 			boolean showed3DViewerOption = false;
 			Image3DUniverse universeToUse = null;
-			String [] choices3DViewer = null;
+			String[] choices3DViewer = null;
 			int defaultResamplingFactor = 1;
 			int resamplingFactor = 1;
 
-			if (!singleSlice) {	
-				boolean java3DAvailable = haveJava3D();
+			if (!singleSlice) {
+				final boolean java3DAvailable = haveJava3D();
 				defaultResamplingFactor = guessResamplingFactor();
 				resamplingFactor = defaultResamplingFactor;
-				if( !java3DAvailable ) {
-					String message = "(Java3D doesn't seem to be available, so no 3D viewer option is available.)";
+				if (!java3DAvailable) {
+					final String message = "(Java3D doesn't seem to be available, so no 3D viewer option is available.)";
 					System.out.println(message);
 					gd.addMessage(message);
-				} else if( currentImage.getBitDepth() != 8 ) {
-					String message = "(3D viewer option is only currently available for 8 bit images)";
+				} else if (currentImage.getBitDepth() != 8) {
+					final String message = "(3D viewer option is only currently available for 8 bit images)";
 					System.out.println(message);
 					gd.addMessage(message);
 				} else {
 					showed3DViewerOption = true;
-					choices3DViewer = new String[Image3DUniverse.universes.size()+2];
-					String no3DViewerString = "No 3D view";
-					String useNewString = "Create New 3D Viewer";
-					choices3DViewer[choices3DViewer.length-2] = useNewString;
-					choices3DViewer[choices3DViewer.length-1] = no3DViewerString;
-					for( int i = 0; i < choices3DViewer.length - 2; ++i ) {
-						String contentsString = Image3DUniverse.universes.get(i).allContentsString();
+					choices3DViewer = new String[Image3DUniverse.universes.size() + 2];
+					final String no3DViewerString = "No 3D view";
+					final String useNewString = "Create New 3D Viewer";
+					choices3DViewer[choices3DViewer.length - 2] = useNewString;
+					choices3DViewer[choices3DViewer.length - 1] = no3DViewerString;
+					for (int i = 0; i < choices3DViewer.length - 2; ++i) {
+						final String contentsString = Image3DUniverse.universes.get(i).allContentsString();
 						String shortContentsString;
-						if( contentsString.length() == 0 )
+						if (contentsString.length() == 0)
 							shortContentsString = "[Empty]";
 						else
-							shortContentsString = contentsString.substring(0,Math.min(40,contentsString.length()-1));
-						choices3DViewer[i] = "3D viewer ["+i+"] containing " + shortContentsString;
+							shortContentsString = contentsString.substring(0,
+									Math.min(40, contentsString.length() - 1));
+						choices3DViewer[i] = "3D viewer [" + i + "] containing " + shortContentsString;
 					}
-					gd.addMessage(""); //spacer
-					gd.addChoice( "Choice of 3D Viewer:", choices3DViewer, single_pane?no3DViewerString:useNewString );
-					gd.addNumericField( "Resampling factor:", defaultResamplingFactor, 0, 3, "(can be left at the default)");
+					gd.addMessage(""); // spacer
+					gd.addChoice("Choice of 3D Viewer:", choices3DViewer,
+							single_pane ? no3DViewerString : useNewString);
+					gd.addNumericField("Resampling factor:", defaultResamplingFactor, 0, 3,
+							"(can be left at the default)");
 				}
 			}
 			// Disable options not suitable to 2D images
 			final Vector<?> cbxs = gd.getCheckboxes();
-			((java.awt.Checkbox) cbxs.get(1)).setEnabled(!singleSlice); // three pane
-			((java.awt.Checkbox) cbxs.get(3)).setEnabled(!singleSlice); // tubular geodesics
+			((java.awt.Checkbox) cbxs.get(1)).setEnabled(!singleSlice); // three
+																		// pane
+			((java.awt.Checkbox) cbxs.get(3)).setEnabled(!singleSlice); // tubular
+																		// geodesics
 
 			gd.showDialog();
 			if (gd.wasCanceled())
@@ -251,46 +252,47 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			look4tubesFile = gd.getNextBoolean();
 			look4oofFile = gd.getNextBoolean();
 
-			if(!singleSlice && showed3DViewerOption ) {
-				String chosenViewer = gd.getNextChoice();
+			if (!singleSlice && showed3DViewerOption) {
+				final String chosenViewer = gd.getNextChoice();
 				int chosenIndex;
-				for( chosenIndex = 0; chosenIndex < choices3DViewer.length; ++chosenIndex )
-					if( choices3DViewer[chosenIndex].equals(chosenViewer) )
+				for (chosenIndex = 0; chosenIndex < choices3DViewer.length; ++chosenIndex)
+					if (choices3DViewer[chosenIndex].equals(chosenViewer))
 						break;
-				if( chosenIndex == choices3DViewer.length - 2 ) {
+				if (chosenIndex == choices3DViewer.length - 2) {
 					use3DViewer = true;
 					universeToUse = null;
-				} else if( chosenIndex == choices3DViewer.length - 1 ) {
+				} else if (chosenIndex == choices3DViewer.length - 1) {
 					use3DViewer = false;
 					universeToUse = null;
 				} else {
 					use3DViewer = true;
-					universeToUse = Image3DUniverse.universes.get(chosenIndex);;
+					universeToUse = Image3DUniverse.universes.get(chosenIndex);
+					;
 				}
-				double rawResamplingFactor = gd.getNextNumber();
-				resamplingFactor = (int)Math.round(rawResamplingFactor);
-				if( resamplingFactor < 1 ) {
-					IJ.error("The resampling factor "+rawResamplingFactor+" was invalid - \n"+
-							"using the default of "+defaultResamplingFactor+" instead.");
+				final double rawResamplingFactor = gd.getNextNumber();
+				resamplingFactor = (int) Math.round(rawResamplingFactor);
+				if (resamplingFactor < 1) {
+					IJ.error("The resampling factor " + rawResamplingFactor + " was invalid - \n"
+							+ "using the default of " + defaultResamplingFactor + " instead.");
 					resamplingFactor = defaultResamplingFactor;
 				}
 			}
 
 			// Turn it grey, since I find that helpful:
 			if (forceGrayscale) {
-				ImageProcessor imageProcessor = currentImage.getProcessor();
-				byte [] reds = new byte[256];
-				byte [] greens = new byte[256];
-				byte [] blues = new byte[256];
-				for( int i = 0; i < 256; ++i ) {
-					reds[i] = (byte)i;
-					greens[i] = (byte)i;
-					blues[i] = (byte)i;
+				final ImageProcessor imageProcessor = currentImage.getProcessor();
+				final byte[] reds = new byte[256];
+				final byte[] greens = new byte[256];
+				final byte[] blues = new byte[256];
+				for (int i = 0; i < 256; ++i) {
+					reds[i] = (byte) i;
+					greens[i] = (byte) i;
+					blues[i] = (byte) i;
 				}
-				IndexColorModel cm = new IndexColorModel(8, 256, reds, greens, blues);
-				imageProcessor.setColorModel( cm );
-				if( currentImage.getStackSize() > 1 )
-					currentImage.getStack().setColorModel( cm );
+				final IndexColorModel cm = new IndexColorModel(8, 256, reds, greens, blues);
+				imageProcessor.setColorModel(cm);
+				if (currentImage.getStackSize() > 1)
+					currentImage.getStack().setColorModel(cm);
 				currentImage.updateAndRepaintWindow();
 			}
 
@@ -299,54 +301,56 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 
 			// Look for a possible .oof.nrrd file:
 			if (!singleSlice && look4oofFile && file_info != null) {
-				String beforeExtension = stripExtension(file_info.fileName);
+				final String beforeExtension = stripExtension(file_info.fileName);
 				if (beforeExtension != null) {
-					File possibleOOFFile = new File(file_info.directory,
-									beforeExtension + ".oof.nrrd");
+					final File possibleOOFFile = new File(file_info.directory, beforeExtension + ".oof.nrrd");
 					if (possibleOOFFile.exists()) {
 						oofFile = possibleOOFFile;
 					}
 				}
 			}
 
-			if( look4tubesFile && file_info != null ) {
-				String originalFileName=file_info.fileName;
-				if (verbose) System.out.println("originalFileName was: "+originalFileName);
-				if( originalFileName != null ) {
-					int lastDot=originalFileName.lastIndexOf(".");
-					if( lastDot > 0 ) {
-						String tubesFileName =
-							stripExtension(originalFileName)+".tubes.tif";
+			if (look4tubesFile && file_info != null) {
+				final String originalFileName = file_info.fileName;
+				if (verbose)
+					System.out.println("originalFileName was: " + originalFileName);
+				if (originalFileName != null) {
+					final int lastDot = originalFileName.lastIndexOf(".");
+					if (lastDot > 0) {
+						final String tubesFileName = stripExtension(originalFileName) + ".tubes.tif";
 						ImagePlus tubenessImage = null;
-						File tubesFile=new File(file_info.directory,tubesFileName);
-						if (verbose) System.out.println("Testing for the existence of "+tubesFile.getAbsolutePath());
-						if( tubesFile.exists() ) {
-							long megaBytesExtra = ( ((long)width) * height * depth * 4 ) / (1024 * 1024);
-							String extraMemoryNeeded = megaBytesExtra + "MiB";
-							YesNoCancelDialog d = new YesNoCancelDialog( IJ.getInstance(),
-												     "Confirm",
-												     "A tubeness file ("+tubesFile.getName()+") exists.  Load this file?\n"+
-												     "(This would use an extra "+extraMemoryNeeded+" of memory.)");
-							if( d.cancelPressed() )
+						final File tubesFile = new File(file_info.directory, tubesFileName);
+						if (verbose)
+							System.out.println("Testing for the existence of " + tubesFile.getAbsolutePath());
+						if (tubesFile.exists()) {
+							final long megaBytesExtra = (((long) width) * height * depth * 4) / (1024 * 1024);
+							final String extraMemoryNeeded = megaBytesExtra + "MiB";
+							final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Confirm",
+									"A tubeness file (" + tubesFile.getName() + ") exists.  Load this file?\n"
+											+ "(This would use an extra " + extraMemoryNeeded + " of memory.)");
+							if (d.cancelPressed())
 								return;
-							else if( d.yesPressed() ) {
+							else if (d.yesPressed()) {
 								IJ.showStatus("Loading tubes file.");
-								tubenessImage=BatchOpener.openFirstChannel(tubesFile.getAbsolutePath());
-								if (verbose) System.out.println("Loaded the tubeness file");
-								if( tubenessImage == null ) {
-									IJ.error("Failed to load tubes image from "+tubesFile.getAbsolutePath()+" although it existed");
+								tubenessImage = BatchOpener.openFirstChannel(tubesFile.getAbsolutePath());
+								if (verbose)
+									System.out.println("Loaded the tubeness file");
+								if (tubenessImage == null) {
+									IJ.error("Failed to load tubes image from " + tubesFile.getAbsolutePath()
+											+ " although it existed");
 									return;
 								}
-								if( tubenessImage.getType() != ImagePlus.GRAY32 ) {
-									IJ.error("The tubeness file must be a 32 bit float image - "+tubesFile.getAbsolutePath()+" was not.");
+								if (tubenessImage.getType() != ImagePlus.GRAY32) {
+									IJ.error("The tubeness file must be a 32 bit float image - "
+											+ tubesFile.getAbsolutePath() + " was not.");
 									return;
 								}
-								int depth = tubenessImage.getStackSize();
-								ImageStack tubenessStack = tubenessImage.getStack();
+								final int depth = tubenessImage.getStackSize();
+								final ImageStack tubenessStack = tubenessImage.getStack();
 								tubeness = new float[depth][];
-								for( int z = 0; z < depth; ++z ) {
-									FloatProcessor fp = (FloatProcessor)tubenessStack.getProcessor( z + 1 );
-									tubeness[z] = (float[])fp.getPixels();
+								for (int z = 0; z < depth; ++z) {
+									final FloatProcessor fp = (FloatProcessor) tubenessStack.getProcessor(z + 1);
+									tubeness[z] = (float[]) fp.getPixels();
 								}
 							}
 						}
@@ -358,107 +362,104 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			initialize(currentImage);
 			xy.setOverlay(currentImageOverlay);
 
-			xy_tracer_canvas = (InteractiveTracerCanvas)xy_canvas;
-			xz_tracer_canvas = (InteractiveTracerCanvas)xz_canvas;
-			zy_tracer_canvas = (InteractiveTracerCanvas)zy_canvas;
+			xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;
+			xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
+			zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
 
 			setupTrace = true;
 			final Simple_Neurite_Tracer thisPlugin = this;
-			resultsDialog = SwingSafeResult.getResult( new Callable<NeuriteTracerResultsDialog>() {
+			resultsDialog = SwingSafeResult.getResult(new Callable<NeuriteTracerResultsDialog>() {
+				@Override
 				public NeuriteTracerResultsDialog call() {
-					return new NeuriteTracerResultsDialog( "Tracing for: " + xy.getShortTitle(),
-									       thisPlugin,
-									       applet != null );
+					return new NeuriteTracerResultsDialog("Tracing for: " + xy.getShortTitle(), thisPlugin,
+							applet != null);
 				}
 			});
 
-
-			/* FIXME: this could be changed to add
-			   'this', and move the small implementation
-			   out of NeuriteTracerResultsDialog into this
-			   class. */
+			/*
+			 * FIXME: this could be changed to add 'this', and move the small
+			 * implementation out of NeuriteTracerResultsDialog into this class.
+			 */
 			pathAndFillManager.addPathAndFillListener(this);
 
-			if( (x_spacing == 0.0) ||
-			    (y_spacing == 0.0) ||
-			    (z_spacing == 0.0) ) {
+			if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 
-				IJ.error( "One dimension of the calibration information was zero: (" +
-					  x_spacing + "," + y_spacing + "," + z_spacing + ")" );
+				IJ.error("One dimension of the calibration information was zero: (" + x_spacing + "," + y_spacing + ","
+						+ z_spacing + ")");
 				return;
 
 			}
 
 			{
-				ImageStack s = xy.getStack();
-				switch(imageType) {
+				final ImageStack s = xy.getStack();
+				switch (imageType) {
 				case ImagePlus.GRAY8:
 				case ImagePlus.COLOR_256:
 					slices_data_b = new byte[depth][];
-					for( int z = 0; z < depth; ++z )
-						slices_data_b[z] = (byte []) s.getPixels( z + 1 );
+					for (int z = 0; z < depth; ++z)
+						slices_data_b[z] = (byte[]) s.getPixels(z + 1);
 					stackMin = 0;
 					stackMax = 255;
 					break;
 				case ImagePlus.GRAY16:
 					slices_data_s = new short[depth][];
-					for( int z = 0; z < depth; ++z )
-						slices_data_s[z] = (short []) s.getPixels( z + 1 );
+					for (int z = 0; z < depth; ++z)
+						slices_data_s[z] = (short[]) s.getPixels(z + 1);
 					IJ.showStatus("Finding stack minimum / maximum");
-					for( int z = 0; z < depth; ++z ) {
-						for( int y = 0; y < height; ++y )
-							for( int x = 0; x < width; ++x ) {
-								short v = slices_data_s[z][y*width+x];
-								if( v < stackMin )
+					for (int z = 0; z < depth; ++z) {
+						for (int y = 0; y < height; ++y)
+							for (int x = 0; x < width; ++x) {
+								final short v = slices_data_s[z][y * width + x];
+								if (v < stackMin)
 									stackMin = v;
-								if( v > stackMax )
+								if (v > stackMax)
 									stackMax = v;
 							}
-						IJ.showProgress( z / (float)depth );
+						IJ.showProgress(z / (float) depth);
 					}
 					IJ.showProgress(1.0);
 					break;
 				case ImagePlus.GRAY32:
 					slices_data_f = new float[depth][];
-					for( int z = 0; z < depth; ++z )
-						slices_data_f[z] = (float []) s.getPixels( z + 1 );
+					for (int z = 0; z < depth; ++z)
+						slices_data_f[z] = (float[]) s.getPixels(z + 1);
 					IJ.showStatus("Finding stack minimum / maximum");
-					for( int z = 0; z < depth; ++z ) {
-						for( int y = 0; y < height; ++y )
-							for( int x = 0; x < width; ++x ) {
-								float v = slices_data_f[z][y*width+x];
-								if( v < stackMin )
+					for (int z = 0; z < depth; ++z) {
+						for (int y = 0; y < height; ++y)
+							for (int x = 0; x < width; ++x) {
+								final float v = slices_data_f[z][y * width + x];
+								if (v < stackMin)
 									stackMin = v;
-								if( v > stackMax )
+								if (v > stackMax)
 									stackMax = v;
 							}
-						IJ.showProgress( z / (float)depth );
+						IJ.showProgress(z / (float) depth);
 					}
 					IJ.showProgress(1.0);
 					break;
 				}
 			}
 
-			QueueJumpingKeyListener xy_listener = new QueueJumpingKeyListener( this, xy_tracer_canvas );
-			setAsFirstKeyListener( xy_tracer_canvas, xy_listener );
-			setAsFirstKeyListener( xy_window, xy_listener );
+			final QueueJumpingKeyListener xy_listener = new QueueJumpingKeyListener(this, xy_tracer_canvas);
+			setAsFirstKeyListener(xy_tracer_canvas, xy_listener);
+			setAsFirstKeyListener(xy_window, xy_listener);
 
-			if( ! single_pane ) {
+			if (!single_pane) {
 
-				QueueJumpingKeyListener xz_listener = new QueueJumpingKeyListener( this, xz_tracer_canvas );
-				setAsFirstKeyListener( xz_tracer_canvas, xz_listener );
-				setAsFirstKeyListener( xz_window, xz_listener );
+				final QueueJumpingKeyListener xz_listener = new QueueJumpingKeyListener(this, xz_tracer_canvas);
+				setAsFirstKeyListener(xz_tracer_canvas, xz_listener);
+				setAsFirstKeyListener(xz_window, xz_listener);
 
-				QueueJumpingKeyListener zy_listener = new QueueJumpingKeyListener( this, zy_tracer_canvas );
-				setAsFirstKeyListener( zy_tracer_canvas, zy_listener );
-				setAsFirstKeyListener( zy_window, zy_listener );
+				final QueueJumpingKeyListener zy_listener = new QueueJumpingKeyListener(this, zy_tracer_canvas);
+				setAsFirstKeyListener(zy_tracer_canvas, zy_listener);
+				setAsFirstKeyListener(zy_window, zy_listener);
 
 			}
 
-			if( use3DViewer ) {
+			if (use3DViewer) {
 
 				boolean reusing;
-				if( universeToUse == null ) {
+				if (universeToUse == null) {
 					reusing = false;
 					univ = new Image3DUniverse(512, 512);
 				} else {
@@ -467,40 +468,36 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				}
 				univ.setUseToFront(false);
 				univ.addUniverseListener(pathAndFillManager);
-				if( ! reusing ) {
+				if (!reusing) {
 					univ.show();
 					GUI.center(univ.getWindow());
 				}
-				boolean [] channels = { true, true, true };
+				final boolean[] channels = { true, true, true };
 
-				String title = "Image for tracing ["+currentImage.getTitle()+"]";
-				String contentName = univ.getSafeContentName( title );
+				final String title = "Image for tracing [" + currentImage.getTitle() + "]";
+				final String contentName = univ.getSafeContentName(title);
 				// univ.resetView();
-				Content c = univ.addContent(xy,
-							    new Color3f(Color.white),
-							    contentName,
-							    10, // threshold
-							    channels,
-							    resamplingFactor,
-							    Content.VOLUME);
+				final Content c = univ.addContent(xy, new Color3f(Color.white), contentName, 10, // threshold
+						channels, resamplingFactor, ContentConstants.VOLUME);
 				c.setLocked(true);
 				c.setTransparency(0.5f);
-				if( ! reusing )
+				if (!reusing)
 					univ.resetView();
 				univ.setAutoAdjustView(false);
 
-				PointSelectionBehavior psb = new PointSelectionBehavior(univ, this);
+				final PointSelectionBehavior psb = new PointSelectionBehavior(univ, this);
 				univ.addInteractiveBehavior(psb);
 
 			}
 
 			File tracesFileToLoad = null;
-			if( macroTracesFilename != null ) {
-				tracesFileToLoad = new File( macroTracesFilename );
-				if( tracesFileToLoad.exists() )
-					pathAndFillManager.loadGuessingType( tracesFileToLoad.getAbsolutePath() );
+			if (macroTracesFilename != null) {
+				tracesFileToLoad = new File(macroTracesFilename);
+				if (tracesFileToLoad.exists())
+					pathAndFillManager.loadGuessingType(tracesFileToLoad.getAbsolutePath());
 				else
-					IJ.error("The traces file suggested by the macro parameters ("+macroTracesFilename+") does not exist");
+					IJ.error("The traces file suggested by the macro parameters (" + macroTracesFilename
+							+ ") does not exist");
 			}
 
 			resultsDialog.displayOnStarting();
@@ -508,8 +505,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			resultsDialog.pw.toBack();
 
 		} finally {
-			IJ.getInstance().addKeyListener( IJ.getInstance() );
-
+			IJ.getInstance().addKeyListener(IJ.getInstance());
 
 		}
 	}

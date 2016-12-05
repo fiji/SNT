@@ -44,170 +44,176 @@ public class CreateTracingVolume_ implements PlugIn {
 
 	static final boolean verbose = SimpleNeuriteTracer.verbose;
 
-        static final int NONE=0;
-        static final int EB=9;
-        static final int NOD=10;
-        static final int FB=11;
-        static final int PB=12;
+	static final int NONE = 0;
+	static final int EB = 9;
+	static final int NOD = 10;
+	static final int FB = 11;
+	static final int PB = 12;
 
-        public void run(String arg) {
+	@Override
+	public void run(final String arg) {
 
-                // - take our big template image
-                // - map that to the labelled standard brain image
-                // - create a new image stack the same size as the big template
-                // - go through each pixel in the template - if it maps to one in one of the central complex region, include it with the right colour
-                // - set calibration on new image
+		// - take our big template image
+		// - map that to the labelled standard brain image
+		// - create a new image stack the same size as the big template
+		// - go through each pixel in the template - if it maps to one in one of
+		// the central complex region, include it with the right colour
+		// - set calibration on new image
 
+		/*
+		 * changes: take our random image with point and trace labellings map
+		 * that to the labelled standard brain image work out double the size of
+		 * the standard brain image go through each pixel in the standard brain
+		 * image, colouring it with the
+		 *
+		 */
 
-		/* changes:
-		   take our random image with point and trace labellings
-		   map that to the labelled standard brain image
-		   work out double the size of the standard brain image
-		   go through each pixel in the standard brain image, colouring it with the
+		final String standardBrainFileName = "/media/WD USB 2/standard-brain/data/vib-drosophila/CantonM43c.grey";
+		final String standardBrainLabelsFileName = "/media/WD USB 2/standard-brain/data/vib-drosophila/CantonM43c.labels";
 
-		*/
+		final FileAndChannel standardBrainFC = new FileAndChannel(standardBrainFileName, 0);
 
-                String standardBrainFileName="/media/WD USB 2/standard-brain/data/vib-drosophila/CantonM43c.grey";
-                String standardBrainLabelsFileName="/media/WD USB 2/standard-brain/data/vib-drosophila/CantonM43c.labels";
+		final String realImageFileName = "/media/WD USB 2/corpus/central-complex/c061AK.lsm";
 
-                FileAndChannel standardBrainFC=new FileAndChannel(standardBrainFileName,0);
-
-                String realImageFileName="/media/WD USB 2/corpus/central-complex/c061AK.lsm";
-
-                FileAndChannel realImageFC=new FileAndChannel(realImageFileName,0);
-		String tracesFileName = realImageFileName + ".traces";
+		final FileAndChannel realImageFC = new FileAndChannel(realImageFileName, 0);
+		final String tracesFileName = realImageFileName + ".traces";
 
 		// ------------------------------------------------------------------------
 
-		PathAndFillManager manager=new PathAndFillManager();
+		final PathAndFillManager manager = new PathAndFillManager();
 		manager.loadGuessingType(tracesFileName);
 		// FIXME: this will get too many paths:
-		ArrayList< Path > allPaths=manager.getAllPaths();
+		final ArrayList<Path> allPaths = manager.getAllPaths();
 
-                Bookstein_From_Landmarks matcher=new Bookstein_From_Landmarks();
-                matcher.loadImages(standardBrainFC,realImageFC);
+		final Bookstein_From_Landmarks matcher = new Bookstein_From_Landmarks();
+		matcher.loadImages(standardBrainFC, realImageFC);
 		matcher.generateTransformation();
 
-		ImagePlus standardBrain=matcher.getTemplate();
+		final ImagePlus standardBrain = matcher.getTemplate();
 
-		double scaleStandard = 1;
+		final double scaleStandard = 1;
 
-                int newWidth = (int)( standardBrain.getWidth() * scaleStandard );
-                int newHeight = (int)( standardBrain.getHeight() * scaleStandard );
-                int newDepth = (int)( standardBrain.getStackSize() * scaleStandard );
+		final int newWidth = (int) (standardBrain.getWidth() * scaleStandard);
+		final int newHeight = (int) (standardBrain.getHeight() * scaleStandard);
+		final int newDepth = (int) (standardBrain.getStackSize() * scaleStandard);
 
-                ImagePlus labels;
-                {
-                        ImagePlus[] tmp=BatchOpener.open(standardBrainLabelsFileName);
-                        labels=tmp[0];
-                }
-                if (verbose) System.out.println("   labels were: "+labels);
+		ImagePlus labels;
+		{
+			final ImagePlus[] tmp = BatchOpener.open(standardBrainLabelsFileName);
+			labels = tmp[0];
+		}
+		if (verbose)
+			System.out.println("   labels were: " + labels);
 
 		// need to get the AmiraParameters object for that image...
 
-		AmiraParameters parameters = new AmiraParameters(labels);
+		final AmiraParameters parameters = new AmiraParameters(labels);
 
-		int materials = parameters.getMaterialCount();
+		final int materials = parameters.getMaterialCount();
 
-		int redValues[] = new int[materials];
-		int greenValues[] = new int[materials];
-		int blueValues[] = new int[materials];
+		final int redValues[] = new int[materials];
+		final int greenValues[] = new int[materials];
+		final int blueValues[] = new int[materials];
 
-		for( int i=0; i < materials; i++ ) {
+		for (int i = 0; i < materials; i++) {
 
-			double[] c = parameters.getMaterialColor(i);
+			final double[] c = parameters.getMaterialColor(i);
 
-			redValues[i] = (int)(255*c[0]);
-			greenValues[i] = (int)(255*c[1]);
-			blueValues[i] = (int)(255*c[2]);
+			redValues[i] = (int) (255 * c[0]);
+			greenValues[i] = (int) (255 * c[1]);
+			blueValues[i] = (int) (255 * c[2]);
 		}
 
-                ImageStack labelStack=labels.getStack();
+		final ImageStack labelStack = labels.getStack();
 
-                int templateWidth=labelStack.getWidth();
-                int templateDepth=labelStack.getSize();
+		final int templateWidth = labelStack.getWidth();
+		final int templateDepth = labelStack.getSize();
 
-                if (verbose) System.out.println("About to create stack of size: "+newWidth+","+newHeight+","+newDepth);
+		if (verbose)
+			System.out.println("About to create stack of size: " + newWidth + "," + newHeight + "," + newDepth);
 
-                ImageStack newStack=new ImageStack(newWidth,newHeight);
+		final ImageStack newStack = new ImageStack(newWidth, newHeight);
 
-                int x, y, z;
+		int x, y, z;
 
-                byte[][] label_data=new byte[templateDepth][];
-                for( z = 0; z < templateDepth; ++z )
-                        label_data[z] = (byte[])labelStack.getPixels( z + 1 );
+		final byte[][] label_data = new byte[templateDepth][];
+		for (z = 0; z < templateDepth; ++z)
+			label_data[z] = (byte[]) labelStack.getPixels(z + 1);
 
-                byte [][] redPixels = new byte[newDepth][];
-                byte [][] greenPixels = new byte[newDepth][];
-                byte [][] bluePixels = new byte[newDepth][];
+		final byte[][] redPixels = new byte[newDepth][];
+		final byte[][] greenPixels = new byte[newDepth][];
+		final byte[][] bluePixels = new byte[newDepth][];
 
-                for( z=0;z<newDepth;++z) {
+		for (z = 0; z < newDepth; ++z) {
 
-                        if (verbose) System.out.println("Creating slice: "+z);
+			if (verbose)
+				System.out.println("Creating slice: " + z);
 
-                        redPixels[z] = new byte[ newWidth * newHeight ];
-                        greenPixels[z] = new byte[ newWidth * newHeight ];
-                        bluePixels[z] = new byte[ newWidth * newHeight ];
+			redPixels[z] = new byte[newWidth * newHeight];
+			greenPixels[z] = new byte[newWidth * newHeight];
+			bluePixels[z] = new byte[newWidth * newHeight];
 
-                        for(y=0;y<newHeight;++y) {
-                                for(x=0;x<newWidth;++x) {
+			for (y = 0; y < newHeight; ++y) {
+				for (x = 0; x < newWidth; ++x) {
 
-					int label_value=label_data[(int)(z/scaleStandard)][(int)(y/scaleStandard)*templateWidth+(int)(x/scaleStandard)]&0xFF;
+					final int label_value = label_data[(int) (z / scaleStandard)][(int) (y / scaleStandard)
+							* templateWidth + (int) (x / scaleStandard)] & 0xFF;
 
-					if( label_value >= materials ) {
-						IJ.error( "A label value of " + label_value + " was found, which is not a valid material (max " + (materials - 1) + ")" );
+					if (label_value >= materials) {
+						IJ.error("A label value of " + label_value + " was found, which is not a valid material (max "
+								+ (materials - 1) + ")");
 						return;
 					}
 
-					redPixels[z][y*newWidth+x] = (byte)( redValues[label_value] / 1 );
-					greenPixels[z][y*newWidth+x] = (byte)( greenValues[label_value] / 1 );
-					bluePixels[z][y*newWidth+x] = (byte)( blueValues[label_value] / 1 );
+					redPixels[z][y * newWidth + x] = (byte) (redValues[label_value] / 1);
+					greenPixels[z][y * newWidth + x] = (byte) (greenValues[label_value] / 1);
+					bluePixels[z][y * newWidth + x] = (byte) (blueValues[label_value] / 1);
 
 				}
 			}
 		}
 
-		RegistrationAlgorithm.ImagePoint imagePoint = new RegistrationAlgorithm.ImagePoint();
+		final RegistrationAlgorithm.ImagePoint imagePoint = new RegistrationAlgorithm.ImagePoint();
 
-		if( allPaths != null ) {
-			// if (verbose) System.out.println("Have some allPaths paths to draw.");
-			int paths = allPaths.size();
+		if (allPaths != null) {
+			// if (verbose) System.out.println("Have some allPaths paths to
+			// draw.");
+			final int paths = allPaths.size();
 			// if (verbose) System.out.println("Paths to draw: "+paths);
-			for( int i = 0; i < paths; ++i ) {
+			for (int i = 0; i < paths; ++i) {
 
-				Path p = allPaths.get(i);
+				final Path p = allPaths.get(i);
 
 				int last_x_in_template = -1;
 				int last_y_in_template = -1;
 				int last_z_in_template = -1;
 
-				for( int k = 0; k < p.size(); ++k ) {
+				for (int k = 0; k < p.size(); ++k) {
 
-					int x_in_domain = p.getXUnscaled(k);
-					int y_in_domain = p.getYUnscaled(k);
-					int z_in_domain = p.getZUnscaled(k);
+					final int x_in_domain = p.getXUnscaled(k);
+					final int y_in_domain = p.getYUnscaled(k);
+					final int z_in_domain = p.getZUnscaled(k);
 
-					matcher.transformDomainToTemplate( x_in_domain, y_in_domain, z_in_domain, imagePoint );
+					matcher.transformDomainToTemplate(x_in_domain, y_in_domain, z_in_domain, imagePoint);
 
-					int x_in_template=imagePoint.x;
-					int y_in_template=imagePoint.y;
-					int z_in_template=imagePoint.z;
+					final int x_in_template = imagePoint.x;
+					final int y_in_template = imagePoint.y;
+					final int z_in_template = imagePoint.z;
 
-					if( (last_x_in_template >= 0) &&
-					    (last_y_in_template >= 0) &&
-					    (last_z_in_template >= 0) ) {
+					if ((last_x_in_template >= 0) && (last_y_in_template >= 0) && (last_z_in_template >= 0)) {
 
-						int xdiff = Math.abs( x_in_template - last_x_in_template );
-						int ydiff = Math.abs( y_in_template - last_y_in_template );
-						int zdiff = Math.abs( z_in_template - last_z_in_template );
+						final int xdiff = Math.abs(x_in_template - last_x_in_template);
+						final int ydiff = Math.abs(y_in_template - last_y_in_template);
+						final int zdiff = Math.abs(z_in_template - last_z_in_template);
 
-						if( xdiff > 5 || ydiff > 5 || zdiff > 5 ) {
-							if (verbose) System.out.println("too long in path: "+i+", at point "+k);
+						if (xdiff > 5 || ydiff > 5 || zdiff > 5) {
+							if (verbose)
+								System.out.println("too long in path: " + i + ", at point " + k);
 						}
 
-						int xdiff_s = x_in_template - last_x_in_template;
-						int ydiff_s = y_in_template - last_y_in_template;
-						int zdiff_s = z_in_template - last_z_in_template;
+						final int xdiff_s = x_in_template - last_x_in_template;
+						final int ydiff_s = y_in_template - last_y_in_template;
+						final int zdiff_s = z_in_template - last_z_in_template;
 
 						// Draw a line from last_ to current...
 
@@ -215,123 +221,151 @@ public class CreateTracingVolume_ implements PlugIn {
 
 						// In order of size, must be one of these options:
 						//
-						//    zdiff >= ydiff >= xdiff
-						//    zdiff >= xdiff >= ydiff
-						//    ydiff >= xdiff >= zdiff
-						//    ydiff >= zdiff >= xdiff
-						//    xdiff >= ydiff >= zdiff
-						//    xdiff >= zdiff >= ydiff
+						// zdiff >= ydiff >= xdiff
+						// zdiff >= xdiff >= ydiff
+						// ydiff >= xdiff >= zdiff
+						// ydiff >= zdiff >= xdiff
+						// xdiff >= ydiff >= zdiff
+						// xdiff >= zdiff >= ydiff
 
-						// For the moment i'm collapsing these into 3 cases (zdiff, ydiff or xdiff largest)
+						// For the moment i'm collapsing these into 3 cases
+						// (zdiff, ydiff or xdiff largest)
 
 						// Each of these cases:
 
-						// if (verbose) System.out.println( "x from: " + last_x_in_template + " to " + x_in_template );
-						// if (verbose) System.out.println( "y from: " + last_y_in_template + " to " + y_in_template );
-						// if (verbose) System.out.println( "z from: " + last_z_in_template + " to " + z_in_template );
+						// if (verbose) System.out.println( "x from: " +
+						// last_x_in_template + " to " + x_in_template );
+						// if (verbose) System.out.println( "y from: " +
+						// last_y_in_template + " to " + y_in_template );
+						// if (verbose) System.out.println( "z from: " +
+						// last_z_in_template + " to " + z_in_template );
 
 						long line_x, line_y, line_z;
 
-						if( (zdiff >= ydiff) && (zdiff >= xdiff) ) {
+						if ((zdiff >= ydiff) && (zdiff >= xdiff)) {
 
-							if( zdiff == 0 ) {
-								int in_plane = y_in_template*newWidth+x_in_template;
-								redPixels[z_in_template][in_plane] = (byte)255;
-								greenPixels[z_in_template][in_plane] = (byte)255;
-								bluePixels[z_in_template][in_plane] = (byte)255;
+							if (zdiff == 0) {
+								final int in_plane = y_in_template * newWidth + x_in_template;
+								redPixels[z_in_template][in_plane] = (byte) 255;
+								greenPixels[z_in_template][in_plane] = (byte) 255;
+								bluePixels[z_in_template][in_plane] = (byte) 255;
 							} else {
 								int z_step;
-								if( last_z_in_template <= z_in_template ) {
+								if (last_z_in_template <= z_in_template) {
 									z_step = 1;
 								} else {
 									z_step = -1;
 								}
 								line_z = last_z_in_template;
 								do {
-									// So the vector from the start point (last_(xyz)) to the end point is
-									double proportion_along = Math.abs(line_z - last_z_in_template) / (double)zdiff;
-									// if (verbose) System.out.println( proportion_along + " of xdiff_s " + xdiff_s );
-									// if (verbose) System.out.println( proportion_along + " of ydiff_s " + ydiff_s );
-									double y_delta = proportion_along * ydiff_s;
-									double x_delta = proportion_along * xdiff_s;
+									// So the vector from the start point
+									// (last_(xyz)) to the end point is
+									final double proportion_along = Math.abs(line_z - last_z_in_template)
+											/ (double) zdiff;
+									// if (verbose) System.out.println(
+									// proportion_along + " of xdiff_s " +
+									// xdiff_s );
+									// if (verbose) System.out.println(
+									// proportion_along + " of ydiff_s " +
+									// ydiff_s );
+									final double y_delta = proportion_along * ydiff_s;
+									final double x_delta = proportion_along * xdiff_s;
 									line_y = Math.round(y_delta + last_y_in_template);
 									line_x = Math.round(x_delta + last_x_in_template);
-									// if (verbose) System.out.println( "x is: "+line_x+" (width: "+newWidth+")");
-									// if (verbose) System.out.println( "y is: "+line_y+" (height: "+newHeight+")");
-									int in_plane = (int)( line_y * newWidth + line_x );
-									redPixels[(int)line_z][in_plane] = (byte)255;
-									greenPixels[(int)line_z][in_plane] = (byte)255;
-									bluePixels[(int)line_z][in_plane] = (byte)255;
+									// if (verbose) System.out.println( "x is:
+									// "+line_x+" (width: "+newWidth+")");
+									// if (verbose) System.out.println( "y is:
+									// "+line_y+" (height: "+newHeight+")");
+									final int in_plane = (int) (line_y * newWidth + line_x);
+									redPixels[(int) line_z][in_plane] = (byte) 255;
+									greenPixels[(int) line_z][in_plane] = (byte) 255;
+									bluePixels[(int) line_z][in_plane] = (byte) 255;
 									line_z += z_step;
-								} while( line_z != z_in_template );
+								} while (line_z != z_in_template);
 							}
 
-						} else if( (ydiff >= zdiff) && (ydiff >= xdiff) ) {
+						} else if ((ydiff >= zdiff) && (ydiff >= xdiff)) {
 
-							if( ydiff == 0 ) {
-								int in_plane = y_in_template*newWidth+x_in_template;
-								redPixels[z_in_template][in_plane] = (byte)255;
-								greenPixels[z_in_template][in_plane] = (byte)255;
-								bluePixels[z_in_template][in_plane] = (byte)255;
+							if (ydiff == 0) {
+								final int in_plane = y_in_template * newWidth + x_in_template;
+								redPixels[z_in_template][in_plane] = (byte) 255;
+								greenPixels[z_in_template][in_plane] = (byte) 255;
+								bluePixels[z_in_template][in_plane] = (byte) 255;
 							} else {
 								int y_step;
-								if( last_y_in_template <= y_in_template ) {
+								if (last_y_in_template <= y_in_template) {
 									y_step = 1;
 								} else {
 									y_step = -1;
 								}
 								line_y = last_y_in_template;
 								do {
-									// So the vector from the start point (last_(xyz)) to the end point is
-									double proportion_along = Math.abs(line_y - last_y_in_template) / (double)ydiff;
-									// if (verbose) System.out.println( proportion_along + " of xdiff_s " + xdiff_s );
-									// if (verbose) System.out.println( proportion_along + " of zdiff_s " + zdiff_s );
-									double z_delta = proportion_along * zdiff_s;
-									double x_delta = proportion_along * xdiff_s;
+									// So the vector from the start point
+									// (last_(xyz)) to the end point is
+									final double proportion_along = Math.abs(line_y - last_y_in_template)
+											/ (double) ydiff;
+									// if (verbose) System.out.println(
+									// proportion_along + " of xdiff_s " +
+									// xdiff_s );
+									// if (verbose) System.out.println(
+									// proportion_along + " of zdiff_s " +
+									// zdiff_s );
+									final double z_delta = proportion_along * zdiff_s;
+									final double x_delta = proportion_along * xdiff_s;
 									line_z = Math.round(z_delta + last_z_in_template);
 									line_x = Math.round(x_delta + last_x_in_template);
-									// if (verbose) System.out.println( "x is: "+line_x+" (width: "+newWidth+")");
-									// if (verbose) System.out.println( "z is: "+line_z+" (height: "+newHeight+")");
-									int in_plane = (int)( line_y * newWidth + line_x );
-									redPixels[(int)line_z][in_plane] = (byte)255;
-									greenPixels[(int)line_z][in_plane] = (byte)255;
-									bluePixels[(int)line_z][in_plane] = (byte)255;
+									// if (verbose) System.out.println( "x is:
+									// "+line_x+" (width: "+newWidth+")");
+									// if (verbose) System.out.println( "z is:
+									// "+line_z+" (height: "+newHeight+")");
+									final int in_plane = (int) (line_y * newWidth + line_x);
+									redPixels[(int) line_z][in_plane] = (byte) 255;
+									greenPixels[(int) line_z][in_plane] = (byte) 255;
+									bluePixels[(int) line_z][in_plane] = (byte) 255;
 									line_y += y_step;
-								} while( line_y != y_in_template );
+								} while (line_y != y_in_template);
 							}
 
-						} else if( (xdiff >= ydiff) && (xdiff >= zdiff) ) {
+						} else if ((xdiff >= ydiff) && (xdiff >= zdiff)) {
 
-							if( xdiff == 0 ) {
-								int in_plane = y_in_template*newWidth+x_in_template;
-								redPixels[z_in_template][in_plane] = (byte)255;
-								greenPixels[z_in_template][in_plane] = (byte)255;
-								bluePixels[z_in_template][in_plane] = (byte)255;
+							if (xdiff == 0) {
+								final int in_plane = y_in_template * newWidth + x_in_template;
+								redPixels[z_in_template][in_plane] = (byte) 255;
+								greenPixels[z_in_template][in_plane] = (byte) 255;
+								bluePixels[z_in_template][in_plane] = (byte) 255;
 							} else {
 								int x_step;
-								if( last_x_in_template <= x_in_template ) {
+								if (last_x_in_template <= x_in_template) {
 									x_step = 1;
 								} else {
 									x_step = -1;
 								}
 								line_x = last_x_in_template;
 								do {
-									// So the vector from the start point (last_(xyz)) to the end point is
-									double proportion_along = Math.abs(line_x - last_x_in_template) / (double)xdiff;
-									// if (verbose) System.out.println( proportion_along + " of ydiff_s " + ydiff_s );
-									// if (verbose) System.out.println( proportion_along + " of zdiff_s " + zdiff_s );
-									double z_delta = proportion_along * zdiff_s;
-									double y_delta = proportion_along * ydiff_s;
+									// So the vector from the start point
+									// (last_(xyz)) to the end point is
+									final double proportion_along = Math.abs(line_x - last_x_in_template)
+											/ (double) xdiff;
+									// if (verbose) System.out.println(
+									// proportion_along + " of ydiff_s " +
+									// ydiff_s );
+									// if (verbose) System.out.println(
+									// proportion_along + " of zdiff_s " +
+									// zdiff_s );
+									final double z_delta = proportion_along * zdiff_s;
+									final double y_delta = proportion_along * ydiff_s;
 									line_z = Math.round(z_delta + last_z_in_template);
 									line_y = Math.round(y_delta + last_y_in_template);
-									// if (verbose) System.out.println( "z is: "+line_z+" (depth: "+newDepth+")");
-									// if (verbose) System.out.println( "y is: "+line_y+" (height: "+newHeight+")");
-									int in_plane = (int)( line_y * newWidth + line_x );
-									redPixels[(int)line_z][in_plane] = (byte)255;
-									greenPixels[(int)line_z][in_plane] = (byte)255;
-									bluePixels[(int)line_z][in_plane] = (byte)255;
+									// if (verbose) System.out.println( "z is:
+									// "+line_z+" (depth: "+newDepth+")");
+									// if (verbose) System.out.println( "y is:
+									// "+line_y+" (height: "+newHeight+")");
+									final int in_plane = (int) (line_y * newWidth + line_x);
+									redPixels[(int) line_z][in_plane] = (byte) 255;
+									greenPixels[(int) line_z][in_plane] = (byte) 255;
+									bluePixels[(int) line_z][in_plane] = (byte) 255;
 									line_x += x_step;
-								} while( line_x != x_in_template );
+								} while (line_x != x_in_template);
 
 							}
 						}
@@ -344,24 +378,24 @@ public class CreateTracingVolume_ implements PlugIn {
 			}
 		}
 
-		for( z = 0; z < newDepth; ++z ) {
+		for (z = 0; z < newDepth; ++z) {
 
 			// if (verbose) System.out.println("Actually adding slice: "+z);
 
-                        ColorProcessor cp = new ColorProcessor( newWidth, newHeight );
-                        cp.setRGB( redPixels[z], greenPixels[z], bluePixels[z] );
-                        newStack.addSlice( null, cp );
-                }
+			final ColorProcessor cp = new ColorProcessor(newWidth, newHeight);
+			cp.setRGB(redPixels[z], greenPixels[z], bluePixels[z]);
+			newStack.addSlice(null, cp);
+		}
 
-                ImagePlus impNew=new ImagePlus("tracings stack",newStack);
+		final ImagePlus impNew = new ImagePlus("tracings stack", newStack);
 
 		impNew.show();
 
-                // String outputFilename="/home/s9808248/saturn1/vib/ImageJ/hanesch.tif";
-                // FileSaver fileSaver=new FileSaver(impNew);
-                // fileSaver.saveAsTiffStack(outputFilename);
+		// String
+		// outputFilename="/home/s9808248/saturn1/vib/ImageJ/hanesch.tif";
+		// FileSaver fileSaver=new FileSaver(impNew);
+		// fileSaver.saveAsTiffStack(outputFilename);
 
-        }
+	}
 
 }
-

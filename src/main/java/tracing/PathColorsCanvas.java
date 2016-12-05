@@ -39,10 +39,11 @@ import ij.gui.ColorChooser;
 public class PathColorsCanvas extends Canvas implements MouseListener {
 
 	SimpleNeuriteTracer plugin;
-	public PathColorsCanvas( SimpleNeuriteTracer plugin, int width, int height ) {
+
+	public PathColorsCanvas(final SimpleNeuriteTracer plugin, final int width, final int height) {
 		this.plugin = plugin;
-		addMouseListener( this );
-		setSize( width, height );
+		addMouseListener(this);
+		setSize(width, height);
 		selectedColor = plugin.selectedColor;
 		deselectedColor = plugin.deselectedColor;
 	}
@@ -51,63 +52,65 @@ public class PathColorsCanvas extends Canvas implements MouseListener {
 	private Color deselectedColor;
 
 	@Override
-	public void update( Graphics g ) {
+	public void update(final Graphics g) {
 		paint(g);
 	}
 
 	@Override
-	public void paint( Graphics g ) {
-		int width = getWidth();
-		int height = getHeight();
-		int leftWidth = width / 2;
-		g.setColor( selectedColor );
-		g.fillRect( 0, 0, leftWidth, height );
+	public void paint(final Graphics g) {
+		final int width = getWidth();
+		final int height = getHeight();
+		final int leftWidth = width / 2;
+		g.setColor(selectedColor);
+		g.fillRect(0, 0, leftWidth, height);
 		g.setColor(contrastColor(selectedColor));
-		g.drawString("Selected", 3, height-3);
-		g.setColor( deselectedColor );
-		g.fillRect( leftWidth, 0, width - leftWidth, height );
+		g.drawString("Selected", 3, height - 3);
+		g.setColor(deselectedColor);
+		g.fillRect(leftWidth, 0, width - leftWidth, height);
 		g.setColor(contrastColor(deselectedColor));
-		g.drawString("Deselected", leftWidth + 3, height-3);
+		g.drawString("Deselected", leftWidth + 3, height - 3);
 	}
 
 	private Color contrastColor(final Color c) {
-		int intensity = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
+		final int intensity = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
 		return intensity < 128 ? Color.WHITE : Color.BLACK;
 	}
 
-	public void mouseClicked(MouseEvent e) {
-		int x = e.getX();
+	@Override
+	public void mouseClicked(final MouseEvent e) {
+		final int x = e.getX();
 		ColorChooser chooser;
-		if( x < getWidth() / 2 ) {
-			chooser = new ColorChooser(
-				"Colour for selected paths",
-				selectedColor,
-				false );
-			Color newColor = chooser.getColor();
-			if( newColor == null )
+		if (x < getWidth() / 2) {
+			chooser = new ColorChooser("Colour for selected paths", selectedColor, false);
+			final Color newColor = chooser.getColor();
+			if (newColor == null)
 				return;
 			selectedColor = newColor;
-			plugin.setSelectedColor( newColor );
+			plugin.setSelectedColor(newColor);
 		} else {
-			chooser = new ColorChooser(
-				"Colour for deselected paths",
-				deselectedColor,
-				false );
-			Color newColor = chooser.getColor();
-			if( newColor == null )
+			chooser = new ColorChooser("Colour for deselected paths", deselectedColor, false);
+			final Color newColor = chooser.getColor();
+			if (newColor == null)
 				return;
 			deselectedColor = newColor;
-			plugin.setDeselectedColor( newColor );
+			plugin.setDeselectedColor(newColor);
 		}
 		repaint();
 	}
 
-	public void mouseEntered(MouseEvent e) { }
+	@Override
+	public void mouseEntered(final MouseEvent e) {
+	}
 
-	public void mouseExited(MouseEvent e) { }
+	@Override
+	public void mouseExited(final MouseEvent e) {
+	}
 
-	public void mousePressed(MouseEvent e) { }
+	@Override
+	public void mousePressed(final MouseEvent e) {
+	}
 
-	public void mouseReleased(MouseEvent e) { }
+	@Override
+	public void mouseReleased(final MouseEvent e) {
+	}
 }
-

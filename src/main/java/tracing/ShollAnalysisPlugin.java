@@ -226,7 +226,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 					sa.setCenter(pX, pY, pZ);
 				}
 			} else
-				sa.setCenter(-1,-1,-1);
+				sa.setCenter(-1, -1, -1);
 			sa.analyzeProfile(distances, counts, threeD);
 
 		} else {

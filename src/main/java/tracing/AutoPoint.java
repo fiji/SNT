@@ -29,24 +29,28 @@ public class AutoPoint {
 	public short x;
 	public short y;
 	public short z;
-	public AutoPoint(int x,int y,int z) {
-		this.x = (short)x;
-		this.y = (short)y;
-		this.z = (short)z;
+
+	public AutoPoint(final int x, final int y, final int z) {
+		this.x = (short) x;
+		this.y = (short) y;
+		this.z = (short) z;
 	}
+
 	@Override
 	public String toString() {
-		return "("+x+","+y+","+z+")";
+		return "(" + x + "," + y + "," + z + ")";
 	}
+
 	@Override
-	public boolean equals(Object o) {
-		AutoPoint op=(AutoPoint)o;
+	public boolean equals(final Object o) {
+		final AutoPoint op = (AutoPoint) o;
 		// System.out.println("Testing equality between "+this+" and "+op);
-		boolean result = (this.x == op.x) && (this.y == op.y) && (this.z == op.z);
+		final boolean result = (this.x == op.x) && (this.y == op.y) && (this.z == op.z);
 		return result;
 	}
+
 	@Override
 	public int hashCode() {
-		return (int)x + (int)y * (1 << 11) + (int)z * (1 << 22);
+		return x + y * (1 << 11) + z * (1 << 22);
 	}
 }

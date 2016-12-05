@@ -44,91 +44,91 @@ public class SinglePathsGraph {
 	int width, height, depth;
 	float spacing_x, spacing_y, spacing_z;
 
-	public SinglePathsGraph( int width, int height, int depth, double spacing_x, double spacing_y, double spacing_z ) {
+	public SinglePathsGraph(final int width, final int height, final int depth, final double spacing_x,
+			final double spacing_y, final double spacing_z) {
 		this.width = width;
 		this.height = height;
 		this.depth = depth;
-		this.spacing_x = (float)spacing_x;
-		this.spacing_y = (float)spacing_y;
-		this.spacing_z = (float)spacing_z;
+		this.spacing_x = (float) spacing_x;
+		this.spacing_y = (float) spacing_y;
+		this.spacing_z = (float) spacing_z;
 	}
 
 	// For fast lookup from positions:
-	Hashtable<Integer,AutoPoint> fromPosition=new Hashtable<Integer,AutoPoint>();
+	Hashtable<Integer, AutoPoint> fromPosition = new Hashtable<>();
 
-	public AutoPoint get( int x, int y, int z ) {
-		int k = x + y * width + z * width * height;
+	public AutoPoint get(final int x, final int y, final int z) {
+		final int k = x + y * width + z * width * height;
 		return fromPosition.get(k);
 	}
 
-	public void addPoint( AutoPoint p, AutoPoint previous ) {
-		int k = (int)p.x + (int)p.y * width + (int)p.z * width * height;
-		AutoPoint existingPoint=fromPosition.get( k );
-		if( existingPoint == null ) {
-			fromPosition.put(k,p);
+	public void addPoint(final AutoPoint p, final AutoPoint previous) {
+		final int k = p.x + p.y * width + p.z * width * height;
+		final AutoPoint existingPoint = fromPosition.get(k);
+		if (existingPoint == null) {
+			fromPosition.put(k, p);
 		}
-		if( previous != null ) {
-			int k_previous = (int)previous.x + (int)previous.y * width + (int)previous.z * width * height;
-			addLink( k_previous, k );
+		if (previous != null) {
+			final int k_previous = previous.x + previous.y * width + previous.z * width * height;
+			addLink(k_previous, k);
 		}
 	}
 
-	/* This all turns out to be very memory hungry, so keep track
-	   of the links between points here, encoded into a long for
-	   each link:
+	/*
+	 * This all turns out to be very memory hungry, so keep track of the links
+	 * between points here, encoded into a long for each link:
 	 */
 
-	HashSet<Long> directedLinks = new HashSet<Long>();
+	HashSet<Long> directedLinks = new HashSet<>();
 
-	void addLink( int from_k, int to_k ) {
-		long toAdd = (from_k << 32) + to_k;
+	void addLink(final int from_k, final int to_k) {
+		final long toAdd = (from_k << 32) + to_k;
 		directedLinks.add(toAdd);
 	}
 
-	void addLink( int from_x, int from_y, int from_z, int to_x, int to_y, int to_z ) {
-		int from_k = from_x + from_y * width + from_z * width * height;
-		int to_k = to_x + to_y * width + to_z * width * height;
-		addLink( from_k, to_k );
+	void addLink(final int from_x, final int from_y, final int from_z, final int to_x, final int to_y, final int to_z) {
+		final int from_k = from_x + from_y * width + from_z * width * height;
+		final int to_k = to_x + to_y * width + to_z * width * height;
+		addLink(from_k, to_k);
 	}
 
-	void writeWavefrontObj( String outputFilename ) throws IOException {
+	void writeWavefrontObj(final String outputFilename) throws IOException {
 
-		PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFilename),"UTF-8"));
+		final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFilename), "UTF-8"));
 
 		// It's a bit ugly encoding this data in the comments,
 		// but it's a useful enough stop gap measure:
-		pw.println("# width: "+width);
-		pw.println("# height: "+height);
-		pw.println("# depth: "+depth);
-		pw.println("# spacing_x: "+spacing_x);
-		pw.println("# spacing_y: "+spacing_y);
-		pw.println("# spacing_z: "+spacing_z);
-
+		pw.println("# width: " + width);
+		pw.println("# height: " + height);
+		pw.println("# depth: " + depth);
+		pw.println("# spacing_x: " + spacing_x);
+		pw.println("# spacing_y: " + spacing_y);
+		pw.println("# spacing_z: " + spacing_z);
 
 		/* First build a map from keys to wavefront indices: */
 
-		Hashtable<Integer,Integer> wavefrontToKey=new Hashtable<Integer,Integer>();
+		final Hashtable<Integer, Integer> wavefrontToKey = new Hashtable<>();
 
-		Set<Integer> keySet=fromPosition.keySet();
+		final Set<Integer> keySet = fromPosition.keySet();
 
 		int counter = 1;
-		for( int k : keySet ) {
-			wavefrontToKey.put(k,counter);
-			int x = k % width;
-			int y = ( k / width ) % height;
-			int z = ( k / ( width * height ) ) % depth;
-			pw.println("v "+(x * spacing_x)+" "+(y * spacing_y)+" "+(z * spacing_z));
+		for (final int k : keySet) {
+			wavefrontToKey.put(k, counter);
+			final int x = k % width;
+			final int y = (k / width) % height;
+			final int z = (k / (width * height)) % depth;
+			pw.println("v " + (x * spacing_x) + " " + (y * spacing_y) + " " + (z * spacing_z));
 			++counter;
 		}
 
-		for( long l : directedLinks ) {
-			long from = l >> 32;
-			long to = l & 0xFFFFFFFF;
-			int from_k = (int)from;
-			int to_k = (int)to;
-			int from_vertex = wavefrontToKey.get(from_k);
-			int to_vertex = wavefrontToKey.get(to_k);
-			pw.println("l "+from_vertex+" "+to_vertex);
+		for (final long l : directedLinks) {
+			final long from = l >> 32;
+			final long to = l & 0xFFFFFFFF;
+			final int from_k = (int) from;
+			final int to_k = (int) to;
+			final int from_vertex = wavefrontToKey.get(from_k);
+			final int to_vertex = wavefrontToKey.get(to_k);
+			pw.println("l " + from_vertex + " " + to_vertex);
 		}
 
 		pw.print("g");
@@ -136,25 +136,25 @@ public class SinglePathsGraph {
 		pw.close();
 	}
 
-	static public int getNonNegativeIntAfterPrefix( String line, String prefix ) {
+	static public int getNonNegativeIntAfterPrefix(final String line, final String prefix) {
 		try {
-			String s=line.substring(prefix.length());
+			final String s = line.substring(prefix.length());
 			return Integer.parseInt(s);
-		} catch( NumberFormatException e ) {
+		} catch (final NumberFormatException e) {
 			return -1;
 		}
 	}
 
-	static public float getNonNegativeFloatAfterPrefix( String line, String prefix ) {
+	static public float getNonNegativeFloatAfterPrefix(final String line, final String prefix) {
 		try {
-			String s=line.substring(prefix.length());
+			final String s = line.substring(prefix.length());
 			return Float.parseFloat(s);
-		} catch( NumberFormatException e ) {
+		} catch (final NumberFormatException e) {
 			return -1;
 		}
 	}
 
-	static boolean loadWithListener( String inputFilename, TraceLoaderListener listener ) {
+	static boolean loadWithListener(final String inputFilename, final TraceLoaderListener listener) {
 
 		int width = -1, height = -1, depth = -1;
 		float spacing_x = Float.MIN_VALUE;
@@ -162,110 +162,110 @@ public class SinglePathsGraph {
 		float spacing_z = Float.MIN_VALUE;
 
 		try {
-			String widthPrefix = "# width: ";
-			String heightPrefix = "# height: ";
-			String depthPrefix = "# depth: ";
-			String spacingXPrefix = "# spacing_x: ";
-			String spacingYPrefix = "# spacing_y: ";
-			String spacingZPrefix = "# spacing_z: ";
+			final String widthPrefix = "# width: ";
+			final String heightPrefix = "# height: ";
+			final String depthPrefix = "# depth: ";
+			final String spacingXPrefix = "# spacing_x: ";
+			final String spacingYPrefix = "# spacing_y: ";
+			final String spacingZPrefix = "# spacing_z: ";
 
-			String vertexPrefix = "v ";
-			String linePrefix = "l ";
-			String groupPrefix = "g ";
+			final String vertexPrefix = "v ";
+			final String linePrefix = "l ";
+			final String groupPrefix = "g ";
 
-			int vertexIndex = 1;
+			final int vertexIndex = 1;
 
-			BufferedReader br = new BufferedReader(new FileReader(inputFilename));
+			final BufferedReader br = new BufferedReader(new FileReader(inputFilename));
 			String lastLine;
-			while( null != (lastLine = br.readLine()) ) {
+			while (null != (lastLine = br.readLine())) {
 
-				if( lastLine.startsWith(widthPrefix) ) {
+				if (lastLine.startsWith(widthPrefix)) {
 					width = getNonNegativeIntAfterPrefix(lastLine, widthPrefix);
 					listener.gotWidth(width);
 				}
-				if( lastLine.startsWith(heightPrefix) ) {
+				if (lastLine.startsWith(heightPrefix)) {
 					height = getNonNegativeIntAfterPrefix(lastLine, heightPrefix);
 					listener.gotHeight(height);
 				}
-				if( lastLine.startsWith(depthPrefix) ) {
+				if (lastLine.startsWith(depthPrefix)) {
 					depth = getNonNegativeIntAfterPrefix(lastLine, depthPrefix);
 					listener.gotDepth(depth);
 				}
-				if( lastLine.startsWith(spacingXPrefix) ) {
+				if (lastLine.startsWith(spacingXPrefix)) {
 					spacing_x = getNonNegativeFloatAfterPrefix(lastLine, spacingXPrefix);
 					listener.gotSpacingX(spacing_x);
 				}
-				if( lastLine.startsWith(spacingYPrefix) ) {
+				if (lastLine.startsWith(spacingYPrefix)) {
 					spacing_y = getNonNegativeFloatAfterPrefix(lastLine, spacingYPrefix);
 					listener.gotSpacingY(spacing_y);
 				}
-				if( lastLine.startsWith(spacingZPrefix) ) {
+				if (lastLine.startsWith(spacingZPrefix)) {
 					spacing_z = getNonNegativeFloatAfterPrefix(lastLine, spacingZPrefix);
 					listener.gotSpacingZ(spacing_z);
 				}
 
-				if( lastLine.startsWith(vertexPrefix) ) {
+				if (lastLine.startsWith(vertexPrefix)) {
 
-					StringTokenizer tokenizer=new StringTokenizer(lastLine.substring(vertexPrefix.length())," ");
+					final StringTokenizer tokenizer = new StringTokenizer(lastLine.substring(vertexPrefix.length()),
+							" ");
 
-					float [] vertex = new float[3];
+					final float[] vertex = new float[3];
 
 					int i = 0;
-					while( tokenizer.hasMoreTokens() ) {
-						vertex[i] = Float.parseFloat( tokenizer.nextToken() );
+					while (tokenizer.hasMoreTokens()) {
+						vertex[i] = Float.parseFloat(tokenizer.nextToken());
 						++i;
 					}
 
-					int x = (int)Math.round(vertex[0]/spacing_x);
-					int y = (int)Math.round(vertex[1]/spacing_y);
-					int z = (int)Math.round(vertex[2]/spacing_z);
+					final int x = Math.round(vertex[0] / spacing_x);
+					final int y = Math.round(vertex[1] / spacing_y);
+					final int z = Math.round(vertex[2] / spacing_z);
 
-					listener.gotVertex( vertexIndex,
-							    vertex[0], vertex[1], vertex[2],
-							    x, y, z );
+					listener.gotVertex(vertexIndex, vertex[0], vertex[1], vertex[2], x, y, z);
 
 				}
 
-				if( lastLine.startsWith(linePrefix) ) {
-					StringTokenizer tokenizer=new StringTokenizer(lastLine.substring(linePrefix.length())," ");
-					int [] vertexIndices = new int[2];
+				if (lastLine.startsWith(linePrefix)) {
+					final StringTokenizer tokenizer = new StringTokenizer(lastLine.substring(linePrefix.length()), " ");
+					final int[] vertexIndices = new int[2];
 
 					int i = 0;
-					while( tokenizer.hasMoreTokens() ) {
-						vertexIndices[i] = Integer.parseInt( tokenizer.nextToken() );
+					while (tokenizer.hasMoreTokens()) {
+						vertexIndices[i] = Integer.parseInt(tokenizer.nextToken());
 						++i;
 					}
 
-					listener.gotLine( vertexIndices[0], vertexIndices[1] );
+					listener.gotLine(vertexIndices[0], vertexIndices[1]);
 				}
 
-				if( lastLine.startsWith(groupPrefix) )
+				if (lastLine.startsWith(groupPrefix))
 					; // Do nothing
 			}
 
-		} catch( IOException e ) {
-			IJ.error("IOException loading "+inputFilename+": "+e);
+		} catch (final IOException e) {
+			IJ.error("IOException loading " + inputFilename + ": " + e);
 			return false;
 		}
 
 		return true;
 	}
 
-	void writeXML( String outputFilename ) throws IOException {
+	void writeXML(final String outputFilename) throws IOException {
 
 		PrintWriter pw = null;
 
-		boolean compress = false;
+		final boolean compress = false;
 
 		try {
-			if( compress ) {
+			if (compress) {
 				System.out.println("Creating, with compression...");
-				pw = new PrintWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(outputFilename)),"UTF-8"));
-				System.out.println("Created, pw is: "+pw);
+				pw = new PrintWriter(
+						new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(outputFilename)), "UTF-8"));
+				System.out.println("Created, pw is: " + pw);
 			} else {
 				System.out.println("Creating, without compression...");
-				pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFilename),"UTF-8"));
-				System.out.println("Created, pw is: "+pw);
+				pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFilename), "UTF-8"));
+				System.out.println("Created, pw is: " + pw);
 			}
 
 			pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -316,5 +316,5 @@ public class SinglePathsGraph {
 		} finally {
 			pw.close();
 		}
-		}
 	}
+}

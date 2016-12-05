@@ -426,7 +426,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		 *            the output file.
 		 * @throws IOException
 		 *             if writing the svgFile fails.
-		 * 
+		 *
 		 *             This method is taken from:
 		 *             http://dolf.trieschnigg.nl/jfreechart/
 		 */

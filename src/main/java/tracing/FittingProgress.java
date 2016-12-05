@@ -25,33 +25,36 @@ import java.util.ArrayList;
 
 import ij.IJ;
 
-/** An implementation of the MultiTaskProgress interface that
-    updates the ImageJ progress bar */
+/**
+ * An implementation of the MultiTaskProgress interface that updates the ImageJ
+ * progress bar
+ */
 
 public class FittingProgress implements MultiTaskProgress {
 	ArrayList<Double> tasksProportionsDone;
 	int totalTasks;
 
-	public FittingProgress( int totalTasks ) {
-		tasksProportionsDone =
-			new ArrayList<Double>();
+	public FittingProgress(final int totalTasks) {
+		tasksProportionsDone = new ArrayList<>();
 		this.totalTasks = totalTasks;
-		for( int i = 0; i < totalTasks; ++i )
+		for (int i = 0; i < totalTasks; ++i)
 			tasksProportionsDone.add(0.0);
 	}
 
-	synchronized public void updateProgress(double proportion, int taskIndex) {
-		tasksProportionsDone.set(taskIndex,proportion);
+	@Override
+	synchronized public void updateProgress(final double proportion, final int taskIndex) {
+		tasksProportionsDone.set(taskIndex, proportion);
 		updateStatus();
 	}
 
 	protected void updateStatus() {
 		double totalDone = 0;
-		for( double p : tasksProportionsDone )
+		for (final double p : tasksProportionsDone)
 			totalDone += p;
-		IJ.showProgress(totalDone/totalTasks);
+		IJ.showProgress(totalDone / totalTasks);
 	}
 
+	@Override
 	public void done() {
 		IJ.showProgress(1.0);
 	}

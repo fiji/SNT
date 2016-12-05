@@ -27,16 +27,21 @@
 
 package tracing;
 
-/** The int values are indexes into the image's samples, with z being 0-based.
-    The double values are world coordinates (i.e. scaled with Calibration).
-    If the corresponding point is not found, the transformed values are set to
-    Integer.MIN_VALUE or Double.NaN */
+/**
+ * The int values are indexes into the image's samples, with z being 0-based.
+ * The double values are world coordinates (i.e. scaled with Calibration). If
+ * the corresponding point is not found, the transformed values are set to
+ * Integer.MIN_VALUE or Double.NaN
+ */
 
 public interface PathTransformer {
 
-	public void transformPoint( double x, double y, double z, double [] transformed );
-	public void transformPoint( double x, double y, double z, int [] transformed );
-	public void transformPoint( int x, int y, int z, int [] transformed );
-	public void transformPoint( int x, int y, int z, double [] transformed );
+	public void transformPoint(double x, double y, double z, double[] transformed);
+
+	public void transformPoint(double x, double y, double z, int[] transformed);
+
+	public void transformPoint(int x, int y, int z, int[] transformed);
+
+	public void transformPoint(int x, int y, int z, double[] transformed);
 
 }

@@ -1,6 +1,5 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-
 /* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
@@ -26,7 +25,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 package tracing;
 
 public class SearchNode implements Comparable {
@@ -36,35 +34,33 @@ public class SearchNode implements Comparable {
 	public int z;
 
 	public float g; // cost of the path so far (up to and including this node)
-	public float h; // heuristic esimate of the cost of going from here to the goal
+	public float h; // heuristic esimate of the cost of going from here to the
+					// goal
 
 	public float f; // should always be the sum of g and h
 
 	private SearchNode predecessor;
 
-        public SearchNode getPredecessor( ) {
-                return predecessor;
-        }
+	public SearchNode getPredecessor() {
+		return predecessor;
+	}
 
-	public void setPredecessor( SearchNode p ) {
+	public void setPredecessor(final SearchNode p) {
 		this.predecessor = p;
 	}
 
-	/* This must be one of:
-
-	   SearchThread.OPEN_FROM_START
-	   SearchThread.CLOSED_FROM_START
-	   SearchThread.OPEN_FROM_GOAL
-	   SearchThread.CLOSED_FROM_GOAL
-	   SearchThread.FREE
-	*/
+	/*
+	 * This must be one of:
+	 *
+	 * SearchThread.OPEN_FROM_START SearchThread.CLOSED_FROM_START
+	 * SearchThread.OPEN_FROM_GOAL SearchThread.CLOSED_FROM_GOAL
+	 * SearchThread.FREE
+	 */
 
 	public byte searchStatus;
 
-	public SearchNode( int x, int y, int z,
-			   float g, float h,
-			   SearchNode predecessor,
-			   byte searchStatus ) {
+	public SearchNode(final int x, final int y, final int z, final float g, final float h, final SearchNode predecessor,
+			final byte searchStatus) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -78,21 +74,21 @@ public class SearchNode implements Comparable {
 	// FIXME: check whether this is used any more:
 
 	@Override
-	public boolean equals( Object other ) {
-		SearchNode o = (SearchNode) other;
+	public boolean equals(final Object other) {
+		final SearchNode o = (SearchNode) other;
 		return (x == o.x) && (y == o.y) && (z == o.z);
 	}
 
 	@Override
-        public int hashCode() {
+	public int hashCode() {
 		int hash = 3;
 		hash = 67 * hash + this.x;
 		hash = 67 * hash + this.y;
 		hash = 67 * hash + this.z;
 		return hash;
-        }
+	}
 
-	public void setFrom( SearchNode another ) {
+	public void setFrom(final SearchNode another) {
 		this.x = another.x;
 		this.y = another.y;
 		this.z = another.z;
@@ -105,17 +101,18 @@ public class SearchNode implements Comparable {
 
 	/* This is used by PriorityQueue: */
 
-	public int compareTo( Object other ) {
+	@Override
+	public int compareTo(final Object other) {
 
-		SearchNode o = (SearchNode) other;
+		final SearchNode o = (SearchNode) other;
 
 		int compare_f_result = 0;
-		if( f > o.f )
+		if (f > o.f)
 			compare_f_result = 1;
-		else if( f < o.f )
+		else if (f < o.f)
 			compare_f_result = -1;
 
-		if( compare_f_result != 0 ) {
+		if (compare_f_result != 0) {
 
 			return compare_f_result;
 
@@ -125,69 +122,70 @@ public class SearchNode implements Comparable {
 			// same priority, but which are at different locations.
 
 			int x_compare = 0;
-			if( x > o.x )
+			if (x > o.x)
 				x_compare = 1;
-			if( x < o.x )
+			if (x < o.x)
 				x_compare = -1;
 
-			if( x_compare != 0 )
+			if (x_compare != 0)
 				return x_compare;
 
 			int y_compare = 0;
-			if( y > o.y )
+			if (y > o.y)
 				y_compare = 1;
-			if( y < o.y )
+			if (y < o.y)
 				y_compare = -1;
 
-			if( y_compare != 0 )
+			if (y_compare != 0)
 				return y_compare;
 
 			int z_compare = 0;
-			if( z > o.z )
+			if (z > o.z)
 				z_compare = 1;
-			if( z < o.z )
+			if (z < o.z)
 				z_compare = -1;
 
 			return z_compare;
 
 		}
 
-
 	}
 
 	@Override
-	public String toString( ) {
+	public String toString() {
 		String searchStatusString = "BUG: unknown!";
-		if( searchStatus == SearchThread.OPEN_FROM_START )
+		if (searchStatus == SearchThread.OPEN_FROM_START)
 			searchStatusString = "open from start";
-		else if( searchStatus == SearchThread.CLOSED_FROM_START )
+		else if (searchStatus == SearchThread.CLOSED_FROM_START)
 			searchStatusString = "closed from start";
-		else if( searchStatus == SearchThread.OPEN_FROM_GOAL )
+		else if (searchStatus == SearchThread.OPEN_FROM_GOAL)
 			searchStatusString = "open from goal";
-		else if( searchStatus == SearchThread.CLOSED_FROM_GOAL )
+		else if (searchStatus == SearchThread.CLOSED_FROM_GOAL)
 			searchStatusString = "closed from goal";
-		else if( searchStatus == SearchThread.FREE )
+		else if (searchStatus == SearchThread.FREE)
 			searchStatusString = "free";
-		return "("+x+","+y+","+z+") h: "+h+" g: "+g+" f: "+f+" ["+searchStatusString+"]";
+		return "(" + x + "," + y + "," + z + ") h: " + h + " g: " + g + " f: " + f + " [" + searchStatusString + "]";
 	}
 
-	public Path asPath( double x_spacing, double y_spacing, double z_spacing, String spacing_units ) {
-		Path creversed = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
+	public Path asPath(final double x_spacing, final double y_spacing, final double z_spacing,
+			final String spacing_units) {
+		final Path creversed = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 		SearchNode p = this;
 		do {
-			creversed.addPointDouble( p.x * x_spacing, p.y * y_spacing, p.z * z_spacing );
+			creversed.addPointDouble(p.x * x_spacing, p.y * y_spacing, p.z * z_spacing);
 			p = p.predecessor;
-		} while( p != null );
+		} while (p != null);
 		return creversed.reversed();
 	}
 
-	public Path asPathReversed( double x_spacing, double y_spacing, double z_spacing, String spacing_units ) {
-		Path result = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
+	public Path asPathReversed(final double x_spacing, final double y_spacing, final double z_spacing,
+			final String spacing_units) {
+		final Path result = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 		SearchNode p = this;
 		do {
-			result.addPointDouble( p.x * x_spacing, p.y * y_spacing, p.z * z_spacing );
+			result.addPointDouble(p.x * x_spacing, p.y * y_spacing, p.z * z_spacing);
 			p = p.predecessor;
-		} while( p != null );
+		} while (p != null);
 		return result;
 	}
 

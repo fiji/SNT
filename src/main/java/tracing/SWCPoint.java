@@ -36,8 +36,10 @@ public class SWCPoint implements Comparable<SWCPoint> {
 	int id, type, previous;
 	double x, y, z, radius;
 	Path fromPath = null;
-	public SWCPoint( int id, int type, double x, double y, double z, double radius, int previous ) {
-		nextPoints = new ArrayList<SWCPoint>();
+
+	public SWCPoint(final int id, final int type, final double x, final double y, final double z, final double radius,
+			final int previous) {
+		nextPoints = new ArrayList<>();
 		this.id = id;
 		this.type = type;
 		this.x = x;
@@ -46,28 +48,33 @@ public class SWCPoint implements Comparable<SWCPoint> {
 		this.radius = radius;
 		this.previous = previous;
 	}
+
 	public PointInImage getPointInImage() {
-		return new PointInImage( x, y, z );
+		return new PointInImage(x, y, z);
 	}
-	public void addNextPoint( SWCPoint p ) {
-		if( ! nextPoints.contains( p ) )
-			nextPoints.add( p );
+
+	public void addNextPoint(final SWCPoint p) {
+		if (!nextPoints.contains(p))
+			nextPoints.add(p);
 	}
-	public void setPreviousPoint( SWCPoint p ) {
+
+	public void setPreviousPoint(final SWCPoint p) {
 		previousPoint = p;
 	}
+
 	@Override
-	public String toString( ) {
-		return "SWCPoint ["+id+"] "+Path.swcTypeNames[type]+" "+
-			"("+x+","+y+","+z+") "+
-			"radius: "+radius+", "+
-			"[previous: "+ previous+"]";
+	public String toString() {
+		return "SWCPoint [" + id + "] " + Path.swcTypeNames[type] + " " + "(" + x + "," + y + "," + z + ") "
+				+ "radius: " + radius + ", " + "[previous: " + previous + "]";
 	}
-	public int compareTo( SWCPoint o ) {
-		int oid = o.id;
+
+	@Override
+	public int compareTo(final SWCPoint o) {
+		final int oid = o.id;
 		return (id < oid) ? -1 : ((id > oid) ? 1 : 0);
 	}
-	public void println(PrintWriter pw) {
-		pw.println(""+id+" "+type+" "+x+" "+y+" "+z+" "+radius+" "+previous);
+
+	public void println(final PrintWriter pw) {
+		pw.println("" + id + " " + type + " " + x + " " + y + " " + z + " " + radius + " " + previous);
 	}
 }

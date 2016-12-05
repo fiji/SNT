@@ -987,8 +987,10 @@ public class Path implements Comparable<Path> {
 			final PolygonRoi polyline = new PolygonRoi(p, Roi.FREELINE);
 			polyline.enableSubPixelResolution();
 			// polyline.fitSplineForStraightening();
-			polyline.setName(String.format("Path%04d-%04d-Z%d", id, roi_id, z_position));
+			if (name == null)
+				setDefaultName();
 			polyline.setStrokeColor(getColor());
+			polyline.setName(String.format(name +"-%04d-Z%d", roi_id, z_position));
 			polyline.setPosition(z_position + 1); // index 1
 			overlay.add(polyline);
 		}

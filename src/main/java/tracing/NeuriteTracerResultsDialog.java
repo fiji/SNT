@@ -51,6 +51,7 @@ import java.awt.BorderLayout;
 import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -80,9 +81,9 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-
 import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
 
 @SuppressWarnings("serial")
@@ -174,13 +175,12 @@ public class NeuriteTracerResultsDialog
 	protected JButton cancelPath;
 
 	protected JComboBox viewPathChoice;
-	protected String projectionChoice = "projected through all slices";
-	protected String partsNearbyChoice = "parts in nearby slices";
+	protected String projectionChoice = "Projected through all slices";
+	protected String partsNearbyChoice = "Parts in nearby slices";
 
 	protected TextField nearbyField;
 
 	protected PathColorsCanvas pathColorsCanvas;
-
 	protected JCheckBox enforceDefaultColors;
 	protected JComboBox colorImageChoice;
 	protected String noColorImageString = "[None]";
@@ -191,9 +191,9 @@ public class NeuriteTracerResultsDialog
 	protected JComboBox paths3DChoice;
 	protected String [] paths3DChoicesStrings = {
 		"BUG",
-		"as surface reconstructions",
-		"as lines",
-		"as lines and discs" };
+		"As surface reconstructions",
+		"As lines",
+		"As lines and discs" };
 
 	protected JCheckBox useTubularGeodesics;
 
@@ -443,7 +443,7 @@ public class NeuriteTracerResultsDialog
 		currentSigmaAndMultiplierLabel.setText(
 			"\u03C3 = " +
 			formatDouble( currentSigma ) +
-			", multiplier = " + formatDouble( currentMultiplier ) );
+			", Multiplier = " + formatDouble( currentMultiplier ) );
 	}
 
 	public double getSigma( ) {
@@ -539,8 +539,9 @@ public class NeuriteTracerResultsDialog
 					keepSegment.setVisible(false);
 					junkSegment.setVisible(false);
 
-					viewPathChoice.setEnabled(true);
-					paths3DChoice.setEnabled(true);
+					viewPathChoice.setEnabled(isStackAvailable());
+					nearbyField.setEnabled(nearbySlices());
+					paths3DChoice.setEnabled(isThreeDViewerAvailable());
 					preprocess.setEnabled(true);
 					useTubularGeodesics.setEnabled(plugin.oofFileAvailable());
 
@@ -685,6 +686,7 @@ public class NeuriteTracerResultsDialog
 
 				plugin.repaintAllPanes();
 			}
+
 		});
 
 		currentState = newState;
@@ -692,6 +694,14 @@ public class NeuriteTracerResultsDialog
 
 	public int getState() {
 		return currentState;
+	}
+
+	private boolean isStackAvailable() {
+		return plugin != null && !plugin.singleSlice;
+	}
+
+	private boolean isThreeDViewerAvailable() {
+		return plugin != null && !plugin.singleSlice && plugin.use3DViewer;
 	}
 
 	// ------------------------------------------------------------------------
@@ -780,7 +790,7 @@ public class NeuriteTracerResultsDialog
 		quitMenuItem.addActionListener(this);
 		fileMenu.add(quitMenuItem);
 
-		analyzeSkeletonMenuItem = new JMenuItem("Run \"Analyze Skeleton\"");
+		analyzeSkeletonMenuItem = new JMenuItem("Run \"Analyze Skeleton...\"");
 		analyzeSkeletonMenuItem.addActionListener(this);
 		analysisMenu.add(analyzeSkeletonMenuItem);
 
@@ -792,7 +802,7 @@ public class NeuriteTracerResultsDialog
 		addPathsToOverlayMenuItem = new JMenuItem("Add paths to overlay...");
 		addPathsToOverlayMenuItem.addActionListener(this);
 		analysisMenu.add(addPathsToOverlayMenuItem);
-		addPathsToManagerMenuItem = new JMenuItem("Export paths to ROI Manager");
+		addPathsToManagerMenuItem = new JMenuItem("Export paths to ROI Manager...");
 		addPathsToManagerMenuItem.addActionListener(this);
 		analysisMenu.add(addPathsToManagerMenuItem);
 		analysisMenu.addSeparator();
@@ -807,6 +817,7 @@ public class NeuriteTracerResultsDialog
 			SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT+
 			"% opacity";
 		mipOverlayMenuItem = new JCheckBoxMenuItem(opacityLabel);
+		mipOverlayMenuItem.setEnabled(!plugin.singleSlice);
 		mipOverlayMenuItem.addItemListener(this);
 		viewMenu.add(mipOverlayMenuItem);
 
@@ -837,21 +848,23 @@ public class NeuriteTracerResultsDialog
 		addWindowListener(this);
 
 		getContentPane().setLayout(new GridBagLayout());
-
 		GridBagConstraints c = new GridBagConstraints();
-
 		c.anchor = GridBagConstraints.LINE_START;
 		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridwidth = GridBagConstraints.REMAINDER;
 		c.gridx = 0;
-		c.insets = new Insets( 10, 10, 4, 10 );
 		c.gridy = 0;
 		c.weightx = 1;
+
+		c.insets = new Insets( 4, 4, 0, 0 );
+		getContentPane().add(separator("Instructions:"), c);
+		++c.gridy;
+		c.insets = new Insets( 0, 10, 0, 0 );
 
 		{ /* Add the status panel */
 
 			statusPanel = new JPanel();
 			statusPanel.setLayout(new BorderLayout());
-			statusPanel.add(new JLabel("Instructions:"), BorderLayout.NORTH);
 			statusText = new JLabel("");
 			statusText.setOpaque(true);
 			statusText.setForeground(Color.black);
@@ -906,149 +919,152 @@ public class NeuriteTracerResultsDialog
 			getContentPane().add(pathActionPanel,c);
 		}
 
-		c.insets = new Insets( 10, 10, 10, 10 );
-
+		++c.gridy;
+		addSeparator("Rendering:", c);
 		{
 			JPanel viewOptionsPanel = new JPanel();
-
 			viewOptionsPanel.setLayout(new GridBagLayout());
-			GridBagConstraints cv = new GridBagConstraints();
-			cv.insets = new Insets(3, 2, 3, 2);
-			cv.anchor = GridBagConstraints.LINE_START;
+			GridBagConstraints vop_c = new GridBagConstraints();
+			vop_c.anchor = GridBagConstraints.LINE_START;
+			vop_c.insets = new Insets(0,0,0,0);
+			vop_c.gridx = 0;
+			vop_c.gridy = 0;
+			vop_c.weightx = 1.0;
+			vop_c.fill = GridBagConstraints.BOTH;
+
+			paths3DChoice = new JComboBox();
+			for( int choice = 1; choice < paths3DChoicesStrings.length; ++choice )
+				paths3DChoice.addItem(paths3DChoicesStrings[choice]);
+			paths3DChoice.addItemListener(this);
+			paths3DChoice.setEnabled(isThreeDViewerAvailable());
+
+			vop_c.gridx = 0;
+			viewOptionsPanel.add(leftAlignedLabel("View paths (3D):", isThreeDViewerAvailable()),vop_c);
+			vop_c.gridx = 1;
+			viewOptionsPanel.add(paths3DChoice,vop_c);
+	
 			viewPathChoice = new JComboBox();
 			viewPathChoice.addItem(projectionChoice);
 			viewPathChoice.addItem(partsNearbyChoice);
 			viewPathChoice.addItemListener(this);
+			viewPathChoice.setEnabled(isStackAvailable());
 
 			JPanel nearbyPanel = new JPanel();
 			nearbyPanel.setLayout(new BorderLayout());
-			nearbyPanel.add(new JLabel("(up to"),BorderLayout.WEST);
+			nearbyPanel.add(leftAlignedLabel("(up to ", isStackAvailable()),BorderLayout.WEST);
 			nearbyField = new TextField("2",2);
 			nearbyField.addTextListener(this);
 			nearbyPanel.add(nearbyField,BorderLayout.CENTER);
-			nearbyPanel.add(new JLabel("slices to each side)"),BorderLayout.EAST);
+			nearbyPanel.add(leftAlignedLabel(" slices to each side)",isStackAvailable()),BorderLayout.EAST);
+			nearbyField.setEnabled(isStackAvailable());
+			++ vop_c.gridy;
+			vop_c.gridx = 0;
+			viewOptionsPanel.add(leftAlignedLabel("View paths (2D):", isStackAvailable()),vop_c);
+			vop_c.gridx = 1;
+			viewOptionsPanel.add(viewPathChoice,vop_c);
+			++ vop_c.gridy;
+			viewOptionsPanel.add(nearbyPanel, vop_c);
+			justShowSelected = new JCheckBox( "Show only selected paths" );
+			justShowSelected.addItemListener( this );
 
-			cv.gridx = 0;
-			cv.gridy = 0;
-			viewOptionsPanel.add(new JLabel("View paths (2D): "),cv);
-			cv.gridx = 1;
-			cv.gridy = 0;
-			viewOptionsPanel.add(viewPathChoice,cv);
+			vop_c.gridwidth = GridBagConstraints.REMAINDER;
+			vop_c.gridx = 0;
+			++ vop_c.gridy;
+			viewOptionsPanel.add(justShowSelected,vop_c);
 
-			paths3DChoice = new JComboBox();
-			if( thisPlugin != null && thisPlugin.use3DViewer ) {
-				for( int choice = 1; choice < paths3DChoicesStrings.length; ++choice )
-					paths3DChoice.addItem(paths3DChoicesStrings[choice]);
+			++c.gridy;
+			getContentPane().add(viewOptionsPanel,c);
+		}
 
-				cv.gridx = 0;
-				++ cv.gridy;
-				viewOptionsPanel.add(new JLabel("View paths (3D): "),cv);
-				cv.gridx = 1;
-				viewOptionsPanel.add(paths3DChoice,cv);
-			}
-			paths3DChoice.addItemListener(this);
+		++c.gridy;
+		addSeparator("Labelling of Paths:", c);
 
-			cv.gridx = 1;
-			++ cv.gridy;
-			cv.gridwidth = 1;
-			cv.anchor = GridBagConstraints.LINE_START;
-			viewOptionsPanel.add(nearbyPanel, cv);
+		{
 
-			JPanel flatColorOptionsPanel = new JPanel();
-			flatColorOptionsPanel.setLayout(new BorderLayout());
-			flatColorOptionsPanel.add(new JLabel("Click to change Path colours:"), BorderLayout.NORTH);
+			JLabel flatColorLabel = new JLabel("Default Colors (click to change):");
+			flatColorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			flatColorLabel.setBorder(new EmptyBorder(0,0,2,0));
 			pathColorsCanvas = new PathColorsCanvas(thisPlugin, 150, 18);
-			flatColorOptionsPanel.add(pathColorsCanvas, BorderLayout.CENTER);
 
-			JPanel imageColorOptionsPanel = new JPanel();
-			imageColorOptionsPanel.setLayout(new BorderLayout());
-			imageColorOptionsPanel.add(new JLabel("Use colors / labels from:"), BorderLayout.NORTH);
+			JLabel imageColorLabel = leftAlignedLabel("3D Viewer: Use colors / labels from:",isThreeDViewerAvailable());
+			imageColorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			imageColorLabel.setBorder(new EmptyBorder(6,0,0,0));
 
 			colorImageChoice = new JComboBox();
 			updateColorImageChoice();
 			colorImageChoice.addActionListener(this);
-			imageColorOptionsPanel.add(colorImageChoice, BorderLayout.CENTER);
 			ImagePlus.addImageListener(this);
+			colorImageChoice.setEnabled(isThreeDViewerAvailable());
 
-			cv.gridx = 0;
-			++cv.gridy;
-			cv.gridwidth = 2;
-			viewOptionsPanel.add(flatColorOptionsPanel,cv);
+			JPanel pathOptionsPanel = new JPanel();
+			pathOptionsPanel.setLayout(new GridBagLayout());
+			GridBagConstraints pop_c = singleColumnConstrains();
 
-			cv.gridx = 0;
-			++ cv.gridy;
-			cv.gridwidth = 2;
-			viewOptionsPanel.add(imageColorOptionsPanel,cv);
+			pathOptionsPanel.add(flatColorLabel, pop_c);
+			++pop_c.gridy;
+			pop_c.insets = new Insets(0,4,0,4);
+			pathOptionsPanel.add(pathColorsCanvas, pop_c);
+			pop_c.insets = new Insets(0,0,0,0);
 
-			justShowSelected = new JCheckBox( "Show only selected paths" );
-			justShowSelected.addItemListener( this );
-			cv.gridx = 0;
-			++ cv.gridy;
-			cv.gridwidth = 2;
-			cv.anchor = GridBagConstraints.LINE_START;
-			cv.insets = new Insets( 0, 0, 0, 0 );
-			viewOptionsPanel.add(justShowSelected,cv);
-
-			++ c.gridy;
-			getContentPane().add(viewOptionsPanel,c);
 			enforceDefaultColors = new JCheckBox("Enforce default colors (ignore customizations)");
 			enforceDefaultColors.addItemListener( this );
+			++ pop_c.gridy;
+			pathOptionsPanel.add(enforceDefaultColors,pop_c);
+
+			++pop_c.gridy;
+			pathOptionsPanel.add(imageColorLabel, pop_c);
+			++pop_c.gridy;
+			pathOptionsPanel.add(colorImageChoice, pop_c);
+
+			++c.gridy;
+			getContentPane().add(pathOptionsPanel,c);
 		}
 
+		++c.gridy;
+		addSeparator("Segmentation:", c);
+	
 		{ /* Add the panel with other options - preprocessing and the view of paths */
 
 			JPanel otherOptionsPanel = new JPanel();
-
 			otherOptionsPanel.setLayout(new GridBagLayout());
-			GridBagConstraints co = new GridBagConstraints();
-			co.anchor = GridBagConstraints.LINE_START;
+			GridBagConstraints oop_c = singleColumnConstrains();
 
 			useTubularGeodesics = new JCheckBox("Use Tubular Geodesics");
 			useTubularGeodesics.addItemListener( this );
-
-			co.gridx = 0;
-			++ co.gridy;
-			co.gridwidth = 2;
-			co.anchor = GridBagConstraints.LINE_START;
-			otherOptionsPanel.add(useTubularGeodesics,co);
+			++ oop_c.gridy;
+			otherOptionsPanel.add(useTubularGeodesics,oop_c);
 
 			preprocess = new JCheckBox("Hessian-based analysis");
 			preprocess.addItemListener( this );
+			++ oop_c.gridy;
+			otherOptionsPanel.add(preprocess,oop_c);
 
-			co.gridx = 0;
-			++ co.gridy;
-			co.gridwidth = 2;
-			co.anchor = GridBagConstraints.LINE_START;
-			otherOptionsPanel.add(preprocess,co);
-
-			++ co.gridy;
-			usePreprocessed = new JCheckBox("Use preprocessed image");
+			usePreprocessed = new JCheckBox("Use Tubeness preprocessed image");
 			usePreprocessed.addItemListener( this );
 			usePreprocessed.setEnabled( thisPlugin.tubeness != null );
-			otherOptionsPanel.add(usePreprocessed,co);
-
-			co.fill = GridBagConstraints.HORIZONTAL;
+			++ oop_c.gridy;
+			otherOptionsPanel.add(usePreprocessed,oop_c);
 
 			currentSigmaAndMultiplierLabel = new JLabel();
-			++ co.gridy;
-			otherOptionsPanel.add(currentSigmaAndMultiplierLabel,co);
+			currentSigmaAndMultiplierLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			++ oop_c.gridy;
+			otherOptionsPanel.add(currentSigmaAndMultiplierLabel,oop_c);
 			setSigma( thisPlugin.getMinimumSeparation(), false );
 			setMultiplier( 4 );
 			updateLabel( );
-			++ co.gridy;
 
 			JPanel sigmaButtonPanel = new JPanel( );
 
-			editSigma = new JButton( "Pick Sigma Manually" );
+			editSigma = PathWindow.smallButton( "Pick Sigma Manually" );
 			editSigma.addActionListener( this );
 			sigmaButtonPanel.add(editSigma);
 
-			sigmaWizard = new JButton( "Pick Sigma Visually" );
+			sigmaWizard = PathWindow.smallButton( "Pick Sigma Visually" );
 			sigmaWizard.addActionListener( this );
 			sigmaButtonPanel.add(sigmaWizard);
 
-			++ co.gridy;
-			otherOptionsPanel.add(sigmaButtonPanel,co);
+			++ oop_c.gridy;
+			otherOptionsPanel.add(sigmaButtonPanel,oop_c);
 
 			++ c.gridy;
 			getContentPane().add(otherOptionsPanel,c);
@@ -1084,6 +1100,40 @@ public class NeuriteTracerResultsDialog
 		pathAndFillManager.addPathAndFillListener(fw);
 
 		changeState( WAITING_TO_START_PATH );
+	}
+
+	private GridBagConstraints singleColumnConstrains() {
+		final GridBagConstraints cp = new GridBagConstraints();
+		cp.anchor = GridBagConstraints.LINE_START;
+		cp.gridwidth = GridBagConstraints.REMAINDER;
+		cp.fill = GridBagConstraints.HORIZONTAL;
+		cp.insets = new Insets(0, 0, 0, 0);
+		cp.weightx = 1.0;
+		cp.gridx = 0;
+		cp.gridy = 0;
+		return cp;
+	}
+
+	private void addSeparator(final String heading, final GridBagConstraints c) {
+		final Insets previousInsets = c.insets;
+		c.insets = new Insets(8, 4, 0, 0);
+		getContentPane().add(separator(heading), c);
+		c.insets = previousInsets;
+	}
+
+	private JLabel separator(final String text) {
+		final JLabel label = leftAlignedLabel(text, true);
+		label.setFont(new Font("SansSerif", Font.PLAIN, 11));
+		return label;
+	}
+
+	private JLabel leftAlignedLabel(final String text, final boolean enabled) {
+		final JLabel label = new JLabel(text);
+		//label.setHorizontalAlignment(SwingConstants.LEFT);
+		//label.setBorder(new EmptyBorder(0,0,0,0));
+		if (!enabled)
+			label.setForeground(sholl.gui.Utils.getDisabledComponentColor());
+		return label;
 	}
 
 	protected void displayOnStarting( ) {
@@ -1546,7 +1596,7 @@ public class NeuriteTracerResultsDialog
 	protected void setPathListVisible(boolean makeVisible) {
 		assert SwingUtilities.isEventDispatchThread();
 		if( makeVisible ) {
-			showOrHidePathList.setText("Hide Path List");
+			showOrHidePathList.setText(" Hide Path List ");
 			pw.setVisible(true);
 			pw.toFront();
 		} else {

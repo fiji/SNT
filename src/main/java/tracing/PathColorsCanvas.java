@@ -62,8 +62,17 @@ public class PathColorsCanvas extends Canvas implements MouseListener {
 		int leftWidth = width / 2;
 		g.setColor( selectedColor );
 		g.fillRect( 0, 0, leftWidth, height );
+		g.setColor(contrastColor(selectedColor));
+		g.drawString("Selected", 3, height-3);
 		g.setColor( deselectedColor );
 		g.fillRect( leftWidth, 0, width - leftWidth, height );
+		g.setColor(contrastColor(deselectedColor));
+		g.drawString("Deselected", leftWidth + 3, height-3);
+	}
+
+	private Color contrastColor(final Color c) {
+		int intensity = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
+		return intensity < 128 ? Color.WHITE : Color.BLACK;
 	}
 
 	public void mouseClicked(MouseEvent e) {

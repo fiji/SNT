@@ -501,8 +501,9 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			}
 
 			resultsDialog.displayOnStarting();
+			GUI.center(xy_window);
+			xy_window.toFront();
 			resultsDialog.arrangeWindows();
-			resultsDialog.pw.toBack();
 
 		} finally {
 			IJ.getInstance().addKeyListener(IJ.getInstance());

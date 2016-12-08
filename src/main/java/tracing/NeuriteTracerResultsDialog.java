@@ -1131,7 +1131,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			@Override
 			public void run() {
 				setVisible(true);
-				setPathListVisible(true);
+				setPathListVisible(true, false);
 				setFillListVisible(false);
 			}
 		});
@@ -1564,12 +1564,13 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		});
 	}
 
-	protected void setPathListVisible(final boolean makeVisible) {
+	protected void setPathListVisible(final boolean makeVisible, final boolean toFront) {
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {
 			showOrHidePathList.setText(" Hide Path List ");
 			pw.setVisible(true);
-			pw.toFront();
+			if (toFront)
+				pw.toFront();
 		} else {
 			showOrHidePathList.setText("Show Path List");
 			pw.setVisible(false);
@@ -1579,7 +1580,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	protected void togglePathListVisibility() {
 		assert SwingUtilities.isEventDispatchThread();
 		synchronized (pw) {
-			setPathListVisible(!pw.isVisible());
+			setPathListVisible(!pw.isVisible(), true);
 		}
 	}
 

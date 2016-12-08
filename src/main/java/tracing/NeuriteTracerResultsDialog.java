@@ -759,6 +759,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);
 
+		menuBar.add(trackingMenu());
+
 		analysisMenu = new JMenu("Analysis");
 		menuBar.add(analysisMenu);
 
@@ -818,18 +820,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		exportCSVMenuItemAgain.addActionListener(this);
 		analysisMenu.add(exportCSVMenuItemAgain);
 
-		final String opacityLabel = "Show MIP overlay(s) at " + SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT
-				+ "% opacity";
-		mipOverlayMenuItem = new JCheckBoxMenuItem(opacityLabel);
-		mipOverlayMenuItem.setEnabled(!plugin.singleSlice);
-		mipOverlayMenuItem.addItemListener(this);
-		viewMenu.add(mipOverlayMenuItem);
-
-		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw diameters in XY plane", plugin.getDrawDiametersXY());
-		drawDiametersXYMenuItem.addItemListener(this);
-		viewMenu.add(drawDiametersXYMenuItem);
-
-		viewMenu.addSeparator();
 		xyCanvasMenuItem = new JCheckBoxMenuItem("Hide XY plane");
 		xyCanvasMenuItem.addItemListener(this);
 		viewMenu.add(xyCanvasMenuItem);
@@ -1725,6 +1715,22 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	public void textValueChanged(final TextEvent e) {
 		assert SwingUtilities.isEventDispatchThread();
 		plugin.justDisplayNearSlices(nearbySlices(), getEitherSide());
+	}
+
+	private JMenu trackingMenu() {
+		final JMenu trackingMenu = new JMenu("Tracking");
+		final String opacityLabel = "Show MIP overlay(s) at " + SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT
+				+ "% opacity";
+		mipOverlayMenuItem = new JCheckBoxMenuItem(opacityLabel);
+		mipOverlayMenuItem.setEnabled(!plugin.singleSlice);
+		mipOverlayMenuItem.addItemListener(this);
+		trackingMenu.add(mipOverlayMenuItem);
+
+		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw diameters in XY plane", plugin.getDrawDiametersXY());
+		drawDiametersXYMenuItem.addItemListener(this);
+		trackingMenu.add(drawDiametersXYMenuItem);
+		trackingMenu.addSeparator();
+		return trackingMenu;
 	}
 
 	private JMenu helpMenu() {

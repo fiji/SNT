@@ -1661,7 +1661,12 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			plugin.showMIPOverlays(e.getStateChange() == ItemEvent.SELECTED);
 
 		} else if (source == drawDiametersXYMenuItem) {
+
 			plugin.setDrawDiametersXY(e.getStateChange() == ItemEvent.SELECTED);
+
+		} else if (source == autoActivationMenuItem) {
+
+			plugin.enableAutoActivation(e.getStateChange() == ItemEvent.SELECTED);
 
 		} else if (source == xyCanvasMenuItem && xyCanvasMenuItem.isEnabled()) {
 			toggleWindowVisibility(ThreePanes.XY_PLANE, xyCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
@@ -1730,6 +1735,12 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		drawDiametersXYMenuItem.addItemListener(this);
 		trackingMenu.add(drawDiametersXYMenuItem);
 		trackingMenu.addSeparator();
+
+		autoActivationMenuItem = new JCheckBoxMenuItem("Activate canvas(es) on mouse hovering");
+		autoActivationMenuItem.addItemListener(this);
+		trackingMenu.add(autoActivationMenuItem);
+		trackingMenu.addSeparator();
+
 		return trackingMenu;
 	}
 

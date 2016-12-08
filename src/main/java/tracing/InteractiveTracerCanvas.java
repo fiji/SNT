@@ -176,6 +176,19 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	double last_y_in_pane_precise = Double.MIN_VALUE;
 
 	@Override
+	public void mouseEntered(final MouseEvent e) {
+
+		if (!tracerPlugin.isReady())
+			return;
+
+		if (tracerPlugin.autoCanvasActivation) {
+			imp.getWindow().toFront();
+			requestFocusInWindow();
+		}
+
+	}
+
+	@Override
 	public void mouseClicked(final MouseEvent e) {
 
 		if (!tracerPlugin.isReady())

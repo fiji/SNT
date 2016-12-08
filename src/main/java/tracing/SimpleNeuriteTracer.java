@@ -1718,6 +1718,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 				xy_tracer_canvas.just_near_slices ? resultsDialog.partsNearbyChoice : resultsDialog.projectionChoice);
 	}
 
+	public void enableAutoActivation(final boolean enable) {
+		autoCanvasActivation = enable;
+	}
+
 	protected boolean drawDiametersXY = Prefs.get("tracing.Simple_Neurite_Tracer.drawDiametersXY", "false")
 			.equals("true");
 

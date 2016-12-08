@@ -366,7 +366,11 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
 			zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
 
+			snapCursor = true;
+			cursorSnapWindowXY = 4;
+			cursorSnapWindowZ = 0;
 			setupTrace = true;
+
 			final Simple_Neurite_Tracer thisPlugin = this;
 			resultsDialog = SwingSafeResult.getResult(new Callable<NeuriteTracerResultsDialog>() {
 				@Override

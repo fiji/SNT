@@ -61,9 +61,15 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JSpinner.DefaultEditor;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import features.SigmaPalette;
 import ij.IJ;
@@ -87,7 +93,7 @@ import stacks.ThreePanes;
 
 @SuppressWarnings("serial")
 public class NeuriteTracerResultsDialog extends JDialog implements ActionListener, WindowListener, ItemListener,
-		TextListener, SigmaPalette.SigmaPaletteListener, ImageListener {
+		TextListener, SigmaPalette.SigmaPaletteListener, ImageListener, ChangeListener {
 
 	public static final boolean verbose = SimpleNeuriteTracer.verbose;
 
@@ -198,6 +204,11 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	protected JButton showOrHidePathList;
 	protected JButton showOrHideFillList;
+
+	protected JCheckBox useSnapWindow;
+	protected JSpinner snapWindowXYsizeSpinner;
+	protected JSpinner snapWindowZsizeSpinner;
+
 
 	// ------------------------------------------------------------------------
 	// Implementing the ImageListener interface:
@@ -914,6 +925,11 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		}
 
 		++c.gridy;
+		addSeparator("Tracing:", c);
+		++c.gridy;
+		getContentPane().add(tracingPanel(), c);
+
+		++c.gridy;
 		addSeparator("Rendering:", c);
 		{
 			final JPanel viewOptionsPanel = new JPanel();
@@ -1090,6 +1106,33 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		pathAndFillManager.addPathAndFillListener(fw);
 
 		changeState(WAITING_TO_START_PATH);
+	private JPanel tracingPanel() {
+
+		final JPanel tracingOptionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		useSnapWindow = new JCheckBox("Enable cursor [s]napping within: XY", plugin.snapCursor);
+		useSnapWindow.setBorder(new EmptyBorder(0, 0, 0, 0));
+		useSnapWindow.addItemListener(this);
+		tracingOptionsPanel.add(useSnapWindow);
+
+		final SpinnerModel xy_model = new SpinnerNumberModel(plugin.cursorSnapWindowXY * 2,
+				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY, 2);
+		snapWindowXYsizeSpinner = new JSpinner(xy_model);
+		((DefaultEditor) snapWindowXYsizeSpinner.getEditor()).getTextField().setEditable(false);
+		snapWindowXYsizeSpinner.addChangeListener(this);
+		tracingOptionsPanel.add(snapWindowXYsizeSpinner);
+
+		final JLabel z_spinner_label = leftAlignedLabel("Z", isStackAvailable());
+		z_spinner_label.setBorder(new EmptyBorder(0, 2, 0, 0));
+		tracingOptionsPanel.add(z_spinner_label);
+		final SpinnerModel z_model = new SpinnerNumberModel(plugin.cursorSnapWindowZ,
+				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z, 2);
+		snapWindowZsizeSpinner = new JSpinner(z_model);
+		((DefaultEditor) snapWindowZsizeSpinner.getEditor()).getTextField().setEditable(false);
+		snapWindowZsizeSpinner.addChangeListener(this);
+		snapWindowZsizeSpinner.setEnabled(isStackAvailable());
+		tracingOptionsPanel.add(snapWindowZsizeSpinner);
+		//tracingOptionsPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		return tracingOptionsPanel;
 	}
 
 	private GridBagConstraints singleColumnConstrains() {
@@ -1633,6 +1676,10 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 			plugin.enableTubularGeodesicsTracing(useTubularGeodesics.isSelected());
 
+		} else if (source == useSnapWindow) {
+
+			plugin.enableSnapCursor(useSnapWindow.isSelected());
+
 		} else if (source == preprocess && !ignorePreprocessEvents) {
 
 			if (preprocess.isSelected())
@@ -1675,6 +1722,16 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			toggleWindowVisibility(ThreePanes.ZY_PLANE, zyCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
 		} else if (source == xzCanvasMenuItem && xzCanvasMenuItem.isEnabled()) {
 			toggleWindowVisibility(ThreePanes.XZ_PLANE, xzCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
+		}
+	}
+
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		final Object source = e.getSource();
+		if (source == snapWindowXYsizeSpinner) {
+			plugin.cursorSnapWindowXY = (int) snapWindowXYsizeSpinner.getValue() / 2;
+		} else if (source == snapWindowZsizeSpinner) {
+			plugin.cursorSnapWindowZ = (int) snapWindowZsizeSpinner.getValue() / 2;
 		}
 	}
 

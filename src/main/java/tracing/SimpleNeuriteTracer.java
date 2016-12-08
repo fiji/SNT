@@ -89,6 +89,11 @@ public class SimpleNeuriteTracer extends ThreePanes
 	protected static final int DISPLAY_PATHS_LINES = 2;
 	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
 
+	protected static final int MIN_SNAP_CURSOR_WINDOW_XY = 2;
+	protected static final int MIN_SNAP_CURSOR_WINDOW_Z = 0;
+	protected static final int MAX_SNAP_CURSOR_WINDOW_XY = 20;
+	protected static final int MAX_SNAP_CURSOR_WINDOW_Z = 8;
+
 	protected static final String startBallName = "Start point";
 	protected static final String targetBallName = "Target point";
 	protected static final int ballRadiusMultiplier = 5;
@@ -1798,8 +1803,22 @@ public class SimpleNeuriteTracer extends ThreePanes
 				xy_tracer_canvas.just_near_slices ? resultsDialog.partsNearbyChoice : resultsDialog.projectionChoice);
 	}
 
+	protected volatile boolean snapCursor;
+	protected volatile boolean autoCanvasActivation;
+
 	protected int cursorSnapWindowXY;
 	protected int cursorSnapWindowZ;
+
+	protected void toogleSnapCursor() {
+		enableSnapCursor(!snapCursor);
+	}
+
+	public synchronized void enableSnapCursor(final boolean enable) {
+		snapCursor = enable;
+		resultsDialog.useSnapWindow.setSelected(enable);
+		resultsDialog.snapWindowXYsizeSpinner.setEnabled(enable);
+		resultsDialog.snapWindowZsizeSpinner.setEnabled(enable && !singleSlice);
+	}
 
 	public void enableAutoActivation(final boolean enable) {
 		autoCanvasActivation = enable;

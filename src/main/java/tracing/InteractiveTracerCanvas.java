@@ -162,9 +162,18 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		final boolean mac = IJ.isMacintosh();
 
-		final boolean shift_key_down = (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
+		boolean shift_key_down = (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
 		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
 				: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
+
+		if (tracerPlugin.snapCursor && plane == ThreePanes.XY_PLANE && !joiner_modifier_down
+				&& !shift_key_down) {
+			final double[] p = new double[3];
+			tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise, last_y_in_pane_precise, p);
+			last_x_in_pane_precise = p[0];
+			last_y_in_pane_precise = p[1];
+			shift_key_down = true;
+		}
 
 		super.mouseMoved(e);
 

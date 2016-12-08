@@ -1621,6 +1621,86 @@ public class SimpleNeuriteTracer extends ThreePanes
 		c.addKeyListener(firstKeyListener);
 	}
 
+	public synchronized void findSnappingPointInXYview(final double x_in_pane, final double y_in_pane,
+			final double[] point) {
+
+		// if (width == 0 || height == 0 || depth == 0)
+		// throw new RuntimeException(
+		// "Can't call findSnappingPointInXYview() before width, height and
+		// depth are set...");
+
+		final int[] window_center = new int[3];
+		findPointInStack((int) Math.round(x_in_pane), (int) Math.round(y_in_pane), ThreePanes.XY_PLANE, window_center);
+		int startx = window_center[0] - cursorSnapWindowXY;
+		if (startx < 0)
+			startx = 0;
+		int starty = window_center[1] - cursorSnapWindowXY;
+		if (starty < 0)
+			starty = 0;
+		int startz = window_center[2] - cursorSnapWindowZ;
+		if (startz < 0)
+			startz = 0;
+		int stopx = window_center[0] + cursorSnapWindowXY;
+		if (stopx > width)
+			stopx = width;
+		int stopy = window_center[1] + cursorSnapWindowXY;
+		if (stopy > height)
+			stopy = height;
+		int stopz = window_center[2] + cursorSnapWindowZ;
+		if (cursorSnapWindowZ == 0) {
+			++stopz;
+		} else if (stopz > depth) {
+			stopz = depth;
+		}
+
+		ArrayList<int[]> pointsAtMaximum = new ArrayList<>();
+		float currentMaximum = -Float.MAX_VALUE;
+		for (int x = startx; x < stopx; ++x) {
+			for (int y = starty; y < stopy; ++y) {
+				for (int z = startz; z < stopz; ++z) {
+					float v = -Float.MAX_VALUE;
+					final int xyIndex = y * width + x;
+					switch (imageType) {
+					case ImagePlus.GRAY8:
+					case ImagePlus.COLOR_256:
+						v = 0xFF & slices_data_b[z][xyIndex];
+						break;
+					case ImagePlus.GRAY16:
+						v = slices_data_s[z][xyIndex];
+						break;
+					case ImagePlus.GRAY32:
+						v = slices_data_f[z][xyIndex];
+						break;
+					default:
+						throw new RuntimeException("Unknow image type: " + imageType);
+					}
+					if (v > currentMaximum) {
+						pointsAtMaximum = new ArrayList<>();
+						pointsAtMaximum.add(new int[] { x, y, z });
+						currentMaximum = v;
+					} else if (v == currentMaximum) {
+						pointsAtMaximum.add(new int[] { x, y, z });
+					}
+				}
+			}
+		}
+
+		// if (pointsAtMaximum.size() == 0) {
+		// findPointInStackPrecise(x_in_pane, y_in_pane, ThreePanes.XY_PLANE,
+		// point);
+		// if (verbose)
+		// System.out.println("No maxima in snap-to window");
+		// return;
+		// }
+
+		final int[] snapped_p = pointsAtMaximum.get(pointsAtMaximum.size() / 2);
+		if (window_center[2] != snapped_p[2])
+			xy.setSlice(snapped_p[2] + 1);
+		point[0] = snapped_p[0];
+		point[1] = snapped_p[1];
+		point[2] = snapped_p[2];
+	}
+
 	public void clickAtMaxPoint(final int x_in_pane, final int y_in_pane, final int plane) {
 		final int[][] pointsToConsider = findAllPointsAlongLine(x_in_pane, y_in_pane, plane);
 		ArrayList<int[]> pointsAtMaximum = new ArrayList<>();
@@ -1717,6 +1797,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 		resultsDialog.viewPathChoice.setSelectedItem(
 				xy_tracer_canvas.just_near_slices ? resultsDialog.partsNearbyChoice : resultsDialog.projectionChoice);
 	}
+
+	protected int cursorSnapWindowXY;
+	protected int cursorSnapWindowZ;
 
 	public void enableAutoActivation(final boolean enable) {
 		autoCanvasActivation = enable;

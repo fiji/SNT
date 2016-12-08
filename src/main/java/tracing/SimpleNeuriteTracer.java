@@ -1410,8 +1410,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			final Path p = pafmTraces.getPath(pi);
 			if (p.getUseFitted())
 				continue;
-			else
-				p.addAsLinesTo3DViewer(univ, c, null);
+			p.addAsLinesTo3DViewer(univ, c, null);
 		}
 		// univ.resetView();
 	}
@@ -1476,11 +1475,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 				// instead
 				final Path drawPath = (p.useFitted) ? p.fitted : p;
 
-				Color color = deselectedColor;
-				if (pathAndFillManager.isSelected(p))
-					color = selectedColor;
-				else if (showOnlySelectedPaths)
+				if (showOnlySelectedPaths && !pathAndFillManager.isSelected(p))
 					continue;
+
 				drawPath.drawPathAsPoints(overlay, plane);
 			}
 			imp.setOverlay(overlay);

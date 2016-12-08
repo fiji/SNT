@@ -29,7 +29,9 @@ package tracing;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,6 +52,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -60,10 +63,12 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeModel;
@@ -82,6 +87,11 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 		public HelpfulJTree(final TreeNode root) {
 			super(root);
+			DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
+			renderer.setClosedIcon(new NodeIcon(NodeIcon.PLUS));
+			renderer.setOpenIcon(new NodeIcon(NodeIcon.MINUS));
+			renderer.setLeafIcon(new NodeIcon(NodeIcon.EMPTY));
+			setCellRenderer(renderer);
 			assert SwingUtilities.isEventDispatchThread();
 		}
 
@@ -101,6 +111,47 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			assert SwingUtilities.isEventDispatchThread();
 			final TreePath tp = new TreePath(path);
 			setSelectionPath(tp);
+		}
+
+	}
+
+	// See http://stackoverflow.com/a/7984734
+	public static class NodeIcon implements Icon {
+
+		private static final int SIZE = 9;
+		protected static final char PLUS = '+';
+		protected static final char MINUS = '-';
+		protected static final char EMPTY = ' ';
+
+		private final char type;
+
+		public NodeIcon(final char type) {
+			this.type = type;
+		}
+
+		@Override
+		public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
+			g.setColor(UIManager.getColor("Tree.background"));
+			g.fillRect(x, y, SIZE - 1, SIZE - 1);
+			g.setColor(UIManager.getColor("Tree.hash").darker());
+			g.drawRect(x, y, SIZE - 1, SIZE - 1);
+			if (type == EMPTY)
+				return;
+			g.setColor(UIManager.getColor("Tree.foreground"));
+			g.drawLine(x + 2, y + SIZE / 2, x + SIZE - 3, y + SIZE / 2);
+			if (type == PLUS) {
+				g.drawLine(x + SIZE / 2, y + 2, x + SIZE / 2, y + SIZE - 3);
+			}
+		}
+
+		@Override
+		public int getIconWidth() {
+			return SIZE;
+		}
+
+		@Override
+		public int getIconHeight() {
+			return SIZE;
 		}
 
 	}

@@ -35,6 +35,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.TextField;
@@ -121,6 +122,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	protected JCheckBoxMenuItem mipOverlayMenuItem;
 	protected JCheckBoxMenuItem drawDiametersXYMenuItem;
+	protected JCheckBoxMenuItem autoActivationMenuItem;
+
 	protected JCheckBoxMenuItem xyCanvasMenuItem;
 	protected JCheckBoxMenuItem zyCanvasMenuItem;
 	protected JCheckBoxMenuItem xzCanvasMenuItem;
@@ -168,7 +171,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	protected JComboBox<String> viewPathChoice;
 	protected String projectionChoice = "Projected through all slices";
-	protected String partsNearbyChoice = "Parts in nearby slices";
+	protected String partsNearbyChoice = "Parts in nearby slices [5]";
 
 	protected TextField nearbyField;
 
@@ -589,8 +592,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 						completePath.setEnabled(true);
 					cancelPath.setEnabled(true);
 
-					viewPathChoice.setEnabled(true);
-					paths3DChoice.setEnabled(true);
+					viewPathChoice.setEnabled(isStackAvailable());
+					paths3DChoice.setEnabled(isStackAvailable());
 					preprocess.setEnabled(true);
 					useTubularGeodesics.setEnabled(plugin.oofFileAvailable());
 
@@ -808,15 +811,18 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		quitMenuItem.addActionListener(this);
 		fileMenu.add(quitMenuItem);
 
-		analyzeSkeletonMenuItem = new JMenuItem("Run \"Analyze Skeleton...\"");
-		analyzeSkeletonMenuItem.addActionListener(this);
-		analysisMenu.add(analyzeSkeletonMenuItem);
-
 		makeLineStackMenuItem = new JMenuItem("Make Line Stack");
 		makeLineStackMenuItem.addActionListener(this);
 		analysisMenu.add(makeLineStackMenuItem);
 
+		analyzeSkeletonMenuItem = new JMenuItem("Run \"Analyze Skeleton...\"");
+		analyzeSkeletonMenuItem.addActionListener(this);
+		analysisMenu.add(analyzeSkeletonMenuItem);
+
 		analysisMenu.addSeparator();
+		analysisMenu.add(shollAnalysisHelpMenuItem());
+		analysisMenu.addSeparator();
+
 		addPathsToOverlayMenuItem = new JMenuItem("Add paths to overlay...");
 		addPathsToOverlayMenuItem.addActionListener(this);
 		analysisMenu.add(addPathsToOverlayMenuItem);
@@ -825,8 +831,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		analysisMenu.add(addPathsToManagerMenuItem);
 		analysisMenu.addSeparator();
 
-		analysisMenu.add(shollAnalysisHelpMenuItem());
-		analysisMenu.addSeparator();
 		exportCSVMenuItemAgain = new JMenuItem("Export as CSV...");
 		exportCSVMenuItemAgain.addActionListener(this);
 		analysisMenu.add(exportCSVMenuItemAgain);
@@ -878,8 +882,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			statusText.setBorder(new EmptyBorder(5, 5, 5, 5));
 			statusPanel.add(statusText, BorderLayout.CENTER);
 
-			keepSegment = new JButton("Yes");
-			junkSegment = new JButton("No");
+			keepSegment = new JButton("Yes [y]");
+			junkSegment = new JButton("No [n]");
 			cancelSearch = new JButton("Abandon Search");
 
 			keepSegment.addActionListener(this);
@@ -902,27 +906,29 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			statusChoicesPanel.add(junkSegment);
 			statusChoicesPanel.add(cancelSearch);
 			statusChoicesPanel.setLayout(new FlowLayout());
-
+			statusPanel.setBorder(new EmptyBorder(0,0,0,0));
 			statusPanel.add(statusChoicesPanel, BorderLayout.SOUTH);
-
+			c.insets =  new Insets(4, 0, 0, 0);
 			getContentPane().add(statusPanel, c);
 		}
-
-		c.insets = new Insets(4, 10, 10, 10);
 
 		{ /* Add the panel of actions to take on half-constructed paths */
 
 			pathActionPanel = new JPanel();
-			completePath = new JButton("Complete Path");
+			completePath = new JButton("Complete Path [f]");
 			cancelPath = new JButton("Cancel Path");
 			completePath.addActionListener(this);
 			cancelPath.addActionListener(this);
 			pathActionPanel.add(completePath);
 			pathActionPanel.add(cancelPath);
+			pathActionPanel.setBorder(new EmptyBorder(0,0,0,0));
 
+			c.insets =  new Insets(0, 0, 0, 0);
 			++c.gridy;
 			getContentPane().add(pathActionPanel, c);
 		}
+
+		c.insets = new Insets(4, 10, 10, 10);
 
 		++c.gridy;
 		addSeparator("Tracing:", c);
@@ -1106,6 +1112,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		pathAndFillManager.addPathAndFillListener(fw);
 
 		changeState(WAITING_TO_START_PATH);
+	}
+
 	private JPanel tracingPanel() {
 
 		final JPanel tracingOptionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -1162,8 +1170,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	private JLabel leftAlignedLabel(final String text, final boolean enabled) {
 		final JLabel label = new JLabel(text);
-		// label.setHorizontalAlignment(SwingConstants.LEFT);
-		// label.setBorder(new EmptyBorder(0,0,0,0));
 		if (!enabled)
 			label.setForeground(sholl.gui.Utils.getDisabledComponentColor());
 		return label;
@@ -1794,7 +1800,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		trackingMenu.add(drawDiametersXYMenuItem);
 		trackingMenu.addSeparator();
 
-		autoActivationMenuItem = new JCheckBoxMenuItem("Activate canvas(es) on mouse hovering");
+		autoActivationMenuItem = new JCheckBoxMenuItem("Activate canvas(es) on mouse hovering", plugin.autoCanvasActivation);
 		autoActivationMenuItem.addItemListener(this);
 		trackingMenu.add(autoActivationMenuItem);
 		trackingMenu.addSeparator();
@@ -1867,7 +1873,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		return mi;
 	}
 
-	public static JMenuItem menuItemTrigerringURL(final String label, final String URL) {
+	private JMenuItem menuItemTrigerringURL(final String label, final String URL) {
 		final JMenuItem mi = new JMenuItem(label);
 		mi.addActionListener(new ActionListener() {
 			@Override
@@ -1877,4 +1883,5 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		});
 		return mi;
 	}
+
 }

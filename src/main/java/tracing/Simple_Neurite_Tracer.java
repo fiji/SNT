@@ -367,6 +367,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
 
 			snapCursor = true;
+			autoCanvasActivation = true;
 			cursorSnapWindowXY = 4;
 			cursorSnapWindowZ = 0;
 			setupTrace = true;

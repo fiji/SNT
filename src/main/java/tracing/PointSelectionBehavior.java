@@ -102,6 +102,7 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 				} else if (keyChar == '5') {
 
 					tracerPlugin.getXYCanvas().toggleJustNearSlices();
+					tracerPlugin.updateViewPathChoice();
 					e.consume();
 
 				} else if (keyChar == 'g' || keyChar == 'G') {

@@ -1711,6 +1711,13 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 	}
 
+	protected void updateViewPathChoice() {
+		if (!resultsDialog.viewPathChoice.isEnabled())
+			return;
+		resultsDialog.viewPathChoice.setSelectedItem(
+				xy_tracer_canvas.just_near_slices ? resultsDialog.partsNearbyChoice : resultsDialog.projectionChoice);
+	}
+
 	protected boolean drawDiametersXY = Prefs.get("tracing.Simple_Neurite_Tracer.drawDiametersXY", "false")
 			.equals("true");
 

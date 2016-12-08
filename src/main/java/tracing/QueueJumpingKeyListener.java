@@ -103,6 +103,7 @@ public class QueueJumpingKeyListener implements KeyListener {
 		} else if (keyChar == '5') {
 
 			canvas.toggleJustNearSlices();
+			tracerPlugin.updateViewPathChoice();
 			e.consume();
 
 		} else if (keyChar == 'm' || keyChar == 'M') {

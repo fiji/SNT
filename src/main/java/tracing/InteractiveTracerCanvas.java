@@ -92,8 +92,11 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	public void clickAtMaxPoint() {
-		tracerPlugin.clickAtMaxPoint((int) Math.round(last_x_in_pane_precise), (int) Math.round(last_y_in_pane_precise),
-				plane);
+		final int[] p = new int[3];
+		tracerPlugin.findPointInStack((int) Math.round(last_x_in_pane_precise),
+				(int) Math.round(last_y_in_pane_precise), plane, p);
+		tracerPlugin.clickAtMaxPoint(p[0], p[1], plane);
+		tracerPlugin.setSlicesAllPanes(p[0], p[1], p[2]);
 	}
 
 	public void startShollAnalysis() {

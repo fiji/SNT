@@ -111,6 +111,11 @@ public class QueueJumpingKeyListener implements KeyListener {
 			canvas.clickAtMaxPoint();
 			e.consume();
 
+		} else if (keyChar == 's' || keyChar == 's') {
+
+			tracerPlugin.toogleSnapCursor();
+			e.consume();
+
 		} else if (keyChar == 'g' || keyChar == 'G') {
 
 			canvas.selectNearestPathToMousePointer(shift_down || control_down);

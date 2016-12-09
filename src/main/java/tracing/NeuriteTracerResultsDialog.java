@@ -915,8 +915,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		{ /* Add the panel of actions to take on half-constructed paths */
 
 			pathActionPanel = new JPanel();
-			completePath = new JButton("Complete Path [f]");
-			cancelPath = new JButton("Cancel Path");
+			completePath = new JButton("Finish Path [f]");
+			cancelPath = new JButton("Cancel Path [c]");
 			completePath.addActionListener(this);
 			cancelPath.addActionListener(this);
 			pathActionPanel.add(completePath);
@@ -1616,7 +1616,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	protected void setPathListVisible(final boolean makeVisible, final boolean toFront) {
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {
-			showOrHidePathList.setText(" Hide Path List ");
+			showOrHidePathList.setText(" Hide Path List");
 			pw.setVisible(true);
 			if (toFront)
 				pw.toFront();
@@ -1636,7 +1636,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	protected void setFillListVisible(final boolean makeVisible) {
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {
-			showOrHideFillList.setText("Hide Fill List");
+			showOrHideFillList.setText(" Hide Fill List");
 			fw.setVisible(true);
 			fw.toFront();
 		} else {

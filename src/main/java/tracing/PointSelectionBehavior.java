@@ -89,6 +89,11 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 					tracerPlugin.cancelTemporary();
 					e.consume();
 
+				} else if (keyChar == 'c' || keyChar == 'C') {
+
+					tracerPlugin.cancelPath();
+					e.consume();
+
 				} else if (keyChar == 'f' || keyChar == 'F') {
 
 					tracerPlugin.finishedPath();

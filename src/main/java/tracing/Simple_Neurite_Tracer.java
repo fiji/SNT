@@ -108,7 +108,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			} else {
 				currentImage = BatchOpener.openFirstChannel(macroImageFilename);
 				if (currentImage == null) {
-					IJ.error("Opening the image file specified in the macro parameters (" + macroImageFilename
+					error("Opening the image file specified in the macro parameters (" + macroImageFilename
 							+ ") failed.");
 					return;
 				}
@@ -116,19 +116,20 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			}
 
 			if (currentImage == null) {
-				IJ.error("There's no current image to trace.");
+				error("There's no current image to trace.");
 				return;
 			}
 
 			// Check this isn't a composite image or hyperstack:
 			if (currentImage.getNFrames() > 1) {
-				IJ.error("This plugin only works with single images, not multiple images in a time series.");
+				error("This plugin only works with single 2D/3D image,\nnot multiple images in a time series.");
 				return;
 			}
 
 			if (currentImage.getNChannels() > 1) {
-				IJ.error(
-						"This plugin only works with single channel images: use 'Image>Color>Split Channels' and choose a channel");
+				error("This plugin only works with single channel images: Use\n"
+						+ "'Image>Color>Split Channels' and choose the channel\n"
+						+ "to be traced, then re-run the plugin");
 				return;
 			}
 
@@ -139,9 +140,9 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 			if (imageType == ImagePlus.COLOR_RGB) {
 				final YesNoCancelDialog queryRGB = new YesNoCancelDialog(IJ.getInstance(), "Convert RGB image",
-						"Convert this RGB image to an 8 bit luminance image first?\n"
-								+ "(If you want to trace a particular channel instead, cancel and \"Split Channels\" first.)");
-
+						"Convert this RGB image to an 8-bit luminance image first?\n \n"
+								+ "(If you want to trace a particular channel instead: Cancel,\n"
+								+ "run \"Image>Color>Split Channels\", and re-run the plugin).");
 				if (!queryRGB.yesPressed()) {
 					return;
 				}
@@ -149,11 +150,16 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				currentImage = RGBToLuminance.convertToLuminance(currentImage);
 				currentImage.show();
 				imageType = currentImage.getType();
-			} else if (imageType == ImagePlus.GRAY16) {
-				final YesNoCancelDialog query16to8 = new YesNoCancelDialog(IJ.getInstance(), "Convert 16 bit image",
-						"This image is 16-bit. You can still trace this using 16-bit values,\n"
-								+ "but if you want to use the 3D viewer, you must convert it to\n"
-								+ "8-bit first.  Convert stack to 8 bit?");
+			} else if (!singleSlice && (imageType == ImagePlus.GRAY16 || imageType == ImagePlus.GRAY32)) {
+				final YesNoCancelDialog query16to8 = new YesNoCancelDialog(IJ.getInstance(), "Convert 16 bit image?",
+						"This image is " + currentImage.getBitDepth() + "-bit. You can trace it using "
+								+ currentImage.getBitDepth() + "-bit values, but if you want\n"
+								+ "to use the 3D viewer during tracing, you must convert it to 8-bit first.\n \n"
+								+ "The 3D Viewer is a powerful visualization tool but it may sub-perform on\n"
+								+ "slower machines. Note that you can trace this image without any conversion:\n"
+								+ "Once it has been traced, its tracings can be imported and renderered in\n"
+								+ "the 3D viewer at any later time. \n \n"
+								+ "Use 3D Viewer right now and convert stack to 8-bit?");
 				if (query16to8.yesPressed()) {
 					new StackConverter(currentImage).convertToGray8();
 					imageType = currentImage.getType();
@@ -267,12 +273,11 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				} else {
 					use3DViewer = true;
 					universeToUse = Image3DUniverse.universes.get(chosenIndex);
-					;
 				}
 				final double rawResamplingFactor = gd.getNextNumber();
 				resamplingFactor = (int) Math.round(rawResamplingFactor);
 				if (resamplingFactor < 1) {
-					IJ.error("The resampling factor " + rawResamplingFactor + " was invalid - \n"
+					error("The resampling factor " + rawResamplingFactor + " was invalid - \n"
 							+ "using the default of " + defaultResamplingFactor + " instead.");
 					resamplingFactor = defaultResamplingFactor;
 				}
@@ -336,12 +341,12 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 								if (verbose)
 									System.out.println("Loaded the tubeness file");
 								if (tubenessImage == null) {
-									IJ.error("Failed to load tubes image from " + tubesFile.getAbsolutePath()
+									error("Failed to load tubes image from " + tubesFile.getAbsolutePath()
 											+ " although it existed");
 									return;
 								}
 								if (tubenessImage.getType() != ImagePlus.GRAY32) {
-									IJ.error("The tubeness file must be a 32 bit float image - "
+									error("The tubeness file must be a 32 bit float image - "
 											+ tubesFile.getAbsolutePath() + " was not.");
 									return;
 								}
@@ -389,7 +394,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 			if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 
-				IJ.error("One dimension of the calibration information was zero: (" + x_spacing + "," + y_spacing + ","
+				error("One dimension of the calibration information was zero: (" + x_spacing + "," + y_spacing + ","
 						+ z_spacing + ")");
 				return;
 

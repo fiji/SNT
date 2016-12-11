@@ -1805,6 +1805,15 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		trackingMenu.add(autoActivationMenuItem);
 		trackingMenu.addSeparator();
 
+		JMenuItem optionsMenuItem = new JMenuItem("Options...");
+		optionsMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				new SNTPrefs(plugin).promptForOptions();
+			}
+		});
+		trackingMenu.add(optionsMenuItem);
+
 		return trackingMenu;
 	}
 

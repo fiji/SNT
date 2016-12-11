@@ -83,7 +83,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		implements SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener {
 
 	public static final String PLUGIN_VERSION = getVersion();
-	protected static final boolean verbose = false;
+	protected static boolean verbose = false;
 
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
 	protected static final int DISPLAY_PATHS_LINES = 2;

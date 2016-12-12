@@ -305,7 +305,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			try {
 				swcPoints = getSWCFor(connectedPaths);
 			} catch (final SWCExportException see) {
-				IJ.error("" + see.getMessage());
+				SNT.error("" + see.getMessage());
 				return false;
 			}
 
@@ -314,13 +314,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			// FIXME: done elsewhere - DRY
 			try {
 				final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(swcFile), "UTF-8"));
-				pw.println("# Exported from \"Simple Neurite Tracer\" version " + SimpleNeuriteTracer.PLUGIN_VERSION);
+				pw.println("# Exported from \"Simple Neurite Tracer\" version " + SNT.VERSION);
 				for (final SWCPoint p : swcPoints)
 					p.println(pw);
 				pw.close();
 
 			} catch (final IOException ioe) {
-				IJ.error("Saving to " + swcFile.getAbsolutePath() + " failed");
+				SNT.error("Saving to " + swcFile.getAbsolutePath() + " failed");
 				return false;
 			}
 			++i;
@@ -621,7 +621,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			final Fill f = allFills.get(i);
 			if (f == null) {
 				if (verbose)
-					System.out.println("fill was null with i " + i + " out of " + fills);
+					SNT.log("fill was null with i " + i + " out of " + fills);
 				continue;
 			}
 
@@ -1022,12 +1022,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			 */
 
 			if (verbose)
-				System.out.println("Clearing old paths and fills...");
+				SNT.log("Clearing old paths and fills...");
 
 			clearPathsAndFills();
 
 			if (verbose)
-				System.out.println("Now " + allPaths.size() + " paths and " + allFills.size() + " fills");
+				SNT.log("Now " + allPaths.size() + " paths and " + allFills.size() + " fills");
 
 		} else if (qName.equals("imagesize")) {
 
@@ -1552,25 +1552,25 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		} catch (final javax.xml.parsers.ParserConfigurationException e) {
 
 			clearPathsAndFills();
-			IJ.error("There was a ParserConfigurationException: " + e);
+			SNT.error("There was a ParserConfigurationException: " + e);
 			return false;
 
 		} catch (final SAXException e) {
 
 			clearPathsAndFills();
-			IJ.error(e.toString());
+			SNT.error(e.toString());
 			return false;
 
 		} catch (final FileNotFoundException e) {
 
 			clearPathsAndFills();
-			IJ.error("File not found: " + e);
+			SNT.error("File not found: " + e);
 			return false;
 
 		} catch (final IOException e) {
 
 			clearPathsAndFills();
-			IJ.error("There was an IO exception while reading the file: " + e);
+			SNT.error("There was an IO exception while reading the file: " + e);
 			return false;
 
 		}
@@ -1668,7 +1668,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				continue;
 			final String[] fields = line.split("\\s+");
 			if (fields.length < 7) {
-				IJ.error("Wrong number of fields (" + fields.length + ") in line: " + line);
+				SNT.error("Wrong number of fields (" + fields.length + ") in line: " + line);
 				return false;
 			}
 			try {
@@ -1702,7 +1702,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 				final int previous = Integer.parseInt(fields[6]);
 				if (alreadySeen.contains(id)) {
-					IJ.error("Point with ID " + id + " found more than once");
+					SNT.error("Point with ID " + id + " found more than once");
 					return false;
 				}
 				alreadySeen.add(id);
@@ -1726,7 +1726,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					}
 				}
 			} catch (final NumberFormatException nfe) {
-				IJ.error("There was a malformed number in line: " + line);
+				SNT.error("There was a malformed number in line: " + line);
 				return false;
 			}
 		}
@@ -1792,11 +1792,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		if (alreadySeen.size() > 0) {
-			IJ.error("Malformed file: there are some misconnected points.\n"
+			SNT.error("Malformed file: there are some misconnected points.\n"
 					+ "(List will now be shown in ImageJ's Console)");
 			for (final int i : alreadySeen) {
 				final SWCPoint p = idToSWCPoint.get(i);
-				System.out.println("  Misconnected: " + p);
+				SNT.log("  Misconnected: " + p);
 			}
 			return false;
 		}
@@ -1825,7 +1825,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		final File f = new File(filename);
 		if (!f.exists()) {
-			IJ.error("The traces file '" + filename + "' does not exist.");
+			SNT.error("The traces file '" + filename + "' does not exist.");
 			return false;
 		}
 
@@ -1844,7 +1844,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				is.close();
 
 		} catch (final IOException ioe) {
-			IJ.error("Couldn't open file '" + filename + "' for reading.");
+			SNT.error("Couldn't open file '" + filename + "' for reading.");
 			return false;
 		}
 
@@ -1871,7 +1871,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		final File f = new File(filename);
 		if (!f.exists()) {
-			IJ.error("The traces file '" + filename + "' does not exist.");
+			SNT.error("The traces file '" + filename + "' does not exist.");
 			return -1;
 		}
 
@@ -1882,7 +1882,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			is.read(buf, 0, 8);
 			is.close();
 			if (verbose)
-				System.out.println("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
+				SNT.log("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
 			if (((buf[0] & 0xFF) == 0x1F) && ((buf[1] & 0xFF) == 0x8B))
 				return TRACES_FILE_TYPE_COMPRESSED_XML;
 			else if (((buf[0] == '<') && (buf[1] == '?') && (buf[2] == 'x') && (buf[3] == 'm') && (buf[4] == 'l')
@@ -1890,7 +1890,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				return TRACES_FILE_TYPE_UNCOMPRESSED_XML;
 
 		} catch (final IOException e) {
-			IJ.error("Couldn't read from file: " + filename);
+			SNT.error("Couldn't read from file: " + filename);
 			return -1;
 		}
 
@@ -1900,10 +1900,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public boolean loadCompressedXML(final String filename) {
 		try {
 			if (verbose)
-				System.out.println("Loading gzipped file...");
+				SNT.log("Loading gzipped file...");
 			return load(new GZIPInputStream(new BufferedInputStream(new FileInputStream(filename))), null);
 		} catch (final IOException ioe) {
-			IJ.error("Couldn't open file '" + filename + "' for reading\n(n.b. it was expected to be compressed XML)");
+			SNT.error("Couldn't open file '" + filename + "' for reading\n(n.b. it was expected to be compressed XML)");
 			return false;
 		}
 	}
@@ -1911,10 +1911,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public boolean loadUncompressedXML(final String filename) {
 		try {
 			if (verbose)
-				System.out.println("Loading uncompressed file...");
+				SNT.log("Loading uncompressed file...");
 			return load(new BufferedInputStream(new FileInputStream(filename)), null);
 		} catch (final IOException ioe) {
-			IJ.error("Couldn't open file '" + filename + "' for reading\n(n.b. it was expected to be XML)");
+			SNT.error("Couldn't open file '" + filename + "' for reading\n(n.b. it was expected to be XML)");
 			return false;
 		}
 	}
@@ -1931,7 +1931,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		case TRACES_FILE_TYPE_SWC:
 			return importSWC(filename, false, 0, 0, 0, 1, 1, 1, true);
 		default:
-			IJ.error("guessTracesFileType() return an unknown type" + guessedType);
+			SNT.error("guessTracesFileType() return an unknown type" + guessedType);
 			return false;
 		}
 	}

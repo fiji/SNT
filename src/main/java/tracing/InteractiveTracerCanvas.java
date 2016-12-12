@@ -107,14 +107,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			new ShollAnalysisDialog("Sholl analysis for tracing of " + tracerPlugin.getImagePlus().getTitle(),
 					pointInImage.x, pointInImage.y, pointInImage.z, pathAndFillManager, tracerPlugin.getImagePlus());
 		} else {
-			IJ.error("You must have a path selected in order to start Sholl analysis");
+			SNT.error("You must have a path selected in order to start Sholl analysis");
 		}
 	}
 
 	public void selectNearestPathToMousePointer(final boolean addToExistingSelection) {
 
 		if (pathAndFillManager.size() == 0) {
-			IJ.error("There are no paths yet, so you can't select one with 'g'");
+			SNT.error("There are no paths yet, so you can't select one with 'g'");
 			return;
 		}
 
@@ -131,7 +131,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
 
 		if (np == null) {
-			IJ.error("BUG: No nearby path was found within " + diagonalLength + " of the pointer");
+			SNT.error("BUG: No nearby path was found within " + diagonalLength + " of the pointer");
 			return;
 		}
 
@@ -216,13 +216,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE) {
 
-			IJ.error("You must close the sigma palette to continue");
+			SNT.error("You must close the sigma palette to continue");
 
 		} else if (tracerPlugin.setupTrace) {
 			final boolean join = IJ.isMacintosh() ? e.isAltDown() : e.isControlDown();
 			tracerPlugin.clickForTrace(myOffScreenXD(e.getX()), myOffScreenYD(e.getY()), plane, join);
 		} else
-			IJ.error("BUG: No operation chosen");
+			SNT.error("BUG: No operation chosen");
 	}
 
 	protected void drawSquare(final Graphics g, final PointInImage p, final Color fillColor, final Color edgeColor,

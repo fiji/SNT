@@ -82,7 +82,6 @@ import stacks.ThreePanes;
 public class SimpleNeuriteTracer extends ThreePanes
 		implements SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener {
 
-	public static final String PLUGIN_VERSION = getVersion();
 	protected static boolean verbose = false;
 
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
@@ -112,10 +111,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public boolean pathsUnsaved() {
 		return unsavedPaths;
-	}
-
-	private static String getVersion() {
-		return VersionUtils.getVersion(tracing.SimpleNeuriteTracer.class);
 	}
 
 	public PathAndFillManager getPathAndFillManager() {
@@ -193,10 +188,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 			// avoid concurrent modifications...
 
 			if (verbose)
-				System.out.println("[" + Thread.currentThread() + "] going to lock filler in plugin.saveFill");
+				SNT.log("[" + Thread.currentThread() + "] going to lock filler in plugin.saveFill");
 			synchronized (filler) {
 				if (verbose)
-					System.out.println("[" + Thread.currentThread() + "] acquired it");
+					SNT.log("[" + Thread.currentThread() + "] acquired it");
 				if (SearchThread.PAUSED == filler.getThreadStatus()) {
 					// Then we can go ahead and save:
 					pathAndFillManager.addFill(filler.getFill());
@@ -205,12 +200,12 @@ public class SimpleNeuriteTracer extends ThreePanes
 					resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 					filler = null;
 				} else {
-					error("The filler must be paused before saving the fill.");
+					SNT.error("The filler must be paused before saving the fill.");
 				}
 
 			}
 			if (verbose)
-				System.out.println("[" + Thread.currentThread() + "] left lock on filler");
+				SNT.log("[" + Thread.currentThread() + "] left lock on filler");
 		}
 	}
 
@@ -266,7 +261,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			if (success) {
 				final Path result = source.getResult();
 				if (result == null) {
-					error("Bug! Succeeded, but null result.");
+					SNT.error("Bug! Succeeded, but null result.");
 					return;
 				}
 				if (endJoin != null) {
@@ -370,7 +365,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		final AmiraMeshDecoder d = new AmiraMeshDecoder();
 
 		if (!d.open(path)) {
-			error("Could not open the labels file '" + path + "'");
+			SNT.error("Could not open the labels file '" + path + "'");
 			return;
 		}
 
@@ -379,7 +374,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		final ImagePlus labels = new ImagePlus("Label file for Tracer", stack);
 
 		if ((labels.getWidth() != width) || (labels.getHeight() != height) || (labels.getStackSize() != depth)) {
-			error("The size of that labels file doesn't match the size of the image you're tracing.");
+			SNT.error("The size of that labels file doesn't match the size of the image you're tracing.");
 			return;
 		}
 
@@ -511,7 +506,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 			final File chosenFile = new File(directory, fileName);
 			if (!chosenFile.exists()) {
-				error("The file '" + chosenFile.getAbsolutePath() + "' didn't exist");
+				SNT.error("The file '" + chosenFile.getAbsolutePath() + "' didn't exist");
 				loading = false;
 				return;
 			}
@@ -544,7 +539,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 					unsavedPaths = false;
 				break;
 			default:
-				error("The file '" + chosenFile.getAbsolutePath() + "' was of unknown type (" + guessedType + ")");
+				SNT.error("The file '" + chosenFile.getAbsolutePath() + "' was of unknown type (" + guessedType + ")");
 				break;
 			}
 		}
@@ -865,14 +860,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 	synchronized public void cancelTemporary() {
 
 		if (!lastStartPointSet) {
-			error("No initial start point has been set yet.  Do that with a mouse click or\na Shift+"
+			SNT.error("No initial start point has been set yet.  Do that with a mouse click or\na Shift+"
 					+ (IJ.isMacintosh() ? "Alt" : "Control")
 					+ "-click if the start of the path should join another neurite.");
 			return;
 		}
 
 		if (temporaryPath == null) {
-			error("There's no temporary path to cancel!");
+			SNT.error("There's no temporary path to cancel!");
 			return;
 		}
 
@@ -895,7 +890,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
-			error("      There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
+			SNT.error("      There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
 			return;
 		}
 
@@ -924,12 +919,12 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
-			error("      There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
+			SNT.error("      There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
 			return;
 		}
 
 		if (currentPath == null || justFirstPoint()) {
-			error("You can't complete a path with only a start point in it.");
+			SNT.error("You can't complete a path with only a start point in it.");
 			return;
 		}
 
@@ -950,10 +945,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 		resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 
 		repaintAllPanes();
-	}
-
-	protected void error(final String string) {
-		IJ.error("Simple Neurite Tracer v" + PLUGIN_VERSION, string);
 	}
 
 	synchronized public void clickForTrace(final Point3d p, final boolean join) {
@@ -1029,7 +1020,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		if (distance > 0) {
 
 			if (verbose)
-				System.out.println("Setting new threshold of: " + distance);
+				SNT.log("Setting new threshold of: " + distance);
 
 			resultsDialog.thresholdChanged(distance);
 
@@ -1392,7 +1383,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		 * the "loadGuessingType" method:
 		 */
 		if (!pafmTraces.loadGuessingType(tracesFile.getAbsolutePath())) {
-			error("Failed to load traces from: " + tracesFile.getAbsolutePath());
+			SNT.error("Failed to load traces from: " + tracesFile.getAbsolutePath());
 			return;
 		}
 
@@ -1404,8 +1395,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		int done = 0;
 		for (final NearPoint np : cp) {
 			if (np != null) {
-				// System.out.println("Drawing:");
-				// System.out.println(np.toString());
+				// SNT.log("Drawing:");
+				// SNT.log(np.toString());
 
 				linePoints.add(new Point3f((float) np.nearX, (float) np.nearY, (float) np.nearZ));
 				linePoints.add(new Point3f((float) np.closestIntersection.x, (float) np.closestIntersection.y,
@@ -1715,7 +1706,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// findPointInStackPrecise(x_in_pane, y_in_pane, ThreePanes.XY_PLANE,
 		// point);
 		// if (verbose)
-		// System.out.println("No maxima in snap-to window");
+		// SNT.log("No maxima in snap-to window");
 		// return;
 		// }
 

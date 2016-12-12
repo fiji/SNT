@@ -209,7 +209,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 									pathAndFillManager.addPath(result);
 								}
 							} catch (final Exception e) {
-								IJ.error("The following exception was thrown: " + e);
+								SNT.error("The following exception was thrown: " + e);
 								e.printStackTrace();
 								return;
 							}
@@ -236,7 +236,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		final Set<Path> selectedPaths = getSelectedPaths();
 		if (source == deleteButton || source == deleteMenuItem) {
 			if (selectedPaths.isEmpty()) {
-				IJ.error("No paths were selected for deletion");
+				SNT.error("No paths were selected for deletion");
 				return;
 			}
 			final int n = selectedPaths.size();
@@ -255,7 +255,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			}
 		} else if (source == makePrimaryButton || source == makePrimaryMenuItem) {
 			if (selectedPaths.size() != 1) {
-				IJ.error("You must have exactly one path selected");
+				SNT.error("You must have exactly one path selected");
 				return;
 			}
 			final Path[] singlePath = selectedPaths.toArray(new Path[] {});
@@ -270,7 +270,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			try {
 				swcPoints = pathAndFillManager.getSWCFor(selectedPaths);
 			} catch (final SWCExportException see) {
-				IJ.error("" + see.getMessage());
+				SNT.error("" + see.getMessage());
 				return;
 			}
 
@@ -291,25 +291,25 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 			try {
 				final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(saveFile), "UTF-8"));
-				pw.println("# Exported from \"Simple Neurite Tracer\" version " + SimpleNeuriteTracer.PLUGIN_VERSION);
+				pw.println("# Exported from \"Simple Neurite Tracer\" version " + SNT.VERSION);
 				for (final SWCPoint p : swcPoints)
 					p.println(pw);
 				pw.close();
 
 			} catch (final IOException ioe) {
-				IJ.error("Saving to " + saveFile.getAbsolutePath() + " failed");
+				SNT.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;
 			}
 
 		} else if (source == fillOutButton || source == fillOutMenuItem) {
 			if (selectedPaths.size() < 1) {
-				IJ.error("You must have one or more paths in the list selected");
+				SNT.error("You must have one or more paths in the list selected");
 				return;
 			}
 			plugin.startFillingPaths(selectedPaths);
 		} else if (source == fitVolumeButton || source == fitVolumeMenuItem) {
 			if (selectedPaths.size() < 1) {
-				IJ.error("You must have one or more paths in the list selected");
+				SNT.error("You must have one or more paths in the list selected");
 				return;
 			}
 			final boolean showDetailedFittingResults = (e.getModifiers() & ActionEvent.SHIFT_MASK) > 0;
@@ -340,7 +340,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 		} else if (source == renameButton || source == renameMenuItem) {
 			if (selectedPaths.size() != 1) {
-				IJ.error("You must have exactly one path selected");
+				SNT.error("You must have exactly one path selected");
 				return;
 			}
 			final Path[] singlePath = selectedPaths.toArray(new Path[] {});
@@ -352,12 +352,12 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			if (s == null)
 				return;
 			if (s.length() == 0) {
-				IJ.error("The new name cannot be empty");
+				SNT.error("The new name cannot be empty");
 				return;
 			}
 			synchronized (pathAndFillManager) {
 				if (pathAndFillManager.getPathFromName(s, false) != null) {
-					IJ.error("There is already a path with that name ('" + s + "')");
+					SNT.error("There is already a path with that name ('" + s + "')");
 					return;
 				}
 				// Otherwise this is OK, change the name:
@@ -374,7 +374,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				return;
 			final double maximumDeviation = gd.getNextNumber();
 			if (Double.isNaN(maximumDeviation) || maximumDeviation <= 0) {
-				IJ.error("The maximum permitted distance must be a postive number");
+				SNT.error("The maximum permitted distance must be a postive number");
 				return;
 			}
 			for (final Path p : selectedPaths) {
@@ -407,7 +407,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				pathAndFillManager.resetListeners(null);
 			} else {
 
-				IJ.error("Unexpectedly got an event from an unknown source");
+				SNT.error("Unexpectedly got an event from an unknown source");
 				return;
 			}
 		}

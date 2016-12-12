@@ -103,7 +103,7 @@ public class CreateTracingVolume_ implements PlugIn {
 			labels = tmp[0];
 		}
 		if (verbose)
-			System.out.println("   labels were: " + labels);
+			SNT.log("   labels were: " + labels);
 
 		// need to get the AmiraParameters object for that image...
 
@@ -130,7 +130,7 @@ public class CreateTracingVolume_ implements PlugIn {
 		final int templateDepth = labelStack.getSize();
 
 		if (verbose)
-			System.out.println("About to create stack of size: " + newWidth + "," + newHeight + "," + newDepth);
+			SNT.log("About to create stack of size: " + newWidth + "," + newHeight + "," + newDepth);
 
 		final ImageStack newStack = new ImageStack(newWidth, newHeight);
 
@@ -147,7 +147,7 @@ public class CreateTracingVolume_ implements PlugIn {
 		for (z = 0; z < newDepth; ++z) {
 
 			if (verbose)
-				System.out.println("Creating slice: " + z);
+				SNT.log("Creating slice: " + z);
 
 			redPixels[z] = new byte[newWidth * newHeight];
 			greenPixels[z] = new byte[newWidth * newHeight];
@@ -176,10 +176,10 @@ public class CreateTracingVolume_ implements PlugIn {
 		final RegistrationAlgorithm.ImagePoint imagePoint = new RegistrationAlgorithm.ImagePoint();
 
 		if (allPaths != null) {
-			// if (verbose) System.out.println("Have some allPaths paths to
+			// if (verbose) SNT.log("Have some allPaths paths to
 			// draw.");
 			final int paths = allPaths.size();
-			// if (verbose) System.out.println("Paths to draw: "+paths);
+			// if (verbose) SNT.log("Paths to draw: "+paths);
 			for (int i = 0; i < paths; ++i) {
 
 				final Path p = allPaths.get(i);
@@ -208,7 +208,7 @@ public class CreateTracingVolume_ implements PlugIn {
 
 						if (xdiff > 5 || ydiff > 5 || zdiff > 5) {
 							if (verbose)
-								System.out.println("too long in path: " + i + ", at point " + k);
+								SNT.log("too long in path: " + i + ", at point " + k);
 						}
 
 						final int xdiff_s = x_in_template - last_x_in_template;
@@ -233,11 +233,11 @@ public class CreateTracingVolume_ implements PlugIn {
 
 						// Each of these cases:
 
-						// if (verbose) System.out.println( "x from: " +
+						// if (verbose) SNT.log( "x from: " +
 						// last_x_in_template + " to " + x_in_template );
-						// if (verbose) System.out.println( "y from: " +
+						// if (verbose) SNT.log( "y from: " +
 						// last_y_in_template + " to " + y_in_template );
-						// if (verbose) System.out.println( "z from: " +
+						// if (verbose) SNT.log( "z from: " +
 						// last_z_in_template + " to " + z_in_template );
 
 						long line_x, line_y, line_z;
@@ -262,19 +262,19 @@ public class CreateTracingVolume_ implements PlugIn {
 									// (last_(xyz)) to the end point is
 									final double proportion_along = Math.abs(line_z - last_z_in_template)
 											/ (double) zdiff;
-									// if (verbose) System.out.println(
+									// if (verbose) SNT.log(
 									// proportion_along + " of xdiff_s " +
 									// xdiff_s );
-									// if (verbose) System.out.println(
+									// if (verbose) SNT.log(
 									// proportion_along + " of ydiff_s " +
 									// ydiff_s );
 									final double y_delta = proportion_along * ydiff_s;
 									final double x_delta = proportion_along * xdiff_s;
 									line_y = Math.round(y_delta + last_y_in_template);
 									line_x = Math.round(x_delta + last_x_in_template);
-									// if (verbose) System.out.println( "x is:
+									// if (verbose) SNT.log( "x is:
 									// "+line_x+" (width: "+newWidth+")");
-									// if (verbose) System.out.println( "y is:
+									// if (verbose) SNT.log( "y is:
 									// "+line_y+" (height: "+newHeight+")");
 									final int in_plane = (int) (line_y * newWidth + line_x);
 									redPixels[(int) line_z][in_plane] = (byte) 255;
@@ -304,19 +304,19 @@ public class CreateTracingVolume_ implements PlugIn {
 									// (last_(xyz)) to the end point is
 									final double proportion_along = Math.abs(line_y - last_y_in_template)
 											/ (double) ydiff;
-									// if (verbose) System.out.println(
+									// if (verbose) SNT.log(
 									// proportion_along + " of xdiff_s " +
 									// xdiff_s );
-									// if (verbose) System.out.println(
+									// if (verbose) SNT.log(
 									// proportion_along + " of zdiff_s " +
 									// zdiff_s );
 									final double z_delta = proportion_along * zdiff_s;
 									final double x_delta = proportion_along * xdiff_s;
 									line_z = Math.round(z_delta + last_z_in_template);
 									line_x = Math.round(x_delta + last_x_in_template);
-									// if (verbose) System.out.println( "x is:
+									// if (verbose) SNT.log( "x is:
 									// "+line_x+" (width: "+newWidth+")");
-									// if (verbose) System.out.println( "z is:
+									// if (verbose) SNT.log( "z is:
 									// "+line_z+" (height: "+newHeight+")");
 									final int in_plane = (int) (line_y * newWidth + line_x);
 									redPixels[(int) line_z][in_plane] = (byte) 255;
@@ -346,19 +346,19 @@ public class CreateTracingVolume_ implements PlugIn {
 									// (last_(xyz)) to the end point is
 									final double proportion_along = Math.abs(line_x - last_x_in_template)
 											/ (double) xdiff;
-									// if (verbose) System.out.println(
+									// if (verbose) SNT.log(
 									// proportion_along + " of ydiff_s " +
 									// ydiff_s );
-									// if (verbose) System.out.println(
+									// if (verbose) SNT.log(
 									// proportion_along + " of zdiff_s " +
 									// zdiff_s );
 									final double z_delta = proportion_along * zdiff_s;
 									final double y_delta = proportion_along * ydiff_s;
 									line_z = Math.round(z_delta + last_z_in_template);
 									line_y = Math.round(y_delta + last_y_in_template);
-									// if (verbose) System.out.println( "z is:
+									// if (verbose) SNT.log( "z is:
 									// "+line_z+" (depth: "+newDepth+")");
-									// if (verbose) System.out.println( "y is:
+									// if (verbose) SNT.log( "y is:
 									// "+line_y+" (height: "+newHeight+")");
 									final int in_plane = (int) (line_y * newWidth + line_x);
 									redPixels[(int) line_z][in_plane] = (byte) 255;
@@ -380,7 +380,7 @@ public class CreateTracingVolume_ implements PlugIn {
 
 		for (z = 0; z < newDepth; ++z) {
 
-			// if (verbose) System.out.println("Actually adding slice: "+z);
+			// if (verbose) SNT.log("Actually adding slice: "+z);
 
 			final ColorProcessor cp = new ColorProcessor(newWidth, newHeight);
 			cp.setRGB(redPixels[z], greenPixels[z], bluePixels[z]);

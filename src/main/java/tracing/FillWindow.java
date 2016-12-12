@@ -344,7 +344,7 @@ public class FillWindow extends JFrame
 
 			final int[] selectedIndices = fillList.getSelectedIndices();
 			if (selectedIndices.length < 1) {
-				IJ.error("No fill was selected for deletion");
+				SNT.error("No fill was selected for deletion.");
 				return;
 			}
 			pathAndFillManager.deleteFills(selectedIndices);
@@ -354,7 +354,7 @@ public class FillWindow extends JFrame
 
 			final int[] selectedIndices = fillList.getSelectedIndices();
 			if (selectedIndices.length != 1) {
-				IJ.error("You must have a single fill selected in order to reload.");
+				SNT.error("You must have a single fill selected in order to reload.");
 				return;
 			}
 			pathAndFillManager.reloadFill(selectedIndices[0]);
@@ -368,12 +368,12 @@ public class FillWindow extends JFrame
 			try {
 				final double t = Double.parseDouble(thresholdField.getText());
 				if (t < 0) {
-					IJ.error("The fill threshold cannot be negative.");
+					SNT.error("The fill threshold cannot be negative.");
 					return;
 				}
 				plugin.setFillThreshold(t);
 			} catch (final NumberFormatException nfe) {
-				IJ.error("The threshold '" + thresholdField.getText() + "' wasn't a valid number.");
+				SNT.error("The threshold '" + thresholdField.getText() + "' wasn't a valid number.");
 				return;
 			}
 
@@ -414,12 +414,12 @@ public class FillWindow extends JFrame
 				pathAndFillManager.exportFillsAsCSV(saveFile);
 
 			} catch (final IOException ioe) {
-				IJ.error("Saving to " + saveFile.getAbsolutePath() + " failed");
+				SNT.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;
 			}
 
 		} else {
-			IJ.error("BUG: FillWindow received an event from an unknown source");
+			SNT.error("BUG: FillWindow received an event from an unknown source.");
 		}
 
 	}

@@ -143,7 +143,7 @@ class NormalPlaneCanvas extends ImageCanvas {
 		else
 			g.setColor(Color.MAGENTA);
 
-		System.out.println("radiuses[" + z + "] is: " + radiuses[z]);
+		SNT.log("radiuses[" + z + "] is: " + radiuses[z]);
 
 		final int x_top_left = screenXD(centre_x_positions[z] - radiuses[z]);
 		final int y_top_left = screenYD(centre_y_positions[z] - radiuses[z]);

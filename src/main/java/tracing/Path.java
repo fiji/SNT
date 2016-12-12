@@ -276,7 +276,7 @@ public class Path implements Comparable<Path> {
 			endJoins = other;
 			endJoinsPoint = joinPoint;
 		} else {
-			IJ.error("BUG: unknown first parameter to setJoin");
+			SNT.error("BUG: unknown first parameter to setJoin");
 		}
 		// Also update the somehowJoins list:
 		if (somehowJoins.indexOf(other) < 0) {
@@ -1199,8 +1199,8 @@ public class Path implements Comparable<Path> {
 		final double bz_s = bz * step;
 
 		if (verbose) {
-			System.out.println("a (in normal plane) is " + ax + "," + ay + "," + az);
-			System.out.println("b (in normal plane) is " + bx + "," + by + "," + bz);
+			SNT.log("a (in normal plane) is " + ax + "," + ay + "," + az);
+			SNT.log("b (in normal plane) is " + bx + "," + by + "," + bz);
 		}
 
 		if (true) {
@@ -1213,9 +1213,9 @@ public class Path implements Comparable<Path> {
 			final double b_dot_n = bx * nx + by * ny + bz * nz;
 
 			if (verbose) {
-				System.out.println("a_dot_b: " + a_dot_b);
-				System.out.println("a_dot_n: " + a_dot_n);
-				System.out.println("b_dot_n: " + b_dot_n);
+				SNT.log("a_dot_b: " + a_dot_b);
+				SNT.log("a_dot_n: " + a_dot_n);
+				SNT.log("b_dot_n: " + b_dot_n);
 			}
 
 		}
@@ -1362,17 +1362,17 @@ public class Path implements Comparable<Path> {
 
 		final Path fitted = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 
-		// if (verbose) System.out.println("Generating normal planes stack.");
+		// if (verbose) SNT.log("Generating normal planes stack.");
 
 		final int totalPoints = size();
 
 		if (verbose)
-			System.out.println("There are: " + totalPoints + " in the stack.");
+			SNT.log("There are: " + totalPoints + " in the stack.");
 
 		final int pointsEitherSide = 4;
 
 		if (verbose)
-			System.out.println("Using spacing: " + x_spacing + "," + y_spacing + "," + z_spacing);
+			SNT.log("Using spacing: " + x_spacing + "," + y_spacing + "," + z_spacing);
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
@@ -1456,7 +1456,7 @@ public class Path implements Comparable<Path> {
 			startValues[2] = 3;
 
 			if (verbose)
-				System.out.println("start search at: " + startValues[0] + "," + startValues[1] + " with radius: "
+				SNT.log("start search at: " + startValues[0] + "," + startValues[1] + " with radius: "
 						+ startValues[2]);
 
 			float minValueInSquare = Float.MAX_VALUE;
@@ -1477,8 +1477,8 @@ public class Path implements Comparable<Path> {
 			}
 
 			if (verbose)
-				// System.out.println("u is: "+u[0]+","+u[1]+","+u[2]);
-				System.out.println("search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
+				// SNT.log("u is: "+u[0]+","+u[1]+","+u[2]);
+				SNT.log("search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
 						+ startValues[2]);
 
 			centre_x_positionsUnscaled[i] = startValues[0];
@@ -1497,7 +1497,7 @@ public class Path implements Comparable<Path> {
 					x_from_centre_in_plane * x_from_centre_in_plane + y_from_centre_in_plane * y_from_centre_in_plane);
 
 			if (verbose)
-				System.out.println(
+				SNT.log(
 						"vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
 
 			double centre_real_x = x_world;
@@ -1505,7 +1505,7 @@ public class Path implements Comparable<Path> {
 			double centre_real_z = z_world;
 
 			if (verbose)
-				System.out.println("original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+				SNT.log("original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
 						+ centre_real_z);
 
 			// FIXME: I really think these should be +=, but it seems clear from
@@ -1519,7 +1519,7 @@ public class Path implements Comparable<Path> {
 					+ y_basis_in_plane[2] * y_from_centre_in_plane;
 
 			if (verbose)
-				System.out.println("adjusted original centre in real co-ordinates: " + centre_real_x + ","
+				SNT.log("adjusted original centre in real co-ordinates: " + centre_real_x + ","
 						+ centre_real_y + "," + centre_real_z);
 
 			optimized_x[i] = centre_real_x;
@@ -1531,7 +1531,7 @@ public class Path implements Comparable<Path> {
 			int z_in_image = (int) Math.round(centre_real_z / z_spacing);
 
 			if (verbose)
-				System.out.println("gives in image co-ordinates: " + x_in_image + "," + y_in_image + "," + z_in_image);
+				SNT.log("gives in image co-ordinates: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			if (x_in_image < 0)
 				x_in_image = 0;
@@ -1547,14 +1547,14 @@ public class Path implements Comparable<Path> {
 				z_in_image = depth - 1;
 
 			if (verbose)
-				System.out.println("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
+				SNT.log("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			xs_in_image[i] = x_in_image;
 			ys_in_image[i] = y_in_image;
 			zs_in_image[i] = z_in_image;
 
 			if (verbose)
-				System.out.println("Adding a real slice.");
+				SNT.log("Adding a real slice.");
 
 			final FloatProcessor bp = new FloatProcessor(side, side);
 			bp.setPixels(normalPlane);
@@ -1906,7 +1906,7 @@ public class Path implements Comparable<Path> {
 
 		final double det = n1dotn1 * n2dotn2 - n1dotn2 * n1dotn2;
 		if (Math.abs(det) < epsilon) {
-			System.out.println("WARNING: det was nearly zero: " + det);
+			SNT.log("WARNING: det was nearly zero: " + det);
 			return true;
 		}
 
@@ -1964,7 +1964,7 @@ public class Path implements Comparable<Path> {
 		}
 
 		if (Math.abs(a1) < epsilon) {
-			System.out.println("WARNING: a1 was nearly zero: " + a1);
+			SNT.log("WARNING: a1 was nearly zero: " + a1);
 			return true;
 		}
 
@@ -2003,19 +2003,19 @@ public class Path implements Comparable<Path> {
 		 * values to aid in debugging:
 		 */
 
-		System.out.println("det is: " + det);
+		SNT.log("det is: " + det);
 
-		System.out.println("discriminant1 is: " + discriminant1);
-		System.out.println("discriminant2 is: " + discriminant2);
+		SNT.log("discriminant1 is: " + discriminant1);
+		SNT.log("discriminant2 is: " + discriminant2);
 
-		System.out.println("n1: (" + n1x + "," + n1y + "," + n1z + ")");
-		System.out.println("n2: (" + n2x + "," + n2y + "," + n2z + ")");
+		SNT.log("n1: (" + n1x + "," + n1y + "," + n1z + ")");
+		SNT.log("n2: (" + n2x + "," + n2y + "," + n2z + ")");
 
-		System.out.println("c1: (" + c1x + "," + c1y + "," + c1z + ")");
-		System.out.println("c2: (" + c2x + "," + c2y + "," + c2z + ")");
+		SNT.log("c1: (" + c1x + "," + c1y + "," + c1z + ")");
+		SNT.log("c2: (" + c2x + "," + c2y + "," + c2z + ")");
 
-		System.out.println("radius1: " + radius1);
-		System.out.println("radius2: " + radius2);
+		SNT.log("radius1: " + radius1);
+		SNT.log("radius2: " + radius2);
 
 		throw new RuntimeException("BUG: some overlapping case missed: " + "u1_smaller=" + u1_smaller + "u1_larger="
 				+ u1_larger + "u2_smaller=" + u2_smaller + "u2_larger=" + u2_larger);
@@ -2128,8 +2128,8 @@ public class Path implements Comparable<Path> {
 			final Color3f color, final ImagePlus colorImage) {
 
 		if (verbose) {
-			System.out.println("In updateContent3D, colorImage is: " + colorImage);
-			System.out.println("In updateContent3D, color is: " + color);
+			SNT.log("In updateContent3D, colorImage is: " + colorImage);
+			SNT.log("In updateContent3D, color is: " + color);
 		}
 
 		// So, go through each of the reasons why we might
@@ -2166,10 +2166,10 @@ public class Path implements Comparable<Path> {
 		}
 
 		if (verbose) {
-			System.out.println("pathToUse is: " + pathToUse);
-			System.out.println("  pathToUse.content3D is: " + pathToUse.content3D);
-			System.out.println("  pathToUse.content3DExtra is: " + pathToUse.content3DExtra);
-			System.out.println("  pathToUse.content3DMultiColored: " + pathToUse.content3DMultiColored);
+			SNT.log("pathToUse is: " + pathToUse);
+			SNT.log("  pathToUse.content3D is: " + pathToUse.content3D);
+			SNT.log("  pathToUse.content3DExtra is: " + pathToUse.content3DExtra);
+			SNT.log("  pathToUse.content3DMultiColored: " + pathToUse.content3DMultiColored);
 		}
 
 		// Is the the display (lines-and-discs or surfaces) right?
@@ -2452,12 +2452,12 @@ public class Path implements Comparable<Path> {
 		}
 		final double mean_inter_point_distance_in_image_space = total_length_in_image_space / (pointsToUse - 1);
 		if (verbose)
-			System.out.println("For path " + this + ", got mean_inter_point_distance_in_image_space: "
+			SNT.log("For path " + this + ", got mean_inter_point_distance_in_image_space: "
 					+ mean_inter_point_distance_in_image_space);
 		final boolean resample = mean_inter_point_distance_in_image_space < 3;
 
 		if (verbose)
-			System.out.println("... so" + (resample ? "" : " not") + " resampling");
+			SNT.log("... so" + (resample ? "" : " not") + " resampling");
 
 		final ArrayList<Color3f> tubeColors = new ArrayList<>();
 

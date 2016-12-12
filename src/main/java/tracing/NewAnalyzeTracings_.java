@@ -107,13 +107,13 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 	ArrayList<NewGraphNode> makePath(final NewGraphNode lastNode) {
 
-		// System.out.println( "Trying to return result" );
+		// SNT.log( "Trying to return result" );
 
 		final ArrayList<NewGraphNode> resultReversed = new ArrayList<>();
 		NewGraphNode p = lastNode;
 		do {
 			resultReversed.add(p);
-			// System.out.println( "adding "+p.toDotName());
+			// SNT.log( "adding "+p.toDotName());
 		} while (null != (p = p.previous));
 
 		final ArrayList<NewGraphNode> realResult = new ArrayList<>();
@@ -145,7 +145,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 	PathWithLength findPath(final NewGraphNode start, final int endMaterial) {
 
-		// System.out.println("Starting path finding:");
+		// SNT.log("Starting path finding:");
 
 		// First reset all the search parameters:
 		{
@@ -176,14 +176,14 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 			// NewGraphNode p = get_highest_priority( open_from_start,
 			// open_from_start_hash );
 
-			// System.out.println("Before poll:
+			// SNT.log("Before poll:
 			// "+open_from_start_hash.size()+"/"+open_from_start.size());
 			final NewGraphNode p = open_from_start.poll();
 			open_from_start_hash.remove(p);
-			// System.out.println("After poll:
+			// SNT.log("After poll:
 			// "+open_from_start_hash.size()+"/"+open_from_start.size());
 
-			// System.out.println( " Got node "+p.toDotName()+" from the queue"
+			// SNT.log( " Got node "+p.toDotName()+" from the queue"
 			// );
 
 			final int pointMaterial = label_data[p.z][p.y * width + p.x];
@@ -191,7 +191,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 			// Has the route from the start found the goal?
 
 			if (pointMaterial == endMaterial) {
-				// System.out.println( "Found the goal! (from start to end)" );
+				// SNT.log( "Found the goal! (from start to end)" );
 				final ArrayList<NewGraphNode> path = makePath(p);
 				if (path == null)
 					return null;
@@ -209,13 +209,13 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 			// Now look at all the neighbours...
 
-			// System.out.println("linkedTo "+p.linkedTo.length+" neigbours");
+			// SNT.log("linkedTo "+p.linkedTo.length+" neigbours");
 			for (int i = 0; i < p.linkedTo.length; ++i) {
 
 				final NewGraphNode neighbour = p.linkedTo[i];
 				final float distance = p.distanceTo(neighbour);
 				if (neighbour.z == 118 || (neighbour.y * width + neighbour.x) == 118)
-					System.out.println("neighbour is: (" + neighbour.x + "," + neighbour.y + "," + neighbour.z
+					SNT.log("neighbour is: (" + neighbour.x + "," + neighbour.y + "," + neighbour.z
 							+ " and width " + width + " height " + height + " depth " + depth);
 				final int neighbourMaterial = label_data[neighbour.z][neighbour.y * width + neighbour.x];
 
@@ -239,18 +239,18 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 				// better? If so, discard this new candidate...
 
 				if ((foundInClosed != null) && (foundInClosed.f() <= newNode.f())) {
-					// System.out.println( " Found in closed, but no better.");
+					// SNT.log( " Found in closed, but no better.");
 					continue;
 				}
 
 				if ((foundInOpen != null) && (foundInOpen.f() <= newNode.f())) {
-					// System.out.println( " Found in open, but no better.");
+					// SNT.log( " Found in open, but no better.");
 					continue;
 				}
 
 				if (foundInClosed != null) {
 
-					// System.out.println("Found in closed and better");
+					// SNT.log("Found in closed and better");
 
 					// remove( closed_from_start, closed_from_start_hash,
 					// foundInClosed );
@@ -269,7 +269,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 				if (foundInOpen != null) {
 
-					// System.out.println("Found in open and better");
+					// SNT.log("Found in open and better");
 
 					// remove( open_from_start, open_from_start_hash,
 					// foundInOpen );
@@ -288,7 +288,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 				// Otherwise we add a new node:
 
-				// System.out.println(" Adding new node to open " +
+				// SNT.log(" Adding new node to open " +
 				// newNode.toDotName() );
 
 				// add_node( open_from_start, open_from_start_hash, newNode );
@@ -330,16 +330,16 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 		}
 
 		if (z_image >= depth) {
-			System.out.println("z is too deep:");
-			System.out.println("x_scaled: " + x_scaled);
-			System.out.println("y_scaled: " + y_scaled);
-			System.out.println("z_scaled: " + z_scaled);
-			System.out.println("x_image: " + x_image);
-			System.out.println("y_image: " + y_image);
-			System.out.println("z_image: " + z_image);
-			System.out.println("spacing_x: " + spacing_x);
-			System.out.println("spacing_y: " + spacing_y);
-			System.out.println("spacing_z: " + spacing_z);
+			SNT.log("z is too deep:");
+			SNT.log("x_scaled: " + x_scaled);
+			SNT.log("y_scaled: " + y_scaled);
+			SNT.log("z_scaled: " + z_scaled);
+			SNT.log("x_image: " + x_image);
+			SNT.log("y_image: " + y_image);
+			SNT.log("z_image: " + z_image);
+			SNT.log("spacing_x: " + spacing_x);
+			SNT.log("spacing_y: " + spacing_y);
+			SNT.log("spacing_z: " + spacing_z);
 		}
 
 		verticesInObjOrder.add(new NewGraphNode(x_image, y_image, z_image));
@@ -434,7 +434,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 		for (int i = 0; i < materials; ++i) {
 			materialNames[i] = parameters.getMaterialName(i);
 			materialNameToIndex.put(materialNames[i], new Integer(i));
-			System.out.println("Material: " + i + " is " + materialNames[i]);
+			SNT.log("Material: " + i + " is " + materialNames[i]);
 		}
 
 		redValues = new int[materials];
@@ -485,7 +485,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 			final RegistrationAlgorithm.ImagePoint imagePoint = new RegistrationAlgorithm.ImagePoint();
 
 			for (int z = 0; z < depth; ++z) {
-				System.out.println("doing slice: " + z);
+				SNT.log("doing slice: " + z);
 				for (int y = 0; y < height; ++y) {
 					for (int x = 0; x < width; ++x) {
 
@@ -551,7 +551,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 		verticesInObjOrder = new ArrayList<>();
 		verticesInObjOrder.add(new NewGraphNode());
 
-		System.out.println("Loading traces file: " + tracesObjFileName);
+		SNT.log("Loading traces file: " + tracesObjFileName);
 
 		final boolean success = SinglePathsGraph.loadWithListener(tracesObjFileName, this);
 
@@ -559,11 +559,11 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 			throw new RuntimeException("Failed to load traces");
 		}
 
-		System.out.println("Finished loading: " + (verticesInObjOrder.size() - 1) + " vertices found");
+		SNT.log("Finished loading: " + (verticesInObjOrder.size() - 1) + " vertices found");
 
-		System.out.println("  traces width:" + width);
-		System.out.println("  traces height:" + height);
-		System.out.println("  traces depth:" + depth);
+		SNT.log("  traces width:" + width);
+		SNT.log("  traces height:" + height);
+		SNT.log("  traces depth:" + depth);
 
 		long linksBothWays = 0;
 		for (int i = 1; i < verticesInObjOrder.size(); ++i) {
@@ -577,7 +577,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 		links = null;
 
-		System.out.println("And set the links in the NewGraphNodes: " + linksBothWays);
+		SNT.log("And set the links in the NewGraphNodes: " + linksBothWays);
 
 		positionToNode = new Hashtable<>();
 
@@ -594,7 +594,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 		verticesInObjOrder = null;
 
-		System.out.println("Added vertices to the hash, now has: " + positionToNode.size() + " entries");
+		SNT.log("Added vertices to the hash, now has: " + positionToNode.size() + " entries");
 
 		/* And now the real labels file: */
 
@@ -603,9 +603,9 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 			throw new RuntimeException("Couldn't open labels file " + labelsFileName);
 		final ImageStack labelStack = labels.getStack();
 
-		System.out.println("label file width:" + labels.getWidth());
-		System.out.println("label file height:" + labels.getHeight());
-		System.out.println("label file depth:" + labels.getStackSize());
+		SNT.log("label file width:" + labels.getWidth());
+		SNT.log("label file height:" + labels.getHeight());
+		SNT.log("label file depth:" + labels.getStackSize());
 
 		label_data = new byte[depth][];
 		for (int z = 0; z < depth; ++z)
@@ -653,7 +653,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 			for (int i = 0; i < materials; ++i) {
 				materialNames[i] = parameters.getMaterialName(i);
 				materialNameToIndex.put(materialNames[i], new Integer(i));
-				System.out.println("Material: " + i + " is " + materialNames[i]);
+				SNT.log("Material: " + i + " is " + materialNames[i]);
 			}
 
 			redValues = new int[materials];
@@ -678,7 +678,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 			final int labelIndex = labelIndices[a];
 			final String labelName = materialNames[labelIndex];
 
-			System.out.println("   Dealing with label index " + labelIndex + ", name: " + labelName);
+			SNT.log("   Dealing with label index " + labelIndex + ", name: " + labelName);
 
 			final ArrayList<NewGraphNode> neuropilEdgePoints = allEdges.get(labelIndex);
 
@@ -706,7 +706,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 						}
 					}
 
-			System.out.println("   Found " + neuropilEdgePoints.size() + " points on the edge of the " + labelName);
+			SNT.log("   Found " + neuropilEdgePoints.size() + " points on the edge of the " + labelName);
 		}
 
 		// We'll store copies of these in a PathAndFillManager
@@ -726,7 +726,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 			final int labelIndex = labelIndices[a];
 			final String labelName = materialNames[labelIndex];
-			System.out.println("Starting searches from " + labelIndex + ", name: " + labelName);
+			SNT.log("Starting searches from " + labelIndex + ", name: " + labelName);
 
 			final ArrayList<NewGraphNode> startPoints = allEdges.get(labelIndex);
 
@@ -738,12 +738,12 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 				for (final NewGraphNode startPoint : startPoints) {
 
-					System.out.println("  Starting from point " + startPoint + " (" + labelName
+					SNT.log("  Starting from point " + startPoint + " (" + labelName
 							+ " looking for material: " + materialNames[endM]);
 
 					final PathWithLength route = findPath(startPoint, endM);
 					if (route == null) {
-						// System.out.println("No route found.");
+						// SNT.log("No route found.");
 						continue;
 					}
 
@@ -757,7 +757,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 					// Add that path to the fill manager as well:
 
-					System.out.println("  Found a route!");
+					SNT.log("  Found a route!");
 				}
 			}
 		}
@@ -766,7 +766,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 			try {
 				manager.writeXML(writePathsTo.getAbsolutePath(), true);
 			} catch (final IOException e) {
-				System.out.println("Writing to: " + writePathsTo + " failed");
+				SNT.log("Writing to: " + writePathsTo + " failed");
 			}
 		}
 
@@ -869,11 +869,11 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 		for (final ImagesFromLine line : lines) {
 
-			System.out.println("Looking at line: " + line.lineName);
+			SNT.log("Looking at line: " + line.lineName);
 
 			for (final String baseName : line.baseNames) {
 
-				System.out.println("  Image basename: " + baseName);
+				SNT.log("  Image basename: " + baseName);
 
 				final File lsmFile = new File(baseDirectory, baseName + ".lsm");
 				/*
@@ -888,7 +888,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 				if (!lsmFile.exists())
 					continue;
 
-				System.out.println("!!!");
+				SNT.log("!!!");
 
 				// Load labels and traces.obj ...
 

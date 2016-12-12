@@ -109,7 +109,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			} else {
 				currentImage = BatchOpener.openFirstChannel(macroImageFilename);
 				if (currentImage == null) {
-					error("Opening the image file specified in the macro parameters (" + macroImageFilename
+					SNT.error("Opening the image file specified in the macro parameters (" + macroImageFilename
 							+ ") failed.");
 					return;
 				}
@@ -117,18 +117,18 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			}
 
 			if (currentImage == null) {
-				error("There's no current image to trace.");
+				SNT.error("There's no current image to trace.");
 				return;
 			}
 
 			// Check this isn't a composite image or hyperstack:
 			if (currentImage.getNFrames() > 1) {
-				error("This plugin only works with single 2D/3D image,\nnot multiple images in a time series.");
+				SNT.error("This plugin only works with single 2D/3D image,\nnot multiple images in a time series.");
 				return;
 			}
 
 			if (currentImage.getNChannels() > 1) {
-				error("This plugin only works with single channel images: Use\n"
+				SNT.error("This plugin only works with single channel images: Use\n"
 						+ "'Image>Color>Split Channels' and choose the channel\n"
 						+ "to be traced, then re-run the plugin");
 				return;
@@ -185,7 +185,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			final SNTPrefs prefs = new SNTPrefs(this);
 			prefs.loadStartupPrefs();
 
-			final GenericDialog gd = new GenericDialog("Simple Neurite Tracer (v" + PLUGIN_VERSION + ")");
+			final GenericDialog gd = new GenericDialog("Simple Neurite Tracer (v" + SNT.VERSION + ")");
 			gd.setInsets(0, 0, 0);
 			final Font font = new Font("SansSerif", Font.BOLD, 12);
 			gd.setInsets(0, 0, 0);
@@ -214,11 +214,11 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				resamplingFactor = defaultResamplingFactor;
 				if (!java3DAvailable) {
 					final String message = "(Java3D doesn't seem to be available, so no 3D viewer option is available.)";
-					System.out.println(message);
+					SNT.log(message);
 					gd.addMessage(message);
 				} else if (currentImage.getBitDepth() != 8) {
 					final String message = "(3D viewer option is only currently available for 8 bit images)";
-					System.out.println(message);
+					SNT.log(message);
 					gd.addMessage(message);
 				} else {
 					showed3DViewerOption = true;
@@ -279,7 +279,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				final double rawResamplingFactor = gd.getNextNumber();
 				resamplingFactor = (int) Math.round(rawResamplingFactor);
 				if (resamplingFactor < 1) {
-					error("The resampling factor " + rawResamplingFactor + " was invalid - \n" + "using the default of "
+					SNT.error("The resampling factor " + rawResamplingFactor + " was invalid - \n" + "using the default of "
 							+ defaultResamplingFactor + " instead.");
 					resamplingFactor = defaultResamplingFactor;
 				}
@@ -322,7 +322,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			if (look4tubesFile && file_info != null) {
 				final String originalFileName = file_info.fileName;
 				if (verbose)
-					System.out.println("originalFileName was: " + originalFileName);
+					SNT.log("originalFileName was: " + originalFileName);
 				if (originalFileName != null) {
 					final int lastDot = originalFileName.lastIndexOf(".");
 					if (lastDot > 0) {
@@ -330,7 +330,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 						ImagePlus tubenessImage = null;
 						final File tubesFile = new File(file_info.directory, tubesFileName);
 						if (verbose)
-							System.out.println("Testing for the existence of " + tubesFile.getAbsolutePath());
+							SNT.log("Testing for the existence of " + tubesFile.getAbsolutePath());
 						if (tubesFile.exists()) {
 							final long megaBytesExtra = (((long) width) * height * depth * 4) / (1024 * 1024);
 							final String extraMemoryNeeded = megaBytesExtra + "MiB";
@@ -343,14 +343,14 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 								IJ.showStatus("Loading tubes file.");
 								tubenessImage = BatchOpener.openFirstChannel(tubesFile.getAbsolutePath());
 								if (verbose)
-									System.out.println("Loaded the tubeness file");
+									SNT.log("Loaded the tubeness file");
 								if (tubenessImage == null) {
-									error("Failed to load tubes image from " + tubesFile.getAbsolutePath()
+									SNT.error("Failed to load tubes image from " + tubesFile.getAbsolutePath()
 											+ " although it existed");
 									return;
 								}
 								if (tubenessImage.getType() != ImagePlus.GRAY32) {
-									error("The tubeness file must be a 32 bit float image - "
+									SNT.error("The tubeness file must be a 32 bit float image - "
 											+ tubesFile.getAbsolutePath() + " was not.");
 									return;
 								}
@@ -395,7 +395,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 			if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 
-				error("One dimension of the calibration information was zero: (" + x_spacing + "," + y_spacing + ","
+				SNT.error("One dimension of the calibration information was zero: (" + x_spacing + "," + y_spacing + ","
 						+ z_spacing + ")");
 				return;
 
@@ -507,7 +507,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				if (tracesFileToLoad.exists())
 					pathAndFillManager.loadGuessingType(tracesFileToLoad.getAbsolutePath());
 				else
-					IJ.error("The traces file suggested by the macro parameters (" + macroTracesFilename
+					SNT.error("The traces file suggested by the macro parameters (" + macroTracesFilename
 							+ ") does not exist");
 			}
 

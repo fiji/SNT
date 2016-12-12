@@ -130,7 +130,7 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 					final NearPoint np = tracerPlugin.getPathAndFillManager().nearestPointOnAnyPath(point.x, point.y,
 							point.z, diagonalLength);
 					if (np == null) {
-						IJ.error("BUG: No nearby path was found within " + diagonalLength + " of the pointer");
+						SNT.error("BUG: No nearby path was found within " + diagonalLength + " of the pointer");
 						return;
 					}
 

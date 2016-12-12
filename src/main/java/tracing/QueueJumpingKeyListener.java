@@ -68,18 +68,18 @@ public class QueueJumpingKeyListener implements KeyListener {
 		final boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 
 		if (verbose)
-			System.out.println("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode) + ") keyChar=\"" + keyChar
+			SNT.log("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode) + ") keyChar=\"" + keyChar
 					+ "\" (" + (int) keyChar + ") " + KeyEvent.getKeyModifiersText(canvas.getModifiers()));
 
 		if (keyChar == 'y' || keyChar == 'Y') {
 
-			// if (verbose) System.out.println( "Yes, running confirmPath" );
+			// if (verbose) SNT.log( "Yes, running confirmPath" );
 			tracerPlugin.confirmTemporary();
 			e.consume();
 
 		} else if (keyCode == KeyEvent.VK_ESCAPE) {
 
-			// if (verbose) System.out.println( "Yes, running cancelPath+" );
+			// if (verbose) SNT.log( "Yes, running cancelPath+" );
 			tracerPlugin.cancelTemporary();
 			e.consume();
 
@@ -95,13 +95,13 @@ public class QueueJumpingKeyListener implements KeyListener {
 
 		} else if (keyChar == 'f' || keyChar == 'F') {
 
-			// if (verbose) System.out.println( "Finalizing that path" );
+			// if (verbose) SNT.log( "Finalizing that path" );
 			tracerPlugin.finishedPath();
 			e.consume();
 
 		} else if (keyChar == 'v' || keyChar == 'V') {
 
-			// if (verbose) System.out.println( "View paths as a stack" );
+			// if (verbose) SNT.log( "View paths as a stack" );
 			tracerPlugin.makePathVolume();
 			e.consume();
 

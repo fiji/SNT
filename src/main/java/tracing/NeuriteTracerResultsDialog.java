@@ -332,14 +332,14 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				final Calibration calibration = plugin.getImagePlus().getCalibration();
 				final Calibration colorImageCalibration = intendedColorImage.getCalibration();
 				if (!similarCalibrations(calibration, colorImageCalibration)) {
-					IJ.error("Warning: the calibration of '" + intendedColorImage.getTitle()
+					SNT.error("Warning: the calibration of '" + intendedColorImage.getTitle()
 							+ "' is different from the image you're tracing ('" + image.getTitle()
 							+ "')'\nThis may produce unexpected results.");
 				}
 				if (!(intendedColorImage.getWidth() == image.getWidth()
 						&& intendedColorImage.getHeight() == image.getHeight()
 						&& intendedColorImage.getStackSize() == image.getStackSize()))
-					IJ.error("Warning: the dimensions (in voxels) of '" + intendedColorImage.getTitle()
+					SNT.error("Warning: the dimensions (in voxels) of '" + intendedColorImage.getTitle()
 							+ "' is different from the image you're tracing ('" + image.getTitle()
 							+ "')'\nThis may produce unexpected results.");
 			}
@@ -413,7 +413,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				updateLabel();
 				if (mayStartGaussian) {
 					if (preprocess.isSelected()) {
-						IJ.error("[BUG] The preprocess checkbox should never be on when setSigma is called");
+						SNT.error("[BUG] The preprocess checkbox should never be on when setSigma is called");
 					} else {
 						// Turn on the checkbox:
 						ignorePreprocessEvents = true;
@@ -529,7 +529,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	public void changeState(final int newState) {
 
 		if (verbose)
-			System.out.println("changeState to: " + stateNames[newState]);
+			SNT.log("changeState to: " + stateNames[newState]);
 
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -686,7 +686,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 					break;
 
 				default:
-					IJ.error("BUG: switching to an unknown state");
+					SNT.error("BUG: switching to an unknown state");
 					return;
 				}
 
@@ -1252,7 +1252,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				pathAndFillManager.writeXML(savePath, true);
 			} catch (final IOException ioe) {
 				IJ.showStatus("Saving failed.");
-				IJ.error("Writing traces to '" + savePath + "' failed: " + ioe);
+				SNT.error("Writing traces to '" + savePath + "' failed: " + ioe);
 				changeState(preSavingState);
 				return;
 			}
@@ -1302,7 +1302,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				return;
 			}
 			savePath = sd.getDirectory() + sd.getFileName();
-			IJ.error("got savePath: " + savePath);
+			SNT.error("got savePath: " + savePath);
 			if (!pathAndFillManager.checkOKToWriteAllAsSWC(savePath))
 				return;
 			pathAndFillManager.exportAllAsSWC(savePath);
@@ -1343,7 +1343,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				pathAndFillManager.exportToCSV(file);
 			} catch (final IOException ioe) {
 				IJ.showStatus("Exporting failed.");
-				IJ.error("Writing traces to '" + savePath + "' failed: " + ioe);
+				SNT.error("Writing traces to '" + savePath + "' failed: " + ioe);
 				changeState(preExportingState);
 				return;
 			}
@@ -1371,7 +1371,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 				final File tracesFile = new File(directory, fileName);
 				if (!tracesFile.exists()) {
-					IJ.error("The file '" + tracesFile.getAbsolutePath() + "' does not exist.");
+					SNT.error("The file '" + tracesFile.getAbsolutePath() + "' does not exist.");
 					return;
 				}
 
@@ -1417,7 +1417,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 			if (plugin.getSinglePane()) {
 				if (currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED) {
-					IJ.error("Image is no longer available.");
+					SNT.error("Image is no longer available.");
 					addPathsToOverlayMenuItem.setEnabled(false);
 				} else
 					plugin.addPathsToOverlay();
@@ -1431,7 +1431,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				for (int i = 0; i < planes.length; i++)
 					choices[i] = getImagePlusFromPane(planes[i]) != null;
 				if (!choices[0] && !choices[1] && !choices[2]) {
-					IJ.error("Tracing panes are no longer available.");
+					SNT.error("Tracing panes are no longer available.");
 					addPathsToOverlayMenuItem.setEnabled(false);
 					return;
 				}
@@ -1483,7 +1483,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				updateStatusText("Cancelling Gaussian generation...");
 				plugin.cancelGaussian();
 			} else {
-				IJ.error("BUG! (wrong state for cancelling...)");
+				SNT.error("BUG! (wrong state for cancelling...)");
 			}
 
 		} else if (source == keepSegment) {
@@ -1532,12 +1532,12 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 				newSigma = gd.getNextNumber();
 				if (newSigma <= 0) {
-					IJ.error("The value of sigma must be positive");
+					SNT.error("The value of sigma must be positive");
 				}
 
 				newMultiplier = gd.getNextNumber();
 				if (newMultiplier <= 0) {
-					IJ.error("The value of the multiplier must be positive");
+					SNT.error("The value of the multiplier must be positive");
 				}
 			}
 
@@ -1581,7 +1581,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	private void toggleWindowVisibility(final int pane, final JCheckBoxMenuItem menuItem, final boolean setVisible) {
 		if (getImagePlusFromPane(pane) == null) {
-			IJ.error("Image Closed", "Pane is no longer accessible.");
+			SNT.error("Image closed: Pane is no longer accessible.");
 			menuItem.setEnabled(false);
 			menuItem.setSelected(false);
 		} else { // NB: WindowManager list won't be notified
@@ -1597,7 +1597,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	private boolean noPathsError() {
 		final boolean noPaths = pathAndFillManager.size() == 0;
 		if (noPaths) {
-			IJ.error("Simple Neurite Tracer", "There are no traced paths.");
+			SNT.error("There are no traced paths.");
 		}
 		return noPaths;
 	}
@@ -1761,7 +1761,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			final int e = Integer.parseInt(s);
 			if (e < 0) {
 				if (!reportedInvalid) {
-					IJ.error("The number of slices either side cannot be negative.");
+					SNT.error("The number of slices either side cannot be negative.");
 					reportedInvalid = true;
 					return 0;
 				}
@@ -1771,7 +1771,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		} catch (final NumberFormatException nfe) {
 			if (!reportedInvalid) {
-				IJ.error("The number of slices either side must be a non-negative integer.");
+				SNT.error("The number of slices either side must be a non-negative integer.");
 				reportedInvalid = true;
 				return 0;
 			}
@@ -1869,7 +1869,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 						sb.append("<li>Press \"").append(modKey).append("\" to select a point along the path</li>");
 						sb.append("<li>Press \"").append(modKey).append("+A\" to start analysis</li>");
 						sb.append("</ol>");
-						sb.append("A detailed walkthrough is also <a href='").append(url2)
+						sb.append("A detailed walkthrough of this procedure is <a href='").append(url2)
 								.append("'>available online</a>. ");
 						sb.append("For batch processing, run <a href='").append(url1)
 								.append("'>Analyze>Sholl>Sholl Analysis (Tracings)...</a>. ");

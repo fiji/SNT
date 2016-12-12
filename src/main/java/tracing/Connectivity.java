@@ -127,10 +127,10 @@ public class Connectivity {
 			else {
 				System.out
 						.println("********* Very odd path ********** (" + last_from_material + "," + first_to_material);
-				System.out.println("   from " + from_material + " to " + to_material);
+				SNT.log("   from " + from_material + " to " + to_material);
 				for (int i = 0; i < originalPath.size(); ++i) {
 					final GraphNode g = originalPath.get(i);
-					System.out.println("  - " + g.toDotName());
+					SNT.log("  - " + g.toDotName());
 				}
 			}
 		}
@@ -145,13 +145,13 @@ public class Connectivity {
 
 	ArrayList<GraphNode> makePath(final GraphNode lastNode) {
 
-		// System.out.println( "Trying to return result" );
+		// SNT.log( "Trying to return result" );
 
 		final ArrayList<GraphNode> resultReversed = new ArrayList<>();
 		GraphNode p = lastNode;
 		do {
 			resultReversed.add(p);
-			// System.out.println( "adding "+p.toDotName());
+			// SNT.log( "adding "+p.toDotName());
 		} while (null != (p = p.previous));
 
 		final ArrayList<GraphNode> realResult = new ArrayList<>();
@@ -190,20 +190,20 @@ public class Connectivity {
 			// GraphNode p = get_highest_priority( open_from_start,
 			// open_from_start_hash );
 
-			// System.out.println("Before poll:
+			// SNT.log("Before poll:
 			// "+open_from_start_hash.size()+"/"+open_from_start.size());
 			final GraphNode p = open_from_start.poll();
 			open_from_start_hash.remove(p);
-			// System.out.println("After poll:
+			// SNT.log("After poll:
 			// "+open_from_start_hash.size()+"/"+open_from_start.size());
 
-			// System.out.println( " Got node "+p.toDotName()+" from the queue"
+			// SNT.log( " Got node "+p.toDotName()+" from the queue"
 			// );
 
 			// Has the route from the start found the goal?
 
 			if (p.id == goal.id) {
-				// System.out.println( "Found the goal! (from start to end)" );
+				// SNT.log( "Found the goal! (from start to end)" );
 				final ArrayList<GraphNode> path = trimPath(makePath(p), start.material_name, goal.material_name);
 				if (path == null)
 					return null;
@@ -232,7 +232,7 @@ public class Connectivity {
 							|| neighbour.material_name.equals(start.material_name)
 							|| neighbour.material_name.equals(goal.material_name)) {
 
-						// System.out.println( " /Considering neighbour: " +
+						// SNT.log( " /Considering neighbour: " +
 						// neighbour.toDotName() );
 
 						final GraphNode newNode = new GraphNode();
@@ -249,20 +249,20 @@ public class Connectivity {
 						// better? If so, discard this new candidate...
 
 						if ((foundInClosed != null) && (foundInClosed.f() <= newNode.f())) {
-							// System.out.println( " Found in closed, but no
+							// SNT.log( " Found in closed, but no
 							// better.");
 							continue;
 						}
 
 						if ((foundInOpen != null) && (foundInOpen.f() <= newNode.f())) {
-							// System.out.println( " Found in open, but no
+							// SNT.log( " Found in open, but no
 							// better.");
 							continue;
 						}
 
 						if (foundInClosed != null) {
 
-							// System.out.println("Found in closed and better");
+							// SNT.log("Found in closed and better");
 
 							// remove( closed_from_start,
 							// closed_from_start_hash, foundInClosed );
@@ -281,7 +281,7 @@ public class Connectivity {
 
 						if (foundInOpen != null) {
 
-							// System.out.println("Found in open and better");
+							// SNT.log("Found in open and better");
 
 							// remove( open_from_start, open_from_start_hash,
 							// foundInOpen );
@@ -300,7 +300,7 @@ public class Connectivity {
 
 						// Otherwise we add a new node:
 
-						// System.out.println(" Adding new node to open " +
+						// SNT.log(" Adding new node to open " +
 						// newNode.toDotName() );
 
 						// add_node( open_from_start, open_from_start_hash,

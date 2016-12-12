@@ -175,7 +175,7 @@ public class SNTPrefs {
 		pluginLabels[idx] = "Enable Debug Mode";
 		pluginStates[idx++] = SimpleNeuriteTracer.verbose;
 
-		final GenericDialog gd = new GenericDialog("SNT v" + SimpleNeuriteTracer.PLUGIN_VERSION + " Preferences");
+		final GenericDialog gd = new GenericDialog("SNT v" + SNT.VERSION + " Preferences");
 		final Font font = new Font("SansSerif", Font.BOLD, 12);
 		gd.setInsets(0, 0, 0);
 		gd.addMessage("Startup Options:", font);

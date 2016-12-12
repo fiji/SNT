@@ -130,7 +130,7 @@ public class AnalyzeTracings_ implements PlugIn {
 			final ImagePlus[] tmp = BatchOpener.open(standardBrainLabelsFileName);
 			labels = tmp[0];
 		}
-		System.out.println("   labels were: " + labels);
+		SNT.log("   labels were: " + labels);
 		final ImageStack labelStack = labels.getStack();
 		final int templateWidth = labelStack.getWidth();
 		final int templateHeight = labelStack.getHeight();
@@ -146,7 +146,7 @@ public class AnalyzeTracings_ implements PlugIn {
 		for (int i = 0; i < materials; ++i) {
 			result.materialNames[i] = parameters.getMaterialName(i);
 			result.materialNameToIndex.put(result.materialNames[i], new Integer(i));
-			System.out.println("Material: " + i + " is " + result.materialNames[i]);
+			SNT.log("Material: " + i + " is " + result.materialNames[i]);
 		}
 
 		result.redValues = new int[materials];
@@ -174,7 +174,7 @@ public class AnalyzeTracings_ implements PlugIn {
 		final RegistrationAlgorithm.ImagePoint imagePoint = new RegistrationAlgorithm.ImagePoint();
 
 		final int paths = allPaths.size();
-		// System.out.println("Paths to draw: "+paths);
+		// SNT.log("Paths to draw: "+paths);
 		for (int i = 0; i < paths; ++i) {
 			final Path path = allPaths.get(i);
 
@@ -209,7 +209,7 @@ public class AnalyzeTracings_ implements PlugIn {
 				if (k == (path.size() - 1))
 					p.setEnd(true);
 
-				// System.out.println( p.getPathID() + "|" + i + " - " +
+				// SNT.log( p.getPathID() + "|" + i + " - " +
 				// p.getNeuropilRegion() + ": at (" + x_in_template + "," +
 				// y_in_template + "," + z_in_template + ")" );
 
@@ -227,7 +227,7 @@ public class AnalyzeTracings_ implements PlugIn {
 
 		// This is n squared, so All Really Bad.
 
-		System.out.println("Finding which endpoints are really the same.");
+		SNT.log("Finding which endpoints are really the same.");
 
 		for (int i = 0; i < transformedPoints.size(); ++i) {
 
@@ -239,11 +239,11 @@ public class AnalyzeTracings_ implements PlugIn {
 				for (int j = 0; j < endPoints.size(); ++j) {
 					final GraphNode q = endPoints.get(j);
 					if (p.nearTo(limit, q.x, q.y, q.z)) {
-						// System.out.println( "Two near points" );
-						// System.out.println( "materials: " +
+						// SNT.log( "Two near points" );
+						// SNT.log( "materials: " +
 						// p.getNeuropilRegion() + " and " + q.material_name );
 						if (p.getNeuropilRegion().equals(q.material_name)) {
-							// System.out.println( " same material name" );
+							// SNT.log( " same material name" );
 							// Then we assume they're the same, but set that
 							// information.
 							p.node = q;
@@ -279,7 +279,7 @@ public class AnalyzeTracings_ implements PlugIn {
 
 		}
 
-		System.out.println("Done finding which endpoints are really the same.");
+		SNT.log("Done finding which endpoints are really the same.");
 
 		// Now we're going to go through all the points, path by path.
 
@@ -287,19 +287,19 @@ public class AnalyzeTracings_ implements PlugIn {
 		for (int i = 0; i < transformedPoints.size(); ++i) {
 			final PointInPath p = transformedPoints.get(i);
 			if (p.start()) {
-				// System.out.println( "Found start point: " + p );
+				// SNT.log( "Found start point: " + p );
 				// Set up a new path to add to, and add this point.
 				inThisPath = new ArrayList<>();
 				inThisPath.add(p);
 			} else if (p.end()) {
-				// System.out.println( "Found end point: " + p );
+				// SNT.log( "Found end point: " + p );
 				inThisPath.add(p);
 				{
 					// Now analyze that path.
 					final int start_id = inThisPath.get(0).node.id;
 					final int end_id = inThisPath.get(inThisPath.size() - 1).node.id;
 
-					System.out.println("Path from ID " + start_id + " to " + end_id);
+					SNT.log("Path from ID " + start_id + " to " + end_id);
 
 					final double nearestDistanceSq[] = new double[endPoints.size()];
 					for (int n = 0; n < nearestDistanceSq.length; ++n)
@@ -312,7 +312,7 @@ public class AnalyzeTracings_ implements PlugIn {
 						for (int j = 0; j < endPoints.size(); ++j) {
 							final GraphNode q = endPoints.get(j);
 							if (pi.nearTo(limit, q.x, q.y, q.z)) {
-								// System.out.println( " point in path is near
+								// SNT.log( " point in path is near
 								// to node ID " + q.id );
 								if (pi.getNeuropilRegion().equals(q.material_name) && (q.id != start_id)
 										&& (q.id != end_id)) {
@@ -324,7 +324,7 @@ public class AnalyzeTracings_ implements PlugIn {
 									final double ydiff = q.y - pi.getY();
 									final double zdiff = q.z - pi.getZ();
 									final double distancesq = xdiff * xdiff + ydiff * ydiff + zdiff * zdiff;
-									System.out.println("  on path between " + start_id + " and " + end_id
+									SNT.log("  on path between " + start_id + " and " + end_id
 											+ "  lies the node " + q.id + " (distancesq " + distancesq);
 
 									if ((nearestDistanceSq[j] < 0) || (distancesq < nearestDistanceSq[j])) {
@@ -344,7 +344,7 @@ public class AnalyzeTracings_ implements PlugIn {
 							final GraphNode g = endPoints.get(n);
 							final PointInPath pi = nearestPointInPath[n];
 							pi.node = g;
-							System.out.println(
+							SNT.log(
 									"--- nearest point to node " + n + " (distancesq: " + ds + ") was point " + pi);
 						}
 					}
@@ -352,12 +352,12 @@ public class AnalyzeTracings_ implements PlugIn {
 				}
 				inThisPath = null;
 			} else {
-				// System.out.println( "Found intermediate point: " + p );
+				// SNT.log( "Found intermediate point: " + p );
 				inThisPath.add(p);
 			}
 		}
 
-		System.out.println("Number of end points is: " + endPoints.size());
+		SNT.log("Number of end points is: " + endPoints.size());
 
 		final int max_nodes = 4096;
 		// Limit the number of possible nodes to 1024 for the time being...
@@ -396,8 +396,8 @@ public class AnalyzeTracings_ implements PlugIn {
 			final String material_name = p.getNeuropilRegion();
 
 			if (p.start()) {
-				System.out.println("=====================");
-				System.out.println("Path starting at id " + p.node.id);
+				SNT.log("=====================");
+				SNT.log("Path starting at id " + p.node.id);
 				distance = 0;
 				lastNode = p.node;
 				last_x = -1;
@@ -415,7 +415,7 @@ public class AnalyzeTracings_ implements PlugIn {
 
 			}
 
-			System.out.println("point " + p);
+			SNT.log("point " + p);
 
 			boolean pathEnded = false;
 
@@ -429,7 +429,7 @@ public class AnalyzeTracings_ implements PlugIn {
 							&& (g.material_name.equals(p.getNeuropilRegion())) && (g.id != lastNode.id)) {
 						pathEnded = true;
 						change_into_material_not_registered = false;
-						System.out.println("A: distance " + distance + " from " + lastNode.id + " to " + g.id);
+						SNT.log("A: distance " + distance + " from " + lastNode.id + " to " + g.id);
 						distances[lastNode.id][g.id] = distance;
 						distances[g.id][lastNode.id] = distance;
 						lastNode = g;
@@ -447,7 +447,7 @@ public class AnalyzeTracings_ implements PlugIn {
 				if (p.node.id != lastNode.id) {
 					pathEnded = true;
 					change_into_material_not_registered = false;
-					System.out.println("B: distance " + distance + " from " + lastNode.id + " to " + g.id);
+					SNT.log("B: distance " + distance + " from " + lastNode.id + " to " + g.id);
 					distances[lastNode.id][g.id] = distance;
 					distances[g.id][lastNode.id] = distance;
 					lastNode = g;
@@ -465,7 +465,7 @@ public class AnalyzeTracings_ implements PlugIn {
 			if (!pathEnded) {
 				if (!last_material_name.equals(material_name)) {
 
-					System.out.println("changing from material " + last_material_name + " to " + material_name);
+					SNT.log("changing from material " + last_material_name + " to " + material_name);
 
 					if (material_name.equals("Exterior") && change_into_material_not_registered) {
 
@@ -480,7 +480,7 @@ public class AnalyzeTracings_ implements PlugIn {
 						g.id = e++;
 						allNodes.add(g);
 
-						System.out.println("C: distance " + distance + " from " + lastNode.id + " to " + g.id);
+						SNT.log("C: distance " + distance + " from " + lastNode.id + " to " + g.id);
 						distances[lastNode.id][g.id] = distance;
 						distances[g.id][lastNode.id] = distance;
 						lastNode = g;
@@ -550,9 +550,9 @@ public class AnalyzeTracings_ implements PlugIn {
 			final String fileName = fc.getPath();
 
 			final int lastDotIndex = fileName.lastIndexOf('.');
-			System.out.println("lastDotIndex " + lastDotIndex);
+			SNT.log("lastDotIndex " + lastDotIndex);
 			final int lastSeparatorIndex = fileName.lastIndexOf(File.separatorChar);
-			System.out.println("lastSeparatorIndex " + lastSeparatorIndex);
+			SNT.log("lastSeparatorIndex " + lastSeparatorIndex);
 
 			final String namePrefix = fileName.substring(lastSeparatorIndex + 1, lastDotIndex);
 
@@ -711,7 +711,7 @@ public class AnalyzeTracings_ implements PlugIn {
 						boolean foundConnection = false;
 						double shortestDistance = Double.MAX_VALUE;
 
-						System.out.println("from: " + from_material + " -> " + to_material);
+						SNT.log("from: " + from_material + " -> " + to_material);
 
 						final String hashKey = "\"" + from_material + "\" -- \"" + to_material + "\"";
 
@@ -724,7 +724,7 @@ public class AnalyzeTracings_ implements PlugIn {
 								if (start_node.material_name.equals(from_material)
 										&& end_node.material_name.equals(to_material)) {
 
-									System.out.println("== Trying to find path between " + start_node.toDotName()
+									SNT.log("== Trying to find path between " + start_node.toDotName()
 											+ " and " + end_node.toDotName());
 
 									final PathWithLength pathWithLength = connectivity.pathBetween(start_node,
@@ -734,7 +734,7 @@ public class AnalyzeTracings_ implements PlugIn {
 
 										foundConnection = true;
 
-										// System.out.println("Path is of length
+										// SNT.log("Path is of length
 										// " + pathBetween.size());
 
 										for (int index_in_path = 0; index_in_path < pathWithLength.path
@@ -742,7 +742,7 @@ public class AnalyzeTracings_ implements PlugIn {
 											final GraphNode g = pathWithLength.path.get(index_in_path);
 											System.out.print(g.toDotName() + "-");
 										}
-										System.out.println("");
+										SNT.log("");
 
 										if (pathWithLength.length < shortestDistance) {
 											shortestDistance = pathWithLength.length;
@@ -766,7 +766,7 @@ public class AnalyzeTracings_ implements PlugIn {
 								nonExteriorMaterials.add(to_material);
 
 							out.write("        \"" + from_material + "\" -- \"" + to_material + "\";\n");
-							System.out.println("C: " + from_material + "-" + to_material);
+							SNT.log("C: " + from_material + "-" + to_material);
 							if (!connectionDistances.containsKey(hashKey))
 								connectionDistances.put(hashKey, new double[filesConsidered]);
 							if (!connectionCounts.containsKey(hashKey))
@@ -823,7 +823,7 @@ public class AnalyzeTracings_ implements PlugIn {
 				final double mean = sum / counts;
 				final double sd = Math.sqrt((sum_squared / counts) - (mean * mean));
 
-				System.out.println(
+				SNT.log(
 						connection_string + (counts / filesConsidered) + " mean distance " + mean + " [sd " + sd + "]");
 
 				final String label = "p: " + (counts / (double) filesConsidered) + "\\nmean d: " + mean
@@ -854,15 +854,15 @@ public class AnalyzeTracings_ implements PlugIn {
 			final String dotFile = outputPrefix + ".dot";
 			final String svgFile = outputPrefix + ".svg";
 
-			System.out.println("Generating " + svgFile + " from " + dotFile);
+			SNT.log("Generating " + svgFile + " from " + dotFile);
 
 			try {
 				final Process p = Runtime.getRuntime().exec("neato -Tsvg -o" + svgFile + " < " + dotFile);
 				p.waitFor();
 			} catch (final IOException ioe) {
-				System.out.println("Got IOException: " + ioe);
+				SNT.log("Got IOException: " + ioe);
 			} catch (final InterruptedException ie) {
-				System.out.println("Got InterruptedException: " + ie);
+				SNT.log("Got InterruptedException: " + ie);
 			}
 
 		}

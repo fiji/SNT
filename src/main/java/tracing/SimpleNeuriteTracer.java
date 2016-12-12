@@ -130,8 +130,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		final int lastDot = filename.lastIndexOf(".");
 		if (lastDot > 0)
 			return filename.substring(0, lastDot);
-		else
-			return null;
+		return null;
 	}
 
 	/*
@@ -894,7 +893,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	synchronized public void cancelPath() {
 
-
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
 			error("      There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
@@ -954,7 +952,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		repaintAllPanes();
 	}
 
-	protected void error(String string) {
+	protected void error(final String string) {
 		IJ.error("Simple Neurite Tracer v" + PLUGIN_VERSION, string);
 	}
 

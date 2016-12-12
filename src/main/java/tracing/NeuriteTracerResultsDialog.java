@@ -1787,7 +1787,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	}
 
 	private JMenu trackingMenu() {
-		final JMenu trackingMenu = new JMenu("Tracking");
+		final JMenu trackingMenu = new JMenu("Tracing");
 		final String opacityLabel = "Show MIP overlay(s) at " + SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT
 				+ "% opacity";
 		mipOverlayMenuItem = new JCheckBoxMenuItem(opacityLabel);

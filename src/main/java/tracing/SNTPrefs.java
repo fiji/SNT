@@ -86,8 +86,8 @@ public class SNTPrefs {
 		snt.forceGrayscale = getPref(ENFORCE_LUT);
 		snt.look4oofFile = getPref(LOOK_FOR_OOF);
 		snt.look4tubesFile = getPref(LOOK_FOR_TUBES);
-		snt.setSinglePane(getPref(USE_THREE_PANE));
-		snt.new3DViewer = getPref(USE_3D_VIEWER);
+		snt.setSinglePane(!getPref(USE_THREE_PANE));
+		snt.use3DViewer = getPref(USE_3D_VIEWER);
 	}
 
 	private boolean getPref(final int key) {
@@ -98,7 +98,7 @@ public class SNTPrefs {
 		setPref(ENFORCE_LUT, snt.forceGrayscale);
 		setPref(LOOK_FOR_OOF, snt.look4oofFile);
 		setPref(LOOK_FOR_TUBES, snt.look4tubesFile);
-		setPref(USE_THREE_PANE, snt.getSinglePane());
+		setPref(USE_THREE_PANE, !snt.getSinglePane());
 		setPref(USE_3D_VIEWER, snt.use3DViewer);
 		Prefs.set(BOOLEANS, currentBooleans);
 		Prefs.savePreferences();

@@ -72,7 +72,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 	protected boolean forceGrayscale;
 	protected boolean look4oofFile;
 	protected boolean look4tubesFile;
-	protected boolean new3DViewer;
 
 	@Override
 	public void run(final String ignoredArguments) {
@@ -240,7 +239,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 					}
 					gd.addMessage(""); // spacer
 					gd.addChoice("Choice of 3D Viewer:", choices3DViewer,
-							(single_pane || !new3DViewer) ? no3DViewerString : useNewString);
+							(use3DViewer) ? useNewString : no3DViewerString);
 					gd.addNumericField("Resampling factor:", defaultResamplingFactor, 0, 3,
 							"(can be left at the default)");
 				}
@@ -280,8 +279,8 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				final double rawResamplingFactor = gd.getNextNumber();
 				resamplingFactor = (int) Math.round(rawResamplingFactor);
 				if (resamplingFactor < 1) {
-					error("The resampling factor " + rawResamplingFactor + " was invalid - \n"
-							+ "using the default of " + defaultResamplingFactor + " instead.");
+					error("The resampling factor " + rawResamplingFactor + " was invalid - \n" + "using the default of "
+							+ defaultResamplingFactor + " instead.");
 					resamplingFactor = defaultResamplingFactor;
 				}
 			}
@@ -514,7 +513,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 			resultsDialog.displayOnStarting();
 			GUI.center(xy_window);
-			xy_window.toFront();
 			resultsDialog.arrangeWindows();
 
 		} finally {

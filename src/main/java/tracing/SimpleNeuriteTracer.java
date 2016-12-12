@@ -105,6 +105,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 	protected Content imageContent;
 
 	volatile protected boolean unsavedPaths = false;
+	volatile protected boolean autoCanvasActivation;
+	volatile protected boolean snapCursor;
+	protected int cursorSnapWindowXY;
+	protected int cursorSnapWindowZ;
 
 	public boolean pathsUnsaved() {
 		return unsavedPaths;
@@ -1427,12 +1431,18 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// univ.resetView();
 	}
 
-	volatile private boolean showOnlySelectedPaths;
+	protected volatile boolean showOnlySelectedPaths;
+
+	protected void setShowOnlySelectedPaths(final boolean showOnlySelectedPaths, final boolean updateGUI) {
+		this.showOnlySelectedPaths = showOnlySelectedPaths;
+		if (updateGUI) {
+			update3DViewerContents();
+			repaintAllPanes();
+		}
+	}
 
 	public void setShowOnlySelectedPaths(final boolean showOnlySelectedPaths) {
-		this.showOnlySelectedPaths = showOnlySelectedPaths;
-		update3DViewerContents();
-		repaintAllPanes();
+		setShowOnlySelectedPaths(showOnlySelectedPaths, true);
 	}
 
 	public void addPathsToManager(final RoiManager rm, final boolean SWTColoring) {
@@ -1511,6 +1521,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public boolean getSinglePane() {
 		return single_pane;
+	}
+
+	protected void setSinglePane(final boolean single_pane) {
+		this.single_pane = single_pane;
 	}
 
 	public boolean getShowOnlySelectedPaths() {
@@ -1812,12 +1826,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 				xy_tracer_canvas.just_near_slices ? resultsDialog.partsNearbyChoice : resultsDialog.projectionChoice);
 	}
 
-	protected volatile boolean snapCursor;
-	protected volatile boolean autoCanvasActivation;
-
-	protected int cursorSnapWindowXY;
-	protected int cursorSnapWindowZ;
-
 	protected void toogleSnapCursor() {
 		enableSnapCursor(!snapCursor);
 	}
@@ -1874,6 +1882,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			removeMIPfromOverlay(overlay);
 			xy.setOverlay(overlay);
 		}
+		new SNTPrefs(this).savePluginPrefs();
 	}
 
 }

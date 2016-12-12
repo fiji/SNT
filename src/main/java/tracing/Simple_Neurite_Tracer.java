@@ -68,9 +68,11 @@ import util.RGBToLuminance;
 
 public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn {
 
-	private boolean forceGrayscale;
-	private boolean look4oofFile;
-	private boolean look4tubesFile = true;
+	/* These will be set by SNTPrefs */
+	protected boolean forceGrayscale;
+	protected boolean look4oofFile;
+	protected boolean look4tubesFile;
+	protected boolean new3DViewer;
 
 	@Override
 	public void run(final String ignoredArguments) {
@@ -181,8 +183,8 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 					spacing_units = "" + calibration.getUnit();
 			}
 
-			single_pane = singleSlice;
-			look4oofFile = !singleSlice;
+			final SNTPrefs prefs = new SNTPrefs(this);
+			prefs.loadStartupPrefs();
 
 			final GenericDialog gd = new GenericDialog("Simple Neurite Tracer (v" + PLUGIN_VERSION + ")");
 			gd.setInsets(0, 0, 0);
@@ -196,9 +198,10 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			final int byteDepth = bitDepth == 24 ? 4 : bitDepth / 8;
 			final long megaBytesExtra3P = (((long) width) * height * depth * byteDepth * 2) / (1024 * 1024);
 			extraMemoryNeeded3P += megaBytesExtra3P + "MiB of memory)";
-			gd.addCheckbox("Use_three_pane view? " + extraMemoryNeeded3P, !single_pane);
+			gd.addCheckbox("Use_three_pane view? " + extraMemoryNeeded3P, singleSlice ? false : !single_pane);
 			gd.addCheckbox("Look_for_Tubeness \".tubes.tif\" pre-processed file?", look4tubesFile);
-			gd.addCheckbox("Look_for_Tubular_Geodesics \".oof.ext\" pre-processed file?", look4oofFile);
+			gd.addCheckbox("Look_for_Tubular_Geodesics \".oof.ext\" pre-processed file?",
+					singleSlice ? false : look4oofFile);
 
 			boolean showed3DViewerOption = false;
 			Image3DUniverse universeToUse = null;
@@ -237,7 +240,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 					}
 					gd.addMessage(""); // spacer
 					gd.addChoice("Choice of 3D Viewer:", choices3DViewer,
-							single_pane ? no3DViewerString : useNewString);
+							(single_pane || !new3DViewer) ? no3DViewerString : useNewString);
 					gd.addNumericField("Resampling factor:", defaultResamplingFactor, 0, 3,
 							"(can be left at the default)");
 				}
@@ -282,6 +285,8 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 					resamplingFactor = defaultResamplingFactor;
 				}
 			}
+
+			prefs.saveStartupPrefs();
 
 			// Turn it grey, since I find that helpful:
 			if (forceGrayscale) {
@@ -371,10 +376,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
 			zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
 
-			snapCursor = true;
-			autoCanvasActivation = true;
-			cursorSnapWindowXY = 4;
-			cursorSnapWindowZ = 0;
+			prefs.loadPluginPrefs();
 			setupTrace = true;
 
 			final Simple_Neurite_Tracer thisPlugin = this;

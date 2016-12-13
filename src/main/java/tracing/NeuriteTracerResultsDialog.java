@@ -1075,11 +1075,11 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 			final JPanel sigmaButtonPanel = new JPanel();
 
-			editSigma = PathWindow.smallButton("Pick Sigma Manually");
+			editSigma = SNT.smallButton("Pick Sigma Manually");
 			editSigma.addActionListener(this);
 			sigmaButtonPanel.add(editSigma);
 
-			sigmaWizard = PathWindow.smallButton("Pick Sigma Visually");
+			sigmaWizard = SNT.smallButton("Pick Sigma Visually");
 			sigmaWizard.addActionListener(this);
 			sigmaButtonPanel.add(sigmaWizard);
 

@@ -637,12 +637,12 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		popup.add(colorMenu);
 
 		// Create all the menu items:
-		renameButton = smallButton("Rename");
-		fitVolumeButton = smallButton("Fit Volume");
-		fillOutButton = smallButton("Fill Out");
-		makePrimaryButton = smallButton("Make Primary");
-		deleteButton = smallButton("Delete");
-		exportAsSWCButton = smallButton("Export as SWC");
+		renameButton = SNT.smallButton("Rename");
+		fitVolumeButton = SNT.smallButton("Fit Volume");
+		fillOutButton = SNT.smallButton("Fill Out");
+		makePrimaryButton = SNT.smallButton("Make Primary");
+		deleteButton = SNT.smallButton("Delete");
+		exportAsSWCButton = SNT.smallButton("Export as SWC");
 
 		buttonPanel.add(renameButton);
 		buttonPanel.add(fitVolumeButton);
@@ -733,17 +733,6 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			p.setColor(color);
 		plugin.repaintAllPanes();
 		pathAndFillManager.update3DViewerContents();
-	}
-
-	protected static JButton smallButton(final String text) {
-		final double SCALE = .85;
-		final JButton button = new JButton(text);
-		final Font font = button.getFont();
-		button.setFont(font.deriveFont((float) (font.getSize() * SCALE)));
-		final Insets insets = button.getMargin();
-		button.setMargin(new Insets((int) (insets.top * SCALE), (int) (insets.left * SCALE),
-				(int) (insets.bottom * SCALE), (int) (insets.right * SCALE)));
-		return button;
 	}
 
 	protected void showPopup(final MouseEvent me) {

@@ -160,7 +160,7 @@ public class CreateTracingVolume_ implements PlugIn {
 							* templateWidth + (int) (x / scaleStandard)] & 0xFF;
 
 					if (label_value >= materials) {
-						IJ.error("A label value of " + label_value + " was found, which is not a valid material (max "
+						SNT.error("A label value of " + label_value + " was found, which is not a valid material (max "
 								+ (materials - 1) + ")");
 						return;
 					}

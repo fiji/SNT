@@ -193,7 +193,7 @@ public class AnalyzeTracings_ implements PlugIn {
 				final int label_value = label_data[z_in_template][y_in_template * templateWidth + x_in_template] & 0xFF;
 
 				if (label_value >= materials) {
-					IJ.error("A label value of " + label_value + " was found, which is not a valid material (max "
+					SNT.error("A label value of " + label_value + " was found, which is not a valid material (max "
 							+ (materials - 1) + ")");
 					return null;
 				}
@@ -603,7 +603,7 @@ public class AnalyzeTracings_ implements PlugIn {
 
 			} catch (final IOException ioe) {
 
-				IJ.error("Exception while writing the file");
+				SNT.error("Exception while writing the file");
 
 			}
 
@@ -659,7 +659,7 @@ public class AnalyzeTracings_ implements PlugIn {
 
 			} catch (final IOException ioe) {
 
-				IJ.error("Exception while writing the file");
+				SNT.error("Exception while writing the file");
 
 			}
 
@@ -785,7 +785,7 @@ public class AnalyzeTracings_ implements PlugIn {
 
 			} catch (final IOException ioe) {
 
-				IJ.error("Exception while writing the file");
+				SNT.error("Exception while writing the file");
 
 			}
 
@@ -842,7 +842,7 @@ public class AnalyzeTracings_ implements PlugIn {
 
 		} catch (final IOException ioe) {
 
-			IJ.error("Exception while writing the file");
+			SNT.error("Exception while writing the file");
 
 		}
 

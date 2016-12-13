@@ -13,7 +13,6 @@ import java.util.Hashtable;
 import java.util.PriorityQueue;
 
 import amira.AmiraParameters;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileSaver;
@@ -215,8 +214,8 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 				final NewGraphNode neighbour = p.linkedTo[i];
 				final float distance = p.distanceTo(neighbour);
 				if (neighbour.z == 118 || (neighbour.y * width + neighbour.x) == 118)
-					SNT.log("neighbour is: (" + neighbour.x + "," + neighbour.y + "," + neighbour.z
-							+ " and width " + width + " height " + height + " depth " + depth);
+					SNT.log("neighbour is: (" + neighbour.x + "," + neighbour.y + "," + neighbour.z + " and width "
+							+ width + " height " + height + " depth " + depth);
 				final int neighbourMaterial = label_data[neighbour.z][neighbour.y * width + neighbour.x];
 
 				// Ignore this neighbour if it's it's not of the exterior or end
@@ -738,8 +737,8 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 				for (final NewGraphNode startPoint : startPoints) {
 
-					SNT.log("  Starting from point " + startPoint + " (" + labelName
-							+ " looking for material: " + materialNames[endM]);
+					SNT.log("  Starting from point " + startPoint + " (" + labelName + " looking for material: "
+							+ materialNames[endM]);
 
 					final PathWithLength route = findPath(startPoint, endM);
 					if (route == null) {
@@ -803,7 +802,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 				out.close();
 
 			} catch (final IOException ioe) {
-				IJ.error("Exception while writing the file");
+				SNT.error("Exception while writing the file");
 			}
 		}
 

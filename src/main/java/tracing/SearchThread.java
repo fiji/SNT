@@ -223,24 +223,24 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	@Override
 	public void requestStop() {
 		if (verbose)
-			System.out.println("requestStop called, about to enter synchronized");
+			SNT.log("requestStop called, about to enter synchronized");
 		synchronized (this) {
 			if (verbose)
-				System.out.println("... entered synchronized");
+				SNT.log("... entered synchronized");
 			if (threadStatus == PAUSED) {
 				if (verbose)
-					System.out.println("was paused so interrupting");
+					SNT.log("was paused so interrupting");
 				this.interrupt();
 				if (verbose)
-					System.out.println("done interrupting");
+					SNT.log("done interrupting");
 			}
 			threadStatus = STOPPING;
 			reportThreadStatus();
 			if (verbose)
-				System.out.println("... leaving synchronized");
+				SNT.log("... leaving synchronized");
 		}
 		if (verbose)
-			System.out.println("requestStop finished (threadStatus now " + threadStatus + ")");
+			SNT.log("requestStop finished (threadStatus now " + threadStatus + ")");
 	}
 
 	/**
@@ -265,22 +265,22 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	public void pauseOrUnpause() {
 		// Toggle the paused status:
 		if (verbose)
-			System.out.println("pauseOrUnpause called, about to enter synchronized");
+			SNT.log("pauseOrUnpause called, about to enter synchronized");
 		synchronized (this) {
 			if (verbose)
-				System.out.println("... entered synchronized");
+				SNT.log("... entered synchronized");
 			switch (threadStatus) {
 			case PAUSED:
 				if (verbose)
-					System.out.println("paused, going to switch to running - interrupting first");
+					SNT.log("paused, going to switch to running - interrupting first");
 				this.interrupt();
 				if (verbose)
-					System.out.println("finished interrupting");
+					SNT.log("finished interrupting");
 				threadStatus = RUNNING;
 				break;
 			case RUNNING:
 				if (verbose)
-					System.out.println("running, going to switch to paused");
+					SNT.log("running, going to switch to paused");
 				threadStatus = PAUSED;
 				break;
 			default:
@@ -288,10 +288,10 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			}
 			reportThreadStatus();
 			if (verbose)
-				System.out.println("... leaving synchronized");
+				SNT.log("... leaving synchronized");
 		}
 		if (verbose)
-			System.out.println("pauseOrUnpause finished");
+			SNT.log("pauseOrUnpause finished");
 	}
 
 	int imageType = -1;
@@ -350,7 +350,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 
-			IJ.error("SearchThread: One dimension of the calibration information was zero: (" + x_spacing + ","
+			SNT.error("SearchThread: One dimension of the calibration information was zero: (" + x_spacing + ","
 					+ y_spacing + "," + z_spacing + ")");
 			return;
 
@@ -386,13 +386,13 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	SearchNode[][] nodes_as_image_from_goal;
 
 	public void printStatus() {
-		System.out.println("... with " + open_from_start.size() + " open nodes at the start");
-		System.out.println(" ... and " + closed_from_start.size() + " closed nodes at the start");
+		SNT.log("... with " + open_from_start.size() + " open nodes at the start");
+		SNT.log(" ... and " + closed_from_start.size() + " closed nodes at the start");
 		if (bidirectional) {
-			System.out.println("... with " + open_from_goal.size() + " open nodes at the goal");
-			System.out.println(" ... and " + closed_from_goal.size() + " closed nodes at the goal");
+			SNT.log("... with " + open_from_goal.size() + " open nodes at the goal");
+			SNT.log(" ... and " + closed_from_goal.size() + " closed nodes at the goal");
 		} else
-			System.out.println(" ... unidirectional search");
+			SNT.log(" ... unidirectional search");
 	}
 
 	@Override
@@ -401,11 +401,11 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		try {
 
 			if (verbose)
-				System.out.println("New SearchThread running!");
+				SNT.log("New SearchThread running!");
 			if (verbose)
 				printStatus();
 			if (verbose)
-				System.out.println(
+				SNT.log(
 						"... was asked to start it in the " + (startPaused ? "paused" : "unpaused") + " state.");
 
 			synchronized (this) {
@@ -454,7 +454,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 					if ((timeoutSeconds > 0) && (millisecondsSinceStart > (1000 * timeoutSeconds))) {
 						if (verbose)
-							System.out.println("Timed out...");
+							SNT.log("Timed out...");
 						setExitReason(TIMED_OUT);
 						reportFinished(false);
 						return;
@@ -466,7 +466,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 						final int loops_since_last_report = loops - loops_at_last_report;
 						if (verbose)
-							System.out.println(
+							SNT.log(
 									"milliseconds per loop: " + (since_last_report / (double) loops_since_last_report));
 
 						if (verbose)
@@ -504,7 +504,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 				// Has the route from the start found the goal?
 				if (definedGoal && atGoal(p.x, p.y, p.z, fromStart)) {
 					if (verbose)
-						System.out.println("Found the goal!");
+						SNT.log("Found the goal!");
 					if (fromStart)
 						foundGoal(p.asPath(x_spacing, y_spacing, z_spacing, spacing_units));
 					else
@@ -635,7 +635,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 													p.asPathReversed(x_spacing, y_spacing, z_spacing, spacing_units));
 										}
 										if (verbose)
-											System.out.println("Searches met!");
+											SNT.log("Searches met!");
 										foundGoal(result);
 										setExitReason(SUCCESS);
 										reportFinished(true);
@@ -657,13 +657,13 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			 */
 
 			if (verbose)
-				System.out.println("FAILED to find a route.  Shouldn't happen...");
+				SNT.log("FAILED to find a route.  Shouldn't happen...");
 			setExitReason(POINTS_EXHAUSTED);
 			reportFinished(false);
 		} catch (final OutOfMemoryError oome) {
-			System.out.println("Got an OOME: " + oome);
+			SNT.log("Got an OOME: " + oome);
 			oome.printStackTrace();
-			IJ.error("Out of memory while searching for a path");
+			SNT.error("Out of memory while searching for a path");
 			setExitReason(OUT_OF_MEMORY);
 			reportFinished(false);
 		} catch (final Throwable t) {

@@ -219,8 +219,15 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			SNT.error("You must close the sigma palette to continue");
 
 		} else if (tracerPlugin.setupTrace) {
+
 			final boolean join = IJ.isMacintosh() ? e.isAltDown() : e.isControlDown();
-			tracerPlugin.clickForTrace(myOffScreenXD(e.getX()), myOffScreenYD(e.getY()), plane, join);
+
+			if (tracerPlugin.snapCursor && !join && !e.isShiftDown()) {
+				tracerPlugin.clickForTrace(last_x_in_pane_precise, last_y_in_pane_precise, plane, join);
+			} else {
+				tracerPlugin.clickForTrace(myOffScreenXD(e.getX()), myOffScreenYD(e.getY()), plane, join);
+			}
+
 		} else
 			SNT.error("BUG: No operation chosen");
 	}

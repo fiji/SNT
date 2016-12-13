@@ -840,6 +840,8 @@ public class Path implements Comparable<Path> {
 	public void setColor(final Color color) {
 		this.color = color;
 		hasCustomColor = color != null;
+		if (fitted != null)
+			fitted.setColor(color);
 	}
 
 	public void setColorBySWCtype() {

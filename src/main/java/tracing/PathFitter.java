@@ -67,12 +67,12 @@ public class PathFitter implements Callable<Path> {
 		if (fitted == null) {
 			succeeded = false;
 			return null;
-		} else {
-			succeeded = true;
-			path.setFitted(fitted);
-			path.setUseFitted(true, plugin);
-			return fitted;
 		}
+		succeeded = true;
+		fitted.setColor(path.getColor());
+		path.setFitted(fitted);
+		path.setUseFitted(true, plugin);
+		return fitted;
 	}
 
 }

@@ -1835,8 +1835,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public void setDrawDiametersXY(final boolean draw) {
 		drawDiametersXY = draw;
-		Prefs.set("tracing.Simple_Neurite_Tracer.drawDiametersXY", Boolean.toString(draw));
-		Prefs.savePreferences();
 		repaintAllPanes();
 	}
 

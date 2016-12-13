@@ -773,7 +773,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);
 
-		menuBar.add(trackingMenu());
+		menuBar.add(tracingMenu());
 
 		analysisMenu = new JMenu("Analysis");
 		menuBar.add(analysisMenu);
@@ -1786,7 +1786,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		plugin.justDisplayNearSlices(nearbySlices(), getEitherSide());
 	}
 
-	private JMenu trackingMenu() {
+	private JMenu tracingMenu() {
 		final JMenu trackingMenu = new JMenu("Tracing");
 		final String opacityLabel = "Show MIP overlay(s) at " + SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT
 				+ "% opacity";

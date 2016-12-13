@@ -712,7 +712,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				for (final Path p : selectedPaths)
 					p.setColorBySWCtype();
 				plugin.repaintAllPanes();
-				pathAndFillManager.update3DViewerContents();
+				plugin.update3DViewerContents();
 			}
 		});
 		menu.add(jmi);
@@ -732,7 +732,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		for (final Path p : selectedPaths)
 			p.setColor(color);
 		plugin.repaintAllPanes();
-		pathAndFillManager.update3DViewerContents();
+		plugin.update3DViewerContents();
 	}
 
 	protected void showPopup(final MouseEvent me) {

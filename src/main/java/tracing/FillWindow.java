@@ -38,6 +38,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.HashSet;
 
 import javax.swing.DefaultListModel;
@@ -160,7 +161,7 @@ public class FillWindow extends JFrame
 
 		this.plugin = plugin;
 		this.pathAndFillManager = pathAndFillManager;
-		setBounds(x, y, 400, 400);
+		setBounds(x, y, 350, 400);
 
 		setLayout(new GridBagLayout());
 
@@ -194,7 +195,7 @@ public class FillWindow extends JFrame
 
 			reloadFill = new JButton("Reload Fill");
 			reloadFill.addActionListener(this);
-			fillListCommandsPanel.add(reloadFill, BorderLayout.CENTER);
+			fillListCommandsPanel.add(reloadFill, BorderLayout.EAST);
 
 			c.insets = new Insets(1, 8, 8, 8);
 			c.gridx = 0;
@@ -206,71 +207,69 @@ public class FillWindow extends JFrame
 		{
 
 			final JPanel fillingOptionsPanel = new JPanel();
-
 			fillingOptionsPanel.setLayout(new GridBagLayout());
-
 			final GridBagConstraints cf = new GridBagConstraints();
-
 			cf.gridx = 0;
 			cf.gridy = 0;
-			cf.gridwidth = 4;
-			cf.anchor = GridBagConstraints.LINE_START;
-			cf.fill = GridBagConstraints.HORIZONTAL;
-			fillStatus = new JLabel("(Not filling at the moment.)");
-			fillingOptionsPanel.add(fillStatus, cf);
-
-			thresholdField = new JTextField("", 20);
-			thresholdField.addActionListener(this);
-			cf.gridx = 0;
-			cf.gridy = 1;
 			cf.gridwidth = 2;
-			cf.fill = GridBagConstraints.NONE;
-			fillingOptionsPanel.add(thresholdField, cf);
-
-			maxThreshold = new JLabel("(0)                  ", SwingConstants.LEFT);
-			cf.gridx = 2;
-			cf.gridy = 1;
-			cf.gridwidth = 1;
-			cf.fill = GridBagConstraints.HORIZONTAL;
 			cf.anchor = GridBagConstraints.LINE_START;
-			fillingOptionsPanel.add(maxThreshold, cf);
+			cf.fill = GridBagConstraints.HORIZONTAL;
+			cf.insets = new Insets(0, 0, 0, 0);
 
-			setThreshold = new JButton("Set");
-			setThreshold.addActionListener(this);
+			fillStatus = new JLabel("(Not filling at the moment.)");
+			cf.gridwidth = 3;
+			cf.fill = GridBagConstraints.REMAINDER;
+			fillingOptionsPanel.add(fillStatus, cf);
+			++cf.gridy;
+
 			cf.gridx = 0;
-			cf.gridy = 2;
+			cf.gridwidth = 1;
+			cf.fill = GridBagConstraints.NONE;
+			fillingOptionsPanel.add(new JLabel("Threshold:"), cf);
+			thresholdField = new JTextField("", 5);
+			thresholdField.addActionListener(this);
+			cf.gridx = 1;
+			cf.gridwidth = 1;
+			cf.fill = GridBagConstraints.NONE;
+			fillingOptionsPanel.add(thresholdField,cf);
+
+			maxThreshold = new JLabel("(Max. not yet determined)", SwingConstants.LEFT);
+			cf.gridx = 2;
+			cf.fill = GridBagConstraints.REMAINDER;
+			fillingOptionsPanel.add(maxThreshold, cf);
+			++cf.gridy;
+
+			setThreshold = SNT.smallButton("Set");
+			setThreshold.addActionListener(this);
+			cf.gridx =1;
 			cf.gridwidth = 1;
 			cf.fill = GridBagConstraints.NONE;
 			fillingOptionsPanel.add(setThreshold, cf);
-
-			setMaxThreshold = new JButton("Set Max");
+			setMaxThreshold = SNT.smallButton("Set Max");
+			setMaxThreshold.setEnabled(false);
 			setMaxThreshold.addActionListener(this);
-			cf.gridx = 1;
-			cf.gridy = 2;
+			cf.gridx = 2;
+			cf.fill = GridBagConstraints.REMAINDER;
 			fillingOptionsPanel.add(setMaxThreshold, cf);
+			cf.gridy++;
 
 			view3D = new JButton("Create Image Stack from Fill");
 			view3D.addActionListener(this);
-			cf.gridx = 0;
-			cf.gridy = 3;
-			cf.gridwidth = 2;
 			cf.anchor = GridBagConstraints.LINE_START;
+			cf.gridx = 0;
+			cf.insets = new Insets(0,0,0,0);
+			cf.gridwidth = 3;
+			cf.fill = GridBagConstraints.REMAINDER;
 			fillingOptionsPanel.add(view3D, cf);
 
 			maskNotReal = new JCheckBox("Create as Mask");
 			maskNotReal.addItemListener(this);
-			cf.gridx = 0;
-			cf.gridy = 4;
-			cf.gridwidth = 3;
-			cf.anchor = GridBagConstraints.LINE_START;
+			cf.gridy++;
 			fillingOptionsPanel.add(maskNotReal, cf);
 
 			transparent = new JCheckBox("Transparent fill display (slow!)");
 			transparent.addItemListener(this);
-			cf.gridx = 0;
-			cf.gridy = 5;
-			cf.gridwidth = 3;
-			cf.anchor = GridBagConstraints.LINE_START;
+			cf.gridy++;
 			fillingOptionsPanel.add(transparent, cf);
 
 			c.gridx = 0;
@@ -402,7 +401,7 @@ public class FillWindow extends JFrame
 			}
 
 			final File saveFile = new File(sd.getDirectory(), sd.getFileName());
-			if ((saveFile != null) && saveFile.exists()) {
+			if (saveFile.exists()) {
 				if (!IJ.showMessageWithCancel("Export data...",
 						"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?"))
 					return;
@@ -431,12 +430,14 @@ public class FillWindow extends JFrame
 			plugin.setFillTransparent(transparent.isSelected());
 	}
 
+	protected DecimalFormat df4 = new DecimalFormat("#.0000");
+
 	public void thresholdChanged(final double f) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 				assert SwingUtilities.isEventDispatchThread();
-				thresholdField.setText("" + f);
+				thresholdField.setText(df4.format(f));
 			}
 		});
 	}
@@ -446,8 +447,9 @@ public class FillWindow extends JFrame
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				maxThreshold.setText("(" + f + ")");
+				maxThreshold.setText("(Max: " + df4.format(f) + ")");
 				maxThresholdValue = f;
+				setMaxThreshold.setEnabled(true);
 			}
 		});
 	}

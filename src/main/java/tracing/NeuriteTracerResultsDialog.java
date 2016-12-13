@@ -1192,9 +1192,9 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			public void run() {
 				String newStatus = null;
 				if (t < 0) {
-					newStatus = "Not reached by search yet";
+					newStatus = "Cursor position not reached by search yet";
 				} else {
-					newStatus = "Distance from path is: " + t;
+					newStatus = "Cursor position: Distance from path is " + fw.df4.format(t);
 				}
 				fw.fillStatus.setText(newStatus);
 			}

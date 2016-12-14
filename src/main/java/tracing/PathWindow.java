@@ -581,7 +581,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;
 
-		setBounds(x, y, 600, 240);
+		setBounds(x, y, 620, 240);
 		root = new DefaultMutableTreeNode("All Paths");
 		tree = new HelpfulJTree(root);
 		// tree.setRootVisible(false);

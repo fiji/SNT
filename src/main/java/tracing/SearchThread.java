@@ -386,11 +386,11 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	SearchNode[][] nodes_as_image_from_goal;
 
 	public void printStatus() {
-		SNT.log("... with " + open_from_start.size() + " open nodes at the start");
-		SNT.log(" ... and " + closed_from_start.size() + " closed nodes at the start");
+		SNT.log("... with " + open_from_start.size() + " open nodes at the start and " + closed_from_start.size()
+				+ " closed nodes at the start");
 		if (bidirectional) {
-			SNT.log("... with " + open_from_goal.size() + " open nodes at the goal");
-			SNT.log(" ... and " + closed_from_goal.size() + " closed nodes at the goal");
+			SNT.log("... with " + open_from_goal.size() + " open nodes at the goal and " + closed_from_goal.size()
+					+ " closed nodes at the goal");
 		} else
 			SNT.log(" ... unidirectional search");
 	}

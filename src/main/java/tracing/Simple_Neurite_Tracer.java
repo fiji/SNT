@@ -214,11 +214,13 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				resamplingFactor = defaultResamplingFactor;
 				if (!java3DAvailable) {
 					final String message = "(Java3D doesn't seem to be available, so no 3D viewer option is available.)";
-					SNT.log(message);
+					if (verbose)
+						SNT.log(message);
 					gd.addMessage(message);
 				} else if (currentImage.getBitDepth() != 8) {
 					final String message = "(3D viewer option is only currently available for 8 bit images)";
-					SNT.log(message);
+					if (verbose)
+						SNT.log(message);
 					gd.addMessage(message);
 				} else {
 					showed3DViewerOption = true;

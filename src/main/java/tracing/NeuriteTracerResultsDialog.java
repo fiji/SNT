@@ -787,14 +787,16 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		loadMenuItem.addActionListener(this);
 		fileMenu.add(loadMenuItem);
 
-		loadLabelsMenuItem = new JMenuItem("Load labels file...");
+		loadLabelsMenuItem = new JMenuItem("Load labels (AmiraMesh) file...");
 		loadLabelsMenuItem.addActionListener(this);
 		fileMenu.add(loadLabelsMenuItem);
 
+		fileMenu.addSeparator();
 		saveMenuItem = new JMenuItem("Save traces file...");
 		saveMenuItem.addActionListener(this);
 		fileMenu.add(saveMenuItem);
 
+		fileMenu.addSeparator();
 		exportCSVMenuItem = new JMenuItem("Export as CSV...");
 		exportCSVMenuItem.addActionListener(this);
 		fileMenu.add(exportCSVMenuItem);
@@ -807,6 +809,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		sendToTrakEM2.addActionListener(this);
 		fileMenu.add(sendToTrakEM2);
 
+		fileMenu.addSeparator();
 		quitMenuItem = new JMenuItem("Quit");
 		quitMenuItem.addActionListener(this);
 		fileMenu.add(quitMenuItem);
@@ -1520,12 +1523,13 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			double newMultiplier = -1;
 			while (newSigma <= 0) {
 				final GenericDialog gd = new GenericDialog("Select Scale of Structures");
+				gd.setInsets(10, 0, 0);
 				gd.addMessage("Please enter the approximate radius of the structures you are looking for:");
-				gd.addNumericField("Sigma: ", plugin.getMinimumSeparation(), 4);
-				gd.addMessage("(The default value is the minimum voxel separation.)");
+				gd.addNumericField("Sigma: ", plugin.getMinimumSeparation(), 4, 6,
+						"(The default is the minimum voxel separation)");
+				gd.setInsets(10, 0, 0);
 				gd.addMessage("Please enter the scaling factor to apply:");
-				gd.addNumericField("Multiplier: ", 4, 4);
-				gd.addMessage("(If you're not sure, just leave this at 4.)");
+				gd.addNumericField("    Multiplier: ", 4, 4, 6, "(If unsure, just leave this at 4)");
 				gd.showDialog();
 				if (gd.wasCanceled())
 					return;
@@ -1766,6 +1770,10 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 					return 0;
 				}
 			}
+			if (e > plugin.depth) {
+				SNT.error("The no. of slices either side should not be higher than image's depth.");
+				return plugin.depth;
+			}
 			reportedInvalid = false;
 			return e;
 
@@ -1829,15 +1837,18 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		helpMenu.add(mi);
 		mi = menuItemTrigerringURL("Step-by-step instructions", URL + ":_Step-By-Step_Instructions");
 		helpMenu.add(mi);
+		mi = menuItemTrigerringURL("Filling out processes", URL + ":_Basic_Instructions#Filling_Out_Neurons");
+		helpMenu.add(mi);
 		mi = menuItemTrigerringURL("3D interaction", URL + ":_3D_Interaction");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 		mi = menuItemTrigerringURL("List of shortcuts", URL + ":_Key_Shortcuts");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTrigerringURL("Sholl analysis walkthrough", URL + ":_Sholl_analysis");
-		helpMenu.add(mi);
-		helpMenu.addSeparator();
+		// mi = menuItemTrigerringURL("Sholl analysis walkthrough", URL +
+		// ":_Sholl_analysis");
+		// helpMenu.add(mi);
+		// helpMenu.addSeparator();
 		mi = menuItemTrigerringURL("Ask a question", "http://forum.imagej.net");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();

@@ -253,24 +253,27 @@ public class FillWindow extends JFrame
 			fillingOptionsPanel.add(setMaxThreshold, cf);
 			cf.gridy++;
 
-			view3D = new JButton("Create Image Stack from Fill");
-			view3D.addActionListener(this);
-			cf.anchor = GridBagConstraints.LINE_START;
-			cf.gridx = 0;
-			cf.insets = new Insets(0,0,0,0);
-			cf.gridwidth = 3;
-			cf.fill = GridBagConstraints.REMAINDER;
-			fillingOptionsPanel.add(view3D, cf);
-
-			maskNotReal = new JCheckBox("Create as Mask");
-			maskNotReal.addItemListener(this);
-			cf.gridy++;
-			fillingOptionsPanel.add(maskNotReal, cf);
-
 			transparent = new JCheckBox("Transparent fill display (slow!)");
 			transparent.addItemListener(this);
+			cf.anchor = GridBagConstraints.LINE_START;
+			cf.gridx = 0;
+			cf.insets = new Insets(0, 0, 0, 0);
+			cf.gridwidth = 3;
+			cf.fill = GridBagConstraints.REMAINDER;
 			cf.gridy++;
 			fillingOptionsPanel.add(transparent, cf);
+
+			view3D = new JButton("Create Image Stack from Fill");
+			view3D.addActionListener(this);
+			cf.insets = new Insets(12, 0, 0, 0);
+			cf.gridy++;
+			fillingOptionsPanel.add(view3D, cf);
+
+			maskNotReal = new JCheckBox("Create as mask");
+			maskNotReal.addItemListener(this);
+			cf.insets = new Insets(0, 0, 0, 0);
+			cf.gridy++;
+			fillingOptionsPanel.add(maskNotReal, cf);
 
 			c.gridx = 0;
 			++c.gridy;
@@ -305,6 +308,7 @@ public class FillWindow extends JFrame
 			}
 
 			++c.gridy;
+			c.insets = new Insets(0, 0, 0, 0);
 			c.fill = GridBagConstraints.NONE;
 			exportAsCSV = new JButton("Export as CSV");
 			exportAsCSV.addActionListener(this);

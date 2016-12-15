@@ -1252,7 +1252,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			final int preSavingState = currentState;
 			changeState(SAVING);
 			try {
-				pathAndFillManager.writeXML(savePath, true);
+				pathAndFillManager.writeXML(savePath, plugin.useCompressedXML);
 			} catch (final IOException ioe) {
 				IJ.showStatus("Saving failed.");
 				SNT.error("Writing traces to '" + savePath + "' failed: " + ioe);

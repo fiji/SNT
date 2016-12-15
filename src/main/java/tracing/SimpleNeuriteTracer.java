@@ -102,6 +102,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	protected Image3DUniverse univ;
 	protected Content imageContent;
 
+	protected boolean useCompressedXML;
 	volatile protected boolean unsavedPaths = false;
 	volatile protected boolean autoCanvasActivation;
 	volatile protected boolean snapCursor;

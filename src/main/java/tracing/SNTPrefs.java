@@ -26,6 +26,8 @@ public class SNTPrefs {
 	private static final int ENFORCE_DEFAULT_PATH_COLORS = 2048;
 	private static final int DEBUG = 4096;
 	private static final int LOOK_FOR_TRACES = 8192;
+	private static final int COMPRESSED_XML = 16384;
+
 
 	private static final String BOOLEANS = "tracing.snt.booleans";
 	private static final String SNAP_XY = "tracing.snt.xysnap";
@@ -59,6 +61,7 @@ public class SNTPrefs {
 	}
 
 	protected void loadPluginPrefs() {
+		snt.useCompressedXML = getPref(COMPRESSED_XML);
 		snt.autoCanvasActivation = getPref(AUTO_CANVAS_ACTIVATION);
 		snt.snapCursor = getPref(SNAP_CURSOR);
 		snt.drawDiametersXY = getPref(DRAW_DIAMETERS_XY);
@@ -108,6 +111,7 @@ public class SNTPrefs {
 	}
 
 	protected void savePluginPrefs() {
+		setPref(COMPRESSED_XML, snt.useCompressedXML);
 		setPref(AUTO_CANVAS_ACTIVATION, snt.autoCanvasActivation);
 		setPref(SNAP_CURSOR, snt.snapCursor);
 		Prefs.set(SNAP_XY, snt.cursorSnapWindowXY);
@@ -141,8 +145,8 @@ public class SNTPrefs {
 
 	protected void promptForOptions() {
 
-		final int pluginOptions = 1;
 		final int startupOptions = 6;
+		final int pluginOptions = 2;
 
 		final String[] startupLabels = new String[startupOptions];
 		final int[] startupItems = new int[startupOptions];
@@ -178,8 +182,12 @@ public class SNTPrefs {
 		final boolean[] pluginStates = new boolean[pluginOptions];
 		idx = 0;
 
+		pluginItems[idx] = COMPRESSED_XML;
+		pluginLabels[idx] = "Save traces as compressed XML";
+		pluginStates[idx++] = snt.useCompressedXML;
+
 		pluginItems[idx] = DEBUG;
-		pluginLabels[idx] = "Enable Debug Mode";
+		pluginLabels[idx] = "Enable_debug mode";
 		pluginStates[idx++] = SimpleNeuriteTracer.verbose;
 
 		final GenericDialog gd = new GenericDialog("SNT v" + SNT.VERSION + " Preferences");

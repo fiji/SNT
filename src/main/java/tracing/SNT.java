@@ -1,5 +1,6 @@
 package tracing;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
 
@@ -8,6 +9,7 @@ import javax.swing.JButton;
 import org.scijava.util.VersionUtils;
 
 import ij.IJ;
+import ij.plugin.Colors;
 
 /** Static utilities for SNT **/
 public class SNT {
@@ -37,6 +39,24 @@ public class SNT {
 		button.setMargin(new Insets((int) (insets.top * SCALE), (int) (insets.left * SCALE),
 				(int) (insets.bottom * SCALE), (int) (insets.right * SCALE)));
 		return button;
+	}
+
+	protected static String getColorString(final Color color) {
+		String name = "none";
+		name = Colors.getColorName(color, name);
+		if (!"none".equals(name))
+			name = Colors.colorToString(color);
+		return name;
+	}
+
+	protected static Color getColor(String colorName) {
+		if (colorName == null)
+			colorName = "none";
+		Color color = null;
+		color = Colors.getColor(colorName, color);
+		if (color == null)
+			color = Colors.decode(colorName, color);
+		return color;
 	}
 
 }

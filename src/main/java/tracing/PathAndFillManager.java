@@ -850,6 +850,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.println("  <!ATTLIST path           fitted            CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST path           fittedversionof   CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST path           swctype           CDATA           #IMPLIED>");
+			pw.println("  <!ATTLIST path           color             CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST point          x                 CDATA           #REQUIRED>"); // deprecated
 			pw.println("  <!ATTLIST point          y                 CDATA           #REQUIRED>"); // deprecated
 			pw.println("  <!ATTLIST point          z                 CDATA           #REQUIRED>"); // deprecated
@@ -887,6 +888,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				// method of Path.
 				pw.print("  <path id=\"" + p.getID() + "\"");
 				pw.print(" swctype=\"" + p.getSWCType() + "\"");
+				pw.print(" color=\"" + SNT.getColorString(p.getColor()) + "\"");
 				String startsString = "";
 				String endsString = "";
 				if (p.startJoins != null) {
@@ -1083,6 +1085,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			final String idString = attributes.getValue("id");
 
 			final String swcTypeString = attributes.getValue("swctype");
+			final String colorString = attributes.getValue("color");
 			final String useFittedString = attributes.getValue("usefitted");
 			final String fittedIDString = attributes.getValue("fitted");
 			final String fittedVersionOfIDString = attributes.getValue("fittedversionof");
@@ -1159,6 +1162,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if (swcTypeString != null) {
 					final int swcType = Integer.parseInt(swcTypeString);
 					current_path.setSWCType(swcType, false);
+				}
+
+				if (colorString != null) {
+					current_path.setColor(SNT.getColor(colorString));
 				}
 
 				if (startsonString == null) {

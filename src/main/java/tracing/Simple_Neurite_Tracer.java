@@ -462,6 +462,9 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 			if (!single_pane) {
 
+				xz.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
+				zy.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
+
 				final QueueJumpingKeyListener xz_listener = new QueueJumpingKeyListener(this, xz_tracer_canvas);
 				setAsFirstKeyListener(xz_tracer_canvas, xz_listener);
 				setAsFirstKeyListener(xz_window, xz_listener);

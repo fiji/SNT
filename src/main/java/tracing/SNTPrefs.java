@@ -25,6 +25,7 @@ public class SNTPrefs {
 	// private static final int JUST_NEAR_SLICES = 1024;
 	private static final int ENFORCE_DEFAULT_PATH_COLORS = 2048;
 	private static final int DEBUG = 4096;
+	private static final int LOOK_FOR_TRACES = 8192;
 
 	private static final String BOOLEANS = "tracing.snt.booleans";
 	private static final String SNAP_XY = "tracing.snt.xysnap";
@@ -51,7 +52,7 @@ public class SNTPrefs {
 	}
 
 	private void getBooleans() {
-		// Somehow
+		// Somehow Prefs.getInt() fails. We'll cast from double instead
 		currentBooleans = (int) Prefs.get(BOOLEANS, UNSET_PREFS);
 		if (currentBooleans == UNSET_PREFS)
 			currentBooleans = getDefaultBooleans();
@@ -86,6 +87,7 @@ public class SNTPrefs {
 		snt.forceGrayscale = getPref(ENFORCE_LUT);
 		snt.look4oofFile = getPref(LOOK_FOR_OOF);
 		snt.look4tubesFile = getPref(LOOK_FOR_TUBES);
+		snt.look4tracesFile = getPref(LOOK_FOR_TRACES);
 		snt.setSinglePane(!getPref(USE_THREE_PANE));
 		snt.use3DViewer = getPref(USE_3D_VIEWER);
 	}
@@ -98,6 +100,7 @@ public class SNTPrefs {
 		setPref(ENFORCE_LUT, snt.forceGrayscale);
 		setPref(LOOK_FOR_OOF, snt.look4oofFile);
 		setPref(LOOK_FOR_TUBES, snt.look4tubesFile);
+		setPref(LOOK_FOR_TRACES, snt.look4tracesFile);
 		setPref(USE_THREE_PANE, !snt.getSinglePane());
 		setPref(USE_3D_VIEWER, snt.use3DViewer);
 		Prefs.set(BOOLEANS, currentBooleans);
@@ -138,8 +141,8 @@ public class SNTPrefs {
 
 	protected void promptForOptions() {
 
-		final int startupOptions = 5;
 		final int pluginOptions = 1;
+		final int startupOptions = 6;
 
 		final String[] startupLabels = new String[startupOptions];
 		final int[] startupItems = new int[startupOptions];
@@ -151,20 +154,24 @@ public class SNTPrefs {
 		startupStates[idx++] = snt.forceGrayscale;
 
 		startupItems[idx] = USE_THREE_PANE;
-		startupLabels[idx] = "Use three-pane view";
+		startupLabels[idx] = "Use_three-pane view";
 		startupStates[idx++] = !snt.getSinglePane();
 
 		startupItems[idx] = USE_3D_VIEWER;
-		startupLabels[idx] = "Use 3D Viewer";
+		startupLabels[idx] = "Use_3D Viewer";
 		startupStates[idx++] = snt.use3DViewer;
 
 		startupItems[idx] = LOOK_FOR_TUBES;
-		startupLabels[idx] = "Load_Tubeness \".tubes.tif\" pre-processed files";
+		startupLabels[idx] = "Load_Tubeness \".tubes.tif\" pre-processed file (if present)";
 		startupStates[idx++] = snt.look4tubesFile;
 
 		startupItems[idx] = LOOK_FOR_OOF;
-		startupLabels[idx] = "Load_Tubular_Geodesics \".oof.ext\" pre-processed files";
+		startupLabels[idx] = "Load_Tubular_Geodesics \".oof.ext\" pre-processed file (if present)";
 		startupStates[idx++] = snt.look4oofFile;
+
+		startupItems[idx] = LOOK_FOR_TRACES;
+		startupLabels[idx] = "Load_default \".traces\" file (if present)";
+		startupStates[idx++] = snt.look4tracesFile;
 
 		final String[] pluginLabels = new String[pluginOptions];
 		final int[] pluginItems = new int[pluginOptions];

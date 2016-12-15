@@ -72,6 +72,8 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 	protected boolean forceGrayscale;
 	protected boolean look4oofFile;
 	protected boolean look4tubesFile;
+	protected boolean look4tracesFile;
+
 
 	@Override
 	public void run(final String ignoredArguments) {
@@ -201,7 +203,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			gd.addCheckbox("Look_for_Tubeness \".tubes.tif\" pre-processed file?", look4tubesFile);
 			gd.addCheckbox("Look_for_Tubular_Geodesics \".oof.ext\" pre-processed file?",
 					singleSlice ? false : look4oofFile);
-
+			gd.addCheckbox("Look_for_previously_traced data (\".traces\" file)?", look4tracesFile);
 			boolean showed3DViewerOption = false;
 			Image3DUniverse universeToUse = null;
 			String[] choices3DViewer = null;
@@ -261,6 +263,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			single_pane = !gd.getNextBoolean();
 			look4tubesFile = gd.getNextBoolean();
 			look4oofFile = gd.getNextBoolean();
+			look4tracesFile = gd.getNextBoolean();
 
 			if (!singleSlice && showed3DViewerOption) {
 				final String chosenViewer = gd.getNextChoice();
@@ -503,19 +506,29 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 			}
 
-			File tracesFileToLoad = null;
-			if (macroTracesFilename != null) {
-				tracesFileToLoad = new File(macroTracesFilename);
-				if (tracesFileToLoad.exists())
-					pathAndFillManager.loadGuessingType(tracesFileToLoad.getAbsolutePath());
-				else
-					SNT.error("The traces file suggested by the macro parameters (" + macroTracesFilename
-							+ ") does not exist");
-			}
-
 			resultsDialog.displayOnStarting();
 			GUI.center(xy_window);
 			resultsDialog.arrangeWindows();
+
+			File tracesFileToLoad = null;
+			final boolean macroLoading = macroTracesFilename != null;
+			if (macroLoading) {
+				tracesFileToLoad = new File(macroTracesFilename);
+			} else if (look4tracesFile) {
+				final String filenameBeforeExtension = stripExtension(file_info.fileName);
+				if (filenameBeforeExtension != null) {
+					tracesFileToLoad = new File(file_info.directory, filenameBeforeExtension + ".traces");
+				}
+			}
+			if (tracesFileToLoad == null)
+				return;
+			if (tracesFileToLoad.exists()) {
+				resultsDialog.changeState(NeuriteTracerResultsDialog.LOADING);
+				pathAndFillManager.loadGuessingType(tracesFileToLoad.getAbsolutePath());
+				resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			} else if (macroLoading) {
+				SNT.error("The traces file suggested by the macro parameters does not exist:\n" + macroTracesFilename);
+			}
 
 		} finally {
 			IJ.getInstance().addKeyListener(IJ.getInstance());

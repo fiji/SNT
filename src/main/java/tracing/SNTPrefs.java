@@ -50,7 +50,7 @@ public class SNTPrefs {
 
 	private int getDefaultBooleans() {
 		return DRAW_DIAMETERS_XY + SNAP_CURSOR + AUTO_CANVAS_ACTIVATION + USE_THREE_PANE + LOOK_FOR_TUBES
-				+ LOOK_FOR_OOF;
+				+ LOOK_FOR_OOF + LOOK_FOR_TRACES + COMPRESSED_XML;
 	}
 
 	private void getBooleans() {

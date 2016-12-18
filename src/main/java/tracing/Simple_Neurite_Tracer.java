@@ -42,7 +42,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Macro;
-import ij.gui.GUI;
 import ij.gui.GenericDialog;
 import ij.gui.Overlay;
 import ij.gui.YesNoCancelDialog;
@@ -489,7 +488,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				univ.addUniverseListener(pathAndFillManager);
 				if (!reusing) {
 					univ.show();
-					GUI.center(univ.getWindow());
 				}
 				final boolean[] channels = { true, true, true };
 
@@ -510,8 +508,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			}
 
 			resultsDialog.displayOnStarting();
-			GUI.center(xy_window);
-			resultsDialog.arrangeWindows();
 
 			File tracesFileToLoad = null;
 			final boolean macroLoading = macroTracesFilename != null;

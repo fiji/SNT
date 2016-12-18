@@ -33,11 +33,14 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -1193,9 +1196,12 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
+				arrangeDialogs();
+				arrangeCanvases();
 				setVisible(true);
 				setPathListVisible(true, false);
 				setFillListVisible(false);
+				plugin.getWindow(ThreePanes.XY_PLANE).toFront();
 			}
 		});
 	}
@@ -1570,26 +1576,58 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				checkForColorImageChange();
 
 		} else if (source == arrangeWindowsMenuItem) {
-			arrangeWindows();
+			arrangeCanvases();
 		}
 	}
 
-	protected void arrangeWindows() {
+	private void arrangeDialogs() {
+		final GraphicsDevice activeScreen = getGraphicsConfiguration().getDevice();
+		final int screenWidth = activeScreen.getDisplayMode().getWidth();
+		final int screenHeight = activeScreen.getDisplayMode().getHeight();
+		final Rectangle bounds = activeScreen.getDefaultConfiguration().getBounds();
+
+		setLocation(bounds.x, bounds.y);
+		pw.setLocation(screenWidth - pw.getWidth(), bounds.y);
+		fw.setLocation(bounds.x + getWidth(), screenHeight - fw.getHeight());
+	}
+
+	private void arrangeCanvases() {
 		final StackWindow xy_window = plugin.getWindow(ThreePanes.XY_PLANE);
 		if (xy_window == null)
 			return;
-		if (!plugin.getSinglePane()) {
-			final Point loc = xy_window.getLocation();
-			final StackWindow zy_window = plugin.getWindow(ThreePanes.ZY_PLANE);
-			final StackWindow xz_window = plugin.getWindow(ThreePanes.XZ_PLANE);
-			if (zy_window != null) {
-				zy_window.setLocation(loc.x + xy_window.getWidth(), loc.y);
-				zy_window.toFront();
-			}
-			if (xz_window != null) {
-				xz_window.setLocation(loc.x, loc.y + xy_window.getHeight());
-				xz_window.toFront();
-			}
+		final GraphicsConfiguration xy_config = xy_window.getGraphicsConfiguration();
+		final GraphicsDevice xy_screen = xy_config.getDevice();
+		final int screenWidth = xy_screen.getDisplayMode().getWidth();
+		final int screenHeight = xy_screen.getDisplayMode().getHeight();
+		final Rectangle bounds = xy_screen.getDefaultConfiguration().getBounds();
+
+		// Place 3D Viewer at lower right of the screen where image was found
+		if (plugin.use3DViewer) {
+			final ImageWindow3D uniWindow = plugin.get3DUniverse().getWindow();
+			uniWindow.setLocation(bounds.x + screenWidth - uniWindow.getWidth(),
+					bounds.y + screenHeight - uniWindow.getHeight());
+		}
+
+		// We'll avoid centering the image on the screen it was found to
+		// maximize available space. We'll also avoid the upper left of
+		// the screen in case dialog an path window are also on this screen.
+		int x = bounds.x + this.getX() + this.getWidth();
+		if (x > bounds.x + screenWidth / 2 - xy_window.getWidth() / 2)
+			x = bounds.x + screenWidth / 2 - xy_window.getWidth() / 2;
+		int y = bounds.y + pw.getHeight() / 2;
+		if (y > bounds.y + screenHeight / 2 - xy_window.getHeight() / 2)
+			y = bounds.y + screenHeight / 2 - xy_window.getHeight() / 2;
+		xy_window.setLocation(x, y);
+
+		final StackWindow zy_window = plugin.getWindow(ThreePanes.ZY_PLANE);
+		if (zy_window != null) {
+			zy_window.setLocation(x + xy_window.getWidth(), y);
+			zy_window.toFront();
+		}
+		final StackWindow xz_window = plugin.getWindow(ThreePanes.XZ_PLANE);
+		if (xz_window != null) {
+			xz_window.setLocation(x, y + xy_window.getHeight());
+			xz_window.toFront();
 		}
 		xy_window.toFront();
 	}

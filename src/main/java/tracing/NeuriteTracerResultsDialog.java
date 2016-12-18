@@ -477,6 +477,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
+		new SNTPrefs(plugin).savePluginPrefs();
 		pw.dispose();
 		fw.dispose();
 		dispose();

@@ -1869,7 +1869,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			removeMIPfromOverlay(overlay);
 			xy.setOverlay(overlay);
 		}
-		new SNTPrefs(this).savePluginPrefs();
+
 	}
 
 }

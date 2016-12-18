@@ -1137,7 +1137,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		tracingOptionsPanel.add(useSnapWindow);
 
 		final SpinnerModel xy_model = new SpinnerNumberModel(plugin.cursorSnapWindowXY * 2,
-				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY, 2);
+				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY * 2, 2);
 		snapWindowXYsizeSpinner = new JSpinner(xy_model);
 		((DefaultEditor) snapWindowXYsizeSpinner.getEditor()).getTextField().setEditable(false);
 		snapWindowXYsizeSpinner.addChangeListener(this);
@@ -1146,8 +1146,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		final JLabel z_spinner_label = leftAlignedLabel("Z", isStackAvailable());
 		z_spinner_label.setBorder(new EmptyBorder(0, 2, 0, 0));
 		tracingOptionsPanel.add(z_spinner_label);
-		final SpinnerModel z_model = new SpinnerNumberModel(plugin.cursorSnapWindowZ,
-				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z, 2);
+		final SpinnerModel z_model = new SpinnerNumberModel(plugin.cursorSnapWindowZ * 2,
+				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z * 2, 2);
 		snapWindowZsizeSpinner = new JSpinner(z_model);
 		((DefaultEditor) snapWindowZsizeSpinner.getEditor()).getTextField().setEditable(false);
 		snapWindowZsizeSpinner.addChangeListener(this);

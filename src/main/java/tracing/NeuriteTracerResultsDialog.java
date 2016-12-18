@@ -887,7 +887,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 			keepSegment = new JButton("Yes [y]");
 			junkSegment = new JButton("No [n]");
-			cancelSearch = new JButton("Abandon Search");
+			cancelSearch = new JButton("Abandon Search [Esc]");
 
 			keepSegment.addActionListener(this);
 			junkSegment.addActionListener(this);

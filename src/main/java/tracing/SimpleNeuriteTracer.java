@@ -106,8 +106,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 	volatile protected boolean unsavedPaths = false;
 	volatile protected boolean autoCanvasActivation;
 	volatile protected boolean snapCursor;
-	protected int cursorSnapWindowXY;
-	protected int cursorSnapWindowZ;
+	volatile protected int cursorSnapWindowXY;
+	volatile protected int cursorSnapWindowZ;
 
 	public boolean pathsUnsaved() {
 		return unsavedPaths;

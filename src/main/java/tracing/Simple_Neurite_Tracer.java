@@ -30,6 +30,8 @@ package tracing;
 import java.applet.Applet;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.util.Vector;
@@ -504,7 +506,14 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 				final PointSelectionBehavior psb = new PointSelectionBehavior(univ, this);
 				univ.addInteractiveBehavior(psb);
-
+				univ.getWindow().addWindowListener(new WindowAdapter() {
+					@Override
+					public void windowClosed(final WindowEvent e) {
+						resultsDialog.threeDViewerMenuItem.setEnabled(false);
+						resultsDialog.colorImageChoice.setEnabled(false);
+						resultsDialog.paths3DChoice.setEnabled(false);
+					}
+				});
 			}
 
 			resultsDialog.displayOnStarting();

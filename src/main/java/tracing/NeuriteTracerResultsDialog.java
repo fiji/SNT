@@ -793,16 +793,16 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		menuBar.add(helpMenu());
 
-		loadMenuItem = new JMenuItem("Load traces / (e)SWC file...");
+		loadMenuItem = new JMenuItem("Load Traces / (e)SWC File...");
 		loadMenuItem.addActionListener(this);
 		fileMenu.add(loadMenuItem);
 
-		loadLabelsMenuItem = new JMenuItem("Load labels (AmiraMesh) file...");
+		loadLabelsMenuItem = new JMenuItem("Load Labels (AmiraMesh) File...");
 		loadLabelsMenuItem.addActionListener(this);
 		fileMenu.add(loadLabelsMenuItem);
 
 		fileMenu.addSeparator();
-		saveMenuItem = new JMenuItem("Save traces file...");
+		saveMenuItem = new JMenuItem("Save Traces File...");
 		saveMenuItem.addActionListener(this);
 		fileMenu.add(saveMenuItem);
 
@@ -811,7 +811,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		exportCSVMenuItem.addActionListener(this);
 		fileMenu.add(exportCSVMenuItem);
 
-		exportAllSWCMenuItem = new JMenuItem("Export all as SWC...");
+		exportAllSWCMenuItem = new JMenuItem("Export All as SWC...");
 		exportAllSWCMenuItem.addActionListener(this);
 		fileMenu.add(exportAllSWCMenuItem);
 
@@ -836,10 +836,10 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.addSeparator();
 
-		addPathsToOverlayMenuItem = new JMenuItem("Add paths to overlay...");
+		addPathsToOverlayMenuItem = new JMenuItem("Add Paths to Overlay...");
 		addPathsToOverlayMenuItem.addActionListener(this);
 		analysisMenu.add(addPathsToOverlayMenuItem);
-		addPathsToManagerMenuItem = new JMenuItem("Export paths to ROI Manager...");
+		addPathsToManagerMenuItem = new JMenuItem("Export Paths to ROI Manager...");
 		addPathsToManagerMenuItem.addActionListener(this);
 		analysisMenu.add(addPathsToManagerMenuItem);
 		analysisMenu.addSeparator();
@@ -848,14 +848,14 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		exportCSVMenuItemAgain.addActionListener(this);
 		analysisMenu.add(exportCSVMenuItemAgain);
 
-		xyCanvasMenuItem = new JCheckBoxMenuItem("Hide XY plane");
+		xyCanvasMenuItem = new JCheckBoxMenuItem("Hide XY View");
 		xyCanvasMenuItem.addItemListener(this);
 		viewMenu.add(xyCanvasMenuItem);
-		zyCanvasMenuItem = new JCheckBoxMenuItem("Hide ZY plane");
+		zyCanvasMenuItem = new JCheckBoxMenuItem("Hide ZY View");
 		zyCanvasMenuItem.setEnabled(!plugin.getSinglePane());
 		zyCanvasMenuItem.addItemListener(this);
 		viewMenu.add(zyCanvasMenuItem);
-		xzCanvasMenuItem = new JCheckBoxMenuItem("Hide XZ plane");
+		xzCanvasMenuItem = new JCheckBoxMenuItem("Hide XZ View");
 		xzCanvasMenuItem.setEnabled(!plugin.getSinglePane());
 		xzCanvasMenuItem.addItemListener(this);
 		viewMenu.add(xzCanvasMenuItem);
@@ -864,8 +864,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		threeDViewerMenuItem.addItemListener(this);
 		viewMenu.add(threeDViewerMenuItem);
 		viewMenu.addSeparator();
-		arrangeWindowsMenuItem = new JMenuItem("Arrange planes");
-		arrangeWindowsMenuItem.setEnabled(!plugin.getSinglePane());
+		arrangeWindowsMenuItem = new JMenuItem("Arrange Views");
 		arrangeWindowsMenuItem.addActionListener(this);
 		viewMenu.add(arrangeWindowsMenuItem);
 
@@ -1847,19 +1846,20 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	private JMenu tracingMenu() {
 		final JMenu trackingMenu = new JMenu("Tracing");
-		final String opacityLabel = "Show MIP overlay(s) at " + SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT
-				+ "% opacity";
+		final String opacityLabel = "Show MIP Overlay(s) at " + SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT
+				+ "% Opacity";
 		mipOverlayMenuItem = new JCheckBoxMenuItem(opacityLabel);
 		mipOverlayMenuItem.setEnabled(!plugin.singleSlice);
 		mipOverlayMenuItem.addItemListener(this);
 		trackingMenu.add(mipOverlayMenuItem);
 
-		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw diameters in XY plane", plugin.getDrawDiametersXY());
+		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw Diameters in XY View", plugin.getDrawDiametersXY());
 		drawDiametersXYMenuItem.addItemListener(this);
 		trackingMenu.add(drawDiametersXYMenuItem);
 		trackingMenu.addSeparator();
 
-		autoActivationMenuItem = new JCheckBoxMenuItem("Activate canvas(es) on mouse hovering", plugin.autoCanvasActivation);
+		autoActivationMenuItem = new JCheckBoxMenuItem("Activate Canvas(es) on Mouse Hovering",
+				plugin.autoCanvasActivation);
 		autoActivationMenuItem.addItemListener(this);
 		trackingMenu.add(autoActivationMenuItem);
 		trackingMenu.addSeparator();

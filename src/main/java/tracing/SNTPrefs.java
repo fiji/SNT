@@ -183,7 +183,7 @@ public class SNTPrefs {
 		idx = 0;
 
 		pluginItems[idx] = COMPRESSED_XML;
-		pluginLabels[idx] = "Save traces as compressed XML";
+		pluginLabels[idx] = "Use compression when saving traces";
 		pluginStates[idx++] = snt.useCompressedXML;
 
 		pluginItems[idx] = DEBUG;

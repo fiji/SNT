@@ -6,6 +6,8 @@ import java.awt.Insets;
 
 import javax.swing.JButton;
 
+import org.scijava.Context;
+import org.scijava.log.LogService;
 import org.scijava.util.VersionUtils;
 
 import ij.IJ;
@@ -13,9 +15,24 @@ import ij.plugin.Colors;
 
 /** Static utilities for SNT **/
 public class SNT {
+
+	private static Context context;
+	private static LogService logService;
 	public static final String VERSION = getVersion();
 
+	private static boolean initialized;
+
 	private SNT() {
+	}
+
+	private synchronized static void initialize() {
+		if (initialized)
+			return;
+		if (context == null)
+			context = (Context) IJ.runPlugIn("org.scijava.Context", "");
+		if (logService == null)
+			logService = context.getService(LogService.class);
+		initialized = true;
 	}
 
 	private static String getVersion() {
@@ -23,11 +40,18 @@ public class SNT {
 	}
 
 	protected static void error(final String string) {
-		IJ.error("Simple Neurite Tracer v" + getVersion(), string);
+		IJ.error("Simple Neurite Tracer v" + VERSION, string);
 	}
 
 	protected static void log(final String string) {
-		System.out.println("[SNT] " + string);
+		if (!initialized)
+			initialize();
+		logService.info("[SNT] " + string);
+	}
+
+	protected static void log(final String... strings) {
+		if (strings != null)
+			log(String.join(" ", strings));
 	}
 
 	protected static JButton smallButton(final String text) {

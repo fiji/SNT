@@ -87,6 +87,7 @@ import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 import ij.measure.Calibration;
 import ij.plugin.frame.RoiManager;
+import ij3d.ImageWindow3D;
 import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
 import sc.fiji.skeletonize3D.Skeletonize3D_;
 import sholl.Sholl_Analysis;
@@ -127,6 +128,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	protected JCheckBoxMenuItem xyCanvasMenuItem;
 	protected JCheckBoxMenuItem zyCanvasMenuItem;
 	protected JCheckBoxMenuItem xzCanvasMenuItem;
+	protected JCheckBoxMenuItem threeDViewerMenuItem;
 	protected JMenuItem arrangeWindowsMenuItem;
 
 	// These are the states that the UI can be in:
@@ -854,6 +856,10 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		xzCanvasMenuItem.setEnabled(!plugin.getSinglePane());
 		xzCanvasMenuItem.addItemListener(this);
 		viewMenu.add(xzCanvasMenuItem);
+		threeDViewerMenuItem = new JCheckBoxMenuItem("Hide 3D View");
+		threeDViewerMenuItem.setEnabled(plugin.use3DViewer);
+		threeDViewerMenuItem.addItemListener(this);
+		viewMenu.add(threeDViewerMenuItem);
 		viewMenu.addSeparator();
 		arrangeWindowsMenuItem = new JMenuItem("Arrange planes");
 		arrangeWindowsMenuItem.setEnabled(!plugin.getSinglePane());
@@ -1737,6 +1743,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			toggleWindowVisibility(ThreePanes.ZY_PLANE, zyCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
 		} else if (source == xzCanvasMenuItem && xzCanvasMenuItem.isEnabled()) {
 			toggleWindowVisibility(ThreePanes.XZ_PLANE, xzCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
+		} else if (plugin.use3DViewer && source == threeDViewerMenuItem && threeDViewerMenuItem.isEnabled()) {
+			plugin.get3DUniverse().getWindow().setVisible(e.getStateChange() == ItemEvent.DESELECTED);
 		}
 	}
 

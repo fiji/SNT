@@ -210,10 +210,15 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	synchronized public void discardFill() {
+		discardFill(true);
+	}
+
+	synchronized public void discardFill(final boolean updateState) {
 		if (filler != null) {
 			synchronized (filler) {
 				filler.requestStop();
-				resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+				if (updateState)
+					resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 				filler = null;
 			}
 		}

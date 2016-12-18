@@ -476,7 +476,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		else
 			fitVolumeSetText("Fit Volume");
 		fitVolumeSetEnabled(true);
-		fillOutSetEnabled(true);
+		fillOutSetEnabled(plugin.getUIState() != NeuriteTracerResultsDialog.IMAGE_CLOSED);
 		makePrimarySetEnabled(true);
 		deleteSetEnabled(true);
 		exportAsSWCSetEnabled(true);
@@ -506,7 +506,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				fitVolumeSetText("Fit Volumes");
 		}
 		fitVolumeSetEnabled(true);
-		fillOutSetEnabled(true);
+		fillOutSetEnabled(plugin.getUIState() != NeuriteTracerResultsDialog.IMAGE_CLOSED);
 		makePrimarySetEnabled(false);
 		deleteSetEnabled(true);
 		exportAsSWCSetEnabled(true);
@@ -747,7 +747,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			public void run() {
 				renameSetEnabled(enable);
 				fitVolumeSetEnabled(enable);
-				fillOutSetEnabled(enable);
+				fillOutSetEnabled(plugin.getUIState() != NeuriteTracerResultsDialog.IMAGE_CLOSED);
 				makePrimarySetEnabled(enable);
 				deleteSetEnabled(enable);
 				exportAsSWCSetEnabled(enable);

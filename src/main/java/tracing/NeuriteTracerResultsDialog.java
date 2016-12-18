@@ -488,6 +488,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		assert SwingUtilities.isEventDispatchThread();
 		loadMenuItem.setEnabled(false);
 		loadLabelsMenuItem.setEnabled(false);
+		xyCanvasMenuItem.setEnabled(false);
 		keepSegment.setEnabled(false);
 		junkSegment.setEnabled(false);
 		cancelSearch.setEnabled(false);
@@ -497,6 +498,9 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		sigmaWizard.setEnabled(false);
 		preprocess.setEnabled(false);
 		useTubularGeodesics.setEnabled(false);
+		fw.setEnabledNone();
+		pw.fillOutSetEnabled(false);
+
 	}
 
 	protected void disableEverything() {
@@ -505,7 +509,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		disableImageDependentComponents();
 
-		fw.setEnabledNone();
 		pw.setButtonsEnabled(false);
 
 		statusText.setEnabled(false);
@@ -683,6 +686,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				case IMAGE_CLOSED:
 					updateStatusText("Tracing image is no longer available...");
 					disableImageDependentComponents();
+					plugin.discardFill(false);
 					quitMenuItem.setEnabled(true);
 					break;
 

@@ -30,7 +30,6 @@ package tracing;
 import java.util.ArrayList;
 
 import amira.AmiraParameters;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.PlugIn;

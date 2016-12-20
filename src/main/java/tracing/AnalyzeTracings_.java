@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.Hashtable;
 
 import amira.AmiraParameters;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.PlugIn;
@@ -324,8 +323,8 @@ public class AnalyzeTracings_ implements PlugIn {
 									final double ydiff = q.y - pi.getY();
 									final double zdiff = q.z - pi.getZ();
 									final double distancesq = xdiff * xdiff + ydiff * ydiff + zdiff * zdiff;
-									SNT.log("  on path between " + start_id + " and " + end_id
-											+ "  lies the node " + q.id + " (distancesq " + distancesq);
+									SNT.log("  on path between " + start_id + " and " + end_id + "  lies the node "
+											+ q.id + " (distancesq " + distancesq);
 
 									if ((nearestDistanceSq[j] < 0) || (distancesq < nearestDistanceSq[j])) {
 										nearestDistanceSq[j] = distancesq;
@@ -344,8 +343,7 @@ public class AnalyzeTracings_ implements PlugIn {
 							final GraphNode g = endPoints.get(n);
 							final PointInPath pi = nearestPointInPath[n];
 							pi.node = g;
-							SNT.log(
-									"--- nearest point to node " + n + " (distancesq: " + ds + ") was point " + pi);
+							SNT.log("--- nearest point to node " + n + " (distancesq: " + ds + ") was point " + pi);
 						}
 					}
 
@@ -724,8 +722,8 @@ public class AnalyzeTracings_ implements PlugIn {
 								if (start_node.material_name.equals(from_material)
 										&& end_node.material_name.equals(to_material)) {
 
-									SNT.log("== Trying to find path between " + start_node.toDotName()
-											+ " and " + end_node.toDotName());
+									SNT.log("== Trying to find path between " + start_node.toDotName() + " and "
+											+ end_node.toDotName());
 
 									final PathWithLength pathWithLength = connectivity.pathBetween(start_node,
 											end_node);
@@ -823,8 +821,7 @@ public class AnalyzeTracings_ implements PlugIn {
 				final double mean = sum / counts;
 				final double sd = Math.sqrt((sum_squared / counts) - (mean * mean));
 
-				SNT.log(
-						connection_string + (counts / filesConsidered) + " mean distance " + mean + " [sd " + sd + "]");
+				SNT.log(connection_string + (counts / filesConsidered) + " mean distance " + mean + " [sd " + sd + "]");
 
 				final String label = "p: " + (counts / (double) filesConsidered) + "\\nmean d: " + mean
 						+ (sd > 0 ? "\\nsd d: " + sd : "");

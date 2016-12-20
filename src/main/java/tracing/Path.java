@@ -38,7 +38,6 @@ import java.util.Set;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3f;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Overlay;
@@ -1499,8 +1498,7 @@ public class Path implements Comparable<Path> {
 					x_from_centre_in_plane * x_from_centre_in_plane + y_from_centre_in_plane * y_from_centre_in_plane);
 
 			if (verbose)
-				SNT.log(
-						"vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
+				SNT.log("vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
 
 			double centre_real_x = x_world;
 			double centre_real_y = y_world;
@@ -1521,8 +1519,8 @@ public class Path implements Comparable<Path> {
 					+ y_basis_in_plane[2] * y_from_centre_in_plane;
 
 			if (verbose)
-				SNT.log("adjusted original centre in real co-ordinates: " + centre_real_x + ","
-						+ centre_real_y + "," + centre_real_z);
+				SNT.log("adjusted original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+						+ centre_real_z);
 
 			optimized_x[i] = centre_real_x;
 			optimized_y[i] = centre_real_y;

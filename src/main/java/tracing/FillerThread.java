@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;

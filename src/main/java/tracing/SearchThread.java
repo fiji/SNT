@@ -405,8 +405,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			if (verbose)
 				printStatus();
 			if (verbose)
-				SNT.log(
-						"... was asked to start it in the " + (startPaused ? "paused" : "unpaused") + " state.");
+				SNT.log("... was asked to start it in the " + (startPaused ? "paused" : "unpaused") + " state.");
 
 			synchronized (this) {
 				threadStatus = startPaused ? PAUSED : RUNNING;
@@ -466,8 +465,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 						final int loops_since_last_report = loops - loops_at_last_report;
 						if (verbose)
-							SNT.log(
-									"milliseconds per loop: " + (since_last_report / (double) loops_since_last_report));
+							SNT.log("milliseconds per loop: " + (since_last_report / (double) loops_since_last_report));
 
 						if (verbose)
 							printStatus();

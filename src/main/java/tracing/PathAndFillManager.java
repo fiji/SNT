@@ -1739,7 +1739,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		if (pointsOutsideImageRange > 0)
-			SNT.warn("" + pointsOutsideImageRange + " points were outside the image volume - you may need to change your SWC import options");
+			SNT.warn("" + pointsOutsideImageRange
+					+ " points were outside the image volume - you may need to change your SWC import options");
 
 		final HashMap<SWCPoint, Path> pointToPath = new HashMap<>();
 

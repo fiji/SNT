@@ -895,7 +895,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
-			SNT.error("      There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
+			SNT.error(
+					"      There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
 			return;
 		}
 
@@ -924,7 +925,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
-			SNT.error("      There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
+			SNT.error(
+					"      There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
 			return;
 		}
 

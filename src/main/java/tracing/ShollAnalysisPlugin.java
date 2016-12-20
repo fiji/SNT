@@ -94,8 +94,8 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 	}
 
 	private static String getDefaultInfoMessage() {
-		return "Running " + "Sholl Analysis v" + Sholl_Analysis.VERSION + " / Simple Neurite Tracer v"
-				+ SNT.VERSION + "...";
+		return "Running " + "Sholl Analysis v" + Sholl_Analysis.VERSION + " / Simple Neurite Tracer v" + SNT.VERSION
+				+ "...";
 	}
 
 	@Override

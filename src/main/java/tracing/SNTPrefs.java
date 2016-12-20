@@ -28,7 +28,6 @@ public class SNTPrefs {
 	private static final int LOOK_FOR_TRACES = 8192;
 	private static final int COMPRESSED_XML = 16384;
 
-
 	private static final String BOOLEANS = "tracing.snt.booleans";
 	private static final String SNAP_XY = "tracing.snt.xysnap";
 	private static final String SNAP_Z = "tracing.snt.zsnap";
@@ -49,8 +48,8 @@ public class SNTPrefs {
 	}
 
 	private int getDefaultBooleans() {
-		return DRAW_DIAMETERS_XY + SNAP_CURSOR + AUTO_CANVAS_ACTIVATION + USE_THREE_PANE + LOOK_FOR_TUBES
-				+ LOOK_FOR_OOF + LOOK_FOR_TRACES + COMPRESSED_XML;
+		return DRAW_DIAMETERS_XY + SNAP_CURSOR + AUTO_CANVAS_ACTIVATION + USE_THREE_PANE + LOOK_FOR_TUBES + LOOK_FOR_OOF
+				+ LOOK_FOR_TRACES + COMPRESSED_XML;
 	}
 
 	private void getBooleans() {

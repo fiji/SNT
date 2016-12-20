@@ -231,7 +231,7 @@ public class FillWindow extends JFrame
 			cf.gridx = 1;
 			cf.gridwidth = 1;
 			cf.fill = GridBagConstraints.NONE;
-			fillingOptionsPanel.add(thresholdField,cf);
+			fillingOptionsPanel.add(thresholdField, cf);
 
 			maxThreshold = new JLabel("(Max. not yet determined)", SwingConstants.LEFT);
 			cf.gridx = 2;
@@ -241,7 +241,7 @@ public class FillWindow extends JFrame
 
 			setThreshold = SNT.smallButton("Set");
 			setThreshold.addActionListener(this);
-			cf.gridx =1;
+			cf.gridx = 1;
 			cf.gridwidth = 1;
 			cf.fill = GridBagConstraints.NONE;
 			fillingOptionsPanel.add(setThreshold, cf);

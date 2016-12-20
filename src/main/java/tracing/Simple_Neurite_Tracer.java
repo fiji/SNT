@@ -75,7 +75,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 	protected boolean look4tubesFile;
 	protected boolean look4tracesFile;
 
-
 	@Override
 	public void run(final String ignoredArguments) {
 
@@ -287,8 +286,8 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				final double rawResamplingFactor = gd.getNextNumber();
 				resamplingFactor = (int) Math.round(rawResamplingFactor);
 				if (resamplingFactor < 1) {
-					SNT.error("The resampling factor " + rawResamplingFactor + " was invalid - \n" + "using the default of "
-							+ defaultResamplingFactor + " instead.");
+					SNT.error("The resampling factor " + rawResamplingFactor + " was invalid - \n"
+							+ "using the default of " + defaultResamplingFactor + " instead.");
 					resamplingFactor = defaultResamplingFactor;
 				}
 			}
@@ -503,7 +502,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				if (!reusing)
 					univ.resetView();
 				univ.setAutoAdjustView(false);
-
 				final PointSelectionBehavior psb = new PointSelectionBehavior(univ, this);
 				univ.addInteractiveBehavior(psb);
 				univ.getWindow().addWindowListener(new WindowAdapter() {

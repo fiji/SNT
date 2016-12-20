@@ -68,8 +68,8 @@ public class QueueJumpingKeyListener implements KeyListener {
 		final boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 
 		if (verbose)
-			SNT.log("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode) + ") keyChar=\"" + keyChar
-					+ "\" (" + (int) keyChar + ") " + KeyEvent.getKeyModifiersText(canvas.getModifiers()));
+			SNT.log("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode) + ") keyChar=\"" + keyChar + "\" ("
+					+ (int) keyChar + ") " + KeyEvent.getKeyModifiersText(canvas.getModifiers()));
 
 		if (keyChar == 'y' || keyChar == 'Y') {
 

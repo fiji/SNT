@@ -37,9 +37,7 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
@@ -216,7 +214,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	protected JCheckBox useSnapWindow;
 	protected JSpinner snapWindowXYsizeSpinner;
 	protected JSpinner snapWindowZsizeSpinner;
-
 
 	// ------------------------------------------------------------------------
 	// Implementing the ImageListener interface:
@@ -617,7 +614,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 					updateStatusText("Searching for path between points...");
 					disableEverything();
 
-					cancelSearch.setText("Abandon search");
+					// cancelSearch.setText("Abandon search");
 					cancelSearch.setEnabled(true);
 					cancelSearch.setVisible(true);
 					keepSegment.setVisible(false);
@@ -922,9 +919,9 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			statusChoicesPanel.add(junkSegment);
 			statusChoicesPanel.add(cancelSearch);
 			statusChoicesPanel.setLayout(new FlowLayout());
-			statusPanel.setBorder(new EmptyBorder(0,0,0,0));
+			statusPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 			statusPanel.add(statusChoicesPanel, BorderLayout.SOUTH);
-			c.insets =  new Insets(4, 0, 0, 0);
+			c.insets = new Insets(4, 0, 0, 0);
 			getContentPane().add(statusPanel, c);
 		}
 
@@ -937,9 +934,9 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			cancelPath.addActionListener(this);
 			pathActionPanel.add(completePath);
 			pathActionPanel.add(cancelPath);
-			pathActionPanel.setBorder(new EmptyBorder(0,0,0,0));
+			pathActionPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-			c.insets =  new Insets(0, 0, 0, 0);
+			c.insets = new Insets(0, 0, 0, 0);
 			++c.gridy;
 			getContentPane().add(pathActionPanel, c);
 		}
@@ -996,7 +993,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			viewOptionsPanel.add(viewPathChoice, vop_c);
 			++vop_c.gridy;
 			viewOptionsPanel.add(nearbyPanel, vop_c);
-			justShowSelected = new JCheckBox("Show only selected paths");
+			justShowSelected = new JCheckBox("Show only selected paths", plugin.showOnlySelectedPaths);
 			justShowSelected.addItemListener(this);
 
 			vop_c.gridwidth = GridBagConstraints.REMAINDER;
@@ -1039,7 +1036,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			pathOptionsPanel.add(pathColorsCanvas, pop_c);
 			pop_c.insets = new Insets(0, 0, 0, 0);
 
-			enforceDefaultColors = new JCheckBox("Enforce default colors (ignore customizations)");
+			enforceDefaultColors = new JCheckBox("Enforce default colors (ignore customizations)",
+					!plugin.displayCustomPathColors);
 			enforceDefaultColors.addItemListener(this);
 			++pop_c.gridy;
 			pathOptionsPanel.add(enforceDefaultColors, pop_c);
@@ -1155,7 +1153,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		snapWindowZsizeSpinner.addChangeListener(this);
 		snapWindowZsizeSpinner.setEnabled(isStackAvailable());
 		tracingOptionsPanel.add(snapWindowZsizeSpinner);
-		//tracingOptionsPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		// tracingOptionsPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 		return tracingOptionsPanel;
 	}
 
@@ -1786,7 +1784,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	}
 
 	@Override
-	public void stateChanged(ChangeEvent e) {
+	public void stateChanged(final ChangeEvent e) {
 		final Object source = e.getSource();
 		if (source == snapWindowXYsizeSpinner) {
 			plugin.cursorSnapWindowXY = (int) snapWindowXYsizeSpinner.getValue() / 2;
@@ -1864,7 +1862,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		trackingMenu.add(autoActivationMenuItem);
 		trackingMenu.addSeparator();
 
-		JMenuItem optionsMenuItem = new JMenuItem("Options...");
+		final JMenuItem optionsMenuItem = new JMenuItem("Options...");
 		optionsMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent e) {

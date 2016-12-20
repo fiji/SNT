@@ -2381,23 +2381,33 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			return;
 		final boolean showOnlySelectedPaths = plugin.getShowOnlySelectedPaths();
 		// Now iterate over all the paths:
-		for (final Path p : allPaths) {
+		for (Path p : allPaths) {
 
 			if (p.fittedVersionOf != null)
 				continue;
 
 			final boolean selected = p.getSelected();
 			final boolean customColor = (p.hasCustomColor && plugin.displayCustomPathColors);
-			Color3f color3f = plugin.deselectedColor3f;
-			if (selected)
-				color3f = plugin.selectedColor3f;
-			else if (customColor)
+			Color3f color3f;
+			if (customColor)
 				color3f = new Color3f(p.getColor());
+			else if (selected)
+				color3f = plugin.selectedColor3f;
+			else
+				color3f = plugin.deselectedColor3f;
 
 			p.updateContent3D(plugin.univ, // The appropriate 3D universe
 					(selected || !showOnlySelectedPaths), // Visible at all?
 					plugin.getPaths3DDisplay(), // How to display?
 					color3f, plugin.colorImage); // Colour?
+
+			// If path is being rendered with its own custom color, highlight it
+			// somehow if is being selected
+			if (p.getUseFitted())
+				p = p.getFitted();
+			if (p.content3D != null)
+				p.content3D.setShaded(!(customColor && selected));
+
 		}
 	}
 

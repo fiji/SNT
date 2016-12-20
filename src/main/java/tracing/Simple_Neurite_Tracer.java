@@ -265,8 +265,10 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			look4tubesFile = gd.getNextBoolean();
 			look4oofFile = gd.getNextBoolean();
 			look4tracesFile = gd.getNextBoolean();
+			prefs.saveStartupPrefs();
 
-			if (!singleSlice && showed3DViewerOption) {
+			use3DViewer = !singleSlice && showed3DViewerOption;
+			if (use3DViewer) {
 				final String chosenViewer = gd.getNextChoice();
 				int chosenIndex;
 				for (chosenIndex = 0; chosenIndex < choices3DViewer.length; ++chosenIndex)
@@ -290,8 +292,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 					resamplingFactor = defaultResamplingFactor;
 				}
 			}
-
-			prefs.saveStartupPrefs();
 
 			// Turn it grey, since I find that helpful:
 			if (forceGrayscale) {

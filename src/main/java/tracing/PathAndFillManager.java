@@ -1338,7 +1338,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				}
 
 				if (fill_id != (last_fill_id + 1)) {
-					IJ.log("Out of order id in <fill> (" + fill_id + " when we were expecting " + (last_fill_id + 1)
+					SNT.log("Out of order id in <fill> (" + fill_id + " when we were expecting " + (last_fill_id + 1)
 							+ ")");
 					fill_id = last_fill_id + 1;
 				}
@@ -1739,8 +1739,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		if (pointsOutsideImageRange > 0)
-			IJ.log("Warning: " + pointsOutsideImageRange
-					+ " points were outside the image volume - you may need to change your SWC import options");
+			SNT.warn("" + pointsOutsideImageRange + " points were outside the image volume - you may need to change your SWC import options");
 
 		final HashMap<SWCPoint, Path> pointToPath = new HashMap<>();
 

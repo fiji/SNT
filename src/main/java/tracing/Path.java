@@ -514,7 +514,7 @@ public class Path implements Comparable<Path> {
 	void add(final Path other) {
 
 		if (other == null) {
-			IJ.log("BUG: Trying to add null Path");
+			SNT.warn("BUG: Trying to add null Path");
 			return;
 		}
 

@@ -49,6 +49,12 @@ public class SNT {
 		logService.info("[SNT] " + string);
 	}
 
+	protected static void warn(final String string) {
+		if (!initialized)
+			initialize();
+		logService.warn("[SNT] " + string);
+	}
+
 	protected static void log(final String... strings) {
 		if (strings != null)
 			log(String.join(" ", strings));

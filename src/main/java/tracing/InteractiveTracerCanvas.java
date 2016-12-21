@@ -31,6 +31,8 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -104,8 +106,18 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			final double[] p = new double[3];
 			tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
 			final PointInImage pointInImage = pathAndFillManager.nearestJoinPointOnSelectedPaths(p[0], p[1], p[2]);
-			new ShollAnalysisDialog("Sholl analysis for tracing of " + tracerPlugin.getImagePlus().getTitle(),
-					pointInImage.x, pointInImage.y, pointInImage.z, pathAndFillManager, tracerPlugin.getImagePlus());
+			final boolean autoCanvasActivationState = tracerPlugin.autoCanvasActivation;
+			tracerPlugin.autoCanvasActivation = false;
+			final ShollAnalysisDialog sd = new ShollAnalysisDialog(
+					"Sholl analysis for tracing of " + tracerPlugin.getImagePlus().getTitle(), pointInImage.x,
+					pointInImage.y, pointInImage.z, pathAndFillManager, tracerPlugin.getImagePlus());
+			sd.toFront();
+			sd.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosed(final WindowEvent e) {
+					tracerPlugin.autoCanvasActivation = autoCanvasActivationState;
+				}
+			});
 		} else {
 			SNT.error("You must have a path selected in order to start Sholl analysis");
 		}

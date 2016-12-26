@@ -1961,15 +1961,19 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 	}
 
+	synchronized void setPathPointsInVolume(final byte[][] slices, final int width, final int height, final int depth) {
+		setPathPointsInVolume(allPaths, slices, width, height, depth);
+	}
+
 	/*
 	 * This method will set all the points in array that correspond to points on
 	 * one of the paths to 255, leaving everything else as it is. This is useful
 	 * for creating stacks that can be used in skeleton analysis plugins that
 	 * expect a stack of this kind.
 	 */
-
-	synchronized void setPathPointsInVolume(final byte[][] slices, final int width, final int height, final int depth) {
-		for (final Path topologyPath : allPaths) {
+	synchronized void setPathPointsInVolume(final ArrayList<Path> paths, final byte[][] slices, final int width,
+			final int height, final int depth) {
+		for (final Path topologyPath : paths) {
 			Path p = topologyPath;
 			if (topologyPath.getUseFitted()) {
 				p = topologyPath.fitted;

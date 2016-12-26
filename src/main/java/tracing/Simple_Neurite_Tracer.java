@@ -520,7 +520,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			final boolean macroLoading = macroTracesFilename != null;
 			if (macroLoading) {
 				tracesFileToLoad = new File(macroTracesFilename);
-			} else if (look4tracesFile) {
+			} else if (look4tracesFile && file_info != null) {
 				final String filenameBeforeExtension = stripExtension(file_info.fileName);
 				if (filenameBeforeExtension != null) {
 					tracesFileToLoad = new File(file_info.directory, filenameBeforeExtension + ".traces");

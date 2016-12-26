@@ -289,11 +289,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 			try {
 				final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(saveFile), "UTF-8"));
-				pw.println("# Exported from \"Simple Neurite Tracer\" version " + SNT.VERSION);
-				for (final SWCPoint p : swcPoints)
-					p.println(pw);
+				pathAndFillManager.flushSWCPoints(swcPoints, pw);
 				pw.close();
-
 			} catch (final IOException ioe) {
 				SNT.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;

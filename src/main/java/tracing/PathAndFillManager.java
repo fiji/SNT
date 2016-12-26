@@ -41,6 +41,9 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -310,15 +313,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			}
 
 			IJ.showStatus("Exporting SWC data to " + swcFile.getAbsolutePath());
-
-			// FIXME: done elsewhere - DRY
 			try {
 				final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(swcFile), "UTF-8"));
-				pw.println("# Exported from \"Simple Neurite Tracer\" version " + SNT.VERSION);
-				for (final SWCPoint p : swcPoints)
-					p.println(pw);
-				pw.close();
-
+				flushSWCPoints(swcPoints, pw);
 			} catch (final IOException ioe) {
 				SNT.error("Saving to " + swcFile.getAbsolutePath() + " failed");
 				return false;
@@ -327,6 +324,27 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 		IJ.showStatus("Export finished.");
 		return true;
+	}
+
+	protected void flushSWCPoints(final ArrayList<SWCPoint> swcPoints, final PrintWriter pw) {
+		pw.println("# Exported from \"Simple Neurite Tracer\" version " + SNT.VERSION + " on "
+				+ LocalDateTime.of(LocalDate.now(), LocalTime.now()));
+		pw.println("# https://imagej.net/Simple_Neurite_Tracer");
+		pw.println("#");
+		pw.println("# All positions and radii in " + spacing_units);
+		if (usingNonPhysicalUnits())
+			pw.println("# WARNING: Usage of pixel coordinates does not respect the SWC specification");
+		else
+			pw.println("# Voxel separation (x,y,z): " + x_spacing + ", " + y_spacing + ", " + z_spacing);
+		pw.println("#");
+		for (final SWCPoint p : swcPoints)
+			p.println(pw);
+		pw.close();
+	}
+
+	private boolean usingNonPhysicalUnits() {
+		return (new Calibration().getUnits()).equals(spacing_units)
+				|| ("unknown".equals(spacing_units) && x_spacing * y_spacing * z_spacing == 1d);
 	}
 
 	/*

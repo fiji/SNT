@@ -62,7 +62,6 @@ import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.plugin.ZProjector;
-import ij.plugin.frame.RoiManager;
 import ij.process.ByteProcessor;
 import ij.text.TextWindow;
 import ij3d.Content;
@@ -1445,41 +1444,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		setShowOnlySelectedPaths(showOnlySelectedPaths, true);
 	}
 
-	public void addPathsToManager(final RoiManager rm, final boolean SWTColoring) {
-		if (rm != null) {
-			final Overlay overlay = new Overlay();
-			addAllPathsToOverlay(overlay, SWTColoring);
-			for (final Roi path : overlay.toArray())
-				rm.addRoi(path);
-			rm.runCommand("sort");
-		}
-	}
+	public void addPathsToOverlay(Overlay overlay, final int plane, final boolean SWTColoring) {
 
-	public void addAllPathsToOverlay(final Overlay overlay, final boolean SWTColoring) {
-		if (overlay != null && pathAndFillManager != null) {
-			for (int i = 0; i < pathAndFillManager.size(); ++i) {
-				final Path p = pathAndFillManager.getPath(i);
-				if (p == null)
-					continue;
-				if (p.fittedVersionOf != null)
-					continue;
-				// Prefer fitted version when drawing path
-				final Path drawPath = (p.useFitted) ? p.fitted : p;
-				if (SWTColoring)
-					drawPath.setColorBySWCtype();
-				drawPath.drawPathAsPoints(overlay);
-			}
-		}
-	}
-
-	public void addPathsToOverlay() {
-		if (xy != null)
-			addPathsToOverlay(xy, ThreePanes.XY_PLANE);
-	}
-
-	public void addPathsToOverlay(final ImagePlus imp, final int plane) {
-
-		Overlay overlay = imp.getOverlay();
 		if (overlay == null)
 			overlay = new Overlay();
 
@@ -1500,9 +1466,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 				if (showOnlySelectedPaths && !pathAndFillManager.isSelected(p))
 					continue;
 
+				if (SWTColoring)
+					drawPath.setColorBySWCtype();
 				drawPath.drawPathAsPoints(overlay, plane);
 			}
-			imp.setOverlay(overlay);
 		}
 	}
 

@@ -724,7 +724,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	 * with values set to either 255 (if there's a point on a path there) or 0
 	 */
 
-	synchronized public ImagePlus makePathVolume(ArrayList<Path> paths) {
+	synchronized public ImagePlus makePathVolume(final ArrayList<Path> paths) {
 
 		final byte[][] snapshot_data = new byte[depth][];
 

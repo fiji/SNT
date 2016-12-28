@@ -89,6 +89,7 @@ import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 import ij.measure.Calibration;
+import ij.measure.ResultsTable;
 import ij.plugin.frame.RoiManager;
 import ij3d.ImageWindow3D;
 import sholl.Sholl_Analysis;
@@ -115,7 +116,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	protected JMenuItem exportAllSWCMenuItem;
 	protected JMenuItem quitMenuItem;
 
-	protected JMenuItem analyzeSkeletonMenuItem;
 	protected JMenuItem makeLineStackMenuItem;
 	protected JMenuItem pathsToROIsMenuItem;
 	protected JMenuItem exportCSVMenuItemAgain;
@@ -520,7 +520,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		exportAllSWCMenuItem.setEnabled(false);
 		exportCSVMenuItemAgain.setEnabled(false);
 		sendToTrakEM2.setEnabled(false);
-		analyzeSkeletonMenuItem.setEnabled(false);
 		pathsToROIsMenuItem.setEnabled(false);
 		saveMenuItem.setEnabled(false);
 		if (uploadButton != null) {
@@ -570,7 +569,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 					exportAllSWCMenuItem.setEnabled(true);
 					exportCSVMenuItemAgain.setEnabled(true);
 					sendToTrakEM2.setEnabled(plugin.anyListeners());
-					analyzeSkeletonMenuItem.setEnabled(true);
 					pathsToROIsMenuItem.setEnabled(true);
 					if (uploadButton != null) {
 						uploadButton.setEnabled(true);
@@ -799,15 +797,14 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		saveMenuItem = new JMenuItem("Save Traces File...");
 		saveMenuItem.addActionListener(this);
 		fileMenu.add(saveMenuItem);
-
-		fileMenu.addSeparator();
-		exportCSVMenuItem = new JMenuItem("Export as CSV...");
-		exportCSVMenuItem.addActionListener(this);
-		fileMenu.add(exportCSVMenuItem);
-
-		exportAllSWCMenuItem = new JMenuItem("Export All as SWC...");
+		exportAllSWCMenuItem = new JMenuItem("Save All Paths as SWC...");
 		exportAllSWCMenuItem.addActionListener(this);
 		fileMenu.add(exportAllSWCMenuItem);
+
+		fileMenu.addSeparator();
+		exportCSVMenuItem = new JMenuItem("Export Path Properties...");
+		exportCSVMenuItem.addActionListener(this);
+		fileMenu.add(exportCSVMenuItem);
 
 		sendToTrakEM2 = new JMenuItem("Send to TrakEM2");
 		sendToTrakEM2.addActionListener(this);
@@ -818,20 +815,18 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		quitMenuItem.addActionListener(this);
 		fileMenu.add(quitMenuItem);
 
-		makeLineStackMenuItem = new JMenuItem("Render/Analyze Paths as Skeletons...");
-		makeLineStackMenuItem.addActionListener(this);
-		analysisMenu.add(makeLineStackMenuItem);
 		pathsToROIsMenuItem = new JMenuItem("Convert Paths to ROIs...");
 		pathsToROIsMenuItem.addActionListener(this);
 		analysisMenu.add(pathsToROIsMenuItem);
-
 		analysisMenu.addSeparator();
-		analysisMenu.add(shollAnalysisHelpMenuItem());
-		analysisMenu.addSeparator();
-
-		exportCSVMenuItemAgain = new JMenuItem("Export as CSV...");
+		exportCSVMenuItemAgain = new JMenuItem("Measure Paths...");
 		exportCSVMenuItemAgain.addActionListener(this);
 		analysisMenu.add(exportCSVMenuItemAgain);
+		makeLineStackMenuItem = new JMenuItem("Render/Analyze Skeletonized Paths...");
+		makeLineStackMenuItem.addActionListener(this);
+		analysisMenu.add(makeLineStackMenuItem);
+		analysisMenu.addSeparator();
+		analysisMenu.add(shollAnalysisHelpMenuItem());
 
 		xyCanvasMenuItem = new JCheckBoxMenuItem("Hide XY View");
 		xyCanvasMenuItem.addItemListener(this);
@@ -1316,7 +1311,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				return;
 			}
 			savePath = sd.getDirectory() + sd.getFileName();
-			SNT.error("got savePath: " + savePath);
+			if (verbose)
+				SNT.log("Got savePath: " + savePath);
 			if (!pathAndFillManager.checkOKToWriteAllAsSWC(savePath))
 				return;
 			pathAndFillManager.exportAllAsSWC(savePath);
@@ -1328,11 +1324,11 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 			if (info == null) {
 
-				sd = new SaveDialog("Export as CSV...", "traces", ".csv");
+				sd = new SaveDialog("Export Paths as CSV...", "traces", ".csv");
 
 			} else {
 
-				sd = new SaveDialog("Export as CSV...", info.directory, info.fileName, ".csv");
+				sd = new SaveDialog("Export Paths as CSV...", info.directory, info.fileName, ".csv");
 			}
 
 			String savePath;
@@ -1355,9 +1351,13 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			// Export here...
 			try {
 				pathAndFillManager.exportToCSV(file);
+				if (source == exportCSVMenuItemAgain) {
+					final ResultsTable rt = ResultsTable.open(savePath);
+					rt.show(sd.getFileName());
+				}
 			} catch (final IOException ioe) {
 				IJ.showStatus("Exporting failed.");
-				SNT.error("Writing traces to '" + savePath + "' failed: " + ioe);
+				SNT.error("Writing traces to '" + savePath + "' failed:\n" + ioe);
 				changeState(preExportingState);
 				return;
 			}
@@ -1861,25 +1861,22 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	}
 
 	private JMenu tracingMenu() {
-		final JMenu trackingMenu = new JMenu("Tracing");
+		final JMenu tracingMenu = new JMenu("Tracing");
+		autoActivationMenuItem = new JCheckBoxMenuItem("Activate Canvas on Mouse Hovering",
+				plugin.autoCanvasActivation);
+		autoActivationMenuItem.addItemListener(this);
+		tracingMenu.add(autoActivationMenuItem);
+		tracingMenu.addSeparator();
+		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw Diameters in XY View", plugin.getDrawDiametersXY());
+		drawDiametersXYMenuItem.addItemListener(this);
+		tracingMenu.add(drawDiametersXYMenuItem);
 		final String opacityLabel = "Show MIP Overlay(s) at " + SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT
 				+ "% Opacity";
 		mipOverlayMenuItem = new JCheckBoxMenuItem(opacityLabel);
 		mipOverlayMenuItem.setEnabled(!plugin.singleSlice);
 		mipOverlayMenuItem.addItemListener(this);
-		trackingMenu.add(mipOverlayMenuItem);
-
-		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw Diameters in XY View", plugin.getDrawDiametersXY());
-		drawDiametersXYMenuItem.addItemListener(this);
-		trackingMenu.add(drawDiametersXYMenuItem);
-		trackingMenu.addSeparator();
-
-		autoActivationMenuItem = new JCheckBoxMenuItem("Activate Canvas(es) on Mouse Hovering",
-				plugin.autoCanvasActivation);
-		autoActivationMenuItem.addItemListener(this);
-		trackingMenu.add(autoActivationMenuItem);
-		trackingMenu.addSeparator();
-
+		tracingMenu.add(mipOverlayMenuItem);
+		tracingMenu.addSeparator();
 		final JMenuItem optionsMenuItem = new JMenuItem("Options...");
 		optionsMenuItem.addActionListener(new ActionListener() {
 			@Override
@@ -1887,9 +1884,9 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				new SNTPrefs(plugin).promptForOptions();
 			}
 		});
-		trackingMenu.add(optionsMenuItem);
+		tracingMenu.add(optionsMenuItem);
 
-		return trackingMenu;
+		return tracingMenu;
 	}
 
 	private JMenu helpMenu() {

@@ -1295,6 +1295,15 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		} else if (source == exportAllSWCMenuItem && !noPathsError()) {
 
+			if (pathAndFillManager.usingNonPhysicalUnits()) {
+				final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Warning",
+						"These tracings were obtained from a spatially uncalibrated image.\n"
+								+ "The SWC specification assumes all coordinates to be in " + IJ.micronSymbol + "m.\n"
+								+ "Do you really want to proceed with the SWC export?");
+				if (!d.yesPressed())
+					return;
+			}
+
 			final FileInfo info = plugin.file_info;
 			SaveDialog sd;
 

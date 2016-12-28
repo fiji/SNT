@@ -342,7 +342,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		pw.close();
 	}
 
-	private boolean usingNonPhysicalUnits() {
+	protected boolean usingNonPhysicalUnits() {
 		return (new Calibration().getUnits()).equals(spacing_units)
 				|| ("unknown".equals(spacing_units) && x_spacing * y_spacing * z_spacing == 1d);
 	}

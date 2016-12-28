@@ -2313,7 +2313,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public void exportToCSV(final File outputFile) throws IOException {
 		// FIXME: also add statistics on volumes of fills and
 		// reconstructions...
-		final String[] headers = { "PathID", "PathName", "PrimaryPath", "PathLength", "PathLengthUnits", "StartsOnPath",
+		final String[] headers = { "PathID", "PathName", "SWCType", "PrimaryPath", "PathLength", "PathLengthUnits", "StartsOnPath",
 				"EndsOnPath", "ConnectedPathIDs", "ChildPathIDs", "StartX", "StartY", "StartZ", "EndX", "EndY", "EndZ",
 				"ApproximateFittedVolume" };
 
@@ -2341,6 +2341,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.print(stringForCSV("" + p.getID()));
 			pw.print(",");
 			pw.print(stringForCSV("" + pForLengthAndName.getName()));
+			pw.print(",");
+			pw.print(stringForCSV("" + Path.getSWCtypeName(p.getSWCType())));
 			pw.print(",");
 			final boolean primary = h.contains(p);
 			pw.print(stringForCSV("" + primary));

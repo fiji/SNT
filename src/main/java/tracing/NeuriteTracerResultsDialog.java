@@ -89,8 +89,6 @@ import ij.io.SaveDialog;
 import ij.measure.Calibration;
 import ij.plugin.frame.RoiManager;
 import ij3d.ImageWindow3D;
-import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
-import sc.fiji.skeletonize3D.Skeletonize3D_;
 import sholl.Sholl_Analysis;
 import stacks.ThreePanes;
 
@@ -821,13 +819,9 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		quitMenuItem.addActionListener(this);
 		fileMenu.add(quitMenuItem);
 
-		makeLineStackMenuItem = new JMenuItem("Make Line Stack");
+		makeLineStackMenuItem = new JMenuItem("Render/Analyze Paths as Skeletons...");
 		makeLineStackMenuItem.addActionListener(this);
 		analysisMenu.add(makeLineStackMenuItem);
-
-		analyzeSkeletonMenuItem = new JMenuItem("Run \"Analyze Skeleton...\"");
-		analyzeSkeletonMenuItem.addActionListener(this);
-		analysisMenu.add(analyzeSkeletonMenuItem);
 
 		analysisMenu.addSeparator();
 		analysisMenu.add(shollAnalysisHelpMenuItem());
@@ -1425,19 +1419,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		} else if (source == makeLineStackMenuItem && !noPathsError()) {
 
-			final ImagePlus imagePlus = plugin.makePathVolume();
-			imagePlus.show();
-
-		} else if (source == analyzeSkeletonMenuItem && !noPathsError()) {
-
-			final ImagePlus imagePlus = plugin.makePathVolume();
-			final Skeletonize3D_ skeletonizer = new Skeletonize3D_();
-			skeletonizer.setup("", imagePlus);
-			skeletonizer.run(imagePlus.getProcessor());
-			final AnalyzeSkeleton_ analyzer = new AnalyzeSkeleton_();
-			analyzer.setup("", imagePlus);
-			analyzer.run(imagePlus.getProcessor());
-			imagePlus.show();
+			final SkeletonPlugin skelPlugin = new SkeletonPlugin(plugin);
+			skelPlugin.run();
 
 		} else if (source == addPathsToOverlayMenuItem && !noPathsError()) {
 

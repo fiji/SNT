@@ -725,14 +725,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 	 * with values set to either 255 (if there's a point on a path there) or 0
 	 */
 
-	synchronized public ImagePlus makePathVolume() {
+	synchronized public ImagePlus makePathVolume(ArrayList<Path> paths) {
 
 		final byte[][] snapshot_data = new byte[depth][];
 
 		for (int i = 0; i < depth; ++i)
 			snapshot_data[i] = new byte[width * height];
 
-		pathAndFillManager.setPathPointsInVolume(snapshot_data, width, height, depth);
+		pathAndFillManager.setPathPointsInVolume(paths, snapshot_data, width, height, depth);
 
 		final ImageStack newStack = new ImageStack(width, height);
 
@@ -745,6 +745,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 		final ImagePlus newImp = new ImagePlus("Paths rendered in a Stack", newStack);
 		newImp.setCalibration(xy.getCalibration());
 		return newImp;
+	}
+
+	synchronized public ImagePlus makePathVolume() {
+		return makePathVolume(pathAndFillManager.allPaths);
 	}
 
 	/* If non-null, holds a reference to the currently searching thread: */

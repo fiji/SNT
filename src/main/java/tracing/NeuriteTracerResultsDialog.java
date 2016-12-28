@@ -81,6 +81,8 @@ import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.HTMLDialog;
+import ij.gui.Overlay;
+import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
@@ -115,8 +117,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	protected JMenuItem analyzeSkeletonMenuItem;
 	protected JMenuItem makeLineStackMenuItem;
-	protected JMenuItem addPathsToOverlayMenuItem;
-	protected JMenuItem addPathsToManagerMenuItem;
+	protected JMenuItem pathsToROIsMenuItem;
 	protected JMenuItem exportCSVMenuItemAgain;
 	protected JMenuItem sendToTrakEM2;
 
@@ -519,9 +520,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		exportAllSWCMenuItem.setEnabled(false);
 		exportCSVMenuItemAgain.setEnabled(false);
 		sendToTrakEM2.setEnabled(false);
-		addPathsToManagerMenuItem.setEnabled(false);
-		addPathsToOverlayMenuItem.setEnabled(false);
 		analyzeSkeletonMenuItem.setEnabled(false);
+		pathsToROIsMenuItem.setEnabled(false);
 		saveMenuItem.setEnabled(false);
 		if (uploadButton != null) {
 			uploadButton.setEnabled(false);
@@ -571,8 +571,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 					exportCSVMenuItemAgain.setEnabled(true);
 					sendToTrakEM2.setEnabled(plugin.anyListeners());
 					analyzeSkeletonMenuItem.setEnabled(true);
-					addPathsToManagerMenuItem.setEnabled(true);
-					addPathsToOverlayMenuItem.setEnabled(true);
+					pathsToROIsMenuItem.setEnabled(true);
 					if (uploadButton != null) {
 						uploadButton.setEnabled(true);
 						fetchButton.setEnabled(true);
@@ -822,17 +821,12 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		makeLineStackMenuItem = new JMenuItem("Render/Analyze Paths as Skeletons...");
 		makeLineStackMenuItem.addActionListener(this);
 		analysisMenu.add(makeLineStackMenuItem);
+		pathsToROIsMenuItem = new JMenuItem("Convert Paths to ROIs...");
+		pathsToROIsMenuItem.addActionListener(this);
+		analysisMenu.add(pathsToROIsMenuItem);
 
 		analysisMenu.addSeparator();
 		analysisMenu.add(shollAnalysisHelpMenuItem());
-		analysisMenu.addSeparator();
-
-		addPathsToOverlayMenuItem = new JMenuItem("Add Paths to Overlay...");
-		addPathsToOverlayMenuItem.addActionListener(this);
-		analysisMenu.add(addPathsToOverlayMenuItem);
-		addPathsToManagerMenuItem = new JMenuItem("Export Paths to ROI Manager...");
-		addPathsToManagerMenuItem.addActionListener(this);
-		analysisMenu.add(addPathsToManagerMenuItem);
 		analysisMenu.addSeparator();
 
 		exportCSVMenuItemAgain = new JMenuItem("Export as CSV...");
@@ -1422,66 +1416,98 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			final SkeletonPlugin skelPlugin = new SkeletonPlugin(plugin);
 			skelPlugin.run();
 
-		} else if (source == addPathsToOverlayMenuItem && !noPathsError()) {
+		} else if (source == pathsToROIsMenuItem && !noPathsError()) {
 
-			if (plugin.getSinglePane()) {
-				if (currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED) {
-					SNT.error("Image is no longer available.");
-					addPathsToOverlayMenuItem.setEnabled(false);
-				} else
-					plugin.addPathsToOverlay();
-			} else {
-				final InteractiveTracerCanvas[] canvases = { plugin.xy_tracer_canvas, plugin.xz_tracer_canvas,
-						plugin.zy_tracer_canvas };
-				plugin.xy_tracer_canvas.isShowing();
-				final int[] planes = { ThreePanes.XY_PLANE, ThreePanes.XZ_PLANE, ThreePanes.ZY_PLANE };
-				final String[] options = { "Main (XY) view", "XZ view", "YZ view" };
-				final boolean[] choices = new boolean[3];
-				for (int i = 0; i < planes.length; i++)
-					choices[i] = getImagePlusFromPane(planes[i]) != null;
-				if (!choices[0] && !choices[1] && !choices[2]) {
-					SNT.error("Tracing panes are no longer available.");
-					addPathsToOverlayMenuItem.setEnabled(false);
-					return;
-				}
-				final GenericDialog gd = new GenericDialog("Paths to Overlay");
-				gd.addCheckboxGroup(3, 1, options, choices, new String[] { "Add ROI paths to the overlay of:" });
-				final Vector<?> cbxs = gd.getCheckboxes();
-				for (int i = 0; i < choices.length; i++)
-					((Checkbox) cbxs.get(i)).setEnabled(choices[i]);
-				gd.showDialog();
-				if (gd.wasCanceled())
-					return;
-				int i = 0;
-				for (final InteractiveTracerCanvas canvas : canvases) {
-					if (gd.getNextBoolean() && canvas != null)
-						plugin.addPathsToOverlay(canvas.getImage(), planes[i]);
-					i++;
-				}
-			}
+			final GenericDialog gd = new GenericDialog("Paths to ROIs");
 
-		} else if (source == addPathsToManagerMenuItem && !noPathsError()) {
+			final int[] PLANES_ID = { ThreePanes.XY_PLANE, ThreePanes.XZ_PLANE, ThreePanes.ZY_PLANE };
+			final String[] PLANES_STRING = { "XY_View", "XZ_View", "ZY_View" };
+			final InteractiveTracerCanvas[] canvases = { plugin.xy_tracer_canvas, plugin.xz_tracer_canvas,
+					plugin.zy_tracer_canvas };
+			final boolean[] destinationPlanes = new boolean[PLANES_ID.length];
+			for (int i = 0; i < PLANES_ID.length; i++)
+				destinationPlanes[i] = canvases[i] != null && getImagePlusFromPane(PLANES_ID[i]) != null;
 
-			RoiManager rm = RoiManager.getInstance2();
-			final boolean existingROIs = (rm != null && rm.getCount() > 0);
-			final GenericDialog gd = new GenericDialog("Paths to Manager");
-			if (existingROIs)
-				gd.addCheckbox("Delete existing ROIs in the ROI Manager list?", true);
-			gd.addCheckbox("Color code ROIs by SWC type", true);
+			gd.setInsets(0, 10, 0);
+			gd.addMessage("Create 2D Path-ROIs from:");
+			gd.setInsets(0, 20, 0);
+			for (int i = 0; i < PLANES_ID.length; i++)
+				gd.addCheckbox(PLANES_STRING[i], destinationPlanes[i]);
+
+			// 2D traces?
+			final Vector<?> cbxs = gd.getCheckboxes();
+			for (int i = 1; i < PLANES_ID.length; i++)
+				((Checkbox) cbxs.get(i)).setEnabled(!plugin.singleSlice);
+
+			final String[] scopes = { "ROI Manager", "Image overlay" };
+			gd.addRadioButtonGroup("Store Path-ROIs in:", scopes, 2, 1, scopes[0]);
+
+			gd.addMessage("");
+			gd.addCheckbox("Color code ROIs by SWC type", false);
+			gd.addCheckbox("Discard pre-existing ROIs in Overlay/Manager", true);
+
 			gd.showDialog();
 			if (gd.wasCanceled())
 				return;
 
-			if (rm == null)
-				rm = new RoiManager();
-			if (existingROIs && gd.getNextBoolean())
-				rm.reset();
-			if (plugin.singleSlice)
-				Prefs.showAllSliceOnly = false;
-			rm.setEditMode(plugin.getImagePlus(), false);
-			plugin.addPathsToManager(rm, gd.getNextBoolean());
-			rm.setEditMode(plugin.getImagePlus(), true);
-			rm.runCommand("show all without labels");
+			for (int i = 0; i < PLANES_ID.length; i++)
+				destinationPlanes[i] = gd.getNextBoolean();
+			final String scope = gd.getNextRadioButton();
+			final boolean swcColors = gd.getNextBoolean();
+			final boolean reset = gd.getNextBoolean();
+
+			if (scopes[0].equals(scope)) { // ROI Manager
+
+				final Overlay overlay = new Overlay();
+				for (int i = 0; i < destinationPlanes.length; i++) {
+					if (destinationPlanes[i]) {
+						final int lastPlaneIdx = overlay.size() - 1;
+						plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
+						if (plugin.singleSlice)
+							continue;
+						for (int j = lastPlaneIdx + 1; j < overlay.size(); j++) {
+							final Roi roi = overlay.get(j);
+							roi.setName(roi.getName() + " [" + PLANES_STRING[i] + "]");
+						}
+					}
+				}
+				RoiManager rm = RoiManager.getInstance2();
+				if (rm == null)
+					rm = new RoiManager();
+				else if (reset)
+					rm.reset();
+				Prefs.showAllSliceOnly = !plugin.singleSlice;
+				rm.setEditMode(plugin.getImagePlus(), false);
+				for (final Roi path : overlay.toArray())
+					rm.addRoi(path);
+				rm.runCommand("sort");
+				rm.setEditMode(plugin.getImagePlus(), true);
+				rm.runCommand("show all without labels");
+
+			} else { // Overlay
+
+				String error = "";
+				for (int i = 0; i < destinationPlanes.length; i++) {
+					if (destinationPlanes[i]) {
+						final ImagePlus imp = getImagePlusFromPane(PLANES_ID[i]);
+						if (imp == null) {
+							error += PLANES_STRING[i] + ", ";
+							continue;
+						}
+						Overlay overlay = imp.getOverlay();
+						if (overlay == null) {
+							overlay = new Overlay();
+							imp.setOverlay(overlay);
+						} else if (reset)
+							overlay.clear();
+						plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
+					}
+				}
+				if (!error.isEmpty()) {
+					SNT.error("Some ROIs were skipped because some images (" + error.substring(0, error.length() - 2)
+							+ ") are no longer available.\nPlease consider exporting to the ROI Manager instead.");
+				}
+			}
 
 		} else if (source == cancelSearch) {
 

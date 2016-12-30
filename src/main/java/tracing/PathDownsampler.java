@@ -32,7 +32,8 @@ import java.util.ArrayList;
 class SimplePoint {
 	public double x = 0, y = 0, z = 0;
 	public int originalIndex;
-	public SimplePoint(double x, double y, double z, int originalIndex) {
+
+	public SimplePoint(final double x, final double y, final double z, final int originalIndex) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -53,15 +54,15 @@ public class PathDownsampler {
 	 * @return
 	 */
 
-	public static ArrayList<SimplePoint> downsample(ArrayList<SimplePoint> points,
-			double permittedDeviation) {
-		int n = points.size();
-		SimplePoint startPoint = points.get(0);
-		SimplePoint endPoint = points.get(n - 1);
+	public static ArrayList<SimplePoint> downsample(final ArrayList<SimplePoint> points,
+			final double permittedDeviation) {
+		final int n = points.size();
+		final SimplePoint startPoint = points.get(0);
+		final SimplePoint endPoint = points.get(n - 1);
 		double vx = endPoint.x - startPoint.x;
 		double vy = endPoint.y - startPoint.y;
 		double vz = endPoint.z - startPoint.z;
-		double vSize = Math.sqrt(vx * vx + vy * vy + vz * vz);
+		final double vSize = Math.sqrt(vx * vx + vy * vy + vz * vz);
 		// Scale v to be a unit vector along the line:
 		vx /= vSize;
 		vy /= vSize;
@@ -70,14 +71,14 @@ public class PathDownsampler {
 		// distance from the line:
 		double maxDistanceSquared = 0;
 		int maxIndex = -1;
-		for(int i = 1; i < n - 1; ++i) {
-			SimplePoint midPoint = points.get(i);
-			double dx = midPoint.x - startPoint.x;
-			double dy = midPoint.y - startPoint.y;
-			double dz = midPoint.z - startPoint.z;
-			double projectedLength = dx*vx + dy*vy + dz*vz;
-			double dLengthSquared = dx*dx + dy*dy + dz*dz;
-			double distanceSquared = dLengthSquared - projectedLength * projectedLength;
+		for (int i = 1; i < n - 1; ++i) {
+			final SimplePoint midPoint = points.get(i);
+			final double dx = midPoint.x - startPoint.x;
+			final double dy = midPoint.y - startPoint.y;
+			final double dz = midPoint.z - startPoint.z;
+			final double projectedLength = dx * vx + dy * vy + dz * vz;
+			final double dLengthSquared = dx * dx + dy * dy + dz * dz;
+			final double distanceSquared = dLengthSquared - projectedLength * projectedLength;
 			if (distanceSquared > maxDistanceSquared) {
 				maxDistanceSquared = distanceSquared;
 				maxIndex = i;
@@ -85,10 +86,10 @@ public class PathDownsampler {
 		}
 		if (maxDistanceSquared > (permittedDeviation * permittedDeviation)) {
 			// Then divide at that point and recurse:
-			ArrayList<SimplePoint> firstPart = new ArrayList<SimplePoint>();
+			ArrayList<SimplePoint> firstPart = new ArrayList<>();
 			for (int i = 0; i <= maxIndex; ++i)
 				firstPart.add(points.get(i));
-			ArrayList<SimplePoint> secondPart = new ArrayList<SimplePoint>();
+			ArrayList<SimplePoint> secondPart = new ArrayList<>();
 			for (int i = maxIndex; i < n; ++i)
 				secondPart.add(points.get(i));
 			firstPart = downsample(firstPart, permittedDeviation);
@@ -98,7 +99,7 @@ public class PathDownsampler {
 			return firstPart;
 		} else {
 			// Otherwise just return the first and last points:
-			ArrayList<SimplePoint> result = new ArrayList<SimplePoint>();
+			final ArrayList<SimplePoint> result = new ArrayList<>();
 			result.add(startPoint);
 			result.add(endPoint);
 			return result;

@@ -35,21 +35,21 @@ import javax.swing.SwingUtilities;
 
 public class SwingSafeResult {
 
-	public static <T> T getResult( Callable<T> c ) {
+	public static <T> T getResult(final Callable<T> c) {
 
-		FutureTask<T> ft = new FutureTask<T>(c);
+		final FutureTask<T> ft = new FutureTask<>(c);
 
-		if( SwingUtilities.isEventDispatchThread() )
+		if (SwingUtilities.isEventDispatchThread())
 			ft.run();
 		else
 			SwingUtilities.invokeLater(ft);
 
-		while( true ) {
+		while (true) {
 			try {
 				return ft.get();
-			} catch( InterruptedException e ) {
+			} catch (final InterruptedException e) {
 				// just try again...
-			} catch( ExecutionException e ) {
+			} catch (final ExecutionException e) {
 				e.getCause().printStackTrace();
 				return null;
 			}

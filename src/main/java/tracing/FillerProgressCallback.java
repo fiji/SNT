@@ -29,6 +29,6 @@ package tracing;
 
 public interface FillerProgressCallback extends SearchProgressCallback {
 
-	public void maximumDistanceCompletelyExplored( SearchThread source, float f );
+	public void maximumDistanceCompletelyExplored(SearchThread source, float f);
 
 }

@@ -45,32 +45,34 @@ public class PathFitter implements Callable<Path> {
 		return succeeded;
 	}
 
-	public PathFitter( SimpleNeuriteTracer plugin, Path path, boolean showDetailedFittingResults ) {
+	public PathFitter(final SimpleNeuriteTracer plugin, final Path path, final boolean showDetailedFittingResults) {
 		this.plugin = plugin;
 		this.path = path;
 		this.fitterIndex = -1;
 		this.progress = null;
 		this.showDetailedFittingResults = showDetailedFittingResults;
-		if( path.isFittedVersionOfAnotherPath() )
+		if (path.isFittedVersionOfAnotherPath())
 			throw new RuntimeException("BUG: trying to fit a fitted path");
 	}
 
-	public void setProgressCallback( int fitterIndex, MultiTaskProgress progress ) {
+	public void setProgressCallback(final int fitterIndex, final MultiTaskProgress progress) {
 		this.fitterIndex = fitterIndex;
 		this.progress = progress;
 	}
 
+	@Override
 	public Path call() throws Exception {
-		Path fitted = path.fitCircles( 40, plugin.getImagePlus(), showDetailedFittingResults, plugin, fitterIndex, progress );
-		if( fitted == null ) {
+		final Path fitted = path.fitCircles(40, plugin.getImagePlus(), showDetailedFittingResults, plugin, fitterIndex,
+				progress);
+		if (fitted == null) {
 			succeeded = false;
 			return null;
-		} else {
-			succeeded = true;
-			path.setFitted(fitted);
-			path.setUseFitted(true, plugin);
-			return fitted;
 		}
+		succeeded = true;
+		fitted.setColor(path.getColor());
+		path.setFitted(fitted);
+		path.setUseFitted(true, plugin);
+		return fitted;
 	}
 
 }

@@ -31,21 +31,21 @@ public interface SearchProgressCallback {
 
 	/* How many points have we considered? */
 
-	public void pointsInSearch( SearchInterface source, int inOpen, int inClosed );
+	public void pointsInSearch(SearchInterface source, int inOpen, int inClosed);
 
-	/* Once finished is called, you should be able to get the
-	 * result from whatever means you've implemented,
-	 * e.g. TracerThreed.getResult() */
+	/*
+	 * Once finished is called, you should be able to get the result from
+	 * whatever means you've implemented, e.g. TracerThreed.getResult()
+	 */
 
-	public void finished( SearchInterface source, boolean success );
+	public void finished(SearchInterface source, boolean success);
 
-	/* This reports the current status of the thread, which may be:
+	/*
+	 * This reports the current status of the thread, which may be:
+	 *
+	 * SearchThread.RUNNING SearchThread.PAUSED SearchThread.STOPPING
+	 */
 
-	   SearchThread.RUNNING
-	   SearchThread.PAUSED
-	   SearchThread.STOPPING
-	*/
-
-	public void threadStatus( SearchInterface source, int currentStatus );
+	public void threadStatus(SearchInterface source, int currentStatus);
 
 }

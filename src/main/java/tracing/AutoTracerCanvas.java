@@ -33,8 +33,9 @@ import stacks.PaneOwner;
 @SuppressWarnings("serial")
 public class AutoTracerCanvas extends TracerCanvas {
 
-	public AutoTracerCanvas( ImagePlus imagePlus, PaneOwner owner, int plane, PathAndFillManager pathAndFillManager ) {
-		super( imagePlus, owner, plane, pathAndFillManager );
+	public AutoTracerCanvas(final ImagePlus imagePlus, final PaneOwner owner, final int plane,
+			final PathAndFillManager pathAndFillManager) {
+		super(imagePlus, owner, plane, pathAndFillManager);
 	}
 
 }

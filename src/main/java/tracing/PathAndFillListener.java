@@ -31,10 +31,10 @@ import java.util.HashSet;
 
 public interface PathAndFillListener {
 
-	void setPathList( String [] pathList, Path justAdded, boolean expandAll );
+	void setPathList(String[] pathList, Path justAdded, boolean expandAll);
 
-	void setFillList( String [] fillList );
+	void setFillList(String[] fillList);
 
-	void setSelectedPaths( HashSet<Path> selectedPathSet, Object source );
+	void setSelectedPaths(HashSet<Path> selectedPathSet, Object source);
 
 }

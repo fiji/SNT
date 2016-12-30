@@ -27,9 +27,6 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.io.SaveDialog;
-
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -41,6 +38,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.HashSet;
 
 import javax.swing.DefaultListModel;
@@ -52,22 +50,27 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import ij.IJ;
+import ij.io.SaveDialog;
+
 @SuppressWarnings("serial")
-public class FillWindow extends JFrame implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
+public class FillWindow extends JFrame
+		implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
 
 	protected SimpleNeuriteTracer plugin;
 	protected PathAndFillManager pathAndFillManager;
 
-	public FillWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin) {
-		this( pathAndFillManager, plugin, 200, 60 );
+	public FillWindow(final PathAndFillManager pathAndFillManager, final SimpleNeuriteTracer plugin) {
+		this(pathAndFillManager, plugin, 200, 60);
 	}
 
 	protected JScrollPane scrollPane;
 
-	protected JList fillList;
-	protected DefaultListModel listModel;
+	protected JList<String> fillList;
+	protected DefaultListModel<String> listModel;
 
 	protected JButton deleteFills;
 	protected JButton reloadFill;
@@ -95,7 +98,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 
 	protected JButton exportAsCSV;
 
-	public void setEnabledWhileFilling( ) {
+	public void setEnabledWhileFilling() {
 		assert SwingUtilities.isEventDispatchThread();
 		fillList.setEnabled(false);
 		deleteFills.setEnabled(false);
@@ -113,7 +116,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 		discardFill.setEnabled(true);
 	}
 
-	public void setEnabledWhileNotFilling( ) {
+	public void setEnabledWhileNotFilling() {
 		assert SwingUtilities.isEventDispatchThread();
 		fillList.setEnabled(true);
 		deleteFills.setEnabled(true);
@@ -131,7 +134,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 		discardFill.setEnabled(false);
 	}
 
-	public void setEnabledNone( ) {
+	public void setEnabledNone() {
 		assert SwingUtilities.isEventDispatchThread();
 		fillList.setEnabled(false);
 		deleteFills.setEnabled(false);
@@ -149,7 +152,8 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 		discardFill.setEnabled(false);
 	}
 
-	public FillWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin, int x, int y) {
+	public FillWindow(final PathAndFillManager pathAndFillManager, final SimpleNeuriteTracer plugin, final int x,
+			final int y) {
 		super("All Fills");
 		assert SwingUtilities.isEventDispatchThread();
 
@@ -157,126 +161,126 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 
 		this.plugin = plugin;
 		this.pathAndFillManager = pathAndFillManager;
-		setBounds(x,y,400,400);
+		setBounds(x, y, 350, 400);
 
 		setLayout(new GridBagLayout());
 
-		GridBagConstraints c = new GridBagConstraints();
+		final GridBagConstraints c = new GridBagConstraints();
 
-		listModel = new DefaultListModel();
-		fillList = new JList(listModel);
+		listModel = new DefaultListModel<>();
+		fillList = new JList<>(listModel);
 
 		scrollPane = new JScrollPane();
 		scrollPane.getViewport().add(fillList);
 
 		c.gridx = 0;
 		c.gridy = 0;
-		c.insets = new Insets( 8, 8, 1, 8 );
+		c.insets = new Insets(8, 8, 1, 8);
 		c.weightx = 1;
 		c.weighty = 1;
 		c.fill = GridBagConstraints.BOTH;
 
-		add( scrollPane, c );
+		add(scrollPane, c);
 
 		c.weightx = 0;
 		c.weighty = 0;
 
 		{
-			JPanel fillListCommandsPanel = new JPanel();
+			final JPanel fillListCommandsPanel = new JPanel();
 			fillListCommandsPanel.setLayout(new BorderLayout());
 
 			deleteFills = new JButton("Delete Fill(s)");
-			deleteFills.addActionListener( this );
-			fillListCommandsPanel.add(deleteFills,BorderLayout.WEST);
+			deleteFills.addActionListener(this);
+			fillListCommandsPanel.add(deleteFills, BorderLayout.WEST);
 
 			reloadFill = new JButton("Reload Fill");
-			reloadFill.addActionListener( this );
-			fillListCommandsPanel.add(reloadFill,BorderLayout.CENTER);
+			reloadFill.addActionListener(this);
+			fillListCommandsPanel.add(reloadFill, BorderLayout.EAST);
 
-			c.insets = new Insets( 1, 8, 8, 8 );
+			c.insets = new Insets(1, 8, 8, 8);
 			c.gridx = 0;
-			++ c.gridy;
+			++c.gridy;
 
-			add(fillListCommandsPanel,c);
+			add(fillListCommandsPanel, c);
 		}
 
 		{
 
-			JPanel fillingOptionsPanel = new JPanel();
-
+			final JPanel fillingOptionsPanel = new JPanel();
 			fillingOptionsPanel.setLayout(new GridBagLayout());
-
-			GridBagConstraints cf = new GridBagConstraints();
-
+			final GridBagConstraints cf = new GridBagConstraints();
 			cf.gridx = 0;
 			cf.gridy = 0;
-			cf.gridwidth = 4;
+			cf.gridwidth = 2;
 			cf.anchor = GridBagConstraints.LINE_START;
 			cf.fill = GridBagConstraints.HORIZONTAL;
+			cf.insets = new Insets(0, 0, 0, 0);
+
 			fillStatus = new JLabel("(Not filling at the moment.)");
-			fillingOptionsPanel.add(fillStatus,cf);
-
-			thresholdField = new JTextField("",20);
-			thresholdField.addActionListener(this);
-			cf.gridx = 0;
-			cf.gridy = 1;
-			cf.gridwidth = 2;
-			cf.fill = GridBagConstraints.NONE;
-			fillingOptionsPanel.add(thresholdField,cf);
-
-			maxThreshold = new JLabel("(0)                  ",JLabel.LEFT);
-			cf.gridx = 2;
-			cf.gridy = 1;
-			cf.gridwidth = 1;
-			cf.fill = GridBagConstraints.HORIZONTAL;
-			cf.anchor = GridBagConstraints.LINE_START;
-			fillingOptionsPanel.add(maxThreshold,cf);
-
-			setThreshold = new JButton("Set");
-			setThreshold.addActionListener(this);
-			cf.gridx = 0;
-			cf.gridy = 2;
-			cf.gridwidth = 1;
-			cf.fill = GridBagConstraints.NONE;
-			fillingOptionsPanel.add(setThreshold,cf);
-
-			setMaxThreshold = new JButton("Set Max");
-			setMaxThreshold.addActionListener(this);
-			cf.gridx = 1;
-			cf.gridy = 2;
-			fillingOptionsPanel.add(setMaxThreshold,cf);
-
-			view3D = new JButton("Create Image Stack from Fill");
-			view3D.addActionListener(this);
-			cf.gridx = 0;
-			cf.gridy = 3;
-			cf.gridwidth = 2;
-			cf.anchor = GridBagConstraints.LINE_START;
-			fillingOptionsPanel.add(view3D,cf);
-
-			maskNotReal = new JCheckBox("Create as Mask");
-			maskNotReal.addItemListener(this);
-			cf.gridx = 0;
-			cf.gridy = 4;
 			cf.gridwidth = 3;
-			cf.anchor = GridBagConstraints.LINE_START;
-			fillingOptionsPanel.add(maskNotReal,cf);
+			cf.fill = GridBagConstraints.REMAINDER;
+			fillingOptionsPanel.add(fillStatus, cf);
+			++cf.gridy;
+
+			cf.gridx = 0;
+			cf.gridwidth = 1;
+			cf.fill = GridBagConstraints.NONE;
+			fillingOptionsPanel.add(new JLabel("Threshold:"), cf);
+			thresholdField = new JTextField("", 5);
+			thresholdField.addActionListener(this);
+			cf.gridx = 1;
+			cf.gridwidth = 1;
+			cf.fill = GridBagConstraints.NONE;
+			fillingOptionsPanel.add(thresholdField, cf);
+
+			maxThreshold = new JLabel("(Max. not yet determined)", SwingConstants.LEFT);
+			cf.gridx = 2;
+			cf.fill = GridBagConstraints.REMAINDER;
+			fillingOptionsPanel.add(maxThreshold, cf);
+			++cf.gridy;
+
+			setThreshold = SNT.smallButton("Set");
+			setThreshold.addActionListener(this);
+			cf.gridx = 1;
+			cf.gridwidth = 1;
+			cf.fill = GridBagConstraints.NONE;
+			fillingOptionsPanel.add(setThreshold, cf);
+			setMaxThreshold = SNT.smallButton("Set Max");
+			setMaxThreshold.setEnabled(false);
+			setMaxThreshold.addActionListener(this);
+			cf.gridx = 2;
+			cf.fill = GridBagConstraints.REMAINDER;
+			fillingOptionsPanel.add(setMaxThreshold, cf);
+			cf.gridy++;
 
 			transparent = new JCheckBox("Transparent fill display (slow!)");
 			transparent.addItemListener(this);
-			cf.gridx = 0;
-			cf.gridy = 5;
-			cf.gridwidth = 3;
 			cf.anchor = GridBagConstraints.LINE_START;
-			fillingOptionsPanel.add(transparent,cf);
+			cf.gridx = 0;
+			cf.insets = new Insets(0, 0, 0, 0);
+			cf.gridwidth = 3;
+			cf.fill = GridBagConstraints.REMAINDER;
+			cf.gridy++;
+			fillingOptionsPanel.add(transparent, cf);
+
+			view3D = new JButton("Create Image Stack from Fill");
+			view3D.addActionListener(this);
+			cf.insets = new Insets(12, 0, 0, 0);
+			cf.gridy++;
+			fillingOptionsPanel.add(view3D, cf);
+
+			maskNotReal = new JCheckBox("Create as mask");
+			maskNotReal.addItemListener(this);
+			cf.insets = new Insets(0, 0, 0, 0);
+			cf.gridy++;
+			fillingOptionsPanel.add(maskNotReal, cf);
 
 			c.gridx = 0;
-			++ c.gridy;
-			c.insets = new Insets( 8, 8, 8, 8 );
+			++c.gridy;
+			c.insets = new Insets(8, 8, 8, 8);
 			c.fill = GridBagConstraints.NONE;
 			c.anchor = GridBagConstraints.LINE_START;
-			add(fillingOptionsPanel,c);
-
+			add(fillingOptionsPanel, c);
 
 			{
 				fillControlPanel = new JPanel();
@@ -296,187 +300,191 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 				fillControlPanel.add(discardFill);
 
 				c.gridx = 0;
-				++ c.gridy;
+				++c.gridy;
 				c.fill = GridBagConstraints.HORIZONTAL;
 				c.anchor = GridBagConstraints.CENTER;
 
-				add(fillControlPanel,c);
+				add(fillControlPanel, c);
 			}
 
-			++ c.gridy;
+			++c.gridy;
+			c.insets = new Insets(0, 0, 0, 0);
 			c.fill = GridBagConstraints.NONE;
 			exportAsCSV = new JButton("Export as CSV");
 			exportAsCSV.addActionListener(this);
-			add(exportAsCSV,c);
+			add(exportAsCSV, c);
 		}
 	}
 
 	@Override
-	public void setPathList( String [] pathList, Path justAdded, boolean expandAll ) { }
+	public void setPathList(final String[] pathList, final Path justAdded, final boolean expandAll) {
+	}
 
 	@Override
-	public void setFillList( final String [] newList ) {
+	public void setFillList(final String[] newList) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				listModel.removeAllElements();
-				for( int i = 0; i < newList.length; ++i )
-					listModel.addElement( newList[i] );
+				for (int i = 0; i < newList.length; ++i)
+					listModel.addElement(newList[i]);
 			}
 		});
 	}
 
 	@Override
-	public void setSelectedPaths( HashSet<Path> selectedPathSet, Object source ) {
+	public void setSelectedPaths(final HashSet<Path> selectedPathSet, final Object source) {
 		// This dialog doesn't deal with paths, so ignore this.
 	}
 
 	@Override
-	public void actionPerformed(ActionEvent ae) {
+	public void actionPerformed(final ActionEvent ae) {
 		assert SwingUtilities.isEventDispatchThread();
 
-		Object source = ae.getSource();
+		final Object source = ae.getSource();
 
-		if( source == deleteFills ) {
+		if (source == deleteFills) {
 
-			int [] selectedIndices = fillList.getSelectedIndices();
-			if( selectedIndices.length < 1 ) {
-				IJ.error("No fill was selected for deletion");
+			final int[] selectedIndices = fillList.getSelectedIndices();
+			if (selectedIndices.length < 1) {
+				SNT.error("No fill was selected for deletion.");
 				return;
 			}
-			pathAndFillManager.deleteFills( selectedIndices );
+			pathAndFillManager.deleteFills(selectedIndices);
 			plugin.repaintAllPanes();
 
-		} else if( source == reloadFill ) {
+		} else if (source == reloadFill) {
 
-			int [] selectedIndices = fillList.getSelectedIndices();
-			if( selectedIndices.length != 1 ) {
-				IJ.error("You must have a single fill selected in order to reload.");
+			final int[] selectedIndices = fillList.getSelectedIndices();
+			if (selectedIndices.length != 1) {
+				SNT.error("You must have a single fill selected in order to reload.");
 				return;
 			}
 			pathAndFillManager.reloadFill(selectedIndices[0]);
 
-		} else if( source == setMaxThreshold ) {
+		} else if (source == setMaxThreshold) {
 
-			plugin.setFillThreshold( maxThresholdValue );
+			plugin.setFillThreshold(maxThresholdValue);
 
-		} else if( source == setThreshold || source == thresholdField ) {
+		} else if (source == setThreshold || source == thresholdField) {
 
 			try {
-				double t = Double.parseDouble( thresholdField.getText() );
-				if( t < 0 ) {
-					IJ.error("The fill threshold cannot be negative.");
+				final double t = Double.parseDouble(thresholdField.getText());
+				if (t < 0) {
+					SNT.error("The fill threshold cannot be negative.");
 					return;
 				}
-				plugin.setFillThreshold( t );
-			} catch( NumberFormatException nfe ) {
-				IJ.error("The threshold '" + thresholdField.getText() + "' wasn't a valid number.");
+				plugin.setFillThreshold(t);
+			} catch (final NumberFormatException nfe) {
+				SNT.error("The threshold '" + thresholdField.getText() + "' wasn't a valid number.");
 				return;
 			}
 
-		} else if( source == discardFill ) {
+		} else if (source == discardFill) {
 
 			plugin.discardFill();
 
-		} else if( source == saveFill ) {
+		} else if (source == saveFill) {
 
 			plugin.saveFill();
 
-		} else if( source == pauseOrRestartFilling ) {
+		} else if (source == pauseOrRestartFilling) {
 
 			plugin.pauseOrRestartFilling();
 
-		} else if( source == view3D ) {
+		} else if (source == view3D) {
 
-			plugin.viewFillIn3D( ! maskNotReal.isSelected() );
+			plugin.viewFillIn3D(!maskNotReal.isSelected());
 
-		} else if( source == exportAsCSV ) {
+		} else if (source == exportAsCSV) {
 
-			SaveDialog sd = new SaveDialog("Export fill summary as...",
-						       "fills",
-						       ".csv");
+			final SaveDialog sd = new SaveDialog("Export fill summary as...", "fills", ".csv");
 
-			if(sd.getFileName()==null) {
+			if (sd.getFileName() == null) {
 				return;
 			}
 
-			File saveFile = new File( sd.getDirectory(),
-						  sd.getFileName() );
-			if ((saveFile!=null)&&saveFile.exists()) {
-				if (!IJ.showMessageWithCancel(
-					    "Export data...", "The file "+
-					    saveFile.getAbsolutePath()+" already exists.\n"+
-					    "Do you want to replace it?"))
+			final File saveFile = new File(sd.getDirectory(), sd.getFileName());
+			if (saveFile.exists()) {
+				if (!IJ.showMessageWithCancel("Export data...",
+						"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?"))
 					return;
 			}
 
-			IJ.showStatus("Exporting CSV data to "+saveFile.getAbsolutePath());
+			IJ.showStatus("Exporting CSV data to " + saveFile.getAbsolutePath());
 
 			try {
-				pathAndFillManager.exportFillsAsCSV( saveFile );
+				pathAndFillManager.exportFillsAsCSV(saveFile);
 
-			} catch( IOException ioe) {
-				IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
+			} catch (final IOException ioe) {
+				SNT.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;
 			}
 
 		} else {
-			IJ.error("BUG: FillWindow received an event from an unknown source");
+			SNT.error("BUG: FillWindow received an event from an unknown source.");
 		}
 
 	}
 
 	@Override
-	public void itemStateChanged(ItemEvent ie) {
+	public void itemStateChanged(final ItemEvent ie) {
 		assert SwingUtilities.isEventDispatchThread();
-		if( ie.getSource() == transparent )
-			plugin.setFillTransparent( transparent.isSelected() );
+		if (ie.getSource() == transparent)
+			plugin.setFillTransparent(transparent.isSelected());
 	}
 
-	public void thresholdChanged( final double f ) {
+	protected DecimalFormat df4 = new DecimalFormat("#.0000");
+
+	public void thresholdChanged(final double f) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				assert SwingUtilities.isEventDispatchThread();
-				thresholdField.setText(""+f);
+				thresholdField.setText(df4.format(f));
 			}
 		});
 	}
 
 	@Override
-	public void maximumDistanceCompletelyExplored( SearchThread source, final float f ) {
+	public void maximumDistanceCompletelyExplored(final SearchThread source, final float f) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
-				maxThreshold.setText("("+f+")");
+				maxThreshold.setText("(Max: " + df4.format(f) + ")");
 				maxThresholdValue = f;
+				setMaxThreshold.setEnabled(true);
 			}
 		});
 	}
 
 	@Override
-	public void pointsInSearch( SearchInterface source, int inOpen, int inClosed ) {
+	public void pointsInSearch(final SearchInterface source, final int inOpen, final int inClosed) {
 		// Do nothing...
 	}
 
 	@Override
-	public void finished( SearchInterface source, boolean success ) {
+	public void finished(final SearchInterface source, final boolean success) {
 		// Do nothing...
 	}
 
 	@Override
-	public void threadStatus( SearchInterface source, final int currentStatus ) {
+	public void threadStatus(final SearchInterface source, final int currentStatus) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
-				switch(currentStatus) {
-				case FillerThread.STOPPING:
+				switch (currentStatus) {
+				case SearchThread.STOPPING:
 					pauseOrRestartFilling.setText("Stopped");
 					pauseOrRestartFilling.setEnabled(false);
 					saveFill.setEnabled(false);
 
 					break;
-				case FillerThread.PAUSED:
+				case SearchThread.PAUSED:
 					pauseOrRestartFilling.setText("Continue");
 					saveFill.setEnabled(true);
 					break;
-				case FillerThread.RUNNING:
+				case SearchThread.RUNNING:
 					pauseOrRestartFilling.setText("Pause");
 					saveFill.setEnabled(false);
 					break;
@@ -485,6 +493,5 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 			}
 		});
 	}
-
 
 }

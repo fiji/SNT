@@ -33,47 +33,48 @@ package tracing;
 public class PointInImage {
 
 	public double x, y, z;
-	public PointInImage( double x, double y, double z ) {
-		this.x = x; this.y = y; this.z = z;
+
+	public PointInImage(final double x, final double y, final double z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
 	}
 
 	// You can optionally set this value:
 	public Path onPath = null;
 
-	public double distanceSquaredTo( double ox,
-					 double oy,
-					 double oz ) {
-		double xdiff = x - ox;
-		double ydiff = y - oy;
-		double zdiff = z - oz;
+	public double distanceSquaredTo(final double ox, final double oy, final double oz) {
+		final double xdiff = x - ox;
+		final double ydiff = y - oy;
+		final double zdiff = z - oz;
 		return xdiff * xdiff + ydiff * ydiff + zdiff * zdiff;
 	}
 
-	public double distanceSquaredTo( PointInImage o ) {
-		return distanceSquaredTo( o.x, o.y, o.z );
+	public double distanceSquaredTo(final PointInImage o) {
+		return distanceSquaredTo(o.x, o.y, o.z);
 	}
 
-	public double distanceTo( PointInImage o ) {
-		double xdiff = x - o.x;
-		double ydiff = y - o.y;
-		double zdiff = z - o.z;
-		return Math.sqrt( xdiff * xdiff + ydiff * ydiff + zdiff * zdiff );
+	public double distanceTo(final PointInImage o) {
+		final double xdiff = x - o.x;
+		final double ydiff = y - o.y;
+		final double zdiff = z - o.z;
+		return Math.sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
 	}
 
 	@Override
 	public String toString() {
-		return "( "+x+", "+y+", "+z+" ) [onPath "+onPath+"]";
+		return "( " + x + ", " + y + ", " + z + " ) [onPath " + onPath + "]";
 	}
 
-	public PointInImage transform( PathTransformer transformer ) {
-		double [] result = new double [3];
-		transformer.transformPoint( x, y, z, result );
-		return new PointInImage( result[0], result[1], result[2] );
+	public PointInImage transform(final PathTransformer transformer) {
+		final double[] result = new double[3];
+		transformer.transformPoint(x, y, z, result);
+		return new PointInImage(result[0], result[1], result[2]);
 	}
 
 	public boolean isReal() {
-		return ! (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z) ||
-			  Double.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z));
+		return !(Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z) || Double.isInfinite(x) || Double.isInfinite(y)
+				|| Double.isInfinite(z));
 	}
 
 }

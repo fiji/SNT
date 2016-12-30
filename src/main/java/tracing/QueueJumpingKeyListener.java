@@ -27,13 +27,13 @@
 
 package tracing;
 
-import ij.IJ;
-
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import ij.IJ;
 
 public class QueueJumpingKeyListener implements KeyListener {
 
@@ -41,125 +41,141 @@ public class QueueJumpingKeyListener implements KeyListener {
 	static final protected boolean verbose = SimpleNeuriteTracer.verbose;
 	protected InteractiveTracerCanvas canvas;
 
-	ArrayList<KeyListener> listeners = new ArrayList<KeyListener>();
+	ArrayList<KeyListener> listeners = new ArrayList<>();
 
-	public QueueJumpingKeyListener( SimpleNeuriteTracer tracerPlugin, InteractiveTracerCanvas canvas) {
+	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin, final InteractiveTracerCanvas canvas) {
 		this.tracerPlugin = tracerPlugin;
 		this.canvas = canvas;
 	}
 
-	public void keyPressed(KeyEvent e) {
+	@Override
+	public void keyPressed(final KeyEvent e) {
 
-		if( ! tracerPlugin.isReady() )
+		if (!tracerPlugin.isReady())
 			return;
 
-		int keyCode = e.getKeyCode();
-		char keyChar = e.getKeyChar();
+		final int keyCode = e.getKeyCode();
+		final char keyChar = e.getKeyChar();
 
-		boolean mac = IJ.isMacintosh();
+		final boolean mac = IJ.isMacintosh();
 
-		boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
-		boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT : keyCode == KeyEvent.VK_CONTROL;
+		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
+		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT : keyCode == KeyEvent.VK_CONTROL;
 
-		int modifiers = e.getModifiersEx();
-		boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
-		boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
-		boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
+		final int modifiers = e.getModifiersEx();
+		final boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
+		final boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
+		final boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 
-		if (verbose) System.out.println("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode)
-						+ ") keyChar=\"" + keyChar + "\" (" + (int)keyChar + ") "
-						+ KeyEvent.getKeyModifiersText(canvas.getModifiers()));
+		if (verbose)
+			SNT.log("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode) + ") keyChar=\"" + keyChar + "\" ("
+					+ (int) keyChar + ") " + KeyEvent.getKeyModifiersText(canvas.getModifiers()));
 
-		if( keyChar == 'y' || keyChar == 'Y' ) {
+		if (keyChar == 'y' || keyChar == 'Y') {
 
-			// if (verbose) System.out.println( "Yes, running confirmPath" );
-			tracerPlugin.confirmTemporary( );
+			// if (verbose) SNT.log( "Yes, running confirmPath" );
+			tracerPlugin.confirmTemporary();
 			e.consume();
 
-		} else if( keyCode == KeyEvent.VK_ESCAPE ) {
+		} else if (keyCode == KeyEvent.VK_ESCAPE) {
 
-			// if (verbose) System.out.println( "Yes, running cancelPath+" );
-			tracerPlugin.cancelTemporary( );
+			// if (verbose) SNT.log( "Yes, running cancelSearch+" );
+			tracerPlugin.resultsDialog.cancelSearch.doClick();
 			e.consume();
 
-		} else if( keyChar == 'n' || keyChar == 'N' ) {
+		} else if (keyChar == 'n' || keyChar == 'N') {
 
-			tracerPlugin.cancelTemporary( );
+			tracerPlugin.cancelTemporary();
 			e.consume();
 
-		} else if( keyChar == 'f' || keyChar == 'F' ) {
+		} else if (keyChar == 'c' || keyChar == 'C') {
 
-			// if (verbose) System.out.println( "Finalizing that path" );
-			tracerPlugin.finishedPath( );
+			tracerPlugin.cancelPath();
 			e.consume();
 
-		} else if( keyChar == 'v' || keyChar == 'V' ) {
+		} else if (keyChar == 'f' || keyChar == 'F') {
 
-			// if (verbose) System.out.println( "View paths as a stack" );
-			tracerPlugin.makePathVolume( );
+			// if (verbose) SNT.log( "Finalizing that path" );
+			tracerPlugin.finishedPath();
 			e.consume();
 
-		} else if( keyChar == '5' ) {
+		} else if (keyChar == 'v' || keyChar == 'V') {
+
+			// if (verbose) SNT.log( "View paths as a stack" );
+			tracerPlugin.makePathVolume();
+			e.consume();
+
+		} else if (keyChar == '5') {
 
 			canvas.toggleJustNearSlices();
+			tracerPlugin.updateViewPathChoice();
 			e.consume();
 
-		} else if( keyChar == 'm' || keyChar == 'M' ) {
+		} else if (keyChar == 'm' || keyChar == 'M') {
 
 			canvas.clickAtMaxPoint();
 			e.consume();
 
-		} else if( keyChar == 'g' || keyChar == 'G' ) {
+		} else if (keyChar == 's' || keyChar == 's') {
 
-			canvas.selectNearestPathToMousePointer( shift_down || control_down );
+			tracerPlugin.toogleSnapCursor();
 			e.consume();
 
-		} else if( shift_pressed || join_modifier_pressed ) {
+		} else if (keyChar == 'g' || keyChar == 'G') {
 
-			/* This case is just so that when someone
-			   starts holding down the modified they
-			   immediately see the effect, rather than
-			   having to wait for the next mouse move
-			   event. */
+			canvas.selectNearestPathToMousePointer(shift_down || control_down);
+			e.consume();
 
-			canvas.fakeMouseMoved( shift_pressed, join_modifier_pressed  );
+		} else if (shift_pressed || join_modifier_pressed) {
+
+			/*
+			 * This case is just so that when someone starts holding down the
+			 * modified they immediately see the effect, rather than having to
+			 * wait for the next mouse move event.
+			 */
+
+			canvas.fakeMouseMoved(shift_pressed, join_modifier_pressed);
 			e.consume();
 		}
 
-		if( shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A) ) {
+		if (shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A)) {
 			canvas.startShollAnalysis();
 			e.consume();
 		}
 
-		for(KeyListener kl : listeners) {
-			if( e.isConsumed() )
+		for (final KeyListener kl : listeners) {
+			if (e.isConsumed())
 				break;
 			kl.keyPressed(e);
 		}
 
 	}
 
-	public void keyReleased(KeyEvent e) {
-		for(KeyListener kl : listeners) {
-			if( e.isConsumed() )
+	@Override
+	public void keyReleased(final KeyEvent e) {
+		for (final KeyListener kl : listeners) {
+			if (e.isConsumed())
 				break;
 			kl.keyReleased(e);
 		}
 	}
 
-	public void keyTyped(KeyEvent e) {
-		for(KeyListener kl : listeners) {
-			if( e.isConsumed() )
+	@Override
+	public void keyTyped(final KeyEvent e) {
+		for (final KeyListener kl : listeners) {
+			if (e.isConsumed())
 				break;
 			kl.keyTyped(e);
 		}
 	}
 
-	/** This method should add the other key listeners in
-	    'laterKeyListeners' that will be called for 'source' if
-	    this key listener isn't interested in the key press. */
-	public void addOtherKeyListeners(KeyListener [] laterKeyListeners) {
-		ArrayList<KeyListener> newListeners = new ArrayList<KeyListener>(Arrays.asList(laterKeyListeners));
+	/**
+	 * This method should add the other key listeners in 'laterKeyListeners'
+	 * that will be called for 'source' if this key listener isn't interested in
+	 * the key press.
+	 */
+	public void addOtherKeyListeners(final KeyListener[] laterKeyListeners) {
+		final ArrayList<KeyListener> newListeners = new ArrayList<>(Arrays.asList(laterKeyListeners));
 		listeners.addAll(newListeners);
 	}
 

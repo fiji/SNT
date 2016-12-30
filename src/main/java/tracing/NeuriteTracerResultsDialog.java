@@ -489,7 +489,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		assert SwingUtilities.isEventDispatchThread();
 		loadMenuItem.setEnabled(false);
 		loadLabelsMenuItem.setEnabled(false);
-		xyCanvasMenuItem.setEnabled(false);
 		keepSegment.setEnabled(false);
 		junkSegment.setEnabled(false);
 		cancelSearch.setEnabled(false);
@@ -1418,7 +1417,12 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		} else if (source == pathsToROIsMenuItem && !noPathsError()) {
 
-			final GenericDialog gd = new GenericDialog("Paths to ROIs");
+			if (!pathAndFillManager.anySelected()) {
+				SNT.error("No paths selected.");
+				return;
+			}
+
+			final GenericDialog gd = new GenericDialog("Selected Paths to ROIs");
 
 			final int[] PLANES_ID = { ThreePanes.XY_PLANE, ThreePanes.XZ_PLANE, ThreePanes.ZY_PLANE };
 			final String[] PLANES_STRING = { "XY_View", "XZ_View", "ZY_View" };
@@ -1932,6 +1936,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 				final Thread newThread = new Thread(new Runnable() {
 					@Override
 					public void run() {
+						if (noPathsError())
+							return;
 						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
 						modKey += "+Shift";
 						final String url1 = Sholl_Analysis.URL + "#Analysis_of_Traced_Cells";

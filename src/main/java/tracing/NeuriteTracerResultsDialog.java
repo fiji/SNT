@@ -1905,6 +1905,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		helpMenu.add(mi);
 		mi = menuItemTrigerringURL("3D interaction", URL + ":_3D_Interaction");
 		helpMenu.add(mi);
+		mi = menuItemTrigerringURL("Tubular Geodesics", URL + ":_Tubular_Geodesics");
+		helpMenu.add(mi);
 		helpMenu.addSeparator();
 		mi = menuItemTrigerringURL("List of shortcuts", URL + ":_Key_Shortcuts");
 		helpMenu.add(mi);

@@ -39,98 +39,99 @@ public class Load_Auto_Traces implements PlugIn, TraceLoaderListener {
 	float spacing_y = Float.MIN_VALUE;
 	float spacing_z = Float.MIN_VALUE;
 
-	byte [][] values = null;
+	byte[][] values = null;
 
-	public void gotVertex( int vertexIndex,
-			       float x_scaled, float y_scaled, float z_scaled,
-			       int x_image, int y_image, int z_image ) {
+	@Override
+	public void gotVertex(final int vertexIndex, final float x_scaled, final float y_scaled, final float z_scaled,
+			final int x_image, final int y_image, final int z_image) {
 
-		if( values == null ) {
-			if( width < 0 ||
-			    height < 0 ||
-			    depth < 0 ||
-			    spacing_x == Float.MIN_VALUE ||
-			    spacing_y == Float.MIN_VALUE ||
-			    spacing_z == Float.MIN_VALUE ) {
+		if (values == null) {
+			if (width < 0 || height < 0 || depth < 0 || spacing_x == Float.MIN_VALUE || spacing_y == Float.MIN_VALUE
+					|| spacing_z == Float.MIN_VALUE) {
 
 				throw new RuntimeException("Some metadata was missing from the comments before the first vertex.");
 			}
 			values = new byte[depth][];
-			for( int z = 0; z < depth; ++z )
-				values[z] = new byte[width*height];
+			for (int z = 0; z < depth; ++z)
+				values[z] = new byte[width * height];
 		}
 
-		if( z_image >= depth ) {
-			System.out.println("z_image: "+z_image+" was too large for depth: "+depth);
-			System.out.println("z_scaled was: "+z_scaled);
+		if (z_image >= depth) {
+			System.out.println("z_image: " + z_image + " was too large for depth: " + depth);
+			System.out.println("z_scaled was: " + z_scaled);
 		}
 
-		values[z_image][y_image*width+x_image] = (byte)255;
+		values[z_image][y_image * width + x_image] = (byte) 255;
 	}
 
-	public void gotLine( int fromVertexIndex, int toVertexIndex ) {
+	@Override
+	public void gotLine(final int fromVertexIndex, final int toVertexIndex) {
 		// Do nothing...
 	}
 
-	public void gotWidth( int width ) {
+	@Override
+	public void gotWidth(final int width) {
 		this.width = width;
 	}
 
-	public void gotHeight( int height ) {
+	@Override
+	public void gotHeight(final int height) {
 		this.height = height;
 	}
 
-	public void gotDepth( int depth ) {
+	@Override
+	public void gotDepth(final int depth) {
 		this.depth = depth;
 	}
 
-	public void gotSpacingX( float spacing_x ) {
+	@Override
+	public void gotSpacingX(final float spacing_x) {
 		this.spacing_x = spacing_x;
 	}
 
-	public void gotSpacingY( float spacing_y ) {
+	@Override
+	public void gotSpacingY(final float spacing_y) {
 		this.spacing_y = spacing_y;
 	}
 
-	public void gotSpacingZ( float spacing_z ) {
+	@Override
+	public void gotSpacingZ(final float spacing_z) {
 		this.spacing_z = spacing_z;
 	}
 
-	public void run( String ignored ) {
+	@Override
+	public void run(final String ignored) {
 
-                OpenDialog od;
+		OpenDialog od;
 
-                od = new OpenDialog("Select traces.obj file...",
-                                    null,
-                                    null );
+		od = new OpenDialog("Select traces.obj file...", null, null);
 
-                String fileName = od.getFileName();
-                String directory = od.getDirectory();
+		final String fileName = od.getFileName();
+		final String directory = od.getDirectory();
 
-                if( fileName == null )
+		if (fileName == null)
 			return;
 
-		System.out.println("Got "+fileName);
+		System.out.println("Got " + fileName);
 
-		boolean success = SinglePathsGraph.loadWithListener( directory + fileName, this );
+		final boolean success = SinglePathsGraph.loadWithListener(directory + fileName, this);
 
-		if( ! success ) {
-			IJ.error( "Loading " + directory + fileName );
+		if (!success) {
+			IJ.error("Loading " + directory + fileName);
 			return;
 		}
 
-		ImageStack stack = new ImageStack(width,height);
+		final ImageStack stack = new ImageStack(width, height);
 
-		for( int z = 0; z < depth; ++z ) {
-			ByteProcessor bp = new ByteProcessor(width,height);
+		for (int z = 0; z < depth; ++z) {
+			final ByteProcessor bp = new ByteProcessor(width, height);
 			bp.setPixels(values[z]);
-			stack.addSlice("",bp);
+			stack.addSlice("", bp);
 		}
 
-		ImagePlus imagePlus=new ImagePlus(fileName,stack);
+		final ImagePlus imagePlus = new ImagePlus(fileName, stack);
 		imagePlus.show();
 
 	}
 
 }
-

@@ -27,13 +27,12 @@
 
 package tracing;
 
-import ij.ImagePlus;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.util.ArrayList;
 
+import ij.ImagePlus;
 import stacks.PaneOwner;
 import stacks.ThreePanesCanvas;
 
@@ -42,33 +41,31 @@ public class TracerCanvas extends ThreePanesCanvas {
 
 	protected PathAndFillManager pathAndFillManager;
 
-	public TracerCanvas( ImagePlus imagePlus,
-			     PaneOwner owner,
-			     int plane,
-			     PathAndFillManager pathAndFillManager ) {
+	public TracerCanvas(final ImagePlus imagePlus, final PaneOwner owner, final int plane,
+			final PathAndFillManager pathAndFillManager) {
 
-		super( imagePlus, owner, plane );
+		super(imagePlus, owner, plane);
 		this.pathAndFillManager = pathAndFillManager;
 	}
 
-	ArrayList<SearchInterface> searchThreads = new ArrayList<SearchInterface>();
+	ArrayList<SearchInterface> searchThreads = new ArrayList<>();
 
-	void addSearchThread( SearchInterface s ) {
+	void addSearchThread(final SearchInterface s) {
 		synchronized (searchThreads) {
-			searchThreads.add( s );
+			searchThreads.add(s);
 		}
 	}
 
-	void removeSearchThread( SearchInterface s ) {
+	void removeSearchThread(final SearchInterface s) {
 		synchronized (searchThreads) {
 			int index = -1;
-			for( int i = 0; i < searchThreads.size(); ++i ) {
-				SearchInterface inList = searchThreads.get(i);
-				if( s == inList )
+			for (int i = 0; i < searchThreads.size(); ++i) {
+				final SearchInterface inList = searchThreads.get(i);
+				if (s == inList)
 					index = i;
 			}
-			if( index >= 0 )
-				searchThreads.remove( index );
+			if (index >= 0)
+				searchThreads.remove(index);
 		}
 	}
 
@@ -76,59 +73,66 @@ public class TracerCanvas extends ThreePanesCanvas {
 	int eitherSide;
 
 	@Override
-	protected void drawOverlay(Graphics g) {
+	protected void drawOverlay(final Graphics g) {
 
 		/*
-		int current_z = -1;
+		 * int current_z = -1;
+		 *
+		 * if( plane == ThreePanes.XY_PLANE ) { current_z =
+		 * imp.getCurrentSlice() - 1; }
+		 */
 
-		if( plane == ThreePanes.XY_PLANE ) {
-			current_z = imp.getCurrentSlice() - 1;
-		}
-		*/
-
-		int current_z = imp.getCurrentSlice() - 1;
+		final int current_z = imp.getCurrentSlice() - 1;
 
 		synchronized (searchThreads) {
-			for( SearchInterface st : searchThreads )
-				st.drawProgressOnSlice( plane, current_z, this, g );
+			for (final SearchInterface st : searchThreads)
+				st.drawProgressOnSlice(plane, current_z, this, g);
 		}
 
-		SimpleNeuriteTracer plugin = pathAndFillManager.plugin;
+		final SimpleNeuriteTracer plugin = pathAndFillManager.plugin;
 
-		boolean showOnlySelectedPaths = plugin.getShowOnlySelectedPaths();
+		final boolean showOnlySelectedPaths = plugin.getShowOnlySelectedPaths();
 
-		Color selectedColor = plugin.selectedColor;
-		Color deselectedColor = plugin.deselectedColor;
+		final Color selectedColor = plugin.selectedColor;
+		final Color deselectedColor = plugin.deselectedColor;
 
-		boolean drawDiametersXY = plugin.getDrawDiametersXY();
+		final boolean drawDiametersXY = plugin.getDrawDiametersXY();
 
-		if( pathAndFillManager != null ) {
-			for( int i = 0; i < pathAndFillManager.size(); ++i ) {
+		if (pathAndFillManager != null) {
+			for (int i = 0; i < pathAndFillManager.size(); ++i) {
 
-				Path p = pathAndFillManager.getPath(i);
-				if( p == null )
+				final Path p = pathAndFillManager.getPath(i);
+				if (p == null)
 					continue;
 
-				if( p.fittedVersionOf != null )
+				if (p.fittedVersionOf != null)
 					continue;
 
 				Path drawPath = p;
 
-				// If the path suggests using the fitted version, draw that instead:
-				if( p.useFitted ) {
+				// If the path suggests using the fitted version, draw that
+				// instead:
+				if (p.useFitted) {
 					drawPath = p.fitted;
 				}
 
-				Color color = deselectedColor;
-				if( pathAndFillManager.isSelected(p) ) {
-					color = selectedColor;
-				} else if( showOnlySelectedPaths )
+				final boolean isSelected = pathAndFillManager.isSelected(p);
+				if (!isSelected && showOnlySelectedPaths)
 					continue;
 
-				if( just_near_slices ) {
-					drawPath.drawPathAsPoints( this, g, color, plane, drawDiametersXY, current_z, eitherSide );
-				} else
-					drawPath.drawPathAsPoints( this, g, color, plane, drawDiametersXY );
+				final boolean customColor = (drawPath.hasCustomColor && plugin.displayCustomPathColors);
+				Color color = deselectedColor;
+				if (isSelected && !customColor)
+					color = selectedColor;
+				else if (customColor)
+					color = drawPath.getColor();
+
+				if (just_near_slices) {
+					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected && customColor), drawDiametersXY,
+							current_z, eitherSide);
+				} else {
+					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected && customColor), drawDiametersXY);
+				}
 			}
 		}
 
@@ -146,34 +150,32 @@ public class TracerCanvas extends ThreePanesCanvas {
 
 	private void resetBackBuffer() {
 
-		if(backBufferGraphics!=null){
+		if (backBufferGraphics != null) {
 			backBufferGraphics.dispose();
-			backBufferGraphics=null;
+			backBufferGraphics = null;
 		}
 
-		if(backBufferImage!=null){
+		if (backBufferImage != null) {
 			backBufferImage.flush();
-			backBufferImage=null;
+			backBufferImage = null;
 		}
 
-		backBufferWidth=getSize().width;
-		backBufferHeight=getSize().height;
+		backBufferWidth = getSize().width;
+		backBufferHeight = getSize().height;
 
-		backBufferImage=createImage(backBufferWidth,backBufferHeight);
-	        backBufferGraphics=backBufferImage.getGraphics();
+		backBufferImage = createImage(backBufferWidth, backBufferHeight);
+		backBufferGraphics = backBufferImage.getGraphics();
 	}
 
 	@Override
-	public void paint(Graphics g) {
+	public void paint(final Graphics g) {
 
-		if(backBufferWidth!=getSize().width ||
-		   backBufferHeight!=getSize().height ||
-		   backBufferImage==null ||
-		   backBufferGraphics==null)
+		if (backBufferWidth != getSize().width || backBufferHeight != getSize().height || backBufferImage == null
+				|| backBufferGraphics == null)
 			resetBackBuffer();
 
 		super.paint(backBufferGraphics);
 		drawOverlay(backBufferGraphics);
-		g.drawImage(backBufferImage,0,0,this);
+		g.drawImage(backBufferImage, 0, 0, this);
 	}
 }

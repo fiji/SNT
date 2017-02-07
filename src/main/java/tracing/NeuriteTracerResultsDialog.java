@@ -27,27 +27,18 @@
 
 package tracing;
 
-import sc.fiji.skeletonize3D.Skeletonize3D_;
-import features.SigmaPalette;
-import ij.IJ;
-import ij.ImageListener;
-import ij.ImagePlus;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.WaitForUserDialog;
-import ij.gui.YesNoCancelDialog;
-import ij.io.FileInfo;
-import ij.io.OpenDialog;
-import ij.io.SaveDialog;
-import ij.measure.Calibration;
-
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -60,6 +51,7 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -71,15 +63,41 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JSpinner.DefaultEditor;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
+import features.SigmaPalette;
+import ij.IJ;
+import ij.ImageListener;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.HTMLDialog;
+import ij.gui.Overlay;
+import ij.gui.Roi;
+import ij.gui.StackWindow;
+import ij.gui.YesNoCancelDialog;
+import ij.io.FileInfo;
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
+import ij.measure.Calibration;
+import ij.measure.ResultsTable;
+import ij.plugin.frame.RoiManager;
+import ij3d.ImageWindow3D;
+import sholl.Sholl_Analysis;
+import stacks.ThreePanes;
 
 @SuppressWarnings("serial")
-public class NeuriteTracerResultsDialog
-	extends JDialog
-	implements ActionListener, WindowListener, ItemListener, TextListener, SigmaPalette.SigmaPaletteListener, ImageListener {
+public class NeuriteTracerResultsDialog extends JDialog implements ActionListener, WindowListener, ItemListener,
+		TextListener, SigmaPalette.SigmaPaletteListener, ImageListener, ChangeListener {
 
 	public static final boolean verbose = SimpleNeuriteTracer.verbose;
 
@@ -98,43 +116,41 @@ public class NeuriteTracerResultsDialog
 	protected JMenuItem exportAllSWCMenuItem;
 	protected JMenuItem quitMenuItem;
 
-	protected JMenuItem analyzeSkeletonMenuItem;
 	protected JMenuItem makeLineStackMenuItem;
+	protected JMenuItem pathsToROIsMenuItem;
 	protected JMenuItem exportCSVMenuItemAgain;
 	protected JMenuItem sendToTrakEM2;
 
 	protected JCheckBoxMenuItem mipOverlayMenuItem;
 	protected JCheckBoxMenuItem drawDiametersXYMenuItem;
+	protected JCheckBoxMenuItem autoActivationMenuItem;
+
+	protected JCheckBoxMenuItem xyCanvasMenuItem;
+	protected JCheckBoxMenuItem zyCanvasMenuItem;
+	protected JCheckBoxMenuItem xzCanvasMenuItem;
+	protected JCheckBoxMenuItem threeDViewerMenuItem;
+	protected JMenuItem arrangeWindowsMenuItem;
 
 	// These are the states that the UI can be in:
 
-	static final int WAITING_TO_START_PATH    = 0;
-	static final int PARTIAL_PATH             = 1;
-	static final int SEARCHING                = 2;
-	static final int QUERY_KEEP               = 3;
-	static final int LOGGING_POINTS           = 4;
-	static final int DISPLAY_EVS              = 5;
-	static final int FILLING_PATHS            = 6;
-	static final int CALCULATING_GAUSSIAN     = 7;
-	static final int WAITING_FOR_SIGMA_POINT  = 8;
+	static final int WAITING_TO_START_PATH = 0;
+	static final int PARTIAL_PATH = 1;
+	static final int SEARCHING = 2;
+	static final int QUERY_KEEP = 3;
+	static final int LOGGING_POINTS = 4;
+	static final int DISPLAY_EVS = 5;
+	static final int FILLING_PATHS = 6;
+	static final int CALCULATING_GAUSSIAN = 7;
+	static final int WAITING_FOR_SIGMA_POINT = 8;
 	static final int WAITING_FOR_SIGMA_CHOICE = 9;
-	static final int SAVING                   = 10;
-	static final int LOADING                  = 11;
-	static final int FITTING_PATHS            = 12;
+	static final int SAVING = 10;
+	static final int LOADING = 11;
+	static final int FITTING_PATHS = 12;
+	static final int IMAGE_CLOSED = 13;
 
-	static final String [] stateNames = { "WAITING_TO_START_PATH",
-					      "PARTIAL_PATH",
-					      "SEARCHING",
-					      "QUERY_KEEP",
-					      "LOGGING_POINTS",
-					      "DISPLAY_EVS",
-					      "FILLING_PATHS",
-					      "CALCULATING_GAUSSIAN",
-					      "WAITING_FOR_SIGMA_POINT",
-					      "WAITING_FOR_SIGMA_CHOICE",
-					      "SAVING",
-					      "LOADING",
-					      "FITTING_PATHS" };
+	static final String[] stateNames = { "WAITING_TO_START_PATH", "PARTIAL_PATH", "SEARCHING", "QUERY_KEEP",
+			"LOGGING_POINTS", "DISPLAY_EVS", "FILLING_PATHS", "CALCULATING_GAUSSIAN", "WAITING_FOR_SIGMA_POINT",
+			"WAITING_FOR_SIGMA_CHOICE", "SAVING", "LOADING", "FITTING_PATHS", "IMAGE CLOSED" };
 
 	static final String SEARCHING_STRING = "Searching for path between points...";
 
@@ -155,26 +171,23 @@ public class NeuriteTracerResultsDialog
 	protected JButton completePath;
 	protected JButton cancelPath;
 
-	protected JComboBox viewPathChoice;
-	protected String projectionChoice = "projected through all slices";
-	protected String partsNearbyChoice = "parts in nearby slices";
+	protected JComboBox<String> viewPathChoice;
+	protected String projectionChoice = "Projected through all slices";
+	protected String partsNearbyChoice = "Parts in nearby slices [5]";
 
 	protected TextField nearbyField;
 
 	protected PathColorsCanvas pathColorsCanvas;
-
-	protected JComboBox colorImageChoice;
+	protected JCheckBox enforceDefaultColors;
+	protected JComboBox<String> colorImageChoice;
 	protected String noColorImageString = "[None]";
 	protected ImagePlus currentColorImage;
 
 	protected JCheckBox justShowSelected;
 
-	protected JComboBox paths3DChoice;
-	protected String [] paths3DChoicesStrings = {
-		"BUG",
-		"as surface reconstructions",
-		"as lines",
-		"as lines and discs" };
+	protected JComboBox<String> paths3DChoice;
+	protected String[] paths3DChoicesStrings = { "BUG", "As surface reconstructions", "As lines",
+			"As lines and discs" };
 
 	protected JCheckBox useTubularGeodesics;
 
@@ -197,12 +210,17 @@ public class NeuriteTracerResultsDialog
 	protected JButton showOrHidePathList;
 	protected JButton showOrHideFillList;
 
+	protected JCheckBox useSnapWindow;
+	protected JSpinner snapWindowXYsizeSpinner;
+	protected JSpinner snapWindowZsizeSpinner;
+
 	// ------------------------------------------------------------------------
 	// Implementing the ImageListener interface:
 
 	@Override
-	public void imageOpened(ImagePlus imp) {
+	public void imageOpened(final ImagePlus imp) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				updateColorImageChoice();
 			}
@@ -211,25 +229,30 @@ public class NeuriteTracerResultsDialog
 
 	// Called when an image is closed
 	@Override
-	public void imageClosed(ImagePlus imp) {
+	public void imageClosed(final ImagePlus imp) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				updateColorImageChoice();
+				if (plugin.getImagePlus() == imp)
+					changeState(NeuriteTracerResultsDialog.IMAGE_CLOSED);
 			}
 		});
 	}
 
 	@Override
-	public void imageUpdated(ImagePlus imp) {
-		/* This is called whenever ImagePlus.updateAndDraw
-		  is called - i.e. potentially very often */
+	public void imageUpdated(final ImagePlus imp) {
+		/*
+		 * This is called whenever ImagePlus.updateAndDraw is called - i.e.
+		 * potentially very often
+		 */
 	}
 
 	// ------------------------------------------------------------------------
 
-	protected void updateStatusText(String newStatus) {
+	protected void updateStatusText(final String newStatus) {
 		assert SwingUtilities.isEventDispatchThread();
-		statusText.setText("<html><strong>"+newStatus+"</strong></html>");
+		statusText.setText("<html><strong>" + newStatus + "</strong></html>");
 	}
 
 	volatile boolean ignoreColorImageChoiceEvents = false;
@@ -241,7 +264,7 @@ public class NeuriteTracerResultsDialog
 		ignoreColorImageChoiceEvents = true;
 
 		// Try to preserve the old selection:
-		String oldSelection = (String) colorImageChoice.getSelectedItem();
+		final String oldSelection = (String) colorImageChoice.getSelectedItem();
 
 		colorImageChoice.removeAllItems();
 
@@ -250,12 +273,12 @@ public class NeuriteTracerResultsDialog
 
 		int selectedIndex = 0;
 
-		int[] wList = WindowManager.getIDList();
-		if (wList!=null) {
-			for (int i=0; i<wList.length; i++) {
-				ImagePlus imp = WindowManager.getImage(wList[i]);
+		final int[] wList = WindowManager.getIDList();
+		if (wList != null) {
+			for (int i = 0; i < wList.length; i++) {
+				final ImagePlus imp = WindowManager.getImage(wList[i]);
 				j++;
-				String title = imp.getTitle();
+				final String title = imp.getTitle();
 				colorImageChoice.addItem(title);
 				if (title == oldSelection)
 					selectedIndex = j;
@@ -270,53 +293,56 @@ public class NeuriteTracerResultsDialog
 		checkForColorImageChange();
 	}
 
-	public static boolean similarCalibrations(Calibration a, Calibration b) {
+	public static boolean similarCalibrations(final Calibration a, final Calibration b) {
 		double ax = 1, ay = 1, az = 1;
 		double bx = 1, by = 1, bz = 1;
-		if( a != null ) {
+		if (a != null) {
 			ax = a.pixelWidth;
 			ay = a.pixelHeight;
 			az = a.pixelDepth;
 		}
-		if( b != null ) {
+		if (b != null) {
 			bx = b.pixelWidth;
 			by = b.pixelHeight;
 			bz = b.pixelDepth;
 		}
-		double pixelWidthDifference = Math.abs( ax - bx );
-		double pixelHeightDifference = Math.abs( ay - by );
-		double pixelDepthDifference = Math.abs( az - bz );
-		double epsilon = 0.000001;
-		if( pixelWidthDifference > epsilon )
+		final double pixelWidthDifference = Math.abs(ax - bx);
+		final double pixelHeightDifference = Math.abs(ay - by);
+		final double pixelDepthDifference = Math.abs(az - bz);
+		final double epsilon = 0.000001;
+		if (pixelWidthDifference > epsilon)
 			return false;
-		if( pixelHeightDifference > epsilon )
+		if (pixelHeightDifference > epsilon)
 			return false;
-		if( pixelDepthDifference > epsilon )
+		if (pixelDepthDifference > epsilon)
 			return false;
 		return true;
 	}
 
 	synchronized protected void checkForColorImageChange() {
-		String selectedTitle = (String) colorImageChoice.getSelectedItem();
+		final String selectedTitle = (String) colorImageChoice.getSelectedItem();
 
 		ImagePlus intendedColorImage = null;
-		if( selectedTitle != null && ! selectedTitle.equals(noColorImageString) ) {
+		if (selectedTitle != null && !selectedTitle.equals(noColorImageString)) {
 			intendedColorImage = WindowManager.getImage(selectedTitle);
 		}
 
-		if( intendedColorImage != currentColorImage ) {
-			if( intendedColorImage != null ) {
-				ImagePlus image = plugin.getImagePlus();
-				Calibration calibration = plugin.getImagePlus().getCalibration();
-				Calibration colorImageCalibration = intendedColorImage.getCalibration();
-				if( ! similarCalibrations( calibration,
-							   colorImageCalibration ) ) {
-					IJ.error("Warning: the calibration of '"+intendedColorImage.getTitle()+"' is different from the image you're tracing ('"+image.getTitle()+"')'\nThis may produce unexpected results.");
+		if (intendedColorImage != currentColorImage) {
+			if (intendedColorImage != null) {
+				final ImagePlus image = plugin.getImagePlus();
+				final Calibration calibration = plugin.getImagePlus().getCalibration();
+				final Calibration colorImageCalibration = intendedColorImage.getCalibration();
+				if (!similarCalibrations(calibration, colorImageCalibration)) {
+					SNT.error("Warning: the calibration of '" + intendedColorImage.getTitle()
+							+ "' is different from the image you're tracing ('" + image.getTitle()
+							+ "')'\nThis may produce unexpected results.");
 				}
-				if( ! (intendedColorImage.getWidth() == image.getWidth() &&
-				       intendedColorImage.getHeight() == image.getHeight() &&
-				       intendedColorImage.getStackSize() == image.getStackSize()) )
-					IJ.error("Warning: the dimensions (in voxels) of '"+intendedColorImage.getTitle()+"' is different from the image you're tracing ('"+image.getTitle()+"')'\nThis may produce unexpected results.");
+				if (!(intendedColorImage.getWidth() == image.getWidth()
+						&& intendedColorImage.getHeight() == image.getHeight()
+						&& intendedColorImage.getStackSize() == image.getStackSize()))
+					SNT.error("Warning: the dimensions (in voxels) of '" + intendedColorImage.getTitle()
+							+ "' is different from the image you're tracing ('" + image.getTitle()
+							+ "')'\nThis may produce unexpected results.");
 			}
 			currentColorImage = intendedColorImage;
 			plugin.setColorImage(currentColorImage);
@@ -324,20 +350,22 @@ public class NeuriteTracerResultsDialog
 	}
 
 	@Override
-	public void newSigmaSelected( final double sigma ) {
+	public void newSigmaSelected(final double sigma) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
-				setSigma( sigma, false );
+				setSigma(sigma, false);
 			}
 		});
 	}
 
 	@Override
-	public void newMaximum( final double max ) {
+	public void newMaximum(final double max) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
-				double multiplier = 256 / max;
-				setMultiplier( multiplier );
+				final double multiplier = 256 / max;
+				setMultiplier(multiplier);
 			}
 		});
 	}
@@ -349,14 +377,15 @@ public class NeuriteTracerResultsDialog
 
 	public void gaussianCalculated(final boolean succeeded) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
-				if( !succeeded ) {
+				if (!succeeded) {
 					ignorePreprocessEvents = true;
 					preprocess.setSelected(false);
 					ignorePreprocessEvents = false;
 				}
 				changeState(preGaussianState);
-				if( preprocess.isSelected() ) {
+				if (preprocess.isSelected()) {
 					editSigma.setEnabled(false);
 					sigmaWizard.setEnabled(false);
 				} else {
@@ -367,32 +396,35 @@ public class NeuriteTracerResultsDialog
 		});
 	}
 
-	public void setMultiplier( final double multiplier ) {
+	public void setMultiplier(final double multiplier) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				currentMultiplier = multiplier;
-				updateLabel( );
+				updateLabel();
 			}
 		});
 	}
 
-	public void setSigma( final double sigma, final boolean mayStartGaussian ) {
+	public void setSigma(final double sigma, final boolean mayStartGaussian) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				currentSigma = sigma;
-				updateLabel( );
-				if( mayStartGaussian ) {
-					if( preprocess.isSelected() ) {
-						IJ.error( "[BUG] The preprocess checkbox should never be on when setSigma is called" );
+				updateLabel();
+				if (mayStartGaussian) {
+					if (preprocess.isSelected()) {
+						SNT.error("[BUG] The preprocess checkbox should never be on when setSigma is called");
 					} else {
 						// Turn on the checkbox:
 						ignorePreprocessEvents = true;
-						preprocess.setSelected( true );
+						preprocess.setSelected(true);
 						ignorePreprocessEvents = false;
-						/* ... according to the documentation
-						   this doesn't generate an event, so
-						   we manually turn on the Gaussian
-						   calculation */
+						/*
+						 * ... according to the documentation this doesn't
+						 * generate an event, so we manually turn on the
+						 * Gaussian calculation
+						 */
 						turnOnHessian();
 					}
 				}
@@ -400,7 +432,7 @@ public class NeuriteTracerResultsDialog
 		});
 	}
 
-	protected void turnOnHessian( ) {
+	protected void turnOnHessian() {
 		preGaussianState = currentState;
 		plugin.enableHessian(true);
 	}
@@ -408,27 +440,24 @@ public class NeuriteTracerResultsDialog
 	protected DecimalFormat threeDecimalPlaces = new DecimalFormat("0.0000");
 	protected DecimalFormat threeDecimalPlacesScientific = new DecimalFormat("0.00E00");
 
-	protected String formatDouble( double value ) {
-		double absValue = Math.abs( value );
-		if( absValue < 0.01 || absValue >= 1000 )
+	protected String formatDouble(final double value) {
+		final double absValue = Math.abs(value);
+		if (absValue < 0.01 || absValue >= 1000)
 			return threeDecimalPlacesScientific.format(value);
-		else
-			return threeDecimalPlaces.format(value);
+		return threeDecimalPlaces.format(value);
 	}
 
-	protected void updateLabel( ) {
+	protected void updateLabel() {
 		assert SwingUtilities.isEventDispatchThread();
 		currentSigmaAndMultiplierLabel.setText(
-			"\u03C3 = " +
-			formatDouble( currentSigma ) +
-			", multiplier = " + formatDouble( currentMultiplier ) );
+				"\u03C3 = " + formatDouble(currentSigma) + ", Multiplier = " + formatDouble(currentMultiplier));
 	}
 
-	public double getSigma( ) {
+	public double getSigma() {
 		return currentSigma;
 	}
 
-	public double getMultiplier( ) {
+	public double getMultiplier() {
 		return currentMultiplier;
 	}
 
@@ -437,87 +466,97 @@ public class NeuriteTracerResultsDialog
 
 		// FIXME: check that everything is saved...
 
-		if( plugin.pathsUnsaved() ) {
+		if (plugin.pathsUnsaved()) {
 
-			YesNoCancelDialog d = new YesNoCancelDialog( IJ.getInstance(), "Really quit?",
-								     "There are unsaved paths. Do you really want to quit?" );
+			final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Really quit?",
+					"There are unsaved paths. Do you really want to quit?");
 
-			if( ! d.yesPressed() )
+			if (!d.yesPressed())
 				return;
 
 		}
 
-		plugin.cancelSearch( true );
+		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
+		new SNTPrefs(plugin).savePluginPrefs();
 		pw.dispose();
 		fw.dispose();
 		dispose();
 		plugin.closeAndReset();
 	}
 
-	protected void disableEverything() {
+	protected void disableImageDependentComponents() {
 		assert SwingUtilities.isEventDispatchThread();
-
-		fw.setEnabledNone();
-		pw.setButtonsEnabled(false);
-
-		statusText.setEnabled(false);
+		loadMenuItem.setEnabled(false);
+		loadLabelsMenuItem.setEnabled(false);
 		keepSegment.setEnabled(false);
 		junkSegment.setEnabled(false);
 		cancelSearch.setEnabled(false);
 		completePath.setEnabled(false);
 		cancelPath.setEnabled(false);
-
 		editSigma.setEnabled(false);
 		sigmaWizard.setEnabled(false);
-
-		viewPathChoice.setEnabled(false);
-		paths3DChoice.setEnabled(false);
 		preprocess.setEnabled(false);
 		useTubularGeodesics.setEnabled(false);
+		fw.setEnabledNone();
+		pw.fillOutSetEnabled(false);
+
+	}
+
+	protected void disableEverything() {
+
+		assert SwingUtilities.isEventDispatchThread();
+
+		disableImageDependentComponents();
+
+		pw.setButtonsEnabled(false);
+
+		statusText.setEnabled(false);
+		viewPathChoice.setEnabled(false);
+		paths3DChoice.setEnabled(false);
 
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
 		exportCSVMenuItemAgain.setEnabled(false);
 		sendToTrakEM2.setEnabled(false);
-		analyzeSkeletonMenuItem.setEnabled(false);
+		pathsToROIsMenuItem.setEnabled(false);
 		saveMenuItem.setEnabled(false);
-		loadMenuItem.setEnabled(false);
-		if( uploadButton != null ) {
+		if (uploadButton != null) {
 			uploadButton.setEnabled(false);
 			fetchButton.setEnabled(false);
 		}
-		loadLabelsMenuItem.setEnabled(false);
-
 		quitMenuItem.setEnabled(false);
 	}
 
-	public void changeState( final int newState ) {
+	public void changeState(final int newState) {
 
-		if (verbose) System.out.println("changeState to: "+stateNames[newState]);
+		if (verbose)
+			SNT.log("changeState to: " + stateNames[newState]);
 
-		SwingUtilities.invokeLater( new Runnable() {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
-				switch( newState ) {
+				switch (newState) {
 
 				case WAITING_TO_START_PATH:
 					updateStatusText("Click somewhere to start a new path...");
 					disableEverything();
 					pw.setButtonsEnabled(true);
 					// Fake a selection change in the path tree:
-					pw.valueChanged( null );
+					pw.valueChanged(null);
 
 					cancelSearch.setVisible(false);
 					keepSegment.setVisible(false);
 					junkSegment.setVisible(false);
 
-					viewPathChoice.setEnabled(true);
-					paths3DChoice.setEnabled(true);
+					viewPathChoice.setEnabled(isStackAvailable());
+					nearbyField.setEnabled(nearbySlices());
+					paths3DChoice.setEnabled(isThreeDViewerAvailable());
 					preprocess.setEnabled(true);
 					useTubularGeodesics.setEnabled(plugin.oofFileAvailable());
 
-					editSigma.setEnabled( ! preprocess.isSelected() );
-					sigmaWizard.setEnabled( ! preprocess.isSelected() );
+					editSigma.setEnabled(!preprocess.isSelected());
+					sigmaWizard.setEnabled(!preprocess.isSelected());
 
 					fw.setEnabledWhileNotFilling();
 
@@ -529,8 +568,8 @@ public class NeuriteTracerResultsDialog
 					exportAllSWCMenuItem.setEnabled(true);
 					exportCSVMenuItemAgain.setEnabled(true);
 					sendToTrakEM2.setEnabled(plugin.anyListeners());
-					analyzeSkeletonMenuItem.setEnabled(true);
-					if( uploadButton != null ) {
+					pathsToROIsMenuItem.setEnabled(true);
+					if (uploadButton != null) {
 						uploadButton.setEnabled(true);
 						fetchButton.setEnabled(true);
 					}
@@ -547,19 +586,19 @@ public class NeuriteTracerResultsDialog
 					keepSegment.setVisible(false);
 					junkSegment.setVisible(false);
 
-					if( plugin.justFirstPoint() )
+					if (plugin.justFirstPoint())
 						completePath.setEnabled(false);
 					else
 						completePath.setEnabled(true);
 					cancelPath.setEnabled(true);
 
-					viewPathChoice.setEnabled(true);
-					paths3DChoice.setEnabled(true);
+					viewPathChoice.setEnabled(isStackAvailable());
+					paths3DChoice.setEnabled(isStackAvailable());
 					preprocess.setEnabled(true);
 					useTubularGeodesics.setEnabled(plugin.oofFileAvailable());
 
-					editSigma.setEnabled( ! preprocess.isSelected() );
-					sigmaWizard.setEnabled( ! preprocess.isSelected() );
+					editSigma.setEnabled(!preprocess.isSelected());
+					sigmaWizard.setEnabled(!preprocess.isSelected());
 
 					quitMenuItem.setEnabled(false);
 
@@ -569,7 +608,7 @@ public class NeuriteTracerResultsDialog
 					updateStatusText("Searching for path between points...");
 					disableEverything();
 
-					cancelSearch.setText("Abandon search");
+					// cancelSearch.setText("Abandon search");
 					cancelSearch.setEnabled(true);
 					cancelSearch.setVisible(true);
 					keepSegment.setVisible(false);
@@ -640,8 +679,15 @@ public class NeuriteTracerResultsDialog
 					disableEverything();
 					break;
 
+				case IMAGE_CLOSED:
+					updateStatusText("Tracing image is no longer available...");
+					disableImageDependentComponents();
+					plugin.discardFill(false);
+					quitMenuItem.setEnabled(true);
+					break;
+
 				default:
-					IJ.error("BUG: switching to an unknown state");
+					SNT.error("BUG: switching to an unknown state");
 					return;
 				}
 
@@ -649,6 +695,7 @@ public class NeuriteTracerResultsDialog
 
 				plugin.repaintAllPanes();
 			}
+
 		});
 
 		currentState = newState;
@@ -658,11 +705,20 @@ public class NeuriteTracerResultsDialog
 		return currentState;
 	}
 
+	private boolean isStackAvailable() {
+		return plugin != null && !plugin.singleSlice;
+	}
+
+	private boolean isThreeDViewerAvailable() {
+		return plugin != null && !plugin.singleSlice && plugin.use3DViewer;
+	}
+
 	// ------------------------------------------------------------------------
 
 	@Override
-	public void windowClosing( WindowEvent e ) {
+	public void windowClosing(final WindowEvent e) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				exitRequested();
 			}
@@ -670,27 +726,37 @@ public class NeuriteTracerResultsDialog
 	}
 
 	@Override
-	public void windowActivated( WindowEvent e ) { }
-	@Override
-	public void windowDeactivated( WindowEvent e ) { }
-	@Override
-	public void windowClosed( WindowEvent e ) { }
-	@Override
-	public void windowOpened( WindowEvent e ) { }
-	@Override
-	public void windowIconified( WindowEvent e ) { }
-	@Override
-	public void windowDeiconified( WindowEvent e ) { }
+	public void windowActivated(final WindowEvent e) {
+	}
 
-	private PathAndFillManager pathAndFillManager;
+	@Override
+	public void windowDeactivated(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowClosed(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowOpened(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowIconified(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowDeiconified(final WindowEvent e) {
+	}
+
+	private final PathAndFillManager pathAndFillManager;
 
 	protected boolean launchedByArchive;
 
-	public NeuriteTracerResultsDialog( String title,
-					   SimpleNeuriteTracer plugin,
-					   boolean launchedByArchive ) {
+	public NeuriteTracerResultsDialog(final String title, final SimpleNeuriteTracer plugin,
+			final boolean launchedByArchive) {
 
-		super( IJ.getInstance(), title, false );
+		super(IJ.getInstance(), title, false);
 		assert SwingUtilities.isEventDispatchThread();
 
 		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
@@ -708,6 +774,8 @@ public class NeuriteTracerResultsDialog
 		fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);
 
+		menuBar.add(tracingMenu());
+
 		analysisMenu = new JMenu("Analysis");
 		menuBar.add(analysisMenu);
 
@@ -716,510 +784,590 @@ public class NeuriteTracerResultsDialog
 
 		menuBar.add(helpMenu());
 
-		loadMenuItem = new JMenuItem("Load traces / SWC file...");
+		loadMenuItem = new JMenuItem("Load Traces / (e)SWC File...");
 		loadMenuItem.addActionListener(this);
 		fileMenu.add(loadMenuItem);
 
-		loadLabelsMenuItem = new JMenuItem("Load labels file...");
+		loadLabelsMenuItem = new JMenuItem("Load Labels (AmiraMesh) File...");
 		loadLabelsMenuItem.addActionListener(this);
 		fileMenu.add(loadLabelsMenuItem);
 
-		saveMenuItem = new JMenuItem("Save traces file...");
+		fileMenu.addSeparator();
+		saveMenuItem = new JMenuItem("Save Traces File...");
 		saveMenuItem.addActionListener(this);
 		fileMenu.add(saveMenuItem);
-
-		exportCSVMenuItem = new JMenuItem("Export as CSV...");
-		exportCSVMenuItem.addActionListener(this);
-		fileMenu.add(exportCSVMenuItem);
-
-		exportAllSWCMenuItem = new JMenuItem("Export all as SWC...");
+		exportAllSWCMenuItem = new JMenuItem("Save All Paths as SWC...");
 		exportAllSWCMenuItem.addActionListener(this);
 		fileMenu.add(exportAllSWCMenuItem);
+
+		fileMenu.addSeparator();
+		exportCSVMenuItem = new JMenuItem("Export Path Properties...");
+		exportCSVMenuItem.addActionListener(this);
+		fileMenu.add(exportCSVMenuItem);
 
 		sendToTrakEM2 = new JMenuItem("Send to TrakEM2");
 		sendToTrakEM2.addActionListener(this);
 		fileMenu.add(sendToTrakEM2);
 
+		fileMenu.addSeparator();
 		quitMenuItem = new JMenuItem("Quit");
 		quitMenuItem.addActionListener(this);
 		fileMenu.add(quitMenuItem);
 
-		analyzeSkeletonMenuItem = new JMenuItem("Run \"Analyze Skeleton\"");
-		analyzeSkeletonMenuItem.addActionListener(this);
-		analysisMenu.add(analyzeSkeletonMenuItem);
-
-		makeLineStackMenuItem = new JMenuItem("Make Line Stack");
-		makeLineStackMenuItem.addActionListener(this);
-		analysisMenu.add(makeLineStackMenuItem);
-
-		exportCSVMenuItemAgain = new JMenuItem("Export as CSV...");
+		pathsToROIsMenuItem = new JMenuItem("Convert Paths to ROIs...");
+		pathsToROIsMenuItem.addActionListener(this);
+		analysisMenu.add(pathsToROIsMenuItem);
+		analysisMenu.addSeparator();
+		exportCSVMenuItemAgain = new JMenuItem("Measure Paths...");
 		exportCSVMenuItemAgain.addActionListener(this);
 		analysisMenu.add(exportCSVMenuItemAgain);
+		makeLineStackMenuItem = new JMenuItem("Render/Analyze Skeletonized Paths...");
+		makeLineStackMenuItem.addActionListener(this);
+		analysisMenu.add(makeLineStackMenuItem);
+		analysisMenu.addSeparator();
+		analysisMenu.add(shollAnalysisHelpMenuItem());
 
-		String opacityLabel = "Show MIP overlay(s) at "+
-			SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT+
-			"% opacity";
-		mipOverlayMenuItem = new JCheckBoxMenuItem(opacityLabel);
-		mipOverlayMenuItem.addItemListener(this);
-		viewMenu.add(mipOverlayMenuItem);
-
-		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw diameters in XY plane", plugin.getDrawDiametersXY());
-		drawDiametersXYMenuItem.addItemListener(this);
-		viewMenu.add(drawDiametersXYMenuItem);
+		xyCanvasMenuItem = new JCheckBoxMenuItem("Hide XY View");
+		xyCanvasMenuItem.addItemListener(this);
+		viewMenu.add(xyCanvasMenuItem);
+		zyCanvasMenuItem = new JCheckBoxMenuItem("Hide ZY View");
+		zyCanvasMenuItem.setEnabled(!plugin.getSinglePane());
+		zyCanvasMenuItem.addItemListener(this);
+		viewMenu.add(zyCanvasMenuItem);
+		xzCanvasMenuItem = new JCheckBoxMenuItem("Hide XZ View");
+		xzCanvasMenuItem.setEnabled(!plugin.getSinglePane());
+		xzCanvasMenuItem.addItemListener(this);
+		viewMenu.add(xzCanvasMenuItem);
+		threeDViewerMenuItem = new JCheckBoxMenuItem("Hide 3D View");
+		threeDViewerMenuItem.setEnabled(plugin.use3DViewer);
+		threeDViewerMenuItem.addItemListener(this);
+		viewMenu.add(threeDViewerMenuItem);
+		viewMenu.addSeparator();
+		arrangeWindowsMenuItem = new JMenuItem("Arrange Views");
+		arrangeWindowsMenuItem.addActionListener(this);
+		viewMenu.add(arrangeWindowsMenuItem);
 
 		setJMenuBar(menuBar);
 
 		addWindowListener(this);
 
 		getContentPane().setLayout(new GridBagLayout());
-
-		GridBagConstraints c = new GridBagConstraints();
-
+		final GridBagConstraints c = new GridBagConstraints();
 		c.anchor = GridBagConstraints.LINE_START;
 		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridwidth = GridBagConstraints.REMAINDER;
 		c.gridx = 0;
-		c.insets = new Insets( 10, 10, 4, 10 );
 		c.gridy = 0;
 		c.weightx = 1;
+
+		c.insets = new Insets(4, 4, 0, 0);
+		getContentPane().add(separator("Instructions:"), c);
+		++c.gridy;
+		c.insets = new Insets(0, 10, 0, 0);
 
 		{ /* Add the status panel */
 
 			statusPanel = new JPanel();
 			statusPanel.setLayout(new BorderLayout());
-			statusPanel.add(new JLabel("Instructions:"), BorderLayout.NORTH);
 			statusText = new JLabel("");
 			statusText.setOpaque(true);
 			statusText.setForeground(Color.black);
 			statusText.setBackground(Color.white);
 			updateStatusText("Initial status text");
-			statusText.setBorder( new EmptyBorder( 5, 5, 5, 5 ) );
-			statusPanel.add(statusText,BorderLayout.CENTER);
+			statusText.setBorder(new EmptyBorder(5, 5, 5, 5));
+			statusPanel.add(statusText, BorderLayout.CENTER);
 
-			keepSegment = new JButton("Yes");
-			junkSegment = new JButton("No");
-			cancelSearch = new JButton("Abandon Search");
+			keepSegment = new JButton("Yes [y]");
+			junkSegment = new JButton("No [n]");
+			cancelSearch = new JButton("Abandon Search [Esc]");
 
-			keepSegment.addActionListener( this );
-			junkSegment.addActionListener( this );
-			cancelSearch.addActionListener( this );
+			keepSegment.addActionListener(this);
+			junkSegment.addActionListener(this);
+			cancelSearch.addActionListener(this);
 
-			JPanel statusChoicesPanel = new JPanel();
+			final JPanel statusChoicesPanel = new JPanel();
 			/*
-			statusChoicesPanel.setLayout( new GridBagLayout() );
-			GridBagConstraints cs = new GridBagConstraints();
-			cs.weightx = 1;
-			cs.gridx = 0; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
-			statusChoicesPanel.add(keepSegment,cs);
-			cs.gridx = 1; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
-			statusChoicesPanel.add(junkSegment,cs);
-			cs.gridx = 2; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
-			statusChoicesPanel.add(cancelSearch,cs);
-			*/
+			 * statusChoicesPanel.setLayout( new GridBagLayout() );
+			 * GridBagConstraints cs = new GridBagConstraints(); cs.weightx = 1;
+			 * cs.gridx = 0; cs.gridy = 0; cs.anchor =
+			 * GridBagConstraints.LINE_START;
+			 * statusChoicesPanel.add(keepSegment,cs); cs.gridx = 1; cs.gridy =
+			 * 0; cs.anchor = GridBagConstraints.LINE_START;
+			 * statusChoicesPanel.add(junkSegment,cs); cs.gridx = 2; cs.gridy =
+			 * 0; cs.anchor = GridBagConstraints.LINE_START;
+			 * statusChoicesPanel.add(cancelSearch,cs);
+			 */
 			statusChoicesPanel.add(keepSegment);
 			statusChoicesPanel.add(junkSegment);
 			statusChoicesPanel.add(cancelSearch);
 			statusChoicesPanel.setLayout(new FlowLayout());
-
-			statusPanel.add(statusChoicesPanel,BorderLayout.SOUTH);
-
-			getContentPane().add(statusPanel,c);
+			statusPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+			statusPanel.add(statusChoicesPanel, BorderLayout.SOUTH);
+			c.insets = new Insets(4, 0, 0, 0);
+			getContentPane().add(statusPanel, c);
 		}
-
-		c.insets = new Insets( 4, 10, 10, 10 );
 
 		{ /* Add the panel of actions to take on half-constructed paths */
 
 			pathActionPanel = new JPanel();
-			completePath = new JButton("Complete Path");
-			cancelPath = new JButton("Cancel Path");
-			completePath.addActionListener( this );
-			cancelPath.addActionListener( this );
+			completePath = new JButton("Finish Path [f]");
+			cancelPath = new JButton("Cancel Path [c]");
+			completePath.addActionListener(this);
+			cancelPath.addActionListener(this);
 			pathActionPanel.add(completePath);
 			pathActionPanel.add(cancelPath);
+			pathActionPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-			++ c.gridy;
-			getContentPane().add(pathActionPanel,c);
+			c.insets = new Insets(0, 0, 0, 0);
+			++c.gridy;
+			getContentPane().add(pathActionPanel, c);
 		}
 
-		c.insets = new Insets( 10, 10, 10, 10 );
+		c.insets = new Insets(4, 10, 10, 10);
 
+		++c.gridy;
+		addSeparator("Tracing:", c);
+		++c.gridy;
+		getContentPane().add(tracingPanel(), c);
+
+		++c.gridy;
+		addSeparator("Rendering:", c);
 		{
-			JPanel viewOptionsPanel = new JPanel();
-
+			final JPanel viewOptionsPanel = new JPanel();
 			viewOptionsPanel.setLayout(new GridBagLayout());
-			GridBagConstraints cv = new GridBagConstraints();
-			cv.insets = new Insets(3, 2, 3, 2);
-			cv.anchor = GridBagConstraints.LINE_START;
-			viewPathChoice = new JComboBox();
+			final GridBagConstraints vop_c = new GridBagConstraints();
+			vop_c.anchor = GridBagConstraints.LINE_START;
+			vop_c.insets = new Insets(0, 0, 0, 0);
+			vop_c.gridx = 0;
+			vop_c.gridy = 0;
+			vop_c.weightx = 1.0;
+			vop_c.fill = GridBagConstraints.BOTH;
+
+			paths3DChoice = new JComboBox<>();
+			for (int choice = 1; choice < paths3DChoicesStrings.length; ++choice)
+				paths3DChoice.addItem(paths3DChoicesStrings[choice]);
+			paths3DChoice.addItemListener(this);
+			paths3DChoice.setEnabled(isThreeDViewerAvailable());
+
+			vop_c.gridx = 0;
+			viewOptionsPanel.add(leftAlignedLabel("View paths (3D):", isThreeDViewerAvailable()), vop_c);
+			vop_c.gridx = 1;
+			viewOptionsPanel.add(paths3DChoice, vop_c);
+
+			viewPathChoice = new JComboBox<>();
 			viewPathChoice.addItem(projectionChoice);
 			viewPathChoice.addItem(partsNearbyChoice);
 			viewPathChoice.addItemListener(this);
+			viewPathChoice.setEnabled(isStackAvailable());
 
-			JPanel nearbyPanel = new JPanel();
+			final JPanel nearbyPanel = new JPanel();
 			nearbyPanel.setLayout(new BorderLayout());
-			nearbyPanel.add(new JLabel("(up to"),BorderLayout.WEST);
-			nearbyField = new TextField("2",2);
+			nearbyPanel.add(leftAlignedLabel("(up to ", isStackAvailable()), BorderLayout.WEST);
+			nearbyField = new TextField("2", 2);
 			nearbyField.addTextListener(this);
-			nearbyPanel.add(nearbyField,BorderLayout.CENTER);
-			nearbyPanel.add(new JLabel("slices to each side)"),BorderLayout.EAST);
+			nearbyPanel.add(nearbyField, BorderLayout.CENTER);
+			nearbyPanel.add(leftAlignedLabel(" slices to each side)", isStackAvailable()), BorderLayout.EAST);
+			nearbyField.setEnabled(isStackAvailable());
+			++vop_c.gridy;
+			vop_c.gridx = 0;
+			viewOptionsPanel.add(leftAlignedLabel("View paths (2D):", isStackAvailable()), vop_c);
+			vop_c.gridx = 1;
+			viewOptionsPanel.add(viewPathChoice, vop_c);
+			++vop_c.gridy;
+			viewOptionsPanel.add(nearbyPanel, vop_c);
+			justShowSelected = new JCheckBox("Show only selected paths", plugin.showOnlySelectedPaths);
+			justShowSelected.addItemListener(this);
 
-			cv.gridx = 0;
-			cv.gridy = 0;
-			viewOptionsPanel.add(new JLabel("View paths (2D): "),cv);
-			cv.gridx = 1;
-			cv.gridy = 0;
-			viewOptionsPanel.add(viewPathChoice,cv);
+			vop_c.gridwidth = GridBagConstraints.REMAINDER;
+			vop_c.gridx = 0;
+			++vop_c.gridy;
+			viewOptionsPanel.add(justShowSelected, vop_c);
 
-			paths3DChoice = new JComboBox();
-			if( thisPlugin != null && thisPlugin.use3DViewer ) {
-				for( int choice = 1; choice < paths3DChoicesStrings.length; ++choice )
-					paths3DChoice.addItem(paths3DChoicesStrings[choice]);
-
-				cv.gridx = 0;
-				++ cv.gridy;
-				viewOptionsPanel.add(new JLabel("View paths (3D): "),cv);
-				cv.gridx = 1;
-				viewOptionsPanel.add(paths3DChoice,cv);
-			}
-			paths3DChoice.addItemListener(this);
-
-			cv.gridx = 1;
-			++ cv.gridy;
-			cv.gridwidth = 1;
-			cv.anchor = GridBagConstraints.LINE_START;
-			viewOptionsPanel.add(nearbyPanel, cv);
-
-			JPanel flatColorOptionsPanel = new JPanel();
-			flatColorOptionsPanel.setLayout(new BorderLayout());
-			flatColorOptionsPanel.add(new JLabel("Click to change Path colours:"), BorderLayout.NORTH);
-			pathColorsCanvas = new PathColorsCanvas(thisPlugin, 150, 18);
-			flatColorOptionsPanel.add(pathColorsCanvas, BorderLayout.CENTER);
-
-			JPanel imageColorOptionsPanel = new JPanel();
-			imageColorOptionsPanel.setLayout(new BorderLayout());
-			imageColorOptionsPanel.add(new JLabel("Use colors / labels from:"), BorderLayout.NORTH);
-
-			colorImageChoice = new JComboBox();
-			updateColorImageChoice();
-			colorImageChoice.addActionListener(this);
-			imageColorOptionsPanel.add(colorImageChoice, BorderLayout.CENTER);
-			ImagePlus.addImageListener(this);
-
-			cv.gridx = 0;
-			++cv.gridy;
-			cv.gridwidth = 2;
-			viewOptionsPanel.add(flatColorOptionsPanel,cv);
-
-			cv.gridx = 0;
-			++ cv.gridy;
-			cv.gridwidth = 2;
-			viewOptionsPanel.add(imageColorOptionsPanel,cv);
-
-			justShowSelected = new JCheckBox( "Show only selected paths" );
-			justShowSelected.addItemListener( this );
-			cv.gridx = 0;
-			++ cv.gridy;
-			cv.gridwidth = 2;
-			cv.anchor = GridBagConstraints.LINE_START;
-			cv.insets = new Insets( 0, 0, 0, 0 );
-			viewOptionsPanel.add(justShowSelected,cv);
-
-			++ c.gridy;
-			getContentPane().add(viewOptionsPanel,c);
+			++c.gridy;
+			getContentPane().add(viewOptionsPanel, c);
 		}
 
-		{ /* Add the panel with other options - preprocessing and the view of paths */
+		++c.gridy;
+		addSeparator("Labelling of Paths:", c);
 
-			JPanel otherOptionsPanel = new JPanel();
+		{
 
+			final JLabel flatColorLabel = new JLabel("Default Colors (click to change):");
+			flatColorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			flatColorLabel.setBorder(new EmptyBorder(0, 0, 2, 0));
+			pathColorsCanvas = new PathColorsCanvas(thisPlugin, 150, 18);
+
+			final JLabel imageColorLabel = leftAlignedLabel("3D Viewer: Use colors / labels from:",
+					isThreeDViewerAvailable());
+			imageColorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			imageColorLabel.setBorder(new EmptyBorder(6, 0, 0, 0));
+
+			colorImageChoice = new JComboBox<>();
+			updateColorImageChoice();
+			colorImageChoice.addActionListener(this);
+			ImagePlus.addImageListener(this);
+			colorImageChoice.setEnabled(isThreeDViewerAvailable());
+
+			final JPanel pathOptionsPanel = new JPanel();
+			pathOptionsPanel.setLayout(new GridBagLayout());
+			final GridBagConstraints pop_c = singleColumnConstrains();
+
+			pathOptionsPanel.add(flatColorLabel, pop_c);
+			++pop_c.gridy;
+			pop_c.insets = new Insets(0, 4, 0, 4);
+			pathOptionsPanel.add(pathColorsCanvas, pop_c);
+			pop_c.insets = new Insets(0, 0, 0, 0);
+
+			enforceDefaultColors = new JCheckBox("Enforce default colors (ignore customizations)",
+					!plugin.displayCustomPathColors);
+			enforceDefaultColors.addItemListener(this);
+			++pop_c.gridy;
+			pathOptionsPanel.add(enforceDefaultColors, pop_c);
+
+			++pop_c.gridy;
+			pathOptionsPanel.add(imageColorLabel, pop_c);
+			++pop_c.gridy;
+			pathOptionsPanel.add(colorImageChoice, pop_c);
+
+			++c.gridy;
+			getContentPane().add(pathOptionsPanel, c);
+		}
+
+		++c.gridy;
+		addSeparator("Segmentation:", c);
+
+		{ /*
+			 * Add the panel with other options - preprocessing and the view of
+			 * paths
+			 */
+
+			final JPanel otherOptionsPanel = new JPanel();
 			otherOptionsPanel.setLayout(new GridBagLayout());
-			GridBagConstraints co = new GridBagConstraints();
-			co.anchor = GridBagConstraints.LINE_START;
+			final GridBagConstraints oop_c = singleColumnConstrains();
 
 			useTubularGeodesics = new JCheckBox("Use Tubular Geodesics");
-			useTubularGeodesics.addItemListener( this );
-
-			co.gridx = 0;
-			++ co.gridy;
-			co.gridwidth = 2;
-			co.anchor = GridBagConstraints.LINE_START;
-			otherOptionsPanel.add(useTubularGeodesics,co);
+			useTubularGeodesics.addItemListener(this);
+			++oop_c.gridy;
+			otherOptionsPanel.add(useTubularGeodesics, oop_c);
 
 			preprocess = new JCheckBox("Hessian-based analysis");
-			preprocess.addItemListener( this );
+			preprocess.addItemListener(this);
+			++oop_c.gridy;
+			otherOptionsPanel.add(preprocess, oop_c);
 
-			co.gridx = 0;
-			++ co.gridy;
-			co.gridwidth = 2;
-			co.anchor = GridBagConstraints.LINE_START;
-			otherOptionsPanel.add(preprocess,co);
-
-			++ co.gridy;
-			usePreprocessed = new JCheckBox("Use preprocessed image");
-			usePreprocessed.addItemListener( this );
-			usePreprocessed.setEnabled( thisPlugin.tubeness != null );
-			otherOptionsPanel.add(usePreprocessed,co);
-
-			co.fill = GridBagConstraints.HORIZONTAL;
+			usePreprocessed = new JCheckBox("Use Tubeness preprocessed image");
+			usePreprocessed.addItemListener(this);
+			usePreprocessed.setEnabled(thisPlugin.tubeness != null);
+			++oop_c.gridy;
+			otherOptionsPanel.add(usePreprocessed, oop_c);
 
 			currentSigmaAndMultiplierLabel = new JLabel();
-			++ co.gridy;
-			otherOptionsPanel.add(currentSigmaAndMultiplierLabel,co);
-			setSigma( thisPlugin.getMinimumSeparation(), false );
-			setMultiplier( 4 );
-			updateLabel( );
-			++ co.gridy;
+			currentSigmaAndMultiplierLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			++oop_c.gridy;
+			otherOptionsPanel.add(currentSigmaAndMultiplierLabel, oop_c);
+			setSigma(thisPlugin.getMinimumSeparation(), false);
+			setMultiplier(4);
+			updateLabel();
 
-			JPanel sigmaButtonPanel = new JPanel( );
+			final JPanel sigmaButtonPanel = new JPanel();
 
-			editSigma = new JButton( "Pick Sigma Manually" );
-			editSigma.addActionListener( this );
+			editSigma = SNT.smallButton("Pick Sigma Manually");
+			editSigma.addActionListener(this);
 			sigmaButtonPanel.add(editSigma);
 
-			sigmaWizard = new JButton( "Pick Sigma Visually" );
-			sigmaWizard.addActionListener( this );
+			sigmaWizard = SNT.smallButton("Pick Sigma Visually");
+			sigmaWizard.addActionListener(this);
 			sigmaButtonPanel.add(sigmaWizard);
 
-			++ co.gridy;
-			otherOptionsPanel.add(sigmaButtonPanel,co);
+			++oop_c.gridy;
+			otherOptionsPanel.add(sigmaButtonPanel, oop_c);
 
-			++ c.gridy;
-			getContentPane().add(otherOptionsPanel,c);
+			++c.gridy;
+			getContentPane().add(otherOptionsPanel, c);
 		}
 
 		{
-			JPanel hideWindowsPanel = new JPanel();
+			final JPanel hideWindowsPanel = new JPanel();
 			showOrHidePathList = new JButton("Show / Hide Path List");
 			showOrHidePathList.addActionListener(this);
 			showOrHideFillList = new JButton("Show / Hide Fill List");
 			showOrHideFillList.addActionListener(this);
-			hideWindowsPanel.add( showOrHidePathList );
-			hideWindowsPanel.add( showOrHideFillList );
+			hideWindowsPanel.add(showOrHidePathList);
+			hideWindowsPanel.add(showOrHideFillList);
 			c.fill = GridBagConstraints.HORIZONTAL;
-			++ c.gridy;
-			getContentPane().add( hideWindowsPanel, c );
+			++c.gridy;
+			getContentPane().add(hideWindowsPanel, c);
 		}
 
 		pack();
 
-		pw = new PathWindow(
-			pathAndFillManager,
-			thisPlugin,
-			getX() + getWidth(),
-			getY() );
+		pw = new PathWindow(pathAndFillManager, thisPlugin, getX() + getWidth(), getY());
 		pathAndFillManager.addPathAndFillListener(pw);
 
-		fw = new FillWindow(
-			pathAndFillManager,
-			thisPlugin,
-			getX() + getWidth(),
-			getY() + pw.getHeight() );
+		fw = new FillWindow(pathAndFillManager, thisPlugin, getX() + getWidth(), getY() + pw.getHeight());
 		pathAndFillManager.addPathAndFillListener(fw);
 
-		changeState( WAITING_TO_START_PATH );
+		changeState(WAITING_TO_START_PATH);
 	}
 
-	protected void displayOnStarting( ) {
+	private JPanel tracingPanel() {
+
+		final JPanel tracingOptionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		useSnapWindow = new JCheckBox("Enable cursor [s]napping within: XY", plugin.snapCursor);
+		useSnapWindow.setBorder(new EmptyBorder(0, 0, 0, 0));
+		useSnapWindow.addItemListener(this);
+		tracingOptionsPanel.add(useSnapWindow);
+
+		final SpinnerModel xy_model = new SpinnerNumberModel(plugin.cursorSnapWindowXY * 2,
+				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY * 2, 2);
+		snapWindowXYsizeSpinner = new JSpinner(xy_model);
+		((DefaultEditor) snapWindowXYsizeSpinner.getEditor()).getTextField().setEditable(false);
+		snapWindowXYsizeSpinner.addChangeListener(this);
+		tracingOptionsPanel.add(snapWindowXYsizeSpinner);
+
+		final JLabel z_spinner_label = leftAlignedLabel("Z", isStackAvailable());
+		z_spinner_label.setBorder(new EmptyBorder(0, 2, 0, 0));
+		tracingOptionsPanel.add(z_spinner_label);
+		final SpinnerModel z_model = new SpinnerNumberModel(plugin.cursorSnapWindowZ * 2,
+				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z * 2, 2);
+		snapWindowZsizeSpinner = new JSpinner(z_model);
+		((DefaultEditor) snapWindowZsizeSpinner.getEditor()).getTextField().setEditable(false);
+		snapWindowZsizeSpinner.addChangeListener(this);
+		snapWindowZsizeSpinner.setEnabled(isStackAvailable());
+		tracingOptionsPanel.add(snapWindowZsizeSpinner);
+		// tracingOptionsPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		return tracingOptionsPanel;
+	}
+
+	private GridBagConstraints singleColumnConstrains() {
+		final GridBagConstraints cp = new GridBagConstraints();
+		cp.anchor = GridBagConstraints.LINE_START;
+		cp.gridwidth = GridBagConstraints.REMAINDER;
+		cp.fill = GridBagConstraints.HORIZONTAL;
+		cp.insets = new Insets(0, 0, 0, 0);
+		cp.weightx = 1.0;
+		cp.gridx = 0;
+		cp.gridy = 0;
+		return cp;
+	}
+
+	private void addSeparator(final String heading, final GridBagConstraints c) {
+		final Insets previousInsets = c.insets;
+		c.insets = new Insets(8, 4, 0, 0);
+		getContentPane().add(separator(heading), c);
+		c.insets = previousInsets;
+	}
+
+	private JLabel separator(final String text) {
+		final JLabel label = leftAlignedLabel(text, true);
+		label.setFont(new Font("SansSerif", Font.PLAIN, 11));
+		return label;
+	}
+
+	private JLabel leftAlignedLabel(final String text, final boolean enabled) {
+		final JLabel label = new JLabel(text);
+		if (!enabled)
+			label.setForeground(sholl.gui.Utils.getDisabledComponentColor());
+		return label;
+	}
+
+	protected void displayOnStarting() {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
-				setVisible( true );
-				setPathListVisible( true );
-				setFillListVisible( false );
+				arrangeDialogs();
+				arrangeCanvases();
+				setVisible(true);
+				setPathListVisible(true, false);
+				setFillListVisible(false);
+				plugin.getWindow(ThreePanes.XY_PLANE).toFront();
 			}
 		});
 	}
 
-	public void showMouseThreshold( final float t ) {
+	public void showMouseThreshold(final float t) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				String newStatus = null;
-				if( t < 0 ) {
-					newStatus = "Not reached by search yet";
+				if (t < 0) {
+					newStatus = "Cursor position not reached by search yet";
 				} else {
-					newStatus = "Distance from path is: " + t;
+					newStatus = "Cursor position: Distance from path is " + fw.df4.format(t);
 				}
-				fw.fillStatus.setText( newStatus );
+				fw.fillStatus.setText(newStatus);
 			}
 		});
 	}
 
 	@Override
-	public void actionPerformed( ActionEvent e ) {
+	public void actionPerformed(final ActionEvent e) {
 		assert SwingUtilities.isEventDispatchThread();
 
-		Object source = e.getSource();
+		final Object source = e.getSource();
 
-		/* if( source == uploadButton ) {
-			plugin.uploadTracings();
-		} else if( source == fetchButton ) {
-			plugin.getTracings( true );
-		} else */ if( source == saveMenuItem ) {
+		/*
+		 * if( source == uploadButton ) { plugin.uploadTracings(); } else if(
+		 * source == fetchButton ) { plugin.getTracings( true ); } else
+		 */ if (source == saveMenuItem && !noPathsError()) {
 
-			FileInfo info = plugin.file_info;
+			final FileInfo info = plugin.file_info;
 			SaveDialog sd;
 
-			if( info == null ) {
+			if (info == null) {
 
-				sd = new SaveDialog("Save traces as...",
-						    "image",
-						    ".traces");
+				sd = new SaveDialog("Save traces as...", "image", ".traces");
 
 			} else {
 
-				String fileName = info.fileName;
-				String directory = info.directory;
+				final String fileName = info.fileName;
+				final String directory = info.directory;
 
 				String suggestedSaveFilename;
 
 				suggestedSaveFilename = fileName;
 
-				sd = new SaveDialog("Save traces as...",
-						    directory,
-						    suggestedSaveFilename,
-						    ".traces");
+				sd = new SaveDialog("Save traces as...", directory, suggestedSaveFilename, ".traces");
 			}
 
 			String savePath;
-			if(sd.getFileName()==null) {
+			if (sd.getFileName() == null) {
 				return;
-			} else {
-				savePath = sd.getDirectory()+sd.getFileName();
 			}
+			savePath = sd.getDirectory() + sd.getFileName();
 
-			File file = new File(savePath);
-			if ((file!=null)&&file.exists()) {
-				if (!IJ.showMessageWithCancel(
-					    "Save traces file...", "The file "+
-					    savePath+" already exists.\n"+
-					    "Do you want to replace it?"))
+			final File file = new File(savePath);
+			if (file.exists()) {
+				if (!IJ.showMessageWithCancel("Save traces file...",
+						"The file " + savePath + " already exists.\n" + "Do you want to replace it?"))
 					return;
 			}
 
-			IJ.showStatus("Saving traces to "+savePath);
+			IJ.showStatus("Saving traces to " + savePath);
 
-			int preSavingState = currentState;
-			changeState( SAVING );
+			final int preSavingState = currentState;
+			changeState(SAVING);
 			try {
-				pathAndFillManager.writeXML( savePath, true );
-			} catch( IOException ioe ) {
+				pathAndFillManager.writeXML(savePath, plugin.useCompressedXML);
+			} catch (final IOException ioe) {
 				IJ.showStatus("Saving failed.");
-				IJ.error("Writing traces to '"+savePath+"' failed: "+ioe);
-				changeState( preSavingState );
+				SNT.error("Writing traces to '" + savePath + "' failed: " + ioe);
+				changeState(preSavingState);
 				return;
 			}
-			changeState( preSavingState );
+			changeState(preSavingState);
 			IJ.showStatus("Saving completed.");
 
 			plugin.unsavedPaths = false;
 
-		} else if( source == loadMenuItem ) {
+		} else if (source == loadMenuItem) {
 
-			if( plugin.pathsUnsaved() ) {
-				YesNoCancelDialog d = new YesNoCancelDialog( IJ.getInstance(), "Warning",
-									     "There are unsaved paths. Do you really want to load new traces?" );
+			if (plugin.pathsUnsaved()) {
+				final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Warning",
+						"There are unsaved paths. Do you really want to load new traces?");
 
-				if( ! d.yesPressed() )
+				if (!d.yesPressed())
 					return;
 			}
 
-			int preLoadingState = currentState;
-			changeState( LOADING );
+			final int preLoadingState = currentState;
+			changeState(LOADING);
 			plugin.loadTracings();
-			changeState( preLoadingState );
+			changeState(preLoadingState);
 
-		} else if( source == exportAllSWCMenuItem ) {
+		} else if (source == exportAllSWCMenuItem && !noPathsError()) {
 
-			FileInfo info = plugin.file_info;
+			if (pathAndFillManager.usingNonPhysicalUnits()) {
+				final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Warning",
+						"These tracings were obtained from a spatially uncalibrated image.\n"
+								+ "The SWC specification assumes all coordinates to be in " + IJ.micronSymbol + "m.\n"
+								+ "Do you really want to proceed with the SWC export?");
+				if (!d.yesPressed())
+					return;
+			}
+
+			final FileInfo info = plugin.file_info;
 			SaveDialog sd;
 
-			if( info == null ) {
+			if (info == null) {
 
-				sd = new SaveDialog("Export all as SWC...",
-						    "exported",
-						    "");
+				sd = new SaveDialog("Export all as SWC...", "exported", "");
 
 			} else {
 
 				String suggestedFilename;
-				int extensionIndex = info.fileName.lastIndexOf(".");
+				final int extensionIndex = info.fileName.lastIndexOf(".");
 				if (extensionIndex == -1)
 					suggestedFilename = info.fileName;
 				else
 					suggestedFilename = info.fileName.substring(0, extensionIndex);
 
-				sd = new SaveDialog("Export all as SWC...",
-						    info.directory,
-						    suggestedFilename+"-exported",
-						    "");
+				sd = new SaveDialog("Export all as SWC...", info.directory, suggestedFilename + "-exported", "");
 			}
 
 			String savePath;
-			if(sd.getFileName()==null) {
+			if (sd.getFileName() == null) {
 				return;
-			} else {
-				savePath = sd.getDirectory()+sd.getFileName();
 			}
-			IJ.error("got savePath: "+savePath);
-			if( ! pathAndFillManager.checkOKToWriteAllAsSWC( savePath ) )
+			savePath = sd.getDirectory() + sd.getFileName();
+			if (verbose)
+				SNT.log("Got savePath: " + savePath);
+			if (!pathAndFillManager.checkOKToWriteAllAsSWC(savePath))
 				return;
-			pathAndFillManager.exportAllAsSWC( savePath );
+			pathAndFillManager.exportAllAsSWC(savePath);
 
-		} else if( source == exportCSVMenuItem || source == exportCSVMenuItemAgain ) {
+		} else if ((source == exportCSVMenuItem || source == exportCSVMenuItemAgain) && !noPathsError()) {
 
-			FileInfo info = plugin.file_info;
+			final FileInfo info = plugin.file_info;
 			SaveDialog sd;
 
-			if( info == null ) {
+			if (info == null) {
 
-				sd = new SaveDialog("Export as CSV...",
-						    "traces",
-						    ".csv");
+				sd = new SaveDialog("Export Paths as CSV...", "traces", ".csv");
 
 			} else {
 
-				sd = new SaveDialog("Export as CSV...",
-						    info.directory,
-						    info.fileName,
-						    ".csv");
+				sd = new SaveDialog("Export Paths as CSV...", info.directory, info.fileName, ".csv");
 			}
 
 			String savePath;
-			if(sd.getFileName()==null) {
+			if (sd.getFileName() == null) {
 				return;
-			} else {
-				savePath = sd.getDirectory()+sd.getFileName();
 			}
+			savePath = sd.getDirectory() + sd.getFileName();
 
-			File file = new File(savePath);
-			if ((file!=null)&&file.exists()) {
-				if (!IJ.showMessageWithCancel(
-					    "Export as CSV...", "The file "+
-					    savePath+" already exists.\n"+
-					    "Do you want to replace it?"))
+			final File file = new File(savePath);
+			if (file.exists()) {
+				if (!IJ.showMessageWithCancel("Export as CSV...",
+						"The file " + savePath + " already exists.\n" + "Do you want to replace it?"))
 					return;
 			}
 
-			IJ.showStatus("Exporting as CSV to "+savePath);
+			IJ.showStatus("Exporting as CSV to " + savePath);
 
-			int preExportingState = currentState;
-			changeState( SAVING );
+			final int preExportingState = currentState;
+			changeState(SAVING);
 			// Export here...
 			try {
 				pathAndFillManager.exportToCSV(file);
-			} catch( IOException ioe ) {
+				if (source == exportCSVMenuItemAgain) {
+					final ResultsTable rt = ResultsTable.open(savePath);
+					rt.show(sd.getFileName());
+				}
+			} catch (final IOException ioe) {
 				IJ.showStatus("Exporting failed.");
-				IJ.error("Writing traces to '"+savePath+"' failed: "+ioe);
-				changeState( preExportingState );
+				SNT.error("Writing traces to '" + savePath + "' failed:\n" + ioe);
+				changeState(preExportingState);
 				return;
 			}
 			IJ.showStatus("Export complete.");
-			changeState( preExportingState );
+			changeState(preExportingState);
 
-		} else if( source == sendToTrakEM2 ) {
+		} else if (source == sendToTrakEM2) {
 
 			plugin.notifyListeners(new SNTEvent(SNTEvent.SEND_TO_TRAKEM2));
 
-		} else if( source == showCorrespondencesToButton ) {
+		} else if (source == showCorrespondencesToButton) {
 
 			// Ask for the traces file to show correspondences to:
 
@@ -1227,162 +1375,323 @@ public class NeuriteTracerResultsDialog
 			String directory = null;
 
 			OpenDialog od;
-			od = new OpenDialog("Select other traces file...",
-					    directory,
-					    null );
+			od = new OpenDialog("Select other traces file...", directory, null);
 
 			fileName = od.getFileName();
 			directory = od.getDirectory();
 
-			if( fileName != null ) {
+			if (fileName != null) {
 
-				File tracesFile = new File( directory, fileName );
-				if( ! tracesFile.exists() ) {
-					IJ.error("The file '"+tracesFile.getAbsolutePath()+"' does not exist.");
+				final File tracesFile = new File(directory, fileName);
+				if (!tracesFile.exists()) {
+					SNT.error("The file '" + tracesFile.getAbsolutePath() + "' does not exist.");
 					return;
 				}
 
 				/* FIXME: test code: */
 
-				// File tracesFile = new File("/media/LaCie/corpus/flybrain/Data/1/lo15r202.fitted.traces");
-				// File fittedTracesFile = new File("/media/LaCie/corpus/flybrain/Data/1/LO15R202.traces");
+				// File tracesFile = new
+				// File("/media/LaCie/corpus/flybrain/Data/1/lo15r202.fitted.traces");
+				// File fittedTracesFile = new
+				// File("/media/LaCie/corpus/flybrain/Data/1/LO15R202.traces");
 
-				// plugin.showCorrespondencesTo( tracesFile, Color.YELLOW, 2.5 );
-				// plugin.showCorrespondencesTo( fittedTracesFile, Color.RED, 2.5 );
+				// plugin.showCorrespondencesTo( tracesFile, Color.YELLOW, 2.5
+				// );
+				// plugin.showCorrespondencesTo( fittedTracesFile, Color.RED,
+				// 2.5 );
 
-				plugin.showCorrespondencesTo( tracesFile, Color.YELLOW, 2.5 );
+				plugin.showCorrespondencesTo(tracesFile, Color.YELLOW, 2.5);
 
 				/* end of FIXME */
 
 			}
 
-
-		} else if( source == loadLabelsMenuItem ) {
+		} else if (source == loadLabelsMenuItem) {
 
 			plugin.loadLabels();
 
-		} else if( source == makeLineStackMenuItem ) {
+		} else if (source == makeLineStackMenuItem && !noPathsError()) {
 
-			if( pathAndFillManager.size() == 0 ) {
-				IJ.error("There are no paths traced yet - the stack would be empty");
-			} else {
-				ImagePlus imagePlus = plugin.makePathVolume();
-				imagePlus.show();
+			final SkeletonPlugin skelPlugin = new SkeletonPlugin(plugin);
+			skelPlugin.run();
+
+		} else if (source == pathsToROIsMenuItem && !noPathsError()) {
+
+			if (!pathAndFillManager.anySelected()) {
+				SNT.error("No paths selected.");
+				return;
 			}
 
-		} else if( source == analyzeSkeletonMenuItem ) {
+			final GenericDialog gd = new GenericDialog("Selected Paths to ROIs");
 
-			if( pathAndFillManager.size() == 0 ) {
-				IJ.error("There are no paths traced yet!");
-			} else {
-				ImagePlus imagePlus = plugin.makePathVolume();
-				Skeletonize3D_ skeletonizer = new Skeletonize3D_();
-				skeletonizer.setup("",imagePlus);
-				skeletonizer.run(imagePlus.getProcessor());
-				AnalyzeSkeleton_ analyzer = new AnalyzeSkeleton_();
-				analyzer.setup("",imagePlus);
-				analyzer.run(imagePlus.getProcessor());
-				imagePlus.show();
+			final int[] PLANES_ID = { ThreePanes.XY_PLANE, ThreePanes.XZ_PLANE, ThreePanes.ZY_PLANE };
+			final String[] PLANES_STRING = { "XY_View", "XZ_View", "ZY_View" };
+			final InteractiveTracerCanvas[] canvases = { plugin.xy_tracer_canvas, plugin.xz_tracer_canvas,
+					plugin.zy_tracer_canvas };
+			final boolean[] destinationPlanes = new boolean[PLANES_ID.length];
+			for (int i = 0; i < PLANES_ID.length; i++)
+				destinationPlanes[i] = canvases[i] != null && getImagePlusFromPane(PLANES_ID[i]) != null;
+
+			gd.setInsets(0, 10, 0);
+			gd.addMessage("Create 2D Path-ROIs from:");
+			gd.setInsets(0, 20, 0);
+			for (int i = 0; i < PLANES_ID.length; i++)
+				gd.addCheckbox(PLANES_STRING[i], destinationPlanes[i]);
+
+			// 2D traces?
+			final Vector<?> cbxs = gd.getCheckboxes();
+			for (int i = 1; i < PLANES_ID.length; i++)
+				((Checkbox) cbxs.get(i)).setEnabled(!plugin.singleSlice);
+
+			final String[] scopes = { "ROI Manager", "Image overlay" };
+			gd.addRadioButtonGroup("Store Path-ROIs in:", scopes, 2, 1, scopes[0]);
+
+			gd.addMessage("");
+			gd.addCheckbox("Color code ROIs by SWC type", false);
+			gd.addCheckbox("Discard pre-existing ROIs in Overlay/Manager", true);
+
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return;
+
+			for (int i = 0; i < PLANES_ID.length; i++)
+				destinationPlanes[i] = gd.getNextBoolean();
+			final String scope = gd.getNextRadioButton();
+			final boolean swcColors = gd.getNextBoolean();
+			final boolean reset = gd.getNextBoolean();
+
+			if (scopes[0].equals(scope)) { // ROI Manager
+
+				final Overlay overlay = new Overlay();
+				for (int i = 0; i < destinationPlanes.length; i++) {
+					if (destinationPlanes[i]) {
+						final int lastPlaneIdx = overlay.size() - 1;
+						plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
+						if (plugin.singleSlice)
+							continue;
+						for (int j = lastPlaneIdx + 1; j < overlay.size(); j++) {
+							final Roi roi = overlay.get(j);
+							roi.setName(roi.getName() + " [" + PLANES_STRING[i] + "]");
+						}
+					}
+				}
+				RoiManager rm = RoiManager.getInstance2();
+				if (rm == null)
+					rm = new RoiManager();
+				else if (reset)
+					rm.reset();
+				Prefs.showAllSliceOnly = !plugin.singleSlice;
+				rm.setEditMode(plugin.getImagePlus(), false);
+				for (final Roi path : overlay.toArray())
+					rm.addRoi(path);
+				rm.runCommand("sort");
+				rm.setEditMode(plugin.getImagePlus(), true);
+				rm.runCommand("show all without labels");
+
+			} else { // Overlay
+
+				String error = "";
+				for (int i = 0; i < destinationPlanes.length; i++) {
+					if (destinationPlanes[i]) {
+						final ImagePlus imp = getImagePlusFromPane(PLANES_ID[i]);
+						if (imp == null) {
+							error += PLANES_STRING[i] + ", ";
+							continue;
+						}
+						Overlay overlay = imp.getOverlay();
+						if (overlay == null) {
+							overlay = new Overlay();
+							imp.setOverlay(overlay);
+						} else if (reset)
+							overlay.clear();
+						plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
+					}
+				}
+				if (!error.isEmpty()) {
+					SNT.error("Some ROIs were skipped because some images (" + error.substring(0, error.length() - 2)
+							+ ") are no longer available.\nPlease consider exporting to the ROI Manager instead.");
+				}
 			}
 
-		} else if( source == cancelSearch ) {
+		} else if (source == cancelSearch) {
 
-			if( currentState == SEARCHING ) {
+			if (currentState == SEARCHING) {
 				updateStatusText("Cancelling path search...");
-				plugin.cancelSearch( false );
-			} else if( currentState == CALCULATING_GAUSSIAN ) {
+				plugin.cancelSearch(false);
+			} else if (currentState == CALCULATING_GAUSSIAN) {
 				updateStatusText("Cancelling Gaussian generation...");
 				plugin.cancelGaussian();
 			} else {
-				IJ.error("BUG! (wrong state for cancelling...)");
+				SNT.error("BUG! (wrong state for cancelling...)");
 			}
 
-		} else if( source == keepSegment ) {
+		} else if (source == keepSegment) {
 
-			plugin.confirmTemporary( );
+			plugin.confirmTemporary();
 
-		} else if( source == junkSegment ) {
+		} else if (source == junkSegment) {
 
-			plugin.cancelTemporary( );
+			plugin.cancelTemporary();
 
-		} else if( source == completePath ) {
+		} else if (source == completePath) {
 
-			plugin.finishedPath( );
+			plugin.finishedPath();
 
-		} else if( source == cancelPath ) {
+		} else if (source == cancelPath) {
 
-			plugin.cancelPath( );
+			plugin.cancelPath();
 
-		} else if( source == quitMenuItem ) {
+		} else if (source == quitMenuItem) {
 
 			exitRequested();
 
-		}  else if( source == showOrHidePathList ) {
+		} else if (source == showOrHidePathList) {
 
 			togglePathListVisibility();
 
-		}  else if( source == showOrHideFillList ) {
+		} else if (source == showOrHideFillList) {
 
 			toggleFillListVisibility();
 
-		} else if( source == editSigma ) {
+		} else if (source == editSigma) {
 
 			double newSigma = -1;
 			double newMultiplier = -1;
-			while( newSigma <= 0 ) {
-				GenericDialog gd = new GenericDialog("Select Scale of Structures");
+			while (newSigma <= 0) {
+				final GenericDialog gd = new GenericDialog("Select Scale of Structures");
+				gd.setInsets(10, 0, 0);
 				gd.addMessage("Please enter the approximate radius of the structures you are looking for:");
-				gd.addNumericField("Sigma: ", plugin.getMinimumSeparation(), 4);
-				gd.addMessage("(The default value is the minimum voxel separation.)");
+				gd.addNumericField("Sigma: ", plugin.getMinimumSeparation(), 4, 6,
+						"(The default is the minimum voxel separation)");
+				gd.setInsets(10, 0, 0);
 				gd.addMessage("Please enter the scaling factor to apply:");
-				gd.addNumericField("Multiplier: ", 4, 4);
-				gd.addMessage("(If you're not sure, just leave this at 4.)");
+				gd.addNumericField("    Multiplier: ", 4, 4, 6, "(If unsure, just leave this at 4)");
 				gd.showDialog();
-				if( gd.wasCanceled() )
+				if (gd.wasCanceled())
 					return;
 
 				newSigma = gd.getNextNumber();
-				if( newSigma <= 0 ) {
-					IJ.error("The value of sigma must be positive");
+				if (newSigma <= 0) {
+					SNT.error("The value of sigma must be positive");
 				}
 
 				newMultiplier = gd.getNextNumber();
-				if( newMultiplier <= 0 ) {
-					IJ.error("The value of the multiplier must be positive");
+				if (newMultiplier <= 0) {
+					SNT.error("The value of the multiplier must be positive");
 				}
 			}
 
-			setSigma( newSigma, true );
-			setMultiplier( newMultiplier );
+			setSigma(newSigma, true);
+			setMultiplier(newMultiplier);
 
-		} else if( source == sigmaWizard ) {
+		} else if (source == sigmaWizard) {
 
 			preSigmaPaletteState = currentState;
-			changeState( WAITING_FOR_SIGMA_POINT );
+			changeState(WAITING_FOR_SIGMA_POINT);
 
-		} else if( source == colorImageChoice ) {
+		} else if (source == colorImageChoice) {
 
-			if( ! ignoreColorImageChoiceEvents )
+			if (!ignoreColorImageChoiceEvents)
 				checkForColorImageChange();
+
+		} else if (source == arrangeWindowsMenuItem) {
+			arrangeCanvases();
 		}
+	}
+
+	private void arrangeDialogs() {
+		final GraphicsDevice activeScreen = getGraphicsConfiguration().getDevice();
+		final int screenWidth = activeScreen.getDisplayMode().getWidth();
+		final int screenHeight = activeScreen.getDisplayMode().getHeight();
+		final Rectangle bounds = activeScreen.getDefaultConfiguration().getBounds();
+
+		setLocation(bounds.x, bounds.y);
+		pw.setLocation(screenWidth - pw.getWidth(), bounds.y);
+		fw.setLocation(bounds.x + getWidth(), screenHeight - fw.getHeight());
+	}
+
+	private void arrangeCanvases() {
+		final StackWindow xy_window = plugin.getWindow(ThreePanes.XY_PLANE);
+		if (xy_window == null)
+			return;
+		final GraphicsConfiguration xy_config = xy_window.getGraphicsConfiguration();
+		final GraphicsDevice xy_screen = xy_config.getDevice();
+		final int screenWidth = xy_screen.getDisplayMode().getWidth();
+		final int screenHeight = xy_screen.getDisplayMode().getHeight();
+		final Rectangle bounds = xy_screen.getDefaultConfiguration().getBounds();
+
+		// Place 3D Viewer at lower right of the screen where image was found
+		if (plugin.use3DViewer) {
+			final ImageWindow3D uniWindow = plugin.get3DUniverse().getWindow();
+			uniWindow.setLocation(bounds.x + screenWidth - uniWindow.getWidth(),
+					bounds.y + screenHeight - uniWindow.getHeight());
+		}
+
+		// We'll avoid centering the image on the screen it was found to
+		// maximize available space. We'll also avoid the upper left of
+		// the screen in case dialog an path window are also on this screen.
+		int x = bounds.x + this.getX() + this.getWidth();
+		if (x > bounds.x + screenWidth / 2 - xy_window.getWidth() / 2)
+			x = bounds.x + screenWidth / 2 - xy_window.getWidth() / 2;
+		int y = bounds.y + pw.getHeight() / 2;
+		if (y > bounds.y + screenHeight / 2 - xy_window.getHeight() / 2)
+			y = bounds.y + screenHeight / 2 - xy_window.getHeight() / 2;
+		xy_window.setLocation(x, y);
+
+		final StackWindow zy_window = plugin.getWindow(ThreePanes.ZY_PLANE);
+		if (zy_window != null) {
+			zy_window.setLocation(x + xy_window.getWidth(), y);
+			zy_window.toFront();
+		}
+		final StackWindow xz_window = plugin.getWindow(ThreePanes.XZ_PLANE);
+		if (xz_window != null) {
+			xz_window.setLocation(x, y + xy_window.getHeight());
+			xz_window.toFront();
+		}
+		xy_window.toFront();
+	}
+
+	private void toggleWindowVisibility(final int pane, final JCheckBoxMenuItem menuItem, final boolean setVisible) {
+		if (getImagePlusFromPane(pane) == null) {
+			SNT.error("Image closed: Pane is no longer accessible.");
+			menuItem.setEnabled(false);
+			menuItem.setSelected(false);
+		} else { // NB: WindowManager list won't be notified
+			plugin.getWindow(pane).setVisible(setVisible);
+		}
+	}
+
+	private ImagePlus getImagePlusFromPane(final int pane) {
+		final StackWindow win = plugin.getWindow(pane);
+		return (win == null) ? null : win.getImagePlus();
+	}
+
+	private boolean noPathsError() {
+		final boolean noPaths = pathAndFillManager.size() == 0;
+		if (noPaths) {
+			SNT.error("There are no traced paths.");
+		}
+		return noPaths;
 	}
 
 	@Override
 	public void sigmaPaletteClosing() {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				changeState(preSigmaPaletteState);
-				setSigma( currentSigma, true );
+				setSigma(currentSigma, true);
 			}
 		});
 	}
 
-	protected void setPathListVisible(boolean makeVisible) {
+	protected void setPathListVisible(final boolean makeVisible, final boolean toFront) {
 		assert SwingUtilities.isEventDispatchThread();
-		if( makeVisible ) {
-			showOrHidePathList.setText("Hide Path List");
+		if (makeVisible) {
+			showOrHidePathList.setText(" Hide Path List");
 			pw.setVisible(true);
-			pw.toFront();
+			if (toFront)
+				pw.toFront();
 		} else {
 			showOrHidePathList.setText("Show Path List");
 			pw.setVisible(false);
@@ -1392,14 +1701,14 @@ public class NeuriteTracerResultsDialog
 	protected void togglePathListVisibility() {
 		assert SwingUtilities.isEventDispatchThread();
 		synchronized (pw) {
-			setPathListVisible( ! pw.isVisible() );
+			setPathListVisible(!pw.isVisible(), true);
 		}
 	}
 
-	protected void setFillListVisible(boolean makeVisible) {
+	protected void setFillListVisible(final boolean makeVisible) {
 		assert SwingUtilities.isEventDispatchThread();
-		if( makeVisible ) {
-			showOrHideFillList.setText("Hide Fill List");
+		if (makeVisible) {
+			showOrHideFillList.setText(" Hide Fill List");
 			fw.setVisible(true);
 			fw.toFront();
 		} else {
@@ -1411,97 +1720,136 @@ public class NeuriteTracerResultsDialog
 	protected void toggleFillListVisibility() {
 		assert SwingUtilities.isEventDispatchThread();
 		synchronized (fw) {
-			setFillListVisible( ! fw.isVisible() );
+			setFillListVisible(!fw.isVisible());
 		}
 	}
 
-	public void thresholdChanged( double f ) {
+	public void thresholdChanged(final double f) {
 		fw.thresholdChanged(f);
 	}
 
-	public boolean nearbySlices( ) {
+	public boolean nearbySlices() {
 		assert SwingUtilities.isEventDispatchThread();
-		return ( viewPathChoice.getSelectedIndex() > 0 );
+		return (viewPathChoice.getSelectedIndex() > 0);
 	}
 
 	@Override
-	public void itemStateChanged( ItemEvent e ) {
+	public void itemStateChanged(final ItemEvent e) {
 		assert SwingUtilities.isEventDispatchThread();
 
-		Object source = e.getSource();
+		final Object source = e.getSource();
 
-		if( source == viewPathChoice ) {
+		if (source == enforceDefaultColors) {
 
-			plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
+			plugin.displayCustomPathColors = !enforceDefaultColors.isSelected();
+			plugin.repaintAllPanes();
+			plugin.update3DViewerContents();
 
-		} else if( source == useTubularGeodesics ) {
+		} else if (source == viewPathChoice) {
+
+			plugin.justDisplayNearSlices(nearbySlices(), getEitherSide());
+			nearbyField.setEnabled(nearbySlices());
+
+		} else if (source == useTubularGeodesics) {
 
 			plugin.enableTubularGeodesicsTracing(useTubularGeodesics.isSelected());
 
-		} else if( source == preprocess && ! ignorePreprocessEvents) {
+		} else if (source == useSnapWindow) {
 
-			if( preprocess.isSelected() )
+			plugin.enableSnapCursor(useSnapWindow.isSelected());
+
+		} else if (source == preprocess && !ignorePreprocessEvents) {
+
+			if (preprocess.isSelected())
 				turnOnHessian();
 			else {
 				plugin.enableHessian(false);
 				// changeState(preGaussianState);
 			}
 
-		} else if( source == usePreprocessed ) {
+		} else if (source == usePreprocessed) {
 
-			if( usePreprocessed.isSelected() ) {
+			if (usePreprocessed.isSelected()) {
 				preprocess.setSelected(false);
 			}
 
-		}  else if( source == justShowSelected ) {
+		} else if (source == justShowSelected) {
 
-			plugin.setShowOnlySelectedPaths( justShowSelected.isSelected() );
+			plugin.setShowOnlySelectedPaths(justShowSelected.isSelected());
 
-		} else if( source == paths3DChoice ) {
+		} else if (source == paths3DChoice) {
 
-			int selectedIndex = paths3DChoice.getSelectedIndex();
-			plugin.setPaths3DDisplay( selectedIndex + 1 );
+			final int selectedIndex = paths3DChoice.getSelectedIndex();
+			plugin.setPaths3DDisplay(selectedIndex + 1);
 
-		} else if( source == mipOverlayMenuItem ) {
+		} else if (source == mipOverlayMenuItem) {
 
 			plugin.showMIPOverlays(e.getStateChange() == ItemEvent.SELECTED);
 
-		} else if( source == drawDiametersXYMenuItem ) {
+		} else if (source == drawDiametersXYMenuItem) {
+
 			plugin.setDrawDiametersXY(e.getStateChange() == ItemEvent.SELECTED);
+
+		} else if (source == autoActivationMenuItem) {
+
+			plugin.enableAutoActivation(e.getStateChange() == ItemEvent.SELECTED);
+
+		} else if (source == xyCanvasMenuItem && xyCanvasMenuItem.isEnabled()) {
+			toggleWindowVisibility(ThreePanes.XY_PLANE, xyCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
+		} else if (source == zyCanvasMenuItem && zyCanvasMenuItem.isEnabled()) {
+			toggleWindowVisibility(ThreePanes.ZY_PLANE, zyCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
+		} else if (source == xzCanvasMenuItem && xzCanvasMenuItem.isEnabled()) {
+			toggleWindowVisibility(ThreePanes.XZ_PLANE, xzCanvasMenuItem, e.getStateChange() == ItemEvent.DESELECTED);
+		} else if (plugin.use3DViewer && source == threeDViewerMenuItem && threeDViewerMenuItem.isEnabled()) {
+			plugin.get3DUniverse().getWindow().setVisible(e.getStateChange() == ItemEvent.DESELECTED);
 		}
 	}
 
 	@Override
-	public void paint(Graphics g) {
+	public void stateChanged(final ChangeEvent e) {
+		final Object source = e.getSource();
+		if (source == snapWindowXYsizeSpinner) {
+			plugin.cursorSnapWindowXY = (int) snapWindowXYsizeSpinner.getValue() / 2;
+		} else if (source == snapWindowZsizeSpinner) {
+			plugin.cursorSnapWindowZ = (int) snapWindowZsizeSpinner.getValue() / 2;
+		}
+	}
+
+	@Override
+	public void paint(final Graphics g) {
 		super.paint(g);
 	}
 
 	volatile boolean reportedInvalid;
 
-	protected int getEitherSide( ) {
+	protected int getEitherSide() {
 		assert SwingUtilities.isEventDispatchThread();
 
-		String s = nearbyField.getText();
-		if( s.equals("") ) {
+		final String s = nearbyField.getText();
+		if (s.equals("")) {
 			reportedInvalid = false;
 			return 0;
 		}
 
 		try {
-			int e = Integer.parseInt( s );
-			if( e < 0 ) {
-				if( ! reportedInvalid ) {
-					IJ.error("The number of slices either side cannot be negative.");
+			final int e = Integer.parseInt(s);
+			if (e < 0) {
+				if (!reportedInvalid) {
+					SNT.error("The number of slices either side cannot be negative.");
 					reportedInvalid = true;
 					return 0;
 				}
 			}
+			if (e > plugin.depth) {
+				SNT.error("The no. of slices either side should not be higher than image's depth.");
+				return plugin.depth;
+			}
 			reportedInvalid = false;
 			return e;
 
-		} catch( NumberFormatException nfe ) {
-			if( ! reportedInvalid ) {
-				IJ.error("The number of slices either side must be a non-negative integer.");
+		} catch (final NumberFormatException nfe) {
+			if (!reportedInvalid) {
+				SNT.error("The number of slices either side must be a non-negative integer.");
 				reportedInvalid = true;
 				return 0;
 			}
@@ -1511,9 +1859,38 @@ public class NeuriteTracerResultsDialog
 	}
 
 	@Override
-	public void textValueChanged( TextEvent e ) {
+	public void textValueChanged(final TextEvent e) {
 		assert SwingUtilities.isEventDispatchThread();
-		plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
+		plugin.justDisplayNearSlices(nearbySlices(), getEitherSide());
+	}
+
+	private JMenu tracingMenu() {
+		final JMenu tracingMenu = new JMenu("Tracing");
+		autoActivationMenuItem = new JCheckBoxMenuItem("Activate Canvas on Mouse Hovering",
+				plugin.autoCanvasActivation);
+		autoActivationMenuItem.addItemListener(this);
+		tracingMenu.add(autoActivationMenuItem);
+		tracingMenu.addSeparator();
+		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw Diameters in XY View", plugin.getDrawDiametersXY());
+		drawDiametersXYMenuItem.addItemListener(this);
+		tracingMenu.add(drawDiametersXYMenuItem);
+		final String opacityLabel = "Show MIP Overlay(s) at " + SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT
+				+ "% Opacity";
+		mipOverlayMenuItem = new JCheckBoxMenuItem(opacityLabel);
+		mipOverlayMenuItem.setEnabled(!plugin.singleSlice);
+		mipOverlayMenuItem.addItemListener(this);
+		tracingMenu.add(mipOverlayMenuItem);
+		tracingMenu.addSeparator();
+		final JMenuItem optionsMenuItem = new JMenuItem("Options...");
+		optionsMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				new SNTPrefs(plugin).promptForOptions();
+			}
+		});
+		tracingMenu.add(optionsMenuItem);
+
+		return tracingMenu;
 	}
 
 	private JMenu helpMenu() {
@@ -1528,37 +1905,20 @@ public class NeuriteTracerResultsDialog
 		helpMenu.add(mi);
 		mi = menuItemTrigerringURL("Step-by-step instructions", URL + ":_Step-By-Step_Instructions");
 		helpMenu.add(mi);
+		mi = menuItemTrigerringURL("Filling out processes", URL + ":_Basic_Instructions#Filling_Out_Neurons");
+		helpMenu.add(mi);
 		mi = menuItemTrigerringURL("3D interaction", URL + ":_3D_Interaction");
+		helpMenu.add(mi);
+		mi = menuItemTrigerringURL("Tubular Geodesics", URL + ":_Tubular_Geodesics");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 		mi = menuItemTrigerringURL("List of shortcuts", URL + ":_Key_Shortcuts");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTrigerringURL("Sholl analysis: Online help", URL + ":_Sholl_analysis");
-		helpMenu.add(mi);
-		mi = new JMenuItem("Sholl analysis: Offline help");
-		mi.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				final Thread newThread = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
-						modKey += "+Shift";
-						final String instructions = "To manually select the center of analysis:\n"
-								+ "    1. Mouse over the path of interest and press \"G\" to activate it\n"
-								+ "    2. Press \"" + modKey + "\" to select a point along the path\n"
-								+ "    3. Press \"" + modKey + "+A\" to initiate Sholl analysis\n \n"
-								+ "For batch processing run \"Sholl Analysis (Tracings)...\".";
-						final WaitForUserDialog wd = new WaitForUserDialog("Sholl Analysis Cheat Sheet", instructions);
-						wd.show();
-					}
-				});
-				newThread.start();
-			}
-		});
-		helpMenu.add(mi);
-		helpMenu.addSeparator();
+		// mi = menuItemTrigerringURL("Sholl analysis walkthrough", URL +
+		// ":_Sholl_analysis");
+		// helpMenu.add(mi);
+		// helpMenu.addSeparator();
 		mi = menuItemTrigerringURL("Ask a question", "http://forum.imagej.net");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
@@ -1567,7 +1927,45 @@ public class NeuriteTracerResultsDialog
 		return helpMenu;
 	}
 
-	public static JMenuItem menuItemTrigerringURL(final String label, final String URL) {
+	private JMenuItem shollAnalysisHelpMenuItem() {
+		JMenuItem mi;
+		mi = new JMenuItem("Sholl Analysis...");
+		mi.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				final Thread newThread = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						if (noPathsError())
+							return;
+						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
+						modKey += "+Shift";
+						final String url1 = Sholl_Analysis.URL + "#Analysis_of_Traced_Cells";
+						final String url2 = "http://imagej.net/Simple_Neurite_Tracer/:_Sholl_analysis";
+						final StringBuilder sb = new StringBuilder();
+						sb.append("<html>");
+						sb.append("<div WIDTH=390>");
+						sb.append("To initiate <a href='").append(Sholl_Analysis.URL).append("'>Sholl Analysis</a>, ");
+						sb.append("you must first select a focal point:");
+						sb.append("<ol>");
+						sb.append("<li>Mouse over the path of interest. Press \"G\" to activate it</li>");
+						sb.append("<li>Press \"").append(modKey).append("\" to select a point along the path</li>");
+						sb.append("<li>Press \"").append(modKey).append("+A\" to start analysis</li>");
+						sb.append("</ol>");
+						sb.append("A detailed walkthrough of this procedure is <a href='").append(url2)
+								.append("'>available online</a>. ");
+						sb.append("For batch processing, run <a href='").append(url1)
+								.append("'>Analyze>Sholl>Sholl Analysis (Tracings)...</a>. ");
+						new HTMLDialog("Sholl Analysis How-to", sb.toString(), false);
+					}
+				});
+				newThread.start();
+			}
+		});
+		return mi;
+	}
+
+	private JMenuItem menuItemTrigerringURL(final String label, final String URL) {
 		final JMenuItem mi = new JMenuItem(label);
 		mi.addActionListener(new ActionListener() {
 			@Override
@@ -1577,4 +1975,5 @@ public class NeuriteTracerResultsDialog
 		});
 		return mi;
 	}
+
 }

@@ -94,8 +94,8 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 	}
 
 	private static String getDefaultInfoMessage() {
-		return "Running " + "Sholl Analysis v" + Sholl_Analysis.VERSION + " / Simple Neurite Tracer v"
-				+ SimpleNeuriteTracer.PLUGIN_VERSION + "...";
+		return "Running " + "Sholl Analysis v" + Sholl_Analysis.VERSION + " / Simple Neurite Tracer v" + SNT.VERSION
+				+ "...";
 	}
 
 	@Override
@@ -106,7 +106,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 
 		imp = (impRequired) ? IJ.openImage(imgPath) : null;
 		if (impRequired && imp == null || !validTracesFile(new File(tracesPath))) {
-			IJ.error("Invalid image or invalid Traces/SWC file\n \n" + imgPath + "\n" + tracesPath);
+			SNT.error("Invalid image or invalid Traces/(e)SWC file\n \n" + imgPath + "\n" + tracesPath);
 			return;
 		}
 
@@ -117,7 +117,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		else
 			pafm = new PathAndFillManager(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, 1f, 1f, 1f, null);
 		if (!pafm.loadGuessingType(tracesPath)) {
-			IJ.error("File could not be loaded:\n" + tracesPath);
+			SNT.error("File could not be loaded:\n" + tracesPath);
 			return;
 		}
 
@@ -226,7 +226,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 					sa.setCenter(pX, pY, pZ);
 				}
 			} else
-				sa.setCenter(-1,-1,-1);
+				sa.setCenter(-1, -1, -1);
 			sa.analyzeProfile(distances, counts, threeD);
 
 		} else {
@@ -254,7 +254,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			guessInitialPaths();
 
 		gd = new EnhancedGenericDialog("Sholll Analysis (Tracings)...");
-		gd.addFileField("Traces/SWC file", tracesPath, 32);
+		gd.addFileField("Traces/(e)SWC file", tracesPath, 32);
 		gd.addFileField("Image file", imgPath, 32);
 		gd.setInsets(0, 40, 20);
 		gd.addCheckbox("Load tracings without image", !impRequired);
@@ -365,7 +365,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		}
 		if (!validTracesFile(new File(tracesPath))) {
 			enableOK = false;
-			warning += "Not a valid .traces/.swc file";
+			warning += "Not a valid .traces/.(e)swc file";
 		}
 		if (!warning.isEmpty()) {
 			infoMsg.setForeground(Utils.warningColor());
@@ -426,7 +426,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 	}
 
 	private boolean tracingsFile(final File file) {
-		final String[] tracingsExts = new String[] { ".traces", ".swc" };
+		final String[] tracingsExts = new String[] { ".traces", ".swc", ".eswc" };
 		for (final String ext : tracingsExts)
 			if (file.getName().toLowerCase().endsWith(ext))
 				return true;

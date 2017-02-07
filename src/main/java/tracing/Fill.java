@@ -46,14 +46,15 @@ public class Fill {
 		public boolean open;
 	}
 
-	ArrayList< Node > nodeList;
+	ArrayList<Node> nodeList;
 
-	public Fill( ) {
-		nodeList = new ArrayList< Node >();
+	public Fill() {
+		nodeList = new ArrayList<>();
 	}
 
-	public void add( int x, int y, int z, double distance, int previous, boolean open ) {
-		Node n = new Node();
+	public void add(final int x, final int y, final int z, final double distance, final int previous,
+			final boolean open) {
+		final Node n = new Node();
 		n.x = x;
 		n.y = y;
 		n.z = z;
@@ -63,83 +64,82 @@ public class Fill {
 		nodeList.add(n);
 	}
 
-	Set< Path > sourcePaths;
+	Set<Path> sourcePaths;
 
-	public void setSourcePaths( Path [] newSourcePaths ) {
-		sourcePaths = new HashSet< Path >();
-		for( int i = 0; i < newSourcePaths.length; ++i ) {
-			sourcePaths.add( newSourcePaths[i] );
+	public void setSourcePaths(final Path[] newSourcePaths) {
+		sourcePaths = new HashSet<>();
+		for (int i = 0; i < newSourcePaths.length; ++i) {
+			sourcePaths.add(newSourcePaths[i]);
 		}
 	}
 
-	public void setSourcePaths( Set<Path> newSourcePaths ) {
-		sourcePaths = new HashSet<Path>();
+	public void setSourcePaths(final Set<Path> newSourcePaths) {
+		sourcePaths = new HashSet<>();
 		sourcePaths.addAll(newSourcePaths);
 	}
 
 	public String metric;
 
-	public void setMetric( String metric ) {
+	public void setMetric(final String metric) {
 		this.metric = metric;
 	}
 
-	public String getMetric( ) {
+	public String getMetric() {
 		return metric;
 	}
 
 	public double x_spacing, y_spacing, z_spacing;
 	public String spacing_units;
 
-	public void setSpacing( double x_spacing, double y_spacing, double z_spacing, String units ) {
+	public void setSpacing(final double x_spacing, final double y_spacing, final double z_spacing, final String units) {
 		this.x_spacing = x_spacing;
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
 		this.spacing_units = units;
 	}
 
-	public void setThreshold( double threshold ) {
+	public void setThreshold(final double threshold) {
 		this.distanceThreshold = threshold;
 	}
 
-	public double getThreshold( ) {
+	public double getThreshold() {
 		return distanceThreshold;
 	}
 
-	public void writeNodesXML( PrintWriter pw ) {
+	public void writeNodesXML(final PrintWriter pw) {
 
 		int i = 0;
-		for( Node n : nodeList ) {
-			pw.println( "    <node id=\"" + i + "\" " +
-				    "x=\"" + n.x + "\" " +
-				    "y=\"" + n.y + "\" " +
-				    "z=\"" + n.z + "\" " +
-				    ((n.previous >= 0) ? "previousid=\"" + n.previous + "\" " : "") +
-				    "distance=\"" + n.distance + "\" status=\"" + (n.open ? "open" : "closed") + "\"/>" );
-			++ i;
+		for (final Node n : nodeList) {
+			pw.println("    <node id=\"" + i + "\" " + "x=\"" + n.x + "\" " + "y=\"" + n.y + "\" " + "z=\"" + n.z
+					+ "\" " + ((n.previous >= 0) ? "previousid=\"" + n.previous + "\" " : "") + "distance=\""
+					+ n.distance + "\" status=\"" + (n.open ? "open" : "closed") + "\"/>");
+			++i;
 		}
 	}
 
-	public void writeXML( PrintWriter pw, int fillIndex ) {
-		pw.print( "  <fill id=\"" + fillIndex + "\""  );
-		if( (sourcePaths != null) && (sourcePaths.size() > 0) ) {
-			pw.print( " frompaths=\"" );
-			pw.print( getSourcePathsStringMachine() );
-			pw.print( "\"" );
+	public void writeXML(final PrintWriter pw, final int fillIndex) {
+		pw.print("  <fill id=\"" + fillIndex + "\"");
+		if ((sourcePaths != null) && (sourcePaths.size() > 0)) {
+			pw.print(" frompaths=\"");
+			pw.print(getSourcePathsStringMachine());
+			pw.print("\"");
 		}
-		pw.print( " volume=\"" + getVolume() + "\"" );
-		pw.println( " metric=\"" + getMetric() + "\" threshold=\"" + getThreshold() + "\">" );
-		writeNodesXML( pw );
-		pw.println( "  </fill>" );
+		pw.print(" volume=\"" + getVolume() + "\"");
+		pw.println(" metric=\"" + getMetric() + "\" threshold=\"" + getThreshold() + "\">");
+		writeNodesXML(pw);
+		pw.println("  </fill>");
 	}
 
-	/** Assume that the volume is just the number of sub-threshold
-	    nodes multiplied by x_spacing * y_spacing * z_spacing */
+	/**
+	 * Assume that the volume is just the number of sub-threshold nodes
+	 * multiplied by x_spacing * y_spacing * z_spacing
+	 */
 
 	public double getVolume() {
 		int subThresholdNodes = 0;
-		for( Node n : nodeList ) {
-			if( n.distance <= distanceThreshold )
-				++ subThresholdNodes;
+		for (final Node n : nodeList) {
+			if (n.distance <= distanceThreshold)
+				++subThresholdNodes;
 		}
 		return subThresholdNodes * x_spacing * y_spacing * z_spacing;
 	}
@@ -148,15 +148,15 @@ public class Fill {
 
 	public String getSourcePathsStringMachine() {
 
-		StringBuffer result = new StringBuffer("");
+		final StringBuffer result = new StringBuffer("");
 
 		boolean first = true;
-		for( Path p : sourcePaths ) {
-			if( first ) {
+		for (final Path p : sourcePaths) {
+			if (first) {
 				first = false;
 			} else
-				result.append( ", " );
-			result.append( "" + p.getID() );
+				result.append(", ");
+			result.append("" + p.getID());
 		}
 
 		return result.toString();
@@ -164,15 +164,15 @@ public class Fill {
 
 	public String getSourcePathsStringHuman() {
 
-		StringBuffer result = new StringBuffer( "" );
-		Path [] sortedSourcePaths = sourcePaths.toArray( new Path[]{} );
-		Arrays.sort( sortedSourcePaths );
+		final StringBuffer result = new StringBuffer("");
+		final Path[] sortedSourcePaths = sourcePaths.toArray(new Path[] {});
+		Arrays.sort(sortedSourcePaths);
 
-		for( int j = 0; j < sortedSourcePaths.length; ++j ) {
-			Path p = sortedSourcePaths[j];
-			if( j != 0 )
-				result.append( ", " );
-			result.append( "(" + p.getID() + ")" );
+		for (int j = 0; j < sortedSourcePaths.length; ++j) {
+			final Path p = sortedSourcePaths[j];
+			if (j != 0)
+				result.append(", ");
+			result.append("(" + p.getID() + ")");
 		}
 
 		return result.toString();

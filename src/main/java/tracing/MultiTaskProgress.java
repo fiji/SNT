@@ -23,7 +23,7 @@ package tracing;
 
 public interface MultiTaskProgress {
 
-	public void updateProgress( double proportionDone, int taskIndex );
+	public void updateProgress(double proportionDone, int taskIndex);
 
 	public void done();
 

@@ -27,8 +27,6 @@
 
 package tracing;
 
-import ij.IJ;
-
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ContainerEvent;
@@ -36,71 +34,76 @@ import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-/** There have been problems on Mac OS with people trying to start the
-  * Sholl analysis interface, but while the focus isn't on the image
-  * window.  This is just a key listener to detect such attempts and
-  * suggest to people what might be wrong if they type Shift with
-  * Control-A or Alt-A in the wrong window.  (This will be added to
-  * all the Wrong Windows.) */
+import ij.IJ;
+
+/**
+ * There have been problems on Mac OS with people trying to start the Sholl
+ * analysis interface, but while the focus isn't on the image window. This is
+ * just a key listener to detect such attempts and suggest to people what might
+ * be wrong if they type Shift with Control-A or Alt-A in the wrong window.
+ * (This will be added to all the Wrong Windows.)
+ */
 
 public class ClarifyingKeyListener implements KeyListener, ContainerListener {
 
-	/* Grabbing all key presses in a dialog window isn't trivial,
-           but the technique suggested here works fine:
-           http://www.javaworld.com/javaworld/javatips/jw-javatip69.html */
+	/*
+	 * Grabbing all key presses in a dialog window isn't trivial, but the
+	 * technique suggested here works fine:
+	 * http://www.javaworld.com/javaworld/javatips/jw-javatip69.html
+	 */
 
-	public void addKeyAndContainerListenerRecursively(Component c) {
+	public void addKeyAndContainerListenerRecursively(final Component c) {
 		c.addKeyListener(this);
-		if(c instanceof Container) {
-			Container container = (Container)c;
+		if (c instanceof Container) {
+			final Container container = (Container) c;
 			container.addContainerListener(this);
-			Component[] children = container.getComponents();
-			for(int i = 0; i < children.length; i++){
+			final Component[] children = container.getComponents();
+			for (int i = 0; i < children.length; i++) {
 				addKeyAndContainerListenerRecursively(children[i]);
 			}
 		}
 	}
 
-	private void removeKeyAndContainerListenerRecursively(Component c) {
+	private void removeKeyAndContainerListenerRecursively(final Component c) {
 		c.removeKeyListener(this);
-		if(c instanceof Container){
-			Container container = (Container)c;
+		if (c instanceof Container) {
+			final Container container = (Container) c;
 			container.removeContainerListener(this);
-			Component[] children = container.getComponents();
-			for(int i = 0; i < children.length; i++){
+			final Component[] children = container.getComponents();
+			for (int i = 0; i < children.length; i++) {
 				removeKeyAndContainerListenerRecursively(children[i]);
 			}
 		}
 	}
 
 	@Override
-	public void componentAdded(ContainerEvent e) {
+	public void componentAdded(final ContainerEvent e) {
 		addKeyAndContainerListenerRecursively(e.getChild());
 	}
 
 	@Override
-	public void componentRemoved(ContainerEvent e) {
+	public void componentRemoved(final ContainerEvent e) {
 		removeKeyAndContainerListenerRecursively(e.getChild());
 	}
 
 	@Override
-	public void keyPressed(KeyEvent e) {
+	public void keyPressed(final KeyEvent e) {
 
-		int keyCode = e.getKeyCode();
+		final int keyCode = e.getKeyCode();
 
-		if( e.isShiftDown() && (e.isControlDown() || e.isAltDown()) && (keyCode == KeyEvent.VK_A) ) {
-			IJ.error("You seem to be trying to start Sholl analysis, but the focus is on the wrong window.\n"+
-				 "Bring the (2D) image window to the foreground and try again.");
+		if (e.isShiftDown() && (e.isControlDown() || e.isAltDown()) && (keyCode == KeyEvent.VK_A)) {
+			IJ.error("You seem to be trying to start Sholl analysis, but the focus is on the wrong window.\n"
+					+ "Bring the (2D) image window to the foreground and try again.");
 			e.consume();
 		}
 	}
 
 	@Override
-	public void keyReleased(KeyEvent e) {
+	public void keyReleased(final KeyEvent e) {
 	}
 
 	@Override
-	public void keyTyped(KeyEvent e) {
+	public void keyTyped(final KeyEvent e) {
 	}
 
 }

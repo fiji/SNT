@@ -33,26 +33,31 @@ import util.CMTKTransformation;
 
 public class CMTKInversePathTransformer implements PathTransformer {
 
-	private CMTKTransformation.Inverse t;
+	private final CMTKTransformation.Inverse t;
 
-	public CMTKInversePathTransformer( CMTKTransformation.Inverse t ) {
+	public CMTKInversePathTransformer(final CMTKTransformation.Inverse t) {
 		this.t = t;
 	}
 
-	public void transformPoint( double modelX, double modelY, double modelZ, double [] transformed ) {
-		t.transformPoint( modelX, modelY, modelZ, transformed );
+	@Override
+	public void transformPoint(final double modelX, final double modelY, final double modelZ,
+			final double[] transformed) {
+		t.transformPoint(modelX, modelY, modelZ, transformed);
 	}
 
-	public void transformPoint( double modelX, double modelY, double modelZ, int [] transformed ) {
-		t.transformPoint( modelX, modelY, modelZ, transformed );
+	@Override
+	public void transformPoint(final double modelX, final double modelY, final double modelZ, final int[] transformed) {
+		t.transformPoint(modelX, modelY, modelZ, transformed);
 	}
 
-	public void transformPoint( int modelX, int modelY, int modelZ, int [] transformed ) {
-		t.transformPoint( modelX, modelY, modelZ, transformed );
+	@Override
+	public void transformPoint(final int modelX, final int modelY, final int modelZ, final int[] transformed) {
+		t.transformPoint(modelX, modelY, modelZ, transformed);
 	}
 
-	public void transformPoint( int modelX, int modelY, int modelZ, double [] transformed ) {
-		t.transformPoint( modelX, modelY, modelZ, transformed );
+	@Override
+	public void transformPoint(final int modelX, final int modelY, final int modelZ, final double[] transformed) {
+		t.transformPoint(modelX, modelY, modelZ, transformed);
 	}
 
 }

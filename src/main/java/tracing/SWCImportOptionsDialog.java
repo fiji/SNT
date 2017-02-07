@@ -27,10 +27,6 @@
 
 package tracing;
 
-import ij.IJ;
-import ij.Prefs;
-import ij.gui.GUI;
-
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -46,6 +42,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+
+import ij.IJ;
+import ij.Prefs;
+import ij.gui.GUI;
 
 @SuppressWarnings("serial")
 public class SWCImportOptionsDialog extends Dialog implements WindowListener, ActionListener, ItemListener {
@@ -76,21 +76,15 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 
 	protected void setFieldsFromPrefs() {
 
-		xOffsetTextField.setText(
-			Prefs.get("tracing.SWCImportOptionsDialog.xOffset",offsetDefault) );
-		yOffsetTextField.setText(
-			Prefs.get("tracing.SWCImportOptionsDialog.yOffset",offsetDefault) );
-		zOffsetTextField.setText(
-			Prefs.get("tracing.SWCImportOptionsDialog.zOffset",offsetDefault) );
+		xOffsetTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.xOffset", offsetDefault));
+		yOffsetTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.yOffset", offsetDefault));
+		zOffsetTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.zOffset", offsetDefault));
 
-		xScaleTextField.setText(
-			Prefs.get("tracing.SWCImportOptionsDialog.xScale",scaleDefault) );
-		yScaleTextField.setText(
-			Prefs.get("tracing.SWCImportOptionsDialog.yScale",scaleDefault) );
-		zScaleTextField.setText(
-			Prefs.get("tracing.SWCImportOptionsDialog.zScale",scaleDefault) );
+		xScaleTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.xScale", scaleDefault));
+		yScaleTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.yScale", scaleDefault));
+		zScaleTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.zScale", scaleDefault));
 
-		if( Prefs.get("tracing.SWCImportOptionsDialog.applyOffset","false").equals("true") )
+		if (Prefs.get("tracing.SWCImportOptionsDialog.applyOffset", "false").equals("true"))
 			applyOffsetCheckbox.setState(true);
 		else {
 			applyOffsetCheckbox.setState(false);
@@ -99,7 +93,7 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 			zOffsetTextField.setText(offsetDefault);
 		}
 
-		if( Prefs.get("tracing.SWCImportOptionsDialog.applyScale","false").equals("true") )
+		if (Prefs.get("tracing.SWCImportOptionsDialog.applyScale", "false").equals("true"))
 			applyScaleCheckbox.setState(true);
 		else {
 			applyScaleCheckbox.setState(false);
@@ -108,19 +102,20 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 			zScaleTextField.setText(scaleDefault);
 		}
 
-		ignoreCalibrationCheckbox.setState(
-			Prefs.get("tracing.SWCImportOptionsDialog.ignoreCalibration","false").equals("true") );
+		ignoreCalibrationCheckbox
+				.setState(Prefs.get("tracing.SWCImportOptionsDialog.ignoreCalibration", "false").equals("true"));
 
-		replaceExistingPathsCheckbox.setState(
-			Prefs.get("tracing.SWCImportOptionsDialog.replaceExistingPaths","true").equals("true") );
+		replaceExistingPathsCheckbox
+				.setState(Prefs.get("tracing.SWCImportOptionsDialog.replaceExistingPaths", "true").equals("true"));
 
 		updateEnabled();
 	}
 
-	public void actionPerformed( ActionEvent e ) {
+	@Override
+	public void actionPerformed(final ActionEvent e) {
 
-		Object source = e.getSource();
-		if( source == okButton ) {
+		final Object source = e.getSource();
+		if (source == okButton) {
 			try {
 				Double.parseDouble(xOffsetTextField.getText());
 				Double.parseDouble(yOffsetTextField.getText());
@@ -128,67 +123,64 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 				Double.parseDouble(xScaleTextField.getText());
 				Double.parseDouble(yScaleTextField.getText());
 				Double.parseDouble(zScaleTextField.getText());
-			} catch( NumberFormatException nfe ) {
-				IJ.error("Couldn't parse an offset or scale as a number: "+nfe);
+			} catch (final NumberFormatException nfe) {
+				IJ.error("Couldn't parse an offset or scale as a number: " + nfe);
 				return;
 			}
 			succeeded = true;
 			saveFieldsToPrefs();
 			dispose();
-		} else if( source == cancelButton ) {
+		} else if (source == cancelButton) {
 			dispose();
-		} else if( source == restoreToDefaultsButton ) {
+		} else if (source == restoreToDefaultsButton) {
 			restoreToDefaults();
 		}
 	}
 
-	public void itemStateChanged( ItemEvent e ) {
+	@Override
+	public void itemStateChanged(final ItemEvent e) {
 
-		Object source = e.getSource();
+		final Object source = e.getSource();
 
-		if( source == applyScaleCheckbox || source == applyOffsetCheckbox )
+		if (source == applyScaleCheckbox || source == applyOffsetCheckbox)
 			updateEnabled();
 	}
 
-	protected void enableTextField( TextField tf, boolean enabled, String defaultValue ) {
+	protected void enableTextField(final TextField tf, final boolean enabled, final String defaultValue) {
 		tf.setEnabled(enabled);
 		tf.setVisible(enabled);
-		if(!enabled)
+		if (!enabled)
 			tf.setText(defaultValue);
 	}
 
 	protected void updateEnabled() {
-		boolean manualScale = applyScaleCheckbox.getState();
-		enableTextField( xScaleTextField, manualScale, scaleDefault);
-		enableTextField( yScaleTextField, manualScale, scaleDefault);
-		enableTextField( zScaleTextField, manualScale, scaleDefault);
-		boolean manualOffset = applyOffsetCheckbox.getState();
-		enableTextField( xOffsetTextField, manualOffset, offsetDefault);
-		enableTextField( yOffsetTextField, manualOffset, offsetDefault);
-		enableTextField( zOffsetTextField, manualOffset, offsetDefault);
+		final boolean manualScale = applyScaleCheckbox.getState();
+		enableTextField(xScaleTextField, manualScale, scaleDefault);
+		enableTextField(yScaleTextField, manualScale, scaleDefault);
+		enableTextField(zScaleTextField, manualScale, scaleDefault);
+		final boolean manualOffset = applyOffsetCheckbox.getState();
+		enableTextField(xOffsetTextField, manualOffset, offsetDefault);
+		enableTextField(yOffsetTextField, manualOffset, offsetDefault);
+		enableTextField(zOffsetTextField, manualOffset, offsetDefault);
 		pack();
 	}
 
 	protected void saveFieldsToPrefs() {
 
-		Prefs.set( "tracing.SWCImportOptionsDialog.xOffset", xOffsetTextField.getText() );
-		Prefs.set( "tracing.SWCImportOptionsDialog.yOffset", yOffsetTextField.getText() );
-		Prefs.set( "tracing.SWCImportOptionsDialog.zOffset", zOffsetTextField.getText() );
-		Prefs.set( "tracing.SWCImportOptionsDialog.xScale", xScaleTextField.getText() );
-		Prefs.set( "tracing.SWCImportOptionsDialog.yScale", yScaleTextField.getText() );
-		Prefs.set( "tracing.SWCImportOptionsDialog.zScale", zScaleTextField.getText() );
+		Prefs.set("tracing.SWCImportOptionsDialog.xOffset", xOffsetTextField.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.yOffset", yOffsetTextField.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.zOffset", zOffsetTextField.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.xScale", xScaleTextField.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.yScale", yScaleTextField.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.zScale", zScaleTextField.getText());
 
-		Prefs.set( "tracing.SWCImportOptionsDialog.applyOffset",
-			   applyOffsetCheckbox.getState() );
+		Prefs.set("tracing.SWCImportOptionsDialog.applyOffset", applyOffsetCheckbox.getState());
 
-		Prefs.set( "tracing.SWCImportOptionsDialog.applyScale",
-			   applyScaleCheckbox.getState() );
+		Prefs.set("tracing.SWCImportOptionsDialog.applyScale", applyScaleCheckbox.getState());
 
-		Prefs.set( "tracing.SWCImportOptionsDialog.ignoreCalibration",
-			   ignoreCalibrationCheckbox.getState() );
+		Prefs.set("tracing.SWCImportOptionsDialog.ignoreCalibration", ignoreCalibrationCheckbox.getState());
 
-		Prefs.set( "tracing.SWCImportOptionsDialog.replaceExistingPaths",
-			   replaceExistingPathsCheckbox.getState() );
+		Prefs.set("tracing.SWCImportOptionsDialog.replaceExistingPaths", replaceExistingPathsCheckbox.getState());
 
 		Prefs.savePreferences();
 	}
@@ -201,9 +193,9 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 		saveFieldsToPrefs();
 	}
 
-	public SWCImportOptionsDialog( String title ) {
+	public SWCImportOptionsDialog(final String title) {
 
-		super( IJ.getInstance(), title, true );
+		super(IJ.getInstance(), title, true);
 
 		addWindowListener(this);
 
@@ -214,58 +206,58 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 		applyOffsetCheckbox.addItemListener(this);
 		applyScaleCheckbox.addItemListener(this);
 
-		Panel offsetPanel = new Panel();
+		final Panel offsetPanel = new Panel();
 		offsetPanel.setLayout(new BorderLayout());
-		offsetPanel.add(xOffsetTextField,BorderLayout.NORTH);
-		offsetPanel.add(yOffsetTextField,BorderLayout.CENTER);
-		offsetPanel.add(zOffsetTextField,BorderLayout.SOUTH);
+		offsetPanel.add(xOffsetTextField, BorderLayout.NORTH);
+		offsetPanel.add(yOffsetTextField, BorderLayout.CENTER);
+		offsetPanel.add(zOffsetTextField, BorderLayout.SOUTH);
 
-		Panel scalePanel = new Panel();
+		final Panel scalePanel = new Panel();
 		scalePanel.setLayout(new BorderLayout());
-		scalePanel.add(xScaleTextField,BorderLayout.NORTH);
-		scalePanel.add(yScaleTextField,BorderLayout.CENTER);
-		scalePanel.add(zScaleTextField,BorderLayout.SOUTH);
+		scalePanel.add(xScaleTextField, BorderLayout.NORTH);
+		scalePanel.add(yScaleTextField, BorderLayout.CENTER);
+		scalePanel.add(zScaleTextField, BorderLayout.SOUTH);
 
-		Panel okCancelPanel = new Panel();
+		final Panel okCancelPanel = new Panel();
 		okCancelPanel.setLayout(new FlowLayout());
 		okCancelPanel.add(okButton);
 		okCancelPanel.add(cancelButton);
 
-		Panel buttonsPanel = new Panel();
+		final Panel buttonsPanel = new Panel();
 		buttonsPanel.setLayout(new BorderLayout());
-		buttonsPanel.add(okCancelPanel,BorderLayout.WEST);
-		buttonsPanel.add(restoreToDefaultsButton,BorderLayout.EAST);
+		buttonsPanel.add(okCancelPanel, BorderLayout.WEST);
+		buttonsPanel.add(restoreToDefaultsButton, BorderLayout.EAST);
 
 		setLayout(new GridBagLayout());
-		GridBagConstraints c = new GridBagConstraints();
+		final GridBagConstraints c = new GridBagConstraints();
 
 		c.gridx = 0;
 		c.gridy = 0;
 		c.anchor = GridBagConstraints.LINE_START;
-		add( replaceExistingPathsCheckbox, c );
+		add(replaceExistingPathsCheckbox, c);
 
-		c.gridy ++;
-		add( ignoreCalibrationCheckbox, c );
+		c.gridy++;
+		add(ignoreCalibrationCheckbox, c);
 
-		c.gridy ++;
-		add( applyOffsetCheckbox, c );
+		c.gridy++;
+		add(applyOffsetCheckbox, c);
 
-		c.gridy ++;
+		c.gridy++;
 		c.anchor = GridBagConstraints.CENTER;
-		add( offsetPanel, c );
+		add(offsetPanel, c);
 
-		c.gridy ++;
+		c.gridy++;
 		c.anchor = GridBagConstraints.LINE_START;
-		add( applyScaleCheckbox, c );
+		add(applyScaleCheckbox, c);
 
-		c.gridy ++;
+		c.gridy++;
 		c.anchor = GridBagConstraints.CENTER;
-		add( scalePanel, c );
+		add(scalePanel, c);
 
-		c.gridy ++;
+		c.gridy++;
 		c.anchor = GridBagConstraints.LINE_START;
 		c.fill = GridBagConstraints.BOTH;
-		add( buttonsPanel, c );
+		add(buttonsPanel, c);
 
 		setFieldsFromPrefs();
 
@@ -274,17 +266,34 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 		setVisible(true);
 	}
 
-	public void windowClosing( WindowEvent e ) {
+	@Override
+	public void windowClosing(final WindowEvent e) {
 		dispose();
 	}
 
-	public void windowActivated( WindowEvent e ) { }
-	public void windowDeactivated( WindowEvent e ) { }
-	public void windowClosed( WindowEvent e ) { }
-	public void windowOpened( WindowEvent e ) { }
-	public void windowIconified( WindowEvent e ) { }
-	public void windowDeiconified( WindowEvent e ) { }
+	@Override
+	public void windowActivated(final WindowEvent e) {
+	}
 
+	@Override
+	public void windowDeactivated(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowClosed(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowOpened(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowIconified(final WindowEvent e) {
+	}
+
+	@Override
+	public void windowDeiconified(final WindowEvent e) {
+	}
 
 	public boolean getIgnoreCalibration() {
 		return ignoreCalibrationCheckbox.getState();
@@ -319,4 +328,3 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 	}
 
 }
-

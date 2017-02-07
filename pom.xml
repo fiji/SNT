@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>3.0.6-SNAPSHOT</version>
+	<version>3.1.1-SNAPSHOT</version>
 
 	<name>plugins/Simple_Neurite_Tracer.jar</name>
 	<description />
@@ -38,8 +38,8 @@
 		<contributor>
 			<name>Mark Longair</name>
 			<url>http://imagej.net/User:Mark</url>
-			<properties><id>mhl</id></properties>
 			<roles><role>founder</role></roles>
+			<properties><id>mhl</id></properties>
 		</contributor>
 		<contributor>
 			<name>Johannes Schindelin</name>

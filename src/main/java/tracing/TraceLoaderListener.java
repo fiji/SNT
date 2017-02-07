@@ -27,18 +27,21 @@ package tracing;
 
 public interface TraceLoaderListener {
 
-    public void gotVertex( int vertexIndex,
-                           float x_scaled, float y_scaled, float z_scaled,
-                           int x_image, int y_image, int z_image );
+	public void gotVertex(int vertexIndex, float x_scaled, float y_scaled, float z_scaled, int x_image, int y_image,
+			int z_image);
 
-    public void gotLine( int fromVertexIndex, int toVertexIndex );
+	public void gotLine(int fromVertexIndex, int toVertexIndex);
 
-    public void gotWidth( int width );
-    public void gotHeight( int height );
-    public void gotDepth( int depth );
+	public void gotWidth(int width);
 
-    public void gotSpacingX( float spacing_x );
-    public void gotSpacingY( float spacing_y );
-    public void gotSpacingZ( float spacing_z );
+	public void gotHeight(int height);
+
+	public void gotDepth(int depth);
+
+	public void gotSpacingX(float spacing_x);
+
+	public void gotSpacingY(float spacing_y);
+
+	public void gotSpacingZ(float spacing_z);
 
 }

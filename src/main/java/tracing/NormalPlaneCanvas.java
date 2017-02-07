@@ -27,29 +27,22 @@
 
 package tracing;
 
-import ij.ImagePlus;
-import ij.gui.ImageCanvas;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.util.HashMap;
 
+import ij.ImagePlus;
+import ij.gui.ImageCanvas;
+
 @SuppressWarnings("serial")
 class NormalPlaneCanvas extends ImageCanvas {
 
-	HashMap<Integer,Integer> indexToValidIndex = new HashMap<Integer,Integer>();
+	HashMap<Integer, Integer> indexToValidIndex = new HashMap<>();
 
-	public NormalPlaneCanvas( ImagePlus imp,
-				  SimpleNeuriteTracer plugin,
-				  double [] centre_x_positions,
-				  double [] centre_y_positions,
-				  double [] radiuses,
-				  double [] scores,
-				  double [] modeRadiuses,
-				  double [] angles,
-				  boolean [] valid,
-				  Path fittedPath ) {
+	public NormalPlaneCanvas(final ImagePlus imp, final SimpleNeuriteTracer plugin, final double[] centre_x_positions,
+			final double[] centre_y_positions, final double[] radiuses, final double[] scores,
+			final double[] modeRadiuses, final double[] angles, final boolean[] valid, final Path fittedPath) {
 		super(imp);
 		tracerPlugin = plugin;
 		this.centre_x_positions = centre_x_positions;
@@ -60,13 +53,13 @@ class NormalPlaneCanvas extends ImageCanvas {
 		this.angles = angles;
 		this.valid = valid;
 		this.fittedPath = fittedPath;
-		for( int i = 0; i < scores.length; ++i )
-			if( scores[i] > maxScore )
+		for (int i = 0; i < scores.length; ++i)
+			if (scores[i] > maxScore)
 				maxScore = scores[i];
 		int a = 0;
-		for( int i = 0; i < valid.length; ++i ) {
-			if( valid[i] ) {
-				indexToValidIndex.put(i,a);
+		for (int i = 0; i < valid.length; ++i) {
+			if (valid[i]) {
+				indexToValidIndex.put(i, a);
 				++a;
 			}
 		}
@@ -74,13 +67,13 @@ class NormalPlaneCanvas extends ImageCanvas {
 
 	double maxScore = -1;
 
-	double [] centre_x_positions;
-	double [] centre_y_positions;
-	double [] radiuses;
-	double [] scores;
-	double [] modeRadiuses;
-	boolean [] valid;
-	double [] angles;
+	double[] centre_x_positions;
+	double[] centre_y_positions;
+	double[] radiuses;
+	double[] scores;
+	double[] modeRadiuses;
+	boolean[] valid;
+	double[] angles;
 
 	Path fittedPath;
 
@@ -96,115 +89,100 @@ class NormalPlaneCanvas extends ImageCanvas {
 
 	private void resetBackBuffer() {
 
-		if(backBufferGraphics!=null){
+		if (backBufferGraphics != null) {
 			backBufferGraphics.dispose();
-			backBufferGraphics=null;
+			backBufferGraphics = null;
 		}
 
-		if(backBufferImage!=null){
+		if (backBufferImage != null) {
 			backBufferImage.flush();
-			backBufferImage=null;
+			backBufferImage = null;
 		}
 
-		backBufferWidth=getSize().width;
-		backBufferHeight=getSize().height;
+		backBufferWidth = getSize().width;
+		backBufferHeight = getSize().height;
 
-		backBufferImage=createImage(backBufferWidth,backBufferHeight);
-	        backBufferGraphics=backBufferImage.getGraphics();
+		backBufferImage = createImage(backBufferWidth, backBufferHeight);
+		backBufferGraphics = backBufferImage.getGraphics();
 	}
 
 	@Override
-	public void paint(Graphics g) {
+	public void paint(final Graphics g) {
 
-		if(backBufferWidth!=getSize().width ||
-		   backBufferHeight!=getSize().height ||
-		   backBufferImage==null ||
-		   backBufferGraphics==null)
+		if (backBufferWidth != getSize().width || backBufferHeight != getSize().height || backBufferImage == null
+				|| backBufferGraphics == null)
 			resetBackBuffer();
 
 		super.paint(backBufferGraphics);
 		drawOverlay(backBufferGraphics);
-		g.drawImage(backBufferImage,0,0,this);
+		g.drawImage(backBufferImage, 0, 0, this);
 	}
 
 	int last_slice = -1;
 
-	// FIXME: drawOverlay in ImageCanvas arrived after I wrote this code, I think
-	protected void drawOverlay(Graphics g) {
+	// FIXME: drawOverlay in ImageCanvas arrived after I wrote this code, I
+	// think
+	protected void drawOverlay(final Graphics g) {
 
-		int z = imp.getCurrentSlice() - 1;
+		final int z = imp.getCurrentSlice() - 1;
 
-		if( z != last_slice ) {
-			Integer fittedIndex = indexToValidIndex.get(z);
-			if( fittedIndex != null ) {
-				int px = fittedPath.getXUnscaled(fittedIndex.intValue());
-				int py = fittedPath.getYUnscaled(fittedIndex.intValue());
-				int pz = fittedPath.getZUnscaled(fittedIndex.intValue());
-				tracerPlugin.setSlicesAllPanes( px, py, pz );
-				tracerPlugin.setCrosshair( px, py, pz );
+		if (z != last_slice) {
+			final Integer fittedIndex = indexToValidIndex.get(z);
+			if (fittedIndex != null) {
+				final int px = fittedPath.getXUnscaled(fittedIndex.intValue());
+				final int py = fittedPath.getYUnscaled(fittedIndex.intValue());
+				final int pz = fittedPath.getZUnscaled(fittedIndex.intValue());
+				tracerPlugin.setSlicesAllPanes(px, py, pz);
+				tracerPlugin.setCrosshair(px, py, pz);
 				last_slice = z;
 			}
 		}
 
-		if( valid[z] )
+		if (valid[z])
 			g.setColor(Color.RED);
 		else
 			g.setColor(Color.MAGENTA);
 
-		System.out.println("radiuses["+z+"] is: "+radiuses[z]);
+		SNT.log("radiuses[" + z + "] is: " + radiuses[z]);
 
-		int x_top_left = screenXD( centre_x_positions[z] - radiuses[z] );
-		int y_top_left = screenYD( centre_y_positions[z] - radiuses[z] );
+		final int x_top_left = screenXD(centre_x_positions[z] - radiuses[z]);
+		final int y_top_left = screenYD(centre_y_positions[z] - radiuses[z]);
 
-		g.fillRect( screenXD(centre_x_positions[z])-2,
-			    screenYD(centre_y_positions[z])-2,
-			    5,
-			    5 );
+		g.fillRect(screenXD(centre_x_positions[z]) - 2, screenYD(centre_y_positions[z]) - 2, 5, 5);
 
-		int diameter = screenXD(centre_x_positions[z] + radiuses[z]) - screenXD(centre_x_positions[z] - radiuses[z]);
+		final int diameter = screenXD(centre_x_positions[z] + radiuses[z])
+				- screenXD(centre_x_positions[z] - radiuses[z]);
 
-		g.drawOval( x_top_left, y_top_left, diameter, diameter );
+		g.drawOval(x_top_left, y_top_left, diameter, diameter);
 
-		double proportion = scores[z] / maxScore;
-		int drawToX = (int)( proportion * ( imp.getWidth() - 1 ) );
-		if( valid[z] )
+		final double proportion = scores[z] / maxScore;
+		final int drawToX = (int) (proportion * (imp.getWidth() - 1));
+		if (valid[z])
 			g.setColor(Color.GREEN);
 		else
 			g.setColor(Color.RED);
-		g.fillRect( screenX(0),
-			    screenY(0),
-			    screenX(drawToX) - screenX(0),
-			    screenY(2) - screenY(0) );
+		g.fillRect(screenX(0), screenY(0), screenX(drawToX) - screenX(0), screenY(2) - screenY(0));
 
-		int modeOvalX = screenXD( imp.getWidth() / 2.0 - modeRadiuses[z] );
-		int modeOvalY = screenYD( imp.getHeight() / 2.0 - modeRadiuses[z] );
-		int modeOvalDiameter = screenXD( imp.getWidth() / 2.0 + modeRadiuses[z] ) - modeOvalX;
+		final int modeOvalX = screenXD(imp.getWidth() / 2.0 - modeRadiuses[z]);
+		final int modeOvalY = screenYD(imp.getHeight() / 2.0 - modeRadiuses[z]);
+		final int modeOvalDiameter = screenXD(imp.getWidth() / 2.0 + modeRadiuses[z]) - modeOvalX;
 
 		g.setColor(Color.YELLOW);
-		g.drawOval( modeOvalX,
-			    modeOvalY,
-			    modeOvalDiameter,
-			    modeOvalDiameter );
+		g.drawOval(modeOvalX, modeOvalY, modeOvalDiameter, modeOvalDiameter);
 
 		// Show the angle between this one and the other two
 		// so we can see where the path is "pinched":
 		g.setColor(Color.GREEN);
-		double h = (imp.getWidth() * 3) / 8.0;
-		double centreX = imp.getWidth() / 2.0;
-		double centreY = imp.getHeight() / 2.0;
-		double halfAngle = angles[z] / 2;
-		double rightX = centreX + h * Math.sin(halfAngle);
-		double rightY = centreY - h * Math.cos(halfAngle);
-		double leftX = centreX + h * Math.sin(-halfAngle);
-		double leftY = centreX - h * Math.cos(halfAngle);
-		g.drawLine( screenXD(centreX),
-			    screenYD(centreY),
-			    screenXD(rightX),
-			    screenYD(rightY) );
-		g.drawLine( screenXD(centreX),
-			    screenYD(centreY),
-			    screenXD(leftX),
-			    screenYD(leftY) );
+		final double h = (imp.getWidth() * 3) / 8.0;
+		final double centreX = imp.getWidth() / 2.0;
+		final double centreY = imp.getHeight() / 2.0;
+		final double halfAngle = angles[z] / 2;
+		final double rightX = centreX + h * Math.sin(halfAngle);
+		final double rightY = centreY - h * Math.cos(halfAngle);
+		final double leftX = centreX + h * Math.sin(-halfAngle);
+		final double leftY = centreX - h * Math.cos(halfAngle);
+		g.drawLine(screenXD(centreX), screenYD(centreY), screenXD(rightX), screenYD(rightY));
+		g.drawLine(screenXD(centreX), screenYD(centreY), screenXD(leftX), screenYD(leftY));
 	}
 
 }

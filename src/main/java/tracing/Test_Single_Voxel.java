@@ -2,14 +2,6 @@
 
 package tracing;
 
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.gui.GUI;
-import ij.plugin.PlugIn;
-import ij.process.ByteProcessor;
-import ij3d.Content;
-import ij3d.Image3DUniverse;
-
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,51 +9,57 @@ import java.util.List;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3f;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.GUI;
+import ij.plugin.PlugIn;
+import ij.process.ByteProcessor;
+import ij3d.ContentConstants;
+import ij3d.Image3DUniverse;
+
 /* A test for the 3D viewer.  The results are odd at the moment - the
    crossing point of the lines should always appear to be at the
    centre of the voxel, since A Pixel Is Not A Little Square. */
 
 public class Test_Single_Voxel implements PlugIn {
-	public void run( String ignore ) {
-		ImageStack stack = new ImageStack(3,3);
-		for( int i = 0; i < 3; ++i ) {
-			byte [] pixels = new byte[9];
-			if( i == 1 )
-				pixels[4] = (byte)255;
-			ByteProcessor bp = new ByteProcessor(3,3);
+	@Override
+	public void run(final String ignore) {
+		final ImageStack stack = new ImageStack(3, 3);
+		for (int i = 0; i < 3; ++i) {
+			final byte[] pixels = new byte[9];
+			if (i == 1)
+				pixels[4] = (byte) 255;
+			final ByteProcessor bp = new ByteProcessor(3, 3);
 			bp.setPixels(pixels);
-			stack.addSlice("",bp);
+			stack.addSlice("", bp);
 		}
-		ImagePlus i = new ImagePlus("test",stack);
+		final ImagePlus i = new ImagePlus("test", stack);
 		i.show();
-		Image3DUniverse univ = new Image3DUniverse(512, 512);
+		final Image3DUniverse univ = new Image3DUniverse(512, 512);
 		univ.show();
 		GUI.center(univ.getWindow());
-		boolean [] channels = { true, true, true };
-		univ.addContent(i,
-				new Color3f(Color.white),
-				"Volume Rendering of a Single Voxel at (1,1,1)",
-				10, // threshold
+		final boolean[] channels = { true, true, true };
+		univ.addContent(i, new Color3f(Color.white), "Volume Rendering of a Single Voxel at (1,1,1)", 10, // threshold
 				channels, 1, // resampling
 				// factor
-				Content.VOLUME);
-		List<Point3f> linePoints = new ArrayList<Point3f>();
-		boolean fudgeCoordinates = false;
-		if( fudgeCoordinates ) {
+				ContentConstants.VOLUME);
+		final List<Point3f> linePoints = new ArrayList<>();
+		final boolean fudgeCoordinates = false;
+		if (fudgeCoordinates) {
 			// You shouldn't need to fudge the coordinates
 			// like this to make the cross appear in the
 			// centre of the voxel...
-			linePoints.add(new Point3f(0.5f,0.5f,1.5f));
-			linePoints.add(new Point3f(2.5f,2.5f,1.5f));
-			linePoints.add(new Point3f(0.5f,2.5f,1.5f));
-			linePoints.add(new Point3f(2.5f,0.5f,1.5f));
+			linePoints.add(new Point3f(0.5f, 0.5f, 1.5f));
+			linePoints.add(new Point3f(2.5f, 2.5f, 1.5f));
+			linePoints.add(new Point3f(0.5f, 2.5f, 1.5f));
+			linePoints.add(new Point3f(2.5f, 0.5f, 1.5f));
 		} else {
-			linePoints.add(new Point3f(0,0,1));
-			linePoints.add(new Point3f(2,2,1));
-			linePoints.add(new Point3f(0,2,1));
-			linePoints.add(new Point3f(2,0,1));
+			linePoints.add(new Point3f(0, 0, 1));
+			linePoints.add(new Point3f(2, 2, 1));
+			linePoints.add(new Point3f(0, 2, 1));
+			linePoints.add(new Point3f(2, 0, 1));
 		}
-		univ.addLineMesh( linePoints, new Color3f(Color.red), "Line that cross at (1,1,1)", false );
+		univ.addLineMesh(linePoints, new Color3f(Color.red), "Line that cross at (1,1,1)", false);
 		univ.resetView();
 	}
 }

@@ -35,7 +35,7 @@ public class SNTEvent {
 
 	protected int type;
 
-	public SNTEvent(int type) {
+	public SNTEvent(final int type) {
 		this.type = type;
 	}
 

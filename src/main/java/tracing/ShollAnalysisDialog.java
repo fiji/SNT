@@ -123,7 +123,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	protected Button makeShollImageButton = new Button("Sholl Image");
 	protected Button exportProfileButton = new Button("Save Profile...");
-	protected Button drawShollGraphButton = new Button("Plot Profile");
+	protected Button drawShollGraphButton = new Button("Preview Plot");
 	protected Button analyzeButton = new Button("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
 
 	protected int numberOfSelectedPaths;
@@ -426,7 +426,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		 *            the output file.
 		 * @throws IOException
 		 *             if writing the svgFile fails.
-		 * 
+		 *
 		 *             This method is taken from:
 		 *             http://dolf.trieschnigg.nl/jfreechart/
 		 */

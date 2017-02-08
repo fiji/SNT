@@ -2112,7 +2112,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	@Override
 	public void universeClosed() {
-		plugin.use3DViewer = false;
+		if (plugin != null)
+			plugin.use3DViewer = false;
 	}
 	// ... end of methods for UniverseListener
 

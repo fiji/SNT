@@ -3,17 +3,30 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>sc.fiji</groupId>
-		<artifactId>pom-fiji</artifactId>
-		<version>26.1.1</version>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>13.2.1</version>
 		<relativePath />
 	</parent>
 
+	<groupId>sc.fiji</groupId>
 	<artifactId>Simple_Neurite_Tracer</artifactId>
 	<version>3.1.1-SNAPSHOT</version>
 
-	<name>plugins/Simple_Neurite_Tracer.jar</name>
-	<description />
+	<name>Simple Neurite Tracer</name>
+	<description >The ImageJ framework for semi-automated tracing of neurons and other tube-like structures.</description>
+	<url>http://imagej.net/Simple_Neurite_Tracer</url>
+	<inceptionYear>2010</inceptionYear>
+	<organization>
+		<name>Fiji</name>
+		<url>https://fiji.sc</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>GNU General Public License v3+</name>
+			<url>http://www.gnu.org/licenses/gpl.html</url>
+		</license>
+	</licenses>
 
 	<developers>
 		<developer>
@@ -66,6 +79,13 @@
 		</contributor>
 	</contributors>
 
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
+
 	<scm>
 		<connection>scm:git:git://github.com/fiji/Simple_Neurite_Tracer</connection>
 		<developerConnection>scm:git:git@github.com:fiji/Simple_Neurite_Tracer</developerConnection>
@@ -80,6 +100,12 @@
 		<system>Jenkins</system>
 		<url>http://jenkins.imagej.net/job/Simple_Neurite_Tracer/</url>
 	</ciManagement>
+
+	<properties>
+		<license.licenseName>gpl_v3</license.licenseName>
+		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
+		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
+	</properties>
 
 	<repositories>
 		<!-- NB: for project parent -->
@@ -165,7 +191,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	<properties>
-		<Sholl_Analysis.version>3.6.8</Sholl_Analysis.version>
-	</properties>
 </project>

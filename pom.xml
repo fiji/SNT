@@ -97,8 +97,8 @@
 		<url>https://github.com/fiji/Simple_Neurite_Tracer/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>Jenkins</system>
-		<url>http://jenkins.imagej.net/job/Simple_Neurite_Tracer/</url>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/fiji/Simple_Neurite_Tracer</url>
 	</ciManagement>
 
 	<properties>

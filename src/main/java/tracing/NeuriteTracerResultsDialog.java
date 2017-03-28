@@ -1941,7 +1941,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
 						modKey += "+Shift";
 						final String url1 = Sholl_Analysis.URL + "#Analysis_of_Traced_Cells";
-						final String url2 = "http://imagej.net/Simple_Neurite_Tracer/:_Sholl_analysis";
+						final String url2 = "http://imagej.net/Simple_Neurite_Tracer:_Sholl_analysis";
 						final StringBuilder sb = new StringBuilder();
 						sb.append("<html>");
 						sb.append("<div WIDTH=390>");

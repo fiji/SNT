@@ -250,7 +250,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 
 	private boolean showDialog() {
 
-		if (imgPath == null || tracesPath == null || imgPath.isEmpty() || tracesPath.isEmpty())
+		if (!IJ.macroRunning() && (imgPath == null || tracesPath == null || imgPath.isEmpty() || tracesPath.isEmpty()))
 			guessInitialPaths();
 
 		gd = new EnhancedGenericDialog("Sholll Analysis (Tracings)...");
@@ -395,8 +395,8 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 					return !file.isHidden() && tracingsFile(file);
 				}
 			});
-			Arrays.sort(tracing_files);
 			if (tracing_files != null && tracing_files.length > 0) {
+				Arrays.sort(tracing_files);
 				tracesPath = tracing_files[0].getAbsolutePath();
 				final File[] image_files = lastDir.listFiles(new FileFilter() {
 					@Override
@@ -404,12 +404,13 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 						return !file.isHidden() && expectedImageFile(file);
 					}
 				});
-				Arrays.sort(image_files);
-				if (image_files != null && image_files.length > 0)
+				if (image_files != null && image_files.length > 0) {
+					Arrays.sort(image_files);
 					imgPath = image_files[0].getAbsolutePath();
+				}
 			}
 			if (debug && !getFilePathWithoutExtension(imgPath).equals(getFilePathWithoutExtension(tracesPath)))
-				IJ.log("Could not pair image to traces file:\n" + imgPath + "\n" + tracesPath);
+				SNT.log("Could not pair image to traces file:\n" + imgPath + "\n" + tracesPath);
 		}
 	}
 

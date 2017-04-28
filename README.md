@@ -1,4 +1,4 @@
-[![](http://jenkins.imagej.net/job/Simple_Neurite_Tracer/lastBuild/badge/icon)](http://jenkins.imagej.net/job/Simple_Neurite_Tracer/)
+[![](https://travis-ci.org/fiji/Simple_Neurite_Tracer.svg?branch=master)](https://travis-ci.org/fiji/Simple_Neurite_Tracer)
 
 ## Simple Neurite Tracer
 

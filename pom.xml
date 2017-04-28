@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>13.2.1</version>
+		<version>14.0.0</version>
 		<relativePath />
 	</parent>
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>3.1.1-SNAPSHOT</version>
+	<version>3.1.1</version>
 
 	<name>Simple Neurite Tracer</name>
 	<description >The ImageJ framework for semi-automated tracing of neurons and other tube-like structures.</description>
@@ -97,8 +97,8 @@
 		<url>https://github.com/fiji/Simple_Neurite_Tracer/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<system>Jenkins</system>
-		<url>http://jenkins.imagej.net/job/Simple_Neurite_Tracer/</url>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/fiji/Simple_Neurite_Tracer</url>
 	</ciManagement>
 
 	<properties>
@@ -108,7 +108,6 @@
 	</properties>
 
 	<repositories>
-		<!-- NB: for project parent -->
 		<repository>
 			<id>imagej.public</id>
 			<url>http://maven.imagej.net/content/groups/public</url>

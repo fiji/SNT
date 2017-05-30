@@ -984,15 +984,15 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 	}
 
-	double parsed_x_spacing;
-	double parsed_y_spacing;
-	double parsed_z_spacing;
+	public double parsed_x_spacing;
+	public double parsed_y_spacing;
+	public double parsed_z_spacing;
 
-	String parsed_units;
+	public String parsed_units;
 
-	int parsed_width;
-	int parsed_height;
-	int parsed_depth;
+	public int parsed_width;
+	public int parsed_height;
+	public int parsed_depth;
 
 	Fill current_fill;
 	Path current_path;

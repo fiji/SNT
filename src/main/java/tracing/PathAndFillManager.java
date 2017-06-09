@@ -2024,7 +2024,17 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					 */
 					final List<Bresenham3D.IntegerPoint> pointsToDraw = Bresenham3D.bresenham3D(previous, current);
 					for (final Bresenham3D.IntegerPoint ip : pointsToDraw) {
-						slices[ip.z][ip.y * width + ip.x] = (byte) 255;
+						try {
+							slices[ip.z][ip.y * width + ip.x] = (byte) 255;
+						} catch (final ArrayIndexOutOfBoundsException ignored) {
+							final int x = Math.min(width - 1, Math.max(0, ip.x));
+							final int y = Math.min(height - 1, Math.max(0, ip.y));
+							final int z = Math.min(depth - 1, Math.max(0, ip.z));
+							slices[z][y * width + x] = (byte) 255;
+							if (SimpleNeuriteTracer.verbose)
+								SNT.log(String.format("Bresenham3D: Forced out-of-bounds point to [%d][%d]", z,
+										(y * width + x)));
+						}
 					}
 				}
 

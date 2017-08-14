@@ -103,6 +103,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	public PathWindow pw;
 	public FillWindow fw;
+	private SNTPrefs prefs;
 
 	protected JMenuBar menuBar;
 	protected JMenu fileMenu;
@@ -478,7 +479,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
-		new SNTPrefs(plugin).savePluginPrefs();
+		prefs.savePluginPrefs();
 		pw.dispose();
 		fw.dispose();
 		dispose();
@@ -762,6 +763,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
 
 		this.plugin = plugin;
+		prefs = plugin.prefs;
 		final SimpleNeuriteTracer thisPlugin = plugin;
 		this.launchedByArchive = launchedByArchive;
 
@@ -1885,7 +1887,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		optionsMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				new SNTPrefs(plugin).promptForOptions();
+				prefs.promptForOptions();
 			}
 		});
 		tracingMenu.add(optionsMenuItem);

@@ -96,6 +96,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	protected static final int ballRadiusMultiplier = 5;
 
 	protected PathAndFillManager pathAndFillManager;
+	protected SNTPrefs prefs;
 
 	protected boolean use3DViewer;
 	protected Image3DUniverse univ;

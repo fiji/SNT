@@ -38,6 +38,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
@@ -101,8 +102,9 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	public static final boolean verbose = SimpleNeuriteTracer.verbose;
 
-	public PathWindow pw;
-	public FillWindow fw;
+	private PathWindow pw;
+	private FillWindow fw;
+	private SNTPrefs prefs;
 
 	protected JMenuBar menuBar;
 	protected JMenu fileMenu;
@@ -478,7 +480,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
-		new SNTPrefs(plugin).savePluginPrefs();
+		prefs.savePluginPrefs();
 		pw.dispose();
 		fw.dispose();
 		dispose();
@@ -762,6 +764,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
 
 		this.plugin = plugin;
+		prefs = plugin.prefs;
 		final SimpleNeuriteTracer thisPlugin = plugin;
 		this.launchedByArchive = launchedByArchive;
 
@@ -1175,7 +1178,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				arrangeDialogs();
+				if (plugin.prefs.isSaveWinLocations())
+					arrangeDialogs();
 				arrangeCanvases();
 				setVisible(true);
 				setPathListVisible(true, false);
@@ -1600,14 +1604,20 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	}
 
 	private void arrangeDialogs() {
-		final GraphicsDevice activeScreen = getGraphicsConfiguration().getDevice();
-		final int screenWidth = activeScreen.getDisplayMode().getWidth();
-		final int screenHeight = activeScreen.getDisplayMode().getHeight();
-		final Rectangle bounds = activeScreen.getDefaultConfiguration().getBounds();
-
-		setLocation(bounds.x, bounds.y);
-		pw.setLocation(screenWidth - pw.getWidth(), bounds.y);
-		fw.setLocation(bounds.x + getWidth(), screenHeight - fw.getHeight());
+		Point loc = prefs.getPathWindowLocation();
+		if (loc != null)
+			pw.setLocation(loc);
+		loc = prefs.getFillWindowLocation();
+		if (loc != null)
+			fw.setLocation(loc);
+//		final GraphicsDevice activeScreen = getGraphicsConfiguration().getDevice();
+//		final int screenWidth = activeScreen.getDisplayMode().getWidth();
+//		final int screenHeight = activeScreen.getDisplayMode().getHeight();
+//		final Rectangle bounds = activeScreen.getDefaultConfiguration().getBounds();
+//
+//		setLocation(bounds.x, bounds.y);
+//		pw.setLocation(screenWidth - pw.getWidth(), bounds.y);
+//		fw.setLocation(bounds.x + getWidth(), screenHeight - fw.getHeight());
 	}
 
 	private void arrangeCanvases() {
@@ -1885,7 +1895,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		optionsMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				new SNTPrefs(plugin).promptForOptions();
+				prefs.promptForOptions();
 			}
 		});
 		tracingMenu.add(optionsMenuItem);
@@ -1974,6 +1984,14 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			}
 		});
 		return mi;
+	}
+
+	public PathWindow getPathWindow() {
+		return pw;
+	}
+
+	public FillWindow getFillWindow() {
+		return fw;
 	}
 
 }

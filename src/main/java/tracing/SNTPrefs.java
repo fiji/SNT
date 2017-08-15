@@ -1,6 +1,7 @@
 package tracing;
 
 import java.awt.Font;
+import java.awt.Point;
 
 import ij.Prefs;
 import ij.gui.GenericDialog;
@@ -22,6 +23,7 @@ public class SNTPrefs {
 	private static final int LOOK_FOR_TUBES = 128;
 	private static final int LOOK_FOR_OOF = 256;
 	private static final int SHOW_ONLY_SELECTED = 512;
+	private static final int STORE_WIN_LOCATIONS = 1024;
 	// private static final int JUST_NEAR_SLICES = 1024;
 	private static final int ENFORCE_DEFAULT_PATH_COLORS = 2048;
 	private static final int DEBUG = 4096;
@@ -31,6 +33,11 @@ public class SNTPrefs {
 	private static final String BOOLEANS = "tracing.snt.booleans";
 	private static final String SNAP_XY = "tracing.snt.xysnap";
 	private static final String SNAP_Z = "tracing.snt.zsnap";
+	private static final String PATHWIN_LOC = "tracing.snt.pwloc";
+	private static final String FILLWIN_LOC = "tracing.snt.fwloc";
+
+	//private static final String SNAP_Z = "tracing.snt.zsnap";
+
 	// private final static String NEARBY_VIEW = "tracing.snt.nearbyview";
 
 	private final int UNSET_PREFS = -1;
@@ -60,6 +67,7 @@ public class SNTPrefs {
 	}
 
 	protected void loadPluginPrefs() {
+		getBooleans();
 		snt.useCompressedXML = getPref(COMPRESSED_XML);
 		snt.autoCanvasActivation = getPref(AUTO_CANVAS_ACTIVATION);
 		snt.snapCursor = getPref(SNAP_CURSOR);
@@ -121,6 +129,21 @@ public class SNTPrefs {
 		setPref(DEBUG, SimpleNeuriteTracer.verbose);
 		Prefs.set(BOOLEANS, currentBooleans);
 		clearLegacyPrefs();
+		if (isSaveWinLocations()) {
+			final NeuriteTracerResultsDialog rd = snt.resultsDialog;
+			if (rd == null)
+				return;
+			final PathWindow pw = rd.getPathWindow();
+			if (pw != null)
+				Prefs.saveLocation(PATHWIN_LOC, pw.getLocation());
+			final FillWindow fw = rd.getFillWindow();
+			if (fw != null)
+				Prefs.saveLocation(FILLWIN_LOC, fw.getLocation());
+		}
+	}
+
+	protected boolean isSaveWinLocations() {
+		return getPref(STORE_WIN_LOCATIONS);
 	}
 
 	private void setPref(final int key, final boolean value) {
@@ -130,11 +153,21 @@ public class SNTPrefs {
 			currentBooleans &= ~key;
 	}
 
+	protected Point getPathWindowLocation() {
+		return Prefs.getLocation(PATHWIN_LOC);
+	}
+
+	protected Point getFillWindowLocation() {
+		return Prefs.getLocation(FILLWIN_LOC);
+	}
+
 	private void resetOptions() {
 		clearLegacyPrefs();
 		Prefs.set(BOOLEANS, null);
 		Prefs.set(SNAP_XY, null);
 		Prefs.set(SNAP_Z, null);
+		Prefs.set(FILLWIN_LOC, null);
+		Prefs.set(PATHWIN_LOC, null);
 		currentBooleans = UNSET_PREFS;
 	}
 
@@ -144,7 +177,7 @@ public class SNTPrefs {
 
 	protected void promptForOptions() {
 
-		final int startupOptions = 6;
+		final int startupOptions = 7;
 		final int pluginOptions = 2;
 
 		final String[] startupLabels = new String[startupOptions];
@@ -175,6 +208,10 @@ public class SNTPrefs {
 		startupItems[idx] = LOOK_FOR_TRACES;
 		startupLabels[idx] = "Load_default \".traces\" file (if present)";
 		startupStates[idx++] = snt.look4tracesFile;
+
+		startupItems[idx] = STORE_WIN_LOCATIONS;
+		startupLabels[idx] = "Remember window locations across restarts";
+		startupStates[idx++] = isSaveWinLocations();
 
 		final String[] pluginLabels = new String[pluginOptions];
 		final int[] pluginItems = new int[pluginOptions];

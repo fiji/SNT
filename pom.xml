@@ -11,7 +11,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.6-SNAPSHOT</version>
 
 	<name>Simple Neurite Tracer</name>
 	<description>The ImageJ framework for semi-automated tracing of neurons and other tube-like structures.</description>
@@ -105,6 +105,8 @@
 		<license.licenseName>gpl_v3</license.licenseName>
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
+
+		<batik.version>1.9.1</batik.version>
 	</properties>
 
 	<repositories>
@@ -181,16 +183,6 @@
 		<dependency>
 			<groupId>org.apache.xmlgraphics</groupId>
 			<artifactId>batik-svggen</artifactId>
-		</dependency>
-		<dependency>
-			<!-- NB: Required, but unfortunately undeclared, by batik-svggen. -->
-			<groupId>org.apache.xmlgraphics</groupId>
-			<artifactId>batik-constants</artifactId>
-		</dependency>
-		<dependency>
-			<!-- NB: Required, but unfortunately undeclared, by batik-dom. -->
-			<groupId>org.apache.xmlgraphics</groupId>
-			<artifactId>batik-i18n</artifactId>
 		</dependency>
 
 		<!-- Test dependencies -->

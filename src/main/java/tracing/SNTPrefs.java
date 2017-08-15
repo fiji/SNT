@@ -67,6 +67,7 @@ public class SNTPrefs {
 	}
 
 	protected void loadPluginPrefs() {
+		getBooleans();
 		snt.useCompressedXML = getPref(COMPRESSED_XML);
 		snt.autoCanvasActivation = getPref(AUTO_CANVAS_ACTIVATION);
 		snt.snapCursor = getPref(SNAP_CURSOR);

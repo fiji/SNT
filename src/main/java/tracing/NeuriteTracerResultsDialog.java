@@ -38,6 +38,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
@@ -1177,7 +1178,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				arrangeDialogs();
+				if (plugin.prefs.isSaveWinLocations())
+					arrangeDialogs();
 				arrangeCanvases();
 				setVisible(true);
 				setPathListVisible(true, false);
@@ -1602,14 +1604,20 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 	}
 
 	private void arrangeDialogs() {
-		final GraphicsDevice activeScreen = getGraphicsConfiguration().getDevice();
-		final int screenWidth = activeScreen.getDisplayMode().getWidth();
-		final int screenHeight = activeScreen.getDisplayMode().getHeight();
-		final Rectangle bounds = activeScreen.getDefaultConfiguration().getBounds();
-
-		setLocation(bounds.x, bounds.y);
-		pw.setLocation(screenWidth - pw.getWidth(), bounds.y);
-		fw.setLocation(bounds.x + getWidth(), screenHeight - fw.getHeight());
+		Point loc = prefs.getPathWindowLocation();
+		if (loc != null)
+			pw.setLocation(loc);
+		loc = prefs.getFillWindowLocation();
+		if (loc != null)
+			fw.setLocation(loc);
+//		final GraphicsDevice activeScreen = getGraphicsConfiguration().getDevice();
+//		final int screenWidth = activeScreen.getDisplayMode().getWidth();
+//		final int screenHeight = activeScreen.getDisplayMode().getHeight();
+//		final Rectangle bounds = activeScreen.getDefaultConfiguration().getBounds();
+//
+//		setLocation(bounds.x, bounds.y);
+//		pw.setLocation(screenWidth - pw.getWidth(), bounds.y);
+//		fw.setLocation(bounds.x + getWidth(), screenHeight - fw.getHeight());
 	}
 
 	private void arrangeCanvases() {

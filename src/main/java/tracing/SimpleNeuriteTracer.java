@@ -96,6 +96,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	protected static final int ballRadiusMultiplier = 5;
 
 	protected PathAndFillManager pathAndFillManager;
+	protected SNTPrefs prefs;
 
 	protected boolean use3DViewer;
 	protected Image3DUniverse univ;
@@ -1219,7 +1220,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		this.filler = filler;
 
 		filler.addProgressListener(this);
-		filler.addProgressListener(resultsDialog.fw);
+		filler.addProgressListener(resultsDialog.getFillWindow());
 
 		addThreadToDraw(filler);
 
@@ -1236,7 +1237,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	synchronized public void startFillingPaths(final Set<Path> fromPaths) {
 
 		// currentlyFilling = true;
-		resultsDialog.fw.pauseOrRestartFilling.setText("Pause");
+		resultsDialog.getFillWindow().pauseOrRestartFilling.setText("Pause");
 
 		filler = new FillerThread(xy, stackMin, stackMax, false, // startPaused
 				true, // reciprocal
@@ -1246,7 +1247,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		addThreadToDraw(filler);
 
 		filler.addProgressListener(this);
-		filler.addProgressListener(resultsDialog.fw);
+		filler.addProgressListener(resultsDialog.getFillWindow());
 
 		filler.setSourcePaths(fromPaths);
 
@@ -1565,14 +1566,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 		else
 			pathsToSelect.add(p);
 		if (addToExistingSelection) {
-			pathsToSelect.addAll(resultsDialog.pw.getSelectedPaths());
+			pathsToSelect.addAll(resultsDialog.getPathWindow().getSelectedPaths());
 		}
-		resultsDialog.pw.setSelectedPaths(pathsToSelect, this);
+		resultsDialog.getPathWindow().setSelectedPaths(pathsToSelect, this);
 	}
 
 	public Set<Path> getSelectedPaths() {
-		if (resultsDialog.pw != null) {
-			return resultsDialog.pw.getSelectedPaths();
+		if (resultsDialog.getPathWindow() != null) {
+			return resultsDialog.getPathWindow().getSelectedPaths();
 		}
 		throw new RuntimeException("getSelectedPaths was called when resultsDialog.pw was null");
 	}

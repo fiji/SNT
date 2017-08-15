@@ -285,7 +285,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		if (gd.wasCanceled())
 			return false;
 		else if (gd.wasOKed()) {
-			sholl.gui.Utils.improveRecording();
+			Utils.improveRecording();
 			return dialogItemChanged(gd, null);
 		}
 		return false;
@@ -317,7 +317,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		popup.addSeparator();
 		mi = Utils.menuItemTrigerringURL("Online Documentation", Sholl_Analysis.URL + "#Traces");
 		popup.add(mi);
-		mi = sholl.gui.Utils.menuItemTriggeringResources();
+		mi = Utils.menuItemTriggeringResources();
 		popup.add(mi);
 		return popup;
 	}
@@ -356,15 +356,15 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		for (int i = 2; i < cbxs.size(); i++)
 			((Checkbox) cbxs.get(i)).setEnabled(restrictBySWCType);
 
-		boolean enableOK = true;
+		//boolean enableOK = true;
 		String warning = "";
 
 		if (impRequired && !validImageFile(new File(imgPath))) {
-			enableOK = false;
+			//enableOK = false;
 			warning += "Not a valid image. ";
 		}
 		if (!validTracesFile(new File(tracesPath))) {
-			enableOK = false;
+			//enableOK = false;
 			warning += "Not a valid .traces/.(e)swc file";
 		}
 		if (!warning.isEmpty()) {
@@ -375,7 +375,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			infoMsg.setText(defaultInfoMsg);
 		}
 
-		return enableOK;
+		return true; //enableOK
 	}
 
 	private String getFilePathWithoutExtension(final String filePath) {
@@ -451,10 +451,8 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 	 * We'll need to remove those to avoid I/O errors.
 	 */
 	private String normalizedPath(final String path) {
-		// This is way to simplistic: See
 		// chase-seibert.github.io/blog/2009/04/10/java-replaceall-fileseparator.html
-		return path.replaceAll(Matcher.quoteReplacement(File.separator) + "+",
-				Matcher.quoteReplacement(File.separator));
+		return path.replaceAll("(?<!^)(\\\\|/){2,}", Matcher.quoteReplacement(File.separator));
 	}
 
 	private String swcTypeCodesToString() {

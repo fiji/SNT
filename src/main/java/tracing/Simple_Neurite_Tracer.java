@@ -184,7 +184,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 					spacing_units = "" + calibration.getUnit();
 			}
 
-			final SNTPrefs prefs = new SNTPrefs(this);
+			prefs = new SNTPrefs(this);
 			prefs.loadStartupPrefs();
 
 			final GenericDialog gd = new GenericDialog("Simple Neurite Tracer (v" + SNT.VERSION + ")");

@@ -49,6 +49,8 @@ import stacks.PaneOwner;
 import stacks.ThreePanes;
 import util.BatchOpener;
 
+/** @deprecated Will be removed in v3.3 */
+@Deprecated
 public class Auto_Tracer extends ThreePanes implements PlugIn, PaneOwner, SearchProgressCallback {
 
 	int width;

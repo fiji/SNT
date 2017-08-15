@@ -20,6 +20,8 @@ import ij.WindowManager;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 
+/** @deprecated Will be removed in v3.3 */
+@Deprecated
 public class Albert_Test implements PlugIn {
 
 	@Override

@@ -30,6 +30,8 @@ class ImagesFromLine {
 
 }
 
+/** @deprecated Will be removed in v3.3 */
+@Deprecated
 public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 	int[] labelIndices = { 7, // mushroom_body_r

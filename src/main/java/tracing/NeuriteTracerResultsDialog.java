@@ -101,8 +101,8 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 	public static final boolean verbose = SimpleNeuriteTracer.verbose;
 
-	public PathWindow pw;
-	public FillWindow fw;
+	private PathWindow pw;
+	private FillWindow fw;
 	private SNTPrefs prefs;
 
 	protected JMenuBar menuBar;
@@ -1976,6 +1976,14 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			}
 		});
 		return mi;
+	}
+
+	public PathWindow getPathWindow() {
+		return pw;
+	}
+
+	public FillWindow getFillWindow() {
+		return fw;
 	}
 
 }

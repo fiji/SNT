@@ -2032,8 +2032,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 							final int z = Math.min(depth - 1, Math.max(0, ip.z));
 							slices[z][y * width + x] = (byte) 255;
 							if (SimpleNeuriteTracer.verbose)
-								SNT.log(String.format("Bresenham3D: Forced out-of-bounds point to [%d][%d]", z,
-										(y * width + x)));
+								SNT.log(String.format("Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]",
+										z, y, width, x));
 						}
 					}
 				}

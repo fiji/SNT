@@ -39,6 +39,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.scijava.Context;
+import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Point3f;
@@ -67,6 +71,7 @@ import ij.text.TextWindow;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import stacks.ThreePanes;
+import tracing.gui.GuiUtils;
 
 /* Note on terminology:
 
@@ -77,8 +82,13 @@ import stacks.ThreePanes;
 
 */
 
+@Plugin(type = Command.class, visible=false, initializer = "initialize")
 public class SimpleNeuriteTracer extends ThreePanes
-		implements SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener {
+		implements SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener, Command {
+
+
+	@Parameter
+	private Context context;
 
 	protected static boolean verbose = false;
 
@@ -99,6 +109,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	protected SNTPrefs prefs;
 
 	protected boolean use3DViewer;
+	private GuiUtils guiUtils;
 	protected Image3DUniverse univ;
 	protected Content imageContent;
 
@@ -108,6 +119,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 	volatile protected boolean snapCursor;
 	volatile protected int cursorSnapWindowXY;
 	volatile protected int cursorSnapWindowZ;
+
+	public void initialize() {
+		if (context == null) { // IJ1 initialization
+			context = (Context) IJ.runPlugIn("org.scijava.Context", "");
+			context.inject(this);
+		}
+		guiUtils = new GuiUtils(context);
+	}
 
 	public boolean pathsUnsaved() {
 		return unsavedPaths;
@@ -1849,6 +1868,12 @@ public class SimpleNeuriteTracer extends ThreePanes
 			xy.setOverlay(overlay);
 		}
 
+	}
+
+	@Override
+	public void run() {
+		// Nothing tp do
+		
 	}
 
 }

@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.scijava.Context;
+import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -89,6 +90,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	@Parameter
 	private Context context;
+	@Parameter
+	private StatusService statusService;
 
 	protected static boolean verbose = false;
 
@@ -599,7 +602,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 				final String material = materialList[m];
 				statusMessage += ", material: " + material;
 			}
-			IJ.showStatus(statusMessage);
+			statusService.showStatus(statusMessage);
 
 			repaintAllPanes(); // Or the crosshair isn't updated....
 		}
@@ -763,14 +766,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 			final PointInImage joinPoint) {
 
 		if (!lastStartPointSet) {
-			IJ.showStatus("No initial start point has been set.  Do that with a mouse click." + " (Or a Shift-"
+			statusService.showStatus("No initial start point has been set.  Do that with a mouse click." + " (Or a Shift-"
 					+ (IJ.isMacintosh() ? "Alt" : "Control")
 					+ "-click if the start of the path should join another neurite.");
 			return;
 		}
 
 		if (temporaryPath != null) {
-			IJ.showStatus("There's already a temporary path; Press 'N' to cancel it or 'Y' to keep it.");
+			statusService.showStatus("There's already a temporary path; Press 'N' to cancel it or 'Y' to keep it.");
 			return;
 		}
 
@@ -1048,7 +1051,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		endJoinPoint = null;
 
 		if (lastStartPointSet) {
-			IJ.showStatus("The start point has already been set; to finish a path press 'F'");
+			statusService.showStatus("The start point has already been set; to finish a path press 'F'");
 			return;
 		}
 
@@ -1348,13 +1351,13 @@ public class SimpleNeuriteTracer extends ThreePanes
 			hessian = null;
 			hessianSigma = -1;
 			resultsDialog.gaussianCalculated(false);
-			IJ.showProgress(1.0);
+			statusService.showProgress(1, 1);
 			return;
 		} else if (proportion >= 1.0) {
 			hessianEnabled = true;
 			resultsDialog.gaussianCalculated(true);
 		}
-		IJ.showProgress(proportion);
+		statusService.showProgress((int) proportion, 1); //FIXME:
 	}
 
 	/*

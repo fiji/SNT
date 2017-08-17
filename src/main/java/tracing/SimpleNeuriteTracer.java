@@ -68,7 +68,6 @@ import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
-import ij.text.TextWindow;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import stacks.ThreePanes;
@@ -83,10 +82,11 @@ import tracing.gui.GuiUtils;
 
 */
 
-@Plugin(type = Command.class, visible=false, initializer = "initialize")
-public class SimpleNeuriteTracer extends ThreePanes
-		implements SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener, Command {
-
+@Plugin(type = Command.class, visible = false, initializer = "initialize")
+public class SimpleNeuriteTracer extends ThreePanes implements
+	SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener,
+	Command
+{
 
 	@Parameter
 	private Context context;
@@ -110,18 +110,25 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	protected PathAndFillManager pathAndFillManager;
 	protected SNTPrefs prefs;
-
-	protected boolean use3DViewer;
 	private GuiUtils guiUtils;
 	protected Image3DUniverse univ;
 	protected Content imageContent;
-
+	protected boolean use3DViewer;
 	protected boolean useCompressedXML;
+
 	volatile protected boolean unsavedPaths = false;
 	volatile protected boolean autoCanvasActivation;
 	volatile protected boolean snapCursor;
 	volatile protected int cursorSnapWindowXY;
 	volatile protected int cursorSnapWindowZ;
+
+	/*
+	 * Just for convenience, keep casted references to the superclass's
+	 * InteractiveTracerCanvas objects:
+	 */
+	protected InteractiveTracerCanvas xy_tracer_canvas;
+	protected InteractiveTracerCanvas xz_tracer_canvas;
+	protected InteractiveTracerCanvas zy_tracer_canvas;
 
 	public void initialize() {
 		if (context == null) { // IJ1 initialization
@@ -145,49 +152,40 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public String stripExtension(final String filename) {
 		final int lastDot = filename.lastIndexOf(".");
-		if (lastDot > 0)
-			return filename.substring(0, lastDot);
+		if (lastDot > 0) return filename.substring(0, lastDot);
 		return null;
 	}
-
-	/*
-	 * Just for convenience, keep casted references to the superclass's
-	 * InteractiveTracerCanvas objects:
-	 */
-
-	protected InteractiveTracerCanvas xy_tracer_canvas;
-	protected InteractiveTracerCanvas xz_tracer_canvas;
-	protected InteractiveTracerCanvas zy_tracer_canvas;
 
 	public ImagePlus getImagePlus() {
 		return xy;
 	}
 
 	public double getLargestDimension() {
-		return Math.max(x_spacing * width, Math.max(y_spacing * height, z_spacing * depth));
+		return Math.max(x_spacing * width, Math.max(y_spacing * height, z_spacing *
+			depth));
 	}
 
 	public double getStackDiagonalLength() {
-		return Math.sqrt((x_spacing * width) * (x_spacing * width) + (y_spacing * height) * (y_spacing * height)
-				+ (z_spacing * depth) * (z_spacing * depth));
+		return Math.sqrt((x_spacing * width) * (x_spacing * width) + (y_spacing *
+			height) * (y_spacing * height) + (z_spacing * depth) * (z_spacing *
+				depth));
 	}
 
 	/* This overrides the method in ThreePanes... */
-
 	@Override
-	public InteractiveTracerCanvas createCanvas(final ImagePlus imagePlus, final int plane) {
-		return new InteractiveTracerCanvas(imagePlus, this, plane, pathAndFillManager);
+	public InteractiveTracerCanvas createCanvas(final ImagePlus imagePlus,
+		final int plane)
+	{
+		return new InteractiveTracerCanvas(imagePlus, this, plane,
+			pathAndFillManager);
 	}
 
 	public void cancelSearch(final boolean cancelFillToo) {
-		if (currentSearchThread != null)
-			currentSearchThread.requestStop();
-		if (tubularGeodesicsThread != null)
-			tubularGeodesicsThread.requestStop();
+		if (currentSearchThread != null) currentSearchThread.requestStop();
+		if (tubularGeodesicsThread != null) tubularGeodesicsThread.requestStop();
 		endJoin = null;
 		endJoinPoint = null;
-		if (cancelFillToo && filler != null)
-			filler.requestStop();
+		if (cancelFillToo && filler != null) filler.requestStop();
 	}
 
 	@Override
@@ -209,25 +207,26 @@ public class SimpleNeuriteTracer extends ThreePanes
 			// The filler must be paused while we save to
 			// avoid concurrent modifications...
 
-			if (verbose)
-				SNT.log("[" + Thread.currentThread() + "] going to lock filler in plugin.saveFill");
+			if (verbose) SNT.log("[" + Thread.currentThread() +
+				"] going to lock filler in plugin.saveFill");
 			synchronized (filler) {
-				if (verbose)
-					SNT.log("[" + Thread.currentThread() + "] acquired it");
+				if (verbose) SNT.log("[" + Thread.currentThread() + "] acquired it");
 				if (SearchThread.PAUSED == filler.getThreadStatus()) {
 					// Then we can go ahead and save:
 					pathAndFillManager.addFill(filler.getFill());
 					// ... and then stop filling:
 					filler.requestStop();
-					resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+					resultsDialog.changeState(
+						NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 					filler = null;
-				} else {
+				}
+				else {
 					SNT.error("The filler must be paused before saving the fill.");
 				}
 
 			}
-			if (verbose)
-				SNT.log("[" + Thread.currentThread() + "] left lock on filler");
+			if (verbose) SNT.log("[" + Thread.currentThread() +
+				"] left lock on filler");
 		}
 	}
 
@@ -239,8 +238,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		if (filler != null) {
 			synchronized (filler) {
 				filler.requestStop();
-				if (updateState)
-					resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+				if (updateState) resultsDialog.changeState(
+					NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 				filler = null;
 			}
 		}
@@ -252,7 +251,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 	}
 
-	protected List<SNTListener> listeners = Collections.synchronizedList(new ArrayList<SNTListener>());
+	/* Listeners */
+	protected List<SNTListener> listeners = Collections.synchronizedList(
+		new ArrayList<SNTListener>());
 
 	public void addListener(final SNTListener listener) {
 		listeners.add(listener);
@@ -298,7 +299,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 				resultsDialog.changeState(NeuriteTracerResultsDialog.QUERY_KEEP);
 
-			} else {
+			}
+			else {
 
 				resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
 			}
@@ -317,7 +319,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	@Override
-	public void pointsInSearch(final SearchInterface source, final int inOpen, final int inClosed) {
+	public void pointsInSearch(final SearchInterface source, final int inOpen,
+		final int inClosed)
+	{
 		// Just use this signal to repaint the canvas, in case there's
 		// been no mouse movement.
 		repaintAllPanes();
@@ -374,7 +378,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	}
 
-	public void setCrosshair(final double new_x, final double new_y, final double new_z) {
+	public void setCrosshair(final double new_x, final double new_y,
+		final double new_z)
+	{
 
 		xy_tracer_canvas.setCrosshairs(new_x, new_y, new_z, true);
 		if (!single_pane) {
@@ -400,8 +406,11 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		final ImagePlus labels = new ImagePlus("Label file for Tracer", stack);
 
-		if ((labels.getWidth() != width) || (labels.getHeight() != height) || (labels.getStackSize() != depth)) {
-			SNT.error("The size of that labels file doesn't match the size of the image you're tracing.");
+		if ((labels.getWidth() != width) || (labels.getHeight() != height) ||
+			(labels.getStackSize() != depth))
+		{
+			SNT.error(
+				"The size of that labels file doesn't match the size of the image you're tracing.");
 			return;
 		}
 
@@ -433,11 +442,13 @@ public class SimpleNeuriteTracer extends ThreePanes
 			final String path = possibleLoadFile.getPath();
 
 			if (possibleLoadFile.exists()) {
-				Result result = guiUtils.yesNoCancelPrompt("Load the default labels file?\n(" + path + ")", "Confirm");
+				final Result result = guiUtils.yesNoCancelPrompt(
+					"Load the default labels file?\n(" + path + ")", "Confirm");
 				if (result.equals(Result.YES_OPTION)) {
 					loadLabelsFile(path);
 					return;
-				} else if (result.equals(Result.CANCEL_OPTION)) {
+				}
+				else if (result.equals(Result.CANCEL_OPTION)) {
 					return;
 				}
 			}
@@ -470,25 +481,28 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 			final int dotIndex = fileName.lastIndexOf(".");
 			if (dotIndex >= 0) {
-				possibleLoadFile = new File(directory, fileName.substring(0, dotIndex) + ".traces");
+				possibleLoadFile = new File(directory, fileName.substring(0, dotIndex) +
+					".traces");
 
 				final String path = possibleLoadFile.getPath();
 
 				if (possibleLoadFile.exists()) {
 
-					Result result = guiUtils.yesNoCancelPrompt("Load the default traces file?\n(" + path + ")", "Confirm");
+					final Result result = guiUtils.yesNoCancelPrompt(
+						"Load the default traces file?\n(" + path + ")", "Confirm");
 					if (result.equals(Result.YES_OPTION)) {
 
-						if (pathAndFillManager.loadGuessingType(path))
-							unsavedPaths = false;
+						if (pathAndFillManager.loadGuessingType(path)) unsavedPaths = false;
 
-						Prefs.set("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory", directory);
+						Prefs.set("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory",
+							directory);
 						Prefs.savePreferences();
 
 						loading = false;
 						return;
 
-					} else if (result.equals(Result.CANCEL_OPTION)) {
+					}
+					else if (result.equals(Result.CANCEL_OPTION)) {
 
 						loading = false;
 						return;
@@ -498,7 +512,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			}
 		}
 
-		directory = Prefs.get("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory", null);
+		directory = Prefs.get(
+			"tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory", null);
 		if (directory == null && file_info != null && file_info.directory != null)
 			directory = file_info.directory;
 
@@ -515,49 +530,57 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 			final File chosenFile = new File(directory, fileName);
 			if (!chosenFile.exists()) {
-				SNT.error("The file '" + chosenFile.getAbsolutePath() + "' didn't exist");
+				SNT.error("The file '" + chosenFile.getAbsolutePath() +
+					"' didn't exist");
 				loading = false;
 				return;
 			}
 
-			Prefs.set("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory", directory);
+			Prefs.set("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory",
+				directory);
 			Prefs.savePreferences();
 
-			final int guessedType = PathAndFillManager.guessTracesFileType(chosenFile.getAbsolutePath());
+			final int guessedType = PathAndFillManager.guessTracesFileType(chosenFile
+				.getAbsolutePath());
 
 			switch (guessedType) {
-			case PathAndFillManager.TRACES_FILE_TYPE_SWC: {
-				final SWCImportOptionsDialog swcImportDialog = new SWCImportOptionsDialog(
-						"SWC import options for " + chosenFile.getName());
-				// FIXME: pop up a dialog to ask about options:
-				// .. and then call the full importSWC.=:
-				if (swcImportDialog.succeeded && pathAndFillManager.importSWC(chosenFile.getAbsolutePath(),
-						swcImportDialog.getIgnoreCalibration(), swcImportDialog.getXOffset(),
-						swcImportDialog.getYOffset(), swcImportDialog.getZOffset(), swcImportDialog.getXScale(),
-						swcImportDialog.getYScale(), swcImportDialog.getZScale(),
-						swcImportDialog.getReplaceExistingPaths()))
-					unsavedPaths = false;
-				break;
-			}
-			case PathAndFillManager.TRACES_FILE_TYPE_COMPRESSED_XML:
-				if (pathAndFillManager.loadCompressedXML(chosenFile.getAbsolutePath()))
-					unsavedPaths = false;
-				break;
-			case PathAndFillManager.TRACES_FILE_TYPE_UNCOMPRESSED_XML:
-				if (pathAndFillManager.loadUncompressedXML(chosenFile.getAbsolutePath()))
-					unsavedPaths = false;
-				break;
-			default:
-				SNT.error("The file '" + chosenFile.getAbsolutePath() + "' was of unknown type (" + guessedType + ")");
-				break;
+				case PathAndFillManager.TRACES_FILE_TYPE_SWC: {
+					final SWCImportOptionsDialog swcImportDialog =
+						new SWCImportOptionsDialog("SWC import options for " + chosenFile
+							.getName());
+					// FIXME: pop up a dialog to ask about options:
+					// .. and then call the full importSWC.=:
+					if (swcImportDialog.succeeded && pathAndFillManager.importSWC(
+						chosenFile.getAbsolutePath(), swcImportDialog
+							.getIgnoreCalibration(), swcImportDialog.getXOffset(),
+						swcImportDialog.getYOffset(), swcImportDialog.getZOffset(),
+						swcImportDialog.getXScale(), swcImportDialog.getYScale(),
+						swcImportDialog.getZScale(), swcImportDialog
+							.getReplaceExistingPaths())) unsavedPaths = false;
+					break;
+				}
+				case PathAndFillManager.TRACES_FILE_TYPE_COMPRESSED_XML:
+					if (pathAndFillManager.loadCompressedXML(chosenFile
+						.getAbsolutePath())) unsavedPaths = false;
+					break;
+				case PathAndFillManager.TRACES_FILE_TYPE_UNCOMPRESSED_XML:
+					if (pathAndFillManager.loadUncompressedXML(chosenFile
+						.getAbsolutePath())) unsavedPaths = false;
+					break;
+				default:
+					SNT.error("The file '" + chosenFile.getAbsolutePath() +
+						"' was of unknown type (" + guessedType + ")");
+					break;
 			}
 		}
 
 		loading = false;
 	}
 
-	public void mouseMovedTo(final double x_in_pane, final double y_in_pane, final int in_plane,
-			final boolean shift_key_down, final boolean join_modifier_down) {
+	public void mouseMovedTo(final double x_in_pane, final double y_in_pane,
+		final int in_plane, final boolean shift_key_down,
+		final boolean join_modifier_down)
+	{
 
 		double x, y, z;
 
@@ -569,7 +592,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		if (join_modifier_down && pathAndFillManager.anySelected()) {
 
-			final PointInImage pointInImage = pathAndFillManager.nearestJoinPointOnSelectedPaths(x, y, z);
+			final PointInImage pointInImage = pathAndFillManager
+				.nearestJoinPointOnSelectedPaths(x, y, z);
 			if (pointInImage != null) {
 				x = pointInImage.x / x_spacing;
 				y = pointInImage.y / y_spacing;
@@ -585,14 +609,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 		final double y_scaled = iy * y_spacing;
 		final double z_scaled = iz * z_spacing;
 
-		if (shift_key_down)
-			setSlicesAllPanes(ix, iy, iz);
+		if (shift_key_down) setSlicesAllPanes(ix, iy, iz);
 
-		if ((xy_tracer_canvas != null) && ((xz_tracer_canvas != null) || single_pane)
-				&& ((zy_tracer_canvas != null) || single_pane)) {
+		if ((xy_tracer_canvas != null) && ((xz_tracer_canvas != null) ||
+			single_pane) && ((zy_tracer_canvas != null) || single_pane))
+		{
 
-			String statusMessage = "world: (" + x_scaled + "," + y_scaled + "," + z_scaled + ") image: (" + ix + ","
-					+ iy + "," + iz + ")";
+			String statusMessage = "world: (" + x_scaled + "," + y_scaled + "," +
+				z_scaled + ") image: (" + ix + "," + iy + "," + iz + ")";
 			setCrosshair(x, y, z);
 			if (labelData != null) {
 
@@ -649,15 +673,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		temporaryPath = path;
 
-		if (temporaryPath != null)
-			temporaryPath.setName("Temporary Path");
+		if (temporaryPath != null) temporaryPath.setName("Temporary Path");
 		if (use3DViewer) {
 
 			if (oldTemporaryPath != null) {
 				oldTemporaryPath.removeFrom3DViewer(univ);
 			}
-			if (temporaryPath != null)
-				temporaryPath.addTo3DViewer(univ, Color.BLUE, null);
+			if (temporaryPath != null) temporaryPath.addTo3DViewer(univ, Color.BLUE,
+				null);
 		}
 	}
 
@@ -672,15 +695,13 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 
 		currentPath = path;
-		if (currentPath != null)
-			currentPath.setName("Current Path");
+		if (currentPath != null) currentPath.setName("Current Path");
 
 		if (use3DViewer) {
 			if (oldCurrentPath != null) {
 				oldCurrentPath.removeFrom3DViewer(univ);
 			}
-			if (currentPath != null)
-				currentPath.addTo3DViewer(univ, Color.RED, null);
+			if (currentPath != null) currentPath.addTo3DViewer(univ, Color.RED, null);
 		}
 	}
 
@@ -736,7 +757,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		for (int i = 0; i < depth; ++i)
 			snapshot_data[i] = new byte[width * height];
 
-		pathAndFillManager.setPathPointsInVolume(paths, snapshot_data, width, height, depth);
+		pathAndFillManager.setPathPointsInVolume(paths, snapshot_data, width,
+			height, depth);
 
 		final ImageStack newStack = new ImageStack(width, height);
 
@@ -746,7 +768,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			newStack.addSlice(null, thisSlice);
 		}
 
-		final ImagePlus newImp = new ImagePlus(xy.getShortTitle() + " Rendered Paths", newStack);
+		final ImagePlus newImp = new ImagePlus(xy.getShortTitle() +
+			" Rendered Paths", newStack);
 		newImp.setCalibration(xy.getCalibration());
 		return newImp;
 	}
@@ -762,18 +785,21 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	/* Start a search thread looking for the goal in the arguments: */
 
-	synchronized void testPathTo(final double world_x, final double world_y, final double world_z,
-			final PointInImage joinPoint) {
+	synchronized void testPathTo(final double world_x, final double world_y,
+		final double world_z, final PointInImage joinPoint)
+	{
 
 		if (!lastStartPointSet) {
-			statusService.showStatus("No initial start point has been set.  Do that with a mouse click." + " (Or a Shift-"
-					+ (IJ.isMacintosh() ? "Alt" : "Control")
-					+ "-click if the start of the path should join another neurite.");
+			statusService.showStatus(
+				"No initial start point has been set.  Do that with a mouse click." +
+					" (Or a Shift-" + (IJ.isMacintosh() ? "Alt" : "Control") +
+					"-click if the start of the path should join another neurite.");
 			return;
 		}
 
 		if (temporaryPath != null) {
-			statusService.showStatus("There's already a temporary path; Press 'N' to cancel it or 'Y' to keep it.");
+			statusService.showStatus(
+				"There's already a temporary path; Press 'N' to cancel it or 'Y' to keep it.");
 			return;
 		}
 
@@ -784,7 +810,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			real_x_end = world_x;
 			real_y_end = world_y;
 			real_z_end = world_z;
-		} else {
+		}
+		else {
 			real_x_end = joinPoint.x;
 			real_y_end = joinPoint.y;
 			real_z_end = joinPoint.z;
@@ -792,7 +819,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			endJoinPoint = joinPoint;
 		}
 
-		addSphere(targetBallName, real_x_end, real_y_end, real_z_end, Color.BLUE, x_spacing * ballRadiusMultiplier);
+		addSphere(targetBallName, real_x_end, real_y_end, real_z_end, Color.BLUE,
+			x_spacing * ballRadiusMultiplier);
 
 		x_end = (int) Math.round(real_x_end / x_spacing);
 		y_end = (int) Math.round(real_y_end / y_spacing);
@@ -807,8 +835,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 			// [xyz]_spacing
 
-			tubularGeodesicsThread = new TubularGeodesicsTracer(oofFile, last_start_point_x, last_start_point_y,
-					last_start_point_z, x_end, y_end, z_end, x_spacing, y_spacing, z_spacing, spacing_units);
+			tubularGeodesicsThread = new TubularGeodesicsTracer(oofFile,
+				last_start_point_x, last_start_point_y, last_start_point_z, x_end,
+				y_end, z_end, x_spacing, y_spacing, z_spacing, spacing_units);
 
 			addThreadToDraw(tubularGeodesicsThread);
 
@@ -816,15 +845,17 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 			tubularGeodesicsThread.start();
 
-		} else {
+		}
+		else {
 
 			currentSearchThread = new TracerThread(xy, stackMin, stackMax, 0, // timeout
-																				// in
-																				// seconds
-					1000, // reportEveryMilliseconds
-					last_start_point_x, last_start_point_y, last_start_point_z, x_end, y_end, z_end, true, // reciprocal
-					singleSlice, (hessianEnabled ? hessian : null), resultsDialog.getMultiplier(), tubeness,
-					hessianEnabled);
+				// in
+				// seconds
+				1000, // reportEveryMilliseconds
+				last_start_point_x, last_start_point_y, last_start_point_z, x_end,
+				y_end, z_end, true, // reciprocal
+				singleSlice, (hessianEnabled ? hessian : null), resultsDialog
+					.getMultiplier(), tubeness, hessianEnabled);
 
 			addThreadToDraw(currentSearchThread);
 
@@ -857,7 +888,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			setTemporaryPath(null);
 			resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
 			repaintAllPanes();
-		} else {
+		}
+		else {
 			setTemporaryPath(null);
 			// Since joining onto another path for the end must finish the path:
 			finishedPath();
@@ -873,9 +905,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 	synchronized public void cancelTemporary() {
 
 		if (!lastStartPointSet) {
-			SNT.error("No initial start point has been set yet.  Do that with a mouse click or\na Shift+"
-					+ (IJ.isMacintosh() ? "Alt" : "Control")
-					+ "-click if the start of the path should join another neurite.");
+			SNT.error(
+				"No initial start point has been set yet.  Do that with a mouse click or\na Shift+" +
+					(IJ.isMacintosh() ? "Alt" : "Control") +
+					"-click if the start of the path should join another neurite.");
 			return;
 		}
 
@@ -904,15 +937,13 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
 			SNT.error(
-					"      There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
+				"      There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
 			return;
 		}
 
 		if (currentPath != null) {
-			if (currentPath.startJoins != null)
-				currentPath.unsetStartJoin();
-			if (currentPath.endJoins != null)
-				currentPath.unsetEndJoin();
+			if (currentPath.startJoins != null) currentPath.unsetStartJoin();
+			if (currentPath.endJoins != null) currentPath.unsetEndJoin();
 		}
 
 		removeSphere(targetBallName);
@@ -934,7 +965,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
 			SNT.error(
-					"      There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
+				"      There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
 			return;
 		}
 
@@ -970,26 +1001,24 @@ public class SimpleNeuriteTracer extends ThreePanes
 		clickForTrace(p.x, p.y, p.z, join);
 	}
 
-	synchronized public void clickForTrace(final double world_x, final double world_y, final double world_z,
-			final boolean join) {
+	synchronized public void clickForTrace(final double world_x,
+		final double world_y, final double world_z, final boolean join)
+	{
 
 		PointInImage joinPoint = null;
 
 		if (join) {
-			joinPoint = pathAndFillManager.nearestJoinPointOnSelectedPaths(world_x / x_spacing, world_y / y_spacing,
-					world_z / z_spacing);
+			joinPoint = pathAndFillManager.nearestJoinPointOnSelectedPaths(world_x /
+				x_spacing, world_y / y_spacing, world_z / z_spacing);
 		}
 
-		if (resultsDialog == null)
-			return;
+		if (resultsDialog == null) return;
 
 		// FIXME: in some of the states this doesn't make sense; check for them:
 
-		if (currentSearchThread != null)
-			return;
+		if (currentSearchThread != null) return;
 
-		if (temporaryPath != null)
-			return;
+		if (temporaryPath != null) return;
 
 		if (filler != null) {
 			setFillThresholdFrom(world_x, world_y, world_z);
@@ -1002,7 +1031,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			 */
 			testPathTo(world_x, world_y, world_z, joinPoint);
 			resultsDialog.changeState(NeuriteTracerResultsDialog.SEARCHING);
-		} else {
+		}
+		else {
 			/* This is an initial point. */
 			startPath(world_x, world_y, world_z, joinPoint);
 			resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
@@ -1010,8 +1040,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	}
 
-	synchronized public void clickForTrace(final double x_in_pane_precise, final double y_in_pane_precise,
-			final int plane, final boolean join) {
+	synchronized public void clickForTrace(final double x_in_pane_precise,
+		final double y_in_pane_precise, final int plane, final boolean join)
+	{
 
 		final double[] p = new double[3];
 		findPointInStackPrecise(x_in_pane_precise, y_in_pane_precise, plane, p);
@@ -1023,9 +1054,12 @@ public class SimpleNeuriteTracer extends ThreePanes
 		clickForTrace(world_x, world_y, world_z, join);
 	}
 
-	public void setFillThresholdFrom(final double world_x, final double world_y, final double world_z) {
+	public void setFillThresholdFrom(final double world_x, final double world_y,
+		final double world_z)
+	{
 
-		final float distance = filler.getDistanceAtPoint(world_x / x_spacing, world_y / y_spacing, world_z / z_spacing);
+		final float distance = filler.getDistanceAtPoint(world_x / x_spacing,
+			world_y / y_spacing, world_z / z_spacing);
 
 		setFillThreshold(distance);
 	}
@@ -1034,8 +1068,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		if (distance > 0) {
 
-			if (verbose)
-				SNT.log("Setting new threshold of: " + distance);
+			if (verbose) SNT.log("Setting new threshold of: " + distance);
 
 			resultsDialog.thresholdChanged(distance);
 
@@ -1044,14 +1077,16 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	}
 
-	synchronized void startPath(final double world_x, final double world_y, final double world_z,
-			final PointInImage joinPoint) {
+	synchronized void startPath(final double world_x, final double world_y,
+		final double world_z, final PointInImage joinPoint)
+	{
 
 		endJoin = null;
 		endJoinPoint = null;
 
 		if (lastStartPointSet) {
-			statusService.showStatus("The start point has already been set; to finish a path press 'F'");
+			statusService.showStatus(
+				"The start point has already been set; to finish a path press 'F'");
 			return;
 		}
 
@@ -1070,7 +1105,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			real_last_start_y = world_y;
 			real_last_start_z = world_z;
 			ballColor = Color.BLUE;
-		} else {
+		}
+		else {
 			real_last_start_x = joinPoint.x;
 			real_last_start_y = joinPoint.y;
 			real_last_start_z = joinPoint.z;
@@ -1082,23 +1118,24 @@ public class SimpleNeuriteTracer extends ThreePanes
 		last_start_point_y = (int) Math.round(real_last_start_y / y_spacing);
 		last_start_point_z = (int) Math.round(real_last_start_z / z_spacing);
 
-		addSphere(startBallName, real_last_start_x, real_last_start_y, real_last_start_z, ballColor,
-				x_spacing * ballRadiusMultiplier);
+		addSphere(startBallName, real_last_start_x, real_last_start_y,
+			real_last_start_z, ballColor, x_spacing * ballRadiusMultiplier);
 
 		setCurrentPath(path);
 	}
 
-	protected void addSphere(final String name, final double x, final double y, final double z, final Color color,
-			final double radius) {
+	protected void addSphere(final String name, final double x, final double y,
+		final double z, final Color color, final double radius)
+	{
 		if (use3DViewer) {
-			final List<Point3f> sphere = customnode.MeshMaker.createSphere(x, y, z, radius);
+			final List<Point3f> sphere = customnode.MeshMaker.createSphere(x, y, z,
+				radius);
 			univ.addTriangleMesh(sphere, new Color3f(color), name);
 		}
 	}
 
 	protected void removeSphere(final String name) {
-		if (use3DViewer)
-			univ.removeContent(name);
+		if (use3DViewer) univ.removeContent(name);
 	}
 
 	/*
@@ -1112,7 +1149,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public static String getStackTrace() {
 		final StringWriter sw = new StringWriter();
-		new Exception("Dummy Exception for Stack Trace").printStackTrace(new PrintWriter(sw));
+		new Exception("Dummy Exception for Stack Trace").printStackTrace(
+			new PrintWriter(sw));
 		return sw.toString();
 	}
 
@@ -1145,7 +1183,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	volatile protected boolean cancelled = false;
 
-	protected TextWindow helpTextWindow;
+	// protected TextWindow helpTextWindow;
 
 	protected boolean singleSlice;
 
@@ -1155,8 +1193,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 	volatile protected float stackMin = Float.MAX_VALUE;
 
 	public int guessResamplingFactor() {
-		if (width == 0 || height == 0 || depth == 0)
-			throw new RuntimeException("Can't call guessResamplingFactor() before width, height and depth are set...");
+		if (width == 0 || height == 0 || depth == 0) throw new RuntimeException(
+			"Can't call guessResamplingFactor() before width, height and depth are set...");
 		/*
 		 * This is about right for me, but probably should be related to the
 		 * free memory somehow. However, those calls are so notoriously
@@ -1165,16 +1203,15 @@ public class SimpleNeuriteTracer extends ThreePanes
 		final long maxSamplePoints = 500 * 500 * 100;
 		int level = 0;
 		while (true) {
-			final long samplePoints = (long) (width >> level) * (long) (height >> level) * (depth >> level);
-			if (samplePoints < maxSamplePoints)
-				return (1 << level);
+			final long samplePoints = (long) (width >> level) *
+				(long) (height >> level) * (depth >> level);
+			if (samplePoints < maxSamplePoints) return (1 << level);
 			++level;
 		}
 	}
 
 	public boolean isReady() {
-		if (resultsDialog == null)
-			return false;
+		if (resultsDialog == null) return false;
 		return resultsDialog.isVisible();
 	}
 
@@ -1193,30 +1230,26 @@ public class SimpleNeuriteTracer extends ThreePanes
 		final int originalHeight = xy.getHeight();
 		final int originalDepth = xy.getStackSize();
 
-		if (x_min < 0)
-			x_min = 0;
-		if (y_min < 0)
-			y_min = 0;
-		if (z_min < 0)
-			z_min = 0;
-		if (x_max >= originalWidth)
-			x_max = originalWidth - 1;
-		if (y_max >= originalHeight)
-			y_max = originalHeight - 1;
-		if (z_max >= originalDepth)
-			z_max = originalDepth - 1;
+		if (x_min < 0) x_min = 0;
+		if (y_min < 0) y_min = 0;
+		if (z_min < 0) z_min = 0;
+		if (x_max >= originalWidth) x_max = originalWidth - 1;
+		if (y_max >= originalHeight) y_max = originalHeight - 1;
+		if (z_max >= originalDepth) z_max = originalDepth - 1;
 
 		final double[] sigmas = new double[9];
 		for (int i = 0; i < sigmas.length; ++i) {
 			sigmas[i] = ((i + 1) * getMinimumSeparation()) / 2;
 		}
 
-		resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE);
+		resultsDialog.changeState(
+			NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE);
 
 		final SigmaPalette sp = new SigmaPalette();
 		sp.setListener(resultsDialog);
-		sp.makePalette(xy, x_min, x_max, y_min, y_max, z_min, z_max, new TubenessProcessor(true), sigmas,
-				256 / resultsDialog.getMultiplier(), 3, 3, z);
+		sp.makePalette(xy, x_min, x_max, y_min, y_max, z_min, z_max,
+			new TubenessProcessor(true), sigmas, 256 / resultsDialog.getMultiplier(),
+			3, 3, z);
 	}
 
 	public void startFillerThread(final FillerThread filler) {
@@ -1244,9 +1277,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 		resultsDialog.getFillWindow().pauseOrRestartFilling.setText("Pause");
 
 		filler = new FillerThread(xy, stackMin, stackMax, false, // startPaused
-				true, // reciprocal
-				0.03f, // Initial threshold to display
-				5000); // reportEveryMilliseconds
+			true, // reciprocal
+			0.03f, // Initial threshold to display
+			5000); // reportEveryMilliseconds
 
 		addThreadToDraw(filler);
 
@@ -1272,7 +1305,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	public double getMinimumSeparation() {
-		return Math.min(Math.abs(x_spacing), Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
+		return Math.min(Math.abs(x_spacing), Math.min(Math.abs(y_spacing), Math.abs(
+			z_spacing)));
 	}
 
 	volatile boolean hessianEnabled = false;
@@ -1286,14 +1320,17 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public void startHessian() {
 		if (hessian == null) {
-			resultsDialog.changeState(NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
+			resultsDialog.changeState(
+				NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
 			hessianSigma = resultsDialog.getSigma();
 			hessian = new ComputeCurvatures(xy, hessianSigma, this, true);
 			new Thread(hessian).start();
-		} else {
+		}
+		else {
 			final double newSigma = resultsDialog.getSigma();
 			if (newSigma != hessianSigma) {
-				resultsDialog.changeState(NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
+				resultsDialog.changeState(
+					NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
 				hessianSigma = newSigma;
 				hessian = new ComputeCurvatures(xy, hessianSigma, this, true);
 				new Thread(hessian).start();
@@ -1331,7 +1368,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			startHessian();
 			resultsDialog.editSigma.setEnabled(false);
 			resultsDialog.sigmaWizard.setEnabled(false);
-		} else {
+		}
+		else {
 			resultsDialog.editSigma.setEnabled(true);
 			resultsDialog.sigmaWizard.setEnabled(true);
 		}
@@ -1353,11 +1391,12 @@ public class SimpleNeuriteTracer extends ThreePanes
 			resultsDialog.gaussianCalculated(false);
 			statusService.showProgress(1, 1);
 			return;
-		} else if (proportion >= 1.0) {
+		}
+		else if (proportion >= 1.0) {
 			hessianEnabled = true;
 			resultsDialog.gaussianCalculated(true);
 		}
-		statusService.showProgress((int) proportion, 1); //FIXME:
+		statusService.showProgress((int) proportion, 1); // FIXME:
 	}
 
 	/*
@@ -1374,8 +1413,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public static boolean haveJava3D() {
 		final ClassLoader loader = IJ.getClassLoader();
-		if (loader == null)
-			throw new RuntimeException("IJ.getClassLoader() failed (!)");
+		if (loader == null) throw new RuntimeException(
+			"IJ.getClassLoader() failed (!)");
 		try {
 			final Class<?> c = loader.loadClass("ij3d.ImageWindow3D");
 			/*
@@ -1383,15 +1422,19 @@ public class SimpleNeuriteTracer extends ThreePanes
 			 * exception and not return null, but just in case:
 			 */
 			return c != null;
-		} catch (final Exception e) {
+		}
+		catch (final Exception e) {
 			return false;
 		}
 	}
 
-	public void showCorrespondencesTo(final File tracesFile, final Color c, final double maxDistance) {
+	public void showCorrespondencesTo(final File tracesFile, final Color c,
+		final double maxDistance)
+	{
 
-		final PathAndFillManager pafmTraces = new PathAndFillManager(width, height, depth, (float) x_spacing,
-				(float) y_spacing, (float) z_spacing, spacing_units);
+		final PathAndFillManager pafmTraces = new PathAndFillManager(width, height,
+			depth, (float) x_spacing, (float) y_spacing, (float) z_spacing,
+			spacing_units);
 
 		/*
 		 * FIXME: may well want to odd SWC options here, which isn't done with
@@ -1406,30 +1449,32 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		// Now find corresponding points from the first one, and draw lines to
 		// them:
-		final ArrayList<NearPoint> cp = pathAndFillManager.getCorrespondences(pafmTraces, 2.5);
+		final ArrayList<NearPoint> cp = pathAndFillManager.getCorrespondences(
+			pafmTraces, 2.5);
 		int done = 0;
 		for (final NearPoint np : cp) {
 			if (np != null) {
 				// SNT.log("Drawing:");
 				// SNT.log(np.toString());
 
-				linePoints.add(new Point3f((float) np.nearX, (float) np.nearY, (float) np.nearZ));
-				linePoints.add(new Point3f((float) np.closestIntersection.x, (float) np.closestIntersection.y,
-						(float) np.closestIntersection.z));
+				linePoints.add(new Point3f((float) np.nearX, (float) np.nearY,
+					(float) np.nearZ));
+				linePoints.add(new Point3f((float) np.closestIntersection.x,
+					(float) np.closestIntersection.y, (float) np.closestIntersection.z));
 
 				final String ballName = univ.getSafeContentName("ball " + done);
-				final List<Point3f> sphere = customnode.MeshMaker.createSphere(np.nearX, np.nearY, np.nearZ,
-						Math.abs(x_spacing / 2));
+				final List<Point3f> sphere = customnode.MeshMaker.createSphere(np.nearX,
+					np.nearY, np.nearZ, Math.abs(x_spacing / 2));
 				univ.addTriangleMesh(sphere, new Color3f(c), ballName);
 			}
 			++done;
 		}
-		univ.addLineMesh(linePoints, new Color3f(Color.red), "correspondences", false);
+		univ.addLineMesh(linePoints, new Color3f(Color.red), "correspondences",
+			false);
 
 		for (int pi = 0; pi < pafmTraces.size(); ++pi) {
 			final Path p = pafmTraces.getPath(pi);
-			if (p.getUseFitted())
-				continue;
+			if (p.getUseFitted()) continue;
 			p.addAsLinesTo3DViewer(univ, c, null);
 		}
 		// univ.resetView();
@@ -1437,7 +1482,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	protected volatile boolean showOnlySelectedPaths;
 
-	protected void setShowOnlySelectedPaths(final boolean showOnlySelectedPaths, final boolean updateGUI) {
+	protected void setShowOnlySelectedPaths(final boolean showOnlySelectedPaths,
+		final boolean updateGUI)
+	{
 		this.showOnlySelectedPaths = showOnlySelectedPaths;
 		if (updateGUI) {
 			update3DViewerContents();
@@ -1449,20 +1496,19 @@ public class SimpleNeuriteTracer extends ThreePanes
 		setShowOnlySelectedPaths(showOnlySelectedPaths, true);
 	}
 
-	public void addPathsToOverlay(Overlay overlay, final int plane, final boolean SWTColoring) {
+	public void addPathsToOverlay(Overlay overlay, final int plane,
+		final boolean SWTColoring)
+	{
 
-		if (overlay == null)
-			overlay = new Overlay();
+		if (overlay == null) overlay = new Overlay();
 
 		if (pathAndFillManager != null) {
 			for (int i = 0; i < pathAndFillManager.size(); ++i) {
 
 				final Path p = pathAndFillManager.getPath(i);
-				if (p == null)
-					continue;
+				if (p == null) continue;
 
-				if (p.fittedVersionOf != null)
-					continue;
+				if (p.fittedVersionOf != null) continue;
 
 				// If the path suggests using the fitted version, draw that
 				// instead
@@ -1471,8 +1517,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 				if (showOnlySelectedPaths && !pathAndFillManager.isSelected(p))
 					continue;
 
-				if (SWTColoring)
-					drawPath.setColorBySWCtype();
+				if (SWTColoring) drawPath.setColorBySWCtype();
 				drawPath.drawPathAsPoints(overlay, plane);
 			}
 		}
@@ -1480,14 +1525,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public StackWindow getWindow(final int plane) {
 		switch (plane) {
-		case ThreePanes.XY_PLANE:
-			return xy_window;
-		case ThreePanes.XZ_PLANE:
-			return (single_pane) ? null : xz_window;
-		case ThreePanes.ZY_PLANE:
-			return (single_pane) ? null : zy_window;
-		default:
-			return null;
+			case ThreePanes.XY_PLANE:
+				return xy_window;
+			case ThreePanes.XZ_PLANE:
+				return (single_pane) ? null : xz_window;
+			case ThreePanes.ZY_PLANE:
+				return (single_pane) ? null : zy_window;
+			default:
+				return null;
 		}
 	}
 
@@ -1520,8 +1565,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public static final Color DEFAULT_SELECTED_COLOR = Color.GREEN;
 	public static final Color DEFAULT_DESELECTED_COLOR = Color.MAGENTA;
-	public static final Color3f DEFAULT_SELECTED_COLOR3F = new Color3f(Color.GREEN);
-	public static final Color3f DEFAULT_DESELECTED_COLOR3F = new Color3f(Color.MAGENTA);
+	public static final Color3f DEFAULT_SELECTED_COLOR3F = new Color3f(
+		Color.GREEN);
+	public static final Color3f DEFAULT_DESELECTED_COLOR3F = new Color3f(
+		Color.MAGENTA);
 	public Color3f selectedColor3f = DEFAULT_SELECTED_COLOR3F;
 	public Color3f deselectedColor3f = DEFAULT_DESELECTED_COLOR3F;
 	public Color selectedColor = DEFAULT_SELECTED_COLOR;
@@ -1565,10 +1612,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public void selectPath(final Path p, final boolean addToExistingSelection) {
 		final HashSet<Path> pathsToSelect = new HashSet<>();
-		if (p.isFittedVersionOfAnotherPath())
-			pathsToSelect.add(p.fittedVersionOf);
-		else
-			pathsToSelect.add(p);
+		if (p.isFittedVersionOfAnotherPath()) pathsToSelect.add(p.fittedVersionOf);
+		else pathsToSelect.add(p);
 		if (addToExistingSelection) {
 			pathsToSelect.addAll(resultsDialog.getPathWindow().getSelectedPaths());
 		}
@@ -1579,28 +1624,31 @@ public class SimpleNeuriteTracer extends ThreePanes
 		if (resultsDialog.getPathWindow() != null) {
 			return resultsDialog.getPathWindow().getSelectedPaths();
 		}
-		throw new RuntimeException("getSelectedPaths was called when resultsDialog.pw was null");
+		throw new RuntimeException(
+			"getSelectedPaths was called when resultsDialog.pw was null");
 	}
 
 	@Override
-	public void setPathList(final String[] newList, final Path justAdded, final boolean expandAll) {
-	}
+	public void setPathList(final String[] newList, final Path justAdded,
+		final boolean expandAll)
+	{}
 
 	@Override
-	public void setFillList(final String[] newList) {
-	}
+	public void setFillList(final String[] newList) {}
 
 	// Note that rather unexpectedly the p.setSelcted calls make sure that
 	// the colour of the path in the 3D viewer is right... (FIXME)
 	@Override
-	public void setSelectedPaths(final HashSet<Path> selectedPathsSet, final Object source) {
-		if (source == this)
-			return;
+	public void setSelectedPaths(final HashSet<Path> selectedPathsSet,
+		final Object source)
+	{
+		if (source == this) return;
 		for (int i = 0; i < pathAndFillManager.size(); ++i) {
 			final Path p = pathAndFillManager.getPath(i);
 			if (selectedPathsSet.contains(p)) {
 				p.setSelected(true);
-			} else {
+			}
+			else {
 				p.setSelected(false);
 			}
 		}
@@ -1609,10 +1657,11 @@ public class SimpleNeuriteTracer extends ThreePanes
 	/**
 	 * This method will remove the existing keylisteners from the component 'c',
 	 * tells 'firstKeyListener' to call those key listeners if it has not dealt
-	 * with the key, and then sets 'firstKeyListener' as the key listener for
-	 * 'c'
+	 * with the key, and then sets 'firstKeyListener' as the key listener for 'c'
 	 */
-	public static void setAsFirstKeyListener(final Component c, final QueueJumpingKeyListener firstKeyListener) {
+	public static void setAsFirstKeyListener(final Component c,
+		final QueueJumpingKeyListener firstKeyListener)
+	{
 		final KeyListener[] oldKeyListeners = c.getKeyListeners();
 		for (final KeyListener kl : oldKeyListeners) {
 			c.removeKeyListener(kl);
@@ -1621,8 +1670,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 		c.addKeyListener(firstKeyListener);
 	}
 
-	public synchronized void findSnappingPointInXYview(final double x_in_pane, final double y_in_pane,
-			final double[] point) {
+	public synchronized void findSnappingPointInXYview(final double x_in_pane,
+		final double y_in_pane, final double[] point)
+	{
 
 		// if (width == 0 || height == 0 || depth == 0)
 		// throw new RuntimeException(
@@ -1630,26 +1680,23 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// depth are set...");
 
 		final int[] window_center = new int[3];
-		findPointInStack((int) Math.round(x_in_pane), (int) Math.round(y_in_pane), ThreePanes.XY_PLANE, window_center);
+		findPointInStack((int) Math.round(x_in_pane), (int) Math.round(y_in_pane),
+			ThreePanes.XY_PLANE, window_center);
 		int startx = window_center[0] - cursorSnapWindowXY;
-		if (startx < 0)
-			startx = 0;
+		if (startx < 0) startx = 0;
 		int starty = window_center[1] - cursorSnapWindowXY;
-		if (starty < 0)
-			starty = 0;
+		if (starty < 0) starty = 0;
 		int startz = window_center[2] - cursorSnapWindowZ;
-		if (startz < 0)
-			startz = 0;
+		if (startz < 0) startz = 0;
 		int stopx = window_center[0] + cursorSnapWindowXY;
-		if (stopx > width)
-			stopx = width;
+		if (stopx > width) stopx = width;
 		int stopy = window_center[1] + cursorSnapWindowXY;
-		if (stopy > height)
-			stopy = height;
+		if (stopy > height) stopy = height;
 		int stopz = window_center[2] + cursorSnapWindowZ;
 		if (cursorSnapWindowZ == 0) {
 			++stopz;
-		} else if (stopz > depth) {
+		}
+		else if (stopz > depth) {
 			stopz = depth;
 		}
 
@@ -1661,24 +1708,25 @@ public class SimpleNeuriteTracer extends ThreePanes
 					float v = -Float.MAX_VALUE;
 					final int xyIndex = y * width + x;
 					switch (imageType) {
-					case ImagePlus.GRAY8:
-					case ImagePlus.COLOR_256:
-						v = 0xFF & slices_data_b[z][xyIndex];
-						break;
-					case ImagePlus.GRAY16:
-						v = slices_data_s[z][xyIndex];
-						break;
-					case ImagePlus.GRAY32:
-						v = slices_data_f[z][xyIndex];
-						break;
-					default:
-						throw new RuntimeException("Unknow image type: " + imageType);
+						case ImagePlus.GRAY8:
+						case ImagePlus.COLOR_256:
+							v = 0xFF & slices_data_b[z][xyIndex];
+							break;
+						case ImagePlus.GRAY16:
+							v = slices_data_s[z][xyIndex];
+							break;
+						case ImagePlus.GRAY32:
+							v = slices_data_f[z][xyIndex];
+							break;
+						default:
+							throw new RuntimeException("Unknow image type: " + imageType);
 					}
 					if (v > currentMaximum) {
 						pointsAtMaximum = new ArrayList<>();
 						pointsAtMaximum.add(new int[] { x, y, z });
 						currentMaximum = v;
-					} else if (v == currentMaximum) {
+					}
+					else if (v == currentMaximum) {
 						pointsAtMaximum.add(new int[] { x, y, z });
 					}
 				}
@@ -1694,15 +1742,17 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// }
 
 		final int[] snapped_p = pointsAtMaximum.get(pointsAtMaximum.size() / 2);
-		if (window_center[2] != snapped_p[2])
-			xy.setSlice(snapped_p[2] + 1);
+		if (window_center[2] != snapped_p[2]) xy.setSlice(snapped_p[2] + 1);
 		point[0] = snapped_p[0];
 		point[1] = snapped_p[1];
 		point[2] = snapped_p[2];
 	}
 
-	public void clickAtMaxPoint(final int x_in_pane, final int y_in_pane, final int plane) {
-		final int[][] pointsToConsider = findAllPointsAlongLine(x_in_pane, y_in_pane, plane);
+	public void clickAtMaxPoint(final int x_in_pane, final int y_in_pane,
+		final int plane)
+	{
+		final int[][] pointsToConsider = findAllPointsAlongLine(x_in_pane,
+			y_in_pane, plane);
 		ArrayList<int[]> pointsAtMaximum = new ArrayList<>();
 		float currentMaximum = -Float.MAX_VALUE;
 		for (int i = 0; i < pointsToConsider.length; ++i) {
@@ -1710,24 +1760,25 @@ public class SimpleNeuriteTracer extends ThreePanes
 			final int[] p = pointsToConsider[i];
 			final int xyIndex = p[1] * width + p[0];
 			switch (imageType) {
-			case ImagePlus.GRAY8:
-			case ImagePlus.COLOR_256:
-				v = 0xFF & slices_data_b[p[2]][xyIndex];
-				break;
-			case ImagePlus.GRAY16:
-				v = slices_data_s[p[2]][xyIndex];
-				break;
-			case ImagePlus.GRAY32:
-				v = slices_data_f[p[2]][xyIndex];
-				break;
-			default:
-				throw new RuntimeException("Unknow image type: " + imageType);
+				case ImagePlus.GRAY8:
+				case ImagePlus.COLOR_256:
+					v = 0xFF & slices_data_b[p[2]][xyIndex];
+					break;
+				case ImagePlus.GRAY16:
+					v = slices_data_s[p[2]][xyIndex];
+					break;
+				case ImagePlus.GRAY32:
+					v = slices_data_f[p[2]][xyIndex];
+					break;
+				default:
+					throw new RuntimeException("Unknow image type: " + imageType);
 			}
 			if (v > currentMaximum) {
 				pointsAtMaximum = new ArrayList<>();
 				pointsAtMaximum.add(p);
 				currentMaximum = v;
-			} else if (v == currentMaximum) {
+			}
+			else if (v == currentMaximum) {
 				pointsAtMaximum.add(p);
 			}
 		}
@@ -1751,8 +1802,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			allImages.add(zy);
 		}
 		for (final ImagePlus imagePlus : allImages) {
-			if (imagePlus == null || imagePlus.getImageStackSize() == 1)
-				continue;
+			if (imagePlus == null || imagePlus.getImageStackSize() == 1) continue;
 			Overlay overlayList = imagePlus.getOverlay();
 			if (show) {
 
@@ -1768,11 +1818,11 @@ public class SimpleNeuriteTracer extends ThreePanes
 				final Roi roi = new ImageRoi(0, 0, overlay.getProcessor());
 				roi.setName(OVERLAY_IDENTIFIER);
 				((ImageRoi) roi).setOpacity(OVERLAY_OPACITY_PERCENT / 100.0);
-				if (overlayList == null)
-					overlayList = new Overlay();
+				if (overlayList == null) overlayList = new Overlay();
 				overlayList.add(roi);
 
-			} else {
+			}
+			else {
 				removeMIPfromOverlay(overlayList);
 			}
 			imagePlus.setOverlay(overlayList);
@@ -1792,10 +1842,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	protected void updateViewPathChoice() {
-		if (!resultsDialog.viewPathChoice.isEnabled())
-			return;
+		if (!resultsDialog.viewPathChoice.isEnabled()) return;
 		resultsDialog.viewPathChoice.setSelectedItem(
-				xy_tracer_canvas.just_near_slices ? resultsDialog.partsNearbyChoice : resultsDialog.projectionChoice);
+			xy_tracer_canvas.just_near_slices ? resultsDialog.partsNearbyChoice
+				: resultsDialog.projectionChoice);
 	}
 
 	protected void toogleSnapCursor() {
@@ -1813,8 +1863,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		autoCanvasActivation = enable;
 	}
 
-	protected boolean drawDiametersXY = Prefs.get("tracing.Simple_Neurite_Tracer.drawDiametersXY", "false")
-			.equals("true");
+	protected boolean drawDiametersXY = Prefs.get(
+		"tracing.Simple_Neurite_Tracer.drawDiametersXY", "false").equals("true");
 
 	public void setDrawDiametersXY(final boolean draw) {
 		drawDiametersXY = draw;
@@ -1836,8 +1886,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			for (int i = 0; i < impPanes.length; ++i) {
 				final Overlay overlay = impPanes[i].getOverlay();
 				removeMIPfromOverlay(overlay);
-				if (!impPanes[i].changes && (overlay == null || impPanes[i].getOverlay().size() == 0))
-					impPanes[i].close();
+				if (!impPanes[i].changes && (overlay == null || impPanes[i].getOverlay()
+					.size() == 0)) impPanes[i].close();
 				else {
 					winPanes[i] = new StackWindow(impPanes[i]);
 					removeMIPfromOverlay(overlay);
@@ -1858,7 +1908,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	@Override
 	public void run() {
 		// Nothing tp do
-		
+
 	}
 
 }

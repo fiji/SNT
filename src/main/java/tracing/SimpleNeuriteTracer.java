@@ -43,6 +43,7 @@ import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.DialogPrompt.Result;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Point3f;
@@ -62,7 +63,6 @@ import ij.gui.ImageRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.gui.StackWindow;
-import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.plugin.ZProjector;
@@ -430,36 +430,20 @@ public class SimpleNeuriteTracer extends ThreePanes
 			final String path = possibleLoadFile.getPath();
 
 			if (possibleLoadFile.exists()) {
-
-				final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Confirm",
-						"Load the default labels file?\n(" + path + ")");
-
-				if (d.yesPressed()) {
-
+				Result result = guiUtils.yesNoCancelPrompt("Load the default labels file?\n(" + path + ")", "Confirm");
+				if (result.equals(Result.YES_OPTION)) {
 					loadLabelsFile(path);
-
 					return;
-
-				} else if (d.cancelPressed()) {
-
+				} else if (result.equals(Result.CANCEL_OPTION)) {
 					return;
-
 				}
 			}
+
 		}
 
-		// Presumably "No" was pressed...
-
-		OpenDialog od;
-
-		od = new OpenDialog("Select labels file...", null, null);
-
-		fileName = od.getFileName();
-		directory = od.getDirectory();
-
-		if (fileName != null) {
-
-			loadLabelsFile(directory + fileName);
+		final File file = guiUtils.openFile("Select labels file...", null);
+		if (file != null) {
+			loadLabelsFile(file.getAbsolutePath());
 			return;
 		}
 
@@ -489,10 +473,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 				if (possibleLoadFile.exists()) {
 
-					final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(), "Confirm",
-							"Load the default traces file?\n(" + path + ")");
-
-					if (d.yesPressed()) {
+					Result result = guiUtils.yesNoCancelPrompt("Load the default traces file?\n(" + path + ")", "Confirm");
+					if (result.equals(Result.YES_OPTION)) {
 
 						if (pathAndFillManager.loadGuessingType(path))
 							unsavedPaths = false;
@@ -503,7 +485,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 						loading = false;
 						return;
 
-					} else if (d.cancelPressed()) {
+					} else if (result.equals(Result.CANCEL_OPTION)) {
 
 						loading = false;
 						return;

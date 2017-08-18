@@ -238,6 +238,7 @@ public class SinglePathsGraph {
 				if (lastLine.startsWith(groupPrefix))
 					; // Do nothing
 			}
+			br.close();
 
 		} catch (final IOException e) {
 			IJ.error("IOException loading " + inputFilename + ": " + e);

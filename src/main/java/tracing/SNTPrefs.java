@@ -25,6 +25,7 @@ package tracing;
 import java.awt.Font;
 import java.awt.Point;
 
+import tracing.FillWindow;
 import ij.Prefs;
 import ij.gui.GenericDialog;
 

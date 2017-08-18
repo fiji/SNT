@@ -70,6 +70,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import features.SigmaPalette;
+import tracing.FillWindow;
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;

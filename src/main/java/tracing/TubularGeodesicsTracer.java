@@ -122,7 +122,7 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 				final Class<?> c = loader.loadClass("FijiITKInterface.TubularGeodesics");
 				final Object newInstance = c.newInstance();
 
-				final Class[] parameterTypes = {};
+				final Class<?>[] parameterTypes = {};
 
 				final Method m = c.getMethod("interruptSearch", parameterTypes);
 				final Object[] parameters = new Object[0];
@@ -200,7 +200,7 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 				final Class<?> c = loader.loadClass("FijiITKInterface.TubularGeodesics");
 				final Object newInstance = c.newInstance();
 
-				final Class[] parameterTypes = { String.class, float[].class, float[].class, PathResult.class,
+				final Class<?>[] parameterTypes = { String.class, float[].class, float[].class, PathResult.class,
 						TubularGeodesicsTracer.class };
 
 				final Method m = c.getMethod("startSearch", parameterTypes);

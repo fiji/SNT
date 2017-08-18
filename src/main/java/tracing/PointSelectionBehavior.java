@@ -161,7 +161,6 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 
 		final boolean mac = IJ.isMacintosh();
 
-		final boolean shift_key_down = (me.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
 		final boolean joiner_modifier_down = mac ? ((me.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
 				: ((me.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 

@@ -368,8 +368,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				pathsLeft.add(allPaths.get(i));
 		}
 
-		int markedAsPrimary = 0;
-
 		/*
 		 * This is horrendously inefficent but with the number of paths that
 		 * anyone might reasonably add by hand (I hope!) it's acceptable.
@@ -382,7 +380,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if (p.getPrimary()) {
 				pi.remove();
 				primaryPaths.add(p);
-				++markedAsPrimary;
 			}
 		}
 
@@ -605,13 +602,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		final ArrayList<String> pathListEntries = new ArrayList<>();
 
 		for (final Path p : allPaths) {
-			final int pathID = p.getID();
 			if (p == null) {
 				throw new RuntimeException("BUG: A path in allPaths was null!");
 			}
 			String name = p.getName();
 			if (name == null)
-				name = "Path [" + pathID + "]";
+				name = "Path [" + p.getID() + "]";
 			if (p.startJoins != null) {
 				name += ", starts on " + p.startJoins.getName();
 			}

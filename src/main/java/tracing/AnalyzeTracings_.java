@@ -124,7 +124,8 @@ class PointInPath {
 		return distance_squared <= within_squared;
 	}
 }
-
+/** @deprecated Will be removed in v3.3 */
+@Deprecated
 public class AnalyzeTracings_ implements PlugIn {
 
 	static public Connectivity buildGraph(final String imageFileName, final ArrayList<Path> allPaths) {

@@ -149,6 +149,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			context.inject(this);
 		}
 		guiUtils = new GuiUtils(context);
+		SNT.setContext(context);
 	}
 
 	public boolean pathsUnsaved() {

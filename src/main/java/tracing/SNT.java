@@ -29,6 +29,8 @@ import javax.swing.JButton;
 
 import org.scijava.Context;
 import org.scijava.log.LogService;
+import org.scijava.ui.DialogPrompt.MessageType;
+import org.scijava.ui.UIService;
 import org.scijava.util.VersionUtils;
 
 import ij.IJ;
@@ -39,48 +41,51 @@ public class SNT {
 
 	private static Context context;
 	private static LogService logService;
+	private static UIService uiService;
 	public static final String VERSION = getVersion();
 
-	private static boolean initialized;
-
 	private SNT() {
+		// prevent instantiation of utility class
 	}
 
 	private synchronized static void initialize() {
-		if (initialized)
-			return;
-		if (context == null)
-			context = (Context) IJ.runPlugIn("org.scijava.Context", "");
-		if (logService == null)
-			logService = context.getService(LogService.class);
-		initialized = true;
+		if (context == null) setContext((Context) IJ.runPlugIn(
+			"org.scijava.Context", ""));
+	}
+
+	public static void setContext(final Context cntxt) {
+		if (context != null) return;
+		context = cntxt;
+		if (logService == null) logService = context.getService(LogService.class);
+		if (uiService == null) uiService = context.getService(UIService.class);
 	}
 
 	private static String getVersion() {
 		return VersionUtils.getVersion(tracing.SimpleNeuriteTracer.class);
 	}
 
-	protected static void error(final String string) {
-		IJ.error("Simple Neurite Tracer v" + VERSION, string);
+	@Deprecated
+	public static void error(final String string) {
+		initialize();
+		uiService.showDialog(string, "Simple Neurite Tracer v" + VERSION,
+			MessageType.ERROR_MESSAGE);
 	}
 
 	protected static void log(final String string) {
-		if (!initialized)
-			initialize();
+		initialize();
 		logService.info("[SNT] " + string);
 	}
 
 	protected static void warn(final String string) {
-		if (!initialized)
-			initialize();
+		initialize();
 		logService.warn("[SNT] " + string);
 	}
 
 	protected static void log(final String... strings) {
-		if (strings != null)
-			log(String.join(" ", strings));
+		if (strings != null) log(String.join(" ", strings));
 	}
 
+	//FIXME: Move to gui.GuiUtils
 	protected static JButton smallButton(final String text) {
 		final double SCALE = .85;
 		final JButton button = new JButton(text);

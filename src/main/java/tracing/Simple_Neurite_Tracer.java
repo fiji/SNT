@@ -32,6 +32,10 @@ import java.io.File;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 
+import net.imagej.ImageJ;
+
+import org.scijava.command.Command;
+import org.scijava.plugin.Plugin;
 import org.scijava.vecmath.Color3f;
 
 import client.ArchiveClient;
@@ -62,7 +66,8 @@ import util.RGBToLuminance;
 
  */
 
-public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn {
+@Plugin(type = Command.class, visible=true, menuPath="SNT>SNT", initializer = "initialize")
+public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn, Command {
 
 	/* These will be set by SNTPrefs */
 	protected boolean forceGrayscale;
@@ -71,7 +76,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 	protected boolean look4tracesFile;
 
 	@Override
-	public void run(final String ignoredArguments) {
+	public void run() {
 
 		/*
 		 * The useful macro options are:
@@ -536,4 +541,16 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 		}
 	}
+
+	@Override
+	public void run(final String ignoredArguments) {
+		run();
+	}
+
+	public static void main(final String... args) {
+		final ImageJ ij = new ImageJ();
+		ij.ui().showUI();
+		ij.command().run(Simple_Neurite_Tracer.class, true);
+	}
+
 }

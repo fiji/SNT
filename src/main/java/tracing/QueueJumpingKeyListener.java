@@ -33,7 +33,6 @@ import ij.IJ;
 public class QueueJumpingKeyListener implements KeyListener {
 
 	protected SimpleNeuriteTracer tracerPlugin;
-	static final protected boolean verbose = SimpleNeuriteTracer.verbose;
 	protected InteractiveTracerCanvas canvas;
 
 	ArrayList<KeyListener> listeners = new ArrayList<>();
@@ -62,8 +61,7 @@ public class QueueJumpingKeyListener implements KeyListener {
 		final boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
 		final boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 
-		if (verbose)
-			SNT.log("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode) + ") keyChar=\"" + keyChar + "\" ("
+		SNT.debug("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode) + ") keyChar=\"" + keyChar + "\" ("
 					+ (int) keyChar + ") " + KeyEvent.getKeyModifiersText(canvas.getModifiers()));
 
 		if (keyChar == 'y' || keyChar == 'Y') {

@@ -55,8 +55,6 @@ public class AutoSearchThread extends SearchThread {
 				0, // timeoutSeconds
 				1000); // reportEveryMilliseconds
 
-		this.verbose = false;
-
 		this.tubeValues = tubeValues;
 		this.tubenessThreshold = tubenessThreshold;
 

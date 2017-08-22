@@ -221,10 +221,10 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			// The filler must be paused while we save to
 			// avoid concurrent modifications...
 
-			if (verbose) SNT.log("[" + Thread.currentThread() +
+			SNT.debug("[" + Thread.currentThread() +
 				"] going to lock filler in plugin.saveFill");
 			synchronized (filler) {
-				if (verbose) SNT.log("[" + Thread.currentThread() + "] acquired it");
+				SNT.debug("[" + Thread.currentThread() + "] acquired it");
 				if (SearchThread.PAUSED == filler.getThreadStatus()) {
 					// Then we can go ahead and save:
 					pathAndFillManager.addFill(filler.getFill());
@@ -239,8 +239,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 				}
 
 			}
-			if (verbose) SNT.log("[" + Thread.currentThread() +
-				"] left lock on filler");
+			SNT.debug("[" + Thread.currentThread() + "] left lock on filler");
 		}
 	}
 
@@ -1082,7 +1081,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		if (distance > 0) {
 
-			if (verbose) SNT.log("Setting new threshold of: " + distance);
+			SNT.debug("Setting new threshold of: " + distance);
 
 			resultsDialog.thresholdChanged(distance);
 

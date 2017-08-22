@@ -85,6 +85,13 @@ public class SNT {
 		if (strings != null) log(String.join(" ", strings));
 	}
 
+	protected static void debug(Object msg) {
+		if (SimpleNeuriteTracer.verbose) {
+			initialize();
+			logService.debug("[SNT] " + msg);
+		}
+	}
+
 	//FIXME: Move to gui.GuiUtils
 	protected static JButton smallButton(final String text) {
 		final double SCALE = .85;

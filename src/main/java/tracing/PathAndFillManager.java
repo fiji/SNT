@@ -89,7 +89,6 @@ class SWCExportException extends Exception {
 
 public class PathAndFillManager extends DefaultHandler implements UniverseListener {
 
-	static final boolean verbose = SimpleNeuriteTracer.verbose;
 
 	SimpleNeuriteTracer plugin;
 	ImagePlus imagePlus;
@@ -629,8 +628,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			final Fill f = allFills.get(i);
 			if (f == null) {
-				if (verbose)
-					SNT.log("fill was null with i " + i + " out of " + fills);
+				SNT.debug("fill was null with i " + i + " out of " + fills);
 				continue;
 			}
 
@@ -1032,13 +1030,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			 * ones:
 			 */
 
-			if (verbose)
-				SNT.log("Clearing old paths and fills...");
+			SNT.debug("Clearing old paths and fills...");
 
 			clearPathsAndFills();
 
-			if (verbose)
-				SNT.log("Now " + allPaths.size() + " paths and " + allFills.size() + " fills");
+			SNT.debug("Now " + allPaths.size() + " paths and " + allFills.size() + " fills");
 
 		} else if (qName.equals("imagesize")) {
 
@@ -1897,8 +1893,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			is = new FileInputStream(filename);
 			is.read(buf, 0, 8);
 			is.close();
-			if (verbose)
-				SNT.log("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
+			SNT.debug("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
 			if (((buf[0] & 0xFF) == 0x1F) && ((buf[1] & 0xFF) == 0x8B))
 				return TRACES_FILE_TYPE_COMPRESSED_XML;
 			else if (((buf[0] == '<') && (buf[1] == '?') && (buf[2] == 'x') && (buf[3] == 'm') && (buf[4] == 'l')
@@ -1915,8 +1910,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	public boolean loadCompressedXML(final String filename) {
 		try {
-			if (verbose)
-				SNT.log("Loading gzipped file...");
+			SNT.debug("Loading gzipped file...");
 			return load(new GZIPInputStream(new BufferedInputStream(new FileInputStream(filename))), null);
 		} catch (final IOException ioe) {
 			SNT.error("Couldn't open file '" + filename + "' for reading\n(n.b. it was expected to be compressed XML)");
@@ -1926,8 +1920,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	public boolean loadUncompressedXML(final String filename) {
 		try {
-			if (verbose)
-				SNT.log("Loading uncompressed file...");
+			SNT.debug("Loading uncompressed file...");
 			return load(new BufferedInputStream(new FileInputStream(filename)), null);
 		} catch (final IOException ioe) {
 			SNT.error("Couldn't open file '" + filename + "' for reading\n(n.b. it was expected to be XML)");
@@ -2022,9 +2015,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 							final int y = Math.min(height - 1, Math.max(0, ip.y));
 							final int z = Math.min(depth - 1, Math.max(0, ip.z));
 							slices[z][y * width + x] = (byte) 255;
-							if (SimpleNeuriteTracer.verbose)
-								SNT.log(String.format("Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]",
-										z, y, width, x));
+							SNT.debug(String.format(
+								"Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]",
+								z, y, width, x));
 						}
 					}
 				}

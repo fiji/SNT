@@ -36,7 +36,6 @@ import vib.oldregistration.RegistrationAlgorithm;
 
 public class CreateTracingVolume_ implements PlugIn {
 
-	static final boolean verbose = SimpleNeuriteTracer.verbose;
 
 	static final int NONE = 0;
 	static final int EB = 9;
@@ -96,8 +95,7 @@ public class CreateTracingVolume_ implements PlugIn {
 			final ImagePlus[] tmp = BatchOpener.open(standardBrainLabelsFileName);
 			labels = tmp[0];
 		}
-		if (verbose)
-			SNT.log("   labels were: " + labels);
+		SNT.debug("   labels were: " + labels);
 
 		// need to get the AmiraParameters object for that image...
 
@@ -123,8 +121,7 @@ public class CreateTracingVolume_ implements PlugIn {
 		final int templateWidth = labelStack.getWidth();
 		final int templateDepth = labelStack.getSize();
 
-		if (verbose)
-			SNT.log("About to create stack of size: " + newWidth + "," + newHeight + "," + newDepth);
+		SNT.debug("About to create stack of size: " + newWidth + "," + newHeight + "," + newDepth);
 
 		final ImageStack newStack = new ImageStack(newWidth, newHeight);
 
@@ -140,8 +137,7 @@ public class CreateTracingVolume_ implements PlugIn {
 
 		for (z = 0; z < newDepth; ++z) {
 
-			if (verbose)
-				SNT.log("Creating slice: " + z);
+			SNT.debug("Creating slice: " + z);
 
 			redPixels[z] = new byte[newWidth * newHeight];
 			greenPixels[z] = new byte[newWidth * newHeight];
@@ -201,8 +197,7 @@ public class CreateTracingVolume_ implements PlugIn {
 						final int zdiff = Math.abs(z_in_template - last_z_in_template);
 
 						if (xdiff > 5 || ydiff > 5 || zdiff > 5) {
-							if (verbose)
-								SNT.log("too long in path: " + i + ", at point " + k);
+							SNT.debug("too long in path: " + i + ", at point " + k);
 						}
 
 						final int xdiff_s = x_in_template - last_x_in_template;

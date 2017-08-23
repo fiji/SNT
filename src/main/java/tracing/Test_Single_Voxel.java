@@ -41,6 +41,8 @@ import ij3d.Image3DUniverse;
    crossing point of the lines should always appear to be at the
    centre of the voxel, since A Pixel Is Not A Little Square. */
 
+/** @deprecated Will be removed in v3.3 */
+@Deprecated
 public class Test_Single_Voxel implements PlugIn {
 	@Override
 	public void run(final String ignore) {

@@ -92,6 +92,12 @@ public class SNT {
 		}
 	}
 
+	public static String stripExtension(final String filename) {
+		final int lastDot = filename.lastIndexOf(".");
+		if (lastDot > 0) return filename.substring(0, lastDot);
+		return null;
+	}
+
 	//FIXME: Move to gui.GuiUtils
 	protected static JButton smallButton(final String text) {
 		final double SCALE = .85;

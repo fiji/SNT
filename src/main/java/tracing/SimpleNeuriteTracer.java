@@ -164,12 +164,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		return xy_tracer_canvas;
 	}
 
-	public String stripExtension(final String filename) {
-		final int lastDot = filename.lastIndexOf(".");
-		if (lastDot > 0) return filename.substring(0, lastDot);
-		return null;
-	}
-
 	public ImagePlus getImagePlus() {
 		return xy;
 	}

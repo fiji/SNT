@@ -313,7 +313,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 			// Look for a possible .oof.nrrd file:
 			if (!singleSlice && look4oofFile && file_info != null) {
-				final String beforeExtension = stripExtension(file_info.fileName);
+				final String beforeExtension = SNT.stripExtension(file_info.fileName);
 				if (beforeExtension != null) {
 					final File possibleOOFFile = new File(file_info.directory, beforeExtension + ".oof.nrrd");
 					if (possibleOOFFile.exists()) {

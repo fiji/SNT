@@ -40,10 +40,13 @@
 
 package tracing;
 
+import io.scif.services.DatasetIOService;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.KeyListener;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -55,6 +58,9 @@ import java.util.Set;
 import org.scijava.Context;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
+import org.scijava.convert.ConvertService;
+import org.scijava.io.DataHandleService;
+import org.scijava.io.IOService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.DialogPrompt.Result;
@@ -81,6 +87,7 @@ import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import stacks.ThreePanes;
@@ -102,9 +109,17 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 {
 
 	@Parameter
-	private Context context;
+	protected Context context;
 	@Parameter
-	private StatusService statusService;
+	protected StatusService statusService;
+	@Parameter
+	protected IOService ioService;
+	@Parameter
+	protected DatasetIOService datasetIOService;
+	@Parameter
+	protected DataHandleService dataHandleService;
+	@Parameter
+	protected ConvertService convertService;
 
 	protected static boolean verbose = false;
 
@@ -1345,13 +1360,49 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		}
 	}
 
-	// Even better, we might have a "tubeness" file already there.
-	// If this is non-null then we found the "tubeness" file
-	// (called foo.tubes.tif) on startup and loaded it
-	// successfully.
+	/* == Tracing methods == */
+	private File tubenessFile;
+	private float[][] tubeness;
 
-	float[][] tubeness;
+	/**
+	 * Specifies the "tubeness" image to be used during a tracing session.
+	 *
+	 * @file The file containing the "tubeness" image (typically named
+	 *       {@code <image-basename>.tubes.tif}
+	 **/
+	public void setTubenessFile(File file) {
+		tubenessFile = file;
+	}
 
+	/**
+	 * loads the (32-bit) "tubeness" image specified by
+	 * {@link #setTubenessFile(File)}
+	 */
+	public void loadTubeness() throws IOException, IllegalArgumentException {
+		if (xy == null || !SNT.fileAvailable(tubenessFile))
+			throw new IllegalArgumentException(
+				"data can only be loaded after tracing image and data file are known");
+		final Dataset ds = datasetIOService.open(tubenessFile.getAbsolutePath());
+		final int bitsPerPix = ds.getType().getBitsPerPixel();
+		if (bitsPerPix != 32) throw new IllegalArgumentException(tubenessFile
+			.getName() + " must be a 32-bit image.");
+		if (ds.getWidth() != xy.getWidth() || ds.getHeight() != xy.getHeight() || ds
+			.getDepth() != xy.getNSlices())
+		{
+			throw new IllegalArgumentException(tubenessFile.getAbsolutePath() +
+				": Dimensions mismatch");
+		}
+
+		// TODO: extract values without IJ1: Rewrite method for ImgLib
+		final ImagePlus tubesImp = convertService.convert(ds, ImagePlus.class);
+		final int depth = tubesImp.getStackSize();
+		final ImageStack stack = tubesImp.getStack();
+		tubeness = new float[depth][];
+		for (int z = 0; z < depth; ++z) {
+			final FloatProcessor fp = (FloatProcessor) stack.getProcessor(z + 1);
+			tubeness[z] = (float[]) fp.getPixels();
+		}
+	}
 	public boolean oofFileAvailable() {
 		return oofFile != null;
 	}

@@ -24,6 +24,7 @@ package tracing;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
+import java.io.File;
 
 import javax.swing.JButton;
 
@@ -126,6 +127,15 @@ public class SNT {
 		if (color == null)
 			color = Colors.decode(colorName, color);
 		return color;
+	}
+
+	public static boolean fileAvailable(File file) {
+		try {
+			return file != null && file.exists();
+		}
+		catch (final SecurityException ignored) {
+			return false;
+		}
 	}
 
 }

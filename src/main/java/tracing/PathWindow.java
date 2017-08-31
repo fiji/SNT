@@ -76,16 +76,38 @@ import ij.io.SaveDialog;
 @SuppressWarnings("serial")
 public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener, ActionListener {
 
-	public static class HelpfulJTree extends JTree {
+	/** This class defines the JTree hosting traced paths */
+	private static class HelpfulJTree extends JTree {
 
 		public HelpfulJTree(final TreeNode root) {
 			super(root);
-			final DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
+			final DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer() {
+
+				@Override
+				public Component getTreeCellRendererComponent(final JTree tree,
+					final Object value, final boolean selected, final boolean expanded,
+					final boolean isLeaf, final int row, final boolean focused)
+				{
+					final Component c = super.getTreeCellRendererComponent(tree, value,
+						selected, expanded, isLeaf, row, focused);
+					final TreePath tp = tree.getPathForRow(row);
+					if (tp == null) return c;
+					final DefaultMutableTreeNode node = (DefaultMutableTreeNode) (tp
+						.getLastPathComponent());
+					if (node == null || node == root) return c;
+					final Path p = (Path) node.getUserObject();
+					final Color color = p.color;
+					if (color == null) return c;
+					if (isLeaf) setIcon(new NodeIcon(NodeIcon.EMPTY, color));
+					else if (!expanded) setIcon(new NodeIcon(NodeIcon.PLUS, color));
+					else setIcon(new NodeIcon(NodeIcon.MINUS, color));
+					return c;
+				}
+			};
 			renderer.setClosedIcon(new NodeIcon(NodeIcon.PLUS));
 			renderer.setOpenIcon(new NodeIcon(NodeIcon.MINUS));
 			renderer.setLeafIcon(new NodeIcon(NodeIcon.EMPTY));
 			setCellRenderer(renderer);
-			assert SwingUtilities.isEventDispatchThread();
 		}
 
 		public boolean isExpanded(final Object[] path) {

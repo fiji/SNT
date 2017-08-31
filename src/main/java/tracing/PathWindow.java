@@ -108,28 +108,38 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	}
 
-	// See http://stackoverflow.com/a/7984734
-	public static class NodeIcon implements Icon {
+	/**
+	 * This class generates the JTree node icons. Heavily inspired by
+	 * http://stackoverflow.com/a/7984734
+	 */
+	private static class NodeIcon implements Icon {
 
 		private static final int SIZE = 9;
-		protected static final char PLUS = '+';
-		protected static final char MINUS = '-';
-		protected static final char EMPTY = ' ';
-
+		private static final char PLUS = '+';
+		private static final char MINUS = '-';
+		private static final char EMPTY = ' ';
 		private final char type;
+		private final Color color;
 
-		public NodeIcon(final char type) {
+		private NodeIcon(final char type) {
 			this.type = type;
+			this.color = UIManager.getColor("Tree.background");
+		}
+
+		private NodeIcon(final char type, final Color color) {
+			this.type = type;
+			this.color = color;
 		}
 
 		@Override
-		public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-			g.setColor(UIManager.getColor("Tree.background"));
+		public void paintIcon(final Component c, final Graphics g, final int x,
+			final int y)
+		{
+			g.setColor(color);
 			g.fillRect(x, y, SIZE - 1, SIZE - 1);
-			g.setColor(UIManager.getColor("Tree.hash").darker());
+			g.setColor(color.darker());
 			g.drawRect(x, y, SIZE - 1, SIZE - 1);
-			if (type == EMPTY)
-				return;
+			if (type == EMPTY) return;
 			g.setColor(UIManager.getColor("Tree.foreground"));
 			g.drawLine(x + 2, y + SIZE / 2, x + SIZE - 3, y + SIZE / 2);
 			if (type == PLUS) {

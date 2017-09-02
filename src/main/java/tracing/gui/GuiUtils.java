@@ -22,52 +22,127 @@
 
 package tracing.gui;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.io.File;
 
-import org.scijava.Context;
-import org.scijava.plugin.Parameter;
-import org.scijava.ui.DialogPrompt.MessageType;
-import org.scijava.ui.DialogPrompt.OptionType;
-import org.scijava.ui.DialogPrompt.Result;
-import org.scijava.ui.UIService;
-import org.scijava.widget.FileWidget;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
+import org.scijava.ui.swing.SwingDialog;
+import org.scijava.ui.swing.widget.SwingColorWidget;
+import org.scijava.util.PlatformUtils;
 
 import tracing.SNT;
 
 public class GuiUtils {
 
-	@Parameter
-	private UIService uiService;
+	private final Component parent;
 
-	private final String VERSION;
-
-	public GuiUtils(final Context context) {
-		context.inject(this);
-		VERSION = "SNT v" + SNT.VERSION;
+	public GuiUtils(final Component parent) {
+		this.parent = parent;
 	}
 
-	public void error(final String message, final String title) {
-		uiService.showDialog(message, (title == null) ? VERSION + " Error" : title,
-			MessageType.ERROR_MESSAGE);
+	public GuiUtils() {
+		this(null);
 	}
 
-	public void infoMsg(final String message, final String title) {
-		uiService.showDialog(message, (title == null) ? VERSION : title,
-			MessageType.INFORMATION_MESSAGE);
+	public void error(final String msg) {
+		error(msg, SNT.VERSION, false);
 	}
 
-	public Result yesNoPrompt(final String message, final String title) {
-		return uiService.showDialog(message, (title == null) ? VERSION : title,
-			MessageType.QUESTION_MESSAGE, OptionType.YES_NO_OPTION);
+	public void error(final String msg, final String title) {
+		error(msg, title, false);
 	}
 
-	public Result yesNoCancelPrompt(final String message, final String title) {
-		return uiService.showDialog(message, (title == null) ? VERSION : title,
-			MessageType.QUESTION_MESSAGE, OptionType.YES_NO_CANCEL_OPTION);
+	public void msg(final String msg, final String title) {
+		error(msg, title, false); //TODO: this could be something fancier
 	}
 
-	public File openFile(final String title, final File initialChoice) {
-		return uiService.chooseFile(title, null, FileWidget.OPEN_STYLE);
+	public void error(final String msg, final String title, final boolean icon) {
+		simpleMsg(msg, title, icon ? JOptionPane.ERROR_MESSAGE : JOptionPane.PLAIN_MESSAGE);
+	}
+
+	public int yesNoDialog(final String msg, final String title) {
+		final SwingDialog d = new SwingDialog(getLabel(msg),
+			JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, false);
+		d.setTitle(title);
+		if (parent != null) d.setParent(parent);
+		return d.show();
+	}
+
+	public boolean getConfirmation(final String msg, final String title) {
+		return (yesNoDialog(msg, title) == JOptionPane.YES_OPTION);
+	}
+
+	public String getString(final String promptMsg, final String promptTitle,
+		final String defaultValue)
+	{
+		return (String) getObj(promptMsg, promptTitle, defaultValue);
+	}
+
+	public Color getColor(final String title, final Color defaultValue) {
+		return SwingColorWidget.showColorDialog(parent, title, defaultValue);
+	}
+
+	public Number getNumber(final String promptMsg, final String promptTitle,
+		final Number defaultValue)
+	{
+		return (Number) getObj(promptMsg, promptTitle, defaultValue);
+	}
+
+	public File saveFile(final String title, final File file) {
+		final JFileChooser chooser = fileChooser(title, file, JFileChooser.FILES_ONLY);
+		if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION)
+			return chooser.getSelectedFile();
+		return null;
+	}
+
+	public File openFile(final String title, final File file) {
+		final JFileChooser chooser = fileChooser(title, file, JFileChooser.FILES_ONLY);
+		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
+			return chooser.getSelectedFile();
+		return null;
+	}
+
+	public File chooseDirectory(final String title, final File file) {
+		final JFileChooser chooser = fileChooser(title, file, JFileChooser.DIRECTORIES_ONLY);
+		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
+			return chooser.getSelectedFile();
+		return null;
+	}
+
+	private JFileChooser fileChooser(final String title, final File file, final int type) {
+		final JFileChooser chooser = new JFileChooser(file);
+		chooser.setDialogTitle(title);
+		chooser.setFileSelectionMode(type);
+		chooser.setDragEnabled(true);
+		return chooser;
+	}
+
+	private Object getObj(final String promptMsg, final String promptTitle,
+		final Object defaultValue)
+	{
+		return JOptionPane.showInputDialog(parent, promptMsg, promptTitle,
+			JOptionPane.PLAIN_MESSAGE, null, null, defaultValue);
+	}
+
+	public String ctrlKey() {
+		return (PlatformUtils.isMac()) ? "CMD" : "CTRL";
+	}
+
+	private int simpleMsg(final String msg, final String title, final int type) {
+		final SwingDialog d = new SwingDialog(getLabel(msg), type, false);
+		d.setTitle(title);
+		if (parent != null) d.setParent(parent);
+		return d.show();
+	}
+
+	private JLabel getLabel(final String text) {
+		if (text==null || text.startsWith("<") || text.length() < 60)
+			new JLabel(text);
+		return new JLabel("<html><body><div style='width:400;'>" + text);
 	}
 
 }

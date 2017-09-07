@@ -76,9 +76,14 @@ import ij.IJ;
 import ij.gui.ColorChooser;
 import ij.gui.GenericDialog;
 import ij.io.SaveDialog;
+import tracing.gui.ColorMenu;
+import tracing.gui.GuiUtils;
+import tracing.gui.SWCColor;
 
 @SuppressWarnings("serial")
-public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener, ActionListener {
+public class PathWindow extends JFrame implements PathAndFillListener,
+	TreeSelectionListener
+{
 
 	/** This class defines the JTree hosting traced paths */
 	private static class HelpfulJTree extends JTree {
@@ -191,6 +196,187 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	}
 
 	public Set<Path> getSelectedPaths() {
+	/**
+	 * This class implements implements ActionListeners for most of PathWindow's
+	 * MenuItems.
+	 */
+	private class AListener implements ActionListener {
+
+		private final static String DELETE_CMD = "Delete";
+		private final static String RENAME_CMD = "Rename";
+		private final static String MAKE_PRIMARY_CMD = "Make Primary";
+		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-type Colors";
+		private final static String REMOVE_COLOR_CMD = "Remove Color Tags";
+
+		@Override
+		public void actionPerformed(final ActionEvent e) {
+			assert SwingUtilities.isEventDispatchThread();
+			final Object source = e.getSource();
+
+			final Set<Path> selectedPaths = getSelectedPaths();
+			if (selectedPaths.isEmpty()) {
+				noPathsMsg();
+				return;
+			}
+			final int n = selectedPaths.size();
+
+			if (e.getActionCommand().equals(DELETE_CMD)) {
+
+				final String msg = (n == 1) ? "Delete \"" + selectedPaths.iterator()
+					.next() + "\"?" : "Delete the selected " + n + " paths?";
+				if (guiUtils.getConfirmation(msg, "Confirm Deletion?")) deletePaths(
+					selectedPaths);
+				return;
+
+			}
+			else if (e.getActionCommand().equals(RENAME_CMD)) {
+
+				if (selectedPaths.size() != 1) {
+					displayTmpMsg("You must have exactly one path selected.");
+					return;
+				}
+				final Path[] singlePath = selectedPaths.toArray(new Path[] {});
+				final Path p = singlePath[0];
+				final String s = guiUtils.getString("Rename this path to:",
+					"Rename Path", p.getName());
+				if (s == null) return;
+				if (s.length() == 0) {
+					displayTmpMsg("The new name cannot be empty.");
+					return;
+				}
+				synchronized (pathAndFillManager) {
+					if (pathAndFillManager.getPathFromName(s, false) != null) {
+						displayTmpMsg("There is already a path named:\n('" + s + "')");
+						return;
+					}
+					// Otherwise this is OK, change the name:
+					p.setName(s);
+					pathAndFillManager.resetListeners(null);
+				}
+				return;
+
+			}
+			else if (e.getActionCommand().equals(MAKE_PRIMARY_CMD)) {
+
+				if (selectedPaths.size() != 1) {
+					noSinglePathMsg();
+					return;
+				}
+				final Path[] singlePath = selectedPaths.toArray(new Path[] {});
+				final Path p = singlePath[0];
+				final HashSet<Path> pathsExplored = new HashSet<>();
+				p.setPrimary(true);
+				pathsExplored.add(p);
+				p.unsetPrimaryForConnected(pathsExplored);
+				pathAndFillManager.resetListeners(null);
+				return;
+
+			}
+			else if (e.getActionCommand().equals(APPLY_SWC_COLORS_CMD)) {
+
+				if (n == 1 || (n > 1 && guiUtils.getConfirmation(
+					"Apply SWC-type colors to selected paths?", "Confirm?")))
+					resetPathsColor(getSelectedPaths(), true);
+
+			}
+			else if (e.getActionCommand().equals(REMOVE_COLOR_CMD)) {
+
+				resetPathsColor(getSelectedPaths(), false);
+
+			}
+			else if (source.equals(colorMenu)) {
+
+				final SWCColor swcColor = colorMenu.getSelectedSWCColor();
+				if (swcColor.isTypeDefined()) setSWCType(selectedPaths, swcColor
+					.type());
+				setPathsColor(selectedPaths, swcColor.color());
+				return;
+
+			}
+			else if (source == fitVolumeMenuItem) {
+
+				final boolean showDetailedFittingResults = (e.getModifiers() &
+					ActionEvent.SHIFT_MASK) > 0;
+
+				final ArrayList<PathFitter> pathsToFit = new ArrayList<>();
+				final boolean allAlreadyFitted = allUsingFittedVersion(selectedPaths);
+				for (final Path p : selectedPaths) {
+					if (allAlreadyFitted) {
+						p.setUseFitted(false, plugin);
+					}
+					else {
+						if (p.getUseFitted()) {
+							continue;
+						}
+						if (p.fitted == null) {
+							// There's not already a fitted version:
+							final PathFitter pathFitter = new PathFitter(plugin, p,
+								showDetailedFittingResults);
+							pathsToFit.add(pathFitter);
+						}
+						else {
+							// Just use the existing fitted version:
+							p.setUseFitted(true, plugin);
+						}
+					}
+				}
+				pathAndFillManager.resetListeners(null);
+
+				if (pathsToFit.size() > 0) fitPaths(pathsToFit);
+				return;
+
+			}
+			else if (source.equals(fillOutMenuItem)) {
+
+				plugin.startFillingPaths(selectedPaths);
+				return;
+
+			}
+			else if (source == exportAsRoiMenuItem) {
+
+				guiUtils.error("To be implemented"); // TODO: implement
+				return;
+
+			}
+			else if (source == exportAsSWCMenuItem) {
+
+				exportSelectedPaths(selectedPaths);
+				return;
+
+			}
+			else if (source == downsampleMenuItem) {
+
+				final Number devPrompt = guiUtils.getNumber(
+					"Maximum permitted distance from previous points:\n" +
+						"(WARNING: this destructive operation cannot be undone)",
+					"Downsampling (" + n + " path(s)) ", plugin.x_spacing);
+				if (devPrompt == null) return; // user pressed cancel
+
+				final double maxDeviation = (double) devPrompt;
+				if (Double.isNaN(maxDeviation) || maxDeviation <= 0) {
+					guiUtils.error(
+						"The maximum permitted distance must be a postive number");
+					return;
+				}
+				for (final Path p : selectedPaths) { // TODO: Move to
+																							// pathAndFillManager
+					Path pathToUse = p;
+					if (p.getUseFitted()) {
+						pathToUse = p.fitted;
+					}
+					pathToUse.downsample(maxDeviation);
+				}
+				// Make sure that the 3D viewer and the stacks are redrawn:
+				refreshPluginViewers();
+
+			}
+			else {
+				SNT.debug("Unexpectedly got an event from an unknown source: " +
+					source);
+				return;
+			}
+		}
+	}
 
 		return SwingSafeResult.getResult(new Callable<Set<Path>>() {
 			@Override

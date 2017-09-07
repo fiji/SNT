@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -66,11 +66,14 @@ public class GuiUtils {
 	}
 
 	public void msg(final String msg, final String title) {
-		error(msg, title, false); //TODO: this could be something fancier
+		error(msg, title, false); // TODO: this could be something fancier
 	}
 
 	public void error(final String msg, final String title, final boolean icon) {
-		simpleMsg(msg, title, icon ? JOptionPane.ERROR_MESSAGE : JOptionPane.PLAIN_MESSAGE);
+		simpleMsg(msg, title, icon ? JOptionPane.ERROR_MESSAGE
+			: JOptionPane.PLAIN_MESSAGE);
+	}
+
 	public void tempMsg(final String msg, final boolean snapToParent) {
 		tempMsg(msg, -1, -1, snapToParent);
 	}
@@ -152,27 +155,32 @@ public class GuiUtils {
 	}
 
 	public File saveFile(final String title, final File file) {
-		final JFileChooser chooser = fileChooser(title, file, JFileChooser.FILES_ONLY);
+		final JFileChooser chooser = fileChooser(title, file,
+			JFileChooser.FILES_ONLY);
 		if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION)
 			return chooser.getSelectedFile();
 		return null;
 	}
 
 	public File openFile(final String title, final File file) {
-		final JFileChooser chooser = fileChooser(title, file, JFileChooser.FILES_ONLY);
+		final JFileChooser chooser = fileChooser(title, file,
+			JFileChooser.FILES_ONLY);
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
 			return chooser.getSelectedFile();
 		return null;
 	}
 
 	public File chooseDirectory(final String title, final File file) {
-		final JFileChooser chooser = fileChooser(title, file, JFileChooser.DIRECTORIES_ONLY);
+		final JFileChooser chooser = fileChooser(title, file,
+			JFileChooser.DIRECTORIES_ONLY);
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
 			return chooser.getSelectedFile();
 		return null;
 	}
 
-	private JFileChooser fileChooser(final String title, final File file, final int type) {
+	private JFileChooser fileChooser(final String title, final File file,
+		final int type)
+	{
 		final JFileChooser chooser = new JFileChooser(file);
 		chooser.setDialogTitle(title);
 		chooser.setFileSelectionMode(type);
@@ -199,8 +207,8 @@ public class GuiUtils {
 	}
 
 	private JLabel getLabel(final String text) {
-		if (text==null || text.startsWith("<") || text.length() < 60)
-			new JLabel(text);
+		if (text == null || text.startsWith("<") || text.length() < 60) new JLabel(
+			text);
 		return new JLabel("<html><body><div style='width:400;'>" + text);
 	}
 

@@ -133,6 +133,10 @@ public class ColorMenu extends JMenu {
 		return panel;
 	}
 
+	public void selectColor(final Color c) {
+		selectSWCColor(new SWCColor(c, SWCColor.SWC_TYPE_IGNORED));
+	}
+
 	public void selectSWCColor(final SWCColor c) {
 		final Object obj = _colorPanes.get(c);
 		if (obj == null) {
@@ -148,6 +152,18 @@ public class ColorMenu extends JMenu {
 		if (_selectedColorPane == null) return null;
 		return _selectedColorPane.swcColor;
 	}
+
+	public void selectNone() {
+		for (final Map.Entry<SWCColor, ColorPane> entry : _colorPanes.entrySet()) {
+			entry.getValue().setSelected(false);
+		}
+	}
+
+	public Color getCurrentColorForSWCType(final int swcType) {
+		for (final Map.Entry<SWCColor, ColorPane> entry : _colorPanes.entrySet()) {
+			if (entry.getKey().type() == swcType) return entry.getKey().color();
+		}
+		return null;
 	}
 
 	private void doSelection() {

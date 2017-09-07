@@ -22,6 +22,7 @@
 
 package tracing;
 
+@Deprecated
 public class AutoPoint {
 	public short x;
 	public short y;

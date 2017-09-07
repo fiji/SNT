@@ -30,12 +30,17 @@ import java.awt.Color;
  */
 public class SWCColor {
 
-	private final Color color;
-	private final int swcType;
+	public static final int SWC_TYPE_IGNORED = -1;
+	private Color color;
+	private int swcType;
 
 	public SWCColor(final Color color, final int swcType) {
 		this.color = color;
 		this.swcType = swcType;
+	}
+
+	public SWCColor(final Color color) {
+		this(color, SWC_TYPE_IGNORED);
 	}
 
 	public Color color() {
@@ -44,6 +49,18 @@ public class SWCColor {
 
 	public int type() {
 		return swcType;
+	}
+
+	public boolean isTypeDefined() {
+		return swcType != SWC_TYPE_IGNORED;
+	}
+
+	public void setAWTColor(final Color color) {
+		this.color = color;
+	}
+
+	public void setSWCType(final int swcType) {
+		this.swcType = swcType;
 	}
 
 	@Override

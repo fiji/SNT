@@ -81,7 +81,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import ij.io.SaveDialog;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SWCColor;
@@ -398,14 +397,13 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			return;
 		}
 
-		final SaveDialog sd = new SaveDialog("Export SWC file ...", plugin
-			.getImagePlus().getShortTitle(), ".swc");
+		File saveFile = new File(plugin.getImagePlus().getShortTitle(), ".swc");
+		saveFile = guiUtils.saveFile("Export SWC file ...", saveFile);
 
-		if (sd.getFileName() == null) {
-			return;
+		if (saveFile == null) {
+			return; // user pressed cancel
 		}
 
-		final File saveFile = new File(sd.getDirectory(), sd.getFileName());
 		if (saveFile.exists() && !guiUtils.getConfirmation("The file " + saveFile
 			.getAbsolutePath() + " already exists. Replace it?", "Override?")) return;
 

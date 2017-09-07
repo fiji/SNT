@@ -378,6 +378,40 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		}
 	}
 
+	public void setSWCType(final Set<Path> paths, final int swcType) {
+		for (final Path p : paths)
+			p.setSWCType(swcType);
+		pathAndFillManager.resetListeners(null);
+	}
+
+	public void setPathsColor(final Set<Path> paths, final Color color) {
+		for (final Path p : paths)
+			p.setColor(color);
+		refreshPluginViewers();
+	}
+
+	public void resetPathsColor(final Set<Path> paths,
+		final boolean restoreSWCTypeColors)
+	{
+		for (final Path p : paths) {
+			if (restoreSWCTypeColors) p.setColorBySWCtype();
+			else p.setColor(null);
+		}
+		refreshPluginViewers();
+	}
+
+	private void refreshPluginViewers() {
+		plugin.repaintAllPanes();
+		plugin.update3DViewerContents();
+	}
+
+	public void deletePaths(final Set<Path> pathsToBeDeleted) {
+		for (final Path p : pathsToBeDeleted) {
+			p.disconnectFromAll();
+			pathAndFillManager.deletePath(p);
+		}
+	}
+
 		return SwingSafeResult.getResult(new Callable<Set<Path>>() {
 			@Override
 			public Set<Path> call() {

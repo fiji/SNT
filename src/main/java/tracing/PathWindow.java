@@ -22,9 +22,13 @@
 
 package tracing;
 
+import com.jidesoft.swing.SearchableBar;
+import com.jidesoft.swing.TreeSearchable;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -49,7 +53,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import javax.swing.Icon;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -747,24 +750,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		return true;
 	}
 
-	protected void updateButtonsManySelected() {
-		assert SwingUtilities.isEventDispatchThread();
-		renameSetEnabled(false);
-		{
-			if (allSelectedUsingFittedVersion())
-				fitVolumeSetText("Un-fit Volumes");
-			else
-				fitVolumeSetText("Fit Volumes");
-		}
-		fitVolumeSetEnabled(true);
-		fillOutSetEnabled(plugin.getUIState() != NeuriteTracerResultsDialog.IMAGE_CLOSED);
-		makePrimarySetEnabled(false);
-		deleteSetEnabled(true);
-		exportAsSWCSetEnabled(true);
-		swcTypeMenu.setEnabled(true);
-		colorMenu.setEnabled(true);
-	}
-
 	@Override
 	public void valueChanged(final TreeSelectionEvent e) {
 		assert SwingUtilities.isEventDispatchThread();
@@ -797,13 +782,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	protected JMenu swcTypeMenu;
 	protected JMenu colorMenu;
 	protected JPanel buttonPanel;
-
-	protected JButton renameButton;
-	protected JButton fitVolumeButton;
-	protected JButton fillOutButton;
-	protected JButton makePrimaryButton;
-	protected JButton deleteButton;
-	protected JButton exportAsSWCButton;
 
 	protected JMenuItem renameMenuItem;
 	protected JMenuItem fitVolumeMenuItem;
@@ -840,11 +818,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		scrollPane = new JScrollPane();
 		scrollPane.getViewport().add(tree);
 		add(scrollPane, BorderLayout.CENTER);
-
-		buttonPanel = new JPanel();
-		buttonPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-
-		add(buttonPanel, BorderLayout.PAGE_END);
 
 		// Create all the menu items:
 
@@ -886,28 +859,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		popup.add(swcTypeMenu);
 		colorMenu = colorPopupMenu();
 		popup.add(colorMenu);
-
-		// Create all the menu items:
-		renameButton = SNT.smallButton("Rename");
-		fitVolumeButton = SNT.smallButton("Fit Volume");
-		fillOutButton = SNT.smallButton("Fill Out");
-		makePrimaryButton = SNT.smallButton("Make Primary");
-		deleteButton = SNT.smallButton("Delete");
-		exportAsSWCButton = SNT.smallButton("Export as SWC");
-
-		buttonPanel.add(renameButton);
-		buttonPanel.add(fitVolumeButton);
-		buttonPanel.add(fillOutButton);
-		buttonPanel.add(makePrimaryButton);
-		buttonPanel.add(deleteButton);
-		buttonPanel.add(exportAsSWCButton);
-
-		renameButton.addActionListener(this);
-		fitVolumeButton.addActionListener(this);
-		fillOutButton.addActionListener(this);
-		makePrimaryButton.addActionListener(this);
-		deleteButton.addActionListener(this);
-		exportAsSWCButton.addActionListener(this);
 
 		final MouseListener ml = new MouseAdapter() {
 			@Override
@@ -972,10 +923,40 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				applyColortoSelectPaths(null);
+	private JPanel bottomPanel() {
+		final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		panel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		final TreeSearchable searchable = new TreeSearchable(tree);
+		searchable.setCaseSensitive(false);
+		searchable.setFromStart(false);
+		searchable.setWildcardEnabled(true);
+		final SearchableBar sBar = new SearchableBar(searchable, true);
+		sBar.setShowMatchCount(true);
+		sBar.setHighlightAll(true);
+		sBar.setVisibleButtons(SearchableBar.SHOW_STATUS |
+			SearchableBar.SHOW_HIGHLIGHTS);
+
+		// Make everything more compact and user friendly
+		boolean listenerAdded = false;
+		for (final Component c : sBar.getComponents()) {
+			((JComponent) c).setBorder(new EmptyBorder(0, 0, 0, 0));
+			if (!listenerAdded && c instanceof JLabel && ((JLabel) c).getText()
+				.contains("Find"))
+			{
+				((JLabel) c).setToolTipText("Double-click for Options");
+				c.addMouseListener(new MouseAdapter() {
+
+					@Override
+					public void mouseClicked(final MouseEvent e) {
+						if (e.getClickCount() > 1) searchHelpMsg();
+					}
+				});
+				listenerAdded = true;
 			}
-		});
-		menu.add(jmi);
-		return menu;
+		}
+		sBar.setBorder(new EmptyBorder(0, 0, 0, 0));
+		panel.add(sBar);
+		return panel;
 	}
 
 	private void applyColortoSelectPaths(final Color color) {
@@ -992,18 +973,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		popup.show(me.getComponent(), me.getX(), me.getY());
 	}
 
-	protected void setButtonsEnabled(final boolean enable) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				renameSetEnabled(enable);
-				fitVolumeSetEnabled(enable);
-				fillOutSetEnabled(plugin.getUIState() != NeuriteTracerResultsDialog.IMAGE_CLOSED);
-				makePrimarySetEnabled(enable);
-				deleteSetEnabled(enable);
-				exportAsSWCSetEnabled(enable);
-			}
-		});
 	}
 
 	protected void getExpandedPaths(final HelpfulJTree tree, final TreeModel model, final MutableTreeNode node,

@@ -846,26 +846,30 @@ public class Path implements Comparable<Path> {
 		return hasCustomColor && color != null;
 	}
 
-	public Color getSWCcolor() {
+	public static Color getSWCcolor(final int swcType) {
 		switch (swcType) {
-		case Path.SWC_SOMA:
-			return Color.BLUE;
-		case Path.SWC_DENDRITE:
-			return Color.GREEN;
-		case Path.SWC_APICAL_DENDRITE:
-			return Color.CYAN;
-		case Path.SWC_AXON:
-			return Color.RED;
-		case Path.SWC_FORK_POINT:
-			return Color.ORANGE;
-		case Path.SWC_END_POINT:
-			return Color.PINK;
-		case Path.SWC_CUSTOM:
-			return Color.YELLOW;
-		case Path.SWC_UNDEFINED:
-		default:
-			return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
-		}
+			case Path.SWC_SOMA:
+				return Color.BLUE;
+			case Path.SWC_DENDRITE:
+				return Color.GREEN;
+			case Path.SWC_APICAL_DENDRITE:
+				return Color.CYAN;
+			case Path.SWC_AXON:
+				return Color.RED;
+			case Path.SWC_FORK_POINT:
+				return Color.ORANGE;
+			case Path.SWC_END_POINT:
+				return Color.PINK;
+			case Path.SWC_CUSTOM:
+				return Color.YELLOW;
+			case Path.SWC_UNDEFINED:
+			default:
+				return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
+			}
+	}
+
+	public Color getSWCcolor() {
+		return getSWCcolor(swcType);
 	}
 
 	public void drawPathAsPoints(final Overlay overlay) {

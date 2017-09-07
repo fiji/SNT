@@ -2047,7 +2047,7 @@ public class Path implements Comparable<Path> {
 			name += ", ends on " + endJoins.getName();
 		}
 		if (swcType != SWC_UNDEFINED)
-			name += " (SWC: " + swcTypeNames[swcType] + ")";
+			name += " [" + swcTypeNames[swcType] + "]";
 		return name;
 	}
 

@@ -126,8 +126,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;
 
-		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
-
 		setBounds(x, y, 300, 400);
 		root = new DefaultMutableTreeNode("All Paths");
 		tree = new HelpfulJTree(root);

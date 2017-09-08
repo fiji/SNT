@@ -35,6 +35,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -215,20 +217,15 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		final JMenuItem toggleDnDMenuItem = new JCheckBoxMenuItem(
 			"Allow Hierarchy Edits");
 		toggleDnDMenuItem.setSelected(tree.getDragEnabled());
-		toggleDnDMenuItem.addActionListener(new ActionListener() {
+		toggleDnDMenuItem.addItemListener(new ItemListener() {
 
-			// TODO: This is very incomplete: PathAndFillManager is not aware of any
+			// TODO: This is not functional: PathAndFillManager is not aware of any
 			// of these
 			@Override
-			public void actionPerformed(final ActionEvent e) {
-				if (tree.getDragEnabled()) {
-					tree.setDragEnabled(false);
-					displayTmpMsg("Default behavior restored: Hierarchy is now locked.");
-				}
-				else {
-					tree.setDragEnabled(confirmDnD());
-				}
-				toggleDnDMenuItem.setSelected(tree.getDragEnabled());
+			public void itemStateChanged(final ItemEvent e) {
+				tree.setDragEnabled(toggleDnDMenuItem.isSelected() && confirmDnD());
+				if (!tree.getDragEnabled()) displayTmpMsg(
+					"Default behavior restored: Hierarchy is now locked.");
 			}
 
 		});
@@ -251,6 +248,18 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		pjmi.addActionListener(listener);
 		pjmi = popup.add(AListener.EXPAND_ALL_CMD);
 		pjmi.addActionListener(listener);
+		final JMenuItem jcbmi = new JCheckBoxMenuItem("Expand Selected Nodes");
+		jcbmi.setSelected(tree.getExpandsSelectedPaths());
+		jcbmi.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(final ItemEvent e) {
+				tree.setExpandsSelectedPaths(jcbmi.isSelected());
+				tree.setScrollsOnExpand(jcbmi.isSelected());
+			}
+		});
+		popup.addSeparator();
+		popup.add(jcbmi);
 
 		tree.addMouseListener(new MouseAdapter() {
 

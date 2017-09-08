@@ -179,7 +179,8 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		}
 		menuBar.add(swcTypeMenu);
 
-		colorMenu = new ColorMenu("Colors");
+		colorMenu = new ColorMenu(AListener.COLORS_MENU);
+		colorMenu.addActionListener(listener);
 		jmi = new JMenuItem(AListener.APPLY_SWC_COLORS_CMD);
 		jmi.addActionListener(listener);
 		colorMenu.add(jmi);
@@ -1116,12 +1117,13 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	 */
 	private class AListener implements ActionListener {
 
+		public static final String COLORS_MENU = "Colors";
 		private final static String EXPAND_ALL_CMD = "Expand All";
 		private final static String COLLAPSE_ALL_CMD = "Collapse All";
 		private final static String DELETE_CMD = "Delete";
 		private final static String RENAME_CMD = "Rename";
 		private final static String MAKE_PRIMARY_CMD = "Make Primary";
-		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-type Colors";
+		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-Type Colors";
 		private final static String REMOVE_COLOR_CMD = "Remove Color Tags";
 
 		@Override
@@ -1157,7 +1159,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 			}
 			else if (e.getActionCommand().equals(RENAME_CMD)) {
-
 				if (selectedPaths.size() != 1) {
 					displayTmpMsg("You must have exactly one path selected.");
 					return;
@@ -1211,7 +1212,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				resetPathsColor(getSelectedPaths(), false);
 
 			}
-			else if (source.equals(colorMenu)) {
+			else if (e.getActionCommand().equals(COLORS_MENU)) {
 
 				final SWCColor swcColor = colorMenu.getSelectedSWCColor();
 				if (swcColor.isTypeDefined()) setSWCType(selectedPaths, swcColor
@@ -1220,7 +1221,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				return;
 
 			}
-			else if (source == fitVolumeMenuItem) {
+			else if (source.equals(fitVolumeMenuItem)) {
 
 				final boolean showDetailedFittingResults = (e.getModifiers() &
 					ActionEvent.SHIFT_MASK) > 0;

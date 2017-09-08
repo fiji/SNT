@@ -1271,15 +1271,15 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				return;
 
 			}
-			else if (source == downsampleMenuItem) {
+			else if (source.equals(downsampleMenuItem)) {
 
-				final Number devPrompt = guiUtils.getNumber(
+				final Double userMaxDeviation = guiUtils.getDouble(
 					"Maximum permitted distance from previous points:\n" +
 						"(WARNING: this destructive operation cannot be undone)",
 					"Downsampling (" + n + " path(s)) ", plugin.x_spacing);
-				if (devPrompt == null) return; // user pressed cancel
+				if (userMaxDeviation == null) return; // user pressed cancel
 
-				final double maxDeviation = (double) devPrompt;
+				final double maxDeviation = userMaxDeviation.doubleValue();
 				if (Double.isNaN(maxDeviation) || maxDeviation <= 0) {
 					guiUtils.error(
 						"The maximum permitted distance must be a postive number");

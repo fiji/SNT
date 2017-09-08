@@ -35,7 +35,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 
@@ -148,10 +147,19 @@ public class GuiUtils {
 		return SwingColorWidget.showColorDialog(parent, title, defaultValue);
 	}
 
-	public Number getNumber(final String promptMsg, final String promptTitle,
-		final Number defaultValue)
+	public Double getDouble(final String promptMsg, final String promptTitle,
+		final double defaultValue)
 	{
-		return (Number) getObj(promptMsg, promptTitle, defaultValue);
+		try {
+			return Double.parseDouble((String) getObj(promptMsg, promptTitle,
+				defaultValue));
+		}
+		catch (final NullPointerException ignored) {
+			return null; // user pressed cancel
+		}
+		catch (final NumberFormatException ignored) {
+			return Double.NaN; // invalid user input
+		}
 	}
 
 	public File saveFile(final String title, final File file) {

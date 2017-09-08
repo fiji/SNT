@@ -246,6 +246,11 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		pjmi.addActionListener(listener);
 		pjmi = popup.add(AListener.REMOVE_COLOR_CMD);
 		pjmi.addActionListener(listener);
+		popup.addSeparator();
+		pjmi = popup.add(AListener.COLLAPSE_ALL_CMD);
+		pjmi.addActionListener(listener);
+		pjmi = popup.add(AListener.EXPAND_ALL_CMD);
+		pjmi.addActionListener(listener);
 
 		tree.addMouseListener(new MouseAdapter() {
 
@@ -1102,6 +1107,8 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	 */
 	private class AListener implements ActionListener {
 
+		private final static String EXPAND_ALL_CMD = "Expand All";
+		private final static String COLLAPSE_ALL_CMD = "Collapse All";
 		private final static String DELETE_CMD = "Delete";
 		private final static String RENAME_CMD = "Rename";
 		private final static String MAKE_PRIMARY_CMD = "Make Primary";
@@ -1111,13 +1118,24 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		@Override
 		public void actionPerformed(final ActionEvent e) {
 			assert SwingUtilities.isEventDispatchThread();
-			final Object source = e.getSource();
+
+			if (e.getActionCommand().equals(EXPAND_ALL_CMD)) {
+				for (int i = 0; i < tree.getRowCount(); i++)
+					tree.expandRow(i);
+				return;
+			}
+			else if (e.getActionCommand().equals(COLLAPSE_ALL_CMD)) {
+				for (int i = 0; i < tree.getRowCount(); i++)
+					tree.collapseRow(i);
+				return;
+			}
 
 			final Set<Path> selectedPaths = getSelectedPaths();
 			if (selectedPaths.isEmpty()) {
 				noPathsMsg();
 				return;
 			}
+			final Object source = e.getSource();
 			final int n = selectedPaths.size();
 
 			if (e.getActionCommand().equals(DELETE_CMD)) {

@@ -25,8 +25,7 @@ package tracing.gui;
 import java.awt.Color;
 
 /**
- * A simple class that associates a AWT Color and associates it with a SWC type
- * integer tag.
+ * A simple class that associates an AWT Color to a SWC type integer tag.
  */
 public class SWCColor {
 
@@ -96,6 +95,27 @@ public class SWCColor {
 			return false;
 		}
 		return true;
+	}
+
+	/** Returns the color encoded as hex string with the format #rrggbbaa */
+	public static String colorToString(final Color color) {
+		if (color == null) throw new IllegalArgumentException(
+			"Cannot convert null object");
+		return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(),
+			color.getBlue(), color.getAlpha());
+	}
+
+	/** Returns an AWT Color from a (#)RRGGBB(AA) hex string */
+	public static Color stringToColor(final String hex) {
+		if (hex.length() < 6) throw new IllegalArgumentException(
+			"Unsupported format. Only (#)RRGGBB(AA) allowed");
+		final String input = hex.charAt(0) == '#' ? hex.substring(1) : hex;
+		final int r = Integer.valueOf(input.substring(0, 2), 16);
+		final int g = Integer.valueOf(input.substring(2, 4), 16);
+		final int b = Integer.valueOf(input.substring(4, 6), 16);
+		final int a = (hex.length() < 8) ? 255 : Integer.valueOf(hex.substring(6,
+			8), 16);
+		return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
 	}
 
 }

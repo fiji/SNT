@@ -27,7 +27,7 @@ import javax.swing.border.MatteBorder;
 import tracing.Path;
 
 /**
- * This class generates a simplified color widget holding both pre-determined
+ * This class generates a simplified color widget holding both predetermined
  * colors, user-defined ones and defaults for SWC types. It is based on Gerald
  * Bauer's code released under GPL2
  * (http://www.java2s.com/Code/Java/Swing-JFC/ColorMenu.htm)
@@ -237,18 +237,18 @@ public class ColorMenu extends JMenu {
 
 		@Override
 		public void mousePressed(final MouseEvent ev) {
+
+			// Ensure only this pane gets selected
+			selectNone();
+			setSelected(true);
+
 			if (isCustomizable && (SwingUtilities.isRightMouseButton(ev) || ev
 				.isPopupTrigger()))
 			{
-				ev.consume();
 
 				// Remember menu path so that it can be restored after prompt
 				final MenuElement[] path = MenuSelectionManager.defaultManager()
 					.getSelectedPath();
-
-				// Ensure this colorPane gets selected
-				selectNone();
-				setSelected(true);
 
 				// Prompt user for new color
 				final GuiUtils gUtils = new GuiUtils(getTopLevelAncestor());
@@ -264,24 +264,20 @@ public class ColorMenu extends JMenu {
 						.getLocationOnScreen());
 					return;
 				}
-
-				// Otherwise refresh panel with new choice
-				swcColor.setAWTColor(c);
-				setPanelSWCColor(swcColor);
-				doSelection();
-
-				// restore menu path. Alert user if choice is invalid
+				// Restore menu
 				MenuSelectionManager.defaultManager().setSelectedPath(path);
 
 			}
+			else { // Dismiss menu
+				MenuSelectionManager.defaultManager().clearSelectedPath();
+			}
+
+			doSelection();
+
 		}
 
 		@Override
-		public void mouseReleased(final MouseEvent ev) {
-			selectSWCColor(swcColor);
-			MenuSelectionManager.defaultManager().clearSelectedPath();
-			doSelection();
-		}
+		public void mouseReleased(final MouseEvent ev) {}
 	}
 
 	/** IDE debug method */
@@ -294,7 +290,10 @@ public class ColorMenu extends JMenu {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				System.out.println(e);
-				System.out.println(menu.getSelectedSWCColor());
+				System.out.println(menu.getSelectedSWCColor().color());
+				System.out.println("Type: " + menu.getSelectedSWCColor().type());
+				System.out.println(Path.getSWCtypeName(menu.getSelectedSWCColor()
+					.type()));
 			}
 		});
 		menuBar.add(menu);

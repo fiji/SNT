@@ -256,13 +256,10 @@ public class ColorMenu extends JMenu {
 					.type() == SWCColor.SWC_TYPE_IGNORED) ? "New Color"
 						: "New color for SWC Type: " + Path.getSWCtypeName(swcColor.type());
 				final Color c = gUtils.getColor(promptTitle, swcColor.color());
-				if (c == null) return; // user pressed cancel
-				if (c.equals(swcColor.color())) return; // nothing to change
-
-				if (_colorPanes.containsKey(new SWCColor(c, swcColor.type()))) {
-					gUtils.tempMsg("Chosen color already listed in palette!", ev
-						.getLocationOnScreen());
-					return;
+				if (c != null && !c.equals(swcColor.color())) {
+					// New color choice: refresh panel
+					swcColor.setAWTColor(c);
+					setBackground(c);
 				}
 				// Restore menu
 				MenuSelectionManager.defaultManager().setSelectedPath(path);

@@ -440,6 +440,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		swcTypeMenu.setEnabled(b);
 		colorMenu.setEnabled(b);
 		fitMenu.setEnabled(b);
+		renameMenuItem.setEnabled(b);
 		exportAsSWCMenuItem.setEnabled(b);
 		exportAsRoiMenuItem.setEnabled(b);
 		downsampleMenuItem.setEnabled(b);
@@ -566,9 +567,10 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		searchable.setCaseSensitive(false);
 		searchable.setFromStart(false);
 		searchable.setWildcardEnabled(true);
+		searchable.setRepeats(true);
 		final SearchableBar sBar = new SearchableBar(searchable, true);
 		sBar.setShowMatchCount(true);
-		sBar.setHighlightAll(true);
+		sBar.setHighlightAll(true); //TODO: update to 3.6.19 see bugfix https://github.com/jidesoft/jide-oss/commit/149bd6a53846a973dfbb589fffcc82abbc49610b
 		sBar.setVisibleButtons(SearchableBar.SHOW_STATUS |
 			SearchableBar.SHOW_HIGHLIGHTS);
 

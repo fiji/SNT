@@ -56,6 +56,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.scijava.Context;
+import org.scijava.Contextual;
+import org.scijava.NullContextException;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.convert.ConvertService;
@@ -102,10 +104,9 @@ import tracing.gui.GuiUtils;
 
 */
 
-@Plugin(type = Command.class, visible = false, initializer = "initialize")
 public class SimpleNeuriteTracer extends ThreePanes implements
 	SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener,
-	Command
+	Contextual
 {
 
 	@Parameter
@@ -157,15 +158,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	protected InteractiveTracerCanvas xy_tracer_canvas;
 	protected InteractiveTracerCanvas xz_tracer_canvas;
 	protected InteractiveTracerCanvas zy_tracer_canvas;
-
-	public void initialize() {
-		if (context == null) { // IJ1 initialization
-			context = (Context) IJ.runPlugIn("org.scijava.Context", "");
-			context.inject(this);
-		}
-		guiUtils = new GuiUtils(context);
-		SNT.setContext(context);
-	}
 
 	public boolean pathsUnsaved() {
 		return unsavedPaths;
@@ -1963,10 +1955,21 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 	}
 
+	//-- Contextual methods --
 	@Override
-	public void run() {
-		// Nothing tp do
+	public Context context() {
+		if (context == null) throw new NullContextException();
+		return context;
+	}
 
+	@Override
+	public Context getContext() {
+		return context;
+	}
+
+	@Override
+	public void setContext(final Context context) {
+		if (this.context != null) context.inject(this);
 	}
 
 }

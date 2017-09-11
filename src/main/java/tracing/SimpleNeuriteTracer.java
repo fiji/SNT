@@ -55,17 +55,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import net.imagej.Dataset;
+import net.imagej.legacy.LegacyService;
+
 import org.scijava.Context;
 import org.scijava.Contextual;
 import org.scijava.NullContextException;
 import org.scijava.app.StatusService;
-import org.scijava.command.Command;
 import org.scijava.convert.ConvertService;
 import org.scijava.io.DataHandleService;
-import org.scijava.io.IOService;
 import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
-import org.scijava.ui.DialogPrompt.Result;
+import org.scijava.ui.UIService;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Point3f;
@@ -114,15 +114,12 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	@Parameter
 	protected StatusService statusService;
 	@Parameter
-	protected IOService ioService;
-	@Parameter
 	protected DatasetIOService datasetIOService;
-	@Parameter
-	protected DataHandleService dataHandleService;
 	@Parameter
 	protected ConvertService convertService;
 
-	protected static boolean verbose = false;
+
+	protected static boolean verbose = false; //FIXME: Use prefservice
 
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
 	protected static final int DISPLAY_PATHS_LINES = 2;
@@ -139,7 +136,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 	protected PathAndFillManager pathAndFillManager;
 	protected SNTPrefs prefs;
-	private GuiUtils guiUtils;
+	protected GuiUtils guiUtils;
 	protected Image3DUniverse univ;
 	protected Content imageContent;
 	protected boolean use3DViewer;
@@ -456,17 +453,12 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			final String path = possibleLoadFile.getPath();
 
 			if (possibleLoadFile.exists()) {
-				final Result result = guiUtils.yesNoCancelPrompt(
-					"Load the default labels file?\n(" + path + ")", "Confirm");
-				if (result.equals(Result.YES_OPTION)) {
+				if (guiUtils.getConfirmation(
+					"Load the default labels file?\n(" + path + ")", "Load Labels?")) {
 					loadLabelsFile(path);
 					return;
 				}
-				else if (result.equals(Result.CANCEL_OPTION)) {
-					return;
-				}
 			}
-
 		}
 
 		final File file = guiUtils.openFile("Select labels file...", null);
@@ -502,26 +494,17 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 				if (possibleLoadFile.exists()) {
 
-					final Result result = guiUtils.yesNoCancelPrompt(
-						"Load the default traces file?\n(" + path + ")", "Confirm");
-					if (result.equals(Result.YES_OPTION)) {
-
+					if (guiUtils.getConfirmation("Load the default traces file?\n(" +
+						path + ")", "Load Traces?"))
+					{
 						if (pathAndFillManager.loadGuessingType(path)) unsavedPaths = false;
 
 						Prefs.set("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory",
 							directory);
 						Prefs.savePreferences();
-
-						loading = false;
-						return;
-
 					}
-					else if (result.equals(Result.CANCEL_OPTION)) {
-
-						loading = false;
-						return;
-
-					}
+					loading = false;
+					return;
 				}
 			}
 		}

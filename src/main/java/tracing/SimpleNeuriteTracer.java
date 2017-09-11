@@ -1408,15 +1408,9 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 	public synchronized void enableHessian(final boolean enable) {
 		hessianEnabled = enable;
-		if (enable) {
-			startHessian();
-			resultsDialog.editSigma.setEnabled(false);
-			resultsDialog.sigmaWizard.setEnabled(false);
-		}
-		else {
-			resultsDialog.editSigma.setEnabled(true);
-			resultsDialog.sigmaWizard.setEnabled(true);
-		}
+		if (enable) startHessian();
+		resultsDialog.editSigma.setEnabled(enable);
+		resultsDialog.sigmaWizard.setEnabled(enable);
 	}
 
 	public synchronized void cancelGaussian() {

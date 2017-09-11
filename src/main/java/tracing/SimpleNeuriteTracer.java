@@ -1349,6 +1349,10 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		tubenessFile = file;
 	}
 
+	public boolean tubenessDataLoaded() {
+		return tubeness != null;
+	}
+
 	/**
 	 * loads the (32-bit) "tubeness" image specified by
 	 * {@link #setTubenessFile(File)}
@@ -1378,8 +1382,15 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			tubeness[z] = (float[]) fp.getPixels();
 		}
 	}
+
+	/*
+	 * If there appears to be a local file called <image-basename>.oof.nrrd then
+	 * we assume that we can use the Tubular Geodesics tracing method. This
+	 * variable null if not such file was found.
+	 */
+
 	public boolean oofFileAvailable() {
-		return oofFile != null;
+		return oofFile != null && oofFile.exists();
 	}
 
 	/*

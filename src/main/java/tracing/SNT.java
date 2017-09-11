@@ -25,6 +25,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
 import java.io.File;
+import java.io.FilenameFilter;
+import java.nio.file.Paths;
+import java.util.Arrays;
 
 import javax.swing.JButton;
 
@@ -34,6 +37,7 @@ import org.scijava.ui.DialogPrompt.MessageType;
 import org.scijava.ui.UIService;
 import org.scijava.util.VersionUtils;
 
+import fiji.util.Levenshtein;
 import ij.IJ;
 import ij.plugin.Colors;
 
@@ -138,4 +142,40 @@ public class SNT {
 		}
 	}
 
+	public static File findClosestPair(final File file, final String pairExt) {
+		try {
+			SNT.debug("Finding closest pair for " + file);
+			final File dir = file.getParentFile();
+			final String[] list = dir.list(new FilenameFilter() {
+				@Override
+				public boolean accept(final File f, final String s) {
+					return s.endsWith(pairExt);
+				}
+			});
+			SNT.debug("Found " + list.length + " " + pairExt + " files");
+			if (list.length == 0) return null;
+			Arrays.sort(list);
+			String dirPath = dir.getAbsolutePath();
+			if (!dirPath.endsWith(File.separator)) dirPath += File.separator;
+			int cost = Integer.MAX_VALUE;
+			final String seed = stripExtension(file.getName().toLowerCase());
+			String closest = null;
+			final Levenshtein levenshtein = new Levenshtein(5, 10, 1, 5, 5, 0);
+			for (final String item : list) {
+				final String filename = stripExtension(Paths.get(item).getFileName()
+					.toString()).toLowerCase();
+				final int currentCost = levenshtein.cost(seed, filename);
+				SNT.debug("Levenshtein cost for '" + item + "': " + currentCost);
+				if (currentCost <= cost) {
+					cost = currentCost;
+					closest = item;
+				}
+			}
+			SNT.debug("Identified pair '" + closest + "'");
+			return new File(dirPath + closest);
+		}
+		catch (final SecurityException | NullPointerException ignored) {
+			return null;
+		}
+	}
 }

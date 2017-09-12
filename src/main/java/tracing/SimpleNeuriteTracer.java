@@ -8,35 +8,17 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-/*******************************************************************************
- * Copyright (C) 2017 Tiago Ferreira
- * Copyright (C) 2006-2011 Mark Longair
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************/
-
 
 package tracing;
 
@@ -67,6 +49,7 @@ import org.scijava.NullContextException;
 import org.scijava.app.StatusService;
 import org.scijava.convert.ConvertService;
 import org.scijava.io.DataHandleService;
+import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.ui.UIService;
 import org.scijava.vecmath.Color3f;
@@ -110,18 +93,23 @@ import tracing.gui.GuiUtils;
 */
 
 public class SimpleNeuriteTracer extends ThreePanes implements
-	SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener {
+	SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener
+{
 
 	@Parameter
 	private Context context;
 	@Parameter
 	protected StatusService statusService;
 	@Parameter
+	protected LegacyService legacyService;
+	@Parameter
+	protected LogService logService;
+	@Parameter
 	protected DatasetIOService datasetIOService;
 	@Parameter
 	protected ConvertService convertService;
 
-	protected static boolean verbose = false; //FIXME: Use prefservice
+	protected static boolean verbose = false; // FIXME: Use prefservice
 
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
 	protected static final int DISPLAY_PATHS_LINES = 2;
@@ -138,7 +126,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 	protected PathAndFillManager pathAndFillManager;
 	protected SNTPrefs prefs;
-	protected GuiUtils guiUtils;
+	private final GuiUtils guiUtils;
 	protected Image3DUniverse univ;
 	protected Content imageContent;
 	protected boolean use3DViewer;
@@ -158,19 +146,65 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	protected InteractiveTracerCanvas xz_tracer_canvas;
 	protected InteractiveTracerCanvas zy_tracer_canvas;
 
-	private ImagePlus sourceImage;
-	private File tracesFile;
+	private final ImagePlus sourceImage;
+	private final File tracesFile;
 
-	/* Spatial calibration */
+	protected int width, height, depth;
+	protected int imageType = -1;
+	protected boolean singleSlice;
 	protected double x_spacing = 1;
 	protected double y_spacing = 1;
 	protected double z_spacing = 1;
 	protected String spacing_units = "";
+	protected boolean setupTrace = false;
 
-	public SimpleNeuriteTracer(Context context, ImagePlus sourceImage, File tracesFile) {
+	protected byte[][] slices_data_b;
+	protected short[][] slices_data_s;
+	protected float[][] slices_data_f;
+	volatile protected float stackMax = Float.MIN_VALUE;
+	volatile protected float stackMin = Float.MAX_VALUE;
+
+	/*
+	 * For the original file info - needed for loading the corresponding labels
+	 * file and checking if a "tubes.tif" file already exists:
+	 */
+
+	public FileInfo file_info;
+
+	/* Labels*/
+	protected String[] materialList;
+	byte[][] labelData;
+
+	volatile boolean loading = false;
+	volatile boolean lastStartPointSet = false;
+
+	int last_start_point_x;
+	int last_start_point_y;
+	int last_start_point_z;
+
+	Path endJoin;
+	PointInImage endJoinPoint;
+
+	/*
+	 * If we've finished searching for a path, but the user hasn't confirmed
+	 * that they want to keep it yet, temporaryPath is non-null and holds the
+	 * Path we just searched out.
+	 */
+
+	// Any method that deals with these two fields should be synchronized.
+	Path temporaryPath = null;
+	Path currentPath = null;
+
+	/* GUI */
+	protected NeuriteTracerResultsDialog resultsDialog;
+
+	public SimpleNeuriteTracer(final Context context, final ImagePlus sourceImage,
+		final File tracesFile)
+	{
 
 		if (context == null) throw new NullContextException();
-		if (sourceImage == null) throw new IllegalArgumentException("Null objects are not allowed");
+		if (sourceImage == null) throw new IllegalArgumentException(
+			"Null objects are not allowed");
 
 		context.inject(this);
 		this.sourceImage = sourceImage;
@@ -187,13 +221,15 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			y_spacing = calibration.pixelHeight;
 			z_spacing = calibration.pixelDepth;
 			spacing_units = calibration.getUnits();
-			if (spacing_units == null || spacing_units.length() == 0)
-				spacing_units = "" + calibration.getUnit();
+			if (spacing_units == null || spacing_units.length() == 0) spacing_units =
+				"" + calibration.getUnit();
 		}
 		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
-			throw new IllegalArgumentException("One dimension of the calibration information was zero: (" + x_spacing + "," + y_spacing + ","
-					+ z_spacing + ")");
+			throw new IllegalArgumentException(
+				"One dimension of the calibration information was zero: (" + x_spacing +
+					"," + y_spacing + "," + z_spacing + ")");
 		}
+		guiUtils = new GuiUtils(legacyService.getIJ1Helper().getIJ());
 	}
 
 	private void init() {
@@ -257,58 +293,58 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 				slices_data_s = new short[depth][];
 				for (int z = 0; z < depth; ++z)
 					slices_data_s[z] = (short[]) s.getPixels(z + 1);
-				IJ.showStatus("Finding stack minimum / maximum");
+				statusService.showStatus("Finding stack minimum / maximum");
 				for (int z = 0; z < depth; ++z) {
 					for (int y = 0; y < height; ++y)
 						for (int x = 0; x < width; ++x) {
 							final short v = slices_data_s[z][y * width + x];
-							if (v < stackMin)
-								stackMin = v;
-							if (v > stackMax)
-								stackMax = v;
+							if (v < stackMin) stackMin = v;
+							if (v > stackMax) stackMax = v;
 						}
-					IJ.showProgress(z / (float) depth);
+					statusService.showProgress(z, depth);
 				}
-				IJ.showProgress(1.0);
+				statusService.showProgress(0, 0);
 				break;
 			case ImagePlus.GRAY32:
 				slices_data_f = new float[depth][];
 				for (int z = 0; z < depth; ++z)
 					slices_data_f[z] = (float[]) s.getPixels(z + 1);
-				IJ.showStatus("Finding stack minimum / maximum");
+				statusService.showStatus("Finding stack minimum / maximum");
 				for (int z = 0; z < depth; ++z) {
 					for (int y = 0; y < height; ++y)
 						for (int x = 0; x < width; ++x) {
 							final float v = slices_data_f[z][y * width + x];
-							if (v < stackMin)
-								stackMin = v;
-							if (v > stackMax)
-								stackMax = v;
+							if (v < stackMin) stackMin = v;
+							if (v > stackMax) stackMax = v;
 						}
-					IJ.showProgress(z / (float) depth);
+					statusService.showProgress(z, depth);
 				}
-				IJ.showProgress(1.0);
+				statusService.showProgress(0, 0);
 				break;
 		}
 	}
 
 	public void startUI() {
 		init();
-		//context();
+		// context();
 		final SimpleNeuriteTracer thisPlugin = this;
 		System.out.println(thisPlugin);
-		resultsDialog = SwingSafeResult.getResult(new Callable<NeuriteTracerResultsDialog>() {
-			@Override
-			public NeuriteTracerResultsDialog call() {
-				return new NeuriteTracerResultsDialog("Tracing for: " + xy.getShortTitle(), thisPlugin,
-					false);
-			}
-		});
+		resultsDialog = SwingSafeResult.getResult(
+			new Callable<NeuriteTracerResultsDialog>()
+			{
+
+				@Override
+				public NeuriteTracerResultsDialog call() {
+					return new NeuriteTracerResultsDialog("Tracing for: " + xy
+						.getShortTitle(), thisPlugin, false);
+				}
+			});
 		resultsDialog.displayOnStarting();
 		if (tracesFile.exists()) {
 			resultsDialog.changeState(NeuriteTracerResultsDialog.LOADING);
 			pathAndFillManager.loadGuessingType(tracesFile.getAbsolutePath());
-			resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			resultsDialog.changeState(
+				NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 		}
 	}
 
@@ -495,37 +531,12 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	}
 
 	/*
-	 * FIXME, just for synchronization - replace this with synchronization on
-	 * the object it protects:
+	 * pathUnfinished indicates that we have started to create a path, but not
+	 * yet finished it (in the sense of moving on to a new path with a differen
+	 * starting point.) FIXME: this may be redundant - check that.
 	 */
 
-	protected String nonsense = "unused";
-
-	/*
-	 * These member variables control what we're actually doing - whether that's
-	 * tracing, logging points or displaying values of the Hessian at particular
-	 * points. Currently we only support tracing, support for the others has
-	 * been removed.
-	 */
-
-	protected boolean setupLog = false;
-	protected boolean setupEv = false;
-	protected boolean setupTrace = false;
-	protected boolean setupPreprocess = false;
-
-	/* If we're timing out the searches (probably not any longer...) */
-
-	volatile protected boolean setupTimeout = false;
-	volatile protected float setupTimeoutValue = 0.0f;
-
-	/*
-	 * For the original file info - needed for loading the corresponding labels
-	 * file and checking if a "tubes.tif" file already exists:
-	 */
-
-	public FileInfo file_info;
-
-	protected int width, height, depth;
+	volatile boolean pathUnfinished = false;
 
 	public void justDisplayNearSlices(final boolean value, final int eitherSide) {
 
@@ -556,9 +567,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		}
 
 	}
-
-	protected String[] materialList;
-	byte[][] labelData;
 
 	synchronized public void loadLabelsFile(final String path) {
 
@@ -624,8 +632,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		}
 
 	}
-
-	volatile boolean loading = false;
 
 	synchronized public void loadTracings() {
 
@@ -792,26 +798,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		}
 	}
 
-	volatile boolean lastStartPointSet = false;
-
-	int last_start_point_x;
-	int last_start_point_y;
-	int last_start_point_z;
-
-	Path endJoin;
-	PointInImage endJoinPoint;
-
-	/*
-	 * If we've finished searching for a path, but the user hasn't confirmed
-	 * that they want to keep it yet, temporaryPath is non-null and holds the
-	 * Path we just searched out.
-	 */
-
-	// Any method that deals with these two fields should be synchronized.
-
-	Path temporaryPath = null;
-	Path currentPath = null;
-
 	// When we set temporaryPath, we also want to update the display:
 
 	synchronized public void setTemporaryPath(final Path path) {
@@ -861,14 +847,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	synchronized public Path getCurrentPath() {
 		return currentPath;
 	}
-
-	/*
-	 * pathUnfinished indicates that we have started to create a path, but not
-	 * yet finished it (in the sense of moving on to a new path with a differen
-	 * starting point.) FIXME: this may be redundant - check that.
-	 */
-
-	volatile boolean pathUnfinished = false;
 
 	public void setPathUnfinished(final boolean unfinished) {
 
@@ -944,8 +922,9 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		if (!lastStartPointSet) {
 			statusService.showStatus(
+				
 				"No initial start point has been set.  Do that with a mouse click." +
-					" (Or a Shift-" + (IJ.isMacintosh() ? "Alt" : "Control") +
+					" (Or a Shift-" + guiUtils.ctrlKey() +
 					"-click if the start of the path should join another neurite.");
 			return;
 		}
@@ -1060,7 +1039,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		if (!lastStartPointSet) {
 			SNT.error(
 				"No initial start point has been set yet.  Do that with a mouse click or\na Shift+" +
-					(IJ.isMacintosh() ? "Alt" : "Control") +
+						guiUtils.ctrlKey() +
 					"-click if the start of the path should join another neurite.");
 			return;
 		}
@@ -1319,25 +1298,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		xz.setSlice(y);
 
 	}
-
-	protected int imageType = -1;
-
-	protected byte[][] slices_data_b;
-	protected short[][] slices_data_s;
-	protected float[][] slices_data_f;
-
-	protected NeuriteTracerResultsDialog resultsDialog;
-
-	volatile protected boolean cancelled = false;
-
-	// protected TextWindow helpTextWindow;
-
-	protected boolean singleSlice;
-
-	protected ArchiveClient archiveClient;
-
-	volatile protected float stackMax = Float.MIN_VALUE;
-	volatile protected float stackMin = Float.MAX_VALUE;
 
 	public int guessResamplingFactor() {
 		if (width == 0 || height == 0 || depth == 0) throw new RuntimeException(

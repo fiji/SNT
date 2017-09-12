@@ -30,6 +30,7 @@ import java.awt.event.MouseListener;
 
 import ij.gui.ColorChooser;
 
+@Deprecated
 @SuppressWarnings("serial")
 public class PathColorsCanvas extends Canvas implements MouseListener {
 

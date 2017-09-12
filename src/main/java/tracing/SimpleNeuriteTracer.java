@@ -45,6 +45,8 @@ import io.scif.services.DatasetIOService;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -54,6 +56,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import net.imagej.Dataset;
 import net.imagej.legacy.LegacyService;
@@ -87,10 +90,12 @@ import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
+import ij.measure.Calibration;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij3d.Content;
+import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
 import stacks.ThreePanes;
 import tracing.gui.GuiUtils;
@@ -105,19 +110,16 @@ import tracing.gui.GuiUtils;
 */
 
 public class SimpleNeuriteTracer extends ThreePanes implements
-	SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener,
-	Contextual
-{
+	SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener {
 
 	@Parameter
-	protected Context context;
+	private Context context;
 	@Parameter
 	protected StatusService statusService;
 	@Parameter
 	protected DatasetIOService datasetIOService;
 	@Parameter
 	protected ConvertService convertService;
-
 
 	protected static boolean verbose = false; //FIXME: Use prefservice
 
@@ -155,6 +157,154 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	protected InteractiveTracerCanvas xy_tracer_canvas;
 	protected InteractiveTracerCanvas xz_tracer_canvas;
 	protected InteractiveTracerCanvas zy_tracer_canvas;
+
+	private ImagePlus sourceImage;
+	private File tracesFile;
+
+	public SimpleNeuriteTracer(Context context, ImagePlus sourceImage, File tracesFile) {
+
+		if (context == null) throw new NullContextException();
+		if (sourceImage == null) throw new IllegalArgumentException("Null objects are not allowed");
+
+		context.inject(this);
+		this.sourceImage = sourceImage;
+		this.tracesFile = tracesFile;
+
+		width = sourceImage.getWidth();
+		height = sourceImage.getHeight();
+		depth = sourceImage.getStackSize();
+		imageType = sourceImage.getType();
+
+		final Calibration calibration = sourceImage.getCalibration();
+		if (calibration != null) {
+			x_spacing = calibration.pixelWidth;
+			y_spacing = calibration.pixelHeight;
+			z_spacing = calibration.pixelDepth;
+			spacing_units = calibration.getUnits();
+			if (spacing_units == null || spacing_units.length() == 0)
+				spacing_units = "" + calibration.getUnit();
+		}
+	}
+
+	private void init() {
+		pathAndFillManager = new PathAndFillManager(this);
+		prefs = new SNTPrefs(this);
+
+		final Overlay sourceImageOverlay = sourceImage.getOverlay();
+		initialize(sourceImage);
+		xy.setOverlay(sourceImageOverlay);
+
+		xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;
+		xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
+		zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
+
+		prefs.loadPluginPrefs();
+		setupTrace = true;
+
+		/*
+		 * FIXME: this could be changed to add 'this', and move the small
+		 * implementation out of NeuriteTracerResultsDialog into this class.
+		 */
+		pathAndFillManager.addPathAndFillListener(this);
+
+		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
+
+			SNT.error("One dimension of the calibration information was zero: (" + x_spacing + "," + y_spacing + ","
+					+ z_spacing + ")");
+			return;
+
+		}
+
+		{
+			final ImageStack s = xy.getStack();
+			switch (imageType) {
+				case ImagePlus.GRAY8:
+				case ImagePlus.COLOR_256:
+					slices_data_b = new byte[depth][];
+					for (int z = 0; z < depth; ++z)
+						slices_data_b[z] = (byte[]) s.getPixels(z + 1);
+					stackMin = 0;
+					stackMax = 255;
+					break;
+				case ImagePlus.GRAY16:
+					slices_data_s = new short[depth][];
+					for (int z = 0; z < depth; ++z)
+						slices_data_s[z] = (short[]) s.getPixels(z + 1);
+					IJ.showStatus("Finding stack minimum / maximum");
+					for (int z = 0; z < depth; ++z) {
+						for (int y = 0; y < height; ++y)
+							for (int x = 0; x < width; ++x) {
+								final short v = slices_data_s[z][y * width + x];
+								if (v < stackMin)
+									stackMin = v;
+								if (v > stackMax)
+									stackMax = v;
+							}
+						IJ.showProgress(z / (float) depth);
+					}
+					IJ.showProgress(1.0);
+					break;
+				case ImagePlus.GRAY32:
+					slices_data_f = new float[depth][];
+					for (int z = 0; z < depth; ++z)
+						slices_data_f[z] = (float[]) s.getPixels(z + 1);
+					IJ.showStatus("Finding stack minimum / maximum");
+					for (int z = 0; z < depth; ++z) {
+						for (int y = 0; y < height; ++y)
+							for (int x = 0; x < width; ++x) {
+								final float v = slices_data_f[z][y * width + x];
+								if (v < stackMin)
+									stackMin = v;
+								if (v > stackMax)
+									stackMax = v;
+							}
+						IJ.showProgress(z / (float) depth);
+					}
+					IJ.showProgress(1.0);
+					break;
+			}
+		}
+
+		final QueueJumpingKeyListener xy_listener = new QueueJumpingKeyListener(this, xy_tracer_canvas);
+		setAsFirstKeyListener(xy_tracer_canvas, xy_listener);
+		setAsFirstKeyListener(xy_window, xy_listener);
+
+		if (!single_pane) {
+
+			xz.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
+			zy.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
+
+			final QueueJumpingKeyListener xz_listener = new QueueJumpingKeyListener(this, xz_tracer_canvas);
+			setAsFirstKeyListener(xz_tracer_canvas, xz_listener);
+			setAsFirstKeyListener(xz_window, xz_listener);
+
+			final QueueJumpingKeyListener zy_listener = new QueueJumpingKeyListener(this, zy_tracer_canvas);
+			setAsFirstKeyListener(zy_tracer_canvas, zy_listener);
+			setAsFirstKeyListener(zy_window, zy_listener);
+
+		}
+
+	}
+
+	public void startUI() {
+		init();
+		//context();
+		final SimpleNeuriteTracer thisPlugin = this;
+		System.out.println(thisPlugin);
+		resultsDialog = SwingSafeResult.getResult(new Callable<NeuriteTracerResultsDialog>() {
+			@Override
+			public NeuriteTracerResultsDialog call() {
+				return new NeuriteTracerResultsDialog("Tracing for: " + xy.getShortTitle(), thisPlugin,
+					false);
+			}
+		});
+		resultsDialog.displayOnStarting();
+		if (tracesFile.exists()) {
+			resultsDialog.changeState(NeuriteTracerResultsDialog.LOADING);
+			pathAndFillManager.loadGuessingType(tracesFile.getAbsolutePath());
+			resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+		}
+	}
 
 	public boolean pathsUnsaved() {
 		return unsavedPaths;
@@ -1335,7 +1485,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		}
 	}
 
-	/* == Tracing methods == */
 	private File tubenessFile;
 	private float[][] tubeness;
 
@@ -1901,6 +2050,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		autoCanvasActivation = enable;
 	}
 
+	//TODO: Use prefsService
 	protected boolean drawDiametersXY = Prefs.get(
 		"tracing.Simple_Neurite_Tracer.drawDiametersXY", "false").equals("true");
 
@@ -1943,21 +2093,8 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 	}
 
-	//-- Contextual methods --
-	@Override
-	public Context context() {
-		if (context == null) throw new NullContextException();
-		return context;
-	}
-
-	@Override
 	public Context getContext() {
 		return context;
-	}
-
-	@Override
-	public void setContext(final Context context) {
-		if (this.context != null) context.inject(this);
 	}
 
 }

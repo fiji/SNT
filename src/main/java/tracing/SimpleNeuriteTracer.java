@@ -161,6 +161,12 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	private ImagePlus sourceImage;
 	private File tracesFile;
 
+	/* Spatial calibration */
+	protected double x_spacing = 1;
+	protected double y_spacing = 1;
+	protected double z_spacing = 1;
+	protected String spacing_units = "";
+
 	public SimpleNeuriteTracer(Context context, ImagePlus sourceImage, File tracesFile) {
 
 		if (context == null) throw new NullContextException();
@@ -183,6 +189,10 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			spacing_units = calibration.getUnits();
 			if (spacing_units == null || spacing_units.length() == 0)
 				spacing_units = "" + calibration.getUnit();
+		}
+		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
+			throw new IllegalArgumentException("One dimension of the calibration information was zero: (" + x_spacing + "," + y_spacing + ","
+					+ z_spacing + ")");
 		}
 	}
 
@@ -207,63 +217,9 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		 */
 		pathAndFillManager.addPathAndFillListener(this);
 
-		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 
-			SNT.error("One dimension of the calibration information was zero: (" + x_spacing + "," + y_spacing + ","
-					+ z_spacing + ")");
-			return;
 
-		}
-
-		{
-			final ImageStack s = xy.getStack();
-			switch (imageType) {
-				case ImagePlus.GRAY8:
-				case ImagePlus.COLOR_256:
-					slices_data_b = new byte[depth][];
-					for (int z = 0; z < depth; ++z)
-						slices_data_b[z] = (byte[]) s.getPixels(z + 1);
-					stackMin = 0;
-					stackMax = 255;
-					break;
-				case ImagePlus.GRAY16:
-					slices_data_s = new short[depth][];
-					for (int z = 0; z < depth; ++z)
-						slices_data_s[z] = (short[]) s.getPixels(z + 1);
-					IJ.showStatus("Finding stack minimum / maximum");
-					for (int z = 0; z < depth; ++z) {
-						for (int y = 0; y < height; ++y)
-							for (int x = 0; x < width; ++x) {
-								final short v = slices_data_s[z][y * width + x];
-								if (v < stackMin)
-									stackMin = v;
-								if (v > stackMax)
-									stackMax = v;
-							}
-						IJ.showProgress(z / (float) depth);
-					}
-					IJ.showProgress(1.0);
-					break;
-				case ImagePlus.GRAY32:
-					slices_data_f = new float[depth][];
-					for (int z = 0; z < depth; ++z)
-						slices_data_f[z] = (float[]) s.getPixels(z + 1);
-					IJ.showStatus("Finding stack minimum / maximum");
-					for (int z = 0; z < depth; ++z) {
-						for (int y = 0; y < height; ++y)
-							for (int x = 0; x < width; ++x) {
-								final float v = slices_data_f[z][y * width + x];
-								if (v < stackMin)
-									stackMin = v;
-								if (v > stackMax)
-									stackMax = v;
-							}
-						IJ.showProgress(z / (float) depth);
-					}
-					IJ.showProgress(1.0);
-					break;
-			}
-		}
+		loadData();
 
 		final QueueJumpingKeyListener xy_listener = new QueueJumpingKeyListener(this, xy_tracer_canvas);
 		setAsFirstKeyListener(xy_tracer_canvas, xy_listener);
@@ -284,6 +240,56 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		}
 
+	}
+
+	private void loadData() {
+		final ImageStack s = xy.getStack();
+		switch (imageType) {
+			case ImagePlus.GRAY8:
+			case ImagePlus.COLOR_256:
+				slices_data_b = new byte[depth][];
+				for (int z = 0; z < depth; ++z)
+					slices_data_b[z] = (byte[]) s.getPixels(z + 1);
+				stackMin = 0;
+				stackMax = 255;
+				break;
+			case ImagePlus.GRAY16:
+				slices_data_s = new short[depth][];
+				for (int z = 0; z < depth; ++z)
+					slices_data_s[z] = (short[]) s.getPixels(z + 1);
+				IJ.showStatus("Finding stack minimum / maximum");
+				for (int z = 0; z < depth; ++z) {
+					for (int y = 0; y < height; ++y)
+						for (int x = 0; x < width; ++x) {
+							final short v = slices_data_s[z][y * width + x];
+							if (v < stackMin)
+								stackMin = v;
+							if (v > stackMax)
+								stackMax = v;
+						}
+					IJ.showProgress(z / (float) depth);
+				}
+				IJ.showProgress(1.0);
+				break;
+			case ImagePlus.GRAY32:
+				slices_data_f = new float[depth][];
+				for (int z = 0; z < depth; ++z)
+					slices_data_f[z] = (float[]) s.getPixels(z + 1);
+				IJ.showStatus("Finding stack minimum / maximum");
+				for (int z = 0; z < depth; ++z) {
+					for (int y = 0; y < height; ++y)
+						for (int x = 0; x < width; ++x) {
+							final float v = slices_data_f[z][y * width + x];
+							if (v < stackMin)
+								stackMin = v;
+							if (v > stackMax)
+								stackMax = v;
+						}
+					IJ.showProgress(z / (float) depth);
+				}
+				IJ.showProgress(1.0);
+				break;
+		}
 	}
 
 	public void startUI() {
@@ -1300,12 +1306,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			new PrintWriter(sw));
 		return sw.toString();
 	}
-
-	protected double x_spacing = 1;
-	protected double y_spacing = 1;
-	protected double z_spacing = 1;
-
-	protected String spacing_units = "";
 
 	public void viewFillIn3D(final boolean asMask) {
 		final ImagePlus imagePlus = filler.fillAsImagePlus(asMask);

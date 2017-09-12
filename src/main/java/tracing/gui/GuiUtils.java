@@ -29,14 +29,20 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
+import javax.swing.colorchooser.AbstractColorChooserPanel;
 
 import org.scijava.ui.swing.SwingDialog;
 import org.scijava.ui.swing.widget.SwingColorWidget;
@@ -145,6 +151,47 @@ public class GuiUtils {
 
 	public Color getColor(final String title, final Color defaultValue) {
 		return SwingColorWidget.showColorDialog(parent, title, defaultValue);
+	}
+
+	/** Panes: Any of Swatches, HSV, HSL, RGB, CMYK. null for all */
+	public Color getColor(final String title, final Color defaultValue,
+		final String... panes)
+	{
+
+		List<String> allowedPanels = new ArrayList<>();
+		if (panes != null) allowedPanels = Arrays.asList(panes);
+		final JColorChooser chooser = new JColorChooser();
+		chooser.setPreviewPanel(new JPanel()); // remove preview pane
+
+		for (final AbstractColorChooserPanel accp : chooser.getChooserPanels()) {
+			if (!allowedPanels.contains(accp.getDisplayName())) chooser
+				.removeChooserPanel(accp);
+		}
+
+		class ColorTracker implements ActionListener {
+
+			private final JColorChooser chooser;
+			private Color color;
+
+			public ColorTracker(final JColorChooser c) {
+				chooser = c;
+			}
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				color = chooser.getColor();
+			}
+
+			public Color getColor() {
+				return color;
+			}
+		}
+
+		final ColorTracker ok = new ColorTracker(chooser);
+		final JDialog dialog = JColorChooser.createDialog(parent, title, true,
+			chooser, ok, null);
+		dialog.setVisible(true);
+		return ok.getColor();
 	}
 
 	public Double getDouble(final String promptMsg, final String promptTitle,

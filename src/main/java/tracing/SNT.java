@@ -40,29 +40,25 @@ import org.scijava.util.VersionUtils;
 import fiji.util.Levenshtein;
 import ij.IJ;
 import ij.plugin.Colors;
+import tracing.gui.GuiUtils;
 
 /** Static utilities for SNT **/
 public class SNT {
 
 	private static Context context;
 	private static LogService logService;
-	private static UIService uiService;
 	public static final String VERSION = getVersion();
 
-	private SNT() {
-		// prevent instantiation of utility class
-	}
+	private static boolean initialized;
+
+	private SNT() {}
 
 	private synchronized static void initialize() {
-		if (context == null) setContext((Context) IJ.runPlugIn(
-			"org.scijava.Context", ""));
-	}
-
-	public static void setContext(final Context cntxt) {
-		if (context != null) return;
-		context = cntxt;
+		if (initialized) return;
+		if (context == null) context = (Context) IJ.runPlugIn("org.scijava.Context",
+			"");
 		if (logService == null) logService = context.getService(LogService.class);
-		if (uiService == null) uiService = context.getService(UIService.class);
+		initialized = true;
 	}
 
 	private static String getVersion() {
@@ -104,15 +100,10 @@ public class SNT {
 	}
 
 	//FIXME: Move to gui.GuiUtils
+	// FIXME: Move to gui.GuiUtils
+	@Deprecated
 	protected static JButton smallButton(final String text) {
-		final double SCALE = .85;
-		final JButton button = new JButton(text);
-		final Font font = button.getFont();
-		button.setFont(font.deriveFont((float) (font.getSize() * SCALE)));
-		final Insets insets = button.getMargin();
-		button.setMargin(new Insets((int) (insets.top * SCALE), (int) (insets.left * SCALE),
-				(int) (insets.bottom * SCALE), (int) (insets.right * SCALE)));
-		return button;
+		return GuiUtils.smallButton(text);
 	}
 
 	protected static String getColorString(final Color color) {

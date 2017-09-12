@@ -50,6 +50,7 @@ import javax.swing.SwingUtilities;
 
 import ij.IJ;
 import ij.io.SaveDialog;
+import tracing.gui.GuiUtils;
 
 @SuppressWarnings("serial")
 public class FillWindow extends JFrame
@@ -234,13 +235,13 @@ public class FillWindow extends JFrame
 			fillingOptionsPanel.add(maxThreshold, cf);
 			++cf.gridy;
 
-			setThreshold = SNT.smallButton("Set");
+			setThreshold = GuiUtils.smallButton("Set");
 			setThreshold.addActionListener(this);
 			cf.gridx = 1;
 			cf.gridwidth = 1;
 			cf.fill = GridBagConstraints.NONE;
 			fillingOptionsPanel.add(setThreshold, cf);
-			setMaxThreshold = SNT.smallButton("Set Max");
+			setMaxThreshold = GuiUtils.smallButton("Set Max");
 			setMaxThreshold.setEnabled(false);
 			setMaxThreshold.addActionListener(this);
 			cf.gridx = 2;

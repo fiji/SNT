@@ -25,6 +25,9 @@ package tracing.gui;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -41,6 +45,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
+import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 
@@ -250,10 +255,6 @@ public class GuiUtils {
 			JOptionPane.PLAIN_MESSAGE, null, null, defaultValue);
 	}
 
-	public String ctrlKey() {
-		return (PlatformUtils.isMac()) ? "CMD" : "CTRL";
-	}
-
 	private int simpleMsg(final String msg, final String title, final int type) {
 		final SwingDialog d = new SwingDialog(getLabel(msg), type, false);
 		d.setTitle(title);
@@ -267,4 +268,41 @@ public class GuiUtils {
 		return new JLabel("<html><body><div style='width:400;'>" + text);
 	}
 
+	/* Static methods */
+
+	public static String ctrlKey() {
+		return (PlatformUtils.isMac()) ? "CMD" : "CTRL";
+	}
+
+	public static GridBagConstraints singleColumnConstrains() {
+		final GridBagConstraints cp = new GridBagConstraints();
+		cp.anchor = GridBagConstraints.LINE_START;
+		cp.gridwidth = GridBagConstraints.REMAINDER;
+		cp.fill = GridBagConstraints.HORIZONTAL;
+		cp.insets = new Insets(0, 0, 0, 0);
+		cp.weightx = 1.0;
+		cp.gridx = 0;
+		cp.gridy = 0;
+		return cp;
+	}
+
+	public static Color getDisabledComponentColor() {
+		try {
+			return UIManager.getColor("CheckBox.disabledText");
+		}
+		catch (final Exception ignored) {
+			return Color.GRAY;
+		}
+	}
+
+	public static JButton smallButton(final String text) {
+		final double SCALE = .85;
+		final JButton button = new JButton(text);
+		final Font font = button.getFont();
+		button.setFont(font.deriveFont((float) (font.getSize() * SCALE)));
+		final Insets insets = button.getMargin();
+		button.setMargin(new Insets((int) (insets.top * SCALE), (int) (insets.left *
+			SCALE), (int) (insets.bottom * SCALE), (int) (insets.right * SCALE)));
+		return button;
+	}
 }

@@ -615,7 +615,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	}
 
 	private void searchHelpMsg() {
-		final String key = guiUtils.ctrlKey();
+		final String key = GuiUtils.ctrlKey();
 		final String msg = "<ol>" +
 			"<li>Search is case-insensitive. Wildcards <b>?</b> and <b>*</b> are supported.</li>" +
 			"<li>Select the <i>Highlight All</i> button or press " + key +

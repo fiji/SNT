@@ -27,8 +27,6 @@ import io.scif.services.DatasetIOService;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -44,26 +42,21 @@ import net.imagej.Dataset;
 import net.imagej.legacy.LegacyService;
 
 import org.scijava.Context;
-import org.scijava.Contextual;
 import org.scijava.NullContextException;
 import org.scijava.app.StatusService;
 import org.scijava.convert.ConvertService;
-import org.scijava.io.DataHandleService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
-import org.scijava.ui.UIService;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Point3f;
 
 import amira.AmiraMeshDecoder;
 import amira.AmiraParameters;
-import client.ArchiveClient;
 import features.ComputeCurvatures;
 import features.GaussianGenerationCallback;
 import features.SigmaPalette;
 import features.TubenessProcessor;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
@@ -78,7 +71,6 @@ import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij3d.Content;
-import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
 import stacks.ThreePanes;
 import tracing.gui.GuiUtils;
@@ -253,11 +245,10 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		 */
 		pathAndFillManager.addPathAndFillListener(this);
 
-
-
 		loadData();
 
-		final QueueJumpingKeyListener xy_listener = new QueueJumpingKeyListener(this, xy_tracer_canvas);
+		final QueueJumpingKeyListener xy_listener = new QueueJumpingKeyListener(
+			this, xy_tracer_canvas);
 		setAsFirstKeyListener(xy_tracer_canvas, xy_listener);
 		setAsFirstKeyListener(xy_window, xy_listener);
 
@@ -266,11 +257,13 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			xz.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
 			zy.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
 
-			final QueueJumpingKeyListener xz_listener = new QueueJumpingKeyListener(this, xz_tracer_canvas);
+			final QueueJumpingKeyListener xz_listener = new QueueJumpingKeyListener(
+				this, xz_tracer_canvas);
 			setAsFirstKeyListener(xz_tracer_canvas, xz_listener);
 			setAsFirstKeyListener(xz_window, xz_listener);
 
-			final QueueJumpingKeyListener zy_listener = new QueueJumpingKeyListener(this, zy_tracer_canvas);
+			final QueueJumpingKeyListener zy_listener = new QueueJumpingKeyListener(
+				this, zy_tracer_canvas);
 			setAsFirstKeyListener(zy_tracer_canvas, zy_listener);
 			setAsFirstKeyListener(zy_window, zy_listener);
 
@@ -617,8 +610,9 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			final String path = possibleLoadFile.getPath();
 
 			if (possibleLoadFile.exists()) {
-				if (guiUtils.getConfirmation(
-					"Load the default labels file?\n(" + path + ")", "Load Labels?")) {
+				if (guiUtils.getConfirmation("Load the default labels file?\n(" + path +
+					")", "Load Labels?"))
+				{
 					loadLabelsFile(path);
 					return;
 				}
@@ -1454,7 +1448,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	 * @file The file containing the "tubeness" image (typically named
 	 *       {@code <image-basename>.tubes.tif}
 	 **/
-	public void setTubenessFile(File file) {
+	public void setTubenessFile(final File file) {
 		tubenessFile = file;
 	}
 
@@ -1557,23 +1551,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	 * pathAndFillManager.uploadTracings( archiveClient ); if( result )
 	 * unsavedPaths = false; }
 	 */
-
-	public static boolean haveJava3D() {
-		final ClassLoader loader = IJ.getClassLoader();
-		if (loader == null) throw new RuntimeException(
-			"IJ.getClassLoader() failed (!)");
-		try {
-			final Class<?> c = loader.loadClass("ij3d.ImageWindow3D");
-			/*
-			 * In fact the documentation says that this should throw an
-			 * exception and not return null, but just in case:
-			 */
-			return c != null;
-		}
-		catch (final Exception e) {
-			return false;
-		}
-	}
 
 	public void showCorrespondencesTo(final File tracesFile, final Color c,
 		final double maxDistance)
@@ -2010,7 +1987,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		autoCanvasActivation = enable;
 	}
 
-	//TODO: Use prefsService
+	// TODO: Use prefsService
 	protected boolean drawDiametersXY = Prefs.get(
 		"tracing.Simple_Neurite_Tracer.drawDiametersXY", "false").equals("true");
 

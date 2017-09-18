@@ -291,32 +291,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 		checkForColorImageChange();
 	}
 
-	public static boolean similarCalibrations(final Calibration a, final Calibration b) {
-		double ax = 1, ay = 1, az = 1;
-		double bx = 1, by = 1, bz = 1;
-		if (a != null) {
-			ax = a.pixelWidth;
-			ay = a.pixelHeight;
-			az = a.pixelDepth;
-		}
-		if (b != null) {
-			bx = b.pixelWidth;
-			by = b.pixelHeight;
-			bz = b.pixelDepth;
-		}
-		final double pixelWidthDifference = Math.abs(ax - bx);
-		final double pixelHeightDifference = Math.abs(ay - by);
-		final double pixelDepthDifference = Math.abs(az - bz);
-		final double epsilon = 0.000001;
-		if (pixelWidthDifference > epsilon)
-			return false;
-		if (pixelHeightDifference > epsilon)
-			return false;
-		if (pixelDepthDifference > epsilon)
-			return false;
-		return true;
-	}
-
 	synchronized protected void checkForColorImageChange() {
 		final String selectedTitle = (String) colorImageChoice.getSelectedItem();
 
@@ -329,11 +303,12 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 			if (intendedColorImage != null) {
 				final ImagePlus image = plugin.getImagePlus();
 				final Calibration calibration = plugin.getImagePlus().getCalibration();
-				final Calibration colorImageCalibration = intendedColorImage.getCalibration();
-				if (!similarCalibrations(calibration, colorImageCalibration)) {
-					SNT.error("Warning: the calibration of '" + intendedColorImage.getTitle()
-							+ "' is different from the image you're tracing ('" + image.getTitle()
-							+ "')'\nThis may produce unexpected results.");
+				final Calibration colorImageCalibration = intendedColorImage
+					.getCalibration();
+				if (!SNT.similarCalibrations(calibration, colorImageCalibration)) {
+					SNT.error("Warning: the calibration of '" + intendedColorImage
+						.getTitle() + "' is different from the image you're tracing ('" +
+						image.getTitle() + "')'\nThis may produce unexpected results.");
 				}
 				if (!(intendedColorImage.getWidth() == image.getWidth()
 						&& intendedColorImage.getHeight() == image.getHeight()

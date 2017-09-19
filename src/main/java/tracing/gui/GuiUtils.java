@@ -204,6 +204,7 @@ public class GuiUtils {
 		final JDialog dialog = JColorChooser.createDialog(parent, title, true,
 			chooser, ok, null);
 		dialog.setVisible(true);
+		dialog.toFront();
 		return ok.getColor();
 	}
 

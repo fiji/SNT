@@ -150,12 +150,16 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	protected String spacing_units = "";
 	protected boolean setupTrace = false;
 
+	protected int channel =1;
+	protected int frame =1;
+
 	protected byte[][] slices_data_b;
 	protected short[][] slices_data_s;
 	protected float[][] slices_data_f;
 	volatile protected float stackMax = Float.MIN_VALUE;
 	volatile protected float stackMin = Float.MAX_VALUE;
 
+	
 	/*
 	 * For the original file info - needed for loading the corresponding labels
 	 * file and checking if a "tubes.tif" file already exists:
@@ -204,8 +208,9 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		width = sourceImage.getWidth();
 		height = sourceImage.getHeight();
-		depth = sourceImage.getStackSize();
+		depth = sourceImage.getNSlices();
 		imageType = sourceImage.getType();
+		singleSlice = depth == 1;
 
 		final Calibration calibration = sourceImage.getCalibration();
 		if (calibration != null) {
@@ -279,14 +284,14 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			case ImagePlus.COLOR_256:
 				slices_data_b = new byte[depth][];
 				for (int z = 0; z < depth; ++z)
-					slices_data_b[z] = (byte[]) s.getPixels(z + 1);
+					slices_data_b[z] = (byte[]) s.getPixels(xy.getStackIndex(channel, z+1, frame));
 				stackMin = 0;
 				stackMax = 255;
 				break;
 			case ImagePlus.GRAY16:
 				slices_data_s = new short[depth][];
 				for (int z = 0; z < depth; ++z)
-					slices_data_s[z] = (short[]) s.getPixels(z + 1);
+					slices_data_s[z] = (short[]) s.getPixels(xy.getStackIndex(channel, z+1, frame));
 				statusService.showStatus("Finding stack minimum / maximum");
 				for (int z = 0; z < depth; ++z) {
 					for (int y = 0; y < height; ++y)
@@ -302,7 +307,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			case ImagePlus.GRAY32:
 				slices_data_f = new float[depth][];
 				for (int z = 0; z < depth; ++z)
-					slices_data_f[z] = (float[]) s.getPixels(z + 1);
+					slices_data_f[z] = (float[]) s.getPixels(xy.getStackIndex(channel, z+1, frame));
 				statusService.showStatus("Finding stack minimum / maximum");
 				for (int z = 0; z < depth; ++z) {
 					for (int y = 0; y < height; ++y)
@@ -573,7 +578,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		final ImagePlus labels = new ImagePlus("Label file for Tracer", stack);
 
 		if ((labels.getWidth() != width) || (labels.getHeight() != height) ||
-			(labels.getStackSize() != depth))
+			(labels.getNSlices() != depth))
 		{
 			guiUtils.error(
 				"The size of that labels file doesn't match the size of the image you're tracing.");
@@ -588,7 +593,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		labelData = new byte[depth][];
 		for (int z = 0; z < depth; ++z) {
-			labelData[z] = (byte[]) stack.getPixels(z + 1);
+			labelData[z] = (byte[]) stack.getPixels(xy.getStackIndex(channel, z+1, frame));
 		}
 
 	}
@@ -1328,7 +1333,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		final int originalWidth = xy.getWidth();
 		final int originalHeight = xy.getHeight();
-		final int originalDepth = xy.getStackSize();
+		final int originalDepth = xy.getNSlices();
 
 		if (x_min < 0) x_min = 0;
 		if (y_min < 0) y_min = 0;
@@ -1476,7 +1481,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		// TODO: extract values without IJ1: Rewrite method for ImgLib
 		final ImagePlus tubesImp = convertService.convert(ds, ImagePlus.class);
-		final int depth = tubesImp.getStackSize();
+		final int depth = tubesImp.getNSlices();
 		final ImageStack stack = tubesImp.getStack();
 		tubeness = new float[depth][];
 		for (int z = 0; z < depth; ++z) {
@@ -1926,7 +1931,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			allImages.add(zy);
 		}
 		for (final ImagePlus imagePlus : allImages) {
-			if (imagePlus == null || imagePlus.getImageStackSize() == 1) continue;
+			if (imagePlus == null || imagePlus.getNSlices() == 1) continue;
 			Overlay overlayList = imagePlus.getOverlay();
 			if (show) {
 

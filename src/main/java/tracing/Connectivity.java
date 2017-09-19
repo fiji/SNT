@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.PriorityQueue;
 
+@Deprecated
 class PathWithLength {
 
 	public double length;
@@ -33,6 +34,7 @@ class PathWithLength {
 
 }
 
+@Deprecated
 public class Connectivity {
 
 	ArrayList<GraphNode> allNodes;

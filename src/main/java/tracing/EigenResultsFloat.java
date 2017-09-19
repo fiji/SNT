@@ -23,6 +23,7 @@
 
 package tracing;
 
+@Deprecated
 public class EigenResultsFloat {
 
 	public float[] sortedValues;

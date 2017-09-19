@@ -36,16 +36,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JSpinner.DefaultEditor;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.UIManager;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 
@@ -268,13 +276,46 @@ public class GuiUtils {
 		return new JLabel("<html><body><div style='width:400;'>" + text);
 	}
 
+	public void blinkingError(final JComponent blinkingComponent,
+		final String msg)
+	{
+		final Timer blinkTimer = new Timer(500, new ActionListener() {
+
+			private int count = 0;
+			private final int maxCount = 6;
+			private boolean on = false;
+			private final Border prevBorder = blinkingComponent.getBorder();
+			private final Border flashBorder = BorderFactory.createLineBorder(
+				Color.RED, 2);
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				if (count >= maxCount) {
+					blinkingComponent.setBorder(prevBorder);
+					((Timer) e.getSource()).stop();
+				}
+				else {
+					blinkingComponent.setBorder(on ? flashBorder : prevBorder);
+					on = !on;
+					count++;
+				}
+			}
+		});
+		blinkTimer.start();
+		error(msg, "Ongoing Operation");
+	}
+
 	/* Static methods */
 
 	public static String ctrlKey() {
 		return (PlatformUtils.isMac()) ? "CMD" : "CTRL";
 	}
 
-	public static GridBagConstraints singleColumnConstrains() {
+	public static String modKey() {
+		return (PlatformUtils.isMac()) ? "ALT" : "CTRL";
+	}
+
+	public static GridBagConstraints defaultGbc() {
 		final GridBagConstraints cp = new GridBagConstraints();
 		cp.anchor = GridBagConstraints.LINE_START;
 		cp.gridwidth = GridBagConstraints.REMAINDER;
@@ -305,4 +346,18 @@ public class GuiUtils {
 			SCALE), (int) (insets.bottom * SCALE), (int) (insets.right * SCALE)));
 		return button;
 	}
+
+	public static JSpinner integerSpinner(final int value, final int min,
+		final int max, final int step)
+	{
+		final int maxDigits = Integer.toString(max).length();
+		final SpinnerModel model = new SpinnerNumberModel(value, min, max, step);
+		final JSpinner spinner = new JSpinner(model);
+		final JFormattedTextField textfield = ((DefaultEditor) spinner.getEditor())
+			.getTextField();
+		textfield.setColumns(maxDigits);
+		textfield.setEditable(false);
+		return spinner;
+	}
+
 }

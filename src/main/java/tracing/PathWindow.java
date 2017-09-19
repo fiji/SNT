@@ -123,7 +123,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		final SimpleNeuriteTracer plugin, final int x, final int y)
 	{
 
-		super("All Paths");
+		super("Path Manager");
 		guiUtils = new GuiUtils(this);
 		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;

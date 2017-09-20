@@ -132,7 +132,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JLabel statusText;
 	private JButton keepSegment;
 	private JButton junkSegment;
-	protected JButton cancelSearch;
+	protected JButton abortButton;
 	private JButton completePath;
 	private JButton cancelPath;
 
@@ -466,7 +466,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		loadLabelsMenuItem.setEnabled(false);
 		keepSegment.setEnabled(false);
 		junkSegment.setEnabled(false);
-		cancelSearch.setEnabled(false);
+		abortButton.setEnabled(false);
 		completePath.setEnabled(false);
 		cancelPath.setEnabled(false);
 		editSigma.setEnabled(false);
@@ -527,7 +527,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						updateStatusText(
 							"Now select a point further along that structure...");
 						disableEverything();
-						cancelSearch.setEnabled(false);
+						abortButton.setEnabled(false);
 						keepSegment.setEnabled(false);
 						junkSegment.setEnabled(false);
 						if (plugin.justFirstPoint()) completePath.setEnabled(false);
@@ -543,7 +543,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case SEARCHING:
 						updateStatusText("Searching for path between points...");
 						disableEverything();
-						cancelSearch.setEnabled(true);
+						abortButton.setEnabled(true);
 						keepSegment.setEnabled(false);
 						junkSegment.setEnabled(false);
 						completePath.setEnabled(false);
@@ -560,7 +560,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						disableEverything();
 						keepSegment.setEnabled(true);
 						junkSegment.setEnabled(true);
-						cancelSearch.setEnabled(false);
+						abortButton.setEnabled(false);
 						keepSegment.setEnabled(true);
 						junkSegment.setEnabled(true);
 						break;
@@ -579,7 +579,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case CALCULATING_GAUSSIAN:
 						updateStatusText("Calculating Gaussian...");
 						disableEverything();
-						cancelSearch.setEnabled(true);
+						abortButton.setEnabled(true);
 						keepSegment.setEnabled(false);
 						junkSegment.setEnabled(false);
 						break;
@@ -587,6 +587,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case WAITING_FOR_SIGMA_POINT:
 						updateStatusText("Click on a neuron in the image");
 						disableEverything();
+						abortButton.setEnabled(true);
 						break;
 
 					case WAITING_FOR_SIGMA_CHOICE:
@@ -824,11 +825,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		cancelPath.setMargin(new Insets(0, 0, 0, 0));
 		gbc.gridx = 3;
 		statusChoicesPanel.add(cancelPath, gbc);
-		cancelSearch = GuiUtils.smallButton("<html><b>Esc</b>");
-		cancelSearch.setMargin(new Insets(0, 0, 0, 0));
-		cancelSearch.addActionListener(listener);
+		abortButton = GuiUtils.smallButton("<html><b>Esc</b>");
+		abortButton.setMargin(new Insets(0, 0, 0, 0));
+		abortButton.addActionListener(listener);
 		gbc.gridx = 4;
-		statusChoicesPanel.add(cancelSearch, gbc);
+		statusChoicesPanel.add(abortButton, gbc);
 		return statusChoicesPanel;
 	}
 
@@ -1871,7 +1872,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				}
 
 			}
-			else if (source == cancelSearch) {
+			else if (source == abortButton) {
 
 				if (currentState == SEARCHING) {
 					updateStatusText("Cancelling path search...");
@@ -1881,8 +1882,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					updateStatusText("Cancelling Gaussian generation...");
 					plugin.cancelGaussian();
 				}
+				else if (currentState == WAITING_FOR_SIGMA_POINT) {
+					updateStatusText("Cancelling sigma adjustment...");
+					changeState(preSigmaPaletteState);
+				}
 				else {
-					SNT.error("BUG! (wrong state for cancelling...)");
+					SNT.error("BUG: Wrong state for aborting operation...");
 				}
 
 			}

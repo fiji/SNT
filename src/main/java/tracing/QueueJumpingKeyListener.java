@@ -73,7 +73,7 @@ public class QueueJumpingKeyListener implements KeyListener {
 		} else if (keyCode == KeyEvent.VK_ESCAPE) {
 
 			// if (verbose) SNT.log( "Yes, running cancelSearch+" );
-			tracerPlugin.resultsDialog.cancelSearch.doClick();
+			tracerPlugin.resultsDialog.abortButton.doClick();
 			e.consume();
 
 		} else if (keyChar == 'n' || keyChar == 'N') {

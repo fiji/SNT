@@ -76,7 +76,7 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 
 				} else if (keyCode == KeyEvent.VK_ESCAPE) {
 
-					tracerPlugin.resultsDialog.cancelSearch.doClick();
+					tracerPlugin.resultsDialog.abortButton.doClick();
 					e.consume();
 
 				} else if (keyChar == 'n' || keyChar == 'N') {

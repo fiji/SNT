@@ -134,7 +134,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JButton junkSegment;
 	protected JButton abortButton;
 	private JButton completePath;
-	private JButton cancelPath;
 
 	private volatile int currentState;
 	private volatile double currentSigma;
@@ -820,12 +819,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		completePath.setMargin(new Insets(0, 0, 0, 0));
 		gbc.gridx = 2;
 		statusChoicesPanel.add(completePath, gbc);
-		cancelPath = GuiUtils.smallButton("<html><b>C</b>ancel");
-		cancelPath.addActionListener(listener);
-		cancelPath.setMargin(new Insets(0, 0, 0, 0));
 		gbc.gridx = 3;
-		statusChoicesPanel.add(cancelPath, gbc);
-		abortButton = GuiUtils.smallButton("<html><b>Esc</b>");
+		abortButton = GuiUtils.smallButton("<html><b>C</b>ancel");
+		//abortButton.setToolTipText("<html>Shortcuts: <tt>ESC </tt> or <tt>C</tt>");
 		abortButton.setMargin(new Insets(0, 0, 0, 0));
 		abortButton.addActionListener(listener);
 		gbc.gridx = 4;
@@ -1886,10 +1882,15 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					updateStatusText("Cancelling sigma adjustment...");
 					changeState(preSigmaPaletteState);
 				}
-				else {
+				else if (currentState == PARTIAL_PATH) {
+					plugin.cancelPath();
+				} 
+				else if (currentState == QUERY_KEEP) {
+					plugin.cancelTemporary();
+				}
+				else if (currentState != WAITING_TO_START_PATH){
 					SNT.error("BUG: Wrong state for aborting operation...");
 				}
-
 			}
 			else if (source == keepSegment) {
 

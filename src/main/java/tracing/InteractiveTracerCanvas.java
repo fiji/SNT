@@ -36,7 +36,7 @@ import stacks.ThreePanes;
 @SuppressWarnings("serial")
 public class InteractiveTracerCanvas extends TracerCanvas {
 
-	static final boolean verbose = SimpleNeuriteTracer.verbose;
+	static final boolean verbose = SNT.isDebugMode();
 
 	boolean fillTransparent = false;
 

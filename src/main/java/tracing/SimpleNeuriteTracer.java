@@ -103,10 +103,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 	protected static boolean verbose = false; // FIXME: Use prefservice
 
-	protected static final int DISPLAY_PATHS_SURFACE = 1;
-	protected static final int DISPLAY_PATHS_LINES = 2;
-	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
-
 	protected static final int MIN_SNAP_CURSOR_WINDOW_XY = 2;
 	protected static final int MIN_SNAP_CURSOR_WINDOW_Z = 0;
 	protected static final int MAX_SNAP_CURSOR_WINDOW_XY = 20;
@@ -122,13 +118,17 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	protected Image3DUniverse univ;
 	protected Content imageContent;
 	protected boolean use3DViewer;
-	protected boolean useCompressedXML;
-
-	volatile protected boolean unsavedPaths = false;
-	volatile protected boolean autoCanvasActivation;
-	volatile protected boolean snapCursor;
+	
+	/* UI preferences */
+	protected boolean useCompressedXML = true;
+	volatile protected boolean confirmSegments = true;
+	volatile protected boolean confirmOnFinish; // TODO: implement
 	volatile protected int cursorSnapWindowXY;
 	volatile protected int cursorSnapWindowZ;
+	volatile protected boolean autoCanvasActivation;
+	volatile protected boolean snapCursor;
+
+	volatile protected boolean unsavedPaths = false;
 
 	/*
 	 * Just for convenience, keep casted references to the superclass's
@@ -139,7 +139,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	protected InteractiveTracerCanvas zy_tracer_canvas;
 
 	private final ImagePlus sourceImage;
-	private final File tracesFile;
 
 	protected int width, height, depth;
 	protected int imageType = -1;
@@ -150,8 +149,8 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	protected String spacing_units = "";
 	protected boolean setupTrace = false;
 
-	protected int channel =1;
-	protected int frame =1;
+	protected int channel;
+	protected int frame;
 
 	protected byte[][] slices_data_b;
 	protected short[][] slices_data_s;
@@ -194,9 +193,12 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	/* GUI */
 	protected NeuriteTracerResultsDialog resultsDialog;
 
-	public SimpleNeuriteTracer(final Context context, final ImagePlus sourceImage,
-		final File tracesFile)
-	{
+	/* Deprecated */
+	protected static final int DISPLAY_PATHS_SURFACE = 1;
+	protected static final int DISPLAY_PATHS_LINES = 2;
+	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
+
+	public SimpleNeuriteTracer(final Context context, final ImagePlus sourceImage) {
 
 		if (context == null) throw new NullContextException();
 		if (sourceImage == null) throw new IllegalArgumentException(
@@ -204,7 +206,6 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		context.inject(this);
 		this.sourceImage = sourceImage;
-		this.tracesFile = tracesFile;
 
 		width = sourceImage.getWidth();
 		height = sourceImage.getHeight();
@@ -226,8 +227,9 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 				"One dimension of the calibration information was zero: (" + x_spacing +
 					"," + y_spacing + "," + z_spacing + ")");
 		}
-		guiUtils = new GuiUtils(legacyService.getIJ1Helper().getIJ());
+
 		pathAndFillManager = new PathAndFillManager(this);
+		guiUtils = new GuiUtils(legacyService.getIJ1Helper().getIJ());
 		prefs = new SNTPrefs(this);
 		prefs.loadPluginPrefs();
 
@@ -341,13 +343,17 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 				@Override
 				public NeuriteTracerResultsDialog call() {
 					return new NeuriteTracerResultsDialog("Tracing for: " + xy
-						.getShortTitle(), thisPlugin, false);
+						.getShortTitle(), thisPlugin);
 				}
 			});
 		resultsDialog.displayOnStarting();
-		if (tracesFile.exists()) {
+	}
+
+	public void loadTracings(File file) {
+		if (resultsDialog == null) throw new IllegalArgumentException("UI has not been started");
+		if (file != null && file.exists()) {
 			resultsDialog.changeState(NeuriteTracerResultsDialog.LOADING);
-			pathAndFillManager.loadGuessingType(tracesFile.getAbsolutePath());
+			pathAndFillManager.loadGuessingType(file.getAbsolutePath());
 			resultsDialog.changeState(
 				NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 		}
@@ -930,7 +936,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			statusService.showStatus(
 
 				"No initial start point has been set.  Do that with a mouse click." +
-					" (Or a Shift-" + guiUtils.ctrlKey() +
+					" (Or a Shift-" + GuiUtils.ctrlKey() +
 					"-click if the start of the path should join another neurite.");
 			return;
 		}
@@ -1045,7 +1051,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		if (!lastStartPointSet) {
 			guiUtils.error(
 				"No initial start point has been set yet.  Do that with a mouse click or\na Shift+" +
-					guiUtils.ctrlKey() +
+					GuiUtils.ctrlKey() +
 					"-click if the start of the path should join another neurite.");
 			return;
 		}
@@ -1360,7 +1366,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE);
 
 		final SigmaPalette sp = new SigmaPalette();
-		sp.setListener(resultsDialog);
+		sp.setListener(resultsDialog.listener);
 		sp.makePalette(xy, x_min, x_max, y_min, y_max, z_min, z_max,
 			new TubenessProcessor(true), sigmas, 256 / resultsDialog.getMultiplier(),
 			3, 3, z);
@@ -1453,7 +1459,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	}
 
 	private File tubenessFile;
-	private float[][] tubeness;
+	protected float[][] tubeness;
 
 	/**
 	 * Specifies the "tubeness" image to be used during a tracing session.
@@ -1565,6 +1571,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	 * unsavedPaths = false; }
 	 */
 
+	@Deprecated
 	public void showCorrespondencesTo(final File tracesFile, final Color c,
 		final double maxDistance)
 	{
@@ -1678,8 +1685,8 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		return single_pane;
 	}
 
-	protected void setSinglePane(final boolean single_pane) {
-		this.single_pane = single_pane;
+	public void setSinglePane(final boolean single_pane) {
+		this.single_pane = single_pane || singleSlice;
 	}
 
 	public boolean getShowOnlySelectedPaths() {
@@ -1945,6 +1952,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 			if (show) {
 
 				// Create a MIP project of the stack:
+				//TODO: check this works with hyperstacks
 				final ZProjector zp = new ZProjector();
 				zp.setImage(imagePlus);
 				zp.setMethod(ZProjector.MAX_METHOD);

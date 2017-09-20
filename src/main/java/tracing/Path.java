@@ -77,7 +77,7 @@ public class Path implements Comparable<Path> {
 		this.id = id;
 	}
 
-	static final boolean verbose = SimpleNeuriteTracer.verbose;
+	static final boolean verbose = SNT.isDebugMode();
 
 	boolean selected;
 
@@ -2328,6 +2328,7 @@ public class Path implements Comparable<Path> {
 		addTo3DViewer(univ, new Color3f(c), colorImage);
 	}
 
+	@Deprecated
 	synchronized public void addTo3DViewer(final Image3DUniverse univ, final Color3f c, final ImagePlus colorImage) {
 		if (c == null)
 			throw new RuntimeException("In addTo3DViewer, Color3f can no longer be null");

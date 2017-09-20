@@ -41,7 +41,7 @@ import stacks.ThreePanes;
 
 public abstract class SearchThread extends Thread implements SearchInterface {
 
-	boolean verbose = SimpleNeuriteTracer.verbose;
+	boolean verbose = SNT.isDebugMode();
 
 	public static final byte OPEN_FROM_START = 1;
 	public static final byte CLOSED_FROM_START = 2;

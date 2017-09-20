@@ -36,7 +36,7 @@ import ij.process.ShortProcessor;
 
 public class FillerThread extends SearchThread {
 
-	static final boolean verbose = SimpleNeuriteTracer.verbose;
+	static final boolean verbose = SNT.isDebugMode();
 
 	/*
 	 * You should synchronize on this object if you want to rely on the pause

@@ -337,10 +337,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		});
 	}
 
-	public JFrame getFrame() {
-		return this;
-	}
-
 	public void fitPaths(final List<PathFitter> pathsToFit) {
 
 		final int numberOfPathsToFit = pathsToFit.size();

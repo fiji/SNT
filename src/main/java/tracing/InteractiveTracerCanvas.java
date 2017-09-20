@@ -218,7 +218,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_POINT) {
 
-			tracerPlugin.launchPaletteAround(myOffScreenX(e.getX()), myOffScreenY(e.getY()), imp.getCurrentSlice() - 1);
+			tracerPlugin.launchPaletteAround(myOffScreenX(e.getX()), myOffScreenY(e.getY()), imp.getZ() - 1);
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE) {
 
@@ -273,7 +273,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			return;
 
 		final boolean drawDiametersXY = tracerPlugin.getDrawDiametersXY();
-		final int sliceZeroIndexed = imp.getCurrentSlice() - 1;
+		final int sliceZeroIndexed = imp.getZ() - 1;
 		int eitherSideParameter = eitherSide;
 		if (!just_near_slices)
 			eitherSideParameter = -1;

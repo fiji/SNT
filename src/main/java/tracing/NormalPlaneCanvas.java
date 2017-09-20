@@ -119,7 +119,7 @@ class NormalPlaneCanvas extends ImageCanvas {
 	// think
 	protected void drawOverlay(final Graphics g) {
 
-		final int z = imp.getCurrentSlice() - 1;
+		final int z = imp.getZ() - 1;
 
 		if (z != last_slice) {
 			final Integer fittedIndex = indexToValidIndex.get(z);

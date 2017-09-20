@@ -117,10 +117,10 @@ public class TracerCanvas extends ThreePanesCanvas {
 		 * int current_z = -1;
 		 *
 		 * if( plane == ThreePanes.XY_PLANE ) { current_z =
-		 * imp.getCurrentSlice() - 1; }
+		 * imp.getZ() - 1; }
 		 */
 
-		final int current_z = imp.getCurrentSlice() - 1;
+		final int current_z = imp.getZ() - 1;
 
 		synchronized (searchThreads) {
 			for (final SearchInterface st : searchThreads)

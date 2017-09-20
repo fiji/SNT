@@ -230,11 +230,13 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		pathAndFillManager = new PathAndFillManager(this);
 		prefs = new SNTPrefs(this);
 		prefs.loadPluginPrefs();
-		initialize();
+
 	}
 
-	public void initialize() {
-
+	public void initialize(boolean singlePane, int channel, int frame) {
+		this.channel = channel;
+		this.frame = frame;
+		setSinglePane(singlePane);
 		final Overlay sourceImageOverlay = sourceImage.getOverlay();
 		initialize(sourceImage);
 		xy.setOverlay(sourceImageOverlay);
@@ -275,6 +277,13 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		}
 
+	}
+
+	public void reloadImage(int channel, int frame) {
+		if (!setupTrace) throw new IllegalArgumentException("SNT has not yet been initialized");
+		this.channel = channel;
+		this.frame = frame;
+		loadData();
 	}
 
 	private void loadData() {
@@ -1291,9 +1300,9 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 	public void setPositionAllPanes(final int x, final int y, final int z) {
 
-		xy.setSlice(z + 1);
-		zy.setSlice(x);
-		xz.setSlice(y);
+		xy.setPosition(channel, z + 1, frame);
+		zy.setPosition(channel, x, frame);
+		xz.setPosition(channel, y, frame);
 
 	}
 
@@ -1485,7 +1494,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		final ImageStack stack = tubesImp.getStack();
 		tubeness = new float[depth][];
 		for (int z = 0; z < depth; ++z) {
-			final FloatProcessor fp = (FloatProcessor) stack.getProcessor(z + 1);
+			final FloatProcessor fp = (FloatProcessor) stack.getProcessor(xy.getStackIndex(channel, z+1, frame));
 			tubeness[z] = (float[]) fp.getPixels();
 		}
 	}

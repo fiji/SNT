@@ -90,9 +90,7 @@ import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 
 @SuppressWarnings("serial")
-public class NeuriteTracerResultsDialog extends JDialog implements
-	ActionListener, ItemListener, SigmaPalette.SigmaPaletteListener, ImageListener
-{
+public class NeuriteTracerResultsDialog extends JDialog {
 
 	public static final boolean verbose = SNT.isDebugMode();
 
@@ -141,6 +139,10 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 	private volatile int currentState;
 	private volatile double currentSigma;
 	private volatile double currentMultiplier;
+	private volatile boolean ignoreColorImageChoiceEvents = false;
+	private volatile boolean ignorePreprocessEvents = false;
+	private volatile int preGaussianState;
+	private volatile int preSigmaPaletteState;
 
 	private final SimpleNeuriteTracer plugin;
 	private final PathAndFillManager pathAndFillManager;
@@ -148,6 +150,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 	private final PathWindow pw;
 	private final FillWindow fw;
 	private final SNTPrefs prefs;
+	protected final GuiListener listener;
 
 	/* These are the states that the UI can be in: */
 	static final int WAITING_TO_START_PATH = 0;
@@ -169,8 +172,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		"CALCULATING_GAUSSIAN", "WAITING_FOR_SIGMA_POINT",
 		"WAITING_FOR_SIGMA_CHOICE", "SAVING", "LOADING", "FITTING_PATHS",
 		"IMAGE CLOSED" };
-	// private static final String SEARCHING_STRING = "Searching for path between
-	// points...";
 
 	public NeuriteTracerResultsDialog(final String title,
 		final SimpleNeuriteTracer plugin)
@@ -179,6 +180,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		super(plugin.legacyService.getIJ1Helper().getIJ(), title, false);
 		guiUtils = new GuiUtils(this);
 		this.plugin = plugin;
+		listener = new GuiListener();
 
 		assert SwingUtilities.isEventDispatchThread();
 
@@ -288,51 +290,10 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		return currentState;
 	}
 
-	// ------------------------------------------------------------------------
-	// Implementing the ImageListener interface:
-
-	@Override
-	public void imageOpened(final ImagePlus imp) {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				updateColorImageChoice();
-			}
-		});
-	}
-
-	// Called when an image is closed
-	@Override
-	public void imageClosed(final ImagePlus imp) {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				updateColorImageChoice();
-				if (plugin.getImagePlus() == imp) changeState(
-					NeuriteTracerResultsDialog.IMAGE_CLOSED);
-			}
-		});
-	}
-
-	@Override
-	public void imageUpdated(final ImagePlus imp) {
-		/*
-		 * This is called whenever ImagePlus.updateAndDraw is called - i.e.
-		 * potentially very often
-		 */
-	}
-
-	// ------------------------------------------------------------------------
-
 	protected void updateStatusText(final String newStatus) {
 		assert SwingUtilities.isEventDispatchThread();
 		statusText.setText("<html><strong>" + newStatus + "</strong></html>");
 	}
-
-	volatile boolean ignoreColorImageChoiceEvents = false;
-	volatile boolean ignorePreprocessEvents = false;
 
 	@Deprecated
 	synchronized protected void updateColorImageChoice() {
@@ -400,34 +361,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 			plugin.setColorImage(currentColorImage);
 		}
 	}
-
-	@Override
-	public void newSigmaSelected(final double sigma) {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				setSigma(sigma, false);
-			}
-		});
-	}
-
-	@Override
-	public void newMaximum(final double max) {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				final double multiplier = 256 / max;
-				setMultiplier(multiplier);
-			}
-		});
-	}
-
-	// ------------------------------------------------------------------------
-
-	volatile protected int preGaussianState;
-	volatile protected int preSigmaPaletteState;
 
 	public void gaussianCalculated(final boolean succeeded) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -873,27 +806,27 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		gbc.ipady = 0;
 		gbc.insets = new Insets(0, 0, 0, 0);
 		keepSegment = GuiUtils.smallButton("<html><b>Y</b>es");
-		keepSegment.addActionListener(this);
+		keepSegment.addActionListener(listener);
 		keepSegment.setMargin(new Insets(0, 0, 0, 0));
 		statusChoicesPanel.add(keepSegment, gbc);
 		junkSegment = GuiUtils.smallButton("<html><b>N</b>o");
 		junkSegment.setMargin(new Insets(0, 0, 0, 0));
-		junkSegment.addActionListener(this);
+		junkSegment.addActionListener(listener);
 		gbc.gridx = 1;
 		statusChoicesPanel.add(junkSegment, gbc);
 		completePath = GuiUtils.smallButton("<html><b>F</b>inish");
-		completePath.addActionListener(this);
+		completePath.addActionListener(listener);
 		completePath.setMargin(new Insets(0, 0, 0, 0));
 		gbc.gridx = 2;
 		statusChoicesPanel.add(completePath, gbc);
 		cancelPath = GuiUtils.smallButton("<html><b>C</b>ancel");
-		cancelPath.addActionListener(this);
+		cancelPath.addActionListener(listener);
 		cancelPath.setMargin(new Insets(0, 0, 0, 0));
 		gbc.gridx = 3;
 		statusChoicesPanel.add(cancelPath, gbc);
 		cancelSearch = GuiUtils.smallButton("<html><b>Esc</b>");
 		cancelSearch.setMargin(new Insets(0, 0, 0, 0));
-		cancelSearch.addActionListener(this);
+		cancelSearch.addActionListener(listener);
 		gbc.gridx = 4;
 		statusChoicesPanel.add(cancelSearch, gbc);
 		return statusChoicesPanel;
@@ -930,7 +863,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		filteringOptionsPanel.add(filterChoice, oop_f);
 
 		displayFiltered = new JCheckBox("Display filter image");
-		displayFiltered.addItemListener(this);
+		displayFiltered.addItemListener(listener);
 		++oop_f.gridy;
 		filteringOptionsPanel.add(displayFiltered, oop_f);
 		return filteringOptionsPanel;
@@ -947,21 +880,21 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		menuBar.add(helpMenu());
 
 		loadMenuItem = new JMenuItem("Load Traces / (e)SWC File...");
-		loadMenuItem.addActionListener(this);
+		loadMenuItem.addActionListener(listener);
 		fileMenu.add(loadMenuItem);
 		loadLabelsMenuItem = new JMenuItem("Load Labels (AmiraMesh) File...");
-		loadLabelsMenuItem.addActionListener(this);
+		loadLabelsMenuItem.addActionListener(listener);
 		fileMenu.add(loadLabelsMenuItem);
 		fileMenu.addSeparator();
 		saveMenuItem = new JMenuItem("Save Traces File...");
-		saveMenuItem.addActionListener(this);
+		saveMenuItem.addActionListener(listener);
 		fileMenu.add(saveMenuItem);
 		exportAllSWCMenuItem = new JMenuItem("Save All Paths as SWC...");
-		exportAllSWCMenuItem.addActionListener(this);
+		exportAllSWCMenuItem.addActionListener(listener);
 		fileMenu.add(exportAllSWCMenuItem);
 		fileMenu.addSeparator();
 		exportCSVMenuItem = new JMenuItem("Export Path Properties...");
-		exportCSVMenuItem.addActionListener(this);
+		exportCSVMenuItem.addActionListener(listener);
 		fileMenu.add(exportCSVMenuItem);
 		sendToTrakEM2 = new JMenuItem("Send to TrakEM2");
 		sendToTrakEM2.addActionListener(new ActionListener() {
@@ -974,19 +907,19 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		fileMenu.add(sendToTrakEM2);
 		fileMenu.addSeparator();
 		quitMenuItem = new JMenuItem("Quit");
-		quitMenuItem.addActionListener(this);
+		quitMenuItem.addActionListener(listener);
 		fileMenu.add(quitMenuItem);
 
 		pathsToROIsMenuItem = new JMenuItem("Convert Paths to ROIs...");
-		pathsToROIsMenuItem.addActionListener(this);
+		pathsToROIsMenuItem.addActionListener(listener);
 		analysisMenu.add(pathsToROIsMenuItem);
 		analysisMenu.addSeparator();
 		exportCSVMenuItemAgain = new JMenuItem("Measure Paths...");
-		exportCSVMenuItemAgain.addActionListener(this);
+		exportCSVMenuItemAgain.addActionListener(listener);
 		analysisMenu.add(exportCSVMenuItemAgain);
 		makeLineStackMenuItem = new JMenuItem(
 			"Render/Analyze Skeletonized Paths...");
-		makeLineStackMenuItem.addActionListener(this);
+		makeLineStackMenuItem.addActionListener(listener);
 		analysisMenu.add(makeLineStackMenuItem);
 		final JMenuItem correspondencesMenuItem = new JMenuItem(
 			"Show correspondences with file..");
@@ -1076,14 +1009,14 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 
 		justShowSelected = new JCheckBox("Show only selected paths",
 			plugin.showOnlySelectedPaths);
-		justShowSelected.addItemListener(this);
+		justShowSelected.addItemListener(listener);
 
 		++vop_c.gridy;
 		viewOptionsPanel.add(justShowSelected, vop_c);
 		viewPathChoice = new JComboBox<>();
 		viewPathChoice.addItem(projectionChoice);
 		viewPathChoice.addItem(partsNearbyChoice);
-		viewPathChoice.addItemListener(this);
+		viewPathChoice.addItemListener(listener);
 		viewPathChoice.setEnabled(isStackAvailable());
 
 		final JPanel nearbyPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING));
@@ -1140,7 +1073,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		colorButtonPanel.add(colorChooser2);
 
 		pathsColorChoice = new JComboBox<>();
-		pathsColorChoice.addItemListener(this);
+		pathsColorChoice.addItemListener(listener);
 		pathsColorChoice.addItem("Default colors");
 		pathsColorChoice.addItem("Path Manager colors");
 		pathsColorChoice.setSelectedIndex(plugin.displayCustomPathColors ? 1 : 0);
@@ -1171,7 +1104,7 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		useSnapWindow = new JCheckBox("<html>Enable <b>S</b>napping within: XY",
 			plugin.snapCursor);
 		useSnapWindow.setBorder(new EmptyBorder(0, 0, 0, 0));
-		useSnapWindow.addItemListener(this);
+		useSnapWindow.addItemListener(listener);
 		tracingOptionsPanel.add(useSnapWindow);
 
 		snapWindowXYsizeSpinner = GuiUtils.integerSpinner(
@@ -1214,17 +1147,17 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		setSigma(plugin.getMinimumSeparation(), false);
 		setMultiplier(4);
 		updateLabel();
-		preprocess.addItemListener(this);
+		preprocess.addItemListener(listener);
 		++oop_c.gridy;
 		hessianOptionsPanel.add(preprocess, oop_c);
 
 		final JPanel sigmaButtonPanel = new JPanel();
 		editSigma = GuiUtils.smallButton("Pick Sigma Manually");
-		editSigma.addActionListener(this);
+		editSigma.addActionListener(listener);
 		sigmaButtonPanel.add(editSigma);
 
 		sigmaWizard = GuiUtils.smallButton("Pick Sigma Visually");
-		sigmaWizard.addActionListener(this);
+		sigmaWizard.addActionListener(listener);
 		sigmaButtonPanel.add(sigmaWizard);
 
 		++oop_c.gridy;
@@ -1235,9 +1168,9 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 	private JPanel bottomPanel() {
 		final JPanel hideWindowsPanel = new JPanel();
 		showOrHidePathList = new JButton("Show / Hide Path List");
-		showOrHidePathList.addActionListener(this);
+		showOrHidePathList.addActionListener(listener);
 		showOrHideFillList = new JButton("Show / Hide Fill List");
-		showOrHideFillList.addActionListener(this);
+		showOrHideFillList.addActionListener(listener);
 		hideWindowsPanel.add(showOrHidePathList);
 		hideWindowsPanel.add(showOrHideFillList);
 		return hideWindowsPanel;
@@ -1291,355 +1224,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 				fw.fillStatus.setText(newStatus);
 			}
 		});
-	}
-
-	@Override
-	public void actionPerformed(final ActionEvent e) {
-		assert SwingUtilities.isEventDispatchThread();
-
-		final Object source = e.getSource();
-
-		if (source == saveMenuItem && !noPathsError()) {
-
-			final FileInfo info = plugin.file_info;
-			SaveDialog sd;
-
-			if (info == null) {
-
-				sd = new SaveDialog("Save traces as...", "image", ".traces");
-
-			}
-			else {
-
-				final String fileName = info.fileName;
-				final String directory = info.directory;
-
-				String suggestedSaveFilename;
-
-				suggestedSaveFilename = fileName;
-
-				sd = new SaveDialog("Save traces as...", directory,
-					suggestedSaveFilename, ".traces");
-			}
-
-			String savePath;
-			if (sd.getFileName() == null) {
-				return;
-			}
-			savePath = sd.getDirectory() + sd.getFileName();
-
-			final File file = new File(savePath);
-			if (file.exists()) {
-				if (!IJ.showMessageWithCancel("Save traces file...", "The file " +
-					savePath + " already exists.\n" + "Do you want to replace it?"))
-					return;
-			}
-
-			IJ.showStatus("Saving traces to " + savePath);
-
-			final int preSavingState = currentState;
-			changeState(SAVING);
-			try {
-				pathAndFillManager.writeXML(savePath, plugin.useCompressedXML);
-			}
-			catch (final IOException ioe) {
-				IJ.showStatus("Saving failed.");
-				SNT.error("Writing traces to '" + savePath + "' failed: " + ioe);
-				changeState(preSavingState);
-				return;
-			}
-			changeState(preSavingState);
-			IJ.showStatus("Saving completed.");
-
-			plugin.unsavedPaths = false;
-
-		}
-		else if (source == loadMenuItem) {
-
-			if (plugin.pathsUnsaved()) {
-				final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(),
-					"Warning",
-					"There are unsaved paths. Do you really want to load new traces?");
-
-				if (!d.yesPressed()) return;
-			}
-
-			final int preLoadingState = currentState;
-			changeState(LOADING);
-			plugin.loadTracings();
-			changeState(preLoadingState);
-
-		}
-		else if (source == exportAllSWCMenuItem && !noPathsError()) {
-
-			if (pathAndFillManager.usingNonPhysicalUnits()) {
-				final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(),
-					"Warning",
-					"These tracings were obtained from a spatially uncalibrated image.\n" +
-						"The SWC specification assumes all coordinates to be in " +
-						IJ.micronSymbol + "m.\n" +
-						"Do you really want to proceed with the SWC export?");
-				if (!d.yesPressed()) return;
-			}
-
-			final FileInfo info = plugin.file_info;
-			SaveDialog sd;
-
-			if (info == null) {
-
-				sd = new SaveDialog("Export all as SWC...", "exported", "");
-
-			}
-			else {
-
-				String suggestedFilename;
-				final int extensionIndex = info.fileName.lastIndexOf(".");
-				if (extensionIndex == -1) suggestedFilename = info.fileName;
-				else suggestedFilename = info.fileName.substring(0, extensionIndex);
-
-				sd = new SaveDialog("Export all as SWC...", info.directory,
-					suggestedFilename + "-exported", "");
-			}
-
-			String savePath;
-			if (sd.getFileName() == null) {
-				return;
-			}
-			savePath = sd.getDirectory() + sd.getFileName();
-			if (verbose) SNT.log("Got savePath: " + savePath);
-			if (!pathAndFillManager.checkOKToWriteAllAsSWC(savePath)) return;
-			pathAndFillManager.exportAllAsSWC(savePath);
-
-		}
-		else if ((source == exportCSVMenuItem ||
-			source == exportCSVMenuItemAgain) && !noPathsError())
-		{
-
-			final FileInfo info = plugin.file_info;
-			SaveDialog sd;
-
-			if (info == null) {
-
-				sd = new SaveDialog("Export Paths as CSV...", "traces", ".csv");
-
-			}
-			else {
-
-				sd = new SaveDialog("Export Paths as CSV...", info.directory,
-					info.fileName, ".csv");
-			}
-
-			String savePath;
-			if (sd.getFileName() == null) {
-				return;
-			}
-			savePath = sd.getDirectory() + sd.getFileName();
-
-			final File file = new File(savePath);
-			if (file.exists()) {
-				if (!IJ.showMessageWithCancel("Export as CSV...", "The file " +
-					savePath + " already exists.\n" + "Do you want to replace it?"))
-					return;
-			}
-
-			IJ.showStatus("Exporting as CSV to " + savePath);
-
-			final int preExportingState = currentState;
-			changeState(SAVING);
-			// Export here...
-			try {
-				pathAndFillManager.exportToCSV(file);
-				if (source == exportCSVMenuItemAgain) {
-					final ResultsTable rt = ResultsTable.open(savePath);
-					rt.show(sd.getFileName());
-				}
-			}
-			catch (final IOException ioe) {
-				IJ.showStatus("Exporting failed.");
-				SNT.error("Writing traces to '" + savePath + "' failed:\n" + ioe);
-				changeState(preExportingState);
-				return;
-			}
-			IJ.showStatus("Export complete.");
-			changeState(preExportingState);
-
-		}
-		else if (source == loadLabelsMenuItem) {
-
-			plugin.loadLabels();
-
-		}
-		else if (source == makeLineStackMenuItem && !noPathsError()) {
-
-			final SkeletonPlugin skelPlugin = new SkeletonPlugin(plugin);
-			skelPlugin.run();
-
-		}
-		else if (source == pathsToROIsMenuItem && !noPathsError()) {
-
-			if (!pathAndFillManager.anySelected()) {
-				SNT.error("No paths selected.");
-				return;
-			}
-
-			final GenericDialog gd = new GenericDialog("Selected Paths to ROIs");
-
-			final int[] PLANES_ID = { ThreePanes.XY_PLANE, ThreePanes.XZ_PLANE,
-				ThreePanes.ZY_PLANE };
-			final String[] PLANES_STRING = { "XY_View", "XZ_View", "ZY_View" };
-			final InteractiveTracerCanvas[] canvases = { plugin.xy_tracer_canvas,
-				plugin.xz_tracer_canvas, plugin.zy_tracer_canvas };
-			final boolean[] destinationPlanes = new boolean[PLANES_ID.length];
-			for (int i = 0; i < PLANES_ID.length; i++)
-				destinationPlanes[i] = canvases[i] != null && getImagePlusFromPane(
-					PLANES_ID[i]) != null;
-
-			gd.setInsets(0, 10, 0);
-			gd.addMessage("Create 2D Path-ROIs from:");
-			gd.setInsets(0, 20, 0);
-			for (int i = 0; i < PLANES_ID.length; i++)
-				gd.addCheckbox(PLANES_STRING[i], destinationPlanes[i]);
-
-			// 2D traces?
-			final Vector<?> cbxs = gd.getCheckboxes();
-			for (int i = 1; i < PLANES_ID.length; i++)
-				((Checkbox) cbxs.get(i)).setEnabled(!plugin.singleSlice);
-
-			final String[] scopes = { "ROI Manager", "Image overlay" };
-			gd.addRadioButtonGroup("Store Path-ROIs in:", scopes, 2, 1, scopes[0]);
-
-			gd.addMessage("");
-			gd.addCheckbox("Color code ROIs by SWC type", false);
-			gd.addCheckbox("Discard pre-existing ROIs in Overlay/Manager", true);
-
-			gd.showDialog();
-			if (gd.wasCanceled()) return;
-
-			for (int i = 0; i < PLANES_ID.length; i++)
-				destinationPlanes[i] = gd.getNextBoolean();
-			final String scope = gd.getNextRadioButton();
-			final boolean swcColors = gd.getNextBoolean();
-			final boolean reset = gd.getNextBoolean();
-
-			if (scopes[0].equals(scope)) { // ROI Manager
-
-				final Overlay overlay = new Overlay();
-				for (int i = 0; i < destinationPlanes.length; i++) {
-					if (destinationPlanes[i]) {
-						final int lastPlaneIdx = overlay.size() - 1;
-						plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
-						if (plugin.singleSlice) continue;
-						for (int j = lastPlaneIdx + 1; j < overlay.size(); j++) {
-							final Roi roi = overlay.get(j);
-							roi.setName(roi.getName() + " [" + PLANES_STRING[i] + "]");
-						}
-					}
-				}
-				RoiManager rm = RoiManager.getInstance2();
-				if (rm == null) rm = new RoiManager();
-				else if (reset) rm.reset();
-				Prefs.showAllSliceOnly = !plugin.singleSlice;
-				rm.setEditMode(plugin.getImagePlus(), false);
-				for (final Roi path : overlay.toArray())
-					rm.addRoi(path);
-				rm.runCommand("sort");
-				rm.setEditMode(plugin.getImagePlus(), true);
-				rm.runCommand("show all without labels");
-
-			}
-			else { // Overlay
-
-				String error = "";
-				for (int i = 0; i < destinationPlanes.length; i++) {
-					if (destinationPlanes[i]) {
-						final ImagePlus imp = getImagePlusFromPane(PLANES_ID[i]);
-						if (imp == null) {
-							error += PLANES_STRING[i] + ", ";
-							continue;
-						}
-						Overlay overlay = imp.getOverlay();
-						if (overlay == null) {
-							overlay = new Overlay();
-							imp.setOverlay(overlay);
-						}
-						else if (reset) overlay.clear();
-						plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
-					}
-				}
-				if (!error.isEmpty()) {
-					SNT.error("Some ROIs were skipped because some images (" + error
-						.substring(0, error.length() - 2) +
-						") are no longer available.\nPlease consider exporting to the ROI Manager instead.");
-				}
-			}
-
-		}
-		else if (source == cancelSearch) {
-
-			if (currentState == SEARCHING) {
-				updateStatusText("Cancelling path search...");
-				plugin.cancelSearch(false);
-			}
-			else if (currentState == CALCULATING_GAUSSIAN) {
-				updateStatusText("Cancelling Gaussian generation...");
-				plugin.cancelGaussian();
-			}
-			else {
-				SNT.error("BUG! (wrong state for cancelling...)");
-			}
-
-		}
-		else if (source == keepSegment) {
-
-			plugin.confirmTemporary();
-
-		}
-		else if (source == junkSegment) {
-
-			plugin.cancelTemporary();
-
-		}
-		else if (source == completePath) {
-
-			plugin.finishedPath();
-
-		}
-		else if (source == cancelPath) {
-
-			plugin.cancelPath();
-
-		}
-		else if (source == quitMenuItem) {
-
-			exitRequested();
-
-		}
-		else if (source == showOrHidePathList) {
-
-			togglePathListVisibility();
-
-		}
-		else if (source == showOrHideFillList) {
-
-			toggleFillListVisibility();
-
-		}
-		else if (source == editSigma) {
-
-			setSigmaFromUser();
-
-		}
-		else if (source == sigmaWizard) {
-
-			preSigmaPaletteState = currentState;
-			changeState(WAITING_FOR_SIGMA_POINT);
-
-		}
-		else if (source == colorImageChoice) {
-
-			if (!ignoreColorImageChoiceEvents) checkForColorImageChange();
-
-		}
 	}
 
 	private void setSigmaFromUser() {
@@ -1750,18 +1334,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 		return noPaths;
 	}
 
-	@Override
-	public void sigmaPaletteClosing() {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				changeState(preSigmaPaletteState);
-				setSigma(currentSigma, true);
-			}
-		});
-	}
-
 	protected void setPathListVisible(final boolean makeVisible,
 		final boolean toFront)
 	{
@@ -1811,40 +1383,6 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 	public boolean nearbySlices() {
 		assert SwingUtilities.isEventDispatchThread();
 		return (viewPathChoice.getSelectedIndex() > 0);
-	}
-
-	@Override
-	public void itemStateChanged(final ItemEvent e) {
-		assert SwingUtilities.isEventDispatchThread();
-
-		final Object source = e.getSource();
-
-		if (source == viewPathChoice) {
-
-			plugin.justDisplayNearSlices(nearbySlices(), (int) nearbyFieldSpinner
-				.getValue());
-			nearbyFieldSpinner.setEnabled(nearbySlices());
-
-		}
-		else if (source == useSnapWindow) {
-
-			plugin.enableSnapCursor(useSnapWindow.isSelected());
-
-		}
-		else if (source == preprocess && !ignorePreprocessEvents) {
-
-			if (preprocess.isSelected()) turnOnHessian();
-			else {
-				plugin.enableHessian(false);
-				changeState(preGaussianState);
-			}
-
-		}
-		else if (source == justShowSelected) {
-
-			plugin.setShowOnlySelectedPaths(justShowSelected.isSelected());
-
-		}
 	}
 
 	private JMenu helpMenu() {
@@ -1962,6 +1500,445 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 
 	public FillWindow getFillWindow() {
 		return fw;
+	}
+
+	private class GuiListener implements ActionListener, ItemListener,
+		SigmaPalette.SigmaPaletteListener, ImageListener
+	{
+
+		/* ImageListener */
+		@Override
+		public void imageClosed(final ImagePlus imp) {
+			// updateColorImageChoice(); FIXME
+			if (plugin.getImagePlus() == imp) changeState(
+				NeuriteTracerResultsDialog.IMAGE_CLOSED);
+		}
+
+		@Override
+		public void imageOpened(final ImagePlus imp) {}
+
+		@Override
+		public void imageUpdated(final ImagePlus imp) {}
+
+		/* SigmaPaletteListener */
+		@Override
+		public void newSigmaSelected(final double sigma) {
+			SwingUtilities.invokeLater(new Runnable() {
+
+				@Override
+				public void run() {
+					setSigma(sigma, false);
+				}
+			});
+		}
+
+		@Override
+		public void newMaximum(final double max) {
+			SwingUtilities.invokeLater(new Runnable() {
+
+				@Override
+				public void run() {
+					final double multiplier = 256 / max;
+					setMultiplier(multiplier);
+				}
+			});
+		}
+
+		@Override
+		public void sigmaPaletteClosing() {
+			SwingUtilities.invokeLater(new Runnable() {
+
+				@Override
+				public void run() {
+					changeState(preSigmaPaletteState);
+					setSigma(currentSigma, true);
+				}
+			});
+		}
+
+		@Override
+		public void itemStateChanged(final ItemEvent e) {
+			assert SwingUtilities.isEventDispatchThread();
+
+			final Object source = e.getSource();
+
+			if (source == viewPathChoice) {
+
+				plugin.justDisplayNearSlices(nearbySlices(), (int) nearbyFieldSpinner
+					.getValue());
+				nearbyFieldSpinner.setEnabled(nearbySlices());
+
+			}
+			else if (source == useSnapWindow) {
+
+				plugin.enableSnapCursor(useSnapWindow.isSelected());
+
+			}
+			else if (source == preprocess && !ignorePreprocessEvents) {
+
+				if (preprocess.isSelected()) turnOnHessian();
+				else {
+					plugin.enableHessian(false);
+					changeState(preGaussianState);
+				}
+
+			}
+			else if (source == justShowSelected) {
+
+				plugin.setShowOnlySelectedPaths(justShowSelected.isSelected());
+
+			}
+		}
+
+		@Override
+		public void actionPerformed(final ActionEvent e) {
+			assert SwingUtilities.isEventDispatchThread();
+
+			final Object source = e.getSource();
+
+			if (source == saveMenuItem && !noPathsError()) {
+
+				final FileInfo info = plugin.file_info;
+				SaveDialog sd;
+
+				if (info == null) {
+
+					sd = new SaveDialog("Save traces as...", "image", ".traces");
+
+				}
+				else {
+
+					final String fileName = info.fileName;
+					final String directory = info.directory;
+
+					String suggestedSaveFilename;
+
+					suggestedSaveFilename = fileName;
+
+					sd = new SaveDialog("Save traces as...", directory,
+						suggestedSaveFilename, ".traces");
+				}
+
+				String savePath;
+				if (sd.getFileName() == null) {
+					return;
+				}
+				savePath = sd.getDirectory() + sd.getFileName();
+
+				final File file = new File(savePath);
+				if (file.exists()) {
+					if (!IJ.showMessageWithCancel("Save traces file...", "The file " +
+						savePath + " already exists.\n" + "Do you want to replace it?"))
+						return;
+				}
+
+				IJ.showStatus("Saving traces to " + savePath);
+
+				final int preSavingState = currentState;
+				changeState(SAVING);
+				try {
+					pathAndFillManager.writeXML(savePath, plugin.useCompressedXML);
+				}
+				catch (final IOException ioe) {
+					IJ.showStatus("Saving failed.");
+					SNT.error("Writing traces to '" + savePath + "' failed: " + ioe);
+					changeState(preSavingState);
+					return;
+				}
+				changeState(preSavingState);
+				IJ.showStatus("Saving completed.");
+
+				plugin.unsavedPaths = false;
+
+			}
+			else if (source == loadMenuItem) {
+
+				if (plugin.pathsUnsaved()) {
+					final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(),
+						"Warning",
+						"There are unsaved paths. Do you really want to load new traces?");
+
+					if (!d.yesPressed()) return;
+				}
+
+				final int preLoadingState = currentState;
+				changeState(LOADING);
+				plugin.loadTracings();
+				changeState(preLoadingState);
+
+			}
+			else if (source == exportAllSWCMenuItem && !noPathsError()) {
+
+				if (pathAndFillManager.usingNonPhysicalUnits()) {
+					final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(),
+						"Warning",
+						"These tracings were obtained from a spatially uncalibrated image.\n" +
+							"The SWC specification assumes all coordinates to be in " +
+							IJ.micronSymbol + "m.\n" +
+							"Do you really want to proceed with the SWC export?");
+					if (!d.yesPressed()) return;
+				}
+
+				final FileInfo info = plugin.file_info;
+				SaveDialog sd;
+
+				if (info == null) {
+
+					sd = new SaveDialog("Export all as SWC...", "exported", "");
+
+				}
+				else {
+
+					String suggestedFilename;
+					final int extensionIndex = info.fileName.lastIndexOf(".");
+					if (extensionIndex == -1) suggestedFilename = info.fileName;
+					else suggestedFilename = info.fileName.substring(0, extensionIndex);
+
+					sd = new SaveDialog("Export all as SWC...", info.directory,
+						suggestedFilename + "-exported", "");
+				}
+
+				String savePath;
+				if (sd.getFileName() == null) {
+					return;
+				}
+				savePath = sd.getDirectory() + sd.getFileName();
+				if (verbose) SNT.log("Got savePath: " + savePath);
+				if (!pathAndFillManager.checkOKToWriteAllAsSWC(savePath)) return;
+				pathAndFillManager.exportAllAsSWC(savePath);
+
+			}
+			else if ((source == exportCSVMenuItem ||
+				source == exportCSVMenuItemAgain) && !noPathsError())
+			{
+
+				final FileInfo info = plugin.file_info;
+				SaveDialog sd;
+
+				if (info == null) {
+
+					sd = new SaveDialog("Export Paths as CSV...", "traces", ".csv");
+
+				}
+				else {
+
+					sd = new SaveDialog("Export Paths as CSV...", info.directory,
+						info.fileName, ".csv");
+				}
+
+				String savePath;
+				if (sd.getFileName() == null) {
+					return;
+				}
+				savePath = sd.getDirectory() + sd.getFileName();
+
+				final File file = new File(savePath);
+				if (file.exists()) {
+					if (!IJ.showMessageWithCancel("Export as CSV...", "The file " +
+						savePath + " already exists.\n" + "Do you want to replace it?"))
+						return;
+				}
+
+				IJ.showStatus("Exporting as CSV to " + savePath);
+
+				final int preExportingState = currentState;
+				changeState(SAVING);
+				// Export here...
+				try {
+					pathAndFillManager.exportToCSV(file);
+					if (source == exportCSVMenuItemAgain) {
+						final ResultsTable rt = ResultsTable.open(savePath);
+						rt.show(sd.getFileName());
+					}
+				}
+				catch (final IOException ioe) {
+					IJ.showStatus("Exporting failed.");
+					SNT.error("Writing traces to '" + savePath + "' failed:\n" + ioe);
+					changeState(preExportingState);
+					return;
+				}
+				IJ.showStatus("Export complete.");
+				changeState(preExportingState);
+
+			}
+			else if (source == loadLabelsMenuItem) {
+
+				plugin.loadLabels();
+
+			}
+			else if (source == makeLineStackMenuItem && !noPathsError()) {
+
+				final SkeletonPlugin skelPlugin = new SkeletonPlugin(plugin);
+				skelPlugin.run();
+
+			}
+			else if (source == pathsToROIsMenuItem && !noPathsError()) {
+
+				if (!pathAndFillManager.anySelected()) {
+					SNT.error("No paths selected.");
+					return;
+				}
+
+				final GenericDialog gd = new GenericDialog("Selected Paths to ROIs");
+
+				final int[] PLANES_ID = { ThreePanes.XY_PLANE, ThreePanes.XZ_PLANE,
+					ThreePanes.ZY_PLANE };
+				final String[] PLANES_STRING = { "XY_View", "XZ_View", "ZY_View" };
+				final InteractiveTracerCanvas[] canvases = { plugin.xy_tracer_canvas,
+					plugin.xz_tracer_canvas, plugin.zy_tracer_canvas };
+				final boolean[] destinationPlanes = new boolean[PLANES_ID.length];
+				for (int i = 0; i < PLANES_ID.length; i++)
+					destinationPlanes[i] = canvases[i] != null && getImagePlusFromPane(
+						PLANES_ID[i]) != null;
+
+				gd.setInsets(0, 10, 0);
+				gd.addMessage("Create 2D Path-ROIs from:");
+				gd.setInsets(0, 20, 0);
+				for (int i = 0; i < PLANES_ID.length; i++)
+					gd.addCheckbox(PLANES_STRING[i], destinationPlanes[i]);
+
+				// 2D traces?
+				final Vector<?> cbxs = gd.getCheckboxes();
+				for (int i = 1; i < PLANES_ID.length; i++)
+					((Checkbox) cbxs.get(i)).setEnabled(!plugin.singleSlice);
+
+				final String[] scopes = { "ROI Manager", "Image overlay" };
+				gd.addRadioButtonGroup("Store Path-ROIs in:", scopes, 2, 1, scopes[0]);
+
+				gd.addMessage("");
+				gd.addCheckbox("Color code ROIs by SWC type", false);
+				gd.addCheckbox("Discard pre-existing ROIs in Overlay/Manager", true);
+
+				gd.showDialog();
+				if (gd.wasCanceled()) return;
+
+				for (int i = 0; i < PLANES_ID.length; i++)
+					destinationPlanes[i] = gd.getNextBoolean();
+				final String scope = gd.getNextRadioButton();
+				final boolean swcColors = gd.getNextBoolean();
+				final boolean reset = gd.getNextBoolean();
+
+				if (scopes[0].equals(scope)) { // ROI Manager
+
+					final Overlay overlay = new Overlay();
+					for (int i = 0; i < destinationPlanes.length; i++) {
+						if (destinationPlanes[i]) {
+							final int lastPlaneIdx = overlay.size() - 1;
+							plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
+							if (plugin.singleSlice) continue;
+							for (int j = lastPlaneIdx + 1; j < overlay.size(); j++) {
+								final Roi roi = overlay.get(j);
+								roi.setName(roi.getName() + " [" + PLANES_STRING[i] + "]");
+							}
+						}
+					}
+					RoiManager rm = RoiManager.getInstance2();
+					if (rm == null) rm = new RoiManager();
+					else if (reset) rm.reset();
+					Prefs.showAllSliceOnly = !plugin.singleSlice;
+					rm.setEditMode(plugin.getImagePlus(), false);
+					for (final Roi path : overlay.toArray())
+						rm.addRoi(path);
+					rm.runCommand("sort");
+					rm.setEditMode(plugin.getImagePlus(), true);
+					rm.runCommand("show all without labels");
+
+				}
+				else { // Overlay
+
+					String error = "";
+					for (int i = 0; i < destinationPlanes.length; i++) {
+						if (destinationPlanes[i]) {
+							final ImagePlus imp = getImagePlusFromPane(PLANES_ID[i]);
+							if (imp == null) {
+								error += PLANES_STRING[i] + ", ";
+								continue;
+							}
+							Overlay overlay = imp.getOverlay();
+							if (overlay == null) {
+								overlay = new Overlay();
+								imp.setOverlay(overlay);
+							}
+							else if (reset) overlay.clear();
+							plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
+						}
+					}
+					if (!error.isEmpty()) {
+						SNT.error("Some ROIs were skipped because some images (" + error
+							.substring(0, error.length() - 2) +
+							") are no longer available.\nPlease consider exporting to the ROI Manager instead.");
+					}
+				}
+
+			}
+			else if (source == cancelSearch) {
+
+				if (currentState == SEARCHING) {
+					updateStatusText("Cancelling path search...");
+					plugin.cancelSearch(false);
+				}
+				else if (currentState == CALCULATING_GAUSSIAN) {
+					updateStatusText("Cancelling Gaussian generation...");
+					plugin.cancelGaussian();
+				}
+				else {
+					SNT.error("BUG! (wrong state for cancelling...)");
+				}
+
+			}
+			else if (source == keepSegment) {
+
+				plugin.confirmTemporary();
+
+			}
+			else if (source == junkSegment) {
+
+				plugin.cancelTemporary();
+
+			}
+			else if (source == completePath) {
+
+				plugin.finishedPath();
+
+			}
+			else if (source == cancelPath) {
+
+				plugin.cancelPath();
+
+			}
+			else if (source == quitMenuItem) {
+
+				exitRequested();
+
+			}
+			else if (source == showOrHidePathList) {
+
+				togglePathListVisibility();
+
+			}
+			else if (source == showOrHideFillList) {
+
+				toggleFillListVisibility();
+
+			}
+			else if (source == editSigma) {
+
+				setSigmaFromUser();
+
+			}
+			else if (source == sigmaWizard) {
+
+				preSigmaPaletteState = currentState;
+				changeState(WAITING_FOR_SIGMA_POINT);
+
+			}
+			else if (source == colorImageChoice) {
+
+				if (!ignoreColorImageChoiceEvents) checkForColorImageChange();
+
+			}
+		}
+
 	}
 
 }

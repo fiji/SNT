@@ -1509,36 +1509,10 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 			toggleFillListVisibility();
 
-		} else if (source == editSigma) {
+		}
+		else if (source == editSigma) {
 
-			double newSigma = -1;
-			double newMultiplier = -1;
-			while (newSigma <= 0) {
-				final GenericDialog gd = new GenericDialog("Select Scale of Structures");
-				gd.setInsets(10, 0, 0);
-				gd.addMessage("Please enter the approximate radius of the structures you are looking for:");
-				gd.addNumericField("Sigma: ", plugin.getMinimumSeparation(), 4, 6,
-						"(The default is the minimum voxel separation)");
-				gd.setInsets(10, 0, 0);
-				gd.addMessage("Please enter the scaling factor to apply:");
-				gd.addNumericField("    Multiplier: ", 4, 4, 6, "(If unsure, just leave this at 4)");
-				gd.showDialog();
-				if (gd.wasCanceled())
-					return;
-
-				newSigma = gd.getNextNumber();
-				if (newSigma <= 0) {
-					SNT.error("The value of sigma must be positive");
-				}
-
-				newMultiplier = gd.getNextNumber();
-				if (newMultiplier <= 0) {
-					SNT.error("The value of the multiplier must be positive");
-				}
-			}
-
-			setSigma(newSigma, true);
-			setMultiplier(newMultiplier);
+			setSigmaFromUser();
 
 		} else if (source == sigmaWizard) {
 
@@ -1552,6 +1526,30 @@ public class NeuriteTracerResultsDialog extends JDialog implements ActionListene
 
 		} else if (source == arrangeWindowsMenuItem) {
 			arrangeCanvases();
+	private void setSigmaFromUser() {
+		final JTextField sigmaField = new JTextField(String.valueOf(plugin
+			.getMinimumSeparation()), 5);
+		final JTextField multiplierField = new JTextField("4", 5);
+		final Object[] contents = {
+			"<html><b>Sigma</b><br>Enter the approximate radius of the structures you are<br>" +
+				"tracing (the default is the minimum voxel separation):", sigmaField,
+			"<html><br><b>Multiplier</b><br>Enter the scaling factor to apply " +
+				"(the default is 4):", multiplierField, };
+		final int result = JOptionPane.showConfirmDialog(this, contents,
+			"Select Scale of Structures", JOptionPane.OK_CANCEL_OPTION,
+			JOptionPane.PLAIN_MESSAGE);
+		if (result == JOptionPane.OK_OPTION) {
+			final double sigma = GuiUtils.extractDouble(sigmaField);
+			final double multiplier = GuiUtils.extractDouble(multiplierField);
+			if (Double.isNaN(sigma) || sigma <= 0 || Double.isNaN(multiplier) ||
+				multiplier <= 0)
+			{
+				guiUtils.error("The value of sigma and multiplier must be a valid positive number.",
+					"Invalid Input");
+				return;
+			}
+			setSigma(sigma, true);
+			setMultiplier(multiplier);
 		}
 	}
 

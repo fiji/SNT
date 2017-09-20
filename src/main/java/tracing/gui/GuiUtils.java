@@ -48,6 +48,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JSpinner.DefaultEditor;
+import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
@@ -361,4 +362,12 @@ public class GuiUtils {
 		return spinner;
 	}
 
+	public static double extractDouble(final JTextField textfield) {
+		try {
+			return Double.parseDouble(textfield.getText());
+		}
+		catch (final NullPointerException | NumberFormatException ignored) {
+			return Double.NaN;
+		}
+	}
 }

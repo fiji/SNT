@@ -736,9 +736,40 @@ public class NeuriteTracerResultsDialog extends JDialog implements
 			}
 		});
 		tracingPanel.add(diametersCheckBox, gdb);
+		++gdb.gridy;
 
-	@Override
-	public void windowActivated(final WindowEvent e) {
+		// User inputs for multidimensional images
+		boolean hasChannels = plugin.getImagePlus().getNChannels()>1;
+		boolean hasFrames = plugin.getImagePlus().getNFrames()>1;
+
+		final JPanel positionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		positionPanel.add(leftAlignedLabel("Channel", hasChannels));
+		final JSpinner channelSpinner = GuiUtils.integerSpinner(plugin.channel, 1, plugin.getImagePlus().getNChannels()*100, 1);
+		positionPanel.add(channelSpinner);
+		positionPanel.add(leftAlignedLabel(" Frame", hasFrames));
+		final JSpinner frameSpinner = GuiUtils.integerSpinner(plugin.frame, 1, plugin.getImagePlus().getNFrames()*100, 1);
+		positionPanel.add(frameSpinner);
+		final JButton applyPositionButton = GuiUtils.smallButton("Apply");
+		applyPositionButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				int newC = (int)channelSpinner.getValue();
+				int newT = (int)frameSpinner.getValue();
+				if (newC == plugin.channel && newT == plugin.frame) {
+					guiUtils.error("Position C=" + newC +", T=" + newT +" is already being traced.");
+					return;
+				}
+				if (guiUtils.getConfirmation("You are currently tracing position C="+ plugin.channel + ", T="+plugin.frame+". Start tracing C="+ newC +", T="+ newT +"?", "Change Hyperstack Position?"))
+					plugin.reloadImage(newC, newT);
+			}
+		});
+		positionPanel.add(applyPositionButton);
+		tracingPanel.add(positionPanel, gdb);
+		channelSpinner.setEnabled(hasChannels);
+		frameSpinner.setEnabled(hasFrames);
+		applyPositionButton.setEnabled(hasChannels || hasFrames);
+		return tracingPanel;
 	}
 
 	private JPanel interactionPanel() {

@@ -1049,7 +1049,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 	synchronized public void cancelTemporary() {
 
 		if (!lastStartPointSet) {
-			guiUtils.error(
+			discreteError(
 				"No initial start point has been set yet.  Do that with a mouse click or\na Shift+" +
 					GuiUtils.ctrlKey() +
 					"-click if the start of the path should join another neurite.");
@@ -1057,7 +1057,7 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 		}
 
 		if (temporaryPath == null) {
-			guiUtils.error("There's no temporary path to cancel!");
+			discreteError("There's no temporary path to cancel!");
 			return;
 		}
 
@@ -1080,8 +1080,8 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
-			guiUtils.error(
-				"      There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
+			discreteError(
+				"There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
 			return;
 		}
 
@@ -1108,14 +1108,13 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
-			guiUtils.error(
-				"      There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
+			discreteError(
+				"There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
 			return;
 		}
 
 		if (currentPath == null || justFirstPoint()) {
-			guiUtils.error(
-				"You can't complete a path with only a start point in it.");
+			discreteError("You can't complete a path with only a start point in it.");
 			return;
 		}
 
@@ -1985,6 +1984,11 @@ public class SimpleNeuriteTracer extends ThreePanes implements
 				}
 			}
 		}
+	}
+
+	/** Does nothing if image is not being displayed */
+	private void discreteError(String msg) {
+		GuiUtils.floatingMsg(getImagePlus(), msg);
 	}
 
 	protected void updateViewPathChoice() {

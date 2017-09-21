@@ -52,6 +52,7 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
@@ -62,6 +63,7 @@ import org.scijava.ui.swing.SwingDialog;
 import org.scijava.ui.swing.widget.SwingColorWidget;
 import org.scijava.util.PlatformUtils;
 
+import ij.ImagePlus;
 import tracing.SNT;
 
 public class GuiUtils {
@@ -108,6 +110,7 @@ public class GuiUtils {
 	private void tempMsg(final String msg, final int x, final int y,
 		final boolean snapToParent)
 	{
+		assert SwingUtilities.isEventDispatchThread();
 		final JDialog dialog = new JDialog();
 		dialog.setUndecorated(true);
 		dialog.setModal(false);
@@ -370,4 +373,10 @@ public class GuiUtils {
 			return Double.NaN;
 		}
 	}
+
+	public static void floatingMsg(final ImagePlus imp, final String msg) {
+		if (imp == null || imp.getWindow() == null) return;
+		new GuiUtils(imp.getWindow()).tempMsg(msg, true);
+	}
+
 }

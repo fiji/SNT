@@ -172,6 +172,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		"WAITING_FOR_SIGMA_CHOICE", "SAVING", "LOADING", "FITTING_PATHS",
 		"IMAGE CLOSED" };
 
+	// TODO: Internal preferences: should be migrated to SNTPrefs
+	protected boolean finishOnDoubleConfimation;
+	protected boolean discardOnDoubleCancellation;
+
 	public NeuriteTracerResultsDialog(final String title,
 		final SimpleNeuriteTracer plugin)
 	{
@@ -492,7 +496,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	public void changeState(final int newState) {
 
-		SNT.debug("changeState to: " + stateNames[newState]);
+		SNT.debug("changing state to: " + getState(newState));
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
@@ -703,24 +707,24 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JPanel interactionPanel() {
 		final JPanel intPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
-		final JCheckBox confirmCheckbox = new JCheckBox("Confirm new path segments",
-			plugin.confirmSegments);
+		final JCheckBox confirmCheckbox = new JCheckBox("Pressing 'Y' twice finishes path",
+			finishOnDoubleConfimation);
 		confirmCheckbox.addItemListener(new ItemListener() {
 
 			@Override
 			public void itemStateChanged(final ItemEvent e) {
-				plugin.confirmSegments = (e.getStateChange() == ItemEvent.SELECTED);
+				finishOnDoubleConfimation = (e.getStateChange() == ItemEvent.SELECTED);
 			}
 		});
 		intPanel.add(confirmCheckbox, gdb);
 		++gdb.gridy;
 		final JCheckBox finishCheckbox = new JCheckBox(
-			"Finishing a path confirms last segment", plugin.confirmOnFinish);
+			"Pressing 'N' twice cancels path", discardOnDoubleCancellation);
 		confirmCheckbox.addItemListener(new ItemListener() {
 
 			@Override
 			public void itemStateChanged(final ItemEvent e) {
-				plugin.confirmOnFinish = (e.getStateChange() == ItemEvent.SELECTED);// TODO
+				discardOnDoubleCancellation = (e.getStateChange() == ItemEvent.SELECTED);// TODO
 			}
 		});
 		intPanel.add(finishCheckbox, gdb);

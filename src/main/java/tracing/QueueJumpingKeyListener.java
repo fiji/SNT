@@ -28,18 +28,23 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import ij.IJ;
+import org.scijava.util.PlatformUtils;
 
 public class QueueJumpingKeyListener implements KeyListener {
 
 	protected SimpleNeuriteTracer tracerPlugin;
 	protected InteractiveTracerCanvas canvas;
-
 	ArrayList<KeyListener> listeners = new ArrayList<>();
+
+	private static final int DOUBLE_PRESS_INTERVAL = 300; // ms
+	private long timeKeyDown = 0; // last time key was pressed
+	private int lastKeyPressedCode;
+	private boolean mac;
 
 	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin, final InteractiveTracerCanvas canvas) {
 		this.tracerPlugin = tracerPlugin;
 		this.canvas = canvas;
+		mac = PlatformUtils.isMac();
 	}
 
 	@Override
@@ -50,8 +55,7 @@ public class QueueJumpingKeyListener implements KeyListener {
 
 		final int keyCode = e.getKeyCode();
 		final char keyChar = e.getKeyChar();
-
-		final boolean mac = IJ.isMacintosh();
+		final boolean doublePress = isDoublePress(e);
 
 		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
 		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT : keyCode == KeyEvent.VK_CONTROL;
@@ -65,9 +69,10 @@ public class QueueJumpingKeyListener implements KeyListener {
 					+ (int) keyChar + ") " + KeyEvent.getKeyModifiersText(canvas.getModifiers()));
 
 		if (keyChar == 'y' || keyChar == 'Y') {
-
-			// if (verbose) SNT.log( "Yes, running confirmPath" );
-			tracerPlugin.confirmTemporary();
+			if (tracerPlugin.resultsDialog.finishOnDoubleConfimation && doublePress) //FIXME: May throw a NPE if resultsDialog closed
+				tracerPlugin.finishedPath();
+			else
+				tracerPlugin.confirmTemporary();
 			e.consume();
 
 		} else if (keyCode == KeyEvent.VK_ESCAPE) {
@@ -77,8 +82,10 @@ public class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 
 		} else if (keyChar == 'n' || keyChar == 'N') {
-
-			tracerPlugin.cancelTemporary();
+			if (tracerPlugin.resultsDialog.discardOnDoubleCancellation && doublePress) //FIXME: May throw a NPE if resultsDialog closed
+				tracerPlugin.cancelPath();
+			else
+				tracerPlugin.cancelTemporary();
 			e.consume();
 
 		} else if (keyChar == 'c' || keyChar == 'C') {
@@ -92,11 +99,11 @@ public class QueueJumpingKeyListener implements KeyListener {
 			tracerPlugin.finishedPath();
 			e.consume();
 
-		} else if (keyChar == 'v' || keyChar == 'V') {
-
-			// if (verbose) SNT.log( "View paths as a stack" );
-			tracerPlugin.makePathVolume();
-			e.consume();
+//		} else if (keyChar == 'v' || keyChar == 'V') {
+//
+//			// if (verbose) SNT.log( "View paths as a stack" );
+//			tracerPlugin.makePathVolume();
+//			e.consume();
 
 		} else if (keyChar == '5') {
 
@@ -160,6 +167,14 @@ public class QueueJumpingKeyListener implements KeyListener {
 				break;
 			kl.keyTyped(e);
 		}
+	}
+
+	private boolean isDoublePress(KeyEvent ke) {
+		if (lastKeyPressedCode == ke.getKeyCode() && ((ke.getWhen() -
+			timeKeyDown) < DOUBLE_PRESS_INTERVAL)) return true;
+		timeKeyDown = ke.getWhen();
+		lastKeyPressedCode = ke.getKeyCode();
+		return false;
 	}
 
 	/**

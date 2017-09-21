@@ -166,11 +166,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	static final int LOADING = 11;
 	static final int FITTING_PATHS = 12;
 	static final int IMAGE_CLOSED = -1;
-	static final String[] stateNames = { "WAITING_TO_START_PATH", "PARTIAL_PATH",
-		"SEARCHING", "QUERY_KEEP", "LOGGING_POINTS", "DISPLAY_EVS", "FILLING_PATHS",
-		"CALCULATING_GAUSSIAN", "WAITING_FOR_SIGMA_POINT",
-		"WAITING_FOR_SIGMA_CHOICE", "SAVING", "LOADING", "FITTING_PATHS",
-		"IMAGE CLOSED" };
 
 	// TODO: Internal preferences: should be migrated to SNTPrefs
 	protected boolean finishOnDoubleConfimation;
@@ -1501,6 +1496,41 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	public FillWindow getFillWindow() {
 		return fw;
+	}
+
+	private String getState(int state) {
+		switch (state) {
+			case WAITING_TO_START_PATH:
+				return "WAITING_TO_START_PATH";
+			case PARTIAL_PATH:
+				return "PARTIAL_PATH";
+			case SEARCHING:
+				return "SEARCHING";
+			case QUERY_KEEP:
+				return "QUERY_KEEP";
+			case LOGGING_POINTS:
+				return "LOGGING_POINTS";
+			case DISPLAY_EVS:
+				return "DISPLAY_EVS";
+			case FILLING_PATHS:
+				return "FILLING_PATHS";
+			case CALCULATING_GAUSSIAN:
+				return "CALCULATING_GAUSSIAN";
+			case WAITING_FOR_SIGMA_POINT:
+				return "WAITING_FOR_SIGMA_POINT";
+			case WAITING_FOR_SIGMA_CHOICE:
+				return "WAITING_FOR_SIGMA_CHOICE";
+			case SAVING:
+				return "SAVING";
+			case LOADING:
+				return "LOADING";
+			case FITTING_PATHS:
+				return "FITTING_PATHS";
+			case IMAGE_CLOSED:
+				return "IMAGE_CLOSED";
+			default:
+				return "UNKNOWN";
+		}
 	}
 
 	private class GuiListener implements ActionListener, ItemListener,

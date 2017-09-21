@@ -24,10 +24,11 @@ package tracing;
 
 import ij.ImagePlus;
 import stacks.PaneOwner;
+import tracing.legacy.LegacyTracerCanvas;
 
 @SuppressWarnings("serial")
 @Deprecated
-public class AutoTracerCanvas extends TracerCanvas {
+public class AutoTracerCanvas extends LegacyTracerCanvas {
 
 	public AutoTracerCanvas(final ImagePlus imagePlus, final PaneOwner owner, final int plane,
 			final PathAndFillManager pathAndFillManager) {

@@ -43,12 +43,13 @@ import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import stacks.PaneOwner;
-import stacks.ThreePanes;
+import tracing.hyperpanes.MultiDThreePanes;
+import tracing.hyperpanes.MultiDThreePanesCanvas;
 import util.BatchOpener;
 
 /** @deprecated Will be removed in v3.3 */
 @Deprecated
-public class Auto_Tracer extends ThreePanes implements PlugIn, PaneOwner, SearchProgressCallback {
+public class Auto_Tracer extends MultiDThreePanes implements PlugIn, PaneOwner, SearchProgressCallback {
 
 	int width;
 	int height;
@@ -72,7 +73,7 @@ public class Auto_Tracer extends ThreePanes implements PlugIn, PaneOwner, Search
 	/* This override the method in ThreePanes... */
 
 	@Override
-	public TracerCanvas createCanvas(final ImagePlus imagePlus, final int plane) {
+	public MultiDThreePanesCanvas createCanvas(final ImagePlus imagePlus, final int plane) {
 		return new AutoTracerCanvas(imagePlus, this, plane, null);
 	}
 

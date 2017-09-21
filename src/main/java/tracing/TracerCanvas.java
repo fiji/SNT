@@ -73,9 +73,10 @@ import java.util.ArrayList;
 import ij.ImagePlus;
 import stacks.PaneOwner;
 import stacks.ThreePanesCanvas;
+import tracing.hyperpanes.MultiDThreePanesCanvas;
 
 @SuppressWarnings("serial")
-public class TracerCanvas extends ThreePanesCanvas {
+public class TracerCanvas extends MultiDThreePanesCanvas {
 
 	protected PathAndFillManager pathAndFillManager;
 
@@ -88,13 +89,13 @@ public class TracerCanvas extends ThreePanesCanvas {
 
 	ArrayList<SearchInterface> searchThreads = new ArrayList<>();
 
-	void addSearchThread(final SearchInterface s) {
+	public void addSearchThread(final SearchInterface s) {
 		synchronized (searchThreads) {
 			searchThreads.add(s);
 		}
 	}
 
-	void removeSearchThread(final SearchInterface s) {
+	public void removeSearchThread(final SearchInterface s) {
 		synchronized (searchThreads) {
 			int index = -1;
 			for (int i = 0; i < searchThreads.size(); ++i) {
@@ -127,7 +128,7 @@ public class TracerCanvas extends ThreePanesCanvas {
 				st.drawProgressOnSlice(plane, current_z, this, g);
 		}
 
-		final SimpleNeuriteTracer plugin = pathAndFillManager.plugin;
+		final SimpleNeuriteTracer plugin = pathAndFillManager.getPlugin();
 
 		final boolean showOnlySelectedPaths = plugin.getShowOnlySelectedPaths();
 

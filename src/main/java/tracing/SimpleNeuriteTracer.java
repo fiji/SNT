@@ -74,6 +74,7 @@ import ij3d.Content;
 import ij3d.Image3DUniverse;
 import stacks.ThreePanes;
 import tracing.gui.GuiUtils;
+import tracing.hyperpanes.MultiDThreePanes;
 
 /* Note on terminology:
 
@@ -84,7 +85,7 @@ import tracing.gui.GuiUtils;
 
 */
 
-public class SimpleNeuriteTracer extends ThreePanes implements
+public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener
 {
 

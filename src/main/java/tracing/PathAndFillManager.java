@@ -90,7 +90,7 @@ class SWCExportException extends Exception {
 public class PathAndFillManager extends DefaultHandler implements UniverseListener {
 
 
-	SimpleNeuriteTracer plugin;
+	private SimpleNeuriteTracer plugin;
 	ImagePlus imagePlus;
 
 	int maxUsedID = -1;
@@ -2517,4 +2517,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			p.downsample(maximumPermittedDistance);
 		}
 	}
+
+	/**
+	 * @return the SNT instance associated with this PathManager (if any)
+	 */
+	public SimpleNeuriteTracer getPlugin() {
+		return plugin;
+	}
+
 }

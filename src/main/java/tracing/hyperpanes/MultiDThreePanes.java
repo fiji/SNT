@@ -44,21 +44,21 @@ public class MultiDThreePanes implements PaneOwner {
 		{
 			point[0] = x_in_pane;
 			point[1] = y_in_pane;
-			point[2] = xy.getCurrentSlice() - 1;
+			point[2] = xy.getZ() - 1;
 		}
 		break;
 
 		case ThreePanes.XZ_PLANE:
 		{
 			point[0] = x_in_pane;
-			point[1] = xz.getCurrentSlice() - 1;
+			point[1] = xz.getZ() - 1;
 			point[2] = y_in_pane;
 		}
 		break;
 
 		case ThreePanes.ZY_PLANE:
 		{
-			point[0] = zy.getCurrentSlice() - 1;
+			point[0] = zy.getZ() - 1;
 			point[1] = y_in_pane;
 			point[2] = x_in_pane;
 		}
@@ -76,21 +76,21 @@ public class MultiDThreePanes implements PaneOwner {
 		{
 			point[0] = x_in_pane;
 			point[1] = y_in_pane;
-			point[2] = xy.getCurrentSlice() - 1;
+			point[2] = xy.getZ() - 1;
 		}
 		break;
 
 		case ThreePanes.XZ_PLANE:
 		{
 			point[0] = x_in_pane;
-			point[1] = xz.getCurrentSlice() - 1;
+			point[1] = xz.getZ() - 1;
 			point[2] = y_in_pane;
 		}
 		break;
 
 		case ThreePanes.ZY_PLANE:
 		{
-			point[0] = zy.getCurrentSlice() - 1;
+			point[0] = zy.getZ() - 1;
 			point[1] = y_in_pane;
 			point[2] = x_in_pane;
 		}

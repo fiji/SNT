@@ -5,6 +5,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.ImageCanvas;
 import ij.gui.StackWindow;
+import ij.plugin.RGBStackConverter;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -231,9 +232,20 @@ public class MultiDThreePanes implements PaneOwner {
 
 		int width = xy.getWidth();
 		int height = xy.getHeight();
-		int depth = xy.getStackSize();
+		int stackSize = xy.getStackSize();
 
-		ImageStack xy_stack=xy.getStack();
+		ImagePlus xyTemplate;
+		if (xy.isHyperStack()) {
+			xyTemplate = xy.duplicate();
+			RGBStackConverter.convertToRGB(xyTemplate);
+			width = xyTemplate.getWidth();
+			height = xyTemplate.getHeight();
+			stackSize = xyTemplate.getStackSize();
+			type = xyTemplate.getType();
+		}
+		else 
+			xyTemplate = xy;
+		ImageStack xy_stack=xyTemplate.getStack();
 
 		ColorModel cm = null;
 
@@ -241,25 +253,25 @@ public class MultiDThreePanes implements PaneOwner {
 		if( type == ImagePlus.COLOR_256 )
 			cm = xy_stack.getColorModel();
 
-		if( ! single_pane ) {
+		if( ! single_pane) {
 
-			int zy_width = depth;
+			int zy_width = stackSize;
 			int zy_height = height;
 			ImageStack zy_stack = new ImageStack( zy_width, zy_height );
 
 			int xz_width = width;
-			int xz_height = depth;
+			int xz_height = stackSize;
 			ImageStack xz_stack = new ImageStack( xz_width, xz_height );
 
 			/* Just load in the complete stack for simplicity's
 			 * sake... */
 
-			byte [][] slices_data_b = new byte[depth][];
-			int [][] slices_data_i = new int[depth][];
-			float [][] slices_data_f = new float[depth][];
-			short [][] slices_data_s = new short[depth][];
+			byte [][] slices_data_b = new byte[stackSize][];
+			int [][] slices_data_i = new int[stackSize][];
+			float [][] slices_data_f = new float[stackSize][];
+			short [][] slices_data_s = new short[stackSize][];
 
-			for( int z = 0; z < depth; ++z ) {
+			for( int z = 0; z < stackSize; ++z ) {
 				switch (type) {
 				case ImagePlus.GRAY8:
 				case ImagePlus.COLOR_256:
@@ -291,7 +303,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 					byte [] sliceBytes = new byte[ zy_width * zy_height ];
 
-					for( int z_in_original = 0; z_in_original < depth; ++z_in_original ) {
+					for( int z_in_original = 0; z_in_original < stackSize; ++z_in_original ) {
 						for( int y_in_original = 0; y_in_original < height; ++y_in_original ) {
 
 							int x_in_left = z_in_original;
@@ -315,7 +327,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 					short [] sliceShorts = new short[ zy_width * zy_height ];
 
-					for( int z_in_original = 0; z_in_original < depth; ++z_in_original ) {
+					for( int z_in_original = 0; z_in_original < stackSize; ++z_in_original ) {
 						for( int y_in_original = 0; y_in_original < height; ++y_in_original ) {
 
 							int x_in_left = z_in_original;
@@ -340,7 +352,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 					int [] sliceInts = new int[ zy_width * zy_height ];
 
-					for( int z_in_original = 0; z_in_original < depth; ++z_in_original ) {
+					for( int z_in_original = 0; z_in_original < stackSize; ++z_in_original ) {
 						for( int y_in_original = 0; y_in_original < height; ++y_in_original ) {
 
 							int x_in_left = z_in_original;
@@ -364,7 +376,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 					float [] sliceFloats = new float[ zy_width * zy_height ];
 
-					for( int z_in_original = 0; z_in_original < depth; ++z_in_original ) {
+					for( int z_in_original = 0; z_in_original < stackSize; ++z_in_original ) {
 						for( int y_in_original = 0; y_in_original < height; ++y_in_original ) {
 
 							int x_in_left = z_in_original;
@@ -408,7 +420,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 					byte [] sliceBytes = new byte[ xz_width * xz_height ];
 
-					for( int z_in_original = 0; z_in_original < depth; ++z_in_original ) {
+					for( int z_in_original = 0; z_in_original < stackSize; ++z_in_original ) {
 
 						// Now we can copy a complete row from
 						// the original image to the XZ slice:
@@ -437,7 +449,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 					short [] sliceShorts = new short[ xz_width * xz_height ];
 
-					for( int z_in_original = 0; z_in_original < depth; ++z_in_original ) {
+					for( int z_in_original = 0; z_in_original < stackSize; ++z_in_original ) {
 
 						// Now we can copy a complete row from
 						// the original image to the XZ slice:
@@ -466,7 +478,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 					int [] sliceInts = new int[ xz_width * xz_height ];
 
-					for( int z_in_original = 0; z_in_original < depth; ++z_in_original ) {
+					for( int z_in_original = 0; z_in_original < stackSize; ++z_in_original ) {
 
 						// Now we can copy a complete row from
 						// the original image to the XZ slice:
@@ -495,7 +507,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 					float [] sliceFloats = new float[ xz_width * xz_height ];
 
-					for( int z_in_original = 0; z_in_original < depth; ++z_in_original ) {
+					for( int z_in_original = 0; z_in_original < stackSize; ++z_in_original ) {
 
 						// Now we can copy a complete row from
 						// the original image to the XZ slice:

@@ -223,29 +223,26 @@ public class MultiDThreePanes implements PaneOwner {
 	public void initialize( ImagePlus imagePlus ) {
 
 		xy = imagePlus;
-
-		type = xy.getType();
-
+		boolean rgb_panes = xy.getNChannels() >1 || xy.isComposite();
 		bytesPerPixel = xy.getBitDepth() / 8;
-
 		original_xy_canvas = imagePlus.getWindow().getCanvas();
-
 		int width = xy.getWidth();
 		int height = xy.getHeight();
-		int stackSize = xy.getStackSize();
+		int stackSize = xy.getNSlices();
 
-		ImagePlus xyTemplate;
-		if (xy.isHyperStack()) {
-			xyTemplate = xy.duplicate();
-			RGBStackConverter.convertToRGB(xyTemplate);
-			width = xyTemplate.getWidth();
-			height = xyTemplate.getHeight();
-			stackSize = xyTemplate.getStackSize();
-			type = xyTemplate.getType();
+		ImagePlus xyMonoChannel;
+
+		if (rgb_panes) {
+			xyMonoChannel = xy.createHyperStack(null, 1, xy.getNSlices(), xy.getNFrames(), 24);
+			RGBStackConverter converter = new RGBStackConverter();
+			converter.convertHyperstack(xy, xyMonoChannel);
+//			xyTemplate.show();
+			type = ImagePlus.COLOR_RGB;
+		} else  {
+			xyMonoChannel = xy;
+			type = xy.getType();
 		}
-		else 
-			xyTemplate = xy;
-		ImageStack xy_stack=xyTemplate.getStack();
+		ImageStack xy_stack=xyMonoChannel.getStack();
 
 		ColorModel cm = null;
 

@@ -76,7 +76,6 @@ import ij.gui.HTMLDialog;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.gui.StackWindow;
-import ij.gui.YesNoCancelDialog;
 import ij.io.FileInfo;
 import ij.io.SaveDialog;
 import ij.measure.Calibration;
@@ -437,25 +436,17 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	protected void exitRequested() {
 		assert SwingUtilities.isEventDispatchThread();
-
-		// FIXME: check that everything is saved...
-
-		if (plugin.pathsUnsaved()) {
-
-			final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(),
-				"Really quit?", "There are unsaved paths. Do you really want to quit?");
-
-			if (!d.yesPressed()) return;
-
+		if (plugin.pathsUnsaved() && guiUtils.getConfirmation(
+			"There are unsaved paths. Do you really want to quit?", "Really quit?"))
+		{
+			plugin.cancelSearch(true);
+			plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
+			prefs.savePluginPrefs();
+			pw.dispose();
+			fw.dispose();
+			dispose();
+			plugin.closeAndReset();
 		}
-
-		plugin.cancelSearch(true);
-		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
-		prefs.savePluginPrefs();
-		pw.dispose();
-		fw.dispose();
-		dispose();
-		plugin.closeAndReset();
 	}
 
 	protected void disableImageDependentComponents() {
@@ -1700,15 +1691,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 			else if (source == exportAllSWCMenuItem && !noPathsError()) {
 
-				if (pathAndFillManager.usingNonPhysicalUnits()) {
-					final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(),
-						"Warning",
-						"These tracings were obtained from a spatially uncalibrated image.\n" +
-							"The SWC specification assumes all coordinates to be in " +
-							IJ.micronSymbol + "m.\n" +
-							"Do you really want to proceed with the SWC export?");
-					if (!d.yesPressed()) return;
-				}
+				if (pathAndFillManager.usingNonPhysicalUnits() && !guiUtils
+					.getConfirmation(
+						"These tracings were obtained from a spatially uncalibrated " +
+							"image but the SWC specification assumes all coordinates to be " +
+							"in " + GuiUtils.micrometre() +
+							". Do you really want to proceed " + "with the SWC export?",
+						"Warning")) return;
 
 				final FileInfo info = plugin.file_info;
 				SaveDialog sd;

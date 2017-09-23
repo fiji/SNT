@@ -75,6 +75,7 @@ import ij3d.Image3DUniverse;
 import stacks.ThreePanes;
 import tracing.gui.GuiUtils;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.hyperpanes.MultiDThreePanesCanvas;
 
 /* Note on terminology:
 
@@ -122,8 +123,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	
 	/* UI preferences */
 	protected boolean useCompressedXML = true;
-	volatile protected boolean confirmSegments = true;
-	volatile protected boolean confirmOnFinish; // TODO: implement
 	volatile protected int cursorSnapWindowXY;
 	volatile protected int cursorSnapWindowZ;
 	volatile protected boolean autoCanvasActivation;

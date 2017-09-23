@@ -602,4 +602,15 @@ public class MultiDThreePanes implements PaneOwner {
 		return result;
 	}
 
+	/** IDE debug method **/
+	public static void main(final String[] args) {
+		if (IJ.getInstance() == null) new ij.ImageJ();
+		String path = "/Applications/IJ/samples/Spindly-GFP.zip";
+		ImagePlus imp = IJ.openImage(path);
+		imp.setActiveChannels("01");
+		imp.show();
+		MultiDThreePanes mdp = new MultiDThreePanes();
+		mdp.single_pane = false;
+		mdp.initialize(imp, 20);
+	}
 }

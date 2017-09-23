@@ -244,7 +244,8 @@ public class MultiDThreePanes implements PaneOwner {
 	private void initialize(final ImagePlus imagePlus, final int frame,
 		final boolean initialize)
 	{
-
+		if (frame > imagePlus.getNFrames()) throw new IllegalArgumentException(
+			"Invalid frame: " + frame);
 		xy = imagePlus;
 		final boolean rgb_panes = xy.getNChannels() > 1 || xy.isComposite();
 		final int width = xy.getWidth();

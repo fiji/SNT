@@ -786,8 +786,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			single_pane) && ((zy_tracer_canvas != null) || single_pane))
 		{
 
-			String statusMessage = "world: (" + x_scaled + "," + y_scaled + "," +
-				z_scaled + ") image: (" + ix + "," + iy + "," + iz + ")";
+			String statusMessage = "World: (" + SNT.formatDouble(x_scaled) + ", " + SNT.formatDouble(y_scaled) + ", " +
+					SNT.formatDouble(z_scaled) + "); Image: (" + ix + ", " + iy + ", " + iz + ")";
 			setCrosshair(x, y, z);
 			if (labelData != null) {
 

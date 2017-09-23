@@ -125,7 +125,7 @@ public class SNT {
 		final double absValue = Math.abs(value);
 		if (absValue < 0.01 || absValue >= 1000) return new DecimalFormat("0.00E0")
 			.format(value);
-		return new DecimalFormat("0.000").format(value);
+		return new DecimalFormat("0.00").format(value);
 	}
 
 	/** Assesses if SNT is running in debug mode */

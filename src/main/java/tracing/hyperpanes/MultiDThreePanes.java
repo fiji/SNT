@@ -220,7 +220,10 @@ public class MultiDThreePanes implements PaneOwner {
 	 * ImagePlus in order for the plugin not to warn you about
 	 * free memory. */
 
-	public void initialize( ImagePlus imagePlus ) {
+	public void initialize( ImagePlus imagePlus) {
+		initialize(imagePlus, 1);
+	}
+	public void initialize( ImagePlus imagePlus, int t) {
 
 		xy = imagePlus;
 		boolean rgb_panes = xy.getNChannels() >1 || xy.isComposite();
@@ -269,19 +272,20 @@ public class MultiDThreePanes implements PaneOwner {
 			short [][] slices_data_s = new short[stackSize][];
 
 			for( int z = 0; z < stackSize; ++z ) {
+				int pos = xyMonoChannel.getStackIndex(1, z+1, t);
 				switch (type) {
 				case ImagePlus.GRAY8:
 				case ImagePlus.COLOR_256:
-					slices_data_b[z] = (byte []) xy_stack.getPixels( z + 1 );
+					slices_data_b[z] = (byte []) xy_stack.getPixels( pos );
 					break;
 				case ImagePlus.GRAY16:
-					slices_data_s[z] = (short []) xy_stack.getPixels( z + 1 );
+					slices_data_s[z] = (short []) xy_stack.getPixels( pos );
 					break;
 				case ImagePlus.COLOR_RGB:
-					slices_data_i[z] = (int []) xy_stack.getPixels( z + 1 );
+					slices_data_i[z] = (int []) xy_stack.getPixels( pos );
 					break;
 				case ImagePlus.GRAY32:
-					slices_data_f[z] = (float []) xy_stack.getPixels( z + 1 );
+					slices_data_f[z] = (float []) xy_stack.getPixels( pos );
 					break;
 				}
 			}

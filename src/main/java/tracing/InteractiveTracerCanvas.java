@@ -89,10 +89,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	public void clickAtMaxPoint() {
+		int x = (int) Math.round(last_x_in_pane_precise);
+		int y = (int) Math.round(last_y_in_pane_precise);
 		final int[] p = new int[3];
-		tracerPlugin.findPointInStack((int) Math.round(last_x_in_pane_precise),
-				(int) Math.round(last_y_in_pane_precise), plane, p);
-		tracerPlugin.clickAtMaxPoint(p[0], p[1], plane);
+		tracerPlugin.findPointInStack(x, y, plane, p);
+		SNT.debug("Clicking on x="+x + " y= "+ y + "on pane " + plane 
+		+ " which corresponds to image position x="+ p[0] +", y="+ p[1] + " z="+ p[2]);
+		tracerPlugin.clickAtMaxPoint(x, y, plane);
 		tracerPlugin.setSlicesAllPanes(p[0], p[1], p[2]);
 	}
 

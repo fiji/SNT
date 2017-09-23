@@ -226,6 +226,7 @@ public class MultiDThreePanes implements PaneOwner {
 	 * free memory. */
 
 	public void reload(final int frame) {
+		if (single_pane) return; // nothing to reload
 		if (xy == null) throw new IllegalArgumentException(
 			"reload() called withou initialization");
 		initialize(xy, frame, false);
@@ -260,7 +261,6 @@ public class MultiDThreePanes implements PaneOwner {
 				.getNFrames(), 24);
 			final RGBStackConverter converter = new RGBStackConverter();
 			converter.convertHyperstack(xy, xyMonoChannel);
-//			xyTemplate.show();
 			type = ImagePlus.COLOR_RGB;
 		}
 		else {
@@ -276,6 +276,8 @@ public class MultiDThreePanes implements PaneOwner {
 
 		if (!single_pane) {
 
+			final String title = (xy.getNFrames() > 0) ? "[T" + frame + "] " + xy
+				.getShortTitle() : xy.getShortTitle();
 			final int zy_width = stackSize;
 			final int zy_height = height;
 			final ImageStack zy_stack = new ImageStack(zy_width, zy_height);
@@ -449,10 +451,11 @@ public class MultiDThreePanes implements PaneOwner {
 			IJ.showProgress(0);
 
 			if (initialize) {
-				zy = new ImagePlus("ZY planes of " + xy.getShortTitle(), zy_stack);
+				zy = new ImagePlus("ZY " + title, zy_stack);
 			}
 			else {
 				zy.setStack(zy_stack);
+				zy.setTitle("ZY " + title);
 			}
 
 			// Create the XZ slices:
@@ -580,11 +583,11 @@ public class MultiDThreePanes implements PaneOwner {
 				}
 			}
 			if (initialize) {
-				xz = new ImagePlus("XZ planes of " + xy.getShortTitle(), xz_stack);
-				IJ.run(xz, "Histogram", "stack");
+				xz = new ImagePlus("XZ " + title, xz_stack);
 			}
 			else {
 				xz.setStack(xz_stack);
+				xz.setTitle("XZ " + title);
 			}
 			IJ.showProgress(1.0); // Removes the progress indicator
 
@@ -659,10 +662,10 @@ public class MultiDThreePanes implements PaneOwner {
 		if (IJ.getInstance() == null) new ij.ImageJ();
 		final String path = "/Applications/IJ/samples/Spindly-GFP.zip";
 		final ImagePlus imp = IJ.openImage(path);
-		imp.setActiveChannels("01");
-		imp.show();
+		// imp.setActiveChannels("01");
 		final MultiDThreePanes mdp = new MultiDThreePanes();
 		mdp.single_pane = false;
 		mdp.initialize(imp, 20);
+		mdp.reload(30);
 	}
 }

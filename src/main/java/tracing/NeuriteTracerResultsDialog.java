@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
@@ -60,7 +61,10 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -129,6 +133,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JMenuItem exportCSVMenuItemAgain;
 	private JMenuItem sendToTrakEM2;
 	private JLabel statusText;
+	private JLabel statusBarText;
 	private JButton keepSegment;
 	private JButton junkSegment;
 	protected JButton abortButton;
@@ -236,6 +241,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		++c.gridy;
 		main.add(bottomPanel(), c);
+//		++c.gridy;
+//		addSeparator(main, "", true, c);
+
 		tabbedPane.addTab("Main", main);
 
 		final JPanel advanced = new JPanel();
@@ -269,7 +277,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 
-		getContentPane().add(tabbedPane);
+		setLayout(new BorderLayout());
+		add(tabbedPane, BorderLayout.NORTH);
+		add(statusBar(), BorderLayout.SOUTH);
 		pack();
 
 		pw = new PathWindow(pathAndFillManager, plugin, getX() + getWidth(),
@@ -287,8 +297,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return currentState;
 	}
 
-	protected void updateStatusText(final String newStatus) {
-		assert SwingUtilities.isEventDispatchThread();
+	private void updateStatusText(final String newStatus, boolean includeStatusBar) {
+		updateStatusText(newStatus);
+		showStatus(newStatus);
+	}
+
+	private void updateStatusText(final String newStatus) {
 		statusText.setText("<html><strong>" + newStatus + "</strong></html>");
 	}
 
@@ -678,8 +692,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				}
 				if (guiUtils.getConfirmation("You are currently tracing position C=" +
 					plugin.channel + ", T=" + plugin.frame + ". Start tracing C=" + newC +
-					", T=" + newT + "?", "Change Hyperstack Position?")) plugin
-						.reloadImage(newC, newT);
+					", T=" + newT + "?", "Change Hyperstack Position?")) {
+					plugin.reloadImage(newC, newT);
+					refreshStatus();
+				}
 			}
 		});
 		positionPanel.add(applyPositionButton);
@@ -825,13 +841,14 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		statusPanel.setLayout(new BorderLayout());
 		statusText = new JLabel("");
 		statusText.setOpaque(true);
-		statusText.setForeground(Color.BLACK);
 		statusText.setBackground(Color.WHITE);
-		updateStatusText("Initial status text");
-		statusText.setBorder(new EmptyBorder(5, 5, 5, 5));
+		//statusText.setText("Initial status text");
+		statusText.setBorder(BorderFactory.createCompoundBorder(BorderFactory
+			.createBevelBorder(BevelBorder.LOWERED), BorderFactory.createEmptyBorder(
+				5, 5, 5, 5)));
 		statusPanel.add(statusText, BorderLayout.CENTER);
-		statusPanel.add(statusButtonPanel(), BorderLayout.SOUTH);
-		statusPanel.setBorder(BorderFactory.createEtchedBorder());
+		final JPanel buttonPanel = statusButtonPanel();
+		statusPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return statusPanel;
 	}
 
@@ -1163,6 +1180,39 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return hideWindowsPanel;
 	}
 
+	private JPanel statusBar() {
+		final JPanel statusBar = new JPanel();
+		statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.X_AXIS));
+		statusBar.setBorder(BorderFactory.createEmptyBorder(8, 4, 2, 0));
+		statusBarText = leftAlignedLabel("", false);
+		statusBar.add(statusBarText);
+		refreshStatus();
+		return statusBar;
+	}
+
+	private void refreshStatus() {
+		showStatus(null);
+	}
+
+	private void showStatus(String msg) {
+		final String defaultText = "Tracing " + plugin.getImagePlus()
+			.getShortTitle() + ", C=" + plugin.channel + ", T=" + plugin.frame;
+		if (msg == null || msg.isEmpty()) {
+			statusBarText.setText(defaultText);
+			return;
+		}
+		final Timer timer = new Timer(3000, new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				statusBarText.setText(defaultText);
+			}
+		});
+		timer.setRepeats(false);
+		timer.start();
+		statusBarText.setText(msg);
+	}
+
 	private void addSeparator(final JComponent component, final String heading,
 		final boolean vgap, final GridBagConstraints c)
 	{
@@ -1176,6 +1226,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	private JLabel leftAlignedLabel(final String text, final boolean enabled) {
 		final JLabel label = new JLabel(text);
+		label.setHorizontalAlignment(SwingConstants.LEFT);
 		if (!enabled) label.setForeground(GuiUtils.getDisabledComponentColor());
 		return label;
 	}

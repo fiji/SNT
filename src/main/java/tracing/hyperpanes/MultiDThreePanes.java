@@ -195,9 +195,6 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 	}
 
-	int type;
-	int bytesPerPixel;
-
 	public static String imageTypeToString(final int type) {
 		String result;
 		switch (type) {
@@ -228,19 +225,31 @@ public class MultiDThreePanes implements PaneOwner {
 	 * ImagePlus in order for the plugin not to warn you about
 	 * free memory. */
 
-	public void initialize(final ImagePlus imagePlus) {
-		initialize(imagePlus, 1);
+	public void reload(final int frame) {
+		if (xy == null) throw new IllegalArgumentException(
+			"reload() called withou initialization");
+		initialize(xy, frame, false);
+		repaintAllPanes();
 	}
 
-	public void initialize(final ImagePlus imagePlus, final int t) {
+	public void initialize(final ImagePlus imagePlus) {
+		initialize(imagePlus, 1, true);
+	}
+
+	public void initialize(final ImagePlus imagePlus, final int frame) {
+		initialize(imagePlus, frame, true);
+	}
+
+	private void initialize(final ImagePlus imagePlus, final int frame,
+		final boolean initialize)
+	{
 
 		xy = imagePlus;
 		final boolean rgb_panes = xy.getNChannels() > 1 || xy.isComposite();
-		bytesPerPixel = xy.getBitDepth() / 8;
 		final int width = xy.getWidth();
 		final int height = xy.getHeight();
 		final int stackSize = xy.getNSlices();
-
+		int type;
 		original_xy_canvas = (imagePlus.getWindow() == null) ? null : imagePlus
 			.getWindow().getCanvas();
 
@@ -284,7 +293,7 @@ public class MultiDThreePanes implements PaneOwner {
 			final short[][] slices_data_s = new short[stackSize][];
 
 			for (int z = 0; z < stackSize; ++z) {
-				final int pos = xyMonoChannel.getStackIndex(1, z + 1, t);
+				final int pos = xyMonoChannel.getStackIndex(1, z + 1, frame);
 				switch (type) {
 					case ImagePlus.GRAY8:
 					case ImagePlus.COLOR_256:
@@ -439,7 +448,12 @@ public class MultiDThreePanes implements PaneOwner {
 			IJ.showStatus("Generating ZY planes...");
 			IJ.showProgress(0);
 
-			zy = new ImagePlus("ZY planes of " + xy.getShortTitle(), zy_stack);
+			if (initialize) {
+				zy = new ImagePlus("ZY planes of " + xy.getShortTitle(), zy_stack);
+			}
+			else {
+				zy.setStack(zy_stack);
+			}
 
 			// Create the XZ slices:
 
@@ -560,30 +574,36 @@ public class MultiDThreePanes implements PaneOwner {
 
 			}
 
-			xz = new ImagePlus("XZ planes of " + xy.getShortTitle(), xz_stack);
-
 			if (type == ImagePlus.COLOR_256) {
 				if (cm != null) {
 					xz_stack.setColorModel(cm);
 				}
 			}
-
+			if (initialize) {
+				xz = new ImagePlus("XZ planes of " + xy.getShortTitle(), xz_stack);
+				IJ.run(xz, "Histogram", "stack");
+			}
+			else {
+				xz.setStack(xz_stack);
+			}
 			IJ.showProgress(1.0); // Removes the progress indicator
 
 		}
 
 		System.gc();
 
-		xy_canvas = createCanvas(xy, XY_PLANE);
-		if (!single_pane) {
-			xz_canvas = createCanvas(xz, XZ_PLANE);
-			zy_canvas = createCanvas(zy, ZY_PLANE);
-		}
+		if (initialize) {
+			xy_canvas = createCanvas(xy, XY_PLANE);
+			if (!single_pane) {
+				xz_canvas = createCanvas(xz, XZ_PLANE);
+				zy_canvas = createCanvas(zy, ZY_PLANE);
+			}
 
-		xy_window = new StackWindow(xy, xy_canvas);
-		if (!single_pane) {
-			xz_window = new StackWindow(xz, xz_canvas);
-			zy_window = new StackWindow(zy, zy_canvas);
+			xy_window = new StackWindow(xy, xy_canvas);
+			if (!single_pane) {
+				xz_window = new StackWindow(xz, xz_canvas);
+				zy_window = new StackWindow(zy, zy_canvas);
+			}
 		}
 
 	}

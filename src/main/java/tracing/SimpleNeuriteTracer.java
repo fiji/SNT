@@ -139,8 +139,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected InteractiveTracerCanvas xz_tracer_canvas;
 	protected InteractiveTracerCanvas zy_tracer_canvas;
 
-	private final ImagePlus sourceImage;
-
 	protected int width, height, depth;
 	protected int imageType = -1;
 	protected boolean singleSlice;
@@ -202,12 +200,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public SimpleNeuriteTracer(final Context context, final ImagePlus sourceImage) {
 
 		if (context == null) throw new NullContextException();
-		if (sourceImage == null) throw new IllegalArgumentException(
-			"Null objects are not allowed");
+		if (sourceImage.getStackSize() == 0) throw new IllegalArgumentException(
+			"Uninitialized image object");
+		if (sourceImage.getType()==ImagePlus.COLOR_RGB) throw new IllegalArgumentException(
+				"RGB images are not supported. Please convert to multichannel and re-run");
 
 		context.inject(this);
-		this.sourceImage = sourceImage;
-
+		xy = sourceImage;
 		width = sourceImage.getWidth();
 		height = sourceImage.getHeight();
 		depth = sourceImage.getNSlices();
@@ -240,8 +239,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		this.channel = channel;
 		this.frame = frame;
 		setSinglePane(singlePane);
-		final Overlay sourceImageOverlay = sourceImage.getOverlay();
-		initialize(sourceImage);
+		final Overlay sourceImageOverlay = xy.getOverlay();
+		initialize(xy);
 		xy.setOverlay(sourceImageOverlay);
 
 		xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;

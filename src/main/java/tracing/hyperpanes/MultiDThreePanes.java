@@ -237,10 +237,12 @@ public class MultiDThreePanes implements PaneOwner {
 		xy = imagePlus;
 		final boolean rgb_panes = xy.getNChannels() > 1 || xy.isComposite();
 		bytesPerPixel = xy.getBitDepth() / 8;
-		original_xy_canvas = imagePlus.getWindow().getCanvas();
 		final int width = xy.getWidth();
 		final int height = xy.getHeight();
 		final int stackSize = xy.getNSlices();
+
+		original_xy_canvas = (imagePlus.getWindow() == null) ? null : imagePlus
+			.getWindow().getCanvas();
 
 		ImagePlus xyMonoChannel;
 

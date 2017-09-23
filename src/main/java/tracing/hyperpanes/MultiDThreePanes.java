@@ -573,13 +573,13 @@ public class MultiDThreePanes implements PaneOwner {
 
 		switch( plane ) {
 		case ThreePanes.XY_PLANE:
-			n = xy.getStackSize();
+			n = xy.getNSlices();
 			break;
 		case ThreePanes.XZ_PLANE:
-			n = xz.getStackSize();
+			n = xz.getNSlices();
 			break;
 		case ThreePanes.ZY_PLANE:
-			n = zy.getStackSize();
+			n = zy.getNSlices();
 			break;
 		}
 

@@ -125,7 +125,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			this.spacing_units = "" + c.getUnit();
 		this.width = imagePlus.getWidth();
 		this.height = imagePlus.getHeight();
-		this.depth = imagePlus.getStackSize();
+		this.depth = imagePlus.getNSlices(); //FIXME: Check hyperstack support
 		needImageDataFromTracesFile = false;
 	}
 
@@ -2453,7 +2453,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		final PathAndFillManager pafmResult = new PathAndFillManager(templateImage.getWidth(),
-				templateImage.getHeight(), templateImage.getStackSize(), (float) pixelWidth, (float) pixelHeight,
+				templateImage.getHeight(), templateImage.getNSlices(), (float) pixelWidth, (float) pixelHeight,
 				(float) pixelDepth, units);
 
 		final int[] startJoinsIndices = new int[size()];

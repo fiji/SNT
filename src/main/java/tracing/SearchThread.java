@@ -299,7 +299,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 		width = imagePlus.getWidth();
 		height = imagePlus.getHeight();
-		depth = imagePlus.getStackSize();
+		depth = imagePlus.getNSlices(); //FIXME: Check hyperstack support
 
 		{
 			final ImageStack s = imagePlus.getStack();

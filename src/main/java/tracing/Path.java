@@ -1222,7 +1222,7 @@ public class Path implements Comparable<Path> {
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
-		final int depth = image.getStackSize();
+		final int depth = image.getNSlices(); //FIXME: Check hyperstack support
 		final float[][] v = new float[depth][];
 		final ImageStack s = image.getStack();
 		final int imageType = image.getType();
@@ -1376,7 +1376,7 @@ public class Path implements Comparable<Path> {
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
-		final int depth = image.getStackSize();
+		final int depth = image.getNSlices(); //FIXME: Check hyperstack support
 
 		final ImageStack stack = new ImageStack(side, side);
 

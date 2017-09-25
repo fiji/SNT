@@ -1950,12 +1950,18 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			Overlay overlayList = imagePlus.getOverlay();
 			if (show) {
 
-				// Create a MIP project of the stack:
-				//TODO: check this works with hyperstacks
+				// Create a MIP Z-projection of each image:
+				//TODO: Project time axis if present?
 				final ZProjector zp = new ZProjector();
 				zp.setImage(imagePlus);
+				imagePlus.setPositionWithoutUpdate(channel, imagePlus.getZ(), frame);
+				zp.setStartSlice(1);
+				zp.setStopSlice(imagePlus.getNSlices());
 				zp.setMethod(ZProjector.MAX_METHOD);
-				zp.doProjection();
+				if (imagePlus.getType()==ImagePlus.COLOR_RGB)
+					zp.doRGBProjection();
+				else
+					zp.doHyperStackProjection(false);
 				final ImagePlus overlay = zp.getProjection();
 
 				// Add display it as an overlay.

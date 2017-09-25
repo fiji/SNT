@@ -797,7 +797,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		public ImagePlus makeShollCrossingsImagePlus(final ImagePlus original) {
 			final int width = original.getWidth();
 			final int height = original.getHeight();
-			final int depth = original.getStackSize();
+			final int depth = original.getNSlices(); //FIXME: Check hyperstack support
 			final Calibration c = original.getCalibration();
 			double x_spacing = 1;
 			double y_spacing = 1;

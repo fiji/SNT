@@ -229,20 +229,19 @@ public class MultiDThreePanes implements PaneOwner {
 		if (single_pane) return; // nothing to reload
 		if (xy == null) throw new IllegalArgumentException(
 			"reload() called withou initialization");
-		initialize(xy, frame, false);
+		initialize(xy, frame);
 		repaintAllPanes();
 	}
 
 	public void initialize(final ImagePlus imagePlus) {
-		initialize(imagePlus, 1, true);
+		initialize(imagePlus, 1);
 	}
 
-	public void initialize(final ImagePlus imagePlus, final int frame) {
-		initialize(imagePlus, frame, true);
-	}
+//	public void initialize(final ImagePlus imagePlus, final int frame) {
+//		initialize(imagePlus, frame, true);
+//	}
 
-	private void initialize(final ImagePlus imagePlus, final int frame,
-		final boolean initialize)
+	public void initialize(final ImagePlus imagePlus, final int frame)
 	{
 		if (frame > imagePlus.getNFrames()) throw new IllegalArgumentException(
 			"Invalid frame: " + frame);
@@ -451,10 +450,8 @@ public class MultiDThreePanes implements PaneOwner {
 			IJ.showStatus("Generating ZY planes...");
 			IJ.showProgress(0);
 
-			if (initialize) {
-				zy = new ImagePlus("ZY " + title, zy_stack);
-			}
-			else {
+				if (zy == null)
+					zy = new ImagePlus("ZY " + title, zy_stack);
 				zy.setStack(zy_stack);
 				zy.setTitle("ZY " + title);
 			}
@@ -583,32 +580,29 @@ public class MultiDThreePanes implements PaneOwner {
 					xz_stack.setColorModel(cm);
 				}
 			}
-			if (initialize) {
-				xz = new ImagePlus("XZ " + title, xz_stack);
-			}
-			else {
+				if (xz == null)
+					xz = new ImagePlus("XZ " + title, xz_stack);
 				xz.setStack(xz_stack);
 				xz.setTitle("XZ " + title);
-			}
 			IJ.showProgress(1.0); // Removes the progress indicator
 
 		}
 
 		System.gc();
 
-		if (initialize) {
+		if (xy_canvas == null)
 			xy_canvas = createCanvas(xy, XY_PLANE);
-			if (!single_pane) {
-				xz_canvas = createCanvas(xz, XZ_PLANE);
-				zy_canvas = createCanvas(zy, ZY_PLANE);
-			}
+		if (!single_pane && xz_canvas == null)
+			xz_canvas = createCanvas(xz, XZ_PLANE);
+		if (!single_pane && zy_canvas == null)
+			zy_canvas = createCanvas(zy, ZY_PLANE);
 
+		if (xy_window == null)
 			xy_window = new StackWindow(xy, xy_canvas);
-			if (!single_pane) {
-				xz_window = new StackWindow(xz, xz_canvas);
-				zy_window = new StackWindow(zy, zy_canvas);
-			}
-		}
+		if (!single_pane && xz_window == null)
+			xz_window = new StackWindow(xz, xz_canvas);
+		if (!single_pane && zy_window == null)
+			zy_window = new StackWindow(zy, zy_canvas);
 
 	}
 

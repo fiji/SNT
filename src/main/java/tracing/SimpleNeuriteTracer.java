@@ -285,6 +285,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		this.channel = channel;
 		this.frame = frame;
 		loadData();
+		reloadZYXZpanes(frame);
 	}
 
 	private void loadData() {

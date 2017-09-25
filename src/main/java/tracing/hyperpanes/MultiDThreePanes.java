@@ -225,7 +225,7 @@ public class MultiDThreePanes implements PaneOwner {
 	 * ImagePlus in order for the plugin not to warn you about
 	 * free memory. */
 
-	public void reload(final int frame) {
+	public void reloadZYXZpanes(final int frame) {
 		if (single_pane) return; // nothing to reload
 		if (xy == null) throw new IllegalArgumentException(
 			"reload() called withou initialization");
@@ -661,6 +661,6 @@ public class MultiDThreePanes implements PaneOwner {
 		final MultiDThreePanes mdp = new MultiDThreePanes();
 		mdp.single_pane = false;
 		mdp.initialize(imp, 20);
-		mdp.reload(30);
+		mdp.reloadZYXZpanes(30);
 	}
 }

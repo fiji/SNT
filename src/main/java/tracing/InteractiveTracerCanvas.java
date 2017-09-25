@@ -31,7 +31,7 @@ import java.awt.event.WindowEvent;
 
 import ij.IJ;
 import ij.ImagePlus;
-import stacks.ThreePanes;
+import tracing.hyperpanes.MultiDThreePanes;
 
 @SuppressWarnings("serial")
 public class InteractiveTracerCanvas extends TracerCanvas {
@@ -176,7 +176,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
 				: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 
-		if (tracerPlugin.snapCursor && plane == ThreePanes.XY_PLANE && !joiner_modifier_down && !shift_key_down) {
+		if (tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down && !shift_key_down) {
 			final double[] p = new double[3];
 			tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise, last_y_in_pane_precise, p);
 			last_x_in_pane_precise = p[0];
@@ -196,14 +196,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseEntered(final MouseEvent e) {
 
-		if (!tracerPlugin.isReady())
-			return;
-
-		if (tracerPlugin.autoCanvasActivation) {
-			imp.getWindow().toFront();
-			requestFocusInWindow();
-		}
-
+		if (!tracerPlugin.isReady()) return;
+		if (tracerPlugin.autoCanvasActivation) imp.getWindow().toFront();
 	}
 
 	@Override
@@ -246,10 +240,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		int x, y;
 
-		if (plane == ThreePanes.XY_PLANE) {
+		if (plane == MultiDThreePanes.XY_PLANE) {
 			x = myScreenXD(p.x / tracerPlugin.x_spacing);
 			y = myScreenYD(p.y / tracerPlugin.y_spacing);
-		} else if (plane == ThreePanes.XZ_PLANE) {
+		} else if (plane == MultiDThreePanes.XZ_PLANE) {
 			x = myScreenXD(p.x / tracerPlugin.x_spacing);
 			y = myScreenYD(p.z / tracerPlugin.z_spacing);
 		} else { // plane is ThreePanes.ZY_PLANE

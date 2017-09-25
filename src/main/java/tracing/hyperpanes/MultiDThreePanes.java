@@ -278,313 +278,312 @@ public class MultiDThreePanes implements PaneOwner {
 
 			final String title = (xy.getNFrames() > 0) ? "[T" + frame + "] " + xy
 				.getShortTitle() : xy.getShortTitle();
-			final int zy_width = stackSize;
-			final int zy_height = height;
-			final ImageStack zy_stack = new ImageStack(zy_width, zy_height);
+				final int zy_width = stackSize;
+				final int zy_height = height;
+				final ImageStack zy_stack = new ImageStack(zy_width, zy_height);
 
-			final int xz_width = width;
-			final int xz_height = stackSize;
-			final ImageStack xz_stack = new ImageStack(xz_width, xz_height);
+				final int xz_width = width;
+				final int xz_height = stackSize;
+				final ImageStack xz_stack = new ImageStack(xz_width, xz_height);
 
-			/* Just load in the complete stack for simplicity's
-			 * sake... */
+				/* Just load in the complete stack for simplicity's
+				 * sake... */
 
-			final byte[][] slices_data_b = new byte[stackSize][];
-			final int[][] slices_data_i = new int[stackSize][];
-			final float[][] slices_data_f = new float[stackSize][];
-			final short[][] slices_data_s = new short[stackSize][];
+				final byte[][] slices_data_b = new byte[stackSize][];
+				final int[][] slices_data_i = new int[stackSize][];
+				final float[][] slices_data_f = new float[stackSize][];
+				final short[][] slices_data_s = new short[stackSize][];
 
-			for (int z = 0; z < stackSize; ++z) {
-				final int pos = xyMonoChannel.getStackIndex(1, z + 1, frame);
+				for (int z = 0; z < stackSize; ++z) {
+					final int pos = xyMonoChannel.getStackIndex(1, z + 1, frame);
+					switch (type) {
+						case ImagePlus.GRAY8:
+						case ImagePlus.COLOR_256:
+							slices_data_b[z] = (byte[]) xy_stack.getPixels(pos);
+							break;
+						case ImagePlus.GRAY16:
+							slices_data_s[z] = (short[]) xy_stack.getPixels(pos);
+							break;
+						case ImagePlus.COLOR_RGB:
+							slices_data_i[z] = (int[]) xy_stack.getPixels(pos);
+							break;
+						case ImagePlus.GRAY32:
+							slices_data_f[z] = (float[]) xy_stack.getPixels(pos);
+							break;
+					}
+				}
+
+				IJ.showStatus("Generating XZ planes...");
+				IJ.showProgress(0);
+
+				// Create the ZY slices:
+
 				switch (type) {
+
 					case ImagePlus.GRAY8:
 					case ImagePlus.COLOR_256:
-						slices_data_b[z] = (byte[]) xy_stack.getPixels(pos);
+
+						for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
+
+							final byte[] sliceBytes = new byte[zy_width * zy_height];
+
+							for (int z_in_original =
+									0; z_in_original < stackSize; ++z_in_original)
+							{
+								for (int y_in_original =
+										0; y_in_original < height; ++y_in_original)
+								{
+
+									final int x_in_left = z_in_original;
+									final int y_in_left = y_in_original;
+
+									sliceBytes[y_in_left * zy_width + x_in_left] =
+											slices_data_b[z_in_original][y_in_original * width +
+											                             x_in_original];
+								}
+							}
+
+							final ByteProcessor bp = new ByteProcessor(zy_width, zy_height);
+							bp.setPixels(sliceBytes);
+							zy_stack.addSlice(null, bp);
+							IJ.showProgress(x_in_original / (double) width);
+						}
 						break;
+
 					case ImagePlus.GRAY16:
-						slices_data_s[z] = (short[]) xy_stack.getPixels(pos);
+
+						for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
+
+							final short[] sliceShorts = new short[zy_width * zy_height];
+
+							for (int z_in_original =
+									0; z_in_original < stackSize; ++z_in_original)
+							{
+								for (int y_in_original =
+										0; y_in_original < height; ++y_in_original)
+								{
+
+									final int x_in_left = z_in_original;
+									final int y_in_left = y_in_original;
+
+									sliceShorts[y_in_left * zy_width + x_in_left] =
+											slices_data_s[z_in_original][y_in_original * width +
+											                             x_in_original];
+								}
+							}
+
+							final ShortProcessor sp = new ShortProcessor(zy_width, zy_height);
+							sp.setPixels(sliceShorts);
+							zy_stack.addSlice(null, sp);
+							IJ.showProgress(x_in_original / (double) width);
+						}
 						break;
+
 					case ImagePlus.COLOR_RGB:
-						slices_data_i[z] = (int[]) xy_stack.getPixels(pos);
+
+						for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
+
+							final int[] sliceInts = new int[zy_width * zy_height];
+
+							for (int z_in_original =
+									0; z_in_original < stackSize; ++z_in_original)
+							{
+								for (int y_in_original =
+										0; y_in_original < height; ++y_in_original)
+								{
+
+									final int x_in_left = z_in_original;
+									final int y_in_left = y_in_original;
+
+									sliceInts[y_in_left * zy_width + x_in_left] =
+											slices_data_i[z_in_original][y_in_original * width +
+											                             x_in_original];
+								}
+							}
+
+							final ColorProcessor cp = new ColorProcessor(zy_width, zy_height);
+							cp.setPixels(sliceInts);
+							zy_stack.addSlice(null, cp);
+							IJ.showProgress(x_in_original / (double) width);
+						}
 						break;
+
 					case ImagePlus.GRAY32:
-						slices_data_f[z] = (float[]) xy_stack.getPixels(pos);
+
+						for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
+
+							final float[] sliceFloats = new float[zy_width * zy_height];
+
+							for (int z_in_original =
+									0; z_in_original < stackSize; ++z_in_original)
+							{
+								for (int y_in_original =
+										0; y_in_original < height; ++y_in_original)
+								{
+
+									final int x_in_left = z_in_original;
+									final int y_in_left = y_in_original;
+
+									sliceFloats[y_in_left * zy_width + x_in_left] =
+											slices_data_f[z_in_original][y_in_original * width +
+											                             x_in_original];
+								}
+							}
+
+							final FloatProcessor fp = new FloatProcessor(zy_width, zy_height);
+							fp.setPixels(sliceFloats);
+							zy_stack.addSlice(null, fp);
+							IJ.showProgress(x_in_original / (double) width);
+						}
 						break;
+
 				}
-			}
 
-			IJ.showStatus("Generating XZ planes...");
-			IJ.showProgress(0);
-
-			// Create the ZY slices:
-
-			switch (type) {
-
-				case ImagePlus.GRAY8:
-				case ImagePlus.COLOR_256:
-
-					for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
-
-						final byte[] sliceBytes = new byte[zy_width * zy_height];
-
-						for (int z_in_original =
-							0; z_in_original < stackSize; ++z_in_original)
-						{
-							for (int y_in_original =
-								0; y_in_original < height; ++y_in_original)
-							{
-
-								final int x_in_left = z_in_original;
-								final int y_in_left = y_in_original;
-
-								sliceBytes[y_in_left * zy_width + x_in_left] =
-									slices_data_b[z_in_original][y_in_original * width +
-										x_in_original];
-							}
-						}
-
-						final ByteProcessor bp = new ByteProcessor(zy_width, zy_height);
-						bp.setPixels(sliceBytes);
-						zy_stack.addSlice(null, bp);
-						IJ.showProgress(x_in_original / (double) width);
+				if (type == ImagePlus.COLOR_256) {
+					if (cm != null) {
+						zy_stack.setColorModel(cm);
 					}
-					break;
-
-				case ImagePlus.GRAY16:
-
-					for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
-
-						final short[] sliceShorts = new short[zy_width * zy_height];
-
-						for (int z_in_original =
-							0; z_in_original < stackSize; ++z_in_original)
-						{
-							for (int y_in_original =
-								0; y_in_original < height; ++y_in_original)
-							{
-
-								final int x_in_left = z_in_original;
-								final int y_in_left = y_in_original;
-
-								sliceShorts[y_in_left * zy_width + x_in_left] =
-									slices_data_s[z_in_original][y_in_original * width +
-										x_in_original];
-							}
-						}
-
-						final ShortProcessor sp = new ShortProcessor(zy_width, zy_height);
-						sp.setPixels(sliceShorts);
-						zy_stack.addSlice(null, sp);
-						IJ.showProgress(x_in_original / (double) width);
-					}
-					break;
-
-				case ImagePlus.COLOR_RGB:
-
-					for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
-
-						final int[] sliceInts = new int[zy_width * zy_height];
-
-						for (int z_in_original =
-							0; z_in_original < stackSize; ++z_in_original)
-						{
-							for (int y_in_original =
-								0; y_in_original < height; ++y_in_original)
-							{
-
-								final int x_in_left = z_in_original;
-								final int y_in_left = y_in_original;
-
-								sliceInts[y_in_left * zy_width + x_in_left] =
-									slices_data_i[z_in_original][y_in_original * width +
-										x_in_original];
-							}
-						}
-
-						final ColorProcessor cp = new ColorProcessor(zy_width, zy_height);
-						cp.setPixels(sliceInts);
-						zy_stack.addSlice(null, cp);
-						IJ.showProgress(x_in_original / (double) width);
-					}
-					break;
-
-				case ImagePlus.GRAY32:
-
-					for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
-
-						final float[] sliceFloats = new float[zy_width * zy_height];
-
-						for (int z_in_original =
-							0; z_in_original < stackSize; ++z_in_original)
-						{
-							for (int y_in_original =
-								0; y_in_original < height; ++y_in_original)
-							{
-
-								final int x_in_left = z_in_original;
-								final int y_in_left = y_in_original;
-
-								sliceFloats[y_in_left * zy_width + x_in_left] =
-									slices_data_f[z_in_original][y_in_original * width +
-										x_in_original];
-							}
-						}
-
-						final FloatProcessor fp = new FloatProcessor(zy_width, zy_height);
-						fp.setPixels(sliceFloats);
-						zy_stack.addSlice(null, fp);
-						IJ.showProgress(x_in_original / (double) width);
-					}
-					break;
-
-			}
-
-			if (type == ImagePlus.COLOR_256) {
-				if (cm != null) {
-					zy_stack.setColorModel(cm);
 				}
-			}
 
-			IJ.showProgress(1.0);
+				IJ.showProgress(1.0);
 
-			IJ.showStatus("Generating ZY planes...");
-			IJ.showProgress(0);
+				IJ.showStatus("Generating ZY planes...");
+				IJ.showProgress(0);
 
 				if (zy == null)
 					zy = new ImagePlus("ZY " + title, zy_stack);
 				zy.setStack(zy_stack);
 				zy.setTitle("ZY " + title);
-			}
 
-			// Create the XZ slices:
+				// Create the XZ slices:
 
-			switch (type) {
+				switch (type) {
 
-				case ImagePlus.GRAY8:
-				case ImagePlus.COLOR_256:
+					case ImagePlus.GRAY8:
+					case ImagePlus.COLOR_256:
 
-					for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
+						for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
 
-						final byte[] sliceBytes = new byte[xz_width * xz_height];
+							final byte[] sliceBytes = new byte[xz_width * xz_height];
 
-						for (int z_in_original =
-							0; z_in_original < stackSize; ++z_in_original)
-						{
+							for (int z_in_original =
+									0; z_in_original < stackSize; ++z_in_original)
+							{
 
-							// Now we can copy a complete row from
-							// the original image to the XZ slice:
+								// Now we can copy a complete row from
+								// the original image to the XZ slice:
 
-							final int y_in_top = z_in_original;
+								final int y_in_top = z_in_original;
 
-							System.arraycopy(slices_data_b[z_in_original], y_in_original *
-								width, sliceBytes, y_in_top * xz_width, width);
+								System.arraycopy(slices_data_b[z_in_original], y_in_original *
+									width, sliceBytes, y_in_top * xz_width, width);
 
+							}
+
+							final ByteProcessor bp = new ByteProcessor(xz_width, xz_height);
+							bp.setPixels(sliceBytes);
+							xz_stack.addSlice(null, bp);
+
+							IJ.showProgress(y_in_original / (double) width);
 						}
+						break;
 
-						final ByteProcessor bp = new ByteProcessor(xz_width, xz_height);
-						bp.setPixels(sliceBytes);
-						xz_stack.addSlice(null, bp);
+					case ImagePlus.GRAY16:
 
-						IJ.showProgress(y_in_original / (double) width);
-					}
-					break;
+						for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
 
-				case ImagePlus.GRAY16:
+							final short[] sliceShorts = new short[xz_width * xz_height];
 
-					for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
+							for (int z_in_original =
+									0; z_in_original < stackSize; ++z_in_original)
+							{
 
-						final short[] sliceShorts = new short[xz_width * xz_height];
+								// Now we can copy a complete row from
+								// the original image to the XZ slice:
 
-						for (int z_in_original =
-							0; z_in_original < stackSize; ++z_in_original)
-						{
+								final int y_in_top = z_in_original;
 
-							// Now we can copy a complete row from
-							// the original image to the XZ slice:
+								System.arraycopy(slices_data_s[z_in_original], y_in_original *
+									width, sliceShorts, y_in_top * xz_width, width);
 
-							final int y_in_top = z_in_original;
+							}
 
-							System.arraycopy(slices_data_s[z_in_original], y_in_original *
-								width, sliceShorts, y_in_top * xz_width, width);
+							final ShortProcessor sp = new ShortProcessor(xz_width, xz_height);
+							sp.setPixels(sliceShorts);
+							xz_stack.addSlice(null, sp);
 
+							IJ.showProgress(y_in_original / (double) width);
 						}
+						break;
 
-						final ShortProcessor sp = new ShortProcessor(xz_width, xz_height);
-						sp.setPixels(sliceShorts);
-						xz_stack.addSlice(null, sp);
+					case ImagePlus.COLOR_RGB:
 
-						IJ.showProgress(y_in_original / (double) width);
-					}
-					break;
+						for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
 
-				case ImagePlus.COLOR_RGB:
+							final int[] sliceInts = new int[xz_width * xz_height];
 
-					for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
+							for (int z_in_original =
+									0; z_in_original < stackSize; ++z_in_original)
+							{
 
-						final int[] sliceInts = new int[xz_width * xz_height];
+								// Now we can copy a complete row from
+								// the original image to the XZ slice:
 
-						for (int z_in_original =
-							0; z_in_original < stackSize; ++z_in_original)
-						{
+								final int y_in_top = z_in_original;
 
-							// Now we can copy a complete row from
-							// the original image to the XZ slice:
+								System.arraycopy(slices_data_i[z_in_original], y_in_original *
+									width, sliceInts, y_in_top * xz_width, width);
 
-							final int y_in_top = z_in_original;
+							}
 
-							System.arraycopy(slices_data_i[z_in_original], y_in_original *
-								width, sliceInts, y_in_top * xz_width, width);
+							final ColorProcessor cp = new ColorProcessor(xz_width, xz_height);
+							cp.setPixels(sliceInts);
+							xz_stack.addSlice(null, cp);
 
+							IJ.showProgress(y_in_original / (double) width);
 						}
+						break;
 
-						final ColorProcessor cp = new ColorProcessor(xz_width, xz_height);
-						cp.setPixels(sliceInts);
-						xz_stack.addSlice(null, cp);
+					case ImagePlus.GRAY32:
 
-						IJ.showProgress(y_in_original / (double) width);
-					}
-					break;
+						for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
 
-				case ImagePlus.GRAY32:
+							final float[] sliceFloats = new float[xz_width * xz_height];
 
-					for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
+							for (int z_in_original =
+									0; z_in_original < stackSize; ++z_in_original)
+							{
 
-						final float[] sliceFloats = new float[xz_width * xz_height];
+								// Now we can copy a complete row from
+								// the original image to the XZ slice:
 
-						for (int z_in_original =
-							0; z_in_original < stackSize; ++z_in_original)
-						{
+								final int y_in_top = z_in_original;
 
-							// Now we can copy a complete row from
-							// the original image to the XZ slice:
+								System.arraycopy(slices_data_f[z_in_original], y_in_original *
+									width, sliceFloats, y_in_top * xz_width, width);
 
-							final int y_in_top = z_in_original;
+							}
 
-							System.arraycopy(slices_data_f[z_in_original], y_in_original *
-								width, sliceFloats, y_in_top * xz_width, width);
+							final FloatProcessor fp = new FloatProcessor(xz_width, xz_height);
+							fp.setPixels(sliceFloats);
+							xz_stack.addSlice(null, fp);
 
+							IJ.showProgress(y_in_original / (double) width);
 						}
+						break;
 
-						final FloatProcessor fp = new FloatProcessor(xz_width, xz_height);
-						fp.setPixels(sliceFloats);
-						xz_stack.addSlice(null, fp);
-
-						IJ.showProgress(y_in_original / (double) width);
-					}
-					break;
-
-			}
-
-			if (type == ImagePlus.COLOR_256) {
-				if (cm != null) {
-					xz_stack.setColorModel(cm);
 				}
-			}
+
+				if (type == ImagePlus.COLOR_256) {
+					if (cm != null) {
+						xz_stack.setColorModel(cm);
+					}
+				}
 				if (xz == null)
 					xz = new ImagePlus("XZ " + title, xz_stack);
 				xz.setStack(xz_stack);
 				xz.setTitle("XZ " + title);
-			IJ.showProgress(1.0); // Removes the progress indicator
+				IJ.showProgress(1.0); // Removes the progress indicator
 
 		}
 

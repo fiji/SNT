@@ -201,8 +201,10 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 		backBufferWidth = getSize().width;
 		backBufferHeight = getSize().height;
 
-		backBufferImage = createImage(backBufferWidth, backBufferHeight);
-		backBufferGraphics = backBufferImage.getGraphics();
+		if (backBufferWidth > 0 && backBufferHeight > 0) {
+			backBufferImage = createImage(backBufferWidth, backBufferHeight);
+			backBufferGraphics = backBufferImage.getGraphics();
+		}
 	}
 
 	@Override

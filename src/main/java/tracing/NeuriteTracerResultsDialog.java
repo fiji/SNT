@@ -182,11 +182,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		super(plugin.legacyService.getIJ1Helper().getIJ(), title, false);
 		guiUtils = new GuiUtils(this);
 		this.plugin = plugin;
+		new ClarifyingKeyListener(plugin).addKeyAndContainerListenerRecursively(this);
 		listener = new GuiListener();
 
 		assert SwingUtilities.isEventDispatchThread();
-
-		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
 
 		prefs = plugin.prefs;
 		pathAndFillManager = plugin.getPathAndFillManager();

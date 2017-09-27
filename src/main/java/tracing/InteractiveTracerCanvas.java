@@ -206,7 +206,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		if (!tracerPlugin.isReady())
 			return;
 
-		final int currentState = tracerPlugin.resultsDialog.getState();
+		final int currentState = tracerPlugin.getResultsDialog().getState();
 
 		if (currentState == NeuriteTracerResultsDialog.LOADING || currentState == NeuriteTracerResultsDialog.SAVING
 				|| currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED) {

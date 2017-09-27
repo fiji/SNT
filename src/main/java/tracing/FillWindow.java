@@ -153,8 +153,6 @@ public class FillWindow extends JFrame
 		super("All Fills");
 		assert SwingUtilities.isEventDispatchThread();
 
-		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
-
 		this.plugin = plugin;
 		this.pathAndFillManager = pathAndFillManager;
 		setBounds(x, y, 350, 400);

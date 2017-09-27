@@ -2066,4 +2066,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return context;
 	}
 
+	/**
+	 * @return the main dialog of SNT's UI
+	 */
+	public NeuriteTracerResultsDialog getResultsDialog() {
+		return resultsDialog;
+	}
+
 }

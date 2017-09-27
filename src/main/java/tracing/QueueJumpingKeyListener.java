@@ -30,7 +30,7 @@ import java.util.Arrays;
 
 import org.scijava.util.PlatformUtils;
 
-public class QueueJumpingKeyListener implements KeyListener {
+class QueueJumpingKeyListener implements KeyListener {
 
 	protected SimpleNeuriteTracer tracerPlugin;
 	protected InteractiveTracerCanvas canvas;
@@ -73,7 +73,10 @@ public class QueueJumpingKeyListener implements KeyListener {
 				tracerPlugin.finishedPath();
 			else
 				tracerPlugin.confirmTemporary();
+		if (keyCode == KeyEvent.VK_ENTER) {
+			tracerPlugin.getResultsDialog().toFront();
 			e.consume();
+		}
 
 		} else if (keyCode == KeyEvent.VK_ESCAPE && tracerPlugin.resultsDialog !=  null) {
 

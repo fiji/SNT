@@ -29,7 +29,9 @@ import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import ij.IJ;
+import ij.gui.StackWindow;
+import tracing.gui.GuiUtils;
+import tracing.hyperpanes.MultiDThreePanes;
 
 /**
  * There have been problems on Mac OS with people trying to start the Sholl
@@ -38,15 +40,22 @@ import ij.IJ;
  * be wrong if they type Shift with Control-A or Alt-A in the wrong window.
  * (This will be added to all the Wrong Windows.)
  */
+class ClarifyingKeyListener implements KeyListener, ContainerListener {
 
-public class ClarifyingKeyListener implements KeyListener, ContainerListener {
+	private final SimpleNeuriteTracer plugin;
+	private static final int DOUBLE_PRESS_INTERVAL = 300; // ms
+	private long timeKeyDown = 0; // last time key was pressed
+	private int lastKeyPressedCode;
+
+	public ClarifyingKeyListener(final SimpleNeuriteTracer plugin) {
+		this.plugin = plugin;
+	}
 
 	/*
 	 * Grabbing all key presses in a dialog window isn't trivial, but the
 	 * technique suggested here works fine:
 	 * http://www.javaworld.com/javaworld/javatips/jw-javatip69.html
 	 */
-
 	public void addKeyAndContainerListenerRecursively(final Component c) {
 		c.addKeyListener(this);
 		if (c instanceof Container) {
@@ -84,13 +93,30 @@ public class ClarifyingKeyListener implements KeyListener, ContainerListener {
 	@Override
 	public void keyPressed(final KeyEvent e) {
 
+		if (!plugin.isReady()) // false if plugin.getResultsDialog() == null
+			return;
+
 		final int keyCode = e.getKeyCode();
 
-		if (e.isShiftDown() && (e.isControlDown() || e.isAltDown()) && (keyCode == KeyEvent.VK_A)) {
-			IJ.error("You seem to be trying to start Sholl analysis, but the focus is on the wrong window.\n"
-					+ "Bring the (2D) image window to the foreground and try again.");
+		if (keyCode == KeyEvent.VK_ESCAPE) {
+			if (isDoublePress(e)) plugin.getResultsDialog().reset();
+			else plugin.getResultsDialog().abortCurrentOperation();
+		}
+
+		else if (keyCode == KeyEvent.VK_ENTER && plugin.getImagePlus() != null) {
+			final StackWindow win = plugin.getWindow(MultiDThreePanes.XY_PLANE);
+			if (win.isShowing()) win.toFront();
+		}
+
+		else if (e.isShiftDown() && (e.isControlDown() || e.isAltDown()) &&
+			(keyCode == KeyEvent.VK_A))
+		{
+			new GuiUtils(e.getComponent().getParent()).error(
+				"You seem to be trying to start Sholl analysis, but the focus is on the wrong window.\n" +
+					"Bring the tracing image to the foreground and try again.");
 			e.consume();
 		}
+
 	}
 
 	@Override
@@ -99,6 +125,13 @@ public class ClarifyingKeyListener implements KeyListener, ContainerListener {
 
 	@Override
 	public void keyTyped(final KeyEvent e) {
+
+	private boolean isDoublePress(final KeyEvent ke) {
+		if (lastKeyPressedCode == ke.getKeyCode() && ((ke.getWhen() -
+			timeKeyDown) < DOUBLE_PRESS_INTERVAL)) return true;
+		timeKeyDown = ke.getWhen();
+		lastKeyPressedCode = ke.getKeyCode();
+		return false;
 	}
 
 }

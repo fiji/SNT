@@ -1540,6 +1540,46 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return fw;
 	}
 
+	protected void reset() {
+		showStatus("Resetting");
+		changeState(WAITING_TO_START_PATH);
+	}
+
+	protected void abortCurrentOperation() {//FIXME: MOVE TO Simple NeuriteTracer
+		switch (currentState) {
+			case (SEARCHING):
+				updateStatusText("Cancelling path search...", true);
+				plugin.cancelSearch(false);
+				break;
+			case (CALCULATING_GAUSSIAN):
+				updateStatusText("Cancelling Gaussian generation...", true);
+				plugin.cancelGaussian();
+				break;
+			case (WAITING_FOR_SIGMA_POINT):
+				showStatus("Sigma adjustment cancelled...");
+				changeState(preSigmaPaletteState);
+				break;
+			case (PARTIAL_PATH):
+				showStatus("Last temporary path cancelled...");
+				plugin.cancelPath();
+				break;
+			case (QUERY_KEEP):
+				showStatus("Last segment cancelled...");
+				plugin.cancelTemporary();
+				break;
+			case (FILLING_PATHS):
+				showStatus("Filling out cancelled...");
+				plugin.discardFill();
+				break;
+			case (WAITING_TO_START_PATH):
+				showStatus("Instruction ignored: Nothing to abort");
+				break; // nothing to abort;
+			default:
+				SNT.error("BUG: Wrong state for aborting operation...");
+				break;
+		}
+	}
+
 	private String getState(int state) {
 		switch (state) {
 			case WAITING_TO_START_PATH:

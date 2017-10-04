@@ -375,9 +375,25 @@ public class GuiUtils {
 		}
 	}
 
+	public static void enableComponents(final java.awt.Container container,
+		final boolean enable)
+	{
+		final Component[] components = container.getComponents();
+		for (final Component component : components) {
+			component.setEnabled(enable);
+			if (component instanceof java.awt.Container) {
+				enableComponents((java.awt.Container) component, enable);
+			}
+		}
+	}
+
 	public static void floatingMsg(final ImagePlus imp, final String msg) {
 		if (imp == null || imp.getWindow() == null) return;
 		new GuiUtils(imp.getWindow()).tempMsg(msg, true);
+	}
+
+	public static String micrometre() {
+		return String.valueOf('\u00B5') + 'm';
 	}
 
 }

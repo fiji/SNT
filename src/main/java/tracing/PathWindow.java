@@ -53,6 +53,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.DropMode;
 import javax.swing.Icon;
@@ -558,7 +559,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 	private JPanel bottomPanel() {
 		final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
-		panel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		panel.setBorder(BorderFactory.createEmptyBorder());
 		final TreeSearchable searchable = new TreeSearchable(tree);
 		searchable.setCaseSensitive(false);
 		searchable.setFromStart(false);
@@ -588,7 +589,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				listenerAdded = true;
 			}
 		}
-		sBar.setBorder(new EmptyBorder(0, 0, 0, 0));
+		sBar.setBorder(BorderFactory.createEmptyBorder());
 		panel.add(sBar);
 		return panel;
 	}

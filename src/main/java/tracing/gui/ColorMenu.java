@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JPanel;
@@ -149,7 +150,7 @@ public class ColorMenu extends JMenu {
 	private JPanel getGridPanel(final int rows, final int cols) {
 		final JPanel panel = new JPanel();
 		panel.setBackground(getBackground());
-		panel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		panel.setBorder(BorderFactory.createEmptyBorder());
 		panel.setLayout(new GridLayout(rows, cols));
 		return panel;
 	}
@@ -276,7 +277,7 @@ public class ColorMenu extends JMenu {
 				final String promptTitle = (swcColor
 					.type() == SWCColor.SWC_TYPE_IGNORED) ? "New Color"
 						: "New color for SWC Type: " + Path.getSWCtypeName(swcColor.type());
-				final Color c = gUtils.getColor(promptTitle, swcColor.color());
+				final Color c = gUtils.getColor(promptTitle, swcColor.color(), "RGB");
 				if (c != null && !c.equals(swcColor.color())) {
 					// New color choice: refresh panel
 					swcColor.setAWTColor(c);

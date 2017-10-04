@@ -82,7 +82,7 @@ public class SNT {
 		logService.warn("[SNT] " + string);
 	}
 
-	protected static void debug(final Object msg) {
+	public static void debug(final Object msg) {
 		if (SNT.isDebugMode()) { // FIXME: Use PrefService
 			if (!initialized) initialize();
 			logService.debug("[SNT] " + msg);
@@ -121,11 +121,13 @@ public class SNT {
 		}
 	}
 
-	protected static String formatDouble(final double value) {
+	protected static String formatDouble(final double value, final int digits) {
+		String pattern = "0.";
+		while (pattern.length() < digits+2) pattern += "0";
 		final double absValue = Math.abs(value);
-		if (absValue < 0.01 || absValue >= 1000) return new DecimalFormat("0.00E0")
-			.format(value);
-		return new DecimalFormat("0.00").format(value);
+		if (absValue < 0.01 || absValue >= 1000) 
+			pattern += "E0";
+		return new DecimalFormat(pattern).format(value);
 	}
 
 	/** Assesses if SNT is running in debug mode */

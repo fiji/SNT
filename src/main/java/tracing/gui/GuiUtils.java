@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
@@ -55,7 +54,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 
@@ -284,30 +282,33 @@ public class GuiUtils {
 	public void blinkingError(final JComponent blinkingComponent,
 		final String msg)
 	{
-		final Timer blinkTimer = new Timer(500, new ActionListener() {
+		final Color prevColor = blinkingComponent.getForeground();
+		final Color flashColor = Color.RED;
+		final Timer blinkTimer = new Timer(400, new ActionListener() {
 
 			private int count = 0;
-			private final int maxCount = 6;
+			private final int maxCount = 100;
 			private boolean on = false;
-			private final Border prevBorder = blinkingComponent.getBorder();
-			private final Border flashBorder = BorderFactory.createLineBorder(
-				Color.RED, 2);
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				if (count >= maxCount) {
-					blinkingComponent.setBorder(prevBorder);
+					blinkingComponent.setForeground(prevColor);
 					((Timer) e.getSource()).stop();
 				}
 				else {
-					blinkingComponent.setBorder(on ? flashBorder : prevBorder);
+					blinkingComponent.setForeground(on ? flashColor : prevColor);
 					on = !on;
 					count++;
 				}
 			}
 		});
 		blinkTimer.start();
-		error(msg, "Ongoing Operation");
+		if (simpleMsg(msg, "Ongoing Operation",JOptionPane.PLAIN_MESSAGE) > Integer.MIN_VALUE)
+		{ // Dialog dismissed
+			blinkTimer.stop();
+		}
+		blinkingComponent.setForeground(prevColor);
 	}
 
 	/* Static methods */

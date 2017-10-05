@@ -947,36 +947,31 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 		final JCheckBoxMenuItem xyCanvasMenuItem = new JCheckBoxMenuItem(
 			"Hide XY View");
-		xyCanvasMenuItem.addItemListener(new ItemListener() {
+		xyCanvasMenuItem.addActionListener(new ActionListener() {
 
 			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				toggleWindowVisibility(ThreePanes.XY_PLANE, xyCanvasMenuItem, e
-					.getStateChange() == ItemEvent.DESELECTED);
+			public void actionPerformed(ActionEvent e) {
+				toggleWindowVisibility(MultiDThreePanes.XY_PLANE, xyCanvasMenuItem);
 			}
 		});
 		viewMenu.add(xyCanvasMenuItem);
 		final JCheckBoxMenuItem zyCanvasMenuItem = new JCheckBoxMenuItem(
 			"Hide ZY View");
-		zyCanvasMenuItem.setEnabled(!plugin.getSinglePane());
-		zyCanvasMenuItem.addItemListener(new ItemListener() {
+		zyCanvasMenuItem.addActionListener(new ActionListener() {
 
 			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				toggleWindowVisibility(ThreePanes.ZY_PLANE, zyCanvasMenuItem, e
-					.getStateChange() == ItemEvent.DESELECTED);
+			public void actionPerformed(ActionEvent e) {
+				toggleWindowVisibility(MultiDThreePanes.ZY_PLANE, zyCanvasMenuItem);
 			}
 		});
 		viewMenu.add(zyCanvasMenuItem);
 		final JCheckBoxMenuItem xzCanvasMenuItem = new JCheckBoxMenuItem(
 			"Hide XZ View");
-		xzCanvasMenuItem.setEnabled(!plugin.getSinglePane());
-		xzCanvasMenuItem.addItemListener(new ItemListener() {
+		xzCanvasMenuItem.addActionListener(new ActionListener() {
 
 			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				toggleWindowVisibility(ThreePanes.XZ_PLANE, xzCanvasMenuItem, e
-					.getStateChange() == ItemEvent.DESELECTED);
+			public void actionPerformed(ActionEvent e) {
+				toggleWindowVisibility(MultiDThreePanes.XZ_PLANE, xzCanvasMenuItem);
 			}
 		});
 		viewMenu.add(xzCanvasMenuItem);
@@ -1240,7 +1235,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				setVisible(true);
 				setPathListVisible(true, false);
 				setFillListVisible(false);
-				plugin.getWindow(ThreePanes.XY_PLANE).toFront();
+				plugin.getWindow(MultiDThreePanes.XY_PLANE).toFront();
 			}
 		});
 	}
@@ -1307,7 +1302,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	}
 
 	private void arrangeCanvases() {
-		final StackWindow xy_window = plugin.getWindow(ThreePanes.XY_PLANE);
+		final StackWindow xy_window = plugin.getWindow(MultiDThreePanes.XY_PLANE);
 		if (xy_window == null) return;
 		final GraphicsConfiguration xy_config = xy_window
 			.getGraphicsConfiguration();
@@ -1334,12 +1329,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			bounds.y + screenHeight / 2 - xy_window.getHeight() / 2;
 		xy_window.setLocation(x, y);
 
-		final StackWindow zy_window = plugin.getWindow(ThreePanes.ZY_PLANE);
+		final StackWindow zy_window = plugin.getWindow(MultiDThreePanes.ZY_PLANE);
 		if (zy_window != null) {
 			zy_window.setLocation(x + xy_window.getWidth(), y);
 			zy_window.toFront();
 		}
-		final StackWindow xz_window = plugin.getWindow(ThreePanes.XZ_PLANE);
+		final StackWindow xz_window = plugin.getWindow(MultiDThreePanes.XZ_PLANE);
 		if (xz_window != null) {
 			xz_window.setLocation(x, y + xy_window.getHeight());
 			xz_window.toFront();
@@ -1347,17 +1342,23 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		xy_window.toFront();
 	}
 
-	private void toggleWindowVisibility(final int pane,
-		final JCheckBoxMenuItem menuItem, final boolean setVisible)
+	private void toggleWindowVisibility(final int pane, final JCheckBoxMenuItem mItem)
 	{
 		if (getImagePlusFromPane(pane) == null) {
-			guiUtils.error("Image closed: Pane is no longer accessible.");
-			menuItem.setEnabled(false);
-			menuItem.setSelected(false);
+			String msg;
+			if (pane == MultiDThreePanes.XY_PLANE) msg =
+				"Tracing image is no longer available.";
+			else if (plugin.getSinglePane()) msg =
+				"You are tracing in single-pane mode. To generate ZY/XZ " +
+					"panes run \"Display ZY/XZ views\".";
+			else msg = "Pane was closed and is no longer accessible. " +
+				"You can (re)build it using \"Rebuild ZY/XZ views\".";
+			guiUtils.error(msg);
+			mItem.setSelected(false);
+			return;
 		}
-		else { // NB: WindowManager list won't be notified
-			plugin.getWindow(pane).setVisible(setVisible);
-		}
+		// NB: WindowManager list won't be notified
+		plugin.getWindow(pane).setVisible(!mItem.isSelected());
 	}
 
 	private ImagePlus getImagePlusFromPane(final int pane) {
@@ -1891,8 +1892,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 				final GenericDialog gd = new GenericDialog("Selected Paths to ROIs");
 
-				final int[] PLANES_ID = { ThreePanes.XY_PLANE, ThreePanes.XZ_PLANE,
-					ThreePanes.ZY_PLANE };
+				final int[] PLANES_ID = { MultiDThreePanes.XY_PLANE, MultiDThreePanes.XZ_PLANE,
+					MultiDThreePanes.ZY_PLANE };
 				final String[] PLANES_STRING = { "XY_View", "XZ_View", "ZY_View" };
 				final InteractiveTracerCanvas[] canvases = { plugin.xy_tracer_canvas,
 					plugin.xz_tracer_canvas, plugin.zy_tracer_canvas };

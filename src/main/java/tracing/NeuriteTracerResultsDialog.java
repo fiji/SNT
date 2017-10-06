@@ -139,6 +139,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	protected JButton abortButton;
 	private JButton completePath;
 
+	//private JButton cancelPath;
+	private JPanel colorPanel;
+	private static final int MARGIN = 4;
 	private volatile int currentState;
 	private volatile double currentSigma;
 	private volatile double currentMultiplier;
@@ -175,11 +178,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	protected boolean finishOnDoubleConfimation;
 	protected boolean discardOnDoubleCancellation;
 
-	public NeuriteTracerResultsDialog(final String title,
-		final SimpleNeuriteTracer plugin)
-	{
+	public NeuriteTracerResultsDialog(final SimpleNeuriteTracer plugin) {
 
-		super(plugin.legacyService.getIJ1Helper().getIJ(), title, false);
+		super(plugin.legacyService.getIJ1Helper().getIJ(), "SNT v" + SNT.VERSION, false);
 		guiUtils = new GuiUtils(this);
 		this.plugin = plugin;
 		new ClarifyingKeyListener(plugin).addKeyAndContainerListenerRecursively(this);
@@ -197,89 +198,84 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 
-		setJMenuBar(createMenuBar());
+		final JPanel statusPanel = statusPanel();
 
 		final JTabbedPane tabbedPane = new JTabbedPane();
-		tabbedPane.setBackground(getContentPane().getBackground());
-		tabbedPane.setBorder(new EmptyBorder(0, 0, 0, 0));
-
-		final JPanel main = new JPanel();
-		main.setBackground(getContentPane().getBackground());
-		main.setLayout(new GridBagLayout());
+		final JPanel tab1 = new JPanel();
+		tab1.setLayout(new GridBagLayout());
 		final GridBagConstraints c = GuiUtils.defaultGbc();
-
-		final JPanel statusPanel = statusPanel();
-		main.add(statusPanel, c);
-		c.insets = new Insets(4, 8, 8, 8);
+		c.insets = new Insets(MARGIN, MARGIN*2, MARGIN*2, 0);
+		addSeparator(tab1, "Cursor snapping:", true, c);
 		++c.gridy;
-		addSeparator(main, "", true, c); // empty separator
+		tab1.add(snappingPanel(), c);
 		++c.gridy;
-		addSeparator(main, "Cursor snapping:", true, c);
+		addSeparator(tab1, "Curvatures:", true, c);
 		++c.gridy;
-		main.add(snappingPanel(), c);
+		tab1.add(hessianPanel(), c);
 		++c.gridy;
-		addSeparator(main, "Curvatures:", true, c);
+		addSeparator(tab1, "Additional Segmentation Threads:", true, c);
 		++c.gridy;
-		main.add(hessianPanel(), c);
+		tab1.add(filteringPanel(), c);
 		++c.gridy;
-		addSeparator(main, "Additional Segmentation Threads:", true, c);
+		addSeparator(tab1, "Path Rendering:", true, c);
 		++c.gridy;
-		main.add(filteringPanel(), c);
+		tab1.add(renderingPanel(), c);
 		++c.gridy;
-		addSeparator(main, "Path Rendering:", true, c);
+		addSeparator(tab1, "Path Labelling:", false, c);
 		++c.gridy;
-		main.add(renderingPanel(), c);
+		tab1.add(colorPanel = colorOptionsPanel(), c);
 		++c.gridy;
-		addSeparator(main, "Path Labelling:", false, c);
+		addSeparator(tab1, "", true, c); // empty separator
 		++c.gridy;
-		main.add(colorOptionsPanel(), c);
-
-		++c.gridy;
-		addSeparator(main, "", true, c); // empty separator
-
 		c.fill = GridBagConstraints.HORIZONTAL;
-		++c.gridy;
-		main.add(bottomPanel(), c);
-//		++c.gridy;
-//		addSeparator(main, "", true, c);
+		c.insets = new Insets(0, 0, 0, 0);
+		tab1.add(hideWindowsPanel(), c);
+		tabbedPane.addTab("Main", tab1);
 
-		tabbedPane.addTab("Main", main);
-
-		final JPanel advanced = new JPanel();
-		advanced.setLayout(new GridBagLayout());
+		final JPanel tab2 = new JPanel();
+		tab2.setBorder(BorderFactory.createEmptyBorder());
+		tab2.setLayout(new GridBagLayout());
 		final GridBagConstraints c2 = GuiUtils.defaultGbc();
 		c2.anchor = GridBagConstraints.NORTHEAST;
 		c2.gridwidth = GridBagConstraints.REMAINDER;
-		c2.insets = new Insets(4, 8, 8, 8);
-		addSeparator(advanced, "Tracing:", true, c2);
+		c2.insets = new Insets(MARGIN, MARGIN*2, MARGIN*2, 0);
+		addSeparator(tab2, "Tracing:", true, c2);
 		++c2.gridy;
-		advanced.add(advancedTracingPanel(), c2);
+		tab2.add(advancedTracingPanel(), c2);
 		++c2.gridy;
-		addSeparator(advanced, "UI Interaction:", true, c2);
+		addSeparator(tab2, "UI Interaction:", true, c2);
 		++c2.gridy;
-		advanced.add(interactionPanel(), c2);
+		tab2.add(interactionPanel(), c2);
 		++c2.gridy;
-		addSeparator(advanced, "Misc:", true, c2);
+		addSeparator(tab2, "Misc:", true, c2);
 		++c2.gridy;
 		c2.weighty = 1;
-		advanced.add(miscPanel(), c2);
-		tabbedPane.addTab("Advanced", advanced);
+		tab2.add(miscPanel(), c2);
+		tabbedPane.addTab("Advanced", tab2);
 		tabbedPane.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(final ChangeEvent e) {
 				if (tabbedPane.getSelectedIndex() == 1 && getCurrentState() > 0) {
 					tabbedPane.setSelectedIndex(0);
-					guiUtils.blinkingError(statusPanel,
-						"Please complete current operation before selecting the \"Advanced\" tab.");;
+					guiUtils.blinkingError(statusText,
+						"Please complete current operation before selecting the \"Advanced\" tab.");
 				}
 			}
 		});
 
-		setLayout(new BorderLayout());
-		add(tabbedPane, BorderLayout.NORTH);
-		add(statusBar(), BorderLayout.SOUTH);
+		setJMenuBar(createMenuBar());
+		setLayout(new GridBagLayout());
+		final GridBagConstraints dialogGbc = GuiUtils.defaultGbc();
+		add(statusPanel(), dialogGbc);
+		dialogGbc.gridy++;
+		dialogGbc.insets = new Insets(0, 0, MARGIN*2, 0); // vertical spacer
+		add(tabbedPane, dialogGbc);
+		dialogGbc.gridy++;
+		dialogGbc.insets = new Insets(0, 0, 0, 0);
+		add(statusBar(), dialogGbc);
 		pack();
+		toFront();
 
 		pw = new PathWindow(pathAndFillManager, plugin, getX() + getWidth(),
 			getY());
@@ -435,7 +431,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private void updateLabel() {
 		assert SwingUtilities.isEventDispatchThread();
 		preprocess.setText("Hessian-based analysis (\u03C3 = " + SNT.formatDouble(
-			currentSigma) + ", \u00D7 = " + SNT.formatDouble(currentMultiplier) +
+			currentSigma, 2) + "; \u00D7 = " + SNT.formatDouble(currentMultiplier,2) +
 			")");
 	}
 
@@ -593,7 +589,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						break;
 
 					case WAITING_FOR_SIGMA_CHOICE:
-						updateStatusText("Close the sigma palette window to continue");
+						updateStatusText("Close the sigma palette window to continue...");
 						disableEverything();
 						break;
 
@@ -803,7 +799,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JPanel statusButtonPanel() {
 		final JPanel statusChoicesPanel = new JPanel();
 		statusChoicesPanel.setLayout(new GridBagLayout());
-		statusChoicesPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		statusChoicesPanel.setBorder(new EmptyBorder(0, 0, MARGIN*2, 0));
 		final GridBagConstraints gbc = new GridBagConstraints();
 		gbc.anchor = GridBagConstraints.LINE_START;
 		gbc.fill = GridBagConstraints.NONE;
@@ -825,7 +821,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		gbc.gridx = 2;
 		statusChoicesPanel.add(completePath, gbc);
 		gbc.gridx = 3;
-		abortButton = GuiUtils.smallButton("<html><b>C</b>ancel");
+		abortButton = GuiUtils.smallButton("<html><b>C</b>ancel/<b>Esc</b>");
 		//abortButton.setToolTipText("<html>Shortcuts: <tt>ESC </tt> or <tt>C</tt>");
 		abortButton.setMargin(new Insets(0, 0, 0, 0));
 		abortButton.addActionListener(listener);
@@ -836,18 +832,17 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	private JPanel statusPanel() {
 		final JPanel statusPanel = new JPanel();
-		statusPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 		statusPanel.setLayout(new BorderLayout());
-		statusText = new JLabel("");
+		statusText = new JLabel("Loading SNT...");
 		statusText.setOpaque(true);
 		statusText.setBackground(Color.WHITE);
-		//statusText.setText("Initial status text");
 		statusText.setBorder(BorderFactory.createCompoundBorder(BorderFactory
 			.createBevelBorder(BevelBorder.LOWERED), BorderFactory.createEmptyBorder(
-				5, 5, 5, 5)));
+				MARGIN, MARGIN, MARGIN, MARGIN)));
 		statusPanel.add(statusText, BorderLayout.CENTER);
 		final JPanel buttonPanel = statusButtonPanel();
 		statusPanel.add(buttonPanel, BorderLayout.SOUTH);
+		statusPanel.setBorder(BorderFactory.createEmptyBorder(MARGIN,MARGIN,0,MARGIN));
 		return statusPanel;
 	}
 
@@ -1071,8 +1066,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		colorButtonPanel.add(colorChooser1);
 		colorButtonPanel.add(colorChooser2);
 
-		pathsColorChoice = new JComboBox<>();
-		pathsColorChoice.addItemListener(listener);
+		final JComboBox<String> pathsColorChoice = new JComboBox<>();
 		pathsColorChoice.addItem("Default colors");
 		pathsColorChoice.addItem("Path Manager colors");
 		pathsColorChoice.setSelectedIndex(plugin.displayCustomPathColors ? 1 : 0);
@@ -1102,7 +1096,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			FlowLayout.LEFT));
 		useSnapWindow = new JCheckBox("<html>Enable <b>S</b>napping within: XY",
 			plugin.snapCursor);
-		useSnapWindow.setBorder(new EmptyBorder(0, 0, 0, 0));
+		useSnapWindow.setBorder(BorderFactory.createEmptyBorder());
 		useSnapWindow.addItemListener(listener);
 		tracingOptionsPanel.add(useSnapWindow);
 
@@ -1126,6 +1120,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		snapWindowZsizeSpinner = GuiUtils.integerSpinner(plugin.cursorSnapWindowZ *
 			2, SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z,
 			SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z * 2, 2);
+		snapWindowZsizeSpinner.setBorder(BorderFactory.createEmptyBorder());
 		snapWindowZsizeSpinner.setEnabled(isStackAvailable());
 		snapWindowZsizeSpinner.addChangeListener(new ChangeListener() {
 
@@ -1151,6 +1146,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		hessianOptionsPanel.add(preprocess, oop_c);
 
 		final JPanel sigmaButtonPanel = new JPanel();
+		final FlowLayout layout = (FlowLayout)sigmaButtonPanel.getLayout();
+		layout.setHgap(0);
 		editSigma = GuiUtils.smallButton("Pick Sigma Manually");
 		editSigma.addActionListener(listener);
 		sigmaButtonPanel.add(editSigma);
@@ -1164,22 +1161,25 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return hessianOptionsPanel;
 	}
 
-	private JPanel bottomPanel() {
+	private JPanel hideWindowsPanel() {
 		final JPanel hideWindowsPanel = new JPanel();
-		showOrHidePathList = new JButton("Show / Hide Path List");
+		final FlowLayout layout = (FlowLayout)hideWindowsPanel.getLayout();
+		layout.setHgap(0);
+		showOrHidePathList = new JButton("Show Path Manager");
 		showOrHidePathList.addActionListener(listener);
-		showOrHideFillList = new JButton("Show / Hide Fill List");
+		showOrHideFillList = new JButton("Show Fill Manager");
 		showOrHideFillList.addActionListener(listener);
 		hideWindowsPanel.add(showOrHidePathList);
 		hideWindowsPanel.add(showOrHideFillList);
+		hideWindowsPanel.setBorder(BorderFactory.createEmptyBorder());
 		return hideWindowsPanel;
 	}
 
 	private JPanel statusBar() {
 		final JPanel statusBar = new JPanel();
 		statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.X_AXIS));
-		statusBar.setBorder(BorderFactory.createEmptyBorder(8, 4, 2, 0));
-		statusBarText = leftAlignedLabel("", false);
+		statusBarText = leftAlignedLabel("Ready to trace...", false);
+		statusBarText.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, MARGIN/2, 0));
 		statusBar.add(statusBarText);
 		refreshStatus();
 		return statusBar;
@@ -1212,7 +1212,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final boolean vgap, final GridBagConstraints c)
 	{
 		final Insets previousInsets = c.insets;
-		c.insets = new Insets(vgap ? 8 : 0, 4, 0, 0);
+		c.insets = new Insets(vgap ? MARGIN*2 : 0, MARGIN, 0, 0);
 		final JLabel label = leftAlignedLabel(heading, true);
 		label.setFont(new Font("SansSerif", Font.PLAIN, 11));
 		component.add(label, c);
@@ -1260,14 +1260,17 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	}
 
 	private void setSigmaFromUser() {
-		final JTextField sigmaField = new JTextField(String.valueOf(plugin
-			.getMinimumSeparation()), 5);
-		final JTextField multiplierField = new JTextField("4", 5);
+		final JTextField sigmaField = new JTextField(SNT.formatDouble(getSigma(),
+			5), 5);
+		final JTextField multiplierField = new JTextField(SNT.formatDouble(
+			getMultiplier(), 1), 5);
 		final Object[] contents = {
 			"<html><b>Sigma</b><br>Enter the approximate radius of the structures you are<br>" +
-				"tracing (the default is the minimum voxel separation):", sigmaField,
+				"tracing (the default is the minimum voxel separation,<br>i.e., <tt>" +
+				SNT.formatDouble(plugin.getMinimumSeparation(), 5) + "</tt> " + plugin
+					.getImagePlus().getCalibration().getUnit() + ")", sigmaField,
 			"<html><br><b>Multiplier</b><br>Enter the scaling factor to apply " +
-				"(the default is 4):", multiplierField, };
+				"(the default is <tt>4.0</tt>):", multiplierField, };
 		final int result = JOptionPane.showConfirmDialog(this, contents,
 			"Select Scale of Structures", JOptionPane.OK_CANCEL_OPTION,
 			JOptionPane.PLAIN_MESSAGE);
@@ -1426,17 +1429,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	private JMenu helpMenu() {
 		final JMenu helpMenu = new JMenu("Help");
-		final JMenuItem aboutMenuItem = new JMenuItem("About...");
-		aboutMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				guiUtils.msg("You are running Simple Neurite Tracer version " +
-					SNT.VERSION, "SNT v" + SNT.VERSION);
-			}
-		});
-		helpMenu.add(aboutMenuItem);
-		helpMenu.addSeparator();
 		final String URL = "http://imagej.net/Simple_Neurite_Tracer";
 		JMenuItem mi = menuItemTrigerringURL("Main documentation page", URL);
 		helpMenu.add(mi);
@@ -1572,6 +1564,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				showStatus("Filling out cancelled...");
 				plugin.discardFill();
 				break;
+			case (WAITING_FOR_SIGMA_CHOICE):
+				showStatus("Close the sigma palette to abort sigma input...");
+				break; // do nothing: 
 			case (WAITING_TO_START_PATH):
 				showStatus("Instruction ignored: Nothing to abort");
 				break; // nothing to abort;
@@ -1620,10 +1615,14 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		SigmaPalette.SigmaPaletteListener, ImageListener
 	{
 
+		public GuiListener(){
+			ImagePlus.addImageListener(this);
+		}
+
 		/* ImageListener */
 		@Override
 		public void imageClosed(final ImagePlus imp) {
-			// updateColorImageChoice(); FIXME
+			// updateColorImageChoice(); //FIXME
 			if (plugin.getImagePlus() == imp) changeState(
 				NeuriteTracerResultsDialog.IMAGE_CLOSED);
 		}

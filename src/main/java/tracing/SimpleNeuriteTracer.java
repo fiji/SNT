@@ -287,8 +287,20 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		reloadZYXZpanes(frame);
 	}
 
-	private void loadData() {
+	public void rebuildZYXZpanes() {
+		single_pane = false;
+		reloadZYXZpanes(frame);
+		zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
+		addListener(zy_tracer_canvas, zy_window);
+		xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
+		addListener(xz_tracer_canvas, xz_window);
+		if (!zy.isVisible()) zy.show();
+		if (!xz.isVisible()) xz.show();
+	}
+
+	private void loadData() {//FIXME needs to becalled before init
 		final ImageStack s = xy.getStack();
+
 		switch (imageType) {
 			case ImagePlus.GRAY8:
 			case ImagePlus.COLOR_256:

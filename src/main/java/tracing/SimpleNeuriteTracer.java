@@ -72,7 +72,6 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
-import stacks.ThreePanes;
 import tracing.gui.GuiUtils;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.hyperpanes.MultiDThreePanesCanvas;
@@ -1669,11 +1668,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public StackWindow getWindow(final int plane) {
 		switch (plane) {
-			case ThreePanes.XY_PLANE:
+			case MultiDThreePanes.XY_PLANE:
 				return xy_window;
-			case ThreePanes.XZ_PLANE:
+			case MultiDThreePanes.XZ_PLANE:
 				return (single_pane) ? null : xz_window;
-			case ThreePanes.ZY_PLANE:
+			case MultiDThreePanes.ZY_PLANE:
 				return (single_pane) ? null : zy_window;
 			default:
 				return null;
@@ -1825,7 +1824,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		final int[] window_center = new int[3];
 		findPointInStack((int) Math.round(x_in_pane), (int) Math.round(y_in_pane),
-			ThreePanes.XY_PLANE, window_center);
+			MultiDThreePanes.XY_PLANE, window_center);
 		int startx = window_center[0] - cursorSnapWindowXY;
 		if (startx < 0) startx = 0;
 		int starty = window_center[1] - cursorSnapWindowXY;

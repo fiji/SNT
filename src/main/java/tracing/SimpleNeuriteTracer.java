@@ -255,28 +255,21 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		loadData();
 
-		final QueueJumpingKeyListener xy_listener = new QueueJumpingKeyListener(
-			this, xy_tracer_canvas);
-		setAsFirstKeyListener(xy_tracer_canvas, xy_listener);
-		setAsFirstKeyListener(xy_window, xy_listener);
-
+		addListener(xy_tracer_canvas, xy_window);
 		if (!single_pane) {
-
 			xz.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
 			zy.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
-
-			final QueueJumpingKeyListener xz_listener = new QueueJumpingKeyListener(
-				this, xz_tracer_canvas);
-			setAsFirstKeyListener(xz_tracer_canvas, xz_listener);
-			setAsFirstKeyListener(xz_window, xz_listener);
-
-			final QueueJumpingKeyListener zy_listener = new QueueJumpingKeyListener(
-				this, zy_tracer_canvas);
-			setAsFirstKeyListener(zy_tracer_canvas, zy_listener);
-			setAsFirstKeyListener(zy_window, zy_listener);
-
+			addListener(xz_tracer_canvas, xz_window);
+			addListener(zy_tracer_canvas, zy_window);
 		}
 
+	}
+
+	private void addListener(InteractiveTracerCanvas canvas, StackWindow window) {
+		final QueueJumpingKeyListener listener = new QueueJumpingKeyListener(this,
+			canvas);
+		setAsFirstKeyListener(canvas, listener);
+		setAsFirstKeyListener(window, listener);
 	}
 
 	public void reloadImage(int channel, int frame) {
@@ -353,8 +346,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 				@Override
 				public NeuriteTracerResultsDialog call() {
-					return new NeuriteTracerResultsDialog("Tracing for: " + xy
-						.getShortTitle(), thisPlugin);
+					return new NeuriteTracerResultsDialog(thisPlugin);
 				}
 			});
 		resultsDialog.displayOnStarting();

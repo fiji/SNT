@@ -22,23 +22,16 @@
 
 package tracing;
 
-import java.applet.Applet;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 
-import net.imagej.ImageJ;
-
-import org.scijava.command.Command;
-import org.scijava.plugin.Plugin;
+import org.scijava.Context;
 import org.scijava.vecmath.Color3f;
 
-import client.ArchiveClient;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -46,7 +39,6 @@ import ij.Macro;
 import ij.gui.GenericDialog;
 import ij.gui.Overlay;
 import ij.gui.YesNoCancelDialog;
-import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -66,8 +58,11 @@ import util.RGBToLuminance;
 
  */
 
-@Plugin(type = Command.class, visible=true, menuPath="SNT>SNT", initializer = "initialize")
-public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn, Command {
+public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn {
+
+	public Simple_Neurite_Tracer() {
+		super((Context) IJ.runPlugIn(Context.class.getName(), ""), IJ.getImage());
+	}
 
 	/* These will be set by SNTPrefs */
 	protected boolean forceGrayscale;
@@ -76,7 +71,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 	protected boolean look4tracesFile;
 
 	@Override
-	public void run() {
+	public void run(String arg) {
 
 		/*
 		 * The useful macro options are:
@@ -95,13 +90,13 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			macroTracesFilename = Macro.getValue(macroOptions, "tracesfilename", null);
 		}
 
-		final Applet applet = IJ.getApplet();
-		if (applet != null) {
-			archiveClient = new ArchiveClient(applet, macroOptions);
-		}
-
-		if (archiveClient != null)
-			archiveClient.closeChannelsWithTag("nc82");
+//		final Applet applet = IJ.getApplet();
+//		if (applet != null) {
+//			archiveClient = new ArchiveClient(applet, macroOptions);
+//		}
+//
+//		if (archiveClient != null)
+//			archiveClient.closeChannelsWithTag("nc82");
 
 		try {
 
@@ -136,10 +131,9 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				return;
 			}
 
-			if (currentImage.getStackSize() == 1)
-				singleSlice = true;
-
-			imageType = currentImage.getType();
+			/* We're running in legacy mode: We need to initialize unset
+			 * variables to default values for backwards compatibility */
+			channel = 1; frame = 1;
 
 			if (imageType == ImagePlus.COLOR_RGB) {
 				final YesNoCancelDialog queryRGB = new YesNoCancelDialog(IJ.getInstance(), "Convert RGB image",
@@ -170,23 +164,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 					return;
 			}
 
-			width = currentImage.getWidth();
-			height = currentImage.getHeight();
-			depth = currentImage.getStackSize();
-
-			final Calibration calibration = currentImage.getCalibration();
-			if (calibration != null) {
-				x_spacing = calibration.pixelWidth;
-				y_spacing = calibration.pixelHeight;
-				z_spacing = calibration.pixelDepth;
-				spacing_units = calibration.getUnits();
-				if (spacing_units == null || spacing_units.length() == 0)
-					spacing_units = "" + calibration.getUnit();
-			}
-
-			prefs = new SNTPrefs(this);
-			prefs.loadStartupPrefs();
-
 			final GenericDialog gd = new GenericDialog("Simple Neurite Tracer (v" + SNT.VERSION + ")");
 			gd.setInsets(0, 0, 0);
 			final Font font = new Font("SansSerif", Font.BOLD, 12);
@@ -211,7 +188,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			int resamplingFactor = 1;
 
 			if (!singleSlice) {
-				final boolean java3DAvailable = haveJava3D();
+				final boolean java3DAvailable = true; // This should always be true in a Fiji installation
 				defaultResamplingFactor = guessResamplingFactor();
 				resamplingFactor = defaultResamplingFactor;
 				if (!java3DAvailable) {
@@ -382,8 +359,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			resultsDialog = SwingSafeResult.getResult(new Callable<NeuriteTracerResultsDialog>() {
 				@Override
 				public NeuriteTracerResultsDialog call() {
-					return new NeuriteTracerResultsDialog("Tracing for: " + xy.getShortTitle(), thisPlugin,
-							applet != null);
+					return new NeuriteTracerResultsDialog(thisPlugin);
 				}
 			});
 
@@ -499,24 +475,24 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				univ.setAutoAdjustView(false);
 				final PointSelectionBehavior psb = new PointSelectionBehavior(univ, this);
 				univ.addInteractiveBehavior(psb);
-				univ.getWindow().addWindowListener(new WindowAdapter() {
-					@Override
-					public void windowClosed(final WindowEvent e) {
-						resultsDialog.threeDViewerMenuItem.setEnabled(false);
-						resultsDialog.colorImageChoice.setEnabled(false);
-						resultsDialog.paths3DChoice.setEnabled(false);
-					}
-				});
+//				univ.getWindow().addWindowListener(new WindowAdapter() {
+//					@Override
+//					public void windowClosed(final WindowEvent e) {
+//						//Deprecated: resultsDialog.threeDViewerMenuItem.setEnabled(false);
+//						//Deprecated: resultsDialog.colorImageChoice.setEnabled(false);
+//						//Deprecated: resultsDialog.paths3DChoice.setEnabled(false);
+//					}
+//				});
 			}
 
-			resultsDialog.displayOnStarting();
+			getResultsDialog().displayOnStarting();
 
 			File tracesFileToLoad = null;
 			final boolean macroLoading = macroTracesFilename != null;
 			if (macroLoading) {
 				tracesFileToLoad = new File(macroTracesFilename);
 			} else if (look4tracesFile && file_info != null) {
-				final String filenameBeforeExtension = stripExtension(file_info.fileName);
+				final String filenameBeforeExtension = SNT.stripExtension(file_info.fileName);
 				if (filenameBeforeExtension != null) {
 					tracesFileToLoad = new File(file_info.directory, filenameBeforeExtension + ".traces");
 				}
@@ -524,9 +500,9 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			if (tracesFileToLoad == null)
 				return;
 			if (tracesFileToLoad.exists()) {
-				resultsDialog.changeState(NeuriteTracerResultsDialog.LOADING);
+				getResultsDialog().changeState(NeuriteTracerResultsDialog.LOADING);
 				pathAndFillManager.loadGuessingType(tracesFileToLoad.getAbsolutePath());
-				resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+				getResultsDialog().changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 			} else if (macroLoading) {
 				SNT.error("The traces file suggested by the macro parameters does not exist:\n" + macroTracesFilename);
 			}
@@ -535,17 +511,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			IJ.getInstance().addKeyListener(IJ.getInstance());
 
 		}
-	}
-
-	@Override
-	public void run(final String ignoredArguments) {
-		run();
-	}
-
-	public static void main(final String... args) {
-		final ImageJ ij = new ImageJ();
-		ij.ui().showUI();
-		ij.command().run(Simple_Neurite_Tracer.class, true);
 	}
 
 }

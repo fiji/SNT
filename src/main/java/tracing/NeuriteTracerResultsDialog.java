@@ -405,24 +405,15 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			public void run() {
 				currentSigma = sigma;
 				updateLabel();
-				if (mayStartGaussian) {
-					if (preprocess.isSelected()) {
-						SNT.error(
-							"[BUG] The preprocess checkbox should never be on when setSigma is called");
-					}
-					else {
-						// Turn on the checkbox:
-						ignorePreprocessEvents = true;
-						preprocess.setSelected(true);
-						ignorePreprocessEvents = false;
-						/*
-						 * ... according to the documentation this doesn't
-						 * generate an event, so we manually turn on the
-						 * Gaussian calculation
-						 */
-						turnOnHessian();
-					}
-				}
+				if (!mayStartGaussian) return;
+				preprocess.setSelected(false);
+
+				// Turn on the checkbox: according to the documentation this doesn't
+				// generate an event, so we manually turn on the Gaussian calculation
+				ignorePreprocessEvents = true;
+				preprocess.setSelected(true);
+				ignorePreprocessEvents = false;
+				turnOnHessian();
 			}
 		});
 	}
@@ -1786,18 +1777,15 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 			else if (source == loadMenuItem) {
 
-				if (plugin.pathsUnsaved()) {
-					final YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(),
-						"Warning",
-						"There are unsaved paths. Do you really want to load new traces?");
-
-					if (!d.yesPressed()) return;
+				if (plugin.pathsUnsaved() && guiUtils.getConfirmation(
+					"There are unsaved paths. Do you really want to load new traces?",
+					"Warning"))
+				{
+					final int preLoadingState = currentState;
+					changeState(LOADING);
+					plugin.loadTracings();
+					changeState(preLoadingState);
 				}
-
-				final int preLoadingState = currentState;
-				changeState(LOADING);
-				plugin.loadTracings();
-				changeState(preLoadingState);
 
 			}
 			else if (source == exportAllSWCMenuItem && !noPathsError()) {

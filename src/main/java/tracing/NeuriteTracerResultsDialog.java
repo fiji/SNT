@@ -671,11 +671,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final JPanel positionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		positionPanel.add(leftAlignedLabel("Channel", hasChannels));
 		final JSpinner channelSpinner = GuiUtils.integerSpinner(plugin.channel, 1,
-			plugin.getImagePlus().getNChannels() * 100, 1);
+			plugin.getImagePlus().getNChannels(), 1);
 		positionPanel.add(channelSpinner);
 		positionPanel.add(leftAlignedLabel(" Frame", hasFrames));
 		final JSpinner frameSpinner = GuiUtils.integerSpinner(plugin.frame, 1,
-			plugin.getImagePlus().getNFrames() * 100, 1);
+			plugin.getImagePlus().getNFrames(), 1);
 		positionPanel.add(frameSpinner);
 		final JButton applyPositionButton = GuiUtils.smallButton("Apply");
 		applyPositionButton.addActionListener(new ActionListener() {
@@ -853,6 +853,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	private JPanel filteringPanel() {
 		final JPanel filteringOptionsPanel = new JPanel();
+		filteringOptionsPanel.setBorder(BorderFactory.createEmptyBorder());
 		filteringOptionsPanel.setLayout(new GridBagLayout());
 		final GridBagConstraints oop_f = GuiUtils.defaultGbc();
 
@@ -1984,27 +1985,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 			else if (source == abortButton) {
 
-				if (currentState == SEARCHING) {
-					updateStatusText("Cancelling path search...");
-					plugin.cancelSearch(false);
-				}
-				else if (currentState == CALCULATING_GAUSSIAN) {
-					updateStatusText("Cancelling Gaussian generation...");
-					plugin.cancelGaussian();
-				}
-				else if (currentState == WAITING_FOR_SIGMA_POINT) {
-					updateStatusText("Cancelling sigma adjustment...");
-					changeState(preSigmaPaletteState);
-				}
-				else if (currentState == PARTIAL_PATH) {
-					plugin.cancelPath();
-				} 
-				else if (currentState == QUERY_KEEP) {
-					plugin.cancelTemporary();
-				}
-				else if (currentState != WAITING_TO_START_PATH){
-					SNT.error("BUG: Wrong state for aborting operation...");
-				}
+				abortCurrentOperation();
 			}
 			else if (source == keepSegment) {
 

@@ -74,6 +74,8 @@ import ij.process.FloatProcessor;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import tracing.gui.GuiUtils;
+import tracing.QueueJumpingKeyListener;
+import tracing.gui.SWCImportOptionsDialog;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.hyperpanes.MultiDThreePanesCanvas;
 

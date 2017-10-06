@@ -67,6 +67,7 @@ import ij.gui.StackWindow;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.measure.Calibration;
+import ij.plugin.Duplicator;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
@@ -1431,6 +1432,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			z_spacing)));
 	}
 
+	// FIXME: This is just a lame quick fix to allow SNT to be aware of data
+	// coming from multidimensional images without having to patch too much.
+	// We should not be duplicating anything:
+	// We already extracted the subset of voxels we need, so we should compute
+	// curvatures differently (rewrite/patch features.ComputeCurvatures? ImgLIb2?)
+	private ImagePlus uniDimensionalImp() {
+		return new Duplicator().run(xy, channel, channel, 1, depth, frame, frame);
+	}
+
 	volatile boolean hessianEnabled = false;
 	ComputeCurvatures hessian = null;
 	/*
@@ -1445,7 +1455,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			resultsDialog.changeState(
 				NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
 			hessianSigma = resultsDialog.getSigma();
-			hessian = new ComputeCurvatures(xy, hessianSigma, this, true);
+			hessian = new ComputeCurvatures(uniDimensionalImp(), hessianSigma, this, true);
 			new Thread(hessian).start();
 		}
 		else {
@@ -1454,7 +1464,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				resultsDialog.changeState(
 					NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
 				hessianSigma = newSigma;
-				hessian = new ComputeCurvatures(xy, hessianSigma, this, true);
+				hessian = new ComputeCurvatures(uniDimensionalImp(), hessianSigma, this, true);
 				new Thread(hessian).start();
 			}
 		}

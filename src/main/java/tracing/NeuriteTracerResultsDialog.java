@@ -1381,12 +1381,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	{
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {
-			showOrHidePathList.setText(" Hide Path List");
+			showOrHidePathList.setText(" Hide Path Manager");
 			pw.setVisible(true);
 			if (toFront) pw.toFront();
 		}
 		else {
-			showOrHidePathList.setText("Show Path List");
+			showOrHidePathList.setText("Show Path Manager");
 			pw.setVisible(false);
 		}
 	}
@@ -1401,12 +1401,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	protected void setFillListVisible(final boolean makeVisible) {
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {
-			showOrHideFillList.setText(" Hide Fill List");
+			showOrHideFillList.setText(" Hide Fill Manager");
 			fw.setVisible(true);
 			fw.toFront();
 		}
 		else {
-			showOrHideFillList.setText("Show Fill List");
+			showOrHideFillList.setText("Show Fill Manager");
 			fw.setVisible(false);
 		}
 	}

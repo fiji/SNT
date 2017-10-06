@@ -274,7 +274,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void reloadImage(int channel, int frame) {
-		if (!setupTrace) throw new IllegalArgumentException("SNT has not yet been initialized");
+		if (!setupTrace) throw new IllegalArgumentException(
+			"SNT has not yet been initialized");
+		if (frame < 1 || channel < 1 || frame > getImagePlus().getNFrames() ||
+			channel > getImagePlus().getNChannels())
+			throw new IllegalArgumentException("Invalid position: C=" + channel +
+				" T=" + frame);
 		this.channel = channel;
 		this.frame = frame;
 		loadData();
@@ -725,7 +730,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 							.getName());
 					// FIXME: pop up a dialog to ask about options:
 					// .. and then call the full importSWC.=:
-					if (swcImportDialog.succeeded && pathAndFillManager.importSWC(
+					if (swcImportDialog.succeeded() && pathAndFillManager.importSWC(
 						chosenFile.getAbsolutePath(), swcImportDialog
 							.getIgnoreCalibration(), swcImportDialog.getXOffset(),
 						swcImportDialog.getYOffset(), swcImportDialog.getZOffset(),
@@ -1903,6 +1908,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		point[0] = snapped_p[0];
 		point[1] = snapped_p[1];
 		point[2] = snapped_p[2];
+	}
+
+	public void clickAtMaxPointInMainPane(final int x_in_pane, final int y_in_pane)
+	{
+		clickAtMaxPoint(x_in_pane, y_in_pane, MultiDThreePanes.XY_PLANE);
 	}
 
 	public void clickAtMaxPoint(final int x_in_pane, final int y_in_pane,

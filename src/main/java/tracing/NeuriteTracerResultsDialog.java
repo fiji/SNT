@@ -695,6 +695,22 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 		positionPanel.add(applyPositionButton);
 		tracingPanel.add(positionPanel, gdb);
+		++gdb.gridy;
+		String bLabel = (plugin.getSinglePane()) ? "Display" : "Rebuild";
+		final JButton refreshPanesButton = GuiUtils.smallButton(bLabel +
+			" ZY/XZ views");
+		refreshPanesButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				plugin.rebuildZYXZpanes();
+				showStatus("ZY/XZ views reloaded...");
+				refreshPanesButton.setText("Rebuild ZY/XZ views");
+				arrangeCanvases();
+			}
+		});
+		gdb.fill = GridBagConstraints.NONE;
+		tracingPanel.add(refreshPanesButton, gdb);
 		channelSpinner.setEnabled(hasChannels);
 		frameSpinner.setEnabled(hasFrames);
 		applyPositionButton.setEnabled(hasChannels || hasFrames);

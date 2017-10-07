@@ -31,7 +31,6 @@ import net.imagej.ImageJ;
 import net.imagej.display.ImageDisplayService;
 import net.imagej.legacy.LegacyService;
 
-import org.scijava.ItemVisibility;
 import org.scijava.command.DynamicCommand;
 import org.scijava.display.DisplayService;
 import org.scijava.module.MutableModuleItem;
@@ -82,6 +81,29 @@ public class SNTLoader extends DynamicCommand {
 	private static final String UI_SIMPLE = "Memory saving: Only XY view";
 	private static final String UI_DEFAULT = "Default: XY, ZY, XZ and 3D views";
 
+	@Override
+	public void initialize() {
+		// TODO: load defaults from prefService?
+		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
+			.getActiveImageDisplay());
+		if (sourceImp == null) {
+			final MutableModuleItem<Button> useCurrentImgInput = getInfo()
+				.getMutableInput("useCurrentImg", Button.class);
+			removeInput(useCurrentImgInput);
+		}
+		else {
+			adjustChannelInput();
+		}
+	}
+
+	private void adjustChannelInput() {
+		if (sourceImp == null) return;
+		final MutableModuleItem<Integer> channelInput = getInfo().getMutableInput(
+			"channel", Integer.class);
+		channelInput.setMaximumValue(sourceImp.getNChannels());
+		channelInput.setValue(this, channel = sourceImp.getC());
+	}
+
 	@SuppressWarnings("unused")
 	private void loadActiveImage() {
 		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
@@ -108,24 +130,7 @@ public class SNTLoader extends DynamicCommand {
 				tracesFile = candidate;
 				break;
 			}
-
-			if (sourceImp == null) return;
-			final MutableModuleItem<Integer> channelInput = getInfo().getMutableInput(
-				"channel", Integer.class);
-			channelInput.setMaximumValue(sourceImp.getNChannels());
-		}
-
-	}
-
-	@Override
-	public void initialize() {
-		// TODO: load defaults from prefService?
-		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
-			.getActiveImageDisplay());
-		if (sourceImp == null) {
-			final MutableModuleItem<Button> useCurrentImgInput = getInfo()
-				.getMutableInput("useCurrentImg", Button.class);
-			removeInput(useCurrentImgInput);
+			adjustChannelInput();
 		}
 	}
 
@@ -153,6 +158,7 @@ public class SNTLoader extends DynamicCommand {
 		// TODO: logic to load SNT
 	}
 
+	/** IDE debug method **/
 	public static void main(final String[] args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();

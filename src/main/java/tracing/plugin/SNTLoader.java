@@ -67,15 +67,11 @@ public class SNTLoader extends DynamicCommand {
 		style = FileWidget.OPEN_STYLE)
 	private File tracesFile;
 
-	@Parameter(required = false, visibility = ItemVisibility.MESSAGE,
-		label = "<html><body><div style='width:130;'><br><b>Tracing Options:")
-	private String HEADER3;
+	@Parameter(required = false, label = "User interface", choices = {UI_DEFAULT, UI_SIMPLE})
+	private String uiChoice;
 
 	@Parameter(required = false, label = "Tracing channel", min = "1")
 	private int channel;
-
-	@Parameter(required = false, label = "Use three pane view")
-	private boolean three_pane;
 
 	@Parameter(label = "Use current image", callback = "loadActiveImage")
 	private Button useCurrentImg;
@@ -83,12 +79,15 @@ public class SNTLoader extends DynamicCommand {
 	private ImagePlus sourceImp;
 	private boolean loadActiveImage;
 
+	private static final String UI_SIMPLE = "Memory saving: Only XY view";
+	private static final String UI_DEFAULT = "Default: XY, ZY, XZ and 3D views";
+
 	@SuppressWarnings("unused")
 	private void loadActiveImage() {
 		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
 			.getActiveImageDisplay());
 		if (sourceImp == null) {
-			uiService.showDialog("There are no images open");
+			uiService.showDialog("There are no images open.");
 			return;
 		}
 		if (sourceImp.getOriginalFileInfo() != null) {

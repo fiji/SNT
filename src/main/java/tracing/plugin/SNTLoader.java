@@ -27,11 +27,13 @@ import io.scif.services.DatasetIOService;
 import java.io.File;
 import java.io.IOException;
 
+import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.display.ImageDisplayService;
 import net.imagej.legacy.LegacyService;
 
 import org.scijava.command.DynamicCommand;
+import org.scijava.convert.ConvertService;
 import org.scijava.display.DisplayService;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
@@ -42,6 +44,7 @@ import org.scijava.widget.FileWidget;
 
 import ij.ImagePlus;
 import tracing.SNT;
+import tracing.SimpleNeuriteTracer;
 
 @Plugin(type = DynamicCommand.class, visible = true, menuPath = "SNT>SNTLoader",
 	initializer = "initialize")
@@ -56,6 +59,8 @@ public class SNTLoader extends DynamicCommand {
 	@Parameter
 	private LegacyService legacyService;
 	@Parameter
+	private ConvertService convertService;
+	@Parameter
 	private UIService uiService;
 
 	@Parameter(required = false, label = "Image", style = FileWidget.OPEN_STYLE,
@@ -66,7 +71,8 @@ public class SNTLoader extends DynamicCommand {
 		style = FileWidget.OPEN_STYLE)
 	private File tracesFile;
 
-	@Parameter(required = false, label = "User interface", choices = {UI_DEFAULT, UI_SIMPLE})
+	@Parameter(required = false, label = "User interface", choices = { UI_DEFAULT,
+		UI_SIMPLE }) // TODO: Add options for 3D viewer
 	private String uiChoice;
 
 	@Parameter(required = false, label = "Tracing channel", min = "1")
@@ -122,7 +128,6 @@ public class SNTLoader extends DynamicCommand {
 	}
 
 	private void sourceImageChanged() {
-
 		if (sourceFile == null || !sourceFile.exists()) return;
 		for (final String ext : new String[] { "traces", "swc" }) {
 			final File candidate = SNT.findClosestPair(sourceFile, ext);
@@ -141,21 +146,31 @@ public class SNTLoader extends DynamicCommand {
 			cancel("An image is required but none was found");
 			return;
 		}
-		if (sourceFile == null || !sourceFile.exists()) {
-			cancel("No valid image chosen.");
-			return;
+		if (sourceImp == null) {
+			if (sourceFile == null || !sourceFile.exists()) {
+				cancel("No valid image chosen.");
+				return;
+			}
+			try { // sourceFile is valid but image is not displayed
+				final Dataset ds = datasetIOService.open(sourceFile.getAbsolutePath());
+				// displayService.createDisplay(ds); // does not work well in legacy
+				// mode
+				sourceImp = convertService.convert(ds, ImagePlus.class);
+				displayService.createDisplay(sourceImp.getTitle(), sourceImp);
+			}
+			catch (final IOException exc) {
+				cancel("Could not open\n" + sourceFile.getAbsolutePath());
+				return;
+			}
 		}
 
-		try { // sourceFile is valid but image is not displayed
-			displayService.createDisplay(datasetIOService.open(sourceFile
-				.getAbsolutePath()));
-		}
-		catch (final IOException exc) {
-			cancel("Could not open\n" + sourceFile.getAbsolutePath());
-			return;
-		}
+		final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(
+			getContext(), sourceImp);
+		sntInstance.initialize(uiChoice.equals(UI_SIMPLE), channel, sourceImp
+			.getFrame());
+		sntInstance.startUI();
+		sntInstance.loadTracings(tracesFile);
 
-		// TODO: logic to load SNT
 	}
 
 	/** IDE debug method **/

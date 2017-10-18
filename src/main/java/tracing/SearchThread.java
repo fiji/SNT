@@ -24,17 +24,13 @@ package tracing;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.io.CharArrayWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import ij.text.TextWindow;
-import stacks.ThreePanes;
+import tracing.hyperpanes.MultiDThreePanes;
 
 /* This is the thread that explores the image using a variety of
    strategies, for example to trace tubular structures or surfaces. */
@@ -640,19 +636,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			setExitReason(OUT_OF_MEMORY);
 			reportFinished(false);
 		} catch (final Throwable t) {
-			// This is more-or-less based on the catch( Throwable )
-			// in Excecuter.java in ImageJ. FIXME: change this to
-			// call the Bug_Submitter directly...
-			final CharArrayWriter caw = new CharArrayWriter();
-			final PrintWriter pw = new PrintWriter(caw);
-			t.printStackTrace(pw);
-			String s = "There was an exception in the search thread:\n";
-			s += caw.toString();
-			final int w = 350, h = 250;
-			if (IJ.getInstance() != null)
-				new TextWindow("Exception in SearchThread", s, w, h);
-			else
-				IJ.log(s);
+			SNT.error("There was an exception in the search thread", t);
 		}
 		return;
 
@@ -741,7 +725,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			if (pixel_size < 1)
 				pixel_size = 1;
 
-			if (plane == ThreePanes.XY_PLANE) {
+			if (plane == MultiDThreePanes.XY_PLANE) {
 				final int z = currentSliceInPlane;
 				for (int y = 0; y < height; ++y)
 					for (int x = 0; x < width; ++x) {
@@ -753,7 +737,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 							g.fillRect(canvas.myScreenX(x) - pixel_size / 2, canvas.myScreenY(y) - pixel_size / 2,
 									pixel_size, pixel_size);
 					}
-			} else if (plane == ThreePanes.XZ_PLANE) {
+			} else if (plane == MultiDThreePanes.XZ_PLANE) {
 				final int y = currentSliceInPlane;
 				for (int z = 0; z < depth; ++z)
 					for (int x = 0; x < width; ++x) {
@@ -765,7 +749,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 							g.fillRect(canvas.myScreenX(x) - pixel_size / 2, canvas.myScreenY(z) - pixel_size / 2,
 									pixel_size, pixel_size);
 					}
-			} else if (plane == ThreePanes.ZY_PLANE) {
+			} else if (plane == MultiDThreePanes.ZY_PLANE) {
 				final int x = currentSliceInPlane;
 				for (int y = 0; y < height; ++y)
 					for (int z = 0; z < depth; ++z) {

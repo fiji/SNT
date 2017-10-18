@@ -72,6 +72,11 @@ public class SNT {
 		logService.error("[SNT] " + string);
 	}
 
+	protected static void error(final String string, final Throwable t) {
+		if (!initialized) initialize();
+		logService.error("[SNT] " + string, t);
+	}
+
 	protected static void log(final String string) {
 		if (!initialized) initialize();
 		logService.info("[SNT] " + string);

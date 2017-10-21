@@ -668,24 +668,36 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final JSpinner frameSpinner = GuiUtils.integerSpinner(plugin.frame, 1,
 			plugin.getImagePlus().getNFrames(), 1);
 		positionPanel.add(frameSpinner);
-		final JButton applyPositionButton = GuiUtils.smallButton("Apply");
+		final JButton applyPositionButton = GuiUtils.smallButton("Reload");
+		final ChangeListener spinnerListener = new ChangeListener() {
+
+			@Override
+			public void stateChanged(final ChangeEvent e) {
+				applyPositionButton.setText(((int) channelSpinner
+					.getValue() == plugin.channel && (int) frameSpinner
+						.getValue() == plugin.frame) ? "Reload" : "Apply");
+			}
+		};
+		channelSpinner.addChangeListener(spinnerListener);
+		frameSpinner.addChangeListener(spinnerListener);
+		channelSpinner.setEnabled(hasChannels);
+		frameSpinner.setEnabled(hasFrames);
 		applyPositionButton.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				final int newC = (int) channelSpinner.getValue();
 				final int newT = (int) frameSpinner.getValue();
-				if (newC == plugin.channel && newT == plugin.frame) {
-					guiUtils.error("Position C=" + newC + ", T=" + newT +
-						" is already being traced.");
+				final boolean reload = newC == plugin.channel && newT == plugin.frame;
+				if (!reload && !guiUtils.getConfirmation(
+					"You are currently tracing position C=" + plugin.channel + ", T=" +
+						plugin.frame + ". Start tracing C=" + newC + ", T=" + newT + "?",
+					"Change Hyperstack Position?"))
+				{
 					return;
 				}
-				if (guiUtils.getConfirmation("You are currently tracing position C=" +
-					plugin.channel + ", T=" + plugin.frame + ". Start tracing C=" + newC +
-					", T=" + newT + "?", "Change Hyperstack Position?")) {
-					plugin.reloadImage(newC, newT);
-					refreshStatus();
-				}
+				plugin.reloadImage(newC, newT);
+				showStatus(reload ? "Image reloaded into memory..." : null);
 			}
 		});
 		positionPanel.add(applyPositionButton);

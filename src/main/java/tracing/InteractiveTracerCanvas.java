@@ -31,6 +31,7 @@ import java.awt.event.WindowEvent;
 
 import ij.IJ;
 import ij.ImagePlus;
+import tracing.gui.GuiUtils;
 import tracing.hyperpanes.MultiDThreePanes;
 
 @SuppressWarnings("serial")
@@ -117,14 +118,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				}
 			});
 		} else {
-			SNT.error("You must have a path selected in order to start Sholl analysis");
+			tracerPlugin.floatingMsg("You must have a path selected in order to start Sholl analysis");
 		}
 	}
 
 	public void selectNearestPathToMousePointer(final boolean addToExistingSelection) {
 
 		if (pathAndFillManager.size() == 0) {
-			SNT.error("There are no paths yet, so you can't select one with 'g'");
+			tracerPlugin.floatingMsg("There are no paths yet, so you can't select one with 'g'");
 			return;
 		}
 
@@ -219,7 +220,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE) {
 
-			SNT.error("You must close the sigma palette to continue");
+			tracerPlugin.floatingMsg("You must close the sigma palette to continue");
 
 		} else if (tracerPlugin.setupTrace) {
 
@@ -232,7 +233,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			}
 
 		} else
-			SNT.error("BUG: No operation chosen");
+			SNT.debug("BUG: No operation chosen");
 	}
 
 	protected void drawSquare(final Graphics g, final PointInImage p, final Color fillColor, final Color edgeColor,
@@ -246,7 +247,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		} else if (plane == MultiDThreePanes.XZ_PLANE) {
 			x = myScreenXD(p.x / tracerPlugin.x_spacing);
 			y = myScreenYD(p.z / tracerPlugin.z_spacing);
-		} else { // plane is ThreePanes.ZY_PLANE
+		} else { // MultiDThreePanes.ZY_PLANE
 			x = myScreenXD(p.z / tracerPlugin.z_spacing);
 			y = myScreenYD(p.y / tracerPlugin.y_spacing);
 		}

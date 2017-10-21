@@ -30,6 +30,7 @@ import java.util.PriorityQueue;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
+import tracing.gui.GuiUtils;
 import tracing.hyperpanes.MultiDThreePanes;
 
 /* This is the thread that explores the image using a variety of
@@ -630,13 +631,12 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			setExitReason(POINTS_EXHAUSTED);
 			reportFinished(false);
 		} catch (final OutOfMemoryError oome) {
-			SNT.log("Got an OOME: " + oome);
-			oome.printStackTrace();
-			SNT.error("Out of memory while searching for a path");
+			SNT.error("Out Of Memory Error", oome);
+			GuiUtils.errorPrompt("Out of memory while searching for a path");
 			setExitReason(OUT_OF_MEMORY);
 			reportFinished(false);
 		} catch (final Throwable t) {
-			SNT.error("There was an exception in the search thread", t);
+			SNT.error("Exception in search thread", t);
 		}
 		return;
 

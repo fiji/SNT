@@ -473,7 +473,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	protected void disableEverything() {
 		assert SwingUtilities.isEventDispatchThread();
 		disableImageDependentComponents();
-		statusText.setEnabled(false);
 		viewPathChoice.setEnabled(false);
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
@@ -1036,7 +1035,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		viewPathChoice.addItemListener(listener);
 		viewPathChoice.setEnabled(isStackAvailable());
 
-		final JPanel nearbyPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING));
+		final JPanel nearbyPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 0, 0));
 		nearbyPanel.add(leftAlignedLabel("(up to ", isStackAvailable()));
 		nearbyFieldSpinner = GuiUtils.integerSpinner(plugin.depth == 1 ? 1 : 2, 1,
 			plugin.depth, 1);
@@ -1116,10 +1115,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JPanel snappingPanel() {
 
 		final JPanel tracingOptionsPanel = new JPanel(new FlowLayout(
-			FlowLayout.LEFT));
+			FlowLayout.LEADING, 0, 0));
 		useSnapWindow = new JCheckBox("<html>Enable <b>S</b>napping within: XY",
 			plugin.snapCursor);
-		useSnapWindow.setBorder(BorderFactory.createEmptyBorder());
 		useSnapWindow.addItemListener(listener);
 		tracingOptionsPanel.add(useSnapWindow);
 
@@ -1137,7 +1135,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 		tracingOptionsPanel.add(snapWindowXYsizeSpinner);
 
-		final JLabel z_spinner_label = leftAlignedLabel("Z", isStackAvailable());
+		final JLabel z_spinner_label = leftAlignedLabel(" Z", isStackAvailable());
 		z_spinner_label.setBorder(new EmptyBorder(0, 2, 0, 0));
 		tracingOptionsPanel.add(z_spinner_label);
 		snapWindowZsizeSpinner = GuiUtils.integerSpinner(plugin.cursorSnapWindowZ *
@@ -1153,12 +1151,14 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 		tracingOptionsPanel.add(snapWindowZsizeSpinner);
-		return tracingOptionsPanel;
+		// ensure same alignment of all other panels using defaultGbc
+		final JPanel container = new JPanel(new GridBagLayout());
+		container.add(tracingOptionsPanel, GuiUtils.defaultGbc());
+		return container;
 	}
 
 	private JPanel hessianPanel() {
-		final JPanel hessianOptionsPanel = new JPanel();
-		hessianOptionsPanel.setLayout(new GridBagLayout());
+		final JPanel hessianOptionsPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints oop_c = GuiUtils.defaultGbc();
 		preprocess = new JCheckBox();
 		setSigma(plugin.getMinimumSeparation(), false);

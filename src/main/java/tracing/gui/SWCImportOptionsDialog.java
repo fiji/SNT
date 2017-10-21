@@ -236,8 +236,7 @@ public class SWCImportOptionsDialog extends Dialog implements ActionListener,
 		scalePanel.add(yScaleTextField, BorderLayout.CENTER);
 		scalePanel.add(zScaleTextField, BorderLayout.SOUTH);
 
-		final Panel okCancelPanel = new Panel();
-		okCancelPanel.setLayout(new FlowLayout());
+		final Panel okCancelPanel = new Panel(new FlowLayout(FlowLayout.CENTER, 0,0));
 		okCancelPanel.add(okButton);
 		okCancelPanel.add(cancelButton);
 

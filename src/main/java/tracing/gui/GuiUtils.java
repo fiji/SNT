@@ -396,4 +396,8 @@ public class GuiUtils {
 		return String.valueOf('\u00B5') + 'm';
 	}
 
+	public static void errorPrompt(final String msg) {
+		new GuiUtils().error(msg, "SNT v"+ SNT.VERSION);
+	}
+
 }

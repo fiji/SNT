@@ -558,7 +558,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	}
 
 	private JPanel bottomPanel() {
-		final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder());
 		final TreeSearchable searchable = new TreeSearchable(tree);
 		searchable.setCaseSensitive(false);
@@ -1111,12 +1111,12 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	}
 
 	/**
-	 * This class implements implements ActionListeners for most of PathWindow's
+	 * This class implements implements ActionListeners for most of Path Manager's
 	 * MenuItems.
 	 */
 	private class AListener implements ActionListener {
 
-		public static final String COLORS_MENU = "Colors";
+		public static final String COLORS_MENU = "Tags";
 		private final static String EXPAND_ALL_CMD = "Expand All";
 		private final static String COLLAPSE_ALL_CMD = "Collapse All";
 		private final static String DELETE_CMD = "Delete";

@@ -27,12 +27,12 @@ import java.util.ArrayList;
 
 public class ManualTracerThread extends Thread implements SearchInterface {
 
-	private final int start_x;
-	private final int start_y;
-	private final int start_z;
-	private final int goal_x;
-	private final int goal_y;
-	private final int goal_z;
+	private final double start_x;
+	private final double start_y;
+	private final double start_z;
+	private final double goal_x;
+	private final double goal_y;
+	private final double goal_z;
 	private final SimpleNeuriteTracer plugin;
 	private final ArrayList<SearchProgressCallback> progListeners =
 		new ArrayList<>();
@@ -45,12 +45,12 @@ public class ManualTracerThread extends Thread implements SearchInterface {
 	{
 		if (goal_x > plugin.width || goal_y > plugin.width || goal_z > plugin.depth)
 			throw new IllegalArgumentException("Out-of bounds goal");
-		this.start_x = start_x;
-		this.start_y = start_y;
-		this.start_z = start_z;
-		this.goal_x = goal_x;
-		this.goal_y = goal_y;
-		this.goal_z = goal_z;
+		this.start_x = start_x * plugin.x_spacing;
+		this.start_y = start_y * plugin.y_spacing;
+		this.start_z = start_z * plugin.z_spacing;
+		this.goal_x = goal_x * plugin.x_spacing;
+		this.goal_y = goal_y * plugin.y_spacing;
+		this.goal_z = goal_z * plugin.z_spacing;
 		this.plugin = plugin;
 	}
 
@@ -84,7 +84,6 @@ public class ManualTracerThread extends Thread implements SearchInterface {
 
 	@Override
 	public void requestStop() {
-		SNT.debug("requestStop called on manual tracing thread?");
 		synchronized (this) {
 			if (threadStatus == SearchThread.PAUSED) this.interrupt();
 			threadStatus = SearchThread.STOPPING;

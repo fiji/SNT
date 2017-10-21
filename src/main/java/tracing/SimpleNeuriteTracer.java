@@ -408,6 +408,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public void cancelSearch(final boolean cancelFillToo) {
 		if (currentSearchThread != null) currentSearchThread.requestStop();
+		if (currentManualThread != null) currentManualThread.requestStop();
 		if (tubularGeodesicsThread != null) tubularGeodesicsThread.requestStop();
 		endJoin = null;
 		endJoinPoint = null;
@@ -507,7 +508,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		 * these cases:
 		 */
 
-		if (source == currentSearchThread || source == tubularGeodesicsThread) {
+		if (source == currentSearchThread || source == tubularGeodesicsThread || source == currentManualThread) {
 
 			removeSphere(targetBallName);
 
@@ -935,6 +936,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	/* If non-null, holds a reference to the currently searching thread: */
 
 	TracerThread currentSearchThread;
+	ManualTracerThread currentManualThread;
+
 	TubularGeodesicsTracer tubularGeodesicsThread = null;
 
 	/* Start a search thread looking for the goal in the arguments: */
@@ -1001,8 +1004,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			tubularGeodesicsThread.start();
 
 		}
-		else {
 
+		else if (isAstarDisabled()) {
+			currentManualThread = new ManualTracerThread(this, last_start_point_x,
+				last_start_point_y, last_start_point_z, x_end, y_end, z_end);
+			addThreadToDraw(currentManualThread);
+			currentManualThread.addProgressListener(this);
+			currentManualThread.start();
+		}
+		else {
 			currentSearchThread = new TracerThread(xy, stackMin, stackMax, 0, // timeout
 				// in
 				// seconds

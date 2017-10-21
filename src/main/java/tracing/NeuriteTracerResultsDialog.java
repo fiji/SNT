@@ -776,6 +776,23 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 		miscPanel.add(winLocCheckBox, gdb);
+		final JPanel miscPanel = new JPanel(new GridBagLayout());
+		final GridBagConstraints gdb = GuiUtils.defaultGbc();
+		final JCheckBox manualModeCheckBox = new JCheckBox(
+			"Disable A* search algorithm", plugin.isAstarDisabled());
+		manualModeCheckBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(final ItemEvent e) {
+				final boolean mode = e.getStateChange() == ItemEvent.SELECTED &&
+					guiUtils.getConfirmation(
+						"Disable computation of paths? You will be effectively tracing using straight lines.",
+						"Are you sure?");
+				manualModeCheckBox.setSelected(mode);
+				plugin.disableAstar(mode);
+			}
+		});
+		miscPanel.add(manualModeCheckBox, gdb);
 		++gdb.gridy;
 		final JCheckBox compressedXMLCheckBox = new JCheckBox(
 			"Use compression when saving traces", plugin.useCompressedXML);

@@ -47,7 +47,7 @@ import ij3d.Image3DUniverse;
 import ij3d.Pipe;
 import pal.math.ConjugateDirectionSearch;
 import pal.math.MultivariateFunction;
-import stacks.ThreePanes;
+import tracing.hyperpanes.MultiDThreePanes;
 
 /* This class represents a list of points, and has methods for drawing
  * them onto ThreePanes-style image canvases. */
@@ -657,7 +657,7 @@ public class Path implements Comparable<Path> {
 			int slice_of_point = Integer.MIN_VALUE;
 
 			switch (plane) {
-			case ThreePanes.XY_PLANE:
+			case MultiDThreePanes.XY_PLANE:
 				x = canvas.myScreenXD(getXUnscaledDouble(i));
 				y = canvas.myScreenYD(getYUnscaledDouble(i));
 				if (notFirstPoint) {
@@ -670,7 +670,7 @@ public class Path implements Comparable<Path> {
 				}
 				slice_of_point = getZUnscaled(i);
 				break;
-			case ThreePanes.XZ_PLANE:
+			case MultiDThreePanes.XZ_PLANE:
 				x = canvas.myScreenXD(getXUnscaledDouble(i));
 				y = canvas.myScreenYD(getZUnscaledDouble(i));
 				if (notFirstPoint) {
@@ -683,7 +683,7 @@ public class Path implements Comparable<Path> {
 				}
 				slice_of_point = getYUnscaled(i);
 				break;
-			case ThreePanes.ZY_PLANE:
+			case MultiDThreePanes.ZY_PLANE:
 				x = canvas.myScreenXD(getZUnscaledDouble(i));
 				y = canvas.myScreenYD(getYUnscaledDouble(i));
 				if (notFirstPoint) {
@@ -705,7 +705,7 @@ public class Path implements Comparable<Path> {
 			 * do it in XY - this is only really for debugging...
 			 */
 
-			if (plane == ThreePanes.XY_PLANE && drawDiameter) {
+			if (plane == MultiDThreePanes.XY_PLANE && drawDiameter) {
 				// Cross the tangents with a unit z vector:
 				final double n_x = 0;
 				final double n_y = 0;
@@ -873,7 +873,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	public void drawPathAsPoints(final Overlay overlay) {
-		drawPathAsPoints(overlay, ThreePanes.XY_PLANE);
+		drawPathAsPoints(overlay, MultiDThreePanes.XY_PLANE);
 	}
 
 	public void drawPathAsPoints(final Overlay overlay, final int plane) {
@@ -889,17 +889,17 @@ public class Path implements Comparable<Path> {
 			int slice_of_point = Integer.MIN_VALUE;
 
 			switch (plane) {
-			case ThreePanes.XY_PLANE:
+			case MultiDThreePanes.XY_PLANE:
 				x = getXUnscaledDouble(i);
 				y = getYUnscaledDouble(i);
 				slice_of_point = getZUnscaled(i);
 				break;
-			case ThreePanes.XZ_PLANE:
+			case MultiDThreePanes.XZ_PLANE:
 				x = getXUnscaledDouble(i);
 				y = getZUnscaledDouble(i);
 				slice_of_point = getYUnscaled(i);
 				break;
-			case ThreePanes.ZY_PLANE:
+			case MultiDThreePanes.ZY_PLANE:
 				x = getZUnscaledDouble(i);
 				y = getYUnscaledDouble(i);
 				slice_of_point = getXUnscaled(i);

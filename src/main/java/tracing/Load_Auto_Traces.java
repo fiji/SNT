@@ -29,6 +29,7 @@ import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
 import ij.process.ByteProcessor;
 
+@Deprecated
 public class Load_Auto_Traces implements PlugIn, TraceLoaderListener {
 
 	int width = -1, height = -1, depth = -1;

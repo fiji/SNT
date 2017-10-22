@@ -1,5 +1,7 @@
+
 package tracing.gui;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Label;
@@ -10,11 +12,12 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 
 import features.HessianEvalueProcessor;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.ImageCanvas;
+import ij.gui.Overlay;
 import ij.gui.StackWindow;
+import ij.gui.TextRoi;
 import ij.process.FloatProcessor;
 import stacks.ThreePaneCrop;
 import tracing.SNT;
@@ -49,7 +52,7 @@ public class SigmaPalette extends Thread {
 
 		private void addExtraScrollbar(final double defaultMaxValue) {
 			add(new Label(" ")); // spacer
-			label = new Label("Adjust multiplier: 0000.00");
+			label = new Label("Adjust max. (sets multiplier): 0000000");
 			add(label);
 			updateLabel(defaultMaxValue);
 			maxValueScrollbar = new Scrollbar(Scrollbar.HORIZONTAL,
@@ -68,7 +71,7 @@ public class SigmaPalette extends Thread {
 		}
 
 		private void updateLabel(final double maxValue) {
-			label.setText("Adjust multiplier: " + SNT.formatDouble(maxValue, 2));
+			label.setText("Adjust max. (sets multiplier): " + (int)maxValue + "   ");
 		}
 
 		private void maxChanged(final double newValue) {
@@ -88,7 +91,9 @@ public class SigmaPalette extends Thread {
 
 		@Override
 		public String createSubtitle() {
-			return "Sigma choice grid";
+			return "Sigma preview grid [" + SNT.formatDouble(owner.sigmaValues[0], 1) +
+				" - " + SNT.formatDouble(owner.sigmaValues[owner.sigmaValues.length -
+					1], 1) + "]";
 		}
 
 	}
@@ -114,14 +119,19 @@ public class SigmaPalette extends Thread {
 			this.sigmasDown = sigmasDown;
 		}
 
-		private int sigmaIndexFromMouseEvent(final MouseEvent e) {
+		private int[] getTileXY(final MouseEvent e) {
 			final int sx = e.getX();
 			final int sy = e.getY();
 			final int ox = offScreenX(sx);
 			final int oy = offScreenY(sy);
 			final int sigmaX = ox / (owner.croppedWidth + 1);
 			final int sigmaY = oy / (owner.croppedHeight + 1);
-			final int sigmaIndex = sigmaY * sigmasAcross + sigmaX;
+			return new int[] { sigmaX, sigmaY };
+		}
+
+		private int sigmaIndexFromMouseEvent(final MouseEvent e) {
+			final int[] sigmaXY = getTileXY(e);
+			final int sigmaIndex = sigmaXY[1] * sigmasAcross + sigmaXY[0];
 			if (sigmaIndex >= 0 && sigmaIndex < owner.sigmaValues.length)
 				return sigmaIndex;
 			else return -1;
@@ -131,11 +141,7 @@ public class SigmaPalette extends Thread {
 		public void mouseMoved(final MouseEvent e) {
 			final int sigmaIndex = sigmaIndexFromMouseEvent(e);
 			if (sigmaIndex >= 0) {
-				final double sigmaValue = owner.sigmaValues[sigmaIndex];
-				IJ.showStatus("\u03C3 = " + sigmaValue);
-			}
-			else {
-				IJ.showStatus("No  \u03C3 (unused entry)");
+				setOverlayLabel(Color.MAGENTA, sigmaIndex, getTileXY(e));
 			}
 		}
 
@@ -146,8 +152,23 @@ public class SigmaPalette extends Thread {
 			if (sigmaIndex >= 0) {
 				if (sigmaIndex == oldSelectedSigmaIndex) owner.setSelectedSigmaIndex(
 					-1);
-				else owner.setSelectedSigmaIndex(sigmaIndex);
+				else {
+					owner.setSelectedSigmaIndex(sigmaIndex);
+					setOverlayLabel(Color.GREEN, sigmaIndex, getTileXY(e));
+				}
 			}
+		}
+
+		private void setOverlayLabel(final Color color, final int sigmaIndex,
+			final int[] xyTile)
+		{
+			final String label = "\u03C3 = " + SNT.formatDouble(
+				owner.sigmaValues[sigmaIndex], 1);
+			final TextRoi roi = new TextRoi(xyTile[0] * owner.croppedWidth + 2,
+				xyTile[1] * owner.croppedHeight + 2, label);
+			roi.setStrokeColor(color);
+			roi.setAntialiased(true);
+			owner.paletteImage.setOverlay(new Overlay(roi));
 		}
 
 		/* Keep another Graphics for double-buffering: */
@@ -156,7 +177,7 @@ public class SigmaPalette extends Thread {
 		private Graphics backBufferGraphics;
 		private Image backBufferImage;
 
-	private void resetBackBuffer() {
+		private void resetBackBuffer() {
 			if (backBufferGraphics != null) {
 				backBufferGraphics.dispose();
 				backBufferGraphics = null;
@@ -314,8 +335,9 @@ public class SigmaPalette extends Thread {
 	public void run() {
 
 		if (sigmaValues.length > sigmasAcross * sigmasDown) {
-			throw new IllegalArgumentException("A " + sigmasAcross + "x" + sigmasDown +
-				" layout is not large enough for " + sigmaValues + " + 1 images");
+			throw new IllegalArgumentException("A " + sigmasAcross + "x" +
+				sigmasDown + " layout is not large enough for " + sigmaValues +
+				" + 1 images");
 		}
 
 		final ImagePlus cropped = ThreePaneCrop.performCrop(image, x_min, x_max,
@@ -333,7 +355,7 @@ public class SigmaPalette extends Thread {
 			final FloatProcessor fp = new FloatProcessor(paletteWidth, paletteHeight);
 			newStack.addSlice("", fp);
 		}
-		paletteImage = new ImagePlus("Pick Sigma and Maximum", newStack);
+		paletteImage = new ImagePlus("Pick Sigma and Multiplier", newStack);
 		setMax(defaultMax);
 
 		final PaletteCanvas paletteCanvas = new PaletteCanvas(paletteImage, this,

@@ -1,13 +1,4 @@
-/* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
-
 package tracing.gui;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.gui.ImageCanvas;
-import ij.gui.StackWindow;
-import ij.process.FloatProcessor;
 
 import java.awt.Graphics;
 import java.awt.Image;
@@ -19,79 +10,102 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 
 import features.HessianEvalueProcessor;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.ImageCanvas;
+import ij.gui.StackWindow;
+import ij.process.FloatProcessor;
 import stacks.ThreePaneCrop;
+import tracing.SNT;
 import util.Limits;
 
 public class SigmaPalette extends Thread {
 
 	public static interface SigmaPaletteListener {
-		public void newSigmaSelected( double sigma );
-		public void newMaximum( double max );
-		public void sigmaPaletteClosing( );
+
+		public void newSigmaSelected(double sigma);
+
+		public void newMaximum(double max);
+
+		public void sigmaPaletteClosing();
 	}
 
-	public static class PaletteStackWindow extends StackWindow {
+	private static class PaletteStackWindow extends StackWindow {
 
-		SigmaPalette owner;
-		Label label;
-		Scrollbar maxValueScrollbar;
-		boolean manuallyChangedAlready = false;
+		private static final long serialVersionUID = 1L;
+		private final SigmaPalette owner;
+		private Label label;
+		private Scrollbar maxValueScrollbar;
+		private boolean manuallyChangedAlready = false;
 
-		private void addExtraScrollbar( double defaultMaxValue ) {
-			label = new Label("");
+		public PaletteStackWindow(final ImagePlus imp, final ImageCanvas ic,
+			final SigmaPalette owner, final double defaultMax)
+		{
+			super(imp, ic);
+			this.owner = owner;
+			addExtraScrollbar(defaultMax);
+		}
+
+		private void addExtraScrollbar(final double defaultMaxValue) {
+			add(new Label(" ")); // spacer
+			label = new Label("Adjust multiplier: 0000.00");
 			add(label);
-			updateLabel( defaultMaxValue );
-			maxValueScrollbar = new Scrollbar( Scrollbar.HORIZONTAL, (int)defaultMaxValue, 1, 1, 350 );
-			maxValueScrollbar.addAdjustmentListener(
-				new AdjustmentListener()  {
-					public void adjustmentValueChanged(AdjustmentEvent e) {
-						manuallyChangedAlready = true;
-						int newValue = e.getValue();
-						maxChanged( newValue );
-					}
-				} );
+			updateLabel(defaultMaxValue);
+			maxValueScrollbar = new Scrollbar(Scrollbar.HORIZONTAL,
+				(int) defaultMaxValue, 1, 1, 350);
+			maxValueScrollbar.addAdjustmentListener(new AdjustmentListener() {
+
+				@Override
+				public void adjustmentValueChanged(final AdjustmentEvent e) {
+					manuallyChangedAlready = true;
+					final int newValue = e.getValue();
+					maxChanged(newValue);
+				}
+			});
 			add(maxValueScrollbar);
 			pack();
 		}
 
-		private void updateLabel( double maxValue ) {
-			int intMaxValue = (int)Math.round(maxValue);
-			label.setText("Adjust maximum value: "+intMaxValue);
+		private void updateLabel(final double maxValue) {
+			label.setText("Adjust multiplier: " + SNT.formatDouble(maxValue, 2));
 		}
 
-		protected void maxChanged( double newValue ) {
-			updateLabel( newValue );
-			if( owner != null ) {
-				owner.setMax( newValue );
+		private void maxChanged(final double newValue) {
+			updateLabel(newValue);
+			if (owner != null) {
+				owner.setMax(newValue);
 			}
 		}
 
-		public void windowClosing(WindowEvent e) {
-			if( owner != null && owner.listener != null ) {
+		@Override
+		public void windowClosing(final WindowEvent e) {
+			if (owner != null && owner.listener != null) {
 				owner.listener.sigmaPaletteClosing();
 			}
 			super.windowClosing(e);
 		}
 
-		public PaletteStackWindow(ImagePlus imp) {
-			super(imp);
-			addExtraScrollbar(80);
+		@Override
+		public String createSubtitle() {
+			return "Sigma choice grid";
 		}
 
-		public PaletteStackWindow(ImagePlus imp, ImageCanvas ic, SigmaPalette owner, double defaultMax ) {
-			super(imp,ic);
-			this.owner = owner;
-			addExtraScrollbar(defaultMax);
-		}
 	}
 
-	public static class PaletteCanvas extends ImageCanvas {
+	private static class PaletteCanvas extends ImageCanvas {
 
-		SigmaPalette owner;
+		private static final long serialVersionUID = 1L;
+		private final SigmaPalette owner;
+		private final int croppedWidth;
+		private final int croppedHeight;
+		private final int sigmasAcross;
+		private final int sigmasDown;
 
-		int croppedWidth, croppedHeight, sigmasAcross, sigmasDown;
-
-		protected PaletteCanvas( ImagePlus imagePlus, SigmaPalette owner, int croppedWidth, int croppedHeight, int sigmasAcross, int sigmasDown ) {
+		public PaletteCanvas(final ImagePlus imagePlus, final SigmaPalette owner,
+			final int croppedWidth, final int croppedHeight, final int sigmasAcross,
+			final int sigmasDown)
+		{
 			super(imagePlus);
 			this.owner = owner;
 			this.croppedWidth = croppedWidth;
@@ -100,278 +114,250 @@ public class SigmaPalette extends Thread {
 			this.sigmasDown = sigmasDown;
 		}
 
-		int sigmaIndexFromMouseEvent( MouseEvent e ) {
-			int sx = e.getX();
-			int sy = e.getY();
-			int ox = offScreenX(sx);
-			int oy = offScreenY(sy);
-			int sigmaX = ox / (owner.croppedWidth + 1);
-			int sigmaY = oy / (owner.croppedHeight + 1);
-			int sigmaIndex = sigmaY * sigmasAcross + sigmaX;
-			if( sigmaIndex >= 0 && sigmaIndex < owner.sigmaValues.length )
+		private int sigmaIndexFromMouseEvent(final MouseEvent e) {
+			final int sx = e.getX();
+			final int sy = e.getY();
+			final int ox = offScreenX(sx);
+			final int oy = offScreenY(sy);
+			final int sigmaX = ox / (owner.croppedWidth + 1);
+			final int sigmaY = oy / (owner.croppedHeight + 1);
+			final int sigmaIndex = sigmaY * sigmasAcross + sigmaX;
+			if (sigmaIndex >= 0 && sigmaIndex < owner.sigmaValues.length)
 				return sigmaIndex;
-			else
-				return -1;
+			else return -1;
 		}
 
-		public void mouseMoved(MouseEvent e) {
-			int sigmaIndex = sigmaIndexFromMouseEvent( e );
-			if( sigmaIndex >= 0 ) {
-				double sigmaValue = owner.sigmaValues[sigmaIndex];
-				IJ.showStatus("\u03C3 = "+sigmaValue);
-			} else {
+		@Override
+		public void mouseMoved(final MouseEvent e) {
+			final int sigmaIndex = sigmaIndexFromMouseEvent(e);
+			if (sigmaIndex >= 0) {
+				final double sigmaValue = owner.sigmaValues[sigmaIndex];
+				IJ.showStatus("\u03C3 = " + sigmaValue);
+			}
+			else {
 				IJ.showStatus("No  \u03C3 (unused entry)");
 			}
 		}
 
-		public void mouseClicked(MouseEvent e) {
-			int oldSelectedSigmaIndex = owner.getSelectedSigmaIndex();
-			int sigmaIndex = sigmaIndexFromMouseEvent( e );
-			if( sigmaIndex >= 0 ) {
-				if( sigmaIndex == oldSelectedSigmaIndex )
-					owner.setSelectedSigmaIndex( -1 );
-				else
-					owner.setSelectedSigmaIndex( sigmaIndex );
+		@Override
+		public void mouseClicked(final MouseEvent e) {
+			final int oldSelectedSigmaIndex = owner.getSelectedSigmaIndex();
+			final int sigmaIndex = sigmaIndexFromMouseEvent(e);
+			if (sigmaIndex >= 0) {
+				if (sigmaIndex == oldSelectedSigmaIndex) owner.setSelectedSigmaIndex(
+					-1);
+				else owner.setSelectedSigmaIndex(sigmaIndex);
 			}
 		}
 
 		/* Keep another Graphics for double-buffering: */
-
 		private int backBufferWidth;
 		private int backBufferHeight;
-
 		private Graphics backBufferGraphics;
 		private Image backBufferImage;
 
-		private void resetBackBuffer() {
-
-			if(backBufferGraphics!=null){
+	private void resetBackBuffer() {
+			if (backBufferGraphics != null) {
 				backBufferGraphics.dispose();
-				backBufferGraphics=null;
+				backBufferGraphics = null;
 			}
-
-			if(backBufferImage!=null){
+			if (backBufferImage != null) {
 				backBufferImage.flush();
-				backBufferImage=null;
+				backBufferImage = null;
 			}
-
-			backBufferWidth=getSize().width;
-			backBufferHeight=getSize().height;
-
-			backBufferImage=createImage(backBufferWidth,backBufferHeight);
-			backBufferGraphics=backBufferImage.getGraphics();
+			backBufferWidth = getSize().width;
+			backBufferHeight = getSize().height;
+			backBufferImage = createImage(backBufferWidth, backBufferHeight);
+			backBufferGraphics = backBufferImage.getGraphics();
 		}
 
-		public void paint(Graphics g) {
+		@Override
+		public void paint(final Graphics g) {
 
-			if(backBufferWidth!=getSize().width ||
-			   backBufferHeight!=getSize().height ||
-			   backBufferImage==null ||
-			   backBufferGraphics==null)
-				resetBackBuffer();
+			if (backBufferWidth != getSize().width ||
+				backBufferHeight != getSize().height || backBufferImage == null ||
+				backBufferGraphics == null) resetBackBuffer();
 
 			super.paint(backBufferGraphics);
-			drawOverlay(backBufferGraphics);
-			g.drawImage(backBufferImage,0,0,this);
+			drawOverlayGrid(backBufferGraphics);
+			g.drawImage(backBufferImage, 0, 0, this);
 		}
 
-		protected void drawOverlay( Graphics g ) {
+		private void drawOverlayGrid(final Graphics g) {
 
-			g.setColor( java.awt.Color.MAGENTA );
+			g.setColor(java.awt.Color.MAGENTA);
 
-			int width = imp.getWidth();
-			int height = imp.getHeight();
+			final int width = imp.getWidth();
+			final int height = imp.getHeight();
 
 			// Draw the vertical lines:
-			for( int i = 0; i <= sigmasAcross; ++i ) {
-				int x = i * (croppedWidth + 1);
-				int screen_x = screenX(x);
-				g.drawLine( screen_x, screenY(0), screen_x, screenY(height-1) );
+			for (int i = 0; i <= sigmasAcross; ++i) {
+				final int x = i * (croppedWidth + 1);
+				final int screen_x = screenX(x);
+				g.drawLine(screen_x, screenY(0), screen_x, screenY(height - 1));
 			}
 
 			// Draw the horizontal lines:
-			for( int j = 0; j <= sigmasDown; ++j ) {
-				int y = j * (croppedHeight + 1);
-				int screen_y = screenY(y);
-				g.drawLine( screenX(0), screen_y, screenX(width-1), screen_y );
+			for (int j = 0; j <= sigmasDown; ++j) {
+				final int y = j * (croppedHeight + 1);
+				final int screen_y = screenY(y);
+				g.drawLine(screenX(0), screen_y, screenX(width - 1), screen_y);
 			}
 
 			// If there's a selected sigma, highlight that in green:
-			int selectedSigmaIndex = owner.getSelectedSigmaIndex();
+			final int selectedSigmaIndex = owner.getSelectedSigmaIndex();
 
-			if( selectedSigmaIndex >= 0 && selectedSigmaIndex < owner.sigmaValues.length ) {
-				g.setColor( java.awt.Color.GREEN );
-				int sigmaY = selectedSigmaIndex / sigmasAcross;
-				int sigmaX = selectedSigmaIndex % sigmasAcross;
-				int leftX   = screenX( sigmaX * (croppedWidth + 1) );
-				int rightX  = screenX( (sigmaX + 1) * (croppedWidth + 1) );
-				int topY    = screenY( sigmaY * (croppedHeight + 1) );
-				int bottomY = screenY( (sigmaY + 1) * (croppedHeight + 1) );
-				g.drawLine( leftX, topY, rightX, topY );
-				g.drawLine( leftX, topY, leftX, bottomY );
-				g.drawLine( leftX, bottomY, rightX, bottomY );
-				g.drawLine( rightX, bottomY, rightX, topY );
+			if (selectedSigmaIndex >= 0 &&
+				selectedSigmaIndex < owner.sigmaValues.length)
+			{
+				g.setColor(java.awt.Color.GREEN);
+				final int sigmaY = selectedSigmaIndex / sigmasAcross;
+				final int sigmaX = selectedSigmaIndex % sigmasAcross;
+				final int leftX = screenX(sigmaX * (croppedWidth + 1));
+				final int rightX = screenX((sigmaX + 1) * (croppedWidth + 1));
+				final int topY = screenY(sigmaY * (croppedHeight + 1));
+				final int bottomY = screenY((sigmaY + 1) * (croppedHeight + 1));
+				g.drawLine(leftX, topY, rightX, topY);
+				g.drawLine(leftX, topY, leftX, bottomY);
+				g.drawLine(leftX, bottomY, rightX, bottomY);
+				g.drawLine(rightX, bottomY, rightX, topY);
 			}
 		}
 	}
 
-	double [] sigmaValues;
+	private double[] sigmaValues;
+	private int croppedWidth;
+	private int croppedHeight;
+	private int croppedDepth;
+	private SigmaPaletteListener listener;
+	private ImagePlus paletteImage;
+	private int selectedSigmaIndex = -1;
+	private int x_min, x_max, y_min, y_max, z_min, z_max;
+	private HessianEvalueProcessor hep;
+	private double defaultMax;
+	private int sigmasAcross;
+	private int sigmasDown;
+	private int initial_z;
+	private ImagePlus image;
 
-	int croppedWidth;
-	int croppedHeight;
-	int croppedDepth;
-
-	SigmaPaletteListener listener;
-
-	public void setListener( SigmaPaletteListener newListener ) {
+	public void setListener(final SigmaPaletteListener newListener) {
 		listener = newListener;
 	}
 
-	ImagePlus paletteImage;
-
-	double max;
-	public double getMax( ) {
-		return max;
-	}
-
-	public void setMax( double max ) {
-		this.max = max;
-		if( paletteImage != null ) {
-			paletteImage.getProcessor().setMinAndMax(0,max);
+	public void setMax(final double max) {
+		if (paletteImage != null) {
+			paletteImage.getProcessor().setMinAndMax(0, max);
 			paletteImage.updateAndDraw();
 		}
-		if( listener != null )
-			listener.newMaximum( max );
+		if (listener != null) listener.newMaximum(max);
 	}
 
-	int selectedSigmaIndex = -1;
-	public int getSelectedSigmaIndex( ) {
+	private int getSelectedSigmaIndex() {
 		return selectedSigmaIndex;
 	}
 
-	public void setSelectedSigmaIndex( int selectedSigmaIndex ) {
+	private void setSelectedSigmaIndex(final int selectedSigmaIndex) {
 		this.selectedSigmaIndex = selectedSigmaIndex;
-		if( listener != null && selectedSigmaIndex >= 0 )
-			listener.newSigmaSelected( sigmaValues[selectedSigmaIndex] );
+		if (listener != null && selectedSigmaIndex >= 0) listener.newSigmaSelected(
+			sigmaValues[selectedSigmaIndex]);
 		paletteImage.updateAndDraw();
 	}
 
-	int x_min, x_max, y_min, y_max, z_min, z_max;
-	HessianEvalueProcessor hep;
-	double defaultMax;
-	int sigmasAcross;
-	int sigmasDown;
-	int initial_z;
-
-	public void makePalette( ImagePlus image,
-				 int x_min,
-				 int x_max,
-				 int y_min,
-				 int y_max,
-				 int z_min,
-				 int z_max,
-				 HessianEvalueProcessor hep,
-				 double [] sigmaValues,
-				 double defaultMax,
-				 int sigmasAcross,
-				 int sigmasDown,
-				 int initial_z ) {
-
+	public void makePalette(final ImagePlus image, final int x_min,
+		final int x_max, final int y_min, final int y_max, final int z_min,
+		final int z_max, final HessianEvalueProcessor hep,
+		final double[] sigmaValues, final double defaultMax, final int sigmasAcross,
+		final int sigmasDown, final int initial_z)
+	{
 		this.image = image;
-
 		this.x_min = x_min;
 		this.x_max = x_max;
 		this.y_min = y_min;
 		this.y_max = y_max;
 		this.z_min = z_min;
 		this.z_max = z_max;
-
 		this.hep = hep;
-
 		this.sigmaValues = sigmaValues;
 		this.defaultMax = defaultMax;
-
 		this.sigmasAcross = sigmasAcross;
 		this.sigmasDown = sigmasDown;
-
 		this.initial_z = initial_z;
-
-		int originalWidth = image.getWidth();
-		int originalHeight = image.getHeight();
-		int originalDepth = image.getStackSize();
-
 		start();
-
 	}
 
-	public void copyIntoPalette( ImagePlus smallImage, ImagePlus paletteImage, int offsetX, int offsetY ) {
-		int largerWidth = paletteImage.getWidth();
-		int largerHeight = paletteImage.getHeight();
-		int depth = paletteImage.getStackSize();
-		if( depth != smallImage.getStackSize() )
-			throw new RuntimeException("In copyIntoPalette(), depths don't match");
-		int smallWidth = smallImage.getWidth();
-		int smallHeight = smallImage.getHeight();
-		float [] limits = Limits.getStackLimits( smallImage );
-		ImageStack paletteStack = paletteImage.getStack();
-		ImageStack smallStack = smallImage.getStack();
+	private void copyIntoPalette(final ImagePlus smallImage,
+		final ImagePlus paletteImage, final int offsetX, final int offsetY)
+	{
+		final int largerWidth = paletteImage.getWidth();
+		final int depth = paletteImage.getStackSize();
+		if (depth != smallImage.getStackSize()) throw new RuntimeException(
+			"In copyIntoPalette(), depths don't match");
+		final int smallWidth = smallImage.getWidth();
+		final int smallHeight = smallImage.getHeight();
+		final ImageStack paletteStack = paletteImage.getStack();
+		final ImageStack smallStack = smallImage.getStack();
 		// Make sure the minimum and maximum are sensible in the small stack:
-		for( int z = 0; z < depth; ++z ) {
-			float [] smallPixels = (float[])smallStack.getProcessor(z+1).getPixels();
-			float [] palettePixels = (float[])paletteStack.getProcessor(z+1).getPixels();
-			for( int y = 0; y < smallHeight; ++y ) {
-				int smallIndex = y * smallWidth;
-				System.arraycopy( smallPixels, smallIndex, palettePixels, (offsetY + y) * largerWidth + offsetX, smallWidth );
+		for (int z = 0; z < depth; ++z) {
+			final float[] smallPixels = (float[]) smallStack.getProcessor(z + 1)
+				.getPixels();
+			final float[] palettePixels = (float[]) paletteStack.getProcessor(z + 1)
+				.getPixels();
+			for (int y = 0; y < smallHeight; ++y) {
+				final int smallIndex = y * smallWidth;
+				System.arraycopy(smallPixels, smallIndex, palettePixels, (offsetY + y) *
+					largerWidth + offsetX, smallWidth);
 			}
 		}
 	}
 
-	ImagePlus image;
+	@Override
+	public void run() {
 
-	public void run( ) {
+		if (sigmaValues.length > sigmasAcross * sigmasDown) {
+			throw new IllegalArgumentException("A " + sigmasAcross + "x" + sigmasDown +
+				" layout is not large enough for " + sigmaValues + " + 1 images");
+		}
 
-		ImagePlus cropped = ThreePaneCrop.performCrop( image, x_min, x_max, y_min, y_max, z_min, z_max, false );
+		final ImagePlus cropped = ThreePaneCrop.performCrop(image, x_min, x_max,
+			y_min, y_max, z_min, z_max, false);
 
-		croppedWidth  = (x_max - x_min) + 1;
+		croppedWidth = (x_max - x_min) + 1;
 		croppedHeight = (y_max - y_min) + 1;
-		croppedDepth  = (z_max - z_min) + 1;
+		croppedDepth = (z_max - z_min) + 1;
 
-		if( sigmaValues.length > sigmasAcross * sigmasDown ) {
-			IJ.error( "A "+sigmasAcross+"x"+sigmasDown+" layout is not large enough for "+sigmaValues+" + 1 images" );
-			return;
+		final int paletteWidth = croppedWidth * sigmasAcross + (sigmasAcross + 1);
+		final int paletteHeight = croppedHeight * sigmasDown + (sigmasDown + 1);
+
+		final ImageStack newStack = new ImageStack(paletteWidth, paletteHeight);
+		for (int z = 0; z < croppedDepth; ++z) {
+			final FloatProcessor fp = new FloatProcessor(paletteWidth, paletteHeight);
+			newStack.addSlice("", fp);
 		}
-
-		int paletteWidth = croppedWidth * sigmasAcross + (sigmasAcross + 1);
-		int paletteHeight = croppedHeight * sigmasDown + (sigmasDown + 1);
-
-		ImageStack newStack = new ImageStack( paletteWidth, paletteHeight );
-		for( int z = 0; z < croppedDepth; ++z ) {
-			FloatProcessor fp = new FloatProcessor( paletteWidth, paletteHeight );
-			newStack.addSlice("",fp);
-		}
-		paletteImage = new ImagePlus("Pick Sigma and Maximum",newStack);
+		paletteImage = new ImagePlus("Pick Sigma and Maximum", newStack);
 		setMax(defaultMax);
 
-		PaletteCanvas paletteCanvas = new PaletteCanvas( paletteImage, this, croppedWidth, croppedHeight, sigmasAcross, sigmasDown );
-		PaletteStackWindow paletteWindow = new PaletteStackWindow( paletteImage, paletteCanvas, this, defaultMax );
+		final PaletteCanvas paletteCanvas = new PaletteCanvas(paletteImage, this,
+			croppedWidth, croppedHeight, sigmasAcross, sigmasDown);
+		final PaletteStackWindow paletteWindow = new PaletteStackWindow(
+			paletteImage, paletteCanvas, this, defaultMax);
 
-		paletteImage.setSlice( (initial_z - z_min) + 1 );
+		paletteImage.setSlice((initial_z - z_min) + 1);
 
-		for( int sigmaIndex = 0; sigmaIndex < sigmaValues.length; ++sigmaIndex ) {
-			int sigmaY = sigmaIndex / sigmasAcross;
-			int sigmaX = sigmaIndex % sigmasAcross;
-			int offsetX = sigmaX * (croppedWidth + 1) + 1;
-			int offsetY = sigmaY * (croppedHeight + 1) + 1;
-			double sigma = sigmaValues[sigmaIndex];
+		for (int sigmaIndex = 0; sigmaIndex < sigmaValues.length; ++sigmaIndex) {
+			final int sigmaY = sigmaIndex / sigmasAcross;
+			final int sigmaX = sigmaIndex % sigmasAcross;
+			final int offsetX = sigmaX * (croppedWidth + 1) + 1;
+			final int offsetY = sigmaY * (croppedHeight + 1) + 1;
+			final double sigma = sigmaValues[sigmaIndex];
 			hep.setSigma(sigma);
-			ImagePlus processed = hep.generateImage(cropped);
-			if( ! paletteWindow.manuallyChangedAlready ) {
-				float [] limits = Limits.getStackLimits( processed );
-				int suggestedMax = (int)limits[1];
-				paletteWindow.maxValueScrollbar.setValue( suggestedMax );
-				paletteWindow.maxChanged( suggestedMax );
+			final ImagePlus processed = hep.generateImage(cropped);
+			if (!paletteWindow.manuallyChangedAlready) {
+				final float[] limits = Limits.getStackLimits(processed);
+				final int suggestedMax = (int) limits[1];
+				paletteWindow.maxValueScrollbar.setValue(suggestedMax);
+				paletteWindow.maxChanged(suggestedMax);
 			}
-			copyIntoPalette( processed, paletteImage, offsetX, offsetY );
+			copyIntoPalette(processed, paletteImage, offsetX, offsetY);
 			paletteImage.updateAndDraw();
 		}
 	}

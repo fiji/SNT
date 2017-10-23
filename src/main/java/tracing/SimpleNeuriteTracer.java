@@ -71,6 +71,8 @@ import ij.plugin.Duplicator;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import tracing.gui.GuiUtils;
@@ -1449,13 +1451,45 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			z_spacing)));
 	}
 
-	// FIXME: This is just a lame quick fix to allow SNT to be aware of data
-	// coming from multidimensional images without having to patch too much.
-	// We should not be duplicating anything:
-	// We already extracted the subset of voxels we need, so we should compute
-	// curvatures differently (rewrite/patch features.ComputeCurvatures? ImgLIb2?)
-	private ImagePlus uniDimensionalImp() {
-		return new Duplicator().run(xy, channel, channel, 1, depth, frame, frame);
+	/**
+	 * Retrieves the pixel data currently loaded as an image. The sole purpose of
+	 * this method is is to bridge SNT with other legacy classes that cannot deal
+	 * with multidimensional images.
+	 *
+	 * @return the loaded data corresponding to the C,T position currently being
+	 *         traced
+	 */
+	private ImagePlus getLoadedDataAsImp() {
+		final ImageStack stack = new ImageStack(xy.getWidth(), xy.getHeight());
+		switch (imageType) {
+			case ImagePlus.GRAY8:
+			case ImagePlus.COLOR_256:
+				for (int z = 0; z < depth; ++z) {
+					final ImageProcessor ip = new ByteProcessor(xy.getWidth(), xy.getHeight());
+					ip.setPixels(slices_data_b[z]);
+					stack.addSlice(ip);
+				}
+				break;
+			case ImagePlus.GRAY16:
+				for (int z = 0; z < depth; ++z) {
+					final ImageProcessor ip = new ShortProcessor(xy.getWidth(), xy.getHeight());
+					ip.setPixels(slices_data_s[z]);
+					stack.addSlice(ip);
+				}
+				break;
+			case ImagePlus.GRAY32:
+				for (int z = 0; z < depth; ++z) {
+					final ImageProcessor ip = new FloatProcessor(xy.getWidth(), xy.getHeight());
+					ip.setPixels(slices_data_f[z]);
+					stack.addSlice(ip);
+				}
+				break;
+			default:
+				throw new IllegalArgumentException("Bug: unsupported type somehow");
+		}
+		final ImagePlus imp = new ImagePlus("C" + channel + "F" + frame, stack);
+		imp.setCalibration(xy.getCalibration());
+		return imp;
 	}
 
 	volatile boolean hessianEnabled = false;
@@ -1472,7 +1506,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			resultsDialog.changeState(
 				NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
 			hessianSigma = resultsDialog.getSigma();
-			hessian = new ComputeCurvatures(uniDimensionalImp(), hessianSigma, this, true);
+			hessian = new ComputeCurvatures(getLoadedDataAsImp(), hessianSigma, this, true);
 			new Thread(hessian).start();
 		}
 		else {
@@ -1481,7 +1515,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				resultsDialog.changeState(
 					NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
 				hessianSigma = newSigma;
-				hessian = new ComputeCurvatures(uniDimensionalImp(), hessianSigma, this, true);
+				hessian = new ComputeCurvatures(getLoadedDataAsImp(), hessianSigma, this, true);
 				new Thread(hessian).start();
 			}
 		}

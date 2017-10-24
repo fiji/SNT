@@ -25,6 +25,7 @@ package tracing.gui;
 import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Label;
@@ -40,6 +41,7 @@ import features.HessianEvalueProcessor;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
 import ij.gui.Overlay;
 import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
@@ -95,8 +97,13 @@ public class SigmaPalette extends Thread {
 		}
 
 		private Panel buttonPanel() {
-			final Panel buttonPanel = new Panel();
-			final Button cButton = new Button("    Cancel    ");
+			final Panel buttonPanel = new Panel(new FlowLayout(FlowLayout.CENTER, 0,
+				0));
+			final Button cButton = new Button("Cancel");
+			final int width = (int) getLayout().preferredLayoutSize(this).getWidth() /
+				2 - (2 * ImageWindow.HGAP);
+			final int height = 25;
+			cButton.setPreferredSize(new Dimension(width, height));
 			cButton.addActionListener(new ActionListener() {
 
 				@Override
@@ -105,7 +112,8 @@ public class SigmaPalette extends Thread {
 				}
 			});
 			buttonPanel.add(cButton);
-			final Button aButton = new Button("    Apply    ");
+			final Button aButton = new Button("Apply");
+			aButton.setPreferredSize(new Dimension(width, height));
 			aButton.addActionListener(new ActionListener() {
 
 				@Override
@@ -172,8 +180,7 @@ public class SigmaPalette extends Thread {
 
 		@Override
 		public String createSubtitle() {
-			String label = "Sigma preview grid";
-			label += " \u03C3=" + getMouseOverSigma();
+			String label = "Sigma preview grid: \u03C3=" + getMouseOverSigma();
 			if (zSelector != null) label += "  z=" + zSelector.getValue();
 			return label;
 		}

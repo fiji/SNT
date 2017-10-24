@@ -1,3 +1,24 @@
+/*-
+ * #%L
+ * Fiji distribution of ImageJ for the life sciences.
+ * %%
+ * Copyright (C) 2010 - 2017 Fiji developers.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 
 package tracing.gui;
 
@@ -28,12 +49,29 @@ import stacks.ThreePaneCrop;
 import tracing.SNT;
 import util.Limits;
 
+/**
+ * This class implements SNT's 'Sigma wizard'. It relies heavily on java.awt
+ * because it relies on IJ1's StackWindow.
+ */
 public class SigmaPalette extends Thread {
 
+	/**
+	 * Classes implementing this interface can how users interact with the 'Sigma
+	 * wizard'.
+	 */
 	public static interface SigmaPaletteListener {
 
+		/**
+		 * Notifies listeners that the user OKed the sigma wizard.
+		 *
+		 * @param sigma the user's chosen value for sigma
+		 * @param multiplier the user's chosen value for the multiplier
+		 */
 		public void sigmaPaletteOKed(double sigma, double multiplier);
 
+		/**
+		 * Notifies listeners that the user Canceled the sigma wizard.
+		 */
 		public void sigmaPaletteCanceled();
 	}
 
@@ -287,6 +325,11 @@ public class SigmaPalette extends Thread {
 	private ImagePlus image;
 	private PaletteStackWindow paletteWindow;
 
+	/**
+	 * Attaches a listener to the current wizard.
+	 *
+	 * @param listener the SigmaPaletteListener listener
+	 */
 	public void setListener(final SigmaPaletteListener listener) {
 		this.listener = listener;
 	}
@@ -340,6 +383,23 @@ public class SigmaPalette extends Thread {
 		paletteImage.setOverlay(new Overlay(roi));
 	}
 
+	/**
+	 * Displays the Sigma wizard in a separate thread.
+	 *
+	 * @param image the 2D/3D image serving data to the wizard
+	 * @param x_min image boundary for choice grid
+	 * @param x_max image boundary for choice grid
+	 * @param y_min image boundary for choice grid
+	 * @param y_max image boundary for choice grid
+	 * @param z_min image boundary for choice grid
+	 * @param z_max image boundary for choice grid
+	 * @param hep the HessianEvalueProcessor generating the preview
+	 * @param sigmaValues the desired range of sigma values for choice grid
+	 * @param defaultMax the default image maximum (setting the multiplier)
+	 * @param sigmasAcross the number of columns in choice grid
+	 * @param sigmasDown the number of rows in choice grid
+	 * @param initial_z the default z-position
+	 */
 	public void makePalette(final ImagePlus image, final int x_min,
 		final int x_max, final int y_min, final int y_max, final int z_min,
 		final int z_max, final HessianEvalueProcessor hep,

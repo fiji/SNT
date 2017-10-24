@@ -1675,36 +1675,25 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 		/* SigmaPaletteListener */
 		@Override
-		public void newSigmaSelected(final double sigma) {
-			SwingUtilities.invokeLater(new Runnable() {
-
-				@Override
-				public void run() {
-					setSigma(sigma, false);
-				}
-			});
-		}
-
-		@Override
-		public void newMaximum(final double max) {
-			SwingUtilities.invokeLater(new Runnable() {
-
-				@Override
-				public void run() {
-					final double multiplier = 256 / max;
-					setMultiplier(multiplier);
-				}
-			});
-		}
-
-		@Override
-		public void sigmaPaletteClosing() {
+		public void sigmaPaletteOKed(double newSigma, double newMultiplier) {
 			SwingUtilities.invokeLater(new Runnable() {
 
 				@Override
 				public void run() {
 					changeState(preSigmaPaletteState);
-					setSigma(currentSigma, true);
+					setMultiplier(newMultiplier);
+					setSigma(newSigma, true);
+				}
+			});
+		}
+
+		@Override
+		public void sigmaPaletteCanceled() {
+			SwingUtilities.invokeLater(new Runnable() {
+
+				@Override
+				public void run() {
+					changeState(preSigmaPaletteState);
 				}
 			});
 		}

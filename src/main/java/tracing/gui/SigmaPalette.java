@@ -34,6 +34,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 
@@ -52,14 +54,15 @@ import tracing.SNT;
 import util.Limits;
 
 /**
- * This class implements SNT's 'Sigma wizard'. It relies heavily on java.awt
- * because it relies on IJ1's StackWindow.
+ * This class implements SNT's v3 'Sigma wizard'. It relies heavily on java.awt
+ * because it extends IJ1's StackWindow. It was ported from
+ * {@link features.SigmaPalette} now deprecated.
  */
 public class SigmaPalette extends Thread {
 
 	/**
-	 * Classes implementing this interface can how users interact with the 'Sigma
-	 * wizard'.
+	 * Classes implementing this interface can monitor how users interact with the
+	 * 'Sigma wizard'.
 	 */
 	public static interface SigmaPaletteListener {
 
@@ -72,7 +75,7 @@ public class SigmaPalette extends Thread {
 		public void sigmaPaletteOKed(double sigma, double multiplier);
 
 		/**
-		 * Notifies listeners that the user Canceled the sigma wizard.
+		 * Notifies listeners that the user canceled the sigma wizard.
 		 */
 		public void sigmaPaletteCanceled();
 	}
@@ -108,7 +111,7 @@ public class SigmaPalette extends Thread {
 
 				@Override
 				public void actionPerformed(final ActionEvent e) {
-					cancel();
+					dismiss();
 				}
 			});
 			buttonPanel.add(cButton);
@@ -123,18 +126,6 @@ public class SigmaPalette extends Thread {
 			});
 			buttonPanel.add(aButton);
 			return buttonPanel;
-		}
-
-		private void apply() {
-			if (listener != null) {
-				listener.sigmaPaletteOKed(getSelectedSigma(), getSelectedMultiplier());
-			}
-			dispose();
-		}
-
-		private void cancel() {
-			if (listener != null) listener.sigmaPaletteCanceled();
-			dispose();
 		}
 
 		private void buildMaxValueScrollbar(final double defaultMaxValue) {
@@ -175,7 +166,7 @@ public class SigmaPalette extends Thread {
 
 		@Override
 		public void windowClosing(final WindowEvent e) {
-			cancel();
+			dismiss();
 		}
 
 		@Override
@@ -312,11 +303,25 @@ public class SigmaPalette extends Thread {
 		}
 	}
 
+	private class KeyListener extends KeyAdapter {
+
+		@Override
+		public void keyPressed(final KeyEvent e) {
+			if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+				dismiss();
+			}
+			else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+				apply();
+			}
+		}
+	}
+
 	private double[] sigmaValues;
 	private int croppedWidth;
 	private int croppedHeight;
 	private int croppedDepth;
 	private SigmaPaletteListener listener;
+	private PaletteStackWindow paletteWindow;
 	private ImagePlus paletteImage;
 	private PaletteCanvas paletteCanvas;
 
@@ -330,7 +335,6 @@ public class SigmaPalette extends Thread {
 	private int sigmasDown;
 	private int initial_z;
 	private ImagePlus image;
-	private PaletteStackWindow paletteWindow;
 
 	/**
 	 * Attaches a listener to the current wizard.
@@ -436,6 +440,18 @@ public class SigmaPalette extends Thread {
 		start();
 	}
 
+	private void dismiss() {
+		if (listener != null) listener.sigmaPaletteCanceled();
+		paletteWindow.dispose();
+	}
+
+	private void apply() {
+		if (listener != null) {
+			listener.sigmaPaletteOKed(getSelectedSigma(), getSelectedMultiplier());
+		}
+		paletteWindow.dispose();
+	}
+
 	private void copyIntoPalette(final ImagePlus smallImage,
 		final ImagePlus paletteImage, final int offsetX, final int offsetY)
 	{
@@ -486,7 +502,9 @@ public class SigmaPalette extends Thread {
 			sigmasAcross, sigmasDown);
 		paletteWindow = new PaletteStackWindow(paletteImage, paletteCanvas,
 			defaultMax);
-
+		paletteCanvas.addKeyListener(new KeyListener());
+		paletteCanvas.requestFocusInWindow(); // required to trigger keylistener
+																					// events
 		paletteImage.setZ(initial_z - z_min + 1);
 		setOverlayLabel(0, new int[] { 0, 0 });
 

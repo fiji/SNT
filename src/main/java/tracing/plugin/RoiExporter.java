@@ -52,9 +52,11 @@ public class RoiExporter {
 	public static final int ZY_PLANE = MultiDThreePanes.ZY_PLANE;
 	/** Flag describing SNT's XZ view */
 	public static final int XZ_PLANE = MultiDThreePanes.XZ_PLANE;
+	private static final int DEF_WIDTH = 0;
 
+	private int width = DEF_WIDTH;
+	private int exportPlane = XY_PLANE;
 	private boolean useSWCcolors;
-	private int exportPlane = MultiDThreePanes.XY_PLANE;
 
 	/**
 	 * Runs SNT's ROI exporter dialog.
@@ -69,7 +71,7 @@ public class RoiExporter {
 		}
 		final PathAndFillManager pathAndFillManager = plugin
 			.getPathAndFillManager();
-		final GuiUtils gUtils = new GuiUtils(plugin.getUI());
+		final GuiUtils gUtils = new GuiUtils(pluginUI.getPathWindow());
 		if (!pathAndFillManager.anySelected()) {
 			gUtils.error("No paths selected.");
 			return;
@@ -78,7 +80,7 @@ public class RoiExporter {
 		final GenericDialog gd = new GenericDialog("Selected Paths to ROIs");
 
 		final int[] PLANES_ID = { XY_PLANE, XZ_PLANE, ZY_PLANE };
-		final String[] PLANES_STRING = { "XY_View", "XZ_View", "ZY_View" };
+		final String[] PLANES_STRING = { "XY_view", "XZ_view", "ZY_view" };
 
 		final boolean[] destinationPlanes = new boolean[PLANES_ID.length];
 		for (int i = 0; i < PLANES_ID.length; i++)
@@ -87,32 +89,30 @@ public class RoiExporter {
 		gd.setInsets(0, 10, 0);
 		gd.addMessage("Create 2D Path-ROIs from:");
 		gd.setInsets(0, 20, 0);
-		for (int i = 0; i < PLANES_ID.length; i++)
-			gd.addCheckbox(PLANES_STRING[i], destinationPlanes[i]);
+		gd.addCheckboxGroup(1, 3, PLANES_STRING, destinationPlanes);
 
 		// 2D traces?
 		final Vector<?> cbxs = gd.getCheckboxes();
 		for (int i = 1; i < PLANES_ID.length; i++)
 			((Checkbox) cbxs.get(i)).setEnabled(!plugin.is2D());
 
-		final String[] scopes = { "ROI Manager", "Image overlay" };
-		gd.addRadioButtonGroup("Store Path-ROIs in:", scopes, 2, 1, scopes[0]);
+		final String[] scopes = { "Image overlay", "ROI Manager" };
+		gd.addRadioButtonGroup("Store ROIs in:", scopes, 1, 2, scopes[0]);
 
-		gd.addMessage("");
-		gd.addCheckbox("Color code ROIs by SWC type", false);
+		gd.setInsets(30, 0, 0);
+		gd.addNumericField("       Width", 1, 0);
+		gd.addCheckbox("Apply SWC colors", false);
 		gd.addCheckbox("Discard pre-existing ROIs in Overlay/Manager", true);
-
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
 
 		for (int i = 0; i < PLANES_ID.length; i++)
 			destinationPlanes[i] = gd.getNextBoolean();
-
 		final String scope = gd.getNextRadioButton();
 		useSWCcolors(gd.getNextBoolean());
 		final boolean reset = gd.getNextBoolean();
 
-		if (scopes[0].equals(scope)) { // ROI Manager
+		if (scopes[1].equals(scope)) { // ROI Manager
 
 			final Overlay overlay = new Overlay();
 			for (int i = 0; i < destinationPlanes.length; i++) {
@@ -157,11 +157,14 @@ public class RoiExporter {
 					export(pathAndFillManager, overlay, PLANES_ID[i]);
 				}
 			}
-			if (!error.isEmpty()) {
-				gUtils.error("Some ROIs were skipped because some images (" //
+			if (error.isEmpty()) {
+				gUtils.tempMsg("ROI conversion concluded", true);
+			}
+			else {
+				gUtils.error("Some ROIs were not converted because some views (" //
 					+ error.substring(0, error.length() - 2)//
 					+ ") are not being displayed. Please generate them and " +
-					"re-run the export (orf export to the ROI Manager instead).");
+					"re-run the conversion (or choose to store ROIs in ROI Manager instead).");
 			}
 		}
 	}
@@ -205,13 +208,20 @@ public class RoiExporter {
 	 */
 	public void export(final ArrayList<Path> paths, Overlay overlay) {
 		if (overlay == null) overlay = new Overlay();
+		final int firstIdx = Math.max(overlay.size() - 1, 0);
 		for (final Path p : paths) {
 			if (!exportablePath(p)) continue;
+
 			// If path suggests using fitted version, draw that instead
 			final Path drawPath = (p.getUseFitted()) ? p.getFitted() : p;
 			if (useSWCcolors) drawPath.setColorBySWCtype();
 			drawPath.drawPathAsPoints(overlay, exportPlane);
 		}
+
+		// Set line widths
+		if (width == DEF_WIDTH) return;
+		for (int i = firstIdx; i < overlay.size() - 1; i++)
+			overlay.get(i).setStrokeWidth(width);
 	}
 
 	/**
@@ -234,6 +244,15 @@ public class RoiExporter {
 	 */
 	public void useSWCcolors(final boolean useSWCcolors) {
 		this.useSWCcolors = useSWCcolors;
+	}
+
+	/**
+	 * Sets the line width of converted ROIs.
+	 *
+	 * @see Roi#setStrokeWidth(int)
+	 */
+	public void setStrokeWidth(final int width) {
+		this.width = width;
 	}
 
 }

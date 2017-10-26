@@ -44,7 +44,7 @@ import tracing.hyperpanes.MultiDThreePanes;
  *
  * @author Tiago Ferreira
  */
-public class RoiExporter {
+public class RoiConverter {
 
 	/** Flag describing SNT's XY view */
 	public static final int XY_PLANE = MultiDThreePanes.XY_PLANE;

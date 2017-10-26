@@ -859,16 +859,23 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			this.color = color;
 		}
 
+		/* see https://stackoverflow.com/a/9780689 */
+		private boolean closerToBlack(final Color c) {
+			final double y = 0.2126 * c.getRed() + 0.7152 * c.getGreen() + 0.0722 * c
+				.getBlue();
+			return y < 100;
+		}
+
 		@Override
 		public void paintIcon(final Component c, final Graphics g, final int x,
 			final int y)
 		{
 			g.setColor(color);
 			g.fillRect(x, y, SIZE - 1, SIZE - 1);
-			g.setColor(color.darker());
+			g.setColor(Color.BLACK);
 			g.drawRect(x, y, SIZE - 1, SIZE - 1);
 			if (type == EMPTY) return;
-			g.setColor(UIManager.getColor("Tree.foreground"));
+			g.setColor(closerToBlack(color) ? Color.WHITE : Color.BLACK);
 			g.drawLine(x + 2, y + SIZE / 2, x + SIZE - 3, y + SIZE / 2);
 			if (type == PLUS) {
 				g.drawLine(x + SIZE / 2, y + 2, x + SIZE / 2, y + SIZE - 3);

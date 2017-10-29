@@ -118,7 +118,7 @@ public class RoiConverter {
 			for (int i = 0; i < destinationPlanes.length; i++) {
 				if (destinationPlanes[i]) {
 					final int lastPlaneIdx = overlay.size() - 1;
-					export(pathAndFillManager, overlay, PLANES_ID[i]);
+					convert(pathAndFillManager, overlay, PLANES_ID[i]);
 					if (plugin.is2D()) continue;
 					for (int j = lastPlaneIdx + 1; j < overlay.size(); j++) {
 						final Roi roi = overlay.get(j);
@@ -154,7 +154,7 @@ public class RoiConverter {
 						imp.setOverlay(overlay);
 					}
 					else if (reset) overlay.clear();
-					export(pathAndFillManager, overlay, PLANES_ID[i]);
+					convert(pathAndFillManager, overlay, PLANES_ID[i]);
 				}
 			}
 			if (error.isEmpty()) {
@@ -169,14 +169,14 @@ public class RoiConverter {
 		}
 	}
 
-	private void export(final PathAndFillManager pathAndFillManager,
+	private void convert(final PathAndFillManager pathAndFillManager,
 		final Overlay overlay, final int plane)
 	{
 		setView(plane);
-		export(pathAndFillManager, true, overlay);
+		convert(pathAndFillManager, true, overlay);
 	}
 
-	private boolean exportablePath(final Path path) {
+	private boolean convertablePath(final Path path) {
 		return path != null && !path.isFittedVersionOfAnotherPath();
 	}
 
@@ -187,17 +187,17 @@ public class RoiConverter {
 	 * @param onlySelected if true only selected paths are converted into ROI
 	 * @param overlay the target overlay holding the converted paths
 	 */
-	public void export(final PathAndFillManager pathAndFillManager,
+	public void convert(final PathAndFillManager pathAndFillManager,
 		final boolean onlySelected, final Overlay overlay)
 	{
 		final ArrayList<Path> paths = new ArrayList<>();
 		for (int i = 0; i < pathAndFillManager.size(); ++i) {
 			final Path p = pathAndFillManager.getPath(i);
-			if (!exportablePath(p)) continue;
+			if (!convertablePath(p)) continue;
 			if (onlySelected && !pathAndFillManager.isSelected(p)) continue;
 			paths.add(p);
 		}
-		export(paths, overlay);
+		convert(paths, overlay);
 	}
 
 	/**
@@ -206,11 +206,11 @@ public class RoiConverter {
 	 * @param paths the paths being converted.
 	 * @param overlay the target overlay holding the converted paths
 	 */
-	public void export(final ArrayList<Path> paths, Overlay overlay) {
+	public void convert(final ArrayList<Path> paths, Overlay overlay) {
 		if (overlay == null) overlay = new Overlay();
 		final int firstIdx = Math.max(overlay.size() - 1, 0);
 		for (final Path p : paths) {
-			if (!exportablePath(p)) continue;
+			if (!convertablePath(p)) continue;
 
 			// If path suggests using fitted version, draw that instead
 			final Path drawPath = (p.getUseFitted()) ? p.getFitted() : p;

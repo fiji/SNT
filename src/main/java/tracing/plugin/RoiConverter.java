@@ -52,9 +52,8 @@ public class RoiConverter {
 	public static final int ZY_PLANE = MultiDThreePanes.ZY_PLANE;
 	/** Flag describing SNT's XZ view */
 	public static final int XZ_PLANE = MultiDThreePanes.XZ_PLANE;
-	private static final int DEF_WIDTH = 0;
 
-	private int width = DEF_WIDTH;
+	private int width = -1; // flag to use mean path diameter
 	private int exportPlane = XY_PLANE;
 	private boolean useSWCcolors;
 
@@ -99,9 +98,9 @@ public class RoiConverter {
 		final String[] scopes = { "Image overlay", "ROI Manager" };
 		gd.addRadioButtonGroup("Store ROIs in:", scopes, 1, 2, scopes[0]);
 
-		gd.setInsets(30, 0, 0);
-		gd.addNumericField("       Width", 1, 0);
-		gd.addCheckbox("Apply SWC colors", false);
+		gd.addMessage(""); //spacer
+		gd.addCheckbox("Impose default SWC colors", false);
+		gd.addCheckbox("Use average path diameter as stroke width", false);
 		gd.addCheckbox("Discard pre-existing ROIs in Overlay/Manager", true);
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
@@ -110,6 +109,7 @@ public class RoiConverter {
 			destinationPlanes[i] = gd.getNextBoolean();
 		final String scope = gd.getNextRadioButton();
 		useSWCcolors(gd.getNextBoolean());
+		setStrokeWidth((gd.getNextBoolean()) ? -1 : 0);
 		final boolean reset = gd.getNextBoolean();
 
 		if (scopes[1].equals(scope)) { // ROI Manager
@@ -201,27 +201,30 @@ public class RoiConverter {
 	}
 
 	/**
-	 * Converts a list of paths.
+	 * Converts a list of paths into 2D polyline ROIs
 	 *
-	 * @param paths the paths being converted.
-	 * @param overlay the target overlay holding the converted paths
+	 * @param paths the paths being converted
+	 * @param overlay the target overlay to hold converted paths
 	 */
 	public void convert(final ArrayList<Path> paths, Overlay overlay) {
 		if (overlay == null) overlay = new Overlay();
-		final int firstIdx = Math.max(overlay.size() - 1, 0);
 		for (final Path p : paths) {
 			if (!convertablePath(p)) continue;
+
+			// Monitor how many 2D ROIs we'll be generating;
+			final int firstIdx = Math.max(overlay.size() - 1, 0);
 
 			// If path suggests using fitted version, draw that instead
 			final Path drawPath = (p.getUseFitted()) ? p.getFitted() : p;
 			if (useSWCcolors) drawPath.setColorBySWCtype();
 			drawPath.drawPathAsPoints(overlay, exportPlane);
-		}
 
-		// Set line widths
-		if (width == DEF_WIDTH) return;
-		for (int i = firstIdx; i < overlay.size() - 1; i++)
-			overlay.get(i).setStrokeWidth(width);
+			// Set ROI widths
+			for (int i = firstIdx; i < overlay.size(); i++) {
+				double w = (width == -1) ? drawPath.getMeanRadius() * 2 : width;
+				overlay.get(i).setStrokeWidth(w);
+			}
+		}
 	}
 
 	/**
@@ -247,9 +250,10 @@ public class RoiConverter {
 	}
 
 	/**
-	 * Sets the line width of converted ROIs.
+	 * Sets the line width of converted ROIs. Set it to -1 to have ROIs plotted
+	 * using the average diameter of the path
 	 *
-	 * @see Roi#setStrokeWidth(int)
+	 * @see {@link Path#getMeanRadius()}, {@link Roi#getStrokeWidth()}
 	 */
 	public void setStrokeWidth(final int width) {
 		this.width = width;

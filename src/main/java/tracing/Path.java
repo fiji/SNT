@@ -2020,6 +2020,20 @@ public class Path implements Comparable<Path> {
 				+ u1_larger + "u2_smaller=" + u2_smaller + "u2_larger=" + u2_larger);
 	}
 
+	/**
+	 * Gets the path mean radius.
+	 *
+	 * @return the average radius of the path, or zero if path has no defined
+	 *         thickness
+	 */
+	public double getMeanRadius() {
+		if (radiuses == null) return 0;
+		double sum = 0;
+		for (int i = 0; i < radiuses.length; i++) {
+			sum += radiuses[i];
+		}
+		return sum / radiuses.length;
+	}
 
 	/**
 	 * Checks if path has defined thickness.

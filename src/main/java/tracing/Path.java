@@ -488,7 +488,7 @@ public class Path implements Comparable<Path> {
 		precise_x_positions = new_precise_x_positions;
 		precise_y_positions = new_precise_y_positions;
 		precise_z_positions = new_precise_z_positions;
-		if (hasCircles()) {
+		if (hasRadii()) {
 			final double[] new_tangents_x = new double[newMaxPoints];
 			final double[] new_tangents_y = new double[newMaxPoints];
 			final double[] new_tangents_z = new double[newMaxPoints];
@@ -516,7 +516,7 @@ public class Path implements Comparable<Path> {
 		// that previously had none, add circles to the
 		// previous one, and carry on:
 
-		if (other.hasCircles() && !hasCircles()) {
+		if (other.hasRadii() && !hasRadii()) {
 			createCircles();
 			final double defaultRadius = getMinimumSeparation() * 2;
 			for (int i = 0; i < points; ++i)
@@ -550,7 +550,7 @@ public class Path implements Comparable<Path> {
 
 		System.arraycopy(other.precise_z_positions, toSkip, precise_z_positions, points, other.points - toSkip);
 
-		if (hasCircles()) {
+		if (hasRadii()) {
 
 			System.arraycopy(other.radiuses, toSkip, radiuses, points, other.points - toSkip);
 
@@ -566,7 +566,7 @@ public class Path implements Comparable<Path> {
 
 		points = points + (other.points - toSkip);
 
-		if (hasCircles()) {
+		if (hasRadii()) {
 			setGuessedTangents(2);
 		}
 	}
@@ -641,7 +641,7 @@ public class Path implements Comparable<Path> {
 
 		int startIndexOfLastDrawnLine = -1;
 
-		if (!hasCircles())
+		if (!hasRadii())
 			drawDiameter = false;
 
 		for (int i = 0; i < points; ++i) {
@@ -2020,8 +2020,21 @@ public class Path implements Comparable<Path> {
 				+ u1_larger + "u2_smaller=" + u2_smaller + "u2_larger=" + u2_larger);
 	}
 
-	public boolean hasCircles() {
+
+	/**
+	 * Checks if path has defined thickness.
+	 *
+	 * @return true, if the points defining with this path are associated with a
+	 *         list of radii
+	 */
+	public boolean hasRadii() {
 		return radiuses != null;
+	}
+
+	/** @deprecated see {@link #hasRadii()} */
+	@Deprecated
+	public boolean hashCircles() {
+		return hasRadii();
 	}
 
 	public void setFittedCircles(final double[] tangents_x, final double[] tangents_y, final double[] tangents_z,
@@ -2300,7 +2313,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	public Content addDiscsTo3DViewer(final Image3DUniverse univ, final Color3f c, final ImagePlus colorImage) {
-		if (!hasCircles())
+		if (!hasRadii())
 			return null;
 
 		final Color3f[] originalColors = Pipe.getPointColors(precise_x_positions, precise_y_positions,
@@ -2367,7 +2380,7 @@ public class Path implements Comparable<Path> {
 		double[] z_points_d = new double[points];
 		double[] radiuses_d = new double[points];
 
-		if (hasCircles()) {
+		if (hasRadii()) {
 			int added = 0;
 			int lastIndexAdded = -noMoreThanOneEvery;
 			for (int i = 0; i < points; ++i) {
@@ -2526,7 +2539,7 @@ public class Path implements Comparable<Path> {
 	 */
 
 	public double getApproximateFittedVolume() {
-		if (!hasCircles()) {
+		if (!hasRadii()) {
 			return -1;
 		}
 
@@ -2687,7 +2700,7 @@ public class Path implements Comparable<Path> {
 				System.arraycopy(precise_z_positions, end, new_z_points, (start + downsampledLength) - 1, points - end);
 
 				double[] new_radiuses = null;
-				if (hasCircles()) {
+				if (hasRadii()) {
 					new_radiuses = new double[maxPoints];
 					System.arraycopy(radiuses, 0, new_radiuses, 0, start);
 					for (int i = 0; i < downsampledLength; ++i) {
@@ -2728,7 +2741,7 @@ public class Path implements Comparable<Path> {
 				precise_y_positions = new_y_points;
 				precise_z_positions = new_z_points;
 				radiuses = new_radiuses;
-				if (hasCircles()) {
+				if (hasRadii()) {
 					setGuessedTangents(2);
 				}
 			}

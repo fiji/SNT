@@ -525,7 +525,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			SWCPoint firstSWCPoint = null;
 
-			final boolean realRadius = pathToUse.hasCircles();
+			final boolean realRadius = pathToUse.hasRadii();
 			for (int i = indexToStartAt; i < pathToUse.points; ++i) {
 				double radius = 0;
 				if (realRadius)
@@ -950,7 +950,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					final double pzd = p.precise_z_positions[i];
 					String attributes = "x=\"" + px + "\" " + "y=\"" + py + "\" z=\"" + pz + "\" " + "xd=\"" + pxd
 							+ "\" yd=\"" + pyd + "\" zd=\"" + pzd + "\"";
-					if (p.hasCircles()) {
+					if (p.hasRadii()) {
 						attributes += " tx=\"" + p.tangents_x[i] + "\"";
 						attributes += " ty=\"" + p.tangents_y[i] + "\"";
 						attributes += " tz=\"" + p.tangents_z[i] + "\"";
@@ -1297,7 +1297,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					if (lastIndex == 0)
 						// Then we've just started, create the arrays in Path:
 						current_path.createCircles();
-					else if (!current_path.hasCircles())
+					else if (!current_path.hasRadii())
 						throw new TracesFileFormatException(
 								"The point at index " + lastIndex + " had a fitted circle, but none previously did");
 					current_path.tangents_x[lastIndex] = Double.parseDouble(tXString);
@@ -1309,7 +1309,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 							"If one of the r, tx, ty or tz attributes to the point element is specified, they all must be");
 				else {
 					// All circle attributes are null:
-					if (current_path.hasCircles())
+					if (current_path.hasRadii())
 						throw new TracesFileFormatException(
 								"The point at index " + lastIndex + " had no fitted circle, but all previously did");
 				}

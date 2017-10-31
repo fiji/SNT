@@ -1962,9 +1962,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if (topologyPath.getUseFitted()) {
 				p = topologyPath.fitted;
 			}
-			if (topologyPath.fittedVersionOf != null)
-				continue;
-
 			final int n = p.size();
 
 			final ArrayList<Bresenham3D.IntegerPoint> pointsToJoin = new ArrayList<>();

@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing;
+package tracing.gui;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -28,6 +28,11 @@ import java.util.concurrent.FutureTask;
 
 import javax.swing.SwingUtilities;
 
+/**
+ * Utility class that ensures EDT execution.
+ *
+ * @author Tiago Ferreira
+ */
 public class SwingSafeResult {
 
 	public static <T> T getResult(final Callable<T> c) {

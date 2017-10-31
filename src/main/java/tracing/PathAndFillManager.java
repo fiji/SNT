@@ -2060,8 +2060,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return result;
 	}
 
-	@Deprecated
-	ArrayList<Path> getAllPaths() {
+	/**
+	 * Returns all the paths.
+	 *
+	 * @return the paths associated with this PathAndFillManager instance.
+	 */
+	public ArrayList<Path> getPaths() {
 		return allPaths;
 	}
 

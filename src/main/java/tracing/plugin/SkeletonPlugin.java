@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing;
+package tracing.plugin;
 
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
@@ -45,11 +45,14 @@ import ij.text.TextWindow;
 import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
 import sc.fiji.analyzeSkeleton.SkeletonResult;
 import sc.fiji.skeletonize3D.Skeletonize3D_;
+import tracing.Path;
+import tracing.PathAndFillManager;
+import tracing.SimpleNeuriteTracer;
+import tracing.gui.GuiUtils;
 
 public class SkeletonPlugin implements DialogListener {
 
 	private GenericDialog gd;
-	private boolean useOnlySelectedPaths;
 	private boolean restrictByRoi;
 	private boolean restrictBySWCType;
 	private boolean callAnalyzeSkeleton;
@@ -64,25 +67,23 @@ public class SkeletonPlugin implements DialogListener {
 
 	public SkeletonPlugin(final SimpleNeuriteTracer plugin) {
 		this.plugin = plugin;
-		pafm = plugin.pathAndFillManager;
+		pafm = plugin.getPathAndFillManager();
 		imp = plugin.getImagePlus();
 	}
 
-	public void run() {
+	public void runGui() {
 
 		selectedSwcTypes = new ArrayList<>();
 		renderingPaths = new ArrayList<>();
 
+		final GuiUtils gUtils = new GuiUtils(plugin.getUI().getPathWindow());
+		if (!pafm.anySelected()) {
+			gUtils.error("No paths selected.");
+			return;
+		}
+
 		if (!showDialog())
 			return;
-
-		if (useOnlySelectedPaths && !pafm.anySelected()) {
-			final YesNoCancelDialog ynd = new YesNoCancelDialog(IJ.getInstance(), "Render Unselected Paths Instead?",
-					"No path is currently selected.\n" + "Render unselected paths instead?");
-			if (!ynd.yesPressed())
-				return;
-			useOnlySelectedPaths = false;
-		}
 
 		roi = imp.getRoi();
 		if (restrictByRoi && (roi == null || !roi.isArea())) {
@@ -96,12 +97,10 @@ public class SkeletonPlugin implements DialogListener {
 		if (selectedSwcTypes.isEmpty())
 			restrictBySWCType = false;
 
-		for (Path p : pafm.allPaths) {
+		for (Path p : pafm.getPaths()) {
 			if (p.getUseFitted())
-				p = p.fitted;
-			else if (p.fittedVersionOf != null)
-				continue;
-			if (useOnlySelectedPaths && !pafm.isSelected(p))
+				p = p.getFitted();
+			else if (p.isFittedVersionOfAnotherPath())
 				continue;
 			if (restrictBySWCType && !selectedSwcTypes.contains(p.getSWCType()))
 				continue;
@@ -109,7 +108,7 @@ public class SkeletonPlugin implements DialogListener {
 		}
 
 		if (renderingPaths.isEmpty()) {
-			SNT.error("No paths fullfilled the selected criteria.");
+			gUtils.error("No paths fullfilled the selected criteria.");
 			return;
 		}
 
@@ -163,7 +162,7 @@ public class SkeletonPlugin implements DialogListener {
 				rt.addValue("ROI Name", roi.getName() == null ? "Unammed ROI" : roi.getName());
 
 		} catch (final Exception ignored) {
-			SNT.error("Some statistics could not be calculated.");
+			GuiUtils.errorPrompt("Some statistics could not be calculated.");
 		} finally {
 			rt.show(TABLE_TITLE);
 		}
@@ -171,10 +170,8 @@ public class SkeletonPlugin implements DialogListener {
 
 	private String getFilterString() {
 		final StringBuilder filter = new StringBuilder();
-		if (useOnlySelectedPaths)
-			filter.append("SelectedPathsOnly");
 		if (restrictByRoi && roi != null && roi.isArea())
-			filter.append(" OnlyPointsInsideROI");
+			filter.append("OnlyPointsInsideROI");
 		if (restrictBySWCType) {
 			filter.append(" [ ");
 			for (final int type : selectedSwcTypes)
@@ -202,8 +199,6 @@ public class SkeletonPlugin implements DialogListener {
 	private boolean showDialog() {
 
 		gd = new GenericDialog("Render Paths as Topographic Skeletons");
-		final String[] pwScopes = { "Render all paths", "Render only selected paths" };
-		gd.addRadioButtonGroup("Path selection:", pwScopes, 2, 1, pwScopes[useOnlySelectedPaths ? 1 : 0]);
 		final String[] roiScopes = { "None", "Render only segments contained by ROI" };
 		gd.addRadioButtonGroup("ROI filtering:", roiScopes, 2, 1, roiScopes[restrictByRoi ? 1 : 0]);
 
@@ -236,7 +231,6 @@ public class SkeletonPlugin implements DialogListener {
 	@Override
 	public boolean dialogItemChanged(final GenericDialog arg, final AWTEvent event) {
 
-		useOnlySelectedPaths = gd.getNextRadioButton().contains("only");
 		restrictByRoi = gd.getNextRadioButton().contains("only");
 		restrictBySWCType = gd.getNextRadioButton().contains("only");
 		final String analysisChoice = gd.getNextRadioButton();

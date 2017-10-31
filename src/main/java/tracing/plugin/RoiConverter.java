@@ -56,20 +56,20 @@ public class RoiConverter {
 	private int width = -1; // flag to use mean path diameter
 	private int exportPlane = XY_PLANE;
 	private boolean useSWCcolors;
+	private final SimpleNeuriteTracer plugin;
+	private final PathAndFillManager pathAndFillManager;
 
-	/**
-	 * Runs SNT's ROI exporter dialog.
-	 *
-	 * @param plugin the UI running instance of SNT
-	 */
-	public void runGui(final SimpleNeuriteTracer plugin) {
+	public RoiConverter(final SimpleNeuriteTracer plugin) {
+		this.plugin = plugin;
+		pathAndFillManager = plugin.getPathAndFillManager();
+	}
 
+	/** Runs SNT's ROI converter dialog. */
+	public void runGui() {
 		final NeuriteTracerResultsDialog pluginUI = plugin.getUI();
 		if (pluginUI == null) {
 			throw new IllegalArgumentException("UI method called but SNTs UI null");
 		}
-		final PathAndFillManager pathAndFillManager = plugin
-			.getPathAndFillManager();
 		final GuiUtils gUtils = new GuiUtils(pluginUI.getPathWindow());
 		if (!pathAndFillManager.anySelected()) {
 			gUtils.error("No paths selected.");

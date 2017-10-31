@@ -71,6 +71,7 @@ public class SkeletonPlugin implements DialogListener {
 		imp = plugin.getImagePlus();
 	}
 
+	/** Runs SNT's 'Analyze/Render Skeletonized Paths' dialog. */
 	public void runGui() {
 
 		selectedSwcTypes = new ArrayList<>();

@@ -21,8 +21,9 @@
  */
 
 /**
- * Classes implementing SNT's XY, ZY, and XZ views
+ * Classes implementing SNT addons (IJ1 plugins/IJ2 commands)
  *
  * @author Tiago Ferreira
  */
-package tracing.hyperpanes;
+
+package tracing.plugin;

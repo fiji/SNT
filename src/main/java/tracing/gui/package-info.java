@@ -21,8 +21,8 @@
  */
 
 /**
- * Classes implementing SNT's XY, ZY, and XZ views
+ * This package provides customizations for SNT's GUI.
  *
  * @author Tiago Ferreira
  */
-package tracing.hyperpanes;
+package tracing.gui;

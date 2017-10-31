@@ -31,14 +31,12 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.math3.stat.StatUtils;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
-import ij.gui.YesNoCancelDialog;
 import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
@@ -50,7 +48,12 @@ import tracing.PathAndFillManager;
 import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 
-public class SkeletonPlugin implements DialogListener {
+/**
+ * Convenience class for converting SNT paths into skeletonized images.
+ *
+ * @author Tiago Ferreira
+ */
+public class SkeletonConverter implements DialogListener {
 
 	private GenericDialog gd;
 	private boolean restrictByRoi;
@@ -65,13 +68,13 @@ public class SkeletonPlugin implements DialogListener {
 	private final ImagePlus imp;
 	private Roi roi;
 
-	public SkeletonPlugin(final SimpleNeuriteTracer plugin) {
+	public SkeletonConverter(final SimpleNeuriteTracer plugin) {
 		this.plugin = plugin;
 		pafm = plugin.getPathAndFillManager();
 		imp = plugin.getImagePlus();
 	}
 
-	/** Runs SNT's 'Analyze/Render Skeletonized Paths' dialog. */
+	/** Runs SNT's 'Convert To Skeletons' dialog. */
 	public void runGui() {
 
 		selectedSwcTypes = new ArrayList<>();
@@ -88,9 +91,9 @@ public class SkeletonPlugin implements DialogListener {
 
 		roi = imp.getRoi();
 		if (restrictByRoi && (roi == null || !roi.isArea())) {
-			final YesNoCancelDialog ynd = new YesNoCancelDialog(IJ.getInstance(), "Proceed Without ROI Filtering?",
-					"ROI filtering requested but image contains no area ROI.\n" + "Proceed without ROI filtering?");
-			if (!ynd.yesPressed())
+			if (!gUtils.getConfirmation(
+				"ROI filtering requested but image contains no area ROI.\n" +
+					"Proceed without ROI filtering?", "Proceed Without ROI Filtering?"))
 				return;
 			restrictByRoi = false;
 		}
@@ -141,7 +144,7 @@ public class SkeletonPlugin implements DialogListener {
 	}
 
 	private void summarizeSkeleton(final SkeletonResult sr) {
-		final String TABLE_TITLE = "Summary of Rendered Paths";
+		final String TABLE_TITLE = "Skeletonized Paths Summary";
 		final ResultsTable rt = getTable(TABLE_TITLE);
 		try {
 			double sumLength = 0d;
@@ -150,7 +153,7 @@ public class SkeletonPlugin implements DialogListener {
 			for (int i = 0; i < sr.getNumOfTrees(); i++)
 				sumLength += avgLengths[i] * branches[i];
 			rt.incrementCounter();
-			rt.addValue("N. Rendered Paths", renderingPaths.size());
+			rt.addValue("N. Converted Paths", renderingPaths.size());
 			rt.addValue("Unit", imp.getCalibration().getUnits());
 			rt.addValue("Total length", sumLength);
 			rt.addValue("Mean branch length", StatUtils.mean(avgLengths));
@@ -199,8 +202,8 @@ public class SkeletonPlugin implements DialogListener {
 
 	private boolean showDialog() {
 
-		gd = new GenericDialog("Render Paths as Topographic Skeletons");
-		final String[] roiScopes = { "None", "Render only segments contained by ROI" };
+		gd = new GenericDialog("Convert to Topographic Skeletons");
+		final String[] roiScopes = { "None", "Convert only segments contained by ROI" };
 		gd.addRadioButtonGroup("ROI filtering:", roiScopes, 2, 1, roiScopes[restrictByRoi ? 1 : 0]);
 
 		// Assemble SWC choices
@@ -216,7 +219,7 @@ public class SkeletonPlugin implements DialogListener {
 		gd.addCheckboxGroup(nTypes / 2, 2, typeNames, typeChoices);
 
 		final String[] analysisScopes = { "None", "Obtain summary", "Run \"Analyze Skeleton\" plugin" };
-		gd.addRadioButtonGroup("Analysis of rendered paths:", analysisScopes, 3, 1, analysisScopes[0]);
+		gd.addRadioButtonGroup("Analysis of converted paths:", analysisScopes, 3, 1, analysisScopes[0]);
 		gd.addDialogListener(this);
 		dialogItemChanged(gd, null);
 		gd.showDialog();

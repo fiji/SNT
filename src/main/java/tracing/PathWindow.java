@@ -87,6 +87,9 @@ import javax.swing.tree.TreeSelectionModel;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SWCColor;
+import tracing.gui.SwingSafeResult;
+import tracing.plugin.RoiConverter;
+import tracing.plugin.SkeletonConverter;
 
 @SuppressWarnings("serial")
 public class PathWindow extends JFrame implements PathAndFillListener,
@@ -112,6 +115,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	private final JMenuItem fillOutMenuItem;
 	private final JMenuItem exportAsSWCMenuItem;
 	private final JMenuItem exportAsRoiMenuItem;
+	private final JMenuItem makeLineStackMenuItem;
 	private final JMenuItem downsampleMenuItem;
 
 	public PathWindow(final PathAndFillManager pathAndFillManager,
@@ -201,10 +205,14 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		fillOutMenuItem.addActionListener(listener);
 		fitMenu.add(fillOutMenuItem);
 
-		final JMenu advanced = new JMenu("Advanced");
+		final JMenu advanced = new JMenu("Analysis");
 		menuBar.add(advanced);
-		exportAsRoiMenuItem = new JMenuItem("Export as ROI");
+		exportAsRoiMenuItem = new JMenuItem("Convert To ROIs...");
 		advanced.add(exportAsRoiMenuItem);
+		makeLineStackMenuItem = new JMenuItem(
+			"Convert To Skeleton...");
+		makeLineStackMenuItem.addActionListener(listener);
+		advanced.add(makeLineStackMenuItem);
 		exportAsRoiMenuItem.addActionListener(listener);
 		exportAsSWCMenuItem = new JMenuItem("Export as SWC");
 		advanced.add(exportAsSWCMenuItem);
@@ -241,15 +249,14 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		pjmi = popup.add(AListener.MAKE_PRIMARY_CMD);
 		pjmi.addActionListener(listener);
 		popup.addSeparator();
-		pjmi = popup.add(AListener.APPLY_SWC_COLORS_CMD);
+		pjmi = popup.add(AListener.SELECT_ALL_CMD);
 		pjmi.addActionListener(listener);
-		pjmi = popup.add(AListener.REMOVE_COLOR_CMD);
+		pjmi = popup.add(AListener.SELECT_NONE_CMD);
 		pjmi.addActionListener(listener);
 		popup.addSeparator();
 		pjmi = popup.add(AListener.COLLAPSE_ALL_CMD);
 		pjmi.addActionListener(listener);
 		pjmi = popup.add(AListener.EXPAND_ALL_CMD);
-		pjmi.addActionListener(listener);
 		final JMenuItem jcbmi = new JCheckBoxMenuItem("Expand Selected Nodes");
 		jcbmi.setSelected(tree.getExpandsSelectedPaths());
 		jcbmi.addItemListener(new ItemListener() {
@@ -440,6 +447,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		renameMenuItem.setEnabled(b);
 		exportAsSWCMenuItem.setEnabled(b);
 		exportAsRoiMenuItem.setEnabled(b);
+		makeLineStackMenuItem.setEnabled(b);
 		downsampleMenuItem.setEnabled(b);
 	}
 
@@ -1126,6 +1134,8 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		public static final String COLORS_MENU = "Tags";
 		private final static String EXPAND_ALL_CMD = "Expand All";
 		private final static String COLLAPSE_ALL_CMD = "Collapse All";
+		private final static String SELECT_ALL_CMD = "Select All";
+		private final static String SELECT_NONE_CMD = "Select None";
 		private final static String DELETE_CMD = "Delete";
 		private final static String RENAME_CMD = "Rename";
 		private final static String MAKE_PRIMARY_CMD = "Make Primary";
@@ -1136,7 +1146,18 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		public void actionPerformed(final ActionEvent e) {
 			assert SwingUtilities.isEventDispatchThread();
 
-			if (e.getActionCommand().equals(EXPAND_ALL_CMD)) {
+			if (e.getActionCommand().equals(SELECT_ALL_CMD)) {
+				final int n = tree.getRowCount();
+				for (int i = 0; i < n; i++)
+					tree.expandRow(i);
+				tree.addSelectionInterval(0, n);
+				return;
+			}
+			else if (e.getActionCommand().equals(SELECT_NONE_CMD)) {
+				tree.clearSelection();
+				return;
+			}
+			else if (e.getActionCommand().equals(EXPAND_ALL_CMD)) {
 				for (int i = 0; i < tree.getRowCount(); i++)
 					tree.expandRow(i);
 				return;
@@ -1268,7 +1289,13 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			}
 			else if (source == exportAsRoiMenuItem) {
 
-				guiUtils.error("To be implemented"); // TODO: implement
+				new RoiConverter(plugin).runGui();
+				return;
+
+			}
+			else if (source == makeLineStackMenuItem) {
+
+				new SkeletonConverter(plugin).runGui();
 				return;
 
 			}

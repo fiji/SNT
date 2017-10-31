@@ -948,17 +948,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		quitMenuItem.addActionListener(listener);
 		fileMenu.add(quitMenuItem);
 
-		pathsToROIsMenuItem = new JMenuItem("Convert Paths to ROIs...");
-		pathsToROIsMenuItem.addActionListener(listener);
-		analysisMenu.add(pathsToROIsMenuItem);
 		analysisMenu.addSeparator();
 		exportCSVMenuItemAgain = new JMenuItem("Measure Paths...");
 		exportCSVMenuItemAgain.addActionListener(listener);
 		analysisMenu.add(exportCSVMenuItemAgain);
-		makeLineStackMenuItem = new JMenuItem(
-			"Render/Analyze Skeletonized Paths...");
-		makeLineStackMenuItem.addActionListener(listener);
-		analysisMenu.add(makeLineStackMenuItem);
 		final JMenuItem correspondencesMenuItem = new JMenuItem(
 			"Show correspondences with file..");
 		correspondencesMenuItem.addActionListener(new ActionListener() {
@@ -1901,111 +1894,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			else if (source == loadLabelsMenuItem) {
 
 				plugin.loadLabels();
-
-			}
-			else if (source == makeLineStackMenuItem && !noPathsError()) {
-
-				final SkeletonPlugin skelPlugin = new SkeletonPlugin(plugin);
-				skelPlugin.run();
-
-			}
-			else if (source == pathsToROIsMenuItem && !noPathsError()) {
-
-				if (!pathAndFillManager.anySelected()) {
-					SNT.error("No paths selected.");
-					return;
-				}
-
-				final GenericDialog gd = new GenericDialog("Selected Paths to ROIs");
-
-				final int[] PLANES_ID = { MultiDThreePanes.XY_PLANE, MultiDThreePanes.XZ_PLANE,
-					MultiDThreePanes.ZY_PLANE };
-				final String[] PLANES_STRING = { "XY_View", "XZ_View", "ZY_View" };
-				final InteractiveTracerCanvas[] canvases = { plugin.xy_tracer_canvas,
-					plugin.xz_tracer_canvas, plugin.zy_tracer_canvas };
-				final boolean[] destinationPlanes = new boolean[PLANES_ID.length];
-				for (int i = 0; i < PLANES_ID.length; i++)
-					destinationPlanes[i] = canvases[i] != null && getImagePlusFromPane(
-						PLANES_ID[i]) != null;
-
-				gd.setInsets(0, 10, 0);
-				gd.addMessage("Create 2D Path-ROIs from:");
-				gd.setInsets(0, 20, 0);
-				for (int i = 0; i < PLANES_ID.length; i++)
-					gd.addCheckbox(PLANES_STRING[i], destinationPlanes[i]);
-
-				// 2D traces?
-				final Vector<?> cbxs = gd.getCheckboxes();
-				for (int i = 1; i < PLANES_ID.length; i++)
-					((Checkbox) cbxs.get(i)).setEnabled(!plugin.singleSlice);
-
-				final String[] scopes = { "ROI Manager", "Image overlay" };
-				gd.addRadioButtonGroup("Store Path-ROIs in:", scopes, 2, 1, scopes[0]);
-
-				gd.addMessage("");
-				gd.addCheckbox("Color code ROIs by SWC type", false);
-				gd.addCheckbox("Discard pre-existing ROIs in Overlay/Manager", true);
-
-				gd.showDialog();
-				if (gd.wasCanceled()) return;
-
-				for (int i = 0; i < PLANES_ID.length; i++)
-					destinationPlanes[i] = gd.getNextBoolean();
-				final String scope = gd.getNextRadioButton();
-				final boolean swcColors = gd.getNextBoolean();
-				final boolean reset = gd.getNextBoolean();
-
-				if (scopes[0].equals(scope)) { // ROI Manager
-
-					final Overlay overlay = new Overlay();
-					for (int i = 0; i < destinationPlanes.length; i++) {
-						if (destinationPlanes[i]) {
-							final int lastPlaneIdx = overlay.size() - 1;
-							plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
-							if (plugin.singleSlice) continue;
-							for (int j = lastPlaneIdx + 1; j < overlay.size(); j++) {
-								final Roi roi = overlay.get(j);
-								roi.setName(roi.getName() + " [" + PLANES_STRING[i] + "]");
-							}
-						}
-					}
-					RoiManager rm = RoiManager.getInstance2();
-					if (rm == null) rm = new RoiManager();
-					else if (reset) rm.reset();
-					Prefs.showAllSliceOnly = !plugin.singleSlice;
-					rm.setEditMode(plugin.getImagePlus(), false);
-					for (final Roi path : overlay.toArray())
-						rm.addRoi(path);
-					rm.runCommand("sort");
-					rm.setEditMode(plugin.getImagePlus(), true);
-					rm.runCommand("show all without labels");
-
-				}
-				else { // Overlay
-
-					String error = "";
-					for (int i = 0; i < destinationPlanes.length; i++) {
-						if (destinationPlanes[i]) {
-							final ImagePlus imp = getImagePlusFromPane(PLANES_ID[i]);
-							if (imp == null) {
-								error += PLANES_STRING[i] + ", ";
-								continue;
-							}
-							Overlay overlay = imp.getOverlay();
-							if (overlay == null) {
-								overlay = new Overlay();
-								imp.setOverlay(overlay);
-							}
-							else if (reset) overlay.clear();
-							plugin.addPathsToOverlay(overlay, PLANES_ID[i], swcColors);
-						}
-					}
-					if (!error.isEmpty()) {
-						SNT.error("Some ROIs were skipped because some images (" + error
-							.substring(0, error.length() - 2) +
-							") are no longer available.\nPlease consider exporting to the ROI Manager instead.");
-					}
-				}
 
 			}
 			else if (source == abortButton) {

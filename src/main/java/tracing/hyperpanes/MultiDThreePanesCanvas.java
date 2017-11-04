@@ -24,6 +24,8 @@ package tracing.hyperpanes;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
@@ -38,7 +40,10 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	protected PaneOwner owner;
 	protected int plane;
 	private double current_x, current_y, current_z;
-	boolean draw_crosshairs;
+	private boolean draw_crosshairs;
+	private String cursorText;
+	private Color cursorAnnotationsColor;
+
 
 	protected MultiDThreePanesCanvas(final ImagePlus imagePlus,
 		final PaneOwner owner, final int plane)
@@ -65,24 +70,25 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 
 	protected void drawOverlay(final Graphics g) {
 
-		if (draw_crosshairs) {
-
-			if (plane == ThreePanes.XY_PLANE) {
-				final int x = myScreenXD(current_x);
-				final int y = myScreenYD(current_y);
-				drawCrosshairs(g, Color.red, x, y);
-			}
-			else if (plane == ThreePanes.XZ_PLANE) {
-				final int x = myScreenXD(current_x);
-				final int y = myScreenYD(current_z);
-				drawCrosshairs(g, Color.red, x, y);
-			}
-			else if (plane == ThreePanes.ZY_PLANE) {
-				final int x = myScreenXD(current_z);
-				final int y = myScreenYD(current_y);
-				drawCrosshairs(g, Color.red, x, y);
-			}
+		final boolean draw_string = validCursorText();
+		if (!draw_crosshairs && !draw_string) return;
+		int x, y;
+		if (plane == ThreePanes.XY_PLANE) {
+			x = myScreenXD(current_x);
+			y = myScreenYD(current_y);
 		}
+		else if (plane == ThreePanes.XZ_PLANE) {
+			x = myScreenXD(current_x);
+			y = myScreenYD(current_z);
+		}
+		else if (plane == ThreePanes.ZY_PLANE) {
+			x = myScreenXD(current_z);
+			y = myScreenYD(current_y);
+		}
+		else return;
+		g.setColor(getCursorAnnotationsColor());
+		if (draw_crosshairs) drawCrosshairs(g, x, y);
+		if (draw_string) drawString(g, cursorText, x, y);
 	}
 
 	@Override
@@ -124,10 +130,9 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		owner.zoom(false, offScreenX(sx), offScreenY(sy), plane);
 	}
 
-	protected void drawCrosshairs(final Graphics g, final Color c,
+	protected void drawCrosshairs(final Graphics g,
 		final int x_on_screen, final int y_on_screen)
 	{
-		g.setColor(c);
 		final int hairLength = 8;
 		g.drawLine(x_on_screen, y_on_screen + 1, x_on_screen, y_on_screen +
 			(hairLength - 1));
@@ -137,6 +142,15 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 			y_on_screen);
 		g.drawLine(x_on_screen - 1, y_on_screen, x_on_screen - (hairLength - 1),
 			y_on_screen);
+	}
+
+	private void drawString(final Graphics g, final String str,
+		final int x_on_screen, final int y_on_screen)
+	{
+		final Graphics2D g2d = (Graphics2D) g;
+		g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+			RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+		g2d.drawString(str, x_on_screen, y_on_screen);
 	}
 
 	public void setCrosshairs(final double x, final double y, final double z,
@@ -203,6 +217,32 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	public int myScreenYD(final double oy) {
 		return (int) Math.round((oy - srcRect.y) * magnification + magnification /
 			2);
+	}
+
+	public void restoreDefaultCursor() {
+		setCursorText(null);
+		setCursor(ImageCanvas.defaultCursor);
+	}
+
+	/**
+	 * Sets the string to be appended to the current cursor.
+	 *
+	 * @param cursorText the string to be displayed around the cursor
+	 */
+	public void setCursorText(final String cursorText) {
+		this.cursorText = cursorText;
+	}
+
+	public void setCursorAnnotationsColor(Color color) {
+		this.cursorAnnotationsColor = color;
+	}
+
+	public Color getCursorAnnotationsColor() {
+		return (cursorAnnotationsColor == null) ? Color.RED : cursorAnnotationsColor;
+	}
+
+	private boolean validCursorText() {
+		return cursorText != null && !cursorText.trim().isEmpty();
 	}
 
 }

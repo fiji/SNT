@@ -31,42 +31,29 @@ import java.awt.event.WindowEvent;
 
 import ij.IJ;
 import ij.ImagePlus;
-import tracing.gui.GuiUtils;
 import tracing.hyperpanes.MultiDThreePanes;
 
-@SuppressWarnings("serial")
 public class InteractiveTracerCanvas extends TracerCanvas {
 
-	static final boolean verbose = SNT.isDebugMode();
+	private static final long serialVersionUID = 1L;
+	private final Color transparentGreen = new Color(0, 128, 0, 128);
+	private boolean fillTransparent = false;
+	private final SimpleNeuriteTracer tracerPlugin;
+	private double last_x_in_pane_precise = Double.MIN_VALUE;
+	private double last_y_in_pane_precise = Double.MIN_VALUE;
+	private Path unconfirmedSegment;
+	private Path currentPath;
+	private boolean lastPathUnfinished;
 
-	boolean fillTransparent = false;
-
-	Color transparentGreen = new Color(0, 128, 0, 128);
+	InteractiveTracerCanvas(final ImagePlus imp, final SimpleNeuriteTracer plugin, final int plane,
+		final PathAndFillManager pathAndFillManager) {
+		super(imp, plugin, plane, pathAndFillManager);
+		tracerPlugin = plugin;
+	}
 
 	public void setFillTransparent(final boolean transparent) {
 		this.fillTransparent = transparent;
 	}
-
-	// -------------------------------------------------------------
-
-	private final SimpleNeuriteTracer tracerPlugin;
-
-	public SimpleNeuriteTracer getTracerPlugin() {
-		return tracerPlugin;
-	}
-
-	InteractiveTracerCanvas(final ImagePlus imp, final SimpleNeuriteTracer plugin, final int plane,
-			final PathAndFillManager pathAndFillManager) {
-		super(imp, plugin, plane, pathAndFillManager);
-		tracerPlugin = plugin;
-		// SimpleNeuriteTracer.toastKeyListeners( IJ.getInstance(),
-		// "InteractiveTracerCanvas constructor" );
-		// addKeyListener( this );
-	}
-
-	private Path unconfirmedSegment;
-	private Path currentPath;
-	private boolean lastPathUnfinished;
 
 	public void setPathUnfinished(final boolean unfinished) {
 		this.lastPathUnfinished = unfinished;
@@ -86,7 +73,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	public void fakeMouseMoved(final boolean shift_pressed, final boolean join_modifier_pressed) {
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_pressed,
-				join_modifier_pressed);
+			join_modifier_pressed);
 	}
 
 	public void clickAtMaxPoint() {
@@ -95,7 +82,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final int[] p = new int[3];
 		tracerPlugin.findPointInStack(x, y, plane, p);
 		SNT.debug("Clicking on x="+x + " y= "+ y + "on pane " + plane 
-		+ " which corresponds to image position x="+ p[0] +", y="+ p[1] + " z="+ p[2]);
+			+ " which corresponds to image position x="+ p[0] +", y="+ p[1] + " z="+ p[2]);
 		tracerPlugin.clickAtMaxPoint(x, y, plane);
 		tracerPlugin.setSlicesAllPanes(p[0], p[1], p[2]);
 	}
@@ -108,8 +95,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			final boolean autoCanvasActivationState = tracerPlugin.autoCanvasActivation;
 			tracerPlugin.autoCanvasActivation = false;
 			final ShollAnalysisDialog sd = new ShollAnalysisDialog(
-					"Sholl analysis for tracing of " + tracerPlugin.getImagePlus().getTitle(), pointInImage.x,
-					pointInImage.y, pointInImage.z, pathAndFillManager, tracerPlugin.getImagePlus());
+				"Sholl analysis for tracing of " + tracerPlugin.getImagePlus().getTitle(), pointInImage.x,
+				pointInImage.y, pointInImage.z, pathAndFillManager, tracerPlugin.getImagePlus());
 			sd.toFront();
 			sd.addWindowListener(new WindowAdapter() {
 				@Override
@@ -139,7 +126,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		 */
 
 		final NearPoint np = pathAndFillManager.nearestPointOnAnyPath(p[0] * tracerPlugin.x_spacing,
-				p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
+			p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
 
 		if (np == null) {
 			SNT.error("BUG: No nearby path was found within " + diagonalLength + " of the pointer");
@@ -175,7 +162,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		boolean shift_key_down = (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
 		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
-				: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
+			: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 
 		if (tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down && !shift_key_down) {
 			final double[] p = new double[3];
@@ -188,11 +175,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		super.mouseMoved(e);
 
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down,
-				joiner_modifier_down);
+			joiner_modifier_down);
 	}
-
-	double last_x_in_pane_precise = Double.MIN_VALUE;
-	double last_y_in_pane_precise = Double.MIN_VALUE;
 
 	@Override
 	public void mouseEntered(final MouseEvent e) {
@@ -207,7 +191,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		if (!tracerPlugin.isReady())
 			return;
 
-		final int currentState = tracerPlugin.getResultsDialog().getState();
+		final int currentState = tracerPlugin.getUI().getState();
 
 		if (currentState == NeuriteTracerResultsDialog.LOADING || currentState == NeuriteTracerResultsDialog.SAVING
 				|| currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED) {
@@ -217,6 +201,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_POINT) {
 
 			tracerPlugin.launchPaletteAround(myOffScreenX(e.getX()), myOffScreenY(e.getY()), imp.getZ() - 1);
+			restoreDefaultCursor();
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE) {
 
@@ -236,8 +221,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			SNT.debug("BUG: No operation chosen");
 	}
 
-	protected void drawSquare(final Graphics g, final PointInImage p, final Color fillColor, final Color edgeColor,
-			final int side) {
+	private void drawSquare(final Graphics g, final PointInImage p, final Color fillColor, final Color edgeColor,
+		final int side) {
 
 		int x, y;
 
@@ -279,7 +264,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final FillerThread filler = tracerPlugin.filler;
 		if (filler != null) {
 			filler.setDrawingColors(fillTransparent ? transparentGreen : Color.GREEN,
-					fillTransparent ? transparentGreen : Color.GREEN);
+				fillTransparent ? transparentGreen : Color.GREEN);
 			filler.setDrawingThreshold(filler.getThreshold());
 		}
 
@@ -294,7 +279,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		if (unconfirmedSegment != null) {
 			unconfirmedSegment.drawPathAsPoints(this, g, Color.BLUE, plane, drawDiametersXY, sliceZeroIndexed,
-					eitherSideParameter);
+				eitherSideParameter);
 
 			if (unconfirmedSegment.endJoins != null) {
 
@@ -308,13 +293,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		if (currentPathFromTracer != null) {
 			currentPathFromTracer.drawPathAsPoints(this, g, Color.RED, plane, drawDiametersXY, sliceZeroIndexed,
-					eitherSideParameter);
+				eitherSideParameter);
 
 			if (lastPathUnfinished && currentPath.size() == 0) {
 
 				final PointInImage p = new PointInImage(tracerPlugin.last_start_point_x * tracerPlugin.x_spacing,
-						tracerPlugin.last_start_point_y * tracerPlugin.y_spacing,
-						tracerPlugin.last_start_point_z * tracerPlugin.z_spacing);
+					tracerPlugin.last_start_point_y * tracerPlugin.y_spacing,
+					tracerPlugin.last_start_point_z * tracerPlugin.z_spacing);
 
 				Color edgeColour = null;
 				if (currentPathFromTracer.startJoins != null)

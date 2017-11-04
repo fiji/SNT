@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3f;
 
@@ -389,6 +390,70 @@ public class Path implements Comparable<Path> {
 				precise_z_positions[i]);
 		result.onPath = this;
 		return result;
+	}
+
+	/**
+	 * Inserts a node at a specified position.
+	 *
+	 * @param index the (zero-based) index of the position of the new node
+	 * @param point the node to be inserted
+	 * @throws IllegalArgumentException if index is out-of-range
+	 */
+	public void addNode(final int index, final PointInImage point) {
+		if (index < 0 || index > size()) throw new IllegalArgumentException(
+			"addNode() asked for an out-of-range point: " + index);
+		// FIXME: This all would be much easier if we were using Collections/Lists
+		precise_x_positions = ArrayUtils.add(precise_x_positions, index, point.x);
+		precise_y_positions = ArrayUtils.add(precise_y_positions, index, point.y);
+		precise_z_positions = ArrayUtils.add(precise_z_positions, index, point.z);
+	}
+
+	/**
+	 * Removes a node from the path.
+	 *
+	 * @param index the zero-based index of the node to be removed
+	 * @throws IllegalArgumentException if index is out-of-range
+	 */
+	public void removeNode(final int index) {
+		if (index < 0 || index >= size()) throw new IllegalArgumentException(
+			"removeNode() asked for an out-of-range point: " + index);
+		// FIXME: This all would be much easier if we were using Collections/Lists
+		precise_x_positions = ArrayUtils.removeElement(precise_x_positions, precise_x_positions[index]);
+		precise_y_positions = ArrayUtils.removeElement(precise_y_positions, precise_y_positions[index]);
+		precise_z_positions = ArrayUtils.removeElement(precise_z_positions, precise_z_positions[index]);
+	}
+
+	/**
+	 * Assigns a new location to an existing node.
+	 *
+	 * @param index the zero-based index of the node to be modified
+	 * @param destination the new node location
+	 * @throws IllegalArgumentException if index is out-of-range
+	 */
+	public void moveNode(final int index, final PointInImage destination) {
+		if (index < 0 || index >= size()) throw new IllegalArgumentException(
+			"moveNode() asked for an out-of-range point: " + index);
+		precise_x_positions[index] = destination.x;
+		precise_y_positions[index] = destination.y;
+		precise_z_positions[index] = destination.z;
+	}
+
+	/**
+	 * Gets the node index associated with a specified image position.
+	 * Returns -1 if no such node exists.
+	 *
+	 * @param xcoord the x-position in pixel coordinates
+	 * @param ycoord the x-position in pixel coordinates
+	 * @return the node the index of the first occurrence of the specified
+	 *         coordinates, or -1 if there is no such occurrence
+	 */
+	public int getNodeIndex(int xcoord, int ycoord) {
+		for (int i = 0; i < points; ++i) {
+			if (getXUnscaled(i) == xcoord && getYUnscaled(i) == ycoord) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	public int getXUnscaled(final int i) {

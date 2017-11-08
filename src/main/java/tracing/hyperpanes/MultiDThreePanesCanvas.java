@@ -153,6 +153,14 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		g2d.drawString(str, x_on_screen, y_on_screen);
 	}
 
+	public void updatePosition(final double x, final double y, final double z)
+	{
+		current_x = x;
+		current_y = y;
+		current_z = z;
+	}
+
+	@Deprecated
 	public void setCrosshairs(final double x, final double y, final double z,
 		final boolean display)
 	{
@@ -243,6 +251,10 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 
 	private boolean validCursorText() {
 		return cursorText != null && !cursorText.trim().isEmpty();
+	}
+
+	public void setDrawCrosshairs(final boolean drawCrosshairs) {
+		draw_crosshairs = drawCrosshairs;
 	}
 
 }

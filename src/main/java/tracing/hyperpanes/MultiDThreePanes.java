@@ -118,13 +118,10 @@ public class MultiDThreePanes implements PaneOwner {
 
 		findPointInStack(off_screen_x, off_screen_y, in_plane, point);
 
-		xy_canvas.setCrosshairs(point[0], point[1], point[2],
-			true /* in_plane != XY_PLANE */ );
+		xy_canvas.updatePosition(point[0], point[1], point[2]);
 		if (!single_pane) {
-			xz_canvas.setCrosshairs(point[0], point[1], point[2],
-				true /* in_plane != XZ_PLANE */ );
-			zy_canvas.setCrosshairs(point[0], point[1], point[2],
-				true /* in_plane != ZY_PLANE */ );
+			xz_canvas.updatePosition(point[0], point[1], point[2]);
+			zy_canvas.updatePosition(point[0], point[1], point[2]);
 		}
 
 		if (shift_down) setSlicesAllPanes(point[0], point[1], point[2]);

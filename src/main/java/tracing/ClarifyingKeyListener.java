@@ -99,8 +99,8 @@ class ClarifyingKeyListener implements KeyListener, ContainerListener {
 		final int keyCode = e.getKeyCode();
 
 		if (keyCode == KeyEvent.VK_ESCAPE) {
-			if (isDoublePress(e)) plugin.getResultsDialog().reset();
-			else plugin.getResultsDialog().abortCurrentOperation();
+			if (isDoublePress(e)) plugin.getUI().reset();
+			else plugin.getUI().abortCurrentOperation();
 		}
 
 		else if (keyCode == KeyEvent.VK_ENTER && plugin.getImagePlus() != null) {

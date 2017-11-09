@@ -144,7 +144,7 @@ public class SNTPrefs { //TODO: Adopt PrefService
 		Prefs.set(BOOLEANS, currentBooleans);
 		clearLegacyPrefs();
 		if (isSaveWinLocations()) {
-			final NeuriteTracerResultsDialog rd = snt.resultsDialog;
+			final NeuriteTracerResultsDialog rd = snt.getUI();
 			if (rd == null)
 				return;
 			final PathWindow pw = rd.getPathWindow();

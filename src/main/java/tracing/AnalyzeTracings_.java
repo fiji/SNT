@@ -536,7 +536,7 @@ public class AnalyzeTracings_ implements PlugIn {
 		final String tracesFileName = imageFileName + ".traces";
 		final PathAndFillManager manager = new PathAndFillManager();
 		manager.loadGuessingType(tracesFileName);
-		return buildGraph(imageFileName, manager.getAllPaths());
+		return buildGraph(imageFileName, manager.getPaths());
 	}
 
 	@Override

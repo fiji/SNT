@@ -1749,7 +1749,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void setSinglePane(final boolean single_pane) {
-		this.single_pane = single_pane || singleSlice;
+		this.single_pane = single_pane || is2D();
 	}
 
 	public boolean getShowOnlySelectedPaths() {
@@ -2081,7 +2081,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		snapCursor = enable;
 		resultsDialog.useSnapWindow.setSelected(enable);
 		resultsDialog.snapWindowXYsizeSpinner.setEnabled(enable);
-		resultsDialog.snapWindowZsizeSpinner.setEnabled(enable && !singleSlice);
+		resultsDialog.snapWindowZsizeSpinner.setEnabled(enable && !is2D());
 	}
 
 	public void enableAutoActivation(final boolean enable) {
@@ -2089,6 +2089,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	// TODO: Use prefsService
+
+	/**
+	 * @return true if the image currently loaded does not have a depth (Z)
+	 *         dimension
+	 */
+	public boolean is2D() {
+		return singleSlice;
+	}
+
 	protected boolean drawDiametersXY = Prefs.get(
 		"tracing.Simple_Neurite_Tracer.drawDiametersXY", "false").equals("true");
 
@@ -2138,7 +2147,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	/**
 	 * @return the main dialog of SNT's UI
 	 */
-	public NeuriteTracerResultsDialog getResultsDialog() {
+	public NeuriteTracerResultsDialog getUI() {
 		return resultsDialog;
 	}
 

@@ -147,7 +147,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				currentImage = RGBToLuminance.convertToLuminance(currentImage);
 				currentImage.show();
 				imageType = currentImage.getType();
-			} else if (!singleSlice && (imageType == ImagePlus.GRAY16 || imageType == ImagePlus.GRAY32)) {
+			} else if (!is2D() && (imageType == ImagePlus.GRAY16 || imageType == ImagePlus.GRAY32)) {
 				final YesNoCancelDialog query16to8 = new YesNoCancelDialog(IJ.getInstance(), "Convert 16 bit image?",
 						"This image is " + currentImage.getBitDepth() + "-bit. You can trace it using "
 								+ currentImage.getBitDepth() + "-bit values, but if you want\n"
@@ -168,7 +168,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			gd.setInsets(0, 0, 0);
 			final Font font = new Font("SansSerif", Font.BOLD, 12);
 			gd.setInsets(0, 0, 0);
-			gd.addMessage("Tracing of " + currentImage.getTitle() + (singleSlice ? " (2D):" : " (3D):"), font);
+			gd.addMessage("Tracing of " + currentImage.getTitle() + (is2D() ? " (2D):" : " (3D):"), font);
 			gd.addCheckbox("Enforce non-inverted grayscale LUT", forceGrayscale);
 
 			String extraMemoryNeeded3P = " (will use an extra: ";
@@ -176,10 +176,10 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			final int byteDepth = bitDepth == 24 ? 4 : bitDepth / 8;
 			final long megaBytesExtra3P = (((long) width) * height * depth * byteDepth * 2) / (1024 * 1024);
 			extraMemoryNeeded3P += megaBytesExtra3P + "MiB of memory)";
-			gd.addCheckbox("Use_three_pane view? " + extraMemoryNeeded3P, singleSlice ? false : !single_pane);
+			gd.addCheckbox("Use_three_pane view? " + extraMemoryNeeded3P, is2D() ? false : !single_pane);
 			gd.addCheckbox("Look_for_Tubeness \".tubes.tif\" pre-processed file?", look4tubesFile);
 			gd.addCheckbox("Look_for_Tubular_Geodesics \".oof.ext\" pre-processed file?",
-					singleSlice ? false : look4oofFile);
+					is2D() ? false : look4oofFile);
 			gd.addCheckbox("Look_for_previously_traced data (\".traces\" file)?", look4tracesFile);
 			boolean showed3DViewerOption = false;
 			Image3DUniverse universeToUse = null;
@@ -187,7 +187,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			int defaultResamplingFactor = 1;
 			int resamplingFactor = 1;
 
-			if (!singleSlice) {
+			if (!is2D()) {
 				final boolean java3DAvailable = true; // This should always be true in a Fiji installation
 				defaultResamplingFactor = guessResamplingFactor();
 				resamplingFactor = defaultResamplingFactor;
@@ -225,9 +225,9 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			}
 			// Disable options not suitable to 2D images
 			final Vector<?> cbxs = gd.getCheckboxes();
-			((java.awt.Checkbox) cbxs.get(1)).setEnabled(!singleSlice); // three
+			((java.awt.Checkbox) cbxs.get(1)).setEnabled(!is2D()); // three
 																		// pane
-			((java.awt.Checkbox) cbxs.get(3)).setEnabled(!singleSlice); // tubular
+			((java.awt.Checkbox) cbxs.get(3)).setEnabled(!is2D()); // tubular
 																		// geodesics
 
 			gd.showDialog();
@@ -241,7 +241,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			look4tracesFile = gd.getNextBoolean();
 			prefs.saveStartupPrefs();
 
-			use3DViewer = !singleSlice && showed3DViewerOption;
+			use3DViewer = !is2D() && showed3DViewerOption;
 			if (use3DViewer) {
 				final String chosenViewer = gd.getNextChoice();
 				int chosenIndex;
@@ -289,7 +289,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			file_info = currentImage.getOriginalFileInfo();
 
 			// Look for a possible .oof.nrrd file:
-			if (!singleSlice && look4oofFile && file_info != null) {
+			if (!is2D() && look4oofFile && file_info != null) {
 				final String beforeExtension = SNT.stripExtension(file_info.fileName);
 				if (beforeExtension != null) {
 					final File possibleOOFFile = new File(file_info.directory, beforeExtension + ".oof.nrrd");
@@ -485,7 +485,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 //				});
 			}
 
-			getResultsDialog().displayOnStarting();
+			getUI().displayOnStarting();
 
 			File tracesFileToLoad = null;
 			final boolean macroLoading = macroTracesFilename != null;
@@ -500,9 +500,9 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			if (tracesFileToLoad == null)
 				return;
 			if (tracesFileToLoad.exists()) {
-				getResultsDialog().changeState(NeuriteTracerResultsDialog.LOADING);
+				getUI().changeState(NeuriteTracerResultsDialog.LOADING);
 				pathAndFillManager.loadGuessingType(tracesFileToLoad.getAbsolutePath());
-				getResultsDialog().changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+				getUI().changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 			} else if (macroLoading) {
 				SNT.error("The traces file suggested by the macro parameters does not exist:\n" + macroTracesFilename);
 			}

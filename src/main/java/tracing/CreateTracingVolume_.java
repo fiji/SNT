@@ -77,7 +77,7 @@ public class CreateTracingVolume_ implements PlugIn {
 		final PathAndFillManager manager = new PathAndFillManager();
 		manager.loadGuessingType(tracesFileName);
 		// FIXME: this will get too many paths:
-		final ArrayList<Path> allPaths = manager.getAllPaths();
+		final ArrayList<Path> allPaths = manager.getPaths();
 
 		final Bookstein_From_Landmarks matcher = new Bookstein_From_Landmarks();
 		matcher.loadImages(standardBrainFC, realImageFC);

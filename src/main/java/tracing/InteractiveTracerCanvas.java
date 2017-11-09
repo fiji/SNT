@@ -24,6 +24,7 @@ package tracing;
 
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.MenuItem;
@@ -194,13 +195,16 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	public void paint(final Graphics g) {
 		super.paint(g);
 		if (editMode) {
-			final int x1 = 12;
-			final int y1 = x1 + getFontMetrics(getFont()).getHeight() / 2;
+			final int edge = 12;
+			final FontMetrics fm = getFontMetrics(getFont());
+			if (fm.stringWidth("Edit Mode...") > dstWidth || fm.getHeight() > dstHeight)
+				return;
+			final int y = edge + fm.getHeight() / 2;
 			final Graphics2D g2d = (Graphics2D) g;
 			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
 				RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
 			g2d.setColor(getCursorAnnotationsColor());
-			g2d.drawString("Editing...", x1, y1);
+			g2d.drawString("Edit Mode...", edge, y);
 		}
 	}
 

@@ -77,7 +77,7 @@ public class GuiUtils {
 	}
 
 	public void error(final String msg) {
-		error(msg, SNT.VERSION, false);
+		error(msg, "SNT v" + SNT.VERSION, false);
 	}
 
 	public void error(final String msg, final String title) {
@@ -98,11 +98,11 @@ public class GuiUtils {
 	}
 
 	public void tempMsg(final String msg, final Point location) {
-		tempMsg(msg, location.x, location.y, false);
+		tempMsg(msg, location.x, location.y, true);
 	}
 
 	public void tempMsg(final String msg, final int x, final int y) {
-		tempMsg(msg, x, y, false);
+		tempMsg(msg, x, y, true);
 	}
 
 	private void tempMsg(final String msg, final int x, final int y,
@@ -143,6 +143,8 @@ public class GuiUtils {
 		});
 		timer.setRepeats(false);
 		timer.start();
+		dialog.setAlwaysOnTop(true);
+		dialog.toFront();
 		dialog.setVisible(true);
 	}
 

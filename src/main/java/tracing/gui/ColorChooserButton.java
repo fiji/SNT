@@ -30,6 +30,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 /**
@@ -50,6 +51,9 @@ public class ColorChooserButton extends JButton {
 		super(label);
 		setSelectedColor(c);
 		final JButton thisButton = this;
+		setVerticalTextPosition(SwingConstants.CENTER);
+		setHorizontalTextPosition(SwingConstants.LEFT);
+		setIconTextGap(6);
 		addActionListener(new ActionListener() {
 
 			@Override
@@ -75,7 +79,8 @@ public class ColorChooserButton extends JButton {
 	public void setSelectedColor(final Color newColor, final boolean notify) {
 		if (newColor == null) return;
 		current = newColor;
-		setIcon(createIcon(current, 15, 15));
+		final int h = getFontMetrics(getFont()).getAscent();
+		setIcon(createIcon(current, h * 2, h));
 		repaint();
 		if (notify && listener != null) listener.colorChanged(newColor);
 	}

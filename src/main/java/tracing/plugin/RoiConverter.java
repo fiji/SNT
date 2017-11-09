@@ -98,7 +98,7 @@ public class RoiConverter {
 		final String[] scopes = { "Image overlay", "ROI Manager" };
 		gd.addRadioButtonGroup("Store ROIs in:", scopes, 1, 2, scopes[0]);
 
-		gd.addMessage(""); //spacer
+		gd.addMessage(""); // spacer
 		gd.addCheckbox("Impose default SWC colors", false);
 		gd.addCheckbox("Use average path diameter as stroke width", false);
 		gd.addCheckbox("Discard pre-existing ROIs in Overlay/Manager", true);
@@ -221,7 +221,7 @@ public class RoiConverter {
 
 			// Set ROI widths
 			for (int i = firstIdx; i < overlay.size(); i++) {
-				double w = (width == -1) ? drawPath.getMeanRadius() * 2 : width;
+				final double w = (width == -1) ? drawPath.getMeanRadius() * 2 : width;
 				overlay.get(i).setStrokeWidth(w);
 			}
 		}

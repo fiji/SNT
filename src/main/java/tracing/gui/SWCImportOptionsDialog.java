@@ -53,12 +53,12 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener,
 		"Replace existing paths?");
 
 	private final JCheckBox ignoreCalibrationCheckbox = new JCheckBox(
-		"Ignore calibration; assume SWC uses image co-ordinates");
+		"Ignore calibration: assume SWC uses pixel coordinates");
 
 	private final JCheckBox applyOffsetCheckbox = new JCheckBox(
-		"Apply offset to SWC file co-ordinates");
+		"Apply offset to SWC file coordinates");
 	private final JCheckBox applyScaleCheckbox = new JCheckBox(
-		"Apply scale to SWC file co-ordinates");
+		"Apply scale to SWC file coordinates");
 
 	private final String offsetDefault = "0.0";
 	private final String scaleDefault = "1.0";

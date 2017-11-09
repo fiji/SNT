@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.math.stat.StatUtils;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3f;
 
@@ -360,14 +361,6 @@ public class Path implements Comparable<Path> {
 	public int size() {
 		return points;
 	}
-
-	/*
-	 * FIXME: put back public void getPoint( int i, int [] p ) {
-	 *
-	 * if( (i < 0) || i >= size() ) { p[0] = p[1] = p[2] = -1; return; }
-	 *
-	 * p[0] = x_positions[i]; p[1] = y_positions[i]; p[2] = z_positions[i]; }
-	 */
 
 	public void getPointDouble(final int i, final double[] p) {
 
@@ -970,7 +963,8 @@ public class Path implements Comparable<Path> {
 				slice_of_point = getXUnscaled(i);
 				break;
 			default:
-				throw new RuntimeException("BUG: Unknown plane! (" + plane + ")");
+				throw new IllegalArgumentException(
+						"plane is not a valid MultiDThreePanes flag");
 			}
 
 			if (current_roi_slice == slice_of_point || i == 0) {
@@ -2093,11 +2087,7 @@ public class Path implements Comparable<Path> {
 	 */
 	public double getMeanRadius() {
 		if (radiuses == null) return 0;
-		double sum = 0;
-		for (int i = 0; i < radiuses.length; i++) {
-			sum += radiuses[i];
-		}
-		return sum / radiuses.length;
+		return StatUtils.mean(radiuses);
 	}
 
 	/**

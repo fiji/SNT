@@ -46,6 +46,7 @@ import ij.process.StackConverter;
 import ij3d.Content;
 import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
+import tracing.gui.SwingSafeResult;
 import util.BatchOpener;
 import util.RGBToLuminance;
 

@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing;
+package tracing.legacy;
 
 import java.awt.Canvas;
 import java.awt.Color;
@@ -29,6 +29,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import ij.gui.ColorChooser;
+import tracing.SimpleNeuriteTracer;
 
 @Deprecated
 @SuppressWarnings("serial")

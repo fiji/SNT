@@ -24,6 +24,7 @@ package tracing.gui;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -48,12 +49,26 @@ public class ColorChooserButton extends JButton {
 	}
 
 	public ColorChooserButton(final Color c, final String label) {
+		this(c, label, 1d);
+	}
+
+	public ColorChooserButton(final Color c, final String label, double scaleFactor) {
 		super(label);
+		if (scaleFactor != 1d) {
+			setFont(getFont().deriveFont((float) (getFont().getSize() *
+				scaleFactor)));
+			final Insets margin = getMargin();
+			if (margin != null) {
+				setMargin(new Insets((int) (margin.top * scaleFactor),
+					(int) (margin.left * scaleFactor), (int) (margin.bottom *
+						scaleFactor), (int) (margin.right * scaleFactor)));
+			}
+		}
 		setSelectedColor(c);
 		final JButton thisButton = this;
 		setVerticalTextPosition(SwingConstants.CENTER);
 		setHorizontalTextPosition(SwingConstants.LEFT);
-		setIconTextGap(6);
+		setIconTextGap(getFontMetrics(getFont()).stringWidth("  "));
 		addActionListener(new ActionListener() {
 
 			@Override

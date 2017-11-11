@@ -850,7 +850,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	 */
 	private static class NodeIcon implements Icon {
 
-		private static final int SIZE = 9;
+		private final int SIZE = PathWindow.getPreferredIconSize();
 		private static final char PLUS = '+';
 		private static final char MINUS = '-';
 		private static final char EMPTY = ' ';
@@ -1337,6 +1337,12 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				return;
 			}
 		}
+	}
+
+	public static int getPreferredIconSize() {
+		final JTree tree = new JTree();
+		int size = tree.getFontMetrics(tree.getFont()).getAscent();
+		return (size % 2 == 0) ? size - 1 : size;
 	}
 
 }

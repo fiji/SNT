@@ -43,7 +43,6 @@ import javax.swing.MenuSelectionManager;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 
 import tracing.Path;
@@ -138,11 +137,12 @@ public class ColorMenu extends JMenu {
 	}
 
 	private void addSeparator(final String title) {
-		final JPanel panelLabel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		panelLabel.setBorder(new EmptyBorder(4, 0, 0, 0));
+		final JPanel panelLabel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		panelLabel.setBackground(getBackground());
 		final JLabel label = new JLabel(title);
-		label.setFont(getFont().deriveFont((float) (getFont().getSize() / 1.5)));
+		final double h = getFont().getSize() * .80;
+		label.setBorder(BorderFactory.createEmptyBorder((int) h, 4, 0, 4));
+		label.setFont(getFont().deriveFont((float) h));
 		panelLabel.add(label);
 		add(panelLabel);
 	}
@@ -237,11 +237,6 @@ public class ColorMenu extends JMenu {
 		@Override
 		public Dimension getMinimumSize() {
 			return getPreferredSize();
-		}
-
-		@Override
-		public Dimension getPreferredSize() {
-			return new Dimension(15, 15);
 		}
 
 		@Override

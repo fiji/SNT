@@ -71,7 +71,7 @@ import java.awt.Image;
 import java.util.ArrayList;
 
 import ij.ImagePlus;
-import stacks.PaneOwner;
+import tracing.hyperpanes.PaneOwner;
 import tracing.hyperpanes.MultiDThreePanesCanvas;
 
 @SuppressWarnings("serial")

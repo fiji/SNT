@@ -20,10 +20,17 @@
  * #L%
  */
 
-/**
- * Classes implementing SNT's XY, ZY, and XZ views. Derived from VIB-lib stacks
- * package for hyperstack and IJ2 support.
- *
- * @author Tiago Ferreira
- */
 package tracing.hyperpanes;
+
+
+public interface PaneOwner {
+
+	public void mouseMovedTo( int x, int y, int plane, boolean shift_down );
+
+	public void zoom( boolean zoomIn, int x, int y, int plane );
+
+	public void showStatus(String status, double progress);
+
+	public void error(String error);
+
+}

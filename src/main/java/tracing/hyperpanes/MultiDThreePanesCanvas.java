@@ -31,8 +31,8 @@ import java.awt.event.MouseEvent;
 
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
-import stacks.PaneOwner;
-import stacks.ThreePanes;
+import tracing.hyperpanes.PaneOwner;
+import tracing.hyperpanes.MultiDThreePanes;
 
 public class MultiDThreePanesCanvas extends ImageCanvas {
 
@@ -73,15 +73,15 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		final boolean draw_string = validCursorText();
 		if (!draw_crosshairs && !draw_string) return;
 		int x, y;
-		if (plane == ThreePanes.XY_PLANE) {
+		if (plane == MultiDThreePanes.XY_PLANE) {
 			x = myScreenXD(current_x);
 			y = myScreenYD(current_y);
 		}
-		else if (plane == ThreePanes.XZ_PLANE) {
+		else if (plane == MultiDThreePanes.XZ_PLANE) {
 			x = myScreenXD(current_x);
 			y = myScreenYD(current_z);
 		}
-		else if (plane == ThreePanes.ZY_PLANE) {
+		else if (plane == MultiDThreePanes.ZY_PLANE) {
 			x = myScreenXD(current_z);
 			y = myScreenYD(current_y);
 		}

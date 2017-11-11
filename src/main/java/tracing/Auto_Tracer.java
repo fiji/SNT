@@ -42,7 +42,7 @@ import ij.io.FileInfo;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
-import stacks.PaneOwner;
+import tracing.hyperpanes.PaneOwner;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.hyperpanes.MultiDThreePanesCanvas;
 import util.BatchOpener;

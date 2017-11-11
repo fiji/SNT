@@ -24,7 +24,6 @@ package tracing.hyperpanes;
 
 import java.awt.image.ColorModel;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.ImageCanvas;
@@ -34,7 +33,8 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
-import stacks.PaneOwner;
+import tracing.gui.GuiUtils;
+import tracing.hyperpanes.PaneOwner;
 
 public class MultiDThreePanes implements PaneOwner {
 
@@ -184,11 +184,10 @@ public class MultiDThreePanes implements PaneOwner {
 
 		if (bytesNeededEstimate > maxMemory) {
 
-			IJ.error("Warning",
-				"It looks as if the amount of memory required for the " +
-					"three pane view (" + (bytesNeededEstimate / (1024 * 1024)) +
-					"MiB) exceeds the maximum memory available (" + (maxMemory / (1024 *
-						1024)) + "MiB)");
+			error("It looks as if the amount of memory required for the " +
+				"three pane view (" + (bytesNeededEstimate / (1024 * 1024)) +
+				"MiB) exceeds the maximum memory available (" + (maxMemory / (1024 *
+					1024)) + "MiB)");
 		}
 	}
 
@@ -310,11 +309,7 @@ public class MultiDThreePanes implements PaneOwner {
 					}
 				}
 
-				IJ.showStatus("Generating XZ planes...");
-				IJ.showProgress(0);
-
 				// Create the ZY slices:
-
 				switch (type) {
 
 					case ImagePlus.GRAY8:
@@ -343,7 +338,7 @@ public class MultiDThreePanes implements PaneOwner {
 							final ByteProcessor bp = new ByteProcessor(zy_width, zy_height);
 							bp.setPixels(sliceBytes);
 							zy_stack.addSlice(null, bp);
-							IJ.showProgress(x_in_original / (double) width);
+							showStatus("Generating XZ planes...", x_in_original / (double) width);
 						}
 						break;
 
@@ -372,7 +367,7 @@ public class MultiDThreePanes implements PaneOwner {
 							final ShortProcessor sp = new ShortProcessor(zy_width, zy_height);
 							sp.setPixels(sliceShorts);
 							zy_stack.addSlice(null, sp);
-							IJ.showProgress(x_in_original / (double) width);
+							showStatus("Generating XZ planes...", x_in_original / (double) width);
 						}
 						break;
 
@@ -401,7 +396,7 @@ public class MultiDThreePanes implements PaneOwner {
 							final ColorProcessor cp = new ColorProcessor(zy_width, zy_height);
 							cp.setPixels(sliceInts);
 							zy_stack.addSlice(null, cp);
-							IJ.showProgress(x_in_original / (double) width);
+							showStatus("Generating XZ planes...", x_in_original / (double) width);
 						}
 						break;
 
@@ -430,7 +425,7 @@ public class MultiDThreePanes implements PaneOwner {
 							final FloatProcessor fp = new FloatProcessor(zy_width, zy_height);
 							fp.setPixels(sliceFloats);
 							zy_stack.addSlice(null, fp);
-							IJ.showProgress(x_in_original / (double) width);
+							showStatus("Generating XZ planes...", x_in_original / (double) width);
 						}
 						break;
 
@@ -442,18 +437,12 @@ public class MultiDThreePanes implements PaneOwner {
 					}
 				}
 
-				IJ.showProgress(1.0);
-
-				IJ.showStatus("Generating ZY planes...");
-				IJ.showProgress(0);
-
 				if (zy == null)
 					zy = new ImagePlus("ZY " + title, zy_stack);
 				zy.setStack(zy_stack);
 				zy.setTitle("ZY " + title);
 
 				// Create the XZ slices:
-
 				switch (type) {
 
 					case ImagePlus.GRAY8:
@@ -481,7 +470,7 @@ public class MultiDThreePanes implements PaneOwner {
 							bp.setPixels(sliceBytes);
 							xz_stack.addSlice(null, bp);
 
-							IJ.showProgress(y_in_original / (double) width);
+							showStatus("Generating ZY planes...", y_in_original / (double) width);
 						}
 						break;
 
@@ -509,7 +498,7 @@ public class MultiDThreePanes implements PaneOwner {
 							sp.setPixels(sliceShorts);
 							xz_stack.addSlice(null, sp);
 
-							IJ.showProgress(y_in_original / (double) width);
+							showStatus("Generating ZY planes...", y_in_original / (double) width);
 						}
 						break;
 
@@ -537,7 +526,7 @@ public class MultiDThreePanes implements PaneOwner {
 							cp.setPixels(sliceInts);
 							xz_stack.addSlice(null, cp);
 
-							IJ.showProgress(y_in_original / (double) width);
+							showStatus("Generating ZY planes...", y_in_original / (double) width);
 						}
 						break;
 
@@ -565,7 +554,7 @@ public class MultiDThreePanes implements PaneOwner {
 							fp.setPixels(sliceFloats);
 							xz_stack.addSlice(null, fp);
 
-							IJ.showProgress(y_in_original / (double) width);
+							showStatus("Generating ZY planes...", y_in_original / (double) width);
 						}
 						break;
 
@@ -580,7 +569,7 @@ public class MultiDThreePanes implements PaneOwner {
 					xz = new ImagePlus("XZ " + title, xz_stack);
 				xz.setStack(xz_stack);
 				xz.setTitle("XZ " + title);
-				IJ.showProgress(1.0); // Removes the progress indicator
+				showStatus("Generating ZY planes...", 1d);
 
 		}
 
@@ -650,13 +639,24 @@ public class MultiDThreePanes implements PaneOwner {
 
 	/** IDE debug method **/
 	public static void main(final String[] args) {
-		if (IJ.getInstance() == null) new ij.ImageJ();
+		if (ij.IJ.getInstance() == null) new ij.ImageJ();
 		final String path = "/Applications/IJ/samples/Spindly-GFP.zip";
-		final ImagePlus imp = IJ.openImage(path);
+		final ImagePlus imp = ij.IJ.openImage(path);
 		// imp.setActiveChannels("01");
 		final MultiDThreePanes mdp = new MultiDThreePanes();
 		mdp.single_pane = false;
 		mdp.initialize(imp, 20);
 		mdp.reloadZYXZpanes(30);
 	}
+
+	@Override
+	public void showStatus(String status, double progress) {
+		///TODO
+	}
+
+	@Override
+	public void error(String error) {
+		GuiUtils.errorPrompt(error);
+	}
+
 }

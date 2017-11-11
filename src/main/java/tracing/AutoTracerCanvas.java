@@ -23,7 +23,7 @@
 package tracing;
 
 import ij.ImagePlus;
-import stacks.PaneOwner;
+import tracing.hyperpanes.PaneOwner;
 import tracing.legacy.LegacyTracerCanvas;
 
 @SuppressWarnings("serial")

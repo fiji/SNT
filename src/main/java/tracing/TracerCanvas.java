@@ -112,7 +112,7 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 	int eitherSide;
 
 	@Override
-	protected void drawOverlay(final Graphics g) {
+	protected void drawOverlay(final Graphics2D g) {
 
 		/*
 		 * int current_z = -1;
@@ -216,7 +216,7 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 			resetBackBuffer();
 
 		super.paint(backBufferGraphics);
-		drawOverlay(backBufferGraphics);
+		drawOverlay((Graphics2D)backBufferGraphics);
 		g.drawImage(backBufferImage, 0, 0, this);
 	}
 

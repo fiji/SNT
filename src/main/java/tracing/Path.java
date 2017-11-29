@@ -24,6 +24,9 @@ package tracing;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -660,43 +663,25 @@ public class Path implements Comparable<Path> {
 		precise_z_positions[points++] = z;
 	}
 
-	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics g, final java.awt.Color c, final int plane,
+	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
 			final boolean drawDiameter) {
 		drawPathAsPoints(canvas, g, c, plane, false, drawDiameter, 0, -1);
 	}
 
-	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics g, final java.awt.Color c, final int plane,
+	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
 			final boolean highContrast, final boolean drawDiameter) {
 		drawPathAsPoints(canvas, g, c, plane, highContrast, drawDiameter, 0, -1);
 	}
 
-	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics g, final java.awt.Color c, final int plane,
+	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
 			final boolean drawDiameter, final int slice, final int either_side) {
 		drawPathAsPoints(canvas, g, c, plane, false, drawDiameter, slice, either_side);
 	}
 
-	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics g, final java.awt.Color c, final int plane,
+	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g2, final java.awt.Color c, final int plane,
 			final boolean highContrast, boolean drawDiameter, final int slice, final int either_side) {
 
-		/*
-		 * In addition, if this is a start or end point we want to represent
-		 * that with a circle or a square (depending on whether that's a branch
-		 * or not.)
-		 */
-
-		g.setColor(c);
-
-		final double magnification = canvas.getMagnification();
-		int pixel_size = magnification < 1 ? 1 : (int) magnification;
-		if (magnification >= 4)
-			pixel_size = (int) (magnification / 2);
-
-		final int spotExtra = pixel_size;
-		final int spotDiameter = pixel_size * 3;
-
-		final Path realStartJoins = fittedVersionOf == null ? startJoins : fittedVersionOf.startJoins;
-		final Path realEndJoins = fittedVersionOf == null ? endJoins : fittedVersionOf.endJoins;
-
+		g2.setColor(c);
 		int startIndexOfLastDrawnLine = -1;
 
 		if (!hasRadii())
@@ -704,75 +689,65 @@ public class Path implements Comparable<Path> {
 
 		for (int i = 0; i < points; ++i) {
 
-			int x = Integer.MIN_VALUE;
-			int y = Integer.MIN_VALUE;
-			int previous_x_on_screen = Integer.MIN_VALUE;
-			int previous_y_on_screen = Integer.MIN_VALUE;
-			int next_x_on_screen = Integer.MIN_VALUE;
-			int next_y_on_screen = Integer.MIN_VALUE;
+			double previous_x_on_screen = Integer.MIN_VALUE;
+			double previous_y_on_screen = Integer.MIN_VALUE;
+			double next_x_on_screen = Integer.MIN_VALUE;
+			double next_y_on_screen = Integer.MIN_VALUE;
 			final boolean notFirstPoint = i > 0;
 			final boolean notLastPoint = i < points - 1;
 			int slice_of_point = Integer.MIN_VALUE;
 
 			switch (plane) {
 			case MultiDThreePanes.XY_PLANE:
-				x = canvas.myScreenXD(getXUnscaledDouble(i));
-				y = canvas.myScreenYD(getYUnscaledDouble(i));
 				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXD(precise_x_positions[i - 1] / x_spacing);
-					previous_y_on_screen = canvas.myScreenYD(precise_y_positions[i - 1] / y_spacing);
+					previous_x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i - 1] / x_spacing);
+					previous_y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i - 1] / y_spacing);
 				}
 				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXD(precise_x_positions[i + 1] / x_spacing);
-					next_y_on_screen = canvas.myScreenYD(precise_y_positions[i + 1] / y_spacing);
+					next_x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i + 1] / x_spacing);
+					next_y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i + 1] / y_spacing);
 				}
 				slice_of_point = getZUnscaled(i);
 				break;
 			case MultiDThreePanes.XZ_PLANE:
-				x = canvas.myScreenXD(getXUnscaledDouble(i));
-				y = canvas.myScreenYD(getZUnscaledDouble(i));
 				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXD(precise_x_positions[i - 1] / x_spacing);
-					previous_y_on_screen = canvas.myScreenYD(precise_z_positions[i - 1] / z_spacing);
+					previous_x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i - 1] / x_spacing);
+					previous_y_on_screen = canvas.myScreenYDprecise(precise_z_positions[i - 1] / z_spacing);
 				}
 				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXD(precise_x_positions[i + 1] / x_spacing);
-					next_y_on_screen = canvas.myScreenYD(precise_z_positions[i + 1] / z_spacing);
+					next_x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i + 1] / x_spacing);
+					next_y_on_screen = canvas.myScreenYDprecise(precise_z_positions[i + 1] / z_spacing);
 				}
 				slice_of_point = getYUnscaled(i);
 				break;
 			case MultiDThreePanes.ZY_PLANE:
-				x = canvas.myScreenXD(getZUnscaledDouble(i));
-				y = canvas.myScreenYD(getYUnscaledDouble(i));
 				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXD(precise_z_positions[i - 1] / z_spacing);
-					previous_y_on_screen = canvas.myScreenYD(precise_y_positions[i - 1] / y_spacing);
+					previous_x_on_screen = canvas.myScreenXDprecise(precise_z_positions[i - 1] / z_spacing);
+					previous_y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i - 1] / y_spacing);
 				}
 				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXD(precise_z_positions[i + 1] / z_spacing);
-					next_y_on_screen = canvas.myScreenYD(precise_y_positions[i + 1] / y_spacing);
+					next_x_on_screen = canvas.myScreenXDprecise(precise_z_positions[i + 1] / z_spacing);
+					next_y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i + 1] / y_spacing);
 				}
 				slice_of_point = getXUnscaled(i);
 				break;
 			default:
-				throw new RuntimeException("BUG: Unknown plane! (" + plane + ")");
+				throw new IllegalArgumentException("BUG: Unknown plane! (" + plane + ")");
 			}
 
-			/*
-			 * If we've been asked to draw the diameters in the 2.5D view, just
-			 * do it in XY - this is only really for debugging...
-			 */
+			if ((either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side))
+				continue;
 
-			if (plane == MultiDThreePanes.XY_PLANE && drawDiameter) {
+			// If we've been asked to draw the diameters, just do it in XY
+			if (drawDiameter && plane == MultiDThreePanes.XY_PLANE) {
+
 				// Cross the tangents with a unit z vector:
 				final double n_x = 0;
 				final double n_y = 0;
 				final double n_z = 1;
-
 				final double t_x = tangents_x[i];
 				final double t_y = tangents_y[i];
 				final double t_z = tangents_z[i];
-
 				final double cross_x = n_y * t_z - n_z * t_y;
 				final double cross_y = n_z * t_x - n_x * t_z;
 				// double cross_z = n_x * t_y - n_y * t_x;
@@ -780,7 +755,6 @@ public class Path implements Comparable<Path> {
 				final double sizeInPlane = Math.sqrt(cross_x * cross_x + cross_y * cross_y);
 				final double normalized_cross_x = cross_x / sizeInPlane;
 				final double normalized_cross_y = cross_y / sizeInPlane;
-
 				final double zdiff = Math.abs((slice - slice_of_point) * z_spacing);
 				final double realRadius = radiuses[i];
 
@@ -794,26 +768,25 @@ public class Path implements Comparable<Path> {
 
 					final double left_x = precise_x_positions[i] + normalized_cross_x * effective_radius;
 					final double left_y = precise_y_positions[i] + normalized_cross_y * effective_radius;
-
 					final double right_x = precise_x_positions[i] - normalized_cross_x * effective_radius;
 					final double right_y = precise_y_positions[i] - normalized_cross_y * effective_radius;
 
-					final int left_x_on_screen = canvas.myScreenXD(left_x / x_spacing);
-					final int left_y_on_screen = canvas.myScreenYD(left_y / y_spacing);
+					final double left_x_on_screen = canvas.myScreenXDprecise(left_x / x_spacing);
+					final double left_y_on_screen = canvas.myScreenYDprecise(left_y / y_spacing);
+					final double right_x_on_screen = canvas.myScreenXDprecise(right_x / x_spacing);
+					final double right_y_on_screen = canvas.myScreenYDprecise(right_y / y_spacing);
 
-					final int right_x_on_screen = canvas.myScreenXD(right_x / x_spacing);
-					final int right_y_on_screen = canvas.myScreenYD(right_y / y_spacing);
+					final double x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i] / x_spacing);
+					final double y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i] / y_spacing);
 
-					final int x_on_screen = canvas.myScreenXD(precise_x_positions[i] / x_spacing);
-					final int y_on_screen = canvas.myScreenYD(precise_y_positions[i] / y_spacing);
-
-					g.drawLine(x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen);
-					g.drawLine(x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen);
+					g2.draw(new Line2D.Double(x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen));
+					g2.draw(new Line2D.Double(x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen));
 				}
+
 			}
 
-			if ((either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side))
-				continue;
+			final PathNode pn = new PathNode(this, i, canvas);
+			pn.setEditable(getEditableNodeIndex()==i);
 
 			// If there was a previous point in this path, draw a line from
 			// there to here:
@@ -821,63 +794,21 @@ public class Path implements Comparable<Path> {
 				// Don't redraw the line if we drew it the previous time,
 				// though:
 				if (startIndexOfLastDrawnLine != i - 1) {
-					g.drawLine(previous_x_on_screen, previous_y_on_screen, x, y);
+					g2.draw(new Line2D.Double(previous_x_on_screen, previous_y_on_screen, pn.x, pn.y));
 					startIndexOfLastDrawnLine = i - 1;
 				}
 			}
-
 			// If there's a next point in this path, draw a line from here to
 			// there:
 			if (notLastPoint) {
-				g.drawLine(x, y, next_x_on_screen, next_y_on_screen);
+				g2.draw(new Line2D.Double(pn.x, pn.y, next_x_on_screen, next_y_on_screen));
 				startIndexOfLastDrawnLine = i;
 			}
 
-			if (((i == 0) && (realStartJoins == null)) || ((i == points - 1) && (realEndJoins == null))) {
-				// Then draw it as a rectangle...
-				fillRect(g, c, x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, highContrast);
-
-			} else if (((i == 0) && (realStartJoins != null)) || ((i == points - 1) && (realEndJoins != null))) {
-				// The draw it as an oval...
-				fillOval(g, c, x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, highContrast);
-			} else {
-				// Just draw normally...
-				fillRect(g, c, x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, highContrast);
-			}
+			// Draw node
+			pn.draw(g2, c);
 		}
 
-	}
-
-	private void fillOval(final Graphics g, final Color gColor, final int x, final int y, int dim,
-			final boolean highContrast) {
-		if (highContrast) {
-			if (dim < 4)
-				dim = 4;
-			g.fillOval(x, y, dim, dim);
-			g.setColor(Color.BLACK);
-			g.drawOval(x + 1, y + 1, dim - 4, dim - 4);
-			g.setColor(Color.WHITE);
-			g.drawOval(x + 2, y + 2, dim - 4, dim - 4);
-			g.setColor(gColor);
-		} else {
-			g.fillOval(x, y, dim, dim);
-		}
-	}
-
-	private void fillRect(final Graphics g, final Color gColor, final int x, final int y, int dim,
-			final boolean highContrast) {
-		if (highContrast) {
-			if (dim < 4)
-				dim = 4;
-			g.fillRect(x, y, dim, dim);
-			g.setColor(Color.BLACK);
-			g.drawRect(x + 1, y + 1, dim - 4, dim - 4);
-			g.setColor(Color.WHITE);
-			g.drawRect(x + 2, y + 2, dim - 4, dim - 4);
-			g.setColor(gColor);
-		} else {
-			g.fillRect(x, y, dim, dim);
-		}
 	}
 
 	/* Color definitions */

@@ -24,6 +24,7 @@ package tracing.legacy;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.util.ArrayList;
 
@@ -74,7 +75,7 @@ public class LegacyTracerCanvas extends TracerCanvas {
 	int eitherSide;
 
 	@Override
-	protected void drawOverlay(final Graphics g) {
+	protected void drawOverlay(final Graphics2D g) {
 
 		/*
 		 * int current_z = -1;
@@ -135,7 +136,7 @@ public class LegacyTracerCanvas extends TracerCanvas {
 			}
 		}
 
-		super.drawOverlay(g);
+		super.drawOverlay((Graphics2D)g);
 
 	}
 
@@ -174,7 +175,7 @@ public class LegacyTracerCanvas extends TracerCanvas {
 			backBufferGraphics == null) resetBackBuffer();
 
 		super.paint(backBufferGraphics);
-		drawOverlay(backBufferGraphics);
+		drawOverlay((Graphics2D)backBufferGraphics);
 		g.drawImage(backBufferImage, 0, 0, this);
 	}
 }

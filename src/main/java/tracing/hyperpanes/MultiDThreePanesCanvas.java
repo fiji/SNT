@@ -28,6 +28,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Line2D;
 
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
@@ -68,33 +69,38 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		this.owner = owner;
 	}
 
-	protected void drawOverlay(final Graphics g) {
+	protected void drawOverlay(final Graphics2D g) {
 
 		final boolean draw_string = validCursorText();
 		if (!draw_crosshairs && !draw_string) return;
-		int x, y;
+		double x, y;
 		if (plane == MultiDThreePanes.XY_PLANE) {
-			x = myScreenXD(current_x);
-			y = myScreenYD(current_y);
+			x = myScreenXDprecise(current_x);
+			y = myScreenYDprecise(current_y);
 		}
 		else if (plane == MultiDThreePanes.XZ_PLANE) {
-			x = myScreenXD(current_x);
-			y = myScreenYD(current_z);
+			x = myScreenXDprecise(current_x);
+			y = myScreenYDprecise(current_z);
 		}
 		else if (plane == MultiDThreePanes.ZY_PLANE) {
-			x = myScreenXD(current_z);
-			y = myScreenYD(current_y);
+			x = myScreenXDprecise(current_z);
+			y = myScreenYDprecise(current_y);
 		}
-		else return;
+		else throw new IllegalArgumentException("Unknow pane");
+
 		g.setColor(getCursorAnnotationsColor());
 		if (draw_crosshairs) drawCrosshairs(g, x, y);
-		if (draw_string) drawString(g, cursorText, x, y);
+		if (draw_string) drawString(g, cursorText, (float)x, (float)y);
+		if (draw_shape) g.draw(cursorShape);
+
 	}
 
 	@Override
 	public void paint(final Graphics g) {
 		super.paint(g);
-		drawOverlay(g);
+		final Graphics2D g2 = (Graphics2D) g;
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		drawOverlay(g2);
 	}
 
 	@Override
@@ -130,27 +136,20 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		owner.zoom(false, offScreenX(sx), offScreenY(sy), plane);
 	}
 
-	protected void drawCrosshairs(final Graphics g,
-		final int x_on_screen, final int y_on_screen)
+	protected void drawCrosshairs(final Graphics2D g,
+		final double x_on_screen, final double y_on_screen)
 	{
 		final int hairLength = 8;
-		g.drawLine(x_on_screen, y_on_screen + 1, x_on_screen, y_on_screen +
-			(hairLength - 1));
-		g.drawLine(x_on_screen, y_on_screen - 1, x_on_screen, y_on_screen -
-			(hairLength - 1));
-		g.drawLine(x_on_screen + 1, y_on_screen, x_on_screen + (hairLength - 1),
-			y_on_screen);
-		g.drawLine(x_on_screen - 1, y_on_screen, x_on_screen - (hairLength - 1),
-			y_on_screen);
+		g.draw(new Line2D.Double(x_on_screen, y_on_screen, x_on_screen, y_on_screen + hairLength));
+		g.draw(new Line2D.Double(x_on_screen, y_on_screen - 1, x_on_screen, y_on_screen - hairLength));
+		g.draw(new Line2D.Double(x_on_screen + 1, y_on_screen, x_on_screen + hairLength, y_on_screen));
+		g.draw(new Line2D.Double(x_on_screen - 1, y_on_screen, x_on_screen - hairLength, y_on_screen));
 	}
 
-	private void drawString(final Graphics g, final String str,
-		final int x_on_screen, final int y_on_screen)
+	private void drawString(final Graphics2D g, final String str,
+		final float x_on_screen, final float y_on_screen)
 	{
-		final Graphics2D g2d = (Graphics2D) g;
-		g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-			RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-		g2d.drawString(str, x_on_screen, y_on_screen);
+		g.drawString(str, x_on_screen, y_on_screen);
 	}
 
 	public void updatePosition(final double x, final double y, final double z)
@@ -215,16 +214,30 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	 * Converts a floating-point offscreen x-coordinate to a screen x-coordinate.
 	 */
 	public int myScreenXD(final double ox) {
-		return (int) Math.round((ox - srcRect.x) * magnification + magnification /
-			2);
+		return (int) Math.round(myScreenXDprecise(ox));
+	}
+
+	/**
+	 * Converts an offscreen x-coordinate to a screen x-coordinate with
+	 * floating-point precision.
+	 */
+	public double myScreenXDprecise(final double ox) {
+		return (ox - srcRect.x) * magnification + magnification / 2;
 	}
 
 	/**
 	 * Converts a floating-point offscreen x-coordinate to a screen x-coordinate.
 	 */
 	public int myScreenYD(final double oy) {
-		return (int) Math.round((oy - srcRect.y) * magnification + magnification /
-			2);
+		return (int) Math.round(myScreenYDprecise(oy));
+	}
+
+	/**
+	 * Converts an offscreen y-coordinate to a screen y-coordinate with
+	 * floating-point precision.
+	 */
+	public double myScreenYDprecise(final double oy) {
+		return (oy - srcRect.y) * magnification + magnification / 2;
 	}
 
 	public void restoreDefaultCursor() {

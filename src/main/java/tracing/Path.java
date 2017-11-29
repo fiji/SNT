@@ -411,9 +411,9 @@ public class Path implements Comparable<Path> {
 		if (index < 0 || index >= size()) throw new IllegalArgumentException(
 			"removeNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
-		precise_x_positions = ArrayUtils.removeElement(precise_x_positions, precise_x_positions[index]);
-		precise_y_positions = ArrayUtils.removeElement(precise_y_positions, precise_y_positions[index]);
-		precise_z_positions = ArrayUtils.removeElement(precise_z_positions, precise_z_positions[index]);
+		precise_x_positions = ArrayUtils.remove(precise_x_positions, index);
+		precise_y_positions = ArrayUtils.remove(precise_y_positions, index);
+		precise_z_positions = ArrayUtils.remove(precise_z_positions, index);
 	}
 
 	/**

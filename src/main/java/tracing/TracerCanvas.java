@@ -78,6 +78,7 @@ import tracing.hyperpanes.MultiDThreePanesCanvas;
 public class TracerCanvas extends MultiDThreePanesCanvas {
 
 	protected PathAndFillManager pathAndFillManager;
+	private double nodeSize = -1;
 
 	public TracerCanvas(final ImagePlus imagePlus, final PaneOwner owner, final int plane,
 			final PathAndFillManager pathAndFillManager) {
@@ -218,4 +219,39 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 		drawOverlay(backBufferGraphics);
 		g.drawImage(backBufferImage, 0, 0, this);
 	}
+
+	/**
+	 * Returns the MultiDThreePanes plane associated with this canvas.
+	 *
+	 * @return Either MultiDThreePanes.XY_PLANE, XZ_PLANE, or ZY_PLANE
+	 */
+	public int getPlane() {
+		return super.plane;
+	}
+
+	/**
+	 * Returns the diameter of path nodes rendered at current magnification.
+	 *
+	 * @return the baseline rendering diameter of a path node
+	 */
+	public double nodeDiameter() {
+		if (nodeSize < 0) {
+			if (magnification < 4) return 2;
+			else if (magnification > 16) return magnification / 2;
+			else return magnification;
+		}
+		return nodeSize;
+	}
+
+	/**
+	 * Sets the baseline for rendering diameter of path nodes
+	 *
+	 * @param diameter the diameter to be used when rendering path nodes. Set it
+	 *          to -1 for adopting the default value. Set it to zero to suppress
+	 *          node rendering
+	 */
+	public void setNodeDiameter(final double diameter) {
+		nodeSize = diameter;
+	}
+
 }

@@ -2514,10 +2514,11 @@ public class Path implements Comparable<Path> {
 			selected = newSelectedStatus;
 	}
 
-	public boolean getSelected() {
+	public boolean isSelected() {
 		return selected;
 	}
 
+	//TODO: this should be renamed
 	public boolean versionInUse() {
 		if (fittedVersionOf != null)
 			return fittedVersionOf.useFitted;

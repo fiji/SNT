@@ -1104,7 +1104,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		// load paths considering only those whose type has been chosen by user
 		for (Path p : shollpafm.allPaths) {
-			final boolean selected = p.getSelected();
+			final boolean selected = p.isSelected();
 			if (p.getUseFitted()) {
 				p = p.fitted;
 			} else if (p.fittedVersionOf != null)

@@ -73,25 +73,25 @@ class QueueJumpingKeyListener implements KeyListener {
 				.getKeyModifiersText(canvas.getModifiers()));
 
 		if (keyCode == KeyEvent.VK_ENTER) {
-			tracerPlugin.getResultsDialog().toFront();
+			tracerPlugin.getUI().toFront();
 			e.consume();
 		}
 
 		else if (keyChar == 'y' || keyChar == 'Y') {
-			if (tracerPlugin.getResultsDialog().finishOnDoubleConfimation &&
+			if (tracerPlugin.getUI().finishOnDoubleConfimation &&
 				doublePress) tracerPlugin.finishedPath();
 			else tracerPlugin.confirmTemporary();
 			e.consume();
 		}
 
 		else if (keyCode == KeyEvent.VK_ESCAPE) {
-			if (doublePress) tracerPlugin.getResultsDialog().reset();
-			else tracerPlugin.getResultsDialog().abortCurrentOperation();
+			if (doublePress) tracerPlugin.getUI().reset();
+			else tracerPlugin.getUI().abortCurrentOperation();
 			e.consume();
 		}
 
 		else if (keyChar == 'n' || keyChar == 'N') {
-			if (tracerPlugin.getResultsDialog().discardOnDoubleCancellation &&
+			if (tracerPlugin.getUI().discardOnDoubleCancellation &&
 				doublePress) tracerPlugin.cancelPath();
 			else tracerPlugin.cancelTemporary();
 			e.consume();

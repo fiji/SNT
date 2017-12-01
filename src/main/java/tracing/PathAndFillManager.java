@@ -2407,7 +2407,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if (p.fittedVersionOf != null)
 				continue;
 
-			final boolean selected = p.getSelected();
+			final boolean selected = p.isSelected();
 			final boolean customColor = (p.hasCustomColor && plugin.displayCustomPathColors);
 			Color3f color3f;
 			if (customColor)

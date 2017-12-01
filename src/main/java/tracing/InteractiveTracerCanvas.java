@@ -24,13 +24,14 @@ package tracing;
 
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.MenuItem;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.PopupMenu;
-import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -54,6 +55,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private final GuiUtils guiUtils;
 	private final PopupMenu pMenu;
 	private CheckboxMenuItem toggleEditModeMenuItem;
+	private CheckboxMenuItem togglePauseModeMenuItem;
 
 	private double last_x_in_pane_precise = Double.MIN_VALUE;
 	private double last_y_in_pane_precise = Double.MIN_VALUE;
@@ -64,7 +66,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	private Path editingPath;
 	private int editingNode;
-	private boolean editMode = true;
+	private boolean editMode;
+	private static String EDIT_MODE_LABEL = "Edit Mode";
 
 
 	protected InteractiveTracerCanvas(final ImagePlus imp, final SimpleNeuriteTracer plugin, final int plane,
@@ -80,16 +83,25 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private PopupMenu popupMenu() { // We are extending ImageCanvas: we'll avoid swing components here
 		final PopupMenu pMenu = new PopupMenu();
 		final AListener listener = new AListener();
+		togglePauseModeMenuItem = new CheckboxMenuItem(AListener.PAUSE_TOOGLE);
+		togglePauseModeMenuItem.addItemListener(listener);
+		pMenu.add(togglePauseModeMenuItem);
+		pMenu.addSeparator();
 		toggleEditModeMenuItem = new CheckboxMenuItem(AListener.EDIT_TOOGLE);
-		toggleEditModeMenuItem.setEnabled(editMode);
 		toggleEditModeMenuItem.addItemListener(listener);
 		pMenu.add(toggleEditModeMenuItem);
-		pMenu.addSeparator();
 		pMenu.add(menuItem(AListener.NODE_DELETE, listener));
 		pMenu.add(menuItem(AListener.NODE_INSERT, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE_Z, listener));
 		return pMenu;
+	}
+
+	private void refreshPopupMenu() {
+		for (int i = 2; i < pMenu.getItemCount(); i++) {
+			// First 2 items : Edit mode & Pause mode toggles
+			pMenu.getItem(i).setEnabled(editMode);
+		}
 	}
 
 	private MenuItem menuItem(final String cmdName, final ActionListener lstnr) {
@@ -114,28 +126,52 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		this.currentPath = path;
 	}
 
-	public void setEditMode(final boolean mode, boolean assessConditions) {
-		if (mode && assessConditions) {
-			if (editingPath == null) {
-				displayError("You must select a single path in order to proceed");
-				return;
-			}
-			if (editingPath.getUseFitted()) {
-				displayError(
-					"Only unfitted paths can be edited. Run \"Un-fit volume\" to proceed");
-				return;
-			}
+	private boolean editAllowed(final boolean warnUser) {
+		final boolean uiReady = tracerPlugin
+			.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH;
+		if (warnUser && !uiReady) {
+			displayError("You must finish current operation before editing a path");
+			return false;
 		}
-		updateEditingPath();
+		getEditingScope();
+		final boolean pathExists = editingPath != null;
+		if (warnUser && !pathExists) {
+			displayError("You must select a single path in order to edit it");
+			return false;
+		}
+		final boolean validPath = pathExists && !editingPath.getUseFitted();
+		if (warnUser && !validPath) {
+			displayError(
+				"Only unfitted paths can be edited. Run \"Un-fit volume\" to proceed");
+			return false;
+		}
+		final boolean editAllowed = uiReady && pathExists && validPath;
+		editMode = editMode && editAllowed;
+		return editAllowed;
+	}
+
+	public boolean isEditMode() {
+		return editMode;
+	}
+
+	public void setEditMode(final boolean mode, final boolean assessConditions) {
+		if (mode && !editAllowed(assessConditions)) return;
 		editMode = mode;
-		setDrawCrosshairs(!mode);
-		tracerPlugin.changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
+		if (editMode) {
+			setDrawCrosshairs(false);
+			tracerPlugin.changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
+		} else {
+			setDrawCrosshairs(true);
+			setCursorText(null);
+			setCursorShape(null);
+			tracerPlugin.changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			resetEdit();
+		}
 	}
 
 	private void displayError(final String msg) {
-		final Point p = super.getLocationOnScreen();
-		guiUtils.tempMsg(msg, p.x + super.srcRect.x + xMouse, p.y + getSrcRect().y +
-			yMouse);
+		final Point loc = MouseInfo.getPointerInfo().getLocation();
+		guiUtils.tempMsg(msg, loc.x, loc.y);
 		return;
 	}
 
@@ -181,30 +217,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 	}
 
-	private void updateEditingPath() {
+	private void getEditingScope() {
 		if (pathAndFillManager.selectedPathsSet.size() == 1) {
 			editingPath = tracerPlugin.getSelectedPaths().iterator().next();
 			editingNode = editingPath.getNodeIndex((int)last_x_in_pane_precise, (int)last_y_in_pane_precise);
 		} else {
 			editingPath = null;
 			editingNode = -1;
-		}
-	}
-
-	@Override
-	public void paint(final Graphics g) {
-		super.paint(g);
-		if (editMode) {
-			final int edge = 12;
-			final FontMetrics fm = getFontMetrics(getFont());
-			if (fm.stringWidth("Edit Mode...") > dstWidth || fm.getHeight() > dstHeight)
-				return;
-			final int y = edge + fm.getHeight() / 2;
-			final Graphics2D g2d = (Graphics2D) g;
-			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-				RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-			g2d.setColor(getCursorAnnotationsColor());
-			g2d.drawString("Edit Mode...", edge, y);
 		}
 	}
 
@@ -228,7 +247,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
 
 		if (np == null) {
-			SNT.error("BUG: No nearby path was found within " + diagonalLength + " of the pointer");
+			tracerPlugin.floatingMsg("BUG: No nearby path was found within " + diagonalLength + " of the pointer");
 			return;
 		}
 
@@ -248,8 +267,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseMoved(final MouseEvent e) {
 
-		if (!tracerPlugin.isReady())
+		if (super.isMouseEventsDisabled() || !tracerPlugin.isReady()) {
+			super.mouseMoved(e);
 			return;
+		}
 
 		final int rawX = e.getX();
 		final int rawY = e.getY();
@@ -263,17 +284,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
 			: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 
-		updateEditingPath();
-		super.mouseMoved(e);
-
 		if (editMode) {
-			setCursorText("Edit");
-			if (editingNode != -1) {
-				setCursor(handCursor);
-			}
+			getEditingScope();
+			super.setCursor((editingNode == -1)?defaultCursor:handCursor);
 		} else {
-			setCursorText(null);
-			if (tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down && !shift_key_down) {
+			super.setCursor(crosshairCursor);
+		}
+		super.mouseMoved(e);
+		{	if (tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down && !shift_key_down) {
 				final double[] p = new double[3];
 				tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise, last_y_in_pane_precise, p);
 				last_x_in_pane_precise = p[0];
@@ -281,33 +299,43 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				shift_key_down = true;
 			}
 		}
-
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down,
 			joiner_modifier_down);
+		
 	}
 
 	@Override
 	public void mouseEntered(final MouseEvent e) {
 
-		if (!tracerPlugin.isReady()) return;
+		if (super.isMouseEventsDisabled() || !tracerPlugin.isReady()) {
+			super.mouseEntered(e);
+			return;
+		}
 		if (tracerPlugin.autoCanvasActivation) imp.getWindow().toFront();
 	}
 
-
-	
 	@Override
 	public void mousePressed(final MouseEvent me) {
 		if (me.isPopupTrigger()) {
+			toggleEditModeMenuItem.setEnabled(editMode || editAllowed(false));
+			refreshPopupMenu();
 			pMenu.show(this, me.getX(), me.getY());
 			me.consume();
+			return;
+		}
+		if (isMouseEventsDisabled() || !tracerPlugin.isReady()) {
+			super.mousePressed(me);
+			return;
 		}
 	}
 
 	@Override
 	public void mouseClicked(final MouseEvent e) {
 
-		if (!tracerPlugin.isReady())
+		if (isMouseEventsDisabled() || !tracerPlugin.isReady()) {
+			super.mouseClicked(e);
 			return;
+		}
 
 		final int currentState = tracerPlugin.getUI().getState();
 
@@ -315,6 +343,12 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				|| currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED) {
 
 			// Do nothing
+
+		} else if (currentState == NeuriteTracerResultsDialog.EDITING_MODE) {
+
+			if (impossibleEdit(false)) return;
+			editingPath.setEditableNode(editingNode);
+			update(getGraphics());
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_POINT) {
 
@@ -367,8 +401,22 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 	}
 
+	private boolean impossibleEdit(final boolean displayError) {
+		boolean invalid = (editingPath == null || editingNode == -1);
+		if (invalid && displayError) displayError("No node selected");
+		return invalid;
+	}
+
+	private void resetEdit() {
+		editingNode = -1;
+		if (editingPath !=null) {
+			editingPath.setEditableNode(-1);
+			repaint();
+		}
+	}
+
 	@Override
-	protected void drawOverlay(final Graphics g) {
+	protected void drawOverlay(final Graphics2D g) {
 
 		if (tracerPlugin.loading)
 			return;
@@ -386,6 +434,15 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			filler.setDrawingThreshold(filler.getThreshold());
 		}
 
+		if (editMode) {
+			final int edge = 4;
+			final Font font = new Font("SansSerif", Font.PLAIN, 18).deriveFont((float) (18*magnification));
+			final FontMetrics fm = getFontMetrics(font);
+			g.setFont(font);
+			g.setColor(getCursorAnnotationsColor());
+			g.drawString(EDIT_MODE_LABEL, edge, edge + fm.getHeight());
+		}
+	
 		super.drawOverlay(g);
 
 		final double magnification = getMagnification();
@@ -422,7 +479,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				if (currentPathFromTracer.startJoins != null)
 					edgeColour = Color.GREEN;
 
-				drawSquare(g, p, Color.BLUE, edgeColour, spotDiameter);
+				//FIXME:drawSquare(g, p, Color.BLUE, edgeColour, spotDiameter);
 			}
 		}
 
@@ -435,6 +492,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	 */
 	private class AListener implements ActionListener, ItemListener {
 
+		public static final String PAUSE_TOOGLE = "Pause Tracing";
 		public static final String EDIT_TOOGLE = "Allow Node Editing";
 		private final static String NODE_CONNECT = "Connect To...";
 		private final static String NODE_DELETE = "Delete Selected";
@@ -445,30 +503,30 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		@Override
 		public void itemStateChanged(final ItemEvent e) {
 			setEditMode(toggleEditModeMenuItem.getState(), true);
-			toggleEditModeMenuItem.setState(editMode);
-			for (int i = 1; i < pMenu.getItemCount(); i++) {
-				pMenu.getItem(i).setEnabled(editMode);
-			}
+			disableMouseEvents(togglePauseModeMenuItem.getState());
 		}
-	
+
 		@Override
 		public void actionPerformed(final ActionEvent e) {
 
-			System.out.println(e.getActionCommand());
+			if (impossibleEdit(true)) return;
+
 			if (e.getActionCommand().equals(NODE_DELETE)) {
+				editingPath.removeNode(editingNode);
+			}
+
+			else if (e.getActionCommand().equals(NODE_INSERT))
+			{
+				System.out.println("TBD "+ e.getActionCommand());
 				return;
 			}
-			else if (e.getActionCommand().equals(NODE_INSERT)) {
+			else if (e.getActionCommand().equals(NODE_MOVE))
+			{
+				System.out.println("TBD "+ e.getActionCommand());
 				return;
 			}
-			else if (e.getActionCommand().equals(NODE_MOVE)) {
-				return;
-			}
-			else if (e.getActionCommand().equals(NODE_MOVE_Z)) {
-				if (editingPath == null || editingNode == -1) {
-					displayError("No node selected");
-					return;
-				}
+			else if (e.getActionCommand().equals(NODE_MOVE_Z))
+			{
 
 				double newZ = editingPath.precise_z_positions[editingNode];
 				switch (plane) {
@@ -486,12 +544,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 					editingPath.precise_x_positions[editingNode],
 					editingPath.precise_y_positions[editingNode], newZ));
 			}
-			
+
 			else {
 				SNT.debug("Unexpectedly got an event from an unknown source: ");
 				return;
 			}
+			resetEdit();
 		}
 	}
+
 }
 

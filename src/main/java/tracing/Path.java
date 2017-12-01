@@ -59,6 +59,8 @@ import tracing.hyperpanes.MultiDThreePanes;
 
 public class Path implements Comparable<Path> {
 
+	private int editableNodeIndex = -1;
+
 	@Override
 	public int compareTo(final Path o) {
 		if (id == o.id)
@@ -450,6 +452,24 @@ public class Path implements Comparable<Path> {
 			}
 		}
 		return -1;
+	}
+
+	/**
+	 * @return the index of the point currently tagged as editable, or -1 if no
+	 *         such point exists
+	 */
+	public int getEditableNodeIndex() {
+		return editableNodeIndex;
+	}
+
+	/**
+	 * Tags the specified point position as 'editable'
+	 *
+	 * @param index the index of the point to be tagged. Set it to -1 to for no
+	 *          tagging
+	 */
+	public void setEditableNode(int index) {
+		this.editableNodeIndex = index;
 	}
 
 	public int getXUnscaled(final int i) {

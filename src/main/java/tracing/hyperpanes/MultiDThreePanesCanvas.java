@@ -23,12 +23,17 @@
 package tracing.hyperpanes;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+
+import org.scijava.vecmath.Point2d;
 
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
@@ -42,7 +47,8 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	protected int plane;
 	private double current_x, current_y, current_z;
 	private boolean draw_crosshairs;
-	private String cursorText;
+	private String cursorText; // text to be rendered near cursor
+	private String canvasText; // text to be rendered NW corner of canvas
 	private Color cursorAnnotationsColor;
 
 
@@ -70,10 +76,20 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	protected void drawOverlay(final Graphics2D g) {
-
-		final boolean draw_string = validCursorText();
+		drawCanvasText(g, canvasText);
+		final boolean draw_string = validString(cursorText);
 		if (!draw_crosshairs && !draw_string) return;
-		double x, y;
+		final Point2d pos = getCursorPos();
+		g.setColor(getCursorAnnotationsColor());
+		if (draw_crosshairs) drawCrosshairs(g, pos.x, pos.y);
+		if (draw_string) drawString(g, cursorText, (float)pos.x, (float)pos.y);
+	}
+
+	/**
+	 * @return the current X,Y position of the mouse cursor
+	 */
+	public Point2d getCursorPos() {
+		double x,y;
 		if (plane == MultiDThreePanes.XY_PLANE) {
 			x = myScreenXDprecise(current_x);
 			y = myScreenYDprecise(current_y);
@@ -87,20 +103,19 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 			y = myScreenYDprecise(current_y);
 		}
 		else throw new IllegalArgumentException("Unknow pane");
+		return new Point2d(x,y);
+	}
 
-		g.setColor(getCursorAnnotationsColor());
-		if (draw_crosshairs) drawCrosshairs(g, x, y);
-		if (draw_string) drawString(g, cursorText, (float)x, (float)y);
-		if (draw_shape) g.draw(cursorShape);
-
+	protected Graphics2D getGraphics2D(final Graphics g) {
+		final Graphics2D g2 = (Graphics2D) getGraphics();
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		return g2;
 	}
 
 	@Override
 	public void paint(final Graphics g) {
 		super.paint(g);
-		final Graphics2D g2 = (Graphics2D) g;
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		drawOverlay(g2);
+		drawOverlay(getGraphics2D(g));
 	}
 
 	@Override
@@ -152,6 +167,22 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		g.drawString(str, x_on_screen, y_on_screen);
 	}
 
+	private void drawCanvasText(final Graphics2D g, final String text) {
+		if (!validString(text)) return;
+		final int edge = 4;
+		final double size = Math.max(9, Math.min(18 * magnification, 30));
+		final Font font = new Font("SansSerif", Font.PLAIN, 18).deriveFont(
+			(float) size);
+		final FontMetrics fm = getFontMetrics(font);
+		final double w = fm.stringWidth(text) + edge;
+		final double h = fm.getHeight() + edge;
+		g.setColor(new Color(120, 120, 120, 100));
+		g.fill(new Rectangle2D.Double(0, 0, w, h));
+		g.setFont(font);
+		g.setColor(getCursorAnnotationsColor());
+		g.drawString(text, edge / 2, edge / 2 + fm.getAscent());
+	}
+
 	public void updatePosition(final double x, final double y, final double z)
 	{
 		current_x = x;
@@ -163,10 +194,15 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	public void setCrosshairs(final double x, final double y, final double z,
 		final boolean display)
 	{
+		updateCursor(x,y,z);
+		setDrawCrosshairs(display);
+	}
+
+	public void updateCursor(final double x, final double y, final double z)
+	{
 		current_x = x;
 		current_y = y;
 		current_z = z;
-		draw_crosshairs = display;
 	}
 
 	/* These are the "a pixel is not a little square" versions of
@@ -246,6 +282,15 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	/**
+	 * Sets the string to be rendered on canvas' upper left corner.
+	 *
+	 * @param label the string to be displayed
+	 */
+	public void setCanvasLabel(final String label) {
+		canvasText = label;
+	}
+
+	/**
 	 * Sets the string to be appended to the current cursor.
 	 *
 	 * @param cursorText the string to be displayed around the cursor
@@ -262,8 +307,8 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		return (cursorAnnotationsColor == null) ? Color.RED : cursorAnnotationsColor;
 	}
 
-	private boolean validCursorText() {
-		return cursorText != null && !cursorText.trim().isEmpty();
+	private boolean validString(String string) {
+		return string != null && !string.trim().isEmpty();
 	}
 
 	public void setDrawCrosshairs(final boolean drawCrosshairs) {

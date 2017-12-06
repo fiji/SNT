@@ -184,7 +184,7 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 	private int backBufferWidth;
 	private int backBufferHeight;
 
-	private Graphics backBufferGraphics;
+	private Graphics2D backBufferGraphics;
 	private Image backBufferImage;
 
 	private void resetBackBuffer() {
@@ -204,19 +204,19 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 
 		if (backBufferWidth > 0 && backBufferHeight > 0) {
 			backBufferImage = createImage(backBufferWidth, backBufferHeight);
-			backBufferGraphics = backBufferImage.getGraphics();
+			backBufferGraphics = getGraphics2D(backBufferImage.getGraphics());
 		}
 	}
 
 	@Override
 	public void paint(final Graphics g) {
 
-		if (backBufferWidth != getSize().width || backBufferHeight != getSize().height || backBufferImage == null
-				|| backBufferGraphics == null)
-			resetBackBuffer();
+		if (backBufferWidth != getSize().width ||
+			backBufferHeight != getSize().height || backBufferImage == null ||
+			backBufferGraphics == null) resetBackBuffer();
 
 		super.paint(backBufferGraphics);
-		drawOverlay((Graphics2D)backBufferGraphics);
+		drawOverlay(backBufferGraphics);
 		g.drawImage(backBufferImage, 0, 0, this);
 	}
 

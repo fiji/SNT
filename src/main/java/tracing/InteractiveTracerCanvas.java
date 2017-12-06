@@ -53,7 +53,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private final Color transparentGreen = new Color(0, 128, 0, 128);
 	private final SimpleNeuriteTracer tracerPlugin;
 	private final GuiUtils guiUtils;
-	private final PopupMenu pMenu;
+	private PopupMenu pMenu;
 	private CheckboxMenuItem toggleEditModeMenuItem;
 	private CheckboxMenuItem togglePauseModeMenuItem;
 
@@ -75,13 +75,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		super(imp, plugin, plane, pathAndFillManager);
 		tracerPlugin = plugin;
 		guiUtils = new GuiUtils(this.getParent());
-		pMenu = popupMenu();
-		super.disablePopupMenu(true);
+		buildPpupMenu();
+		super.disablePopupMenu(true); // so that handlePopupMenu is not triggered
 		super.add(pMenu);
 	}
 
-	private PopupMenu popupMenu() { // We are extending ImageCanvas: we'll avoid swing components here
-		final PopupMenu pMenu = new PopupMenu();
+	private void buildPpupMenu() { // We are extending ImageCanvas: we'll avoid swing components here
+		pMenu = new PopupMenu();
 		final AListener listener = new AListener();
 		togglePauseModeMenuItem = new CheckboxMenuItem(AListener.PAUSE_TOOGLE);
 		togglePauseModeMenuItem.addItemListener(listener);
@@ -90,18 +90,21 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		toggleEditModeMenuItem = new CheckboxMenuItem(AListener.EDIT_TOOGLE);
 		toggleEditModeMenuItem.addItemListener(listener);
 		pMenu.add(toggleEditModeMenuItem);
+		pMenu.addSeparator();
 		pMenu.add(menuItem(AListener.NODE_DELETE, listener));
 		pMenu.add(menuItem(AListener.NODE_INSERT, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE_Z, listener));
-		return pMenu;
 	}
 
-	private void refreshPopupMenu() {
+	private void showPopupMenu(int x, int y) {
+		toggleEditModeMenuItem.setEnabled(uiReadyForModeChange());
+		togglePauseModeMenuItem.setEnabled(uiReadyForModeChange());
 		for (int i = 2; i < pMenu.getItemCount(); i++) {
 			// First 2 items : Edit mode & Pause mode toggles
 			pMenu.getItem(i).setEnabled(editMode);
 		}
+		pMenu.show(this, x, y);
 	}
 
 	private MenuItem menuItem(final String cmdName, final ActionListener lstnr) {
@@ -173,6 +176,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final Point loc = MouseInfo.getPointerInfo().getLocation();
 		guiUtils.tempMsg(msg, loc.x, loc.y);
 		return;
+	private boolean uiReadyForModeChange() {
+		return tracerPlugin.isReady() && (tracerPlugin
+			.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 	}
 
 	public void toggleJustNearSlices() {
@@ -317,9 +323,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mousePressed(final MouseEvent me) {
 		if (me.isPopupTrigger()) {
-			toggleEditModeMenuItem.setEnabled(editMode || editAllowed(false));
-			refreshPopupMenu();
-			pMenu.show(this, me.getX(), me.getY());
+			showPopupMenu(me.getX(), me.getY());
 			me.consume();
 			return;
 		}

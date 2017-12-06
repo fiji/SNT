@@ -440,17 +440,16 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	protected void exitRequested() {
 		assert SwingUtilities.isEventDispatchThread();
-		if (plugin.pathsUnsaved() && guiUtils.getConfirmation(
+		if (plugin.pathsUnsaved() && !guiUtils.getConfirmation(
 			"There are unsaved paths. Do you really want to quit?", "Really quit?"))
-		{
-			plugin.cancelSearch(true);
-			plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
-			prefs.savePluginPrefs();
-			pw.dispose();
-			fw.dispose();
-			dispose();
-			plugin.closeAndReset();
-		}
+			return;
+		plugin.cancelSearch(true);
+		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
+		prefs.savePluginPrefs();
+		pw.dispose();
+		fw.dispose();
+		dispose();
+		plugin.closeAndReset();
 	}
 
 	protected void disableImageDependentComponents() {

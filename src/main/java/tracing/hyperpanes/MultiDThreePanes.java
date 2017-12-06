@@ -165,8 +165,10 @@ public class MultiDThreePanes implements PaneOwner {
 			zy.close();
 			xz.close();
 		}
-		if (original_xy_canvas != null && xy != null && xy.getImage() != null)
+		if (original_xy_canvas != null && xy != null && xy.getImage() != null) {
 			xy_window = new StackWindow(xy, original_xy_canvas);
+			xy_canvas.add(ij.Menus.getPopupMenu());
+		}
 	}
 
 	/**

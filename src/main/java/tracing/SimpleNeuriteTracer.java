@@ -2133,6 +2133,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 					.size() == 0)) impPanes[i].close();
 				else {
 					winPanes[i] = new StackWindow(impPanes[i]);
+					winPanes[i].getCanvas().add(ij.Menus.getPopupMenu());
 					removeMIPfromOverlay(overlay);
 					impPanes[i].setOverlay(overlay);
 				}
@@ -2144,6 +2145,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			xy_window = new StackWindow(xy, original_xy_canvas);
 			removeMIPfromOverlay(overlay);
 			xy.setOverlay(overlay);
+			xy_window.getCanvas().add(ij.Menus.getPopupMenu());
 		}
 
 	}

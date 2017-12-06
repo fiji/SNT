@@ -169,7 +169,17 @@ public class MultiDThreePanes implements PaneOwner {
 			xy_window = new StackWindow(xy, original_xy_canvas);
 	}
 
-	public void checkMemory(final ImagePlus imagePlus,
+	/**
+	 * Assesses whether enough memory exists to analyze an image. A dialog message
+	 * warning the user is displayed if assessment was negative.
+	 *
+	 * @param imagePlus the image to be loaded by the plugin
+	 * @param memoryMultipleNeeded the memory cutoff multiplier. E.g., 3 means
+	 *          that the user will need 3x the memory used by the supplied
+	 *          ImagePlus in order to not be warned about insufficient memory
+	 * @return true, if sufficient memory was detected, false otherwise
+	 */
+	public boolean memoryCheck(final ImagePlus imagePlus,
 		final int memoryMultipleNeeded)
 	{
 
@@ -182,13 +192,14 @@ public class MultiDThreePanes implements PaneOwner {
 		System.gc();
 		final long maxMemory = Runtime.getRuntime().maxMemory();
 
-		if (bytesNeededEstimate > maxMemory) {
-
+		final boolean sufficientMem = bytesNeededEstimate > maxMemory;
+		if (!sufficientMem) {
 			error("It looks as if the amount of memory required for the " +
 				"three pane view (" + (bytesNeededEstimate / (1024 * 1024)) +
 				"MiB) exceeds the maximum memory available (" + (maxMemory / (1024 *
 					1024)) + "MiB)");
 		}
+		return sufficientMem;
 	}
 
 	public static String imageTypeToString(final int type) {
@@ -215,11 +226,6 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 		return result;
 	}
-
-	/* If memoryMultipleNeeded is 3, for example, that means that
-	 * you will need 3 times the memory used by the supplied
-	 * ImagePlus in order for the plugin not to warn you about
-	 * free memory. */
 
 	public void reloadZYXZpanes(final int frame) {
 		if (single_pane) return; // nothing to reload

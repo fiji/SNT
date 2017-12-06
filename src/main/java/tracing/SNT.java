@@ -126,7 +126,7 @@ public class SNT {
 		}
 	}
 
-	protected static String formatDouble(final double value, final int digits) {
+	public static String formatDouble(final double value, final int digits) {
 		String pattern = "0.";
 		while (pattern.length() < digits+2) pattern += "0";
 		final double absValue = Math.abs(value);
@@ -135,7 +135,11 @@ public class SNT {
 		return new DecimalFormat(pattern).format(value);
 	}
 
-	/** Assesses if SNT is running in debug mode */
+	/**
+	 * Assesses if SNT is running in debug mode
+	 * 
+	 * @return the debug flag
+	 */
 	public static boolean isDebugMode() {
 		return SimpleNeuriteTracer.verbose;
 	}

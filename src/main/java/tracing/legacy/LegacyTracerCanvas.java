@@ -29,7 +29,7 @@ import java.awt.Image;
 import java.util.ArrayList;
 
 import ij.ImagePlus;
-import stacks.PaneOwner;
+import tracing.hyperpanes.PaneOwner;
 import tracing.Path;
 import tracing.PathAndFillManager;
 import tracing.SearchInterface;

@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -22,17 +22,17 @@
 /*******************************************************************************
  * Copyright (C) 2017 Tiago Ferreira
  * Copyright (C) 2006-2011 Mark Longair
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -67,27 +67,31 @@ package tracing;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 
 import ij.ImagePlus;
-import tracing.hyperpanes.PaneOwner;
 import tracing.hyperpanes.MultiDThreePanesCanvas;
+import tracing.hyperpanes.PaneOwner;
 
 @SuppressWarnings("serial")
 public class TracerCanvas extends MultiDThreePanesCanvas {
 
 	protected PathAndFillManager pathAndFillManager;
+	protected boolean just_near_slices = false;
+	protected int eitherSide;
+	private final ArrayList<SearchInterface> searchThreads = new ArrayList<>();
 	private double nodeSize = -1;
 
-	public TracerCanvas(final ImagePlus imagePlus, final PaneOwner owner, final int plane,
-			final PathAndFillManager pathAndFillManager) {
+	public TracerCanvas(final ImagePlus imagePlus, final PaneOwner owner,
+		final int plane, final PathAndFillManager pathAndFillManager)
+	{
 
 		super(imagePlus, owner, plane);
 		this.pathAndFillManager = pathAndFillManager;
 	}
-
-	ArrayList<SearchInterface> searchThreads = new ArrayList<>();
 
 	public void addSearchThread(final SearchInterface s) {
 		synchronized (searchThreads) {
@@ -100,16 +104,11 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 			int index = -1;
 			for (int i = 0; i < searchThreads.size(); ++i) {
 				final SearchInterface inList = searchThreads.get(i);
-				if (s == inList)
-					index = i;
+				if (s == inList) index = i;
 			}
-			if (index >= 0)
-				searchThreads.remove(index);
+			if (index >= 0) searchThreads.remove(index);
 		}
 	}
-
-	boolean just_near_slices = false;
-	int eitherSide;
 
 	@Override
 	protected void drawOverlay(final Graphics2D g) {
@@ -120,6 +119,8 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 		 * if( plane == ThreePanes.XY_PLANE ) { current_z =
 		 * imp.getZ() - 1; }
 		 */
+
+		super.drawOverlay(g); // render crosshairs, cursor text and canvas label
 
 		final int current_z = imp.getZ() - 1;
 
@@ -141,11 +142,9 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 			for (int i = 0; i < pathAndFillManager.size(); ++i) {
 
 				final Path p = pathAndFillManager.getPath(i);
-				if (p == null)
-					continue;
+				if (p == null) continue;
 
-				if (p.fittedVersionOf != null)
-					continue;
+				if (p.fittedVersionOf != null) continue;
 
 				Path drawPath = p;
 
@@ -156,26 +155,24 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 				}
 
 				final boolean isSelected = pathAndFillManager.isSelected(p);
-				if (!isSelected && showOnlySelectedPaths)
-					continue;
+				if (!isSelected && showOnlySelectedPaths) continue;
 
-				final boolean customColor = (drawPath.hasCustomColor && plugin.displayCustomPathColors);
+				final boolean customColor = (drawPath.hasCustomColor &&
+					plugin.displayCustomPathColors);
 				Color color = deselectedColor;
-				if (isSelected && !customColor)
-					color = selectedColor;
-				else if (customColor)
-					color = drawPath.getColor();
+				if (isSelected && !customColor) color = selectedColor;
+				else if (customColor) color = drawPath.getColor();
 
 				if (just_near_slices) {
-					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected && customColor), drawDiametersXY,
-							current_z, eitherSide);
-				} else {
-					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected && customColor), drawDiametersXY);
+					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected &&
+						customColor), drawDiametersXY, current_z, eitherSide);
+				}
+				else {
+					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected &&
+						customColor), drawDiametersXY);
 				}
 			}
 		}
-
-		super.drawOverlay(g);
 
 	}
 

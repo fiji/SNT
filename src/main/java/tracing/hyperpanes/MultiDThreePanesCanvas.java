@@ -119,9 +119,6 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	@Override
-	public void mouseClicked(final MouseEvent e) {}
-
-	@Override
 	public void mouseMoved(final MouseEvent e) {
 
 		super.mouseMoved(e);

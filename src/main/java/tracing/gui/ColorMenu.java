@@ -272,7 +272,7 @@ public class ColorMenu extends JMenu {
 				final String promptTitle = (swcColor
 					.type() == SWCColor.SWC_TYPE_IGNORED) ? "New Color"
 						: "New color for SWC Type: " + Path.getSWCtypeName(swcColor.type());
-				final Color c = gUtils.getColor(promptTitle, swcColor.color(), "RGB");
+				final Color c = gUtils.getColor(promptTitle, swcColor.color(), "HSB");
 				if (c != null && !c.equals(swcColor.color())) {
 					// New color choice: refresh panel
 					swcColor.setAWTColor(c);

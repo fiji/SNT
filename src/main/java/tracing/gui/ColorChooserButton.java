@@ -52,7 +52,9 @@ public class ColorChooserButton extends JButton {
 		this(c, label, 1d);
 	}
 
-	public ColorChooserButton(final Color c, final String label, double scaleFactor) {
+	public ColorChooserButton(final Color c, final String label,
+		double scaleFactor)
+	{
 		super(label);
 		if (scaleFactor != 1d) {
 			setFont(getFont().deriveFont((float) (getFont().getSize() *
@@ -77,8 +79,9 @@ public class ColorChooserButton extends JButton {
 				final String title = (thisButton.getName() == null) ? "Choose new color"
 					: "New " + thisButton.getName();
 				final Color newColor = new GuiUtils(SwingUtilities.getRoot(thisButton))
-					.getColor(title, getSelectedColor(), "RGB");
+					.getColor(title, getSelectedColor(), "HSB");
 				setSelectedColor(newColor);
+
 			}
 		});
 	}

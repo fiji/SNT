@@ -170,19 +170,37 @@ public class GuiUtils {
 		return SwingColorWidget.showColorDialog(parent, title, defaultValue);
 	}
 
-	/** Panes: Any of Swatches, HSV, HSL, RGB, CMYK. null for all */
+	/**
+	 * Simplified color chooser.
+	 *
+	 * @param title the title of the chooser dialog
+	 * @param defaultValue the initial color set in the chooser
+	 * @param panes the panes a list of strings specifying which tabs should be
+	 *          displayed. In most platforms this includes: "Swatches", "HSB" and
+	 *          "RGB". Note that e.g., the GTK L&F may only include the default
+	 *          GtkColorChooser pane
+	 * @return the color
+	 */
 	public Color getColor(final String title, final Color defaultValue,
 		final String... panes)
 	{
 
-		List<String> allowedPanels = new ArrayList<>();
-		if (panes != null) allowedPanels = Arrays.asList(panes);
-		final JColorChooser chooser = new JColorChooser();
-		chooser.setPreviewPanel(new JPanel()); // remove preview pane
+		assert SwingUtilities.isEventDispatchThread();
 
-		for (final AbstractColorChooserPanel accp : chooser.getChooserPanels()) {
-			if (!allowedPanels.contains(accp.getDisplayName())) chooser
-				.removeChooserPanel(accp);
+		final JColorChooser chooser = new JColorChooser(defaultValue != null
+			? defaultValue : Color.WHITE);
+
+		// remove preview pane
+		chooser.setPreviewPanel(new JPanel());
+
+		// remove spurious panes
+		List<String> allowedPanels = new ArrayList<>();
+		if (panes != null) {
+			allowedPanels = Arrays.asList(panes);
+			for (final AbstractColorChooserPanel accp : chooser.getChooserPanels()) {
+				if (!allowedPanels.contains(accp.getDisplayName()) && chooser
+					.getChooserPanels().length > 1) chooser.removeChooserPanel(accp);
+			}
 		}
 
 		class ColorTracker implements ActionListener {

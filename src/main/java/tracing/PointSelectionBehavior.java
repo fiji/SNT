@@ -43,7 +43,7 @@ import ij3d.behaviors.Picker;
 
 public class PointSelectionBehavior extends InteractiveBehavior {
 
-	protected SimpleNeuriteTracer tracerPlugin;
+	protected SimpleNeuriteTracer tracerPlugin; //TODO: implement QueueJumpingKeyListener doublekeypress
 
 	public PointSelectionBehavior(final Image3DUniverse univ, final SimpleNeuriteTracer tracerPlugin) {
 		super(univ);
@@ -74,19 +74,14 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 					tracerPlugin.confirmTemporary();
 					e.consume();
 
-				} else if (keyCode == KeyEvent.VK_ESCAPE) {
+				} else if (keyCode == KeyEvent.VK_ESCAPE || keyChar == 'c' || keyChar == 'C') {
 
-					tracerPlugin.resultsDialog.abortButton.doClick();
+					tracerPlugin.getUI().abortCurrentOperation(); //FIXME: NPE if resultsDialog closed
 					e.consume();
 
 				} else if (keyChar == 'n' || keyChar == 'N') {
 
 					tracerPlugin.cancelTemporary();
-					e.consume();
-
-				} else if (keyChar == 'c' || keyChar == 'C') {
-
-					tracerPlugin.cancelPath();
 					e.consume();
 
 				} else if (keyChar == 'f' || keyChar == 'F') {

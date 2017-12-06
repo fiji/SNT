@@ -28,6 +28,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -102,7 +103,7 @@ public class GuiUtils {
 	}
 
 	public void tempMsg(final String msg, final int x, final int y) {
-		tempMsg(msg, x, y, true);
+		tempMsg(msg, x, y, false);
 	}
 
 	private void tempMsg(final String msg, final int x, final int y,
@@ -329,6 +330,18 @@ public class GuiUtils {
 			blinkTimer.stop();
 		}
 		blinkingComponent.setForeground(prevColor);
+	}
+
+	/**
+	 * Displays an auto-dismiss dialog (temporary message) at current cursor
+	 * location.
+	 *
+	 * @param msg the message to be displayed. HMTL allowed.
+	 */
+	public void msgAtPointer(final String msg) {
+		final Point loc = MouseInfo.getPointerInfo().getLocation();
+		tempMsg(msg, loc.x, loc.y);
+		return;
 	}
 
 	/* Static methods */

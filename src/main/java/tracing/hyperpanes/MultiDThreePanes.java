@@ -338,7 +338,7 @@ public class MultiDThreePanes implements PaneOwner {
 							final ByteProcessor bp = new ByteProcessor(zy_width, zy_height);
 							bp.setPixels(sliceBytes);
 							zy_stack.addSlice(null, bp);
-							showStatus("Generating XZ planes...", x_in_original / (double) width);
+							showStatus(x_in_original, width, "Generating XZ planes...");
 						}
 						break;
 
@@ -367,7 +367,7 @@ public class MultiDThreePanes implements PaneOwner {
 							final ShortProcessor sp = new ShortProcessor(zy_width, zy_height);
 							sp.setPixels(sliceShorts);
 							zy_stack.addSlice(null, sp);
-							showStatus("Generating XZ planes...", x_in_original / (double) width);
+							showStatus(x_in_original, width, "Generating XZ planes...");
 						}
 						break;
 
@@ -396,7 +396,7 @@ public class MultiDThreePanes implements PaneOwner {
 							final ColorProcessor cp = new ColorProcessor(zy_width, zy_height);
 							cp.setPixels(sliceInts);
 							zy_stack.addSlice(null, cp);
-							showStatus("Generating XZ planes...", x_in_original / (double) width);
+							showStatus(x_in_original, width, "Generating XZ planes...");
 						}
 						break;
 
@@ -425,7 +425,7 @@ public class MultiDThreePanes implements PaneOwner {
 							final FloatProcessor fp = new FloatProcessor(zy_width, zy_height);
 							fp.setPixels(sliceFloats);
 							zy_stack.addSlice(null, fp);
-							showStatus("Generating XZ planes...", x_in_original / (double) width);
+							showStatus(x_in_original, width, "Generating XZ planes...");
 						}
 						break;
 
@@ -470,7 +470,7 @@ public class MultiDThreePanes implements PaneOwner {
 							bp.setPixels(sliceBytes);
 							xz_stack.addSlice(null, bp);
 
-							showStatus("Generating ZY planes...", y_in_original / (double) width);
+							showStatus(y_in_original, width, "Generating ZY planes...");
 						}
 						break;
 
@@ -498,7 +498,7 @@ public class MultiDThreePanes implements PaneOwner {
 							sp.setPixels(sliceShorts);
 							xz_stack.addSlice(null, sp);
 
-							showStatus("Generating ZY planes...", y_in_original / (double) width);
+							showStatus(y_in_original, width, "Generating ZY planes...");
 						}
 						break;
 
@@ -526,7 +526,7 @@ public class MultiDThreePanes implements PaneOwner {
 							cp.setPixels(sliceInts);
 							xz_stack.addSlice(null, cp);
 
-							showStatus("Generating ZY planes...", y_in_original / (double) width);
+							showStatus(y_in_original, width, "Generating ZY planes...");
 						}
 						break;
 
@@ -554,7 +554,7 @@ public class MultiDThreePanes implements PaneOwner {
 							fp.setPixels(sliceFloats);
 							xz_stack.addSlice(null, fp);
 
-							showStatus("Generating ZY planes...", y_in_original / (double) width);
+							showStatus(y_in_original, width, "Generating ZY planes...");
 						}
 						break;
 
@@ -569,7 +569,7 @@ public class MultiDThreePanes implements PaneOwner {
 					xz = new ImagePlus("XZ " + title, xz_stack);
 				xz.setStack(xz_stack);
 				xz.setTitle("XZ " + title);
-				showStatus("Generating ZY planes...", 1d);
+				showStatus(0, 0, "Generating ZY planes...");
 
 		}
 
@@ -650,8 +650,8 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	@Override
-	public void showStatus(String status, double progress) {
-		///TODO
+	public void showStatus(int progress, int maximum, String message) {
+		// Do nothing by default
 	}
 
 	@Override

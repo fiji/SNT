@@ -29,7 +29,7 @@ public interface PaneOwner {
 
 	public void zoom( boolean zoomIn, int x, int y, int plane );
 
-	public void showStatus(String status, double progress);
+	public void showStatus(int progress, int maximum, String message);
 
 	public void error(String error);
 

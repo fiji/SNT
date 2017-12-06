@@ -253,6 +253,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return selectedPathsSet.contains(path);
 	}
 
+	public HashSet<Path> getSelectedPaths() {
+		return selectedPathsSet;
+	}
+
 	public boolean anySelected() {
 		return selectedPathsSet.size() > 0;
 	}

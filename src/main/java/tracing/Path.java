@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.math.stat.StatUtils;
+import org.apache.commons.math3.stat.StatUtils;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3f;
 
@@ -750,6 +750,19 @@ public class Path implements Comparable<Path> {
 	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
 			final boolean drawDiameter, final int slice, final int either_side) {
 		drawPathAsPoints(canvas, g, c, plane, false, drawDiameter, slice, either_side);
+	}
+
+	public void drawPathAsPoints(final Graphics2D g2, TracerCanvas canvas, SimpleNeuriteTracer snt) {
+		final boolean customColor = (hasCustomColor && snt.displayCustomPathColors);
+		Color color = snt.deselectedColor;
+		if (isSelected() && !customColor) color = snt.selectedColor;
+		else if (customColor) color = getColor();
+		final int sliceZeroIndexed = canvas.getImage().getZ() - 1;
+		int eitherSideParameter = canvas.eitherSide;
+		if (!canvas.just_near_slices)
+			eitherSideParameter = -1;
+		drawPathAsPoints(canvas, g2, color, canvas.getPlane(), customColor,
+			snt.drawDiametersXY, sliceZeroIndexed, eitherSideParameter);
 	}
 
 	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g2, final java.awt.Color c, final int plane,

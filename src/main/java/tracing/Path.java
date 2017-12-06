@@ -437,12 +437,12 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Gets the node index associated with a specified image position.
+	 * Gets the node index associated with the specified image position.
 	 * Returns -1 if no such node exists.
 	 *
 	 * @param xcoord the x-position in pixel coordinates
-	 * @param ycoord the x-position in pixel coordinates
-	 * @return the node the index of the first occurrence of the specified
+	 * @param ycoord the y-position in pixel coordinates
+	 * @return the node at the index of the first occurrence of the specified
 	 *         coordinates, or -1 if there is no such occurrence
 	 */
 	public int getNodeIndex(int xcoord, int ycoord) {
@@ -455,6 +455,60 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
+	 * Gets the node index associated with the specified image coordinates.
+	 * Returns -1 if no such node was found.
+	 *
+	 * @param pim the image position (calibrated coordinates)
+	 * @return the index of the first node occurrence or -1 if there is no such
+	 *         occurrence
+	 */
+	public int getNodeIndex(final PointInImage pim) {
+		for (int i = 0; i < points; ++i) {
+			if (Math.abs(precise_x_positions[i] - pim.x) < x_spacing && Math.abs(
+				precise_y_positions[i] - pim.y) < y_spacing && Math.abs(
+					precise_z_positions[i] - pim.z) < z_spacing)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * Gets the index of the closest node associated with the specified image coordinates.
+	 * Returns -1 if no such node was found.
+	 *
+	 * @param x the x-coordinates (calibrated units)
+	 * @param y the y-coordinates (calibrated units)
+	 * @param z the z-coordinates (calibrated units)
+	 * @return the index of the closest node to the specified coordinates.
+	 */
+	public int indexNearestTo(final double x, final double y, final double z) {
+
+		if (size() < 1)
+			throw new IllegalArgumentException("indexNearestTo called on a Path of size() = 0");
+
+		double minimumDistanceSquared = Double.MAX_VALUE;
+		int indexOfMinimum = -1;
+
+		for (int i = 0; i < size(); ++i) {
+
+			final double diff_x = x - precise_x_positions[i];
+			final double diff_y = y - precise_y_positions[i];
+			final double diff_z = z - precise_z_positions[i];
+
+			final double thisDistanceSquared = diff_x * diff_x + diff_y * diff_y + diff_z * diff_z;
+
+			if (thisDistanceSquared < minimumDistanceSquared) {
+				indexOfMinimum = i;
+				minimumDistanceSquared = thisDistanceSquared;
+			}
+		}
+
+		return indexOfMinimum;
+	}
+
+	/**
 	 * @return the index of the point currently tagged as editable, or -1 if no
 	 *         such point exists
 	 */
@@ -463,7 +517,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Tags the specified point position as 'editable'
+	 * Tags the specified point position as 'editable'.
 	 *
 	 * @param index the index of the point to be tagged. Set it to -1 to for no
 	 *          tagging
@@ -953,31 +1007,6 @@ public class Path implements Comparable<Path> {
 			polyline.setPosition(z_position + 1); // index 1
 			overlay.add(polyline);
 		}
-	}
-
-	public int indexNearestTo(final double x, final double y, final double z) {
-
-		if (size() < 1)
-			throw new RuntimeException("indexNearestTo called on a Path of size() = 0");
-
-		double minimumDistanceSquared = Double.MAX_VALUE;
-		int indexOfMinimum = -1;
-
-		for (int i = 0; i < size(); ++i) {
-
-			final double diff_x = x - precise_x_positions[i];
-			final double diff_y = y - precise_y_positions[i];
-			final double diff_z = z - precise_z_positions[i];
-
-			final double thisDistanceSquared = diff_x * diff_x + diff_y * diff_y + diff_z * diff_z;
-
-			if (thisDistanceSquared < minimumDistanceSquared) {
-				indexOfMinimum = i;
-				minimumDistanceSquared = thisDistanceSquared;
-			}
-		}
-
-		return indexOfMinimum;
 	}
 
 	// ------------------------------------------------------------------------

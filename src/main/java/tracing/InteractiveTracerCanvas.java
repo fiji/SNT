@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -24,13 +24,9 @@ package tracing;
 
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.MenuItem;
-import java.awt.MouseInfo;
-import java.awt.Point;
 import java.awt.PopupMenu;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,7 +39,6 @@ import java.awt.event.WindowEvent;
 
 import ij.IJ;
 import ij.ImagePlus;
-import tracing.gui.GuiUtils;
 import tracing.hyperpanes.MultiDThreePanes;
 
 public class InteractiveTracerCanvas extends TracerCanvas {
@@ -52,7 +47,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	private final Color transparentGreen = new Color(0, 128, 0, 128);
 	private final SimpleNeuriteTracer tracerPlugin;
-	private final GuiUtils guiUtils;
 	private PopupMenu pMenu;
 	private CheckboxMenuItem toggleEditModeMenuItem;
 	private CheckboxMenuItem togglePauseModeMenuItem;
@@ -62,11 +56,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private boolean fillTransparent = false;
 	private Path unconfirmedSegment;
 	private Path currentPath;
-	private boolean lastPathUnfinished;
-
 	private Path editingPath;
-	private int editingNode;
-	private boolean editMode;
+	private int editingNode = -1;
+	private boolean lastPathUnfinished;
+	private boolean editMode; // convenience flag to monitor SNT's edit mode
 	private static String EDIT_MODE_LABEL = "Edit Mode";
 
 
@@ -74,7 +67,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final PathAndFillManager pathAndFillManager) {
 		super(imp, plugin, plane, pathAndFillManager);
 		tracerPlugin = plugin;
-		guiUtils = new GuiUtils(this.getParent());
 		buildPpupMenu();
 		super.disablePopupMenu(true); // so that handlePopupMenu is not triggered
 		super.add(pMenu);

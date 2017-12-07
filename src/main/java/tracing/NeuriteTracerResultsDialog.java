@@ -178,8 +178,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	static final int IMAGE_CLOSED = -1;
 
 	// TODO: Internal preferences: should be migrated to SNTPrefs
-	protected boolean finishOnDoubleConfimation;
-	protected boolean discardOnDoubleCancellation;
+	protected boolean finishOnDoubleConfimation = true;
+	protected boolean discardOnDoubleCancellation = true;
 
 	public NeuriteTracerResultsDialog(final SimpleNeuriteTracer plugin) {
 

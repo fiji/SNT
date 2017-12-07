@@ -129,53 +129,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		this.currentPath = path;
 	}
 
-	private boolean editAllowed(final boolean warnUser) {
-		final boolean uiReady = tracerPlugin
-			.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH;
-		if (warnUser && !uiReady) {
-			displayError("You must finish current operation before editing a path");
-			return false;
-		}
-		getEditingScope();
-		final boolean pathExists = editingPath != null;
-		if (warnUser && !pathExists) {
-			displayError("You must select a single path in order to edit it");
-			return false;
-		}
-		final boolean validPath = pathExists && !editingPath.getUseFitted();
-		if (warnUser && !validPath) {
-			displayError(
-				"Only unfitted paths can be edited. Run \"Un-fit volume\" to proceed");
-			return false;
-		}
-		final boolean editAllowed = uiReady && pathExists && validPath;
-		editMode = editMode && editAllowed;
-		return editAllowed;
-	}
-
-	public boolean isEditMode() {
-		return editMode;
-	}
-
-	public void setEditMode(final boolean mode, final boolean assessConditions) {
-		if (mode && !editAllowed(assessConditions)) return;
-		editMode = mode;
-		if (editMode) {
-			setDrawCrosshairs(false);
-			tracerPlugin.changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
-		} else {
-			setDrawCrosshairs(true);
-			setCursorText(null);
-			setCursorShape(null);
-			tracerPlugin.changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
-			resetEdit();
-		}
-	}
-
-	private void displayError(final String msg) {
-		final Point loc = MouseInfo.getPointerInfo().getLocation();
-		guiUtils.tempMsg(msg, loc.x, loc.y);
-		return;
 	private boolean uiReadyForModeChange() {
 		return tracerPlugin.isReady() && (tracerPlugin
 			.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
@@ -220,16 +173,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			});
 		} else {
 			tracerPlugin.floatingMsg("You must have a path selected in order to start Sholl analysis");
-		}
-	}
-
-	private void getEditingScope() {
-		if (pathAndFillManager.selectedPathsSet.size() == 1) {
-			editingPath = tracerPlugin.getSelectedPaths().iterator().next();
-			editingNode = editingPath.getNodeIndex((int)last_x_in_pane_precise, (int)last_y_in_pane_precise);
-		} else {
-			editingPath = null;
-			editingNode = -1;
 		}
 	}
 
@@ -290,21 +233,25 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
 			: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 
-		if (editMode) {
-			getEditingScope();
-			super.setCursor((editingNode == -1)?defaultCursor:handCursor);
-		} else {
-			super.setCursor(crosshairCursor);
-		}
 		super.mouseMoved(e);
-		{	if (tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down && !shift_key_down) {
+
+		if (!editMode && tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down && !shift_key_down) {
 				final double[] p = new double[3];
 				tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise, last_y_in_pane_precise, p);
 				last_x_in_pane_precise = p[0];
 				last_y_in_pane_precise = p[1];
 				shift_key_down = true;
-			}
 		}
+
+		if (editMode) {
+			editingNode = (editingPath == null) ? -1 : editingPath.getEditableNodeIndex();
+			setCursor((editingNode==-1) ? defaultCursor : handCursor);
+			setDrawCrosshairs(false); //FIXME:
+		} else {
+			setCursor(crosshairCursor);
+			setDrawCrosshairs(true);// FIXME:
+		}
+
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down,
 			joiner_modifier_down);
 		
@@ -411,12 +358,17 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		return invalid;
 	}
 
-	private void resetEdit() {
-		editingNode = -1;
-		if (editingPath !=null) {
+	private void redrawEditingPath(boolean resetEditingNode) {
+		if (resetEditingNode) {
+			editingNode = -1;
 			editingPath.setEditableNode(-1);
-			repaint();
 		}
+		editingPath.drawPathAsPoints(getGraphics2D(getGraphics()), this, tracerPlugin);
+	}
+
+	private void redrawEditingPath(final Graphics2D g) {
+		editingPath.drawPathAsPoints(g, this, tracerPlugin);
+	}
 	}
 
 	@Override
@@ -438,17 +390,15 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			filler.setDrawingThreshold(filler.getThreshold());
 		}
 
-		if (editMode) {
-			final int edge = 4;
-			final Font font = new Font("SansSerif", Font.PLAIN, 18).deriveFont((float) (18*magnification));
-			final FontMetrics fm = getFontMetrics(font);
-			g.setFont(font);
-			g.setColor(getCursorAnnotationsColor());
-			g.drawString(EDIT_MODE_LABEL, edge, edge + fm.getHeight());
-		}
-	
-		super.drawOverlay(g);
+		super.drawOverlay(g); // draw all paths, crosshair, etc.
 
+		if (editMode && editingPath != null) {
+			redrawEditingPath(g);
+			return; // no need to proceed: only editing path has been updated
+		}
+
+		// Now render temporary/incomplete paths
+		//FIXME: do this only once
 		final double magnification = getMagnification();
 		int pixel_size = magnification < 1 ? 1 : (int) magnification;
 		if (magnification >= 4)
@@ -489,6 +439,21 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	}
 
+
+	private void enableEditMode(boolean enable) {
+		final boolean activate = enable && tracerPlugin.editModeAllowed(true);
+		if (activate) {
+			tracerPlugin.enableEditMode(true);
+			setCanvasLabel(EDIT_MODE_LABEL);
+		} else {
+			tracerPlugin.enableEditMode(false);
+			toggleEditModeMenuItem.setState(false);
+			setCanvasLabel(null);
+		}
+		setEditingPath(tracerPlugin.getEditingPath());
+		tracerPlugin.repaintAllPanes();
+		drawOverlay(getGraphics2D(getGraphics())); // update canvas label
+	}
 
 	/**
 	 * This class implements implements ActionListeners for
@@ -553,7 +518,20 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				SNT.debug("Unexpectedly got an event from an unknown source: ");
 				return;
 			}
-			resetEdit();
+			redrawEditingPath(true);
+		}
+	}
+
+	protected void setEditingPath(final Path path) {
+		editingPath = path;
+		if (path == null) {
+			editMode = false;
+			editingNode = -1;
+			setDrawCrosshairs(true);
+		} else {
+			editMode = true;
+			editingNode = editingPath.getEditableNodeIndex();
+			setDrawCrosshairs(false);
 		}
 	}
 

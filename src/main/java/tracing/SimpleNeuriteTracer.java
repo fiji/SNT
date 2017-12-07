@@ -592,6 +592,75 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void setCrosshair(final double new_x, final double new_y,
 		final double new_z)
 	{
+	private boolean uiReadyForModeChange() {
+		return isReady() && getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH;
+	}
+
+	protected Path getEditingPath() {
+		return editingPath;
+	}
+
+	/**
+	 * Assesses if activation of 'Edit Mode' is possible.
+	 *
+	 * @return true, if possible, false otherwise
+	 */
+	public boolean editModeAllowed() {
+		return editModeAllowed(false);
+	}
+
+	private void assignEditPath() {
+		xy_tracer_canvas.setEditingPath(editingPath);
+		if (!single_pane) {
+			xz_tracer_canvas.setEditingPath(editingPath);
+			zy_tracer_canvas.setEditingPath(editingPath);
+		}
+	}
+
+	protected boolean editModeAllowed(final boolean warnUserIfNot) {
+		final boolean uiReady = uiReadyForModeChange();
+		if (warnUserIfNot && !uiReady) {
+			guiUtils.error("Please finish current operation before editing paths");
+			return false;
+		}
+		setEditingPath();
+		final boolean pathExists = editingPath != null;
+		if (warnUserIfNot && !pathExists) {
+			guiUtils.msgAtPointer("You must select a single path in order to edit it");
+			return false;
+		}
+		final boolean validPath = pathExists && !editingPath.getUseFitted();
+		if (warnUserIfNot && !validPath) {
+			guiUtils.msgAtPointer(
+				"Only unfitted paths can be edited. Run \"Un-fit volume\" to proceed");
+			return false;
+		}
+		final boolean editAllowed = uiReady && pathExists && validPath;
+		return editAllowed;
+	}
+
+	private void setEditingPath() {
+		if (pathAndFillManager.selectedPathsSet.size() == 1) {
+			editingPath = getSelectedPaths().iterator().next();
+		} else {
+			editingPath = null;
+		}
+	}
+
+	protected void enableEditMode(final boolean enable) {
+		if (enable) {
+			setEditingPath();
+			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
+		} else {
+			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			editingPath = null;
+		}
+		assignEditPath();
+	}
+
+	protected boolean isEditModeEnabled() {
+		return NeuriteTracerResultsDialog.EDITING_MODE == getUIState();
+	}
 
 		xy_tracer_canvas.setCrosshairs(new_x, new_y, new_z, true);
 		if (!single_pane) {
@@ -783,7 +852,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		y = pd[1];
 		z = pd[2];
 
-		if (join_modifier_down && pathAndFillManager.anySelected()) {
+		if (isEditModeEnabled() && editingPath != null) {
+			editingPath.setEditableNode(editingPath.getNodeIndex(new PointInImage(x,y,z)));
+		}
+		else if (join_modifier_down && pathAndFillManager.anySelected()) {
 
 			final PointInImage pointInImage = pathAndFillManager
 				.nearestJoinPointOnSelectedPaths(x, y, z);

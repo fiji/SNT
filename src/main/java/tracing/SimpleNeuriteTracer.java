@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import javax.swing.UIManager;
+
 import net.imagej.Dataset;
 import net.imagej.legacy.LegacyService;
 
@@ -55,19 +57,16 @@ import amira.AmiraMeshDecoder;
 import amira.AmiraParameters;
 import features.ComputeCurvatures;
 import features.GaussianGenerationCallback;
-import features.SigmaPalette;
 import features.TubenessProcessor;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
 import ij.gui.ImageRoi;
 import ij.gui.Overlay;
-import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.measure.Calibration;
-import ij.plugin.Duplicator;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
@@ -76,10 +75,10 @@ import ij.process.ShortProcessor;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import tracing.gui.GuiUtils;
-import tracing.QueueJumpingKeyListener;
 import tracing.gui.SWCImportOptionsDialog;
+import tracing.gui.SigmaPalette;
+import tracing.gui.SwingSafeResult;
 import tracing.hyperpanes.MultiDThreePanes;
-import tracing.hyperpanes.MultiDThreePanesCanvas;
 
 /* Note on terminology:
 
@@ -144,7 +143,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	protected int width, height, depth;
 	protected int imageType = -1;
-	protected boolean singleSlice;
+	private boolean singleSlice;
 	protected double x_spacing = 1;
 	protected double y_spacing = 1;
 	protected double z_spacing = 1;
@@ -155,12 +154,21 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected int frame;
 
 	protected byte[][] slices_data_b;
+
 	protected short[][] slices_data_s;
 	protected float[][] slices_data_f;
 	volatile protected float stackMax = Float.MIN_VALUE;
 	volatile protected float stackMin = Float.MAX_VALUE;
 
-	
+	/*
+	 * pathUnfinished indicates that we have started to create a path, but not
+	 * yet finished it (in the sense of moving on to a new path with a differen
+	 * starting point.) FIXME: this may be redundant - check that.
+	 */
+
+	volatile boolean pathUnfinished = false;
+	private Path editingPath; // Path being edited when in 'Edit Mode'
+
 	/*
 	 * For the original file info - needed for loading the corresponding labels
 	 * file and checking if a "tubes.tif" file already exists:
@@ -235,7 +243,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		guiUtils = new GuiUtils(legacyService.getIJ1Helper().getIJ());
 		prefs = new SNTPrefs(this);
 		prefs.loadPluginPrefs();
-
 	}
 
 	public void initialize(boolean singlePane, int channel, int frame) {
@@ -249,7 +256,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;
 		xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
 		zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
-
 		setupTrace = true;
 
 		/*
@@ -259,7 +265,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		pathAndFillManager.addPathAndFillListener(this);
 
 		loadData();
-
 		addListener(xy_tracer_canvas, xy_window);
 		if (!single_pane) {
 			xz.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
@@ -267,7 +272,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			addListener(xz_tracer_canvas, xz_window);
 			addListener(zy_tracer_canvas, zy_window);
 		}
-
 	}
 
 	private void addListener(InteractiveTracerCanvas canvas, StackWindow window) {
@@ -390,6 +394,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public InteractiveTracerCanvas getXYCanvas() {
 		return xy_tracer_canvas;
+	}
+
+	public InteractiveTracerCanvas getZYCanvas() {
+		return zy_tracer_canvas;
+	}
+
+	public InteractiveTracerCanvas getXZCanvas() {
+		return xz_tracer_canvas;
 	}
 
 	public ImagePlus getImagePlus() {
@@ -563,14 +575,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		repaintAllPanes();
 	}
 
-	/*
-	 * pathUnfinished indicates that we have started to create a path, but not
-	 * yet finished it (in the sense of moving on to a new path with a differen
-	 * starting point.) FIXME: this may be redundant - check that.
-	 */
-
-	volatile boolean pathUnfinished = false;
-
 	public void justDisplayNearSlices(final boolean value, final int eitherSide) {
 
 		xy_tracer_canvas.just_near_slices = value;
@@ -589,9 +593,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	}
 
-	public void setCrosshair(final double new_x, final double new_y,
-		final double new_z)
-	{
 	private boolean uiReadyForModeChange() {
 		return isReady() && getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH;
 	}
@@ -1078,11 +1079,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			tubularGeodesicsThread = new TubularGeodesicsTracer(oofFile,
 				last_start_point_x, last_start_point_y, last_start_point_z, x_end,
 				y_end, z_end, x_spacing, y_spacing, z_spacing, spacing_units);
-
 			addThreadToDraw(tubularGeodesicsThread);
-
 			tubularGeodesicsThread.addProgressListener(this);
-
 			tubularGeodesicsThread.start();
 
 		}
@@ -1105,12 +1103,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 					.getMultiplier(), tubeness, hessianEnabled);
 
 			addThreadToDraw(currentSearchThread);
-
 			currentSearchThread.setDrawingColors(Color.CYAN, null);
 			currentSearchThread.setDrawingThreshold(-1);
-
 			currentSearchThread.addProgressListener(this);
-
 			currentSearchThread.start();
 
 		}
@@ -1674,8 +1669,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public synchronized void enableHessian(final boolean enable) {
 		hessianEnabled = enable;
 		if (enable) startHessian();
-		resultsDialog.editSigma.setEnabled(enable);
-		resultsDialog.sigmaWizard.setEnabled(enable);
 	}
 
 	public synchronized void cancelGaussian() {
@@ -2150,10 +2143,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected void updateViewPathChoice() {
-		if (!resultsDialog.viewPathChoice.isEnabled()) return;
-		resultsDialog.viewPathChoice.setSelectedItem(
-			xy_tracer_canvas.just_near_slices ? resultsDialog.partsNearbyChoice
-				: resultsDialog.projectionChoice);
+		if (!resultsDialog.justShowPartsNearby.isEnabled()) return;
+		resultsDialog.justShowPartsNearby.setSelected(xy_tracer_canvas.just_near_slices);
 	}
 
 	protected void toogleSnapCursor() {
@@ -2172,6 +2163,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	// TODO: Use prefsService
+	private boolean manualOverride = false;
+	public void disableAstar(final boolean disable) {
+		manualOverride = disable;
+	}
+
+	public boolean isAstarDisabled() {
+		return manualOverride;
+	}
 
 	/**
 	 * @return true if the image currently loaded does not have a depth (Z)
@@ -2236,6 +2235,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return resultsDialog;
 	}
 
+	protected void floatingMsg(final String msg) {
+		GuiUtils.floatingMsg(getImagePlus(), msg);
+	}
 
 	@Override
 	public void showStatus(int progress, int maximum, String status) {

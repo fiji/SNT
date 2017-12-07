@@ -2236,4 +2236,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return resultsDialog;
 	}
 
+
+	@Override
+	public void showStatus(int progress, int maximum, String status) {
+		statusService.showStatus(progress, maximum, status);
+		if (isReady()) getUI().showStatus(status);
+	}
+
 }

@@ -1464,7 +1464,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		final SigmaPalette sp = new SigmaPalette();
 		sp.setListener(resultsDialog.listener);
-		sp.makePalette(xy, x_min, x_max, y_min, y_max, z_min, z_max,
+		sp.makePalette(getLoadedDataAsImp(), x_min, x_max, y_min, y_max, z_min, z_max,
 			new TubenessProcessor(true), sigmas, 256 / resultsDialog.getMultiplier(),
 			3, 3, z);
 	}

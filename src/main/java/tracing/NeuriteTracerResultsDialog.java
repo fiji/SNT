@@ -164,6 +164,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	static final int SAVING = 10;
 	static final int LOADING = 11;
 	static final int FITTING_PATHS = 12;
+	static final int EDITING_MODE = 13;
+	static final int PAUSED = 14;
 	static final int IMAGE_CLOSED = -1;
 
 	// TODO: Internal preferences: should be migrated to SNTPrefs
@@ -479,7 +481,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 					case WAITING_TO_START_PATH:
 						updateStatusText("Click somewhere to start a new path...");
-						disableEverything();
+						plugin.enableEditMode(false);
 
 						keepSegment.setEnabled(false);
 						junkSegment.setEnabled(false);
@@ -574,6 +576,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 					case SAVING:
 						updateStatusText("Saving...");
+						disableEverything();
+						break;
+
+					case EDITING_MODE:
+						if (noPathsError()) return;
+						updateStatusText("Editing Mode... Tracing functions disabled");
+						plugin.enableEditMode(true);
 						disableEverything();
 						break;
 
@@ -1700,6 +1709,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				return "LOADING";
 			case FITTING_PATHS:
 				return "FITTING_PATHS";
+			case EDITING_MODE:
+				return "EDITING_MODE";
+			case PAUSED:
+				return "PAUSED";
 			case IMAGE_CLOSED:
 				return "IMAGE_CLOSED";
 			default:

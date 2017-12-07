@@ -2084,48 +2084,51 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		clickForTrace(p[0] * x_spacing, p[1] * y_spacing, p[2] * z_spacing, false);
 	}
 
-	public static final int OVERLAY_OPACITY_PERCENT = 20;
 	private static final String OVERLAY_IDENTIFIER = "SNT-MIP-OVERLAY";
 
-	public void showMIPOverlays(final boolean show) {
+	/**
+	 * Overlays a semi-transparent MIP over the tracing canvas(es).
+	 *
+	 * @param opacity (alpha), in the range 0.0-1.0, where 0.0 is fully
+	 *          transparent and 1.0 is fully opaque. Setting opacity to zero
+	 *          clears previous MIPs.
+	 */
+	public void showMIPOverlays(final double opacity) {
 		final ArrayList<ImagePlus> allImages = new ArrayList<>();
 		allImages.add(xy);
 		if (!single_pane) {
 			allImages.add(xz);
 			allImages.add(zy);
 		}
-		for (final ImagePlus imagePlus : allImages) {
-			if (imagePlus == null || imagePlus.getNSlices() == 1) continue;
-			Overlay overlayList = imagePlus.getOverlay();
-			if (show) {
 
-				// Create a MIP Z-projection of each image:
-				//TODO: Project time axis if present?
-				final ZProjector zp = new ZProjector();
-				zp.setImage(imagePlus);
-				imagePlus.setPositionWithoutUpdate(channel, imagePlus.getZ(), frame);
+		// Create a MI Z-projection of the active channel
+		for (final ImagePlus imp : allImages) {
+			if (imp == null || imp.getNSlices() == 1) continue;
+			Overlay existingOverlay = imp.getOverlay();
+			if (opacity > 0) {
+				final ZProjector zp = new ZProjector(new ImagePlus("", imp
+					.getChannelProcessor()));
 				zp.setStartSlice(1);
-				zp.setStopSlice(imagePlus.getNSlices());
+				zp.setStopSlice(imp.getNSlices());
 				zp.setMethod(ZProjector.MAX_METHOD);
-				if (imagePlus.getType()==ImagePlus.COLOR_RGB)
-					zp.doRGBProjection();
-				else
+				if (imp.getType() == ImagePlus.COLOR_RGB) {
+					zp.doRGBProjection(); // 2017.10: side views of hyperstacks are RGB images 
+				} else {
 					zp.doHyperStackProjection(false);
+				}
 				final ImagePlus overlay = zp.getProjection();
-
-				// Add display it as an overlay.
 				// (This logic is taken from OverlayCommands.)
-				final Roi roi = new ImageRoi(0, 0, overlay.getProcessor());
+				final ImageRoi roi = new ImageRoi(0, 0, overlay.getProcessor());
 				roi.setName(OVERLAY_IDENTIFIER);
-				((ImageRoi) roi).setOpacity(OVERLAY_OPACITY_PERCENT / 100.0);
-				if (overlayList == null) overlayList = new Overlay();
-				overlayList.add(roi);
-
+				roi.setOpacity(opacity);
+				if (existingOverlay == null) existingOverlay = new Overlay();
+				existingOverlay.add(roi);
 			}
 			else {
-				removeMIPfromOverlay(overlayList);
+				removeMIPfromOverlay(existingOverlay);
 			}
-			imagePlus.setOverlay(overlayList);
+			imp.setOverlay(existingOverlay);
+			imp.setHideOverlay(false);
 		}
 	}
 

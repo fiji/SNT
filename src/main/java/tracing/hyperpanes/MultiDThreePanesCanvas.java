@@ -50,6 +50,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	private String cursorText; // text to be rendered near cursor
 	private String canvasText; // text to be rendered NW corner of canvas
 	private Color cursorAnnotationsColor;
+	private boolean waveInteractionsToIJ;
 
 
 	protected MultiDThreePanesCanvas(final ImagePlus imagePlus,
@@ -303,6 +304,22 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 
 	public Color getCursorAnnotationsColor() {
 		return (cursorAnnotationsColor == null) ? Color.RED : cursorAnnotationsColor;
+	}
+
+	/**
+	 * @return whether SNT is being notified of mouse events
+	 */
+	public boolean isMouseEventsDisabled() {
+		return waveInteractionsToIJ;
+	}
+
+	/**
+	 * Sets whether mouse interactions should be waved to SNT or to IJ.
+	 *
+	 * @param disable If true, SNT will not be notified of mouse events
+	 */
+	public void disableMouseEvents(boolean disable) {
+		waveInteractionsToIJ = disable;
 	}
 
 	private boolean validString(String string) {

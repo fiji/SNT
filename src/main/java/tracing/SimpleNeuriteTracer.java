@@ -537,7 +537,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			if (success) {
 				final Path result = source.getResult();
 				if (result == null) {
-					guiUtils.error("Bug! Succeeded, but null result.");
+					SNT.error("Bug! Succeeded, but null result.");
 					return;
 				}
 				if (endJoin != null) {
@@ -663,10 +663,23 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return NeuriteTracerResultsDialog.EDITING_MODE == getUIState();
 	}
 
+	@Deprecated
+	public void setCrosshair(final double new_x, final double new_y,
+		final double new_z) {
 		xy_tracer_canvas.setCrosshairs(new_x, new_y, new_z, true);
 		if (!single_pane) {
 			xz_tracer_canvas.setCrosshairs(new_x, new_y, new_z, true);
 			zy_tracer_canvas.setCrosshairs(new_x, new_y, new_z, true);
+		}
+	}
+
+	public void updateCursor(final double new_x, final double new_y,
+		final double new_z)
+	{
+		xy_tracer_canvas.updateCursor(new_x, new_y, new_z);
+		if (!single_pane) {
+			xz_tracer_canvas.updateCursor(new_x, new_y, new_z);
+			zy_tracer_canvas.updateCursor(new_x, new_y, new_z);
 		}
 
 	}
@@ -883,7 +896,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 			String statusMessage = "World: (" + SNT.formatDouble(x_scaled,2) + ", " + SNT.formatDouble(y_scaled,2) + ", " +
 					SNT.formatDouble(z_scaled,2) + "); Image: (" + ix + ", " + iy + ", " + (iz+1) + ")";
-			setCrosshair(x, y, z);
+			updateCursor(x, y, z);
 			if (labelData != null) {
 
 				final byte b = labelData[iz][iy * width + ix];
@@ -894,7 +907,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			}
 			statusService.showStatus(statusMessage);
 
-			repaintAllPanes(); // Or the crosshair isn't updated....
+			repaintAllPanes(); // Or the crosshair isn't updated....//FIXME:
 		}
 
 		if (filler != null) {

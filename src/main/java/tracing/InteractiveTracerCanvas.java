@@ -266,6 +266,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			me.consume();
 			return;
 		}
+
 		if (isMouseEventsDisabled() || !tracerPlugin.isReady()) {
 			super.mousePressed(me);
 			return;
@@ -289,8 +290,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		} else if (currentState == NeuriteTracerResultsDialog.EDITING_MODE) {
 
-			if (impossibleEdit(false)) return;
-			editingPath.setEditableNode(editingNode);
+			if (impossibleEdit(true)) return;
 			update(getGraphics());
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_POINT) {
@@ -346,7 +346,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	private boolean impossibleEdit(final boolean displayError) {
 		boolean invalid = (editingPath == null || editingNode == -1);
-		if (invalid && displayError) displayError("No node selected");
+		if (invalid && displayError) tracerPlugin.floatingMsg("No node selected");
 		return invalid;
 	}
 
@@ -360,7 +360,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	private void redrawEditingPath(final Graphics2D g) {
 		editingPath.drawPathAsPoints(g, this, tracerPlugin);
-	}
 	}
 
 	@Override
@@ -425,7 +424,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				if (currentPathFromTracer.startJoins != null)
 					edgeColour = Color.GREEN;
 
-				//FIXME:drawSquare(g, p, Color.BLUE, edgeColour, spotDiameter);
+				drawSquare(g, p, Color.BLUE, edgeColour, spotDiameter); //FIXME:
 			}
 		}
 
@@ -463,8 +462,11 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		@Override
 		public void itemStateChanged(final ItemEvent e) {
-			setEditMode(toggleEditModeMenuItem.getState(), true);
-			disableMouseEvents(togglePauseModeMenuItem.getState());
+			if (e.getSource().equals(toggleEditModeMenuItem)) {
+				enableEditMode(toggleEditModeMenuItem.getState());
+			}
+		else if (e.getSource().equals(togglePauseModeMenuItem))
+				disableMouseEvents(togglePauseModeMenuItem.getState());
 		}
 
 		@Override

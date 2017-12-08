@@ -131,7 +131,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	protected JButton abortButton;
 	private JButton completePath;
 
-	//private JButton cancelPath;
 	private JPanel colorPanel;
 	private static final int MARGIN = 4;
 	private volatile int currentState;
@@ -1988,11 +1987,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			else if (source == completePath) {
 
 				plugin.finishedPath();
-
-			}
-			else if (source == cancelPath) {
-
-				plugin.cancelPath();
 
 			}
 			else if (source == quitMenuItem) {

@@ -253,7 +253,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				if (tabbedPane.getSelectedIndex() == 1 && getCurrentState() > 0) {
 					tabbedPane.setSelectedIndex(0);
 					guiUtils.blinkingError(statusText,
-						"Please complete current operation before selecting the \"Advanced\" tab.");
+						"Please complete current task before selecting the \"Options\" tab.");
 				}
 			}
 		});
@@ -502,6 +502,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						quitMenuItem.setEnabled(true);
 						GuiUtils.enableComponents(colorPanel, true);
 						justShowSelected.setEnabled(true);
+						showOrHideFillList.setEnabled(true);
 						break;
 
 					case PARTIAL_PATH:
@@ -579,7 +580,18 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 					case EDITING_MODE:
 						if (noPathsError()) return;
-						updateStatusText("Editing Mode... Tracing functions disabled");
+						updateStatusText("Editing Mode. Tracing functions disabled...");
+						disableEverything();
+						keepSegment.setEnabled(false);
+						junkSegment.setEnabled(false);
+						abortButton.setEnabled(true);
+						completePath.setEnabled(false);
+						justShowPartsNearby.setEnabled(isStackAvailable());
+						preprocess.setEnabled(false);
+						getFillWindow().setVisible(false);
+						showOrHideFillList.setEnabled(false);
+						break;
+
 
 					case PAUSED:
 						updateStatusText("SNT is paused. Tracing functions disabled...");

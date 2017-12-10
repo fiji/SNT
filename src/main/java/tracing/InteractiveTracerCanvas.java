@@ -91,10 +91,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	private void showPopupMenu(int x, int y) {
-		toggleEditModeMenuItem.setEnabled(uiReadyForModeChange());
-		togglePauseModeMenuItem.setEnabled(uiReadyForModeChange());
-		for (int i = 2; i < pMenu.getItemCount(); i++) {
-			// First 2 items : Edit mode & Pause mode toggles
+		toggleEditModeMenuItem.setEnabled(uiReadyForModeChange(NeuriteTracerResultsDialog.EDITING_MODE));
+		togglePauseModeMenuItem.setEnabled(uiReadyForModeChange(NeuriteTracerResultsDialog.PAUSED));
+		for (int i = 4; i < pMenu.getItemCount(); i++) {
+			// First 4 items: Edit mode, separator, Pause mode, separator
 			pMenu.getItem(i).setEnabled(editMode);
 		}
 		pMenu.show(this, x, y);
@@ -122,9 +122,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		this.currentPath = path;
 	}
 
-	private boolean uiReadyForModeChange() {
+	private boolean uiReadyForModeChange(int mode) {
 		return tracerPlugin.isReady() && (tracerPlugin
-			.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH ||
+			tracerPlugin.getUIState() == mode);
 	}
 
 	public void toggleJustNearSlices() {
@@ -458,8 +459,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	 */
 	private class AListener implements ActionListener, ItemListener {
 
-		public static final String PAUSE_TOOGLE = "Pause Tracing";
-		public static final String EDIT_TOOGLE = "Allow Node Editing";
+		public static final String PAUSE_TOOGLE = "Pause SNT...";
+		public static final String EDIT_TOOGLE = "Edit Paths";
 		private final static String NODE_CONNECT = "Connect To...";
 		private final static String NODE_DELETE = "Delete Selected";
 		private final static String NODE_INSERT = "Insert Node Here";

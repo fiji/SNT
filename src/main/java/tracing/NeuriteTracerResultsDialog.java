@@ -480,7 +480,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 					case WAITING_TO_START_PATH:
 						updateStatusText("Click somewhere to start a new path...");
-						plugin.enableEditMode(false);
 
 						keepSegment.setEnabled(false);
 						junkSegment.setEnabled(false);
@@ -581,7 +580,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case EDITING_MODE:
 						if (noPathsError()) return;
 						updateStatusText("Editing Mode... Tracing functions disabled");
-						plugin.enableEditMode(true);
 						disableEverything();
 						break;
 

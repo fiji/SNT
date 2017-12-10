@@ -375,11 +375,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void loadTracings(File file) {
-		if (resultsDialog == null) throw new IllegalArgumentException("UI has not been started");
 		if (file != null && file.exists()) {
-			resultsDialog.changeState(NeuriteTracerResultsDialog.LOADING);
+			if (isReady()) resultsDialog.changeState(
+				NeuriteTracerResultsDialog.LOADING);
 			pathAndFillManager.loadGuessingType(file.getAbsolutePath());
-			resultsDialog.changeState(
+			if (isReady()) resultsDialog.changeState(
 				NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 		}
 	}

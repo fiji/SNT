@@ -80,6 +80,11 @@ class ClarifyingKeyListener implements KeyListener, ContainerListener {
 		}
 	}
 
+	private boolean listenerDisabled() {
+		return plugin.getXYCanvas() != null && plugin.getXYCanvas()
+			.isEventsDisabled();
+	}
+
 	@Override
 	public void componentAdded(final ContainerEvent e) {
 		addKeyAndContainerListenerRecursively(e.getChild());
@@ -93,8 +98,7 @@ class ClarifyingKeyListener implements KeyListener, ContainerListener {
 	@Override
 	public void keyPressed(final KeyEvent e) {
 
-		if (!plugin.isReady()) // false if plugin.getResultsDialog() == null
-			return;
+		if (!plugin.isReady() || listenerDisabled()) return;
 
 		final int keyCode = e.getKeyCode();
 

@@ -580,7 +580,18 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case EDITING_MODE:
 						if (noPathsError()) return;
 						updateStatusText("Editing Mode... Tracing functions disabled");
+
+					case PAUSED:
+						updateStatusText("SNT is paused. Tracing functions disabled...");
 						disableEverything();
+						keepSegment.setEnabled(false);
+						junkSegment.setEnabled(false);
+						abortButton.setEnabled(true);
+						completePath.setEnabled(false);
+						justShowPartsNearby.setEnabled(isStackAvailable());
+						preprocess.setEnabled(false);
+						getFillWindow().setVisible(false);
+						showOrHideFillList.setEnabled(false);
 						break;
 
 					case IMAGE_CLOSED:

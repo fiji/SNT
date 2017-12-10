@@ -115,12 +115,6 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	@Override
-	public void paint(final Graphics g) {
-		super.paint(g);
-		drawOverlay(getGraphics2D(g));
-	}
-
-	@Override
 	public void mouseMoved(final MouseEvent e) {
 
 		super.mouseMoved(e);
@@ -307,18 +301,18 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	/**
-	 * @return whether SNT is being notified of mouse events
+	 * @return whether SNT is being notified of mouse/key events
 	 */
-	public boolean isMouseEventsDisabled() {
+	public boolean isEventsDisabled() {
 		return waveInteractionsToIJ;
 	}
 
 	/**
-	 * Sets whether mouse interactions should be waved to SNT or to IJ.
+	 * Sets whether mouse and key events should be waived back to IJ.
 	 *
-	 * @param disable If true, SNT will not be notified of mouse events
+	 * @param disable If true, SNT will not be notified of mouse/keyboard events
 	 */
-	public void disableMouseEvents(boolean disable) {
+	public void disableEvents(boolean disable) {
 		waveInteractionsToIJ = disable;
 	}
 

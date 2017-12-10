@@ -52,7 +52,7 @@ class QueueJumpingKeyListener implements KeyListener {
 	@Override
 	public void keyPressed(final KeyEvent e) {
 
-		if (!tracerPlugin.isReady()) // false if plugin.getResultsDialog() == null
+		if (!tracerPlugin.isReady() || canvas.isEventsDisabled())
 			return;
 
 		final int keyCode = e.getKeyCode();

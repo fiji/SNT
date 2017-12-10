@@ -61,6 +61,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private boolean lastPathUnfinished;
 	private boolean editMode; // convenience flag to monitor SNT's edit mode
 	private static String EDIT_MODE_LABEL = "Edit Mode";
+	private static String PAUSE_MODE_LABEL = "SNT Paused";
 
 
 	protected InteractiveTracerCanvas(final ImagePlus imp, final SimpleNeuriteTracer plugin, final int plane,
@@ -208,7 +209,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseMoved(final MouseEvent e) {
 
-		if (super.isMouseEventsDisabled() || !tracerPlugin.isReady()) {
+		if (super.isEventsDisabled() || !tracerPlugin.isReady()) {
 			super.mouseMoved(e);
 			return;
 		}
@@ -252,7 +253,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseEntered(final MouseEvent e) {
 
-		if (super.isMouseEventsDisabled() || !tracerPlugin.isReady()) {
+		if (super.isEventsDisabled() || !tracerPlugin.isReady()) {
 			super.mouseEntered(e);
 			return;
 		}
@@ -267,7 +268,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			return;
 		}
 
-		if (isMouseEventsDisabled() || !tracerPlugin.isReady()) {
+		if (isEventsDisabled() || !tracerPlugin.isReady()) {
 			super.mousePressed(me);
 			return;
 		}
@@ -276,7 +277,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseClicked(final MouseEvent e) {
 
-		if (isMouseEventsDisabled() || !tracerPlugin.isReady()) {
+		if (isEventsDisabled() || !tracerPlugin.isReady()) {
 			super.mouseClicked(e);
 			return;
 		}
@@ -443,7 +444,12 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 		setEditingPath(tracerPlugin.getEditingPath());
 		tracerPlugin.repaintAllPanes();
-		drawOverlay(getGraphics2D(getGraphics())); // update canvas label
+	}
+
+	private void pauseListeners(boolean pause) {
+			tracerPlugin.pause(pause);
+			disableEvents(pause);
+			setCanvasLabel(pause?PAUSE_MODE_LABEL:null);
 	}
 
 	/**
@@ -466,7 +472,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				enableEditMode(toggleEditModeMenuItem.getState());
 			}
 		else if (e.getSource().equals(togglePauseModeMenuItem))
-				disableMouseEvents(togglePauseModeMenuItem.getState());
+			pauseListeners(togglePauseModeMenuItem.getState());
 		}
 
 		@Override

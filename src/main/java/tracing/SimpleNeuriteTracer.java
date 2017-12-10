@@ -659,6 +659,23 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		assignEditPath();
 	}
 
+	protected void pause(final boolean enable) {
+		if (enable) {
+			if (!uiReadyForModeChange()) {
+				guiUtils.error(
+					"Please finish/abort current task before pausing SNT.");
+				return;
+			}
+			changeUIState(NeuriteTracerResultsDialog.PAUSED);
+		}
+		else {
+			if (xy != null && xy.isLocked() && !guiUtils.getConfirmation(
+				"Image appears to be locked by other process. Activate SNT?",
+				"Image locked")) return;
+			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+		}
+	}
+
 	protected boolean isEditModeEnabled() {
 		return NeuriteTracerResultsDialog.EDITING_MODE == getUIState();
 	}

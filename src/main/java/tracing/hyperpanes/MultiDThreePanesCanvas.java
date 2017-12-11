@@ -49,7 +49,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	private boolean draw_crosshairs;
 	private String cursorText; // text to be rendered near cursor
 	private String canvasText; // text to be rendered NW corner of canvas
-	private Color cursorAnnotationsColor;
+	private Color annotationsColor;
 	private boolean waveInteractionsToIJ;
 
 
@@ -81,7 +81,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		final boolean draw_string = validString(cursorText);
 		if (!draw_crosshairs && !draw_string) return;
 		final Point2d pos = getCursorPos();
-		g.setColor(getCursorAnnotationsColor());
+		g.setColor(getAnnotationsColor());
 		if (draw_crosshairs) drawCrosshairs(g, pos.x, pos.y);
 		if (draw_string) drawString(g, cursorText, (float)pos.x, (float)pos.y);
 	}
@@ -172,7 +172,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		g.setColor(new Color(120, 120, 120, 100));
 		g.fill(new Rectangle2D.Double(0, 0, w, h));
 		g.setFont(font);
-		g.setColor(getCursorAnnotationsColor());
+		g.setColor(getAnnotationsColor());
 		g.drawString(text, edge / 2, edge / 2 + fm.getAscent());
 	}
 
@@ -292,12 +292,12 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		this.cursorText = cursorText;
 	}
 
-	public void setCursorAnnotationsColor(Color color) {
-		this.cursorAnnotationsColor = color;
+	public void setAnnotationsColor(Color color) {
+		this.annotationsColor = color;
 	}
 
-	public Color getCursorAnnotationsColor() {
-		return (cursorAnnotationsColor == null) ? Color.RED : cursorAnnotationsColor;
+	public Color getAnnotationsColor() {
+		return (annotationsColor == null) ? Color.RED : annotationsColor;
 	}
 
 	/**

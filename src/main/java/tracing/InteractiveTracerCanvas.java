@@ -39,13 +39,12 @@ import java.awt.event.WindowEvent;
 
 import ij.IJ;
 import ij.ImagePlus;
+import tracing.gui.SWCColor;
 import tracing.hyperpanes.MultiDThreePanes;
 
 public class InteractiveTracerCanvas extends TracerCanvas {
 
 	private static final long serialVersionUID = 1L;
-
-	private final Color transparentGreen = new Color(0, 128, 0, 128);
 	private final SimpleNeuriteTracer tracerPlugin;
 	private PopupMenu pMenu;
 	private CheckboxMenuItem toggleEditModeMenuItem;
@@ -60,6 +59,11 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private int editingNode = -1;
 	private boolean lastPathUnfinished;
 	private boolean editMode; // convenience flag to monitor SNT's edit mode
+
+	private Color temporaryColor;
+	private Color unconfirmedColor;
+	private Color fillColor;
+
 	private static String EDIT_MODE_LABEL = "Edit Mode";
 	private static String PAUSE_MODE_LABEL = "SNT Paused";
 
@@ -108,6 +112,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	public void setFillTransparent(final boolean transparent) {
 		this.fillTransparent = transparent;
+		if (transparent && fillColor != null) setFillColor(SWCColor.addTransparency(
+			fillColor));
 	}
 
 	public void setPathUnfinished(final boolean unfinished) {
@@ -378,8 +384,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		final FillerThread filler = tracerPlugin.filler;
 		if (filler != null) {
-			filler.setDrawingColors(fillTransparent ? transparentGreen : Color.GREEN,
-				fillTransparent ? transparentGreen : Color.GREEN);
+			filler.setDrawingColors(getFillColor(), getFillColor());
 			filler.setDrawingThreshold(filler.getThreshold());
 		}
 
@@ -400,7 +405,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final int spotDiameter = 5 * pixel_size;
 
 		if (unconfirmedSegment != null) {
-			unconfirmedSegment.drawPathAsPoints(this, g, Color.BLUE, plane, drawDiametersXY, sliceZeroIndexed,
+			unconfirmedSegment.drawPathAsPoints(this, g, getUnconfirmedPathColor(), plane, drawDiametersXY, sliceZeroIndexed,
 				eitherSideParameter);
 
 			if (unconfirmedSegment.endJoins != null) {
@@ -451,6 +456,32 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			tracerPlugin.pause(pause);
 			disableEvents(pause);
 			setCanvasLabel(pause?PAUSE_MODE_LABEL:null);
+	}
+
+	public void setTemporaryPathColor(final Color color) {
+		this.temporaryColor = color;
+	}
+
+	public void setUnconfirmedPathColor(final Color color) {
+		this.unconfirmedColor = color;
+	}
+
+	public void setFillColor(final Color color) {
+		this.fillColor = color;
+	}
+
+	public Color getTemporaryPathColor() {
+		return (temporaryColor == null) ? Color.RED : temporaryColor;
+	}
+
+	public Color getUnconfirmedPathColor() {
+		return (unconfirmedColor == null) ? Color.BLUE : unconfirmedColor;
+	}
+
+	public Color getFillColor() {
+		if (fillColor == null) fillColor =  new Color(0, 128, 0);
+		if (fillTransparent) fillColor = SWCColor.addTransparency(fillColor);
+		return fillColor;
 	}
 
 	/**

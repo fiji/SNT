@@ -28,6 +28,7 @@ import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 
+import tracing.gui.SWCColor;
 import tracing.hyperpanes.MultiDThreePanes;
 
 /** Convenience class used to render Path nodes (vertices). */
@@ -136,7 +137,7 @@ public class PathNode {
 		}
 		else {
 			// 'regular' node: filled @ 50% transparency
-			g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 128));
+			g.setColor(SWCColor.addTransparency(c));
 			g.fill(node);
 		}
 	}

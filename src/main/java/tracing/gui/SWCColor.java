@@ -118,4 +118,14 @@ public class SWCColor {
 		return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
 	}
 
+	/**
+	 * Adds 50% transparency to a specified color.
+	 *
+	 * @param c the input color
+	 * @return the color with an alpha component of 128 (0 - 255) range
+	 */
+	public static Color addTransparency(final Color c) {
+		return new Color(c.getRed(), c.getGreen(), c.getBlue(), 128);
+	}
+
 }

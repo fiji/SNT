@@ -55,6 +55,11 @@ public class ColorChooserButton extends JButton {
 	public ColorChooserButton(final Color c, final String label,
 		double scaleFactor)
 	{
+		this(c, label, scaleFactor, SwingConstants.LEFT);
+	}
+	public ColorChooserButton(final Color c, final String label,
+		double scaleFactor, int textPosition)
+	{
 		super(label);
 		if (scaleFactor != 1d) {
 			setFont(getFont().deriveFont((float) (getFont().getSize() *
@@ -69,7 +74,7 @@ public class ColorChooserButton extends JButton {
 		setSelectedColor(c);
 		final JButton thisButton = this;
 		setVerticalTextPosition(SwingConstants.CENTER);
-		setHorizontalTextPosition(SwingConstants.LEFT);
+		setHorizontalTextPosition(textPosition);
 		setIconTextGap(getFontMetrics(getFont()).stringWidth("  "));
 		addActionListener(new ActionListener() {
 

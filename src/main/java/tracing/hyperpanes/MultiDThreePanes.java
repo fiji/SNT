@@ -22,6 +22,7 @@
 
 package tracing.hyperpanes;
 
+import java.awt.Color;
 import java.awt.image.ColorModel;
 
 import ij.ImagePlus;
@@ -36,6 +37,7 @@ import ij.process.ShortProcessor;
 import tracing.gui.GuiUtils;
 import tracing.hyperpanes.PaneOwner;
 
+/** Convenience class defining methods common to SNT's XY, XZ, and ZY panes */
 public class MultiDThreePanes implements PaneOwner {
 
 	public static final int XY_PLANE = 0; // constant z
@@ -157,6 +159,14 @@ public class MultiDThreePanes implements PaneOwner {
 		if (!single_pane) {
 			xz_canvas.repaint();
 			zy_canvas.repaint();
+		}
+	}
+
+	public void setAnnotationsColorInAllPanes(final Color newColor) {
+		xy_canvas.setAnnotationsColor(newColor);
+		if (!single_pane) {
+			xz_canvas.setAnnotationsColor(newColor);
+			zy_canvas.setAnnotationsColor(newColor);
 		}
 	}
 

@@ -42,6 +42,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -240,6 +242,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		addSeparator(tab2, "UI Interaction:", true, c2);
 		++c2.gridy;
 		tab2.add(interactionPanel(), c2);
+		++c2.gridy;
+		addSeparator(tab2, "Default Colors:", true, c2);
+		++c2.gridy;
+		tab2.add(extraColorsPanel(), c2);
 		++c2.gridy;
 		addSeparator(tab2, "Misc:", true, c2);
 		++c2.gridy;
@@ -799,28 +805,86 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 		intPanel.add(winLocCheckBox, gdb);
-		++gdb.gridy;
+		return intPanel;
+	}
 
-		final ColorChooserButton cChooser = new ColorChooserButton(plugin
-			.getXYCanvas().getCursorAnnotationsColor(), "Cursor Annotations", .85);
-		// cf. GuiUtils.smallButton(String)
-		cChooser.setName("Color for Cursor Annotations");
+	private JPanel extraColorsPanel() {
+
+		final LinkedHashMap<String, Color> hm = new LinkedHashMap<>();
+		hm.put("Canvas annotations", plugin.getXYCanvas().getAnnotationsColor());
+		hm.put("Fills", plugin.getXYCanvas().getFillColor());
+		hm.put("Unconfirmed paths", plugin.getXYCanvas().getUnconfirmedPathColor());
+		hm.put("Temporary paths", plugin.getXYCanvas().getTemporaryPathColor());
+
+		final JComboBox<String> colorChoice = new JComboBox<>();
+		for (final Entry<String, Color> entry : hm.entrySet())
+			colorChoice.addItem(entry.getKey());
+
+		final String selectedKey = String.valueOf(colorChoice
+			.getSelectedItem());
+		final ColorChooserButton cChooser = new ColorChooserButton(hm.get(
+			selectedKey), "Change...", 1, SwingConstants.RIGHT);
+
+		colorChoice.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				cChooser.setSelectedColor(hm.get(String.valueOf(colorChoice
+					.getSelectedItem())), false);
+			}
+		});
+
 		cChooser.addColorChangedListener(new ColorChangedListener() {
 
 			@Override
 			public void colorChanged(final Color newColor) {
-				if (plugin.getXYCanvas() != null) plugin.getXYCanvas()
-					.setCursorAnnotationsColor(newColor);
-				if (plugin.getZYCanvas() != null) plugin.getZYCanvas()
-					.setCursorAnnotationsColor(newColor);
-				if (plugin.getXZCanvas() != null) plugin.getXZCanvas()
-					.setCursorAnnotationsColor(newColor);
+				final String selectedKey = String.valueOf(colorChoice
+					.getSelectedItem());
+				switch (selectedKey) {
+					case "Canvas annotations":
+						plugin.setAnnotationsColorInAllPanes(newColor);
+						break;
+					case "Fills":
+						plugin.getXYCanvas().setFillColor(newColor);
+						if (!plugin.getSinglePane()) {
+							plugin.getZYCanvas().setFillColor(newColor);
+							plugin.getXZCanvas().setFillColor(newColor);
+						}
+						break;
+					case "Unconfirmed paths":
+						plugin.getXYCanvas().setUnconfirmedPathColor(newColor);
+						if (!plugin.getSinglePane()) {
+							plugin.getZYCanvas().setUnconfirmedPathColor(newColor);
+							plugin.getXZCanvas().setUnconfirmedPathColor(newColor);
+						}
+						break;
+					case "Temporary paths":
+						plugin.getXYCanvas().setTemporaryPathColor(newColor);
+						if (!plugin.getSinglePane()) {
+							plugin.getZYCanvas().setTemporaryPathColor(newColor);
+							plugin.getXZCanvas().setTemporaryPathColor(newColor);
+						}
+						break;
+					default:
+						throw new IllegalArgumentException("Unrecognized option");
+				}
 			}
 		});
-		gdb.fill = GridBagConstraints.NONE;
-		intPanel.add(cChooser, gdb);
 
-		return intPanel;
+		final JPanel p = new JPanel();
+		p.setLayout(new GridBagLayout());
+		final GridBagConstraints c = GuiUtils.defaultGbc();
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.ipadx = 2;
+		c.gridwidth = 2;
+		p.add(colorChoice, c);
+		c.fill = GridBagConstraints.NONE;
+		c.gridx = 1;
+		c.ipadx = 0;
+		p.add(cChooser);
+		return p;
 	}
 
 	private JPanel miscPanel() {

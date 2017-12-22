@@ -58,6 +58,7 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 
+import org.scijava.ui.awt.AWTWindows;
 import org.scijava.ui.swing.SwingDialog;
 import org.scijava.ui.swing.widget.SwingColorWidget;
 import org.scijava.util.PlatformUtils;
@@ -78,15 +79,11 @@ public class GuiUtils {
 	}
 
 	public void error(final String msg) {
-		error(msg, "SNT v" + SNT.VERSION, false);
+		error(msg, "SNT v" + SNT.VERSION);
 	}
 
 	public void error(final String msg, final String title) {
-		error(msg, title, false);
-	}
-
-	public void msg(final String msg, final String title) {
-		error(msg, title, false); // TODO: this could be something fancier
+		centeredDialog(msg, title, JOptionPane.ERROR_MESSAGE);
 	}
 
 	public void error(final String msg, final String title, final boolean icon) {
@@ -157,7 +154,7 @@ public class GuiUtils {
 		return d.show();
 	}
 
-	public boolean getConfirmation(final String msg, final String title) {
+	public boolean getConfirmation(final String msg, final String title) { //FIXME: This is always displayed at the center
 		return (yesNoDialog(msg, title) == JOptionPane.YES_OPTION);
 	}
 
@@ -289,9 +286,22 @@ public class GuiUtils {
 
 	private int simpleMsg(final String msg, final String title, final int type) {
 		final SwingDialog d = new SwingDialog(getLabel(msg), type, false);
-		d.setTitle(title);
 		if (parent != null) d.setParent(parent);
 		return d.show();
+	}
+
+	public void centeredMsg(final String msg, final String title) {
+		centeredDialog(msg, title, JOptionPane.PLAIN_MESSAGE);
+	}
+
+	private void centeredDialog(final String msg, final String title, final int type) {
+		final JOptionPane optionPane = new JOptionPane(getLabel(msg), type, JOptionPane.DEFAULT_OPTION);
+		final JDialog d = optionPane.createDialog(title);
+		if (parent != null) {
+			AWTWindows.centerWindow(parent.getBounds(), d);
+			// we could also use d.setLocationRelativeTo(parent);
+		}
+		d.setVisible(true);
 	}
 
 	private JLabel getLabel(final String text) {

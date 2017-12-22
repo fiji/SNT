@@ -629,7 +629,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			" while pressing the up/down keys to select multiple filtered paths</li>" +
 			"<li>Press the up/down keys to find the next/previous occurrence of the search string</li>" +
 			"</ol></div></html>";
-		guiUtils.msg(msg, "Searching Paths");
+		guiUtils.centeredMsg(msg, "Searching Paths");
 	}
 
 	private void showPopup(final MouseEvent me) {
@@ -1315,8 +1315,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 				final double maxDeviation = userMaxDeviation.doubleValue();
 				if (Double.isNaN(maxDeviation) || maxDeviation <= 0) {
-					guiUtils.error(
-						"The maximum permitted distance must be a postive number");
+					guiUtils.error("The maximum permitted distance must be a postive number", "Invalid Input");
 					return;
 				}
 				for (final Path p : selectedPaths) { // TODO: Move to

@@ -621,7 +621,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected boolean editModeAllowed(final boolean warnUserIfNot) {
 		final boolean uiReady = uiReadyForModeChange();
 		if (warnUserIfNot && !uiReady) {
-			guiUtils.error("Please finish current operation before editing paths");
+			guiUtils.error("Please finish current operation before editing paths", "Invalid State");
 			return false;
 		}
 		setEditingPath();

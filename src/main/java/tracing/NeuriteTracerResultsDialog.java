@@ -194,10 +194,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 
 		final JTabbedPane tabbedPane = new JTabbedPane();
-		final JPanel tab1 = new JPanel();
-		tab1.setLayout(new GridBagLayout());
+		final JPanel tab1 = getTab();
 		final GridBagConstraints c = GuiUtils.defaultGbc();
-		c.insets = new Insets(MARGIN, MARGIN*2, MARGIN*2, 0);
+		c.insets.left = MARGIN * 2;
+		c.anchor = GridBagConstraints.NORTHEAST;
 		addSeparator(tab1, "Cursor auto-snapping:", false, c);
 		++c.gridy;
 		tab1.add(snappingPanel(), c);
@@ -223,15 +223,15 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.insets = new Insets(0, 0, 0, 0);
 		tab1.add(hideWindowsPanel(), c);
-		tabbedPane.addTab("Main", tab1);
+		tabbedPane.addTab(" Main ", tab1);
 
-		final JPanel tab2 = new JPanel();
+		final JPanel tab2 = getTab();
 		tab2.setLayout(new GridBagLayout());
 		final GridBagConstraints c2 = GuiUtils.defaultGbc();
+		c.insets.left = MARGIN * 2;
 		c2.anchor = GridBagConstraints.NORTHEAST;
 		c2.gridwidth = GridBagConstraints.REMAINDER;
-		c2.insets = new Insets(MARGIN, MARGIN*2, MARGIN*2, 0);
-		addSeparator(tab2, "Data source:", true, c2);
+		addSeparator(tab2, "Data source:", false, c2);
 		++c2.gridy;
 		tab2.add(sourcePanel(), c2);
 		++c2.gridy;
@@ -251,7 +251,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		++c2.gridy;
 		c2.weighty = 1;
 		tab2.add(miscPanel(), c2);
-		tabbedPane.addTab("Options", tab2);
+		tabbedPane.addTab(" Options ", tab2);
 		tabbedPane.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -269,10 +269,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final GridBagConstraints dialogGbc = GuiUtils.defaultGbc();
 		add(statusPanel(), dialogGbc);
 		dialogGbc.gridy++;
-		dialogGbc.insets = new Insets(0, 0, MARGIN*2, 0); // vertical spacer
 		add(tabbedPane, dialogGbc);
 		dialogGbc.gridy++;
-		dialogGbc.insets = new Insets(0, 0, 0, 0);
 		add(statusBar(), dialogGbc);
 		pack();
 		toFront();
@@ -793,9 +791,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 		intPanel.add(canvasCheckBox, gdb);
 		++gdb.gridy;
-		final JCheckBox winLocCheckBox = new JCheckBox(
-			"Remember window locations across restarts", plugin.prefs
-				.isSaveWinLocations());
+		final JCheckBox winLocCheckBox = new JCheckBox("Remember window locations",
+			plugin.prefs.isSaveWinLocations());
 		winLocCheckBox.addItemListener(new ItemListener() {
 
 			@Override
@@ -937,7 +934,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					"Reset preferences to defaults? (Restart required)", "Reset?"))
 				{
 					plugin.prefs.resetOptions();
-					guiUtils.msg("You should now restart SNT for changes to take effect",
+					guiUtils.centeredMsg("You should now restart SNT for changes to take effect",
 						"Restart required");
 				}
 			}
@@ -993,7 +990,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		statusPanel.add(statusText, BorderLayout.CENTER);
 		final JPanel buttonPanel = statusButtonPanel();
 		statusPanel.add(buttonPanel, BorderLayout.SOUTH);
-		statusPanel.setBorder(BorderFactory.createEmptyBorder(MARGIN,MARGIN,0,MARGIN));
+		statusPanel.setBorder(BorderFactory.createEmptyBorder(MARGIN,MARGIN,MARGIN*2,MARGIN));
 		return statusPanel;
 	}
 
@@ -1012,7 +1009,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				displayFiltered.setEnabled(filterChoice.getSelectedIndex()>0);
-				guiUtils.msg("This feature is not yet implemented", "Not Yet Implemented");
+				guiUtils.centeredMsg("This feature is not yet implemented", "Not Yet Implemented");
 				filterChoice.setSelectedIndex(0);
 			}
 		});
@@ -1288,7 +1285,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 		tracingOptionsPanel.add(snapWindowXYsizeSpinner);
 
-		final JLabel z_spinner_label = leftAlignedLabel(" Z", isStackAvailable());
+		final JLabel z_spinner_label = leftAlignedLabel("  Z ", isStackAvailable());
 		z_spinner_label.setBorder(new EmptyBorder(0, 2, 0, 0));
 		tracingOptionsPanel.add(z_spinner_label);
 		snapWindowZsizeSpinner = GuiUtils.integerSpinner(plugin.cursorSnapWindowZ *
@@ -1384,16 +1381,23 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		statusBarText.setText(msg);
 	}
 
+	private JPanel getTab() {
+		final JPanel tab = new JPanel();
+		tab.setBorder(BorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, MARGIN));
+		tab.setLayout(new GridBagLayout());
+		return tab;
+	}
+
 	private void addSeparator(final JComponent component, final String heading,
 		final boolean vgap, final GridBagConstraints c)
 	{
-		final Insets previousInsets = c.insets;
-		c.insets = new Insets(vgap ? MARGIN*4 : 0, MARGIN, 0, 0);
+		final int previousGap = c.insets.top;
 		final JLabel label = leftAlignedLabel(heading, true);
 		Font font = label.getFont();
 		label.setFont(font.deriveFont((float) (font.getSize()*.85)));
+		if (vgap) c.insets.top = component.getFontMetrics(font).getHeight() * 2;
 		component.add(label, c);
-		c.insets = previousInsets;
+		if (vgap) c.insets.top = previousGap;
 	}
 
 	private JLabel leftAlignedLabel(final String text, final boolean enabled) {
@@ -1457,8 +1461,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			if (Double.isNaN(sigma) || sigma <= 0 || Double.isNaN(multiplier) ||
 				multiplier <= 0)
 			{
-				guiUtils.error(
-					"The value of sigma and multiplier must be a valid positive number.",
+				guiUtils.error("Sigma and multiplier must be positive numbers.",
 					"Invalid Input");
 				return;
 			}
@@ -1570,7 +1573,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	{
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {
-			showOrHidePathList.setText(" Hide Path Manager");
+			showOrHidePathList.setText("  Hide Path Manager");
 			pw.setVisible(true);
 			if (toFront) pw.toFront();
 		}
@@ -1590,7 +1593,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	protected void setFillListVisible(final boolean makeVisible) {
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {
-			showOrHideFillList.setText(" Hide Fill Manager");
+			showOrHideFillList.setText("  Hide Fill Manager");
 			fw.setVisible(true);
 			fw.toFront();
 		}

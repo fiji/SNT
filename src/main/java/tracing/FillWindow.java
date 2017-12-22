@@ -307,6 +307,7 @@ public class FillWindow extends JFrame
 			exportAsCSV = new JButton("Export as CSV");
 			exportAsCSV.addActionListener(this);
 			add(exportAsCSV, c);
+			pack();
 		}
 	}
 

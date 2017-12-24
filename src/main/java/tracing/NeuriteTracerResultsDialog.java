@@ -1754,6 +1754,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				showStatus("Filling out cancelled...");
 				plugin.discardFill();
 				break;
+			case (PAUSED):
+				showStatus("Tracing mode reinstated...");
+				plugin.pause(false);
+				break;
 			case (WAITING_FOR_SIGMA_CHOICE):
 				showStatus("Close the sigma palette to abort sigma input...");
 				break; // do nothing: 

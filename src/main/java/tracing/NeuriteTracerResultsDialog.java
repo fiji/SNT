@@ -24,7 +24,6 @@ package tracing;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsConfiguration;
@@ -46,7 +45,6 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;

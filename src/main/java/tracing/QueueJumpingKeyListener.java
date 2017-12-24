@@ -52,7 +52,7 @@ class QueueJumpingKeyListener implements KeyListener {
 	@Override
 	public void keyPressed(final KeyEvent e) {
 
-		if (!tracerPlugin.isReady() || canvas.isEventsDisabled()) {
+		if (!tracerPlugin.isReady()) {
 			waiveKeyPress(e);
 			return;
 		}
@@ -60,6 +60,18 @@ class QueueJumpingKeyListener implements KeyListener {
 		final int keyCode = e.getKeyCode();
 		final char keyChar = e.getKeyChar();
 		final boolean doublePress = isDoublePress(e);
+
+		if (keyCode == KeyEvent.VK_ESCAPE) {
+			if (doublePress) tracerPlugin.getUI().reset();
+			else tracerPlugin.getUI().abortCurrentOperation();
+			e.consume();
+			return;
+		}
+	
+		if (canvas.isEventsDisabled()) {
+			waiveKeyPress(e);
+			return;
+		}
 
 		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
 		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT
@@ -83,12 +95,6 @@ class QueueJumpingKeyListener implements KeyListener {
 			if (tracerPlugin.getUI().finishOnDoubleConfimation &&
 				doublePress) tracerPlugin.finishedPath();
 			else tracerPlugin.confirmTemporary();
-			e.consume();
-		}
-
-		else if (keyCode == KeyEvent.VK_ESCAPE) {
-			if (doublePress) tracerPlugin.getUI().reset();
-			else tracerPlugin.getUI().abortCurrentOperation();
 			e.consume();
 		}
 
@@ -151,14 +157,14 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 		}
 
-		if (shift_down && (control_down || alt_down) &&
+		else if (shift_down && (control_down || alt_down) &&
 			(keyCode == KeyEvent.VK_A))
 		{
 			canvas.startShollAnalysis();
 			e.consume();
 		}
 
-		waiveKeyPress(e);
+//		else waiveKeyPress(e); // should we pass on other key presses when not in pause mode?
 
 	}
 

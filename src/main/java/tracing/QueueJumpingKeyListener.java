@@ -52,8 +52,10 @@ class QueueJumpingKeyListener implements KeyListener {
 	@Override
 	public void keyPressed(final KeyEvent e) {
 
-		if (!tracerPlugin.isReady() || canvas.isEventsDisabled())
+		if (!tracerPlugin.isReady() || canvas.isEventsDisabled()) {
+			waiveKeyPress(e);
 			return;
+		}
 
 		final int keyCode = e.getKeyCode();
 		final char keyChar = e.getKeyChar();
@@ -156,11 +158,15 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 		}
 
+		waiveKeyPress(e);
+
+	}
+
+	private void waiveKeyPress(final KeyEvent e) {
 		for (final KeyListener kl : listeners) {
 			if (e.isConsumed()) break;
 			kl.keyPressed(e);
 		}
-
 	}
 
 	@Override

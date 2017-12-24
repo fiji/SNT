@@ -64,8 +64,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private Color unconfirmedColor;
 	private Color fillColor;
 
-	private static String EDIT_MODE_LABEL = "Edit Mode";
-	private static String PAUSE_MODE_LABEL = "SNT Paused";
+	protected static String EDIT_MODE_LABEL = "Edit Mode";
+	protected static String PAUSE_MODE_LABEL = "SNT Paused";
 
 
 	protected InteractiveTracerCanvas(final ImagePlus imp, final SimpleNeuriteTracer plugin, final int plane,
@@ -95,8 +95,12 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	private void showPopupMenu(int x, int y) {
-		toggleEditModeMenuItem.setEnabled(uiReadyForModeChange(NeuriteTracerResultsDialog.EDITING_MODE));
-		togglePauseModeMenuItem.setEnabled(uiReadyForModeChange(NeuriteTracerResultsDialog.PAUSED));
+		final boolean be = uiReadyForModeChange(NeuriteTracerResultsDialog.EDITING_MODE);
+		toggleEditModeMenuItem.setEnabled(be);
+		togglePauseModeMenuItem.setState(be && editMode);
+		final boolean bp = uiReadyForModeChange(NeuriteTracerResultsDialog.PAUSED);
+		togglePauseModeMenuItem.setEnabled(bp);
+		togglePauseModeMenuItem.setState(bp && tracerPlugin.getUIState()==NeuriteTracerResultsDialog.PAUSED);
 		for (int i = 4; i < pMenu.getItemCount(); i++) {
 			// First 4 items: Edit mode, separator, Pause mode, separator
 			pMenu.getItem(i).setEnabled(editMode);
@@ -437,12 +441,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	}
 
-
 	private void enableEditMode(boolean enable) {
 		final boolean activate = enable && tracerPlugin.editModeAllowed(true);
 		if (activate) {
 			tracerPlugin.enableEditMode(true);
-			setCanvasLabel(EDIT_MODE_LABEL);
 		} else {
 			tracerPlugin.enableEditMode(false);
 			toggleEditModeMenuItem.setState(false);
@@ -450,12 +452,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 		setEditingPath(tracerPlugin.getEditingPath());
 		tracerPlugin.repaintAllPanes();
-	}
-
-	private void pauseListeners(boolean pause) {
-			tracerPlugin.pause(pause);
-			disableEvents(pause);
-			setCanvasLabel(pause?PAUSE_MODE_LABEL:null);
 	}
 
 	public void setTemporaryPathColor(final Color color) {
@@ -504,7 +500,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				enableEditMode(toggleEditModeMenuItem.getState());
 			}
 		else if (e.getSource().equals(togglePauseModeMenuItem))
-			pauseListeners(togglePauseModeMenuItem.getState());
+			tracerPlugin.pause(togglePauseModeMenuItem.getState());
 		}
 
 		@Override

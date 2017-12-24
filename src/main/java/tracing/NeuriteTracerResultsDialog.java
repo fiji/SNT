@@ -443,7 +443,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		pw.dispose();
 		fw.dispose();
 		dispose();
-		plugin.closeAndReset();
+		plugin.closeAndResetAllPanes();
 	}
 
 	protected void disableImageDependentComponents() {
@@ -839,7 +839,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					.getSelectedItem());
 				switch (selectedKey) {
 					case "Canvas annotations":
-						plugin.setAnnotationsColorInAllPanes(newColor);
+						plugin.setAnnotationsColorAllPanes(newColor);
 						break;
 					case "Fills":
 						plugin.getXYCanvas().setFillColor(newColor);

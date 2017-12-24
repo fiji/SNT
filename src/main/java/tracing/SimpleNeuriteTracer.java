@@ -652,27 +652,36 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (enable) {
 			setEditingPath();
 			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
+			setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
 		} else {
 			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			setCanvasLabelAllPanes(null);
 			editingPath = null;
 		}
 		assignEditPath();
 	}
 
-	protected void pause(final boolean enable) {
-		if (enable) {
+	protected void pause(final boolean pause) {
+		if (pause) {
 			if (!uiReadyForModeChange()) {
 				guiUtils.error(
 					"Please finish/abort current task before pausing SNT.");
 				return;
 			}
 			changeUIState(NeuriteTracerResultsDialog.PAUSED);
+			disableEventsAllPanes(true);
+			setDrawCrosshairsAllPanes(false);
+			setCanvasLabelAllPanes(InteractiveTracerCanvas.PAUSE_MODE_LABEL);
+			
 		}
 		else {
 			if (xy != null && xy.isLocked() && !guiUtils.getConfirmation(
-				"Image appears to be locked by other process. Activate SNT?",
-				"Image locked")) return;
+				"Image appears to be locked by other process. Activate SNT nevertheless?",
+				"Image Locked")) return;
 			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			disableEventsAllPanes(false);
+			setDrawCrosshairsAllPanes(true);
+			setCanvasLabelAllPanes(null);
 		}
 	}
 
@@ -2223,7 +2232,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	@Override
-	public void closeAndReset() {
+	public void closeAndResetAllPanes() {
 		// Dispose xz/zy images unless the user stored some annotations (ROIs)
 		// on the image overlay or modified them somehow. In that case, restore
 		// them to the user

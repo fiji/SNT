@@ -154,7 +154,6 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	public void repaintAllPanes() {
-
 		xy_canvas.repaint();
 		if (!single_pane) {
 			xz_canvas.repaint();
@@ -162,7 +161,31 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 	}
 
-	public void setAnnotationsColorInAllPanes(final Color newColor) {
+	public void disableEventsAllPanes(final boolean disable) {
+		xy_canvas.disableEvents(disable);
+		if (!single_pane) {
+			xz_canvas.disableEvents(disable);
+			zy_canvas.disableEvents(disable);
+		}
+	}
+
+	public void setDrawCrosshairsAllPanes(final boolean drawCrosshairs) {
+		xy_canvas.setDrawCrosshairs(drawCrosshairs);
+		if (!single_pane) {
+			xz_canvas.setDrawCrosshairs(drawCrosshairs);
+			zy_canvas.setDrawCrosshairs(drawCrosshairs);
+		}
+	}
+
+	public void setCanvasLabelAllPanes(final String label) {
+		xy_canvas.setCanvasLabel(label);
+		if (!single_pane) {
+			xz_canvas.setCanvasLabel(label);
+			zy_canvas.setCanvasLabel(label);
+		}
+	}
+
+	public void setAnnotationsColorAllPanes(final Color newColor) {
 		xy_canvas.setAnnotationsColor(newColor);
 		if (!single_pane) {
 			xz_canvas.setAnnotationsColor(newColor);
@@ -170,7 +193,7 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 	}
 
-	public void closeAndReset() {
+	public void closeAndResetAllPanes() {
 		if (!single_pane) {
 			zy.close();
 			xz.close();

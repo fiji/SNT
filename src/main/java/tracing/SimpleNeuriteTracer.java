@@ -265,20 +265,19 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		pathAndFillManager.addPathAndFillListener(this);
 
 		loadData();
-		addListener(xy_tracer_canvas, xy_window);
+		addListener(xy_tracer_canvas);
 		if (!single_pane) {
 			xz.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
 			zy.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
-			addListener(xz_tracer_canvas, xz_window);
-			addListener(zy_tracer_canvas, zy_window);
+			addListener(xz_tracer_canvas);
+			addListener(zy_tracer_canvas);
 		}
 	}
 
-	private void addListener(InteractiveTracerCanvas canvas, StackWindow window) {
+	private void addListener(InteractiveTracerCanvas canvas) {
 		final QueueJumpingKeyListener listener = new QueueJumpingKeyListener(this,
 			canvas);
 		setAsFirstKeyListener(canvas, listener);
-		setAsFirstKeyListener(window, listener);
 	}
 
 	public void reloadImage(int channel, int frame) {
@@ -298,9 +297,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		single_pane = false;
 		reloadZYXZpanes(frame);
 		zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
-		addListener(zy_tracer_canvas, zy_window);
+		addListener(zy_tracer_canvas);
 		xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
-		addListener(xz_tracer_canvas, xz_window);
+		addListener(xz_tracer_canvas);
 		if (!zy.isVisible()) zy.show();
 		if (!xz.isVisible()) xz.show();
 	}

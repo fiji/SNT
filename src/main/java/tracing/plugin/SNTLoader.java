@@ -173,10 +173,16 @@ public class SNTLoader extends DynamicCommand {
 
 	}
 
-	/** IDE debug method **/
-	public static void main(final String[] args) {
+	/**
+	 * IDE debug method
+	 * 
+	 * @throws IOException
+	 **/
+	public static void main(final String[] args) throws IOException {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
+		Object img = ij.io().open("/home/tferr/Fiji.app/samples/t1-head.zip");
+		ij.ui().show("test", img);
 		ij.command().run(SNTLoader.class, true);
 	}
 

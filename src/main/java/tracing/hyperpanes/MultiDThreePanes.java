@@ -55,7 +55,8 @@ public class MultiDThreePanes implements PaneOwner {
 	protected StackWindow xz_window;
 	protected StackWindow zy_window;
 	protected boolean single_pane;
-
+	private boolean disable_zoom;
+	
 	public MultiDThreePanes() {}
 
 	public void findPointInStack(final int x_in_pane, final int y_in_pane,
@@ -167,6 +168,19 @@ public class MultiDThreePanes implements PaneOwner {
 			xz_canvas.disableEvents(disable);
 			zy_canvas.disableEvents(disable);
 		}
+	}
+
+	public void disableZoomAllPanes(final boolean disable) {
+		disable_zoom = disable;
+		xy_canvas.disableZoom(disable);
+		if (!single_pane) {
+			xz_canvas.disableZoom(disable);
+			zy_canvas.disableZoom(disable);
+		}
+	}
+
+	public boolean isZoomAllPanesDisabled() {
+		return disable_zoom;
 	}
 
 	public void setDrawCrosshairsAllPanes(final boolean drawCrosshairs) {

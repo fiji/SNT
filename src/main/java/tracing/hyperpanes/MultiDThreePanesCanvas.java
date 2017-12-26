@@ -51,6 +51,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	private String canvasText; // text to be rendered NW corner of canvas
 	private Color annotationsColor;
 	private boolean waveInteractionsToIJ;
+	private boolean waveZoomToIJ;
 
 
 	protected MultiDThreePanesCanvas(final ImagePlus imagePlus,
@@ -136,12 +137,18 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 
 	@Override
 	public void zoomIn(final int sx, final int sy) {
-		owner.zoom(true, offScreenX(sx), offScreenY(sy), plane);
+		if (isZoomDisabled())
+			super.zoomIn(sx, sy);
+		else
+			owner.zoom(true, offScreenX(sx), offScreenY(sy), plane);
 	}
 
 	@Override
 	public void zoomOut(final int sx, final int sy) {
-		owner.zoom(false, offScreenX(sx), offScreenY(sy), plane);
+		if (isZoomDisabled())
+			super.zoomOut(sx, sy);
+		else
+			owner.zoom(false, offScreenX(sx), offScreenY(sy), plane);
 	}
 
 	protected void drawCrosshairs(final Graphics2D g,
@@ -314,6 +321,23 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	 */
 	public void disableEvents(boolean disable) {
 		waveInteractionsToIJ = disable;
+	}
+
+	/**
+	 * @return whether SNT is being notified/handling zoom changes
+	 */
+	public boolean isZoomDisabled() {
+		return waveZoomToIJ;
+	}
+
+	/**
+	 * Sets whether zoom changes should handled by SNT or IJ.
+	 *
+	 * @param disable
+	 *            If true, SNT will waive all zoom in/out operations to IJ
+	 */
+	public void disableZoom(boolean disable) {
+		waveZoomToIJ = disable;
 	}
 
 	private boolean validString(String string) {

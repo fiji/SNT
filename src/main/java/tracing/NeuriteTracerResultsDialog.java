@@ -735,6 +735,18 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 		viewsPanel.add(diametersCheckBox, gdb);
 		++gdb.gridy;
+
+		final JCheckBox zoomAllPanesCheckBox = new JCheckBox("Apply zoom changes to all views", !plugin.isZoomAllPanesDisabled());
+		zoomAllPanesCheckBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(final ItemEvent e) {
+				plugin.disableZoomAllPanes(e.getStateChange() == ItemEvent.DESELECTED);
+			}
+		});
+		viewsPanel.add(zoomAllPanesCheckBox, gdb);
+		++gdb.gridy;
+
 		String bLabel = (plugin.getSinglePane()) ? "Display" : "Rebuild";
 		final JButton refreshPanesButton = GuiUtils.smallButton(bLabel +
 			" ZY/XZ views");

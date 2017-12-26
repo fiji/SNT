@@ -656,7 +656,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final JSpinner frameSpinner = GuiUtils.integerSpinner(plugin.frame, 1,
 			plugin.getImagePlus().getNFrames(), 1);
 		positionPanel.add(frameSpinner);
-		final JButton applyPositionButton = GuiUtils.smallButton("Reload");
+		final JButton applyPositionButton = new JButton("Reload");
 		final ChangeListener spinnerListener = new ChangeListener() {
 
 			@Override
@@ -748,8 +748,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		++gdb.gridy;
 
 		String bLabel = (plugin.getSinglePane()) ? "Display" : "Rebuild";
-		final JButton refreshPanesButton = GuiUtils.smallButton(bLabel +
-			" ZY/XZ views");
+		final JButton refreshPanesButton = new JButton(bLabel + " ZY/XZ views");
 		refreshPanesButton.addActionListener(new ActionListener() {
 
 			@Override
@@ -801,7 +800,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 		intPanel.add(canvasCheckBox, gdb);
 		++gdb.gridy;
-		final JCheckBox winLocCheckBox = new JCheckBox("Remember window locations",
+		final JCheckBox winLocCheckBox = new JCheckBox("Remember window locations across restarts",
 			plugin.prefs.isSaveWinLocations());
 		winLocCheckBox.addItemListener(new ItemListener() {
 
@@ -1149,6 +1148,22 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 		viewMenu.add(threeDViewerMenuItem);
+		viewMenu.addSeparator();
+		final JMenuItem resetZoomMenuItem = new JMenuItem("Reset Zoom Levels");
+		resetZoomMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				try {
+					plugin.resetZoomAllPanes();
+					Thread.sleep(50); // allow windows to resize if needed
+					plugin.resetZoomAllPanes();
+				} catch (final InterruptedException exc) {
+					// do nothing
+				}
+			}
+		});
+		viewMenu.add(resetZoomMenuItem);
 		viewMenu.addSeparator();
 		final JMenuItem arrangeWindowsMenuItem = new JMenuItem("Arrange Views");
 		arrangeWindowsMenuItem.addActionListener(new ActionListener() {

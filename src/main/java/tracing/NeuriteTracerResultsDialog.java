@@ -514,7 +514,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						keepSegment.setEnabled(false);
 						junkSegment.setEnabled(false);
 						abortButton.setEnabled(true);
-						completePath.setEnabled(!plugin.justFirstPoint());
+						completePath.setEnabled(true);
 						justShowPartsNearby.setEnabled(isStackAvailable());
 						preprocess.setEnabled(true);
 						quitMenuItem.setEnabled(false);

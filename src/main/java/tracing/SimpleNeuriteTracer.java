@@ -130,7 +130,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	volatile protected int cursorSnapWindowZ;
 	volatile protected boolean autoCanvasActivation;
 	volatile protected boolean snapCursor;
-
 	volatile protected boolean unsavedPaths = false;
 
 	/*
@@ -1249,22 +1248,33 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			return;
 		}
 
-		if (currentPath == null || justFirstPoint()) {
+		if (currentPath == null) {
+			discreteError("Cannot finish current path: Path is invalid"); // this should never happen
+			return;
+		}
+
+		if (justFirstPoint() && !guiUtils.getConfirmation("Create a single point path? (such path is typically used to mark the cell soma)", "Create Single Point Path?")) {
 			discreteError("You can't complete a path with only a start point in it.");
 			return;
 		}
 
-		removeSphere(startBallName);
-		removeSphere(targetBallName);
+		final Path savedCurrentPath = currentPath;
 
+		if (justFirstPoint()) {
+			final PointInImage p = new PointInImage(last_start_point_x * x_spacing, last_start_point_y * y_spacing,
+					last_start_point_z * z_spacing);
+			savedCurrentPath.addPointDouble(p.x, p.y, p.z);
+			savedCurrentPath.endJoinsPoint = p;
+			savedCurrentPath.startJoinsPoint = p;
+		} else {
+			removeSphere(startBallName);			
+		}
+
+		removeSphere(targetBallName);
 		lastStartPointSet = false;
 		setPathUnfinished(false);
-
-		final Path savedCurrentPath = currentPath;
 		setCurrentPath(null);
-
 		pathAndFillManager.addPath(savedCurrentPath, true);
-
 		unsavedPaths = true;
 
 		// ... and change the state of the UI
@@ -1422,8 +1432,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * Return true if we have just started a new path, but have not yet added
 	 * any connections to it, otherwise return false.
 	 */
-
-	public boolean justFirstPoint() {
+	private boolean justFirstPoint() {
 		return pathUnfinished && (currentPath.size() == 0);
 	}
 

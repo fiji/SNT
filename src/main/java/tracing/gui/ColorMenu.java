@@ -140,6 +140,7 @@ public class ColorMenu extends JMenu {
 		final JPanel panelLabel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		panelLabel.setBackground(getBackground());
 		final JLabel label = new JLabel(title);
+		label.setForeground(getForeground());
 		final double h = getFont().getSize() * .80;
 		label.setBorder(BorderFactory.createEmptyBorder((int) h, 4, 0, 4));
 		label.setFont(getFont().deriveFont((float) h));
@@ -205,6 +206,7 @@ public class ColorMenu extends JMenu {
 			isCustomizable = customizable;
 			setPanelSWCColor(swcColor);
 			setBorder(_unselectedBorder);
+			setMinimumSize(new Dimension(10,10));
 			addMouseListener(this);
 		}
 

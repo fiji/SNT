@@ -24,6 +24,7 @@ package tracing.gui;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -147,14 +148,21 @@ public class GuiUtils {
 	}
 
 	public int yesNoDialog(final String msg, final String title) {
-		final SwingDialog d = new SwingDialog(getLabel(msg),
-			JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, false);
-		d.setTitle(title);
-		if (parent != null) d.setParent(parent);
-		return d.show();
+		final JOptionPane optionPane = new JOptionPane(getLabel(msg), JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+		final JDialog d = optionPane.createDialog(title);
+		d.setModalityType(ModalityType.APPLICATION_MODAL);
+		if (parent != null) {
+			AWTWindows.centerWindow(parent.getBounds(), d);
+			// we could also use d.setLocationRelativeTo(parent);
+		}
+		d.setVisible(true);
+		d.dispose();
+		final Object result = optionPane.getValue();
+		if (result == null || (!(result instanceof Integer))) return SwingDialog.UNKNOWN_OPTION;
+		return (Integer) result;
 	}
 
-	public boolean getConfirmation(final String msg, final String title) { //FIXME: This is always displayed at the center
+	public boolean getConfirmation(final String msg, final String title) {
 		return (yesNoDialog(msg, title) == JOptionPane.YES_OPTION);
 	}
 

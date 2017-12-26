@@ -119,7 +119,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	protected PathAndFillManager pathAndFillManager;
 	protected SNTPrefs prefs;
-	private final GuiUtils guiUtils;
+	private GuiUtils guiUtils;
 	protected Image3DUniverse univ;
 	protected Content imageContent;
 	protected boolean use3DViewer;
@@ -239,7 +239,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 
 		pathAndFillManager = new PathAndFillManager(this);
-		guiUtils = new GuiUtils(legacyService.getIJ1Helper().getIJ());
 		prefs = new SNTPrefs(this);
 		prefs.loadPluginPrefs();
 	}
@@ -369,6 +368,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 					return new NeuriteTracerResultsDialog(thisPlugin);
 				}
 			});
+		guiUtils = new GuiUtils(resultsDialog);
 		resultsDialog.displayOnStarting();
 	}
 
@@ -1254,7 +1254,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 
 		if (justFirstPoint() && !guiUtils.getConfirmation("Create a single point path? (such path is typically used to mark the cell soma)", "Create Single Point Path?")) {
-			discreteError("You can't complete a path with only a start point in it.");
 			return;
 		}
 

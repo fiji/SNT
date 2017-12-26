@@ -674,6 +674,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
+				if (getState()==IMAGE_CLOSED) {
+					guiUtils.error("Tracing image is no longer available.");
+					return;
+				}
 				final int newC = (int) channelSpinner.getValue();
 				final int newT = (int) frameSpinner.getValue();
 				final boolean reload = newC == plugin.channel && newT == plugin.frame;
@@ -753,6 +757,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
+				if (getState()==IMAGE_CLOSED) {
+					guiUtils.error("Tracing image is no longer available.");
+					return;
+				}
 				plugin.rebuildZYXZpanes();
 				showStatus("ZY/XZ views reloaded...");
 				refreshPanesButton.setText("Rebuild ZY/XZ views");

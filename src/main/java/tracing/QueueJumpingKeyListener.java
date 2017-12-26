@@ -164,8 +164,8 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 		}
 		
-		// Pass on zoom shortcuts
-		else if (keyCode == KeyEvent.VK_PLUS || keyCode == KeyEvent.VK_EQUALS || keyCode == KeyEvent.VK_MINUS)
+		// Pass on pan and zoom shortcuts
+		else if (keyCode == KeyEvent.VK_SPACE ||keyCode == KeyEvent.VK_PLUS || keyCode == KeyEvent.VK_EQUALS || keyCode == KeyEvent.VK_MINUS)
 			waiveKeyPress(e); // should we pass on other key presses when not in pause mode?
 
 	}

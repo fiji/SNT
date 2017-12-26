@@ -33,6 +33,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -59,7 +61,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private int editingNode = -1;
 	private boolean lastPathUnfinished;
 	private boolean editMode; // convenience flag to monitor SNT's edit mode
-
+	
 	private Color temporaryColor;
 	private Color unconfirmedColor;
 	private Color fillColor;
@@ -75,6 +77,18 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		buildPpupMenu();
 		super.disablePopupMenu(true); // so that handlePopupMenu is not triggered
 		super.add(pMenu);
+		super.addKeyListener(new KeyAdapter() {
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            	if (e.getKeyCode() == KeyEvent.VK_SPACE) disableEvents(false);
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+            	if (e.getKeyCode() == KeyEvent.VK_SPACE) disableEvents(true);
+            }
+        });
 	}
 
 	private void buildPpupMenu() { // We are extending ImageCanvas: we'll avoid swing components here

@@ -130,9 +130,11 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 			shift_key_down);
 	}
 
-	public void realZoom(final boolean in, final int x, final int y) {
-		if (in) super.zoomIn(screenX(x), screenY(y));
-		else super.zoomOut(screenX(x), screenY(y));
+	protected void realZoom(final boolean in, final int off_screen_x, final int off_screen_y) {
+		if (in)
+			super.zoomIn(screenX(off_screen_x), screenY(off_screen_y));
+		else
+			super.zoomOut(screenX(off_screen_x), screenY(off_screen_y));
 	}
 
 	@Override
@@ -140,7 +142,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		if (isZoomDisabled())
 			super.zoomIn(sx, sy);
 		else
-			owner.zoom(true, offScreenX(sx), offScreenY(sy), plane);
+			owner.zoom(true, offScreenX(sx), offScreenX(sy), plane);
 	}
 
 	@Override

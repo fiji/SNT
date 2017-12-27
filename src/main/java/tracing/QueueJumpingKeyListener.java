@@ -59,7 +59,6 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 
 		final int keyCode = e.getKeyCode();
-		final char keyChar = e.getKeyChar();
 		final boolean doublePress = isDoublePress(e);
 
 		if (keyCode == KeyEvent.VK_ESCAPE) {
@@ -79,6 +78,13 @@ class QueueJumpingKeyListener implements KeyListener {
 			return;
 		}
 
+		if (canvas.isEditMode() && keyCode == KeyEvent.VK_BACK_SPACE) {
+			canvas.deleteEditingNode(false);
+			e.consume();
+			return;
+		}
+	
+		final char keyChar = e.getKeyChar();
 		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
 		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT
 			: keyCode == KeyEvent.VK_CONTROL;

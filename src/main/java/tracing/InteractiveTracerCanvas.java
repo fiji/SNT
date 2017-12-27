@@ -488,7 +488,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		public static final String PAUSE_TOOGLE = "Pause SNT...";
 		public static final String EDIT_TOOGLE = "Edit Paths";
 		private final static String NODE_CONNECT = "Connect To...";
-		private final static String NODE_DELETE = "Delete Selected";
+		private final static String NODE_DELETE = "Delete Selected Node [Backspace]";
 		private final static String NODE_INSERT = "Insert Node Here";
 		private final static String NODE_MOVE = "Move Selected";
 		private final static String NODE_MOVE_Z = "Assign Current Plane";
@@ -508,7 +508,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			if (impossibleEdit(true)) return;
 
 			if (e.getActionCommand().equals(NODE_DELETE)) {
-				editingPath.removeNode(editingNode);
+				deleteEditingNode(true);
 			}
 
 			else if (e.getActionCommand().equals(NODE_INSERT))
@@ -572,6 +572,15 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 	}
 	
+	protected boolean isEditMode() {
+		return editMode;
+	}
+	
+	protected void deleteEditingNode(final boolean warnOnFailure) {
+		if (warnOnFailure && impossibleEdit(true)) return;
+		editingPath.removeNode(editingNode);
+	}
+
 
 }
 

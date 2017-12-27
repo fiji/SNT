@@ -52,6 +52,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	private Color annotationsColor;
 	private boolean waveInteractionsToIJ;
 	private boolean waveZoomToIJ;
+	protected boolean cursorLocked;
 
 
 	protected MultiDThreePanesCanvas(final ImagePlus imagePlus,
@@ -118,7 +119,8 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	@Override
 	public void mouseMoved(final MouseEvent e) {
 
-		super.mouseMoved(e);
+		if (!cursorLocked) super.mouseMoved(e);
+//		if (isEventsDisabled()) return;
 
 		final double off_screen_x = offScreenX(e.getX());
 		final double off_screen_y = offScreenY(e.getY());
@@ -323,6 +325,11 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	 */
 	public void disableEvents(boolean disable) {
 		waveInteractionsToIJ = disable;
+		if (disable) cursorLocked = false;
+	}
+
+	protected void lockCursor(boolean lock) {
+		cursorLocked = lock;
 	}
 
 	/**

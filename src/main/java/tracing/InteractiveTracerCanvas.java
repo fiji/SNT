@@ -261,17 +261,16 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				shift_key_down = true;
 		}
 
+		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down,
+			joiner_modifier_down);
+		
 		if (editMode) {
 			editingNode = (editingPath == null) ? -1 : editingPath.getEditableNodeIndex();
 			setCursor((editingNode==-1) ? defaultCursor : handCursor);
-			setDrawCrosshairs(false); //FIXME:
 		} else {
 			setCursor(crosshairCursor);
-			setDrawCrosshairs(true);// FIXME:
 		}
-
-		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down,
-			joiner_modifier_down);
+	
 		
 	}
 
@@ -564,18 +563,28 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 	}
 
+	
+	/**
+	 * Toggles Edit Mode.
+	 *
+	 * @param path
+	 *            the editing scope. Set it to null to exit Edit mode.
+	 */
 	protected void setEditingPath(final Path path) {
 		editingPath = path;
 		if (path == null) {
 			editMode = false;
 			editingNode = -1;
 			setDrawCrosshairs(true);
+			lockCursor(false);
 		} else {
 			editMode = true;
 			editingNode = editingPath.getEditableNodeIndex();
 			setDrawCrosshairs(false);
+			lockCursor(true);
 		}
 	}
+	
 
 }
 

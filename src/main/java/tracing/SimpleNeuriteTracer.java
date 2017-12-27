@@ -608,7 +608,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return editModeAllowed(false);
 	}
 
-	private void assignEditPath() {
+	private void assignEditPathAllPanes() {
 		xy_tracer_canvas.setEditingPath(editingPath);
 		if (!single_pane) {
 			xz_tracer_canvas.setEditingPath(editingPath);
@@ -656,7 +656,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			setCanvasLabelAllPanes(null);
 			editingPath = null;
 		}
-		assignEditPath();
+		assignEditPathAllPanes(); // will toggle 'editMode' for all panes
 	}
 
 	protected void pause(final boolean pause) {

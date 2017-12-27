@@ -651,6 +651,13 @@ public class MultiDThreePanes implements PaneOwner {
 			xz_window = new StackWindow(xz, xz_canvas);
 		if (!single_pane && zy_window == null)
 			zy_window = new StackWindow(zy, zy_canvas);
+		
+		// Ensure keylisteners have focus
+		xy_canvas.requestFocusInWindow();
+		if (!single_pane) {
+			xz_canvas.requestFocusInWindow();
+			zy_canvas.requestFocusInWindow();
+		}
 
 	}
 

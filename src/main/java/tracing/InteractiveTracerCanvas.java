@@ -472,11 +472,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		public static final String PAUSE_TOOGLE = "Pause SNT...";
 		public static final String EDIT_TOOGLE = "Edit Paths";
-		private final static String NODE_CONNECT = "Connect To...";
-		private final static String NODE_DELETE = "Delete Selected Node [Backspace]";
-		private final static String NODE_INSERT = "Insert Node Here";
-		private final static String NODE_MOVE = "Move Selected";
-		private final static String NODE_MOVE_Z = "Assign Current Plane";
+		private final static String NODE_DELETE = "Delete Selected Node  [Backspace]";
+		private final static String NODE_INSERT = "Connect Selected Node to Cursor Position  [Insert]";
+		private final static String NODE_MOVE = "Move Selected Node to Cursor Position  [M]";
+		private final static String NODE_MOVE_Z = "Bring Selected Node to current Z-plane";
 
 		@Override
 		public void itemStateChanged(final ItemEvent e) {
@@ -495,40 +494,17 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			if (e.getActionCommand().equals(NODE_DELETE)) {
 				deleteEditingNode(true);
 			}
-
-			else if (e.getActionCommand().equals(NODE_INSERT))
-			{
+			else if (e.getActionCommand().equals(NODE_INSERT)) {
 				apppendLastPositionToEditingNode(true);
 			}
 			else if (e.getActionCommand().equals(NODE_MOVE))
 			{
-				System.out.println("TBD "+ e.getActionCommand());
-				return;
+				moveEditingNodeToLastPosition(true);
 			}
 			else if (e.getActionCommand().equals(NODE_MOVE_Z))
 			{
-
-				final Path editingPath = tracerPlugin.getEditingPath();
-				final int editingNode = editingPath.getEditableNodeIndex();
-				if (editingNode == -1) return;
-				double newZ = editingPath.precise_z_positions[editingNode];
-				switch (plane) {
-					case MultiDThreePanes.XY_PLANE:
-						newZ = (imp.getZ() - 1) * editingPath.z_spacing;
-						break;
-					case MultiDThreePanes.XZ_PLANE:
-						newZ = last_y_in_pane_precise;
-						break;
-					case MultiDThreePanes.ZY_PLANE:
-						newZ = last_x_in_pane_precise;
-						break;
-				}
-				editingPath.moveNode(editingNode, new PointInImage(
-					editingPath.precise_x_positions[editingNode],
-					editingPath.precise_y_positions[editingNode], newZ));
-				redrawEditingPath();
+				assignLastZPositionToEditNode(true);
 			}
-
 			else {
 				SNT.debug("Unexpectedly got an event from an unknown source: ");
 				return;
@@ -565,9 +541,42 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
 		editingPath.addNode(editingNode, new PointInImage(p[0], p[1], p[2]));
-		editingPath.setEditableNode(editingNode+1);
+		editingPath.setEditableNode(editingNode + 1);
 		redrawEditingPath();
 		return;
+	}
+
+	protected void moveEditingNodeToLastPosition(final boolean warnOnFailure) {
+		if (impossibleEdit(warnOnFailure)) return;
+		final Path editingPath = tracerPlugin.getEditingPath();
+		final int editingNode = editingPath.getEditableNodeIndex();
+		final double[] p = new double[3];
+		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
+		editingPath.moveNode(editingNode, new PointInImage(p[0], p[1], p[2]));
+		redrawEditingPath();
+		return;
+	}
+	
+	protected void assignLastZPositionToEditNode(final boolean warnOnFailure) {
+		if (impossibleEdit(warnOnFailure)) return;
+		final Path editingPath = tracerPlugin.getEditingPath();
+		final int editingNode = editingPath.getEditableNodeIndex();
+		double newZ = editingPath.precise_z_positions[editingNode];
+		switch (plane) {
+			case MultiDThreePanes.XY_PLANE:
+				newZ = (imp.getZ() - 1) * editingPath.z_spacing;
+				break;
+			case MultiDThreePanes.XZ_PLANE:
+				newZ = last_y_in_pane_precise;
+				break;
+			case MultiDThreePanes.ZY_PLANE:
+				newZ = last_x_in_pane_precise;
+				break;
+		}
+		editingPath.moveNode(editingNode, new PointInImage(
+			editingPath.precise_x_positions[editingNode],
+			editingPath.precise_y_positions[editingNode], newZ));
+		redrawEditingPath();
 	}
 
 }

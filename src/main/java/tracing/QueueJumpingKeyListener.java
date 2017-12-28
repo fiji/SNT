@@ -65,6 +65,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 
 		final int keyCode = e.getKeyCode();
+		final char keyChar = e.getKeyChar();
 		final boolean doublePress = isDoublePress(e);
 
 		if (keyCode == KeyEvent.VK_ESCAPE) {
@@ -89,13 +90,14 @@ class QueueJumpingKeyListener implements KeyListener {
 				canvas.deleteEditingNode(false);
 			} else if (keyCode == KeyEvent.VK_INSERT) {
 				canvas.apppendLastPositionToEditingNode(false);
+			} else if (keyChar == 'm' || keyChar == 'M') {
+				canvas.moveEditingNodeToLastPosition(false);
 			}
 			e.consume();
 			return;
 
 		}
 	
-		final char keyChar = e.getKeyChar();
 		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
 		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT
 			: keyCode == KeyEvent.VK_CONTROL;

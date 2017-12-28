@@ -159,6 +159,10 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		jmi = new JMenuItem(AListener.MAKE_PRIMARY_CMD);
 		jmi.addActionListener(listener);
 		editMenu.add(jmi);
+		editMenu.addSeparator();
+		jmi = new JMenuItem(AListener.DISCONNECT_CMD);
+		jmi.addActionListener(listener);
+		editMenu.add(jmi);
 		menuBar.add(editMenu);
 
 		swcTypeMenu = new JMenu("Type");
@@ -1139,6 +1143,8 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private final static String DELETE_CMD = "Delete";
 		private final static String RENAME_CMD = "Rename";
 		private final static String MAKE_PRIMARY_CMD = "Make Primary";
+		private final static String DISCONNECT_CMD = "Disconnect Path...";
+
 		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-Type Colors";
 		private final static String REMOVE_COLOR_CMD = "Remove Color Tags";
 
@@ -1223,6 +1229,22 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				p.setPrimary(true);
 				pathsExplored.add(p);
 				p.unsetPrimaryForConnected(pathsExplored);
+				pathAndFillManager.resetListeners(null);
+				return;
+
+			}
+			else if (e.getActionCommand().equals(DISCONNECT_CMD)) {
+
+				if (selectedPaths.size() != 1) {
+					noSinglePathMsg();
+					return;
+				}
+				final Path[] singlePath = selectedPaths.toArray(new Path[] {});
+				final Path p = singlePath[0];
+				if (!guiUtils.getConfirmation("Disconnect \"" + p.toString() + "\" from all it connections?",
+						"Confirm Disconnect"))
+					return;
+				p.disconnectFromAll();
 				pathAndFillManager.resetListeners(null);
 				return;
 

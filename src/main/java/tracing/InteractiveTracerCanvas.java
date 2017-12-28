@@ -246,7 +246,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				last_y_in_pane_precise = p[1];
 				shift_key_down = true;
 		}
-
+		
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down,
 			joiner_modifier_down);
 		
@@ -360,11 +360,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		return invalid;
 	}
 
-	private void redrawEditingPath(boolean resetEditingNode) {
-		if (resetEditingNode) {
-			tracerPlugin.getEditingPath().setEditableNode(-1);
-		}
+	private void redrawEditingPath() {
 		redrawEditingPath(getGraphics2D(getGraphics()));
+		repaint();
 	}
 
 	private void redrawEditingPath(final Graphics2D g) {
@@ -509,8 +507,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 			else if (e.getActionCommand().equals(NODE_INSERT))
 			{
-				System.out.println("TBD "+ e.getActionCommand());
-				return;
+				apppendLastPositionToEditingNode(true);
 			}
 			else if (e.getActionCommand().equals(NODE_MOVE))
 			{
@@ -538,7 +535,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				editingPath.moveNode(editingNode, new PointInImage(
 					editingPath.precise_x_positions[editingNode],
 					editingPath.precise_y_positions[editingNode], newZ));
-				redrawEditingPath(true);
+				redrawEditingPath();
 			}
 
 			else {
@@ -562,12 +559,24 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final Path editingPath = tracerPlugin.getEditingPath();
 		if (editingPath.size() > 1) {
 			editingPath.removeNode(editingPath.getEditableNodeIndex());
-			redrawEditingPath(true);
+			redrawEditingPath();
 		} else { // single point path
 			tracerPlugin.getPathAndFillManager().deletePath(editingPath);
 			tracerPlugin.setEditingPath();
 			tracerPlugin.repaintAllPanes();
 		}
+	}
+	
+	protected void apppendLastPositionToEditingNode(final boolean warnOnFailure) {
+		if (impossibleEdit(warnOnFailure)) return;
+		final Path editingPath = tracerPlugin.getEditingPath();
+		final int editingNode = editingPath.getEditableNodeIndex();
+		final double[] p = new double[3];
+		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
+		editingPath.addNode(editingNode, new PointInImage(p[0], p[1], p[2]));
+		editingPath.setEditableNode(editingNode+1);
+		redrawEditingPath();
+		return;
 	}
 
 }

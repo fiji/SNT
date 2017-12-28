@@ -199,6 +199,14 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 	}
 
+	protected void setLockCursorAllPanes(final boolean lockCursor) {
+		xy_canvas.setLockCursor(lockCursor);
+		if (!single_pane) {
+			xz_canvas.setLockCursor(lockCursor);
+			zy_canvas.setLockCursor(lockCursor);
+		}
+	}
+
 	public void setCanvasLabelAllPanes(final String label) {
 		xy_canvas.setCanvasLabel(label);
 		if (!single_pane) {

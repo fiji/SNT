@@ -55,8 +55,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private boolean fillTransparent = false;
 	private Path unconfirmedSegment;
 	private Path currentPath;
-	private Path editingPath;
-	private int editingNode = -1;
 	private boolean lastPathUnfinished;
 	private boolean editMode; // convenience flag to monitor SNT's edit mode
 	
@@ -251,8 +249,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			joiner_modifier_down);
 		
 		if (editMode) {
-			editingNode = (editingPath == null) ? -1 : editingPath.getEditableNodeIndex();
-			setCursor((editingNode==-1) ? defaultCursor : handCursor);
+			setCursor((tracerPlugin.getEditingNode()==-1) ? defaultCursor : handCursor);
 		} else {
 			setCursor(crosshairCursor);
 		}
@@ -356,21 +353,20 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	private boolean impossibleEdit(final boolean displayError) {
-		boolean invalid = (editingPath == null || editingNode == -1);
+		final boolean invalid = (tracerPlugin.getEditingNode() == -1);
 		if (invalid && displayError) tracerPlugin.floatingMsg("No node selected");
 		return invalid;
 	}
 
 	private void redrawEditingPath(boolean resetEditingNode) {
 		if (resetEditingNode) {
-			editingNode = -1;
-			editingPath.setEditableNode(-1);
+			tracerPlugin.getEditingPath().setEditableNode(-1);
 		}
-		editingPath.drawPathAsPoints(getGraphics2D(getGraphics()), this, tracerPlugin);
+		redrawEditingPath(getGraphics2D(getGraphics()));
 	}
 
 	private void redrawEditingPath(final Graphics2D g) {
-		editingPath.drawPathAsPoints(g, this, tracerPlugin);
+		tracerPlugin.getEditingPath().drawPathAsPoints(g, this, tracerPlugin);
 	}
 
 	@Override
@@ -393,7 +389,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		super.drawOverlay(g); // draw all paths, crosshair, etc.
 
-		if (editMode && editingPath != null) {
+		if (editMode && tracerPlugin.getEditingPath() != null) {
 			redrawEditingPath(g);
 			return; // no need to proceed: only editing path has been updated
 		}
@@ -447,9 +443,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		} else {
 			tracerPlugin.enableEditMode(false);
 			toggleEditModeMenuItem.setState(false);
-			setCanvasLabel(null);
 		}
-		setEditingPath(tracerPlugin.getEditingPath());
 		tracerPlugin.repaintAllPanes();
 	}
 
@@ -524,6 +518,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			else if (e.getActionCommand().equals(NODE_MOVE_Z))
 			{
 
+				final Path editingPath = tracerPlugin.getEditingPath();
+				final int editingNode = editingPath.getEditableNodeIndex();
+				if (editingNode == -1) return;
 				double newZ = editingPath.precise_z_positions[editingNode];
 				switch (plane) {
 					case MultiDThreePanes.XY_PLANE:
@@ -539,36 +536,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				editingPath.moveNode(editingNode, new PointInImage(
 					editingPath.precise_x_positions[editingNode],
 					editingPath.precise_y_positions[editingNode], newZ));
+				redrawEditingPath(true);
 			}
 
 			else {
 				SNT.debug("Unexpectedly got an event from an unknown source: ");
 				return;
 			}
-			redrawEditingPath(true);
-		}
-	}
-
-	
-	/**
-	 * Toggles Edit Mode.
-	 *
-	 * @param path
-	 *            the editing scope. Set it to null to exit Edit mode.
-	 */
-	protected void setEditingPath(final Path path) {
-		editingPath = path;
-		if (path == null) {
-			editMode = false;
-			editingNode = -1;
-			setDrawCrosshairs(true);
-			lockCursor(false);
-		} else {
-			editMode = true;
-			editingNode = editingPath.getEditableNodeIndex();
-			setDrawCrosshairs(false);
-			lockCursor(true);
-			disableEvents(false);
+			
 		}
 	}
 	
@@ -576,11 +551,22 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		return editMode;
 	}
 	
-	protected void deleteEditingNode(final boolean warnOnFailure) {
-		if (warnOnFailure && impossibleEdit(true)) return;
-		editingPath.removeNode(editingNode);
+	protected void setEditMode(final boolean editMode) {
+		this.editMode = editMode;
 	}
-
+	
+	protected void deleteEditingNode(final boolean warnOnFailure) {
+		if (impossibleEdit(warnOnFailure)) return;
+		final Path editingPath = tracerPlugin.getEditingPath();
+		if (editingPath.size() > 1) {
+			editingPath.removeNode(editingPath.getEditableNodeIndex());
+			redrawEditingPath(true);
+		} else { // single point path
+			tracerPlugin.getPathAndFillManager().deletePath(editingPath);
+			tracerPlugin.setEditingPath();
+			tracerPlugin.repaintAllPanes();
+		}
+	}
 
 }
 

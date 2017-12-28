@@ -328,7 +328,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		if (disable) cursorLocked = false;
 	}
 
-	protected void lockCursor(boolean lock) {
+	protected void setLockCursor(boolean lock) {
 		cursorLocked = lock;
 	}
 

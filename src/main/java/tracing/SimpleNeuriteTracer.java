@@ -599,6 +599,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return editingPath;
 	}
 
+	protected int getEditingNode() {
+		return (getEditingPath() == null) ? -1 : getEditingPath().getEditableNodeIndex();
+	}
+
 	/**
 	 * Assesses if activation of 'Edit Mode' is possible.
 	 *
@@ -606,14 +610,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 */
 	public boolean editModeAllowed() {
 		return editModeAllowed(false);
-	}
-
-	private void assignEditPathAllPanes() {
-		xy_tracer_canvas.setEditingPath(editingPath);
-		if (!single_pane) {
-			xz_tracer_canvas.setEditingPath(editingPath);
-			zy_tracer_canvas.setEditingPath(editingPath);
-		}
 	}
 
 	protected boolean editModeAllowed(final boolean warnUserIfNot) {
@@ -638,7 +634,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return editAllowed;
 	}
 
-	private void setEditingPath() {
+	protected void setEditingPath() {
 		if (pathAndFillManager.selectedPathsSet.size() == 1) {
 			editingPath = getSelectedPaths().iterator().next();
 		} else {
@@ -648,7 +644,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	protected void enableEditMode(final boolean enable) {
 		if (enable) {
-			setEditingPath();
 			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
 		} else {
@@ -656,7 +651,18 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			setCanvasLabelAllPanes(null);
 			editingPath = null;
 		}
-		assignEditPathAllPanes(); // will toggle 'editMode' for all panes
+		if (pathAndFillManager.selectedPathsSet.size() == 1) {
+			editingPath = getSelectedPaths().iterator().next();
+		} else {
+			editingPath = null;
+		}
+		setDrawCrosshairsAllPanes(!enable);
+		setLockCursorAllPanes(enable);
+		xy_tracer_canvas.setEditMode(enable);
+		if (!single_pane) {
+			xz_tracer_canvas.setEditMode(enable);
+			zy_tracer_canvas.setEditMode(enable);
+		}
 	}
 
 	protected void pause(final boolean pause) {

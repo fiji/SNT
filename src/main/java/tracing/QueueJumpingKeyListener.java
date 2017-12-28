@@ -39,8 +39,14 @@ class QueueJumpingKeyListener implements KeyListener {
 	private static final int DOUBLE_PRESS_INTERVAL = 300; // ms
 	private long timeKeyDown = 0; // last time key was pressed
 	private int lastKeyPressedCode;
-	private boolean waiveEventsStateBeforeSpaceBarPress;
 	private final boolean mac;
+
+	/* Define which keys are always waved back to IJ listeners */
+	private static final int[] W_KEYS = new int[] { //
+			KeyEvent.VK_SPACE, // pan tool shortcut
+			KeyEvent.VK_PLUS, KeyEvent.VK_EQUALS, KeyEvent.VK_MINUS // zoom shortcuts
+	};
+
 
 	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin,
 		final InteractiveTracerCanvas canvas)
@@ -67,21 +73,26 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 			return;
 		}
-	
-		if (keyCode == KeyEvent.VK_SPACE) {
-			waiveEventsStateBeforeSpaceBarPress = canvas.isEventsDisabled();
-			canvas.disableEvents(true);
-		}
-	
-		if (canvas.isEventsDisabled()) {
+
+		else if (canvas.isEventsDisabled() || Arrays.stream(W_KEYS).anyMatch(i -> i == keyCode)) {
 			waiveKeyPress(e);
 			return;
 		}
-
-		if (canvas.isEditMode() && keyCode == KeyEvent.VK_BACK_SPACE) {
-			canvas.deleteEditingNode(false);
+		else if (keyCode == KeyEvent.VK_ENTER) {
+			tracerPlugin.getUI().toFront();
 			e.consume();
 			return;
+		}
+		else if (canvas.isEditMode()) {
+
+			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
+				canvas.deleteEditingNode(false);
+			} else if (keyCode == KeyEvent.VK_INSERT) {
+				canvas.apppendLastPositionToEditingNode(false);
+			}
+			e.consume();
+			return;
+
 		}
 	
 		final char keyChar = e.getKeyChar();
@@ -98,12 +109,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			") keyChar=\"" + keyChar + "\" (" + (int) keyChar + ") " + KeyEvent
 				.getKeyModifiersText(canvas.getModifiers()));
 
-		if (keyCode == KeyEvent.VK_ENTER) {
-			tracerPlugin.getUI().toFront();
-			e.consume();
-		}
-
-		else if (keyChar == 'y' || keyChar == 'Y') {
+		if (keyChar == 'y' || keyChar == 'Y') {
 			if (tracerPlugin.getUI().finishOnDoubleConfimation &&
 				doublePress) tracerPlugin.finishedPath();
 			else tracerPlugin.confirmTemporary();
@@ -176,9 +182,8 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 		}
 		
-		// Pass on pan and zoom shortcuts
-		else if (keyCode == KeyEvent.VK_PLUS || keyCode == KeyEvent.VK_EQUALS || keyCode == KeyEvent.VK_MINUS)
-			waiveKeyPress(e); // should we pass on other key presses when not in pause mode?
+		// should we pass on other key presses?
+		//else waiveKeyPress(e); 
 
 	}
 
@@ -191,8 +196,6 @@ class QueueJumpingKeyListener implements KeyListener {
 
 	@Override
 	public void keyReleased(final KeyEvent e) {
-		if (e.getKeyCode() == KeyEvent.VK_SPACE)
-			canvas.disableEvents(waiveEventsStateBeforeSpaceBarPress);
 		for (final KeyListener kl : listeners) {
 			if (e.isConsumed()) break;
 			kl.keyReleased(e);

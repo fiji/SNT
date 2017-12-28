@@ -705,7 +705,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public synchronized void deletePath(final Path p) {
 		final int i = getPathIndex(p);
 		if (i < 0)
-			throw new RuntimeException("Trying to delete a non-existent path: " + p);
+			throw new IllegalArgumentException("Trying to delete a non-existent path: " + p);
 		deletePath(i);
 	}
 

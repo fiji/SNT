@@ -405,18 +405,26 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Removes a node from the path.
+	 * Removes the specified node from paths with at least two nodes. Does nothing
+	 * if this is a single point path.
 	 *
-	 * @param index the zero-based index of the node to be removed
-	 * @throws IllegalArgumentException if index is out-of-range
+	 * @param index
+	 *            the zero-based index of the node to be removed
+	 * @throws IllegalArgumentException
+	 *             if index is out-of-range
 	 */
 	public void removeNode(final int index) {
-		if (index < 0 || index >= size()) throw new IllegalArgumentException(
+		if (points == 1) return;
+		if (index < 0 || index >= points) throw new IllegalArgumentException(
 			"removeNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
+		final PointInImage p = getPointInImage(index);
 		precise_x_positions = ArrayUtils.remove(precise_x_positions, index);
 		precise_y_positions = ArrayUtils.remove(precise_y_positions, index);
 		precise_z_positions = ArrayUtils.remove(precise_z_positions, index);
+		points -= 1;
+		if (p.equals(startJoinsPoint)) startJoinsPoint = getPointInImage(0);
+		if (p.equals(endJoinsPoint) && points > 0) endJoinsPoint = getPointInImage(points-1);
 	}
 
 	/**

@@ -839,7 +839,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		public void setSelected(final Object[] path) {
 			assert SwingUtilities.isEventDispatchThread();
 			final TreePath tp = new TreePath(path);
-			setSelectionPath(tp);
+			addSelectionPath(tp);
 		}
 
 	}

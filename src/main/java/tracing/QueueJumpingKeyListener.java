@@ -159,7 +159,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 
 		else if (keyChar == 'g' || keyChar == 'G') {
-			canvas.selectNearestPathToMousePointer(shift_down || control_down);
+			canvas.selectNearestPathToMousePointer(shift_down);
 			e.consume();
 		}
 

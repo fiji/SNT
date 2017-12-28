@@ -205,15 +205,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 
 		final Path path = np.getPath();
-
-		/*
-		 * FIXME: in fact shift-G for multiple selections doesn't work, since in
-		 * ImageJ that's a shortcut for taking a screenshot. Holding down
-		 * control doesn't work since that's already used to restrict the
-		 * cross-hairs to the selected path. Need to find some way around this
-		 * ...
-		 */
-
 		tracerPlugin.selectPath(path, addToExistingSelection);
 	}
 

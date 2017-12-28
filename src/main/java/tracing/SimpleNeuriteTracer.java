@@ -897,7 +897,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		z = pd[2];
 
 		if (isEditModeEnabled() && editingPath != null) {
-			editingPath.setEditableNode(editingPath.getNodeIndex(new PointInImage(x,y,z)));
+			final int eNode = editingPath.getNodeIndex(new PointInImage(x, y, z));
+			if (eNode != -1) editingPath.setEditableNode(eNode);
 		}
 		else if (join_modifier_down && pathAndFillManager.anySelected()) {
 

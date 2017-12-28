@@ -39,6 +39,7 @@ import java.awt.event.WindowEvent;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Menus;
 import tracing.gui.SWCColor;
 import tracing.hyperpanes.MultiDThreePanes;
 
@@ -90,6 +91,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		pMenu.add(menuItem(AListener.NODE_INSERT, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE_Z, listener));
+		if (Menus.getFontSize()!=0) pMenu.setFont(Menus.getFont());
 	}
 
 	private void showPopupMenu(int x, int y) {

@@ -87,21 +87,12 @@ public class GuiUtils {
 		centeredDialog(msg, title, JOptionPane.ERROR_MESSAGE);
 	}
 
-	public void error(final String msg, final String title, final boolean icon) {
-		simpleMsg(msg, title, icon ? JOptionPane.ERROR_MESSAGE
-			: JOptionPane.PLAIN_MESSAGE);
-	}
-
 	public void tempMsg(final String msg, final boolean snapToParent) {
 		tempMsg(msg, -1, -1, snapToParent);
 	}
 
 	public void tempMsg(final String msg, final Point location) {
 		tempMsg(msg, location.x, location.y, true);
-	}
-
-	public void tempMsg(final String msg, final int x, final int y) {
-		tempMsg(msg, x, y, false);
 	}
 
 	private void tempMsg(final String msg, final int x, final int y,
@@ -292,17 +283,15 @@ public class GuiUtils {
 			JOptionPane.PLAIN_MESSAGE, null, null, defaultValue);
 	}
 
-	private int simpleMsg(final String msg, final String title, final int type) {
-		final SwingDialog d = new SwingDialog(getLabel(msg), type, false);
-		if (parent != null) d.setParent(parent);
-		return d.show();
-	}
-
 	public void centeredMsg(final String msg, final String title) {
 		centeredDialog(msg, title, JOptionPane.PLAIN_MESSAGE);
 	}
 
-	private void centeredDialog(final String msg, final String title, final int type) {
+	private int centeredDialog(final String msg, final String title, final int type) {
+		/* if SwingDialogs could be centered, we could simply use */
+		//final SwingDialog d = new SwingDialog(getLabel(msg), type, false);
+		//if (parent != null) d.setParent(parent);
+		//return d.show();
 		final JOptionPane optionPane = new JOptionPane(getLabel(msg), type, JOptionPane.DEFAULT_OPTION);
 		final JDialog d = optionPane.createDialog(title);
 		if (parent != null) {
@@ -310,6 +299,9 @@ public class GuiUtils {
 			// we could also use d.setLocationRelativeTo(parent);
 		}
 		d.setVisible(true);
+		final Object result = optionPane.getValue();
+		if (result == null || (!(result instanceof Integer))) return SwingDialog.UNKNOWN_OPTION;
+		return (Integer) result;
 	}
 
 	private JLabel getLabel(final String text) {
@@ -343,7 +335,7 @@ public class GuiUtils {
 			}
 		});
 		blinkTimer.start();
-		if (simpleMsg(msg, "Ongoing Operation",JOptionPane.PLAIN_MESSAGE) > Integer.MIN_VALUE)
+		if (centeredDialog(msg, "Ongoing Operation",JOptionPane.PLAIN_MESSAGE) > Integer.MIN_VALUE)
 		{ // Dialog dismissed
 			blinkTimer.stop();
 		}
@@ -358,7 +350,7 @@ public class GuiUtils {
 	 */
 	public void msgAtPointer(final String msg) {
 		final Point loc = MouseInfo.getPointerInfo().getLocation();
-		tempMsg(msg, loc.x, loc.y);
+		tempMsg(msg, loc.x, loc.y, false);
 		return;
 	}
 
@@ -431,16 +423,11 @@ public class GuiUtils {
 	{
 		final Component[] components = container.getComponents();
 		for (final Component component : components) {
-			component.setEnabled(enable);
+			if (!(component instanceof JPanel)) component.setEnabled(enable); //otherwise JPanel background will change
 			if (component instanceof java.awt.Container) {
 				enableComponents((java.awt.Container) component, enable);
 			}
 		}
-	}
-
-	public static void floatingMsg(final ImagePlus imp, final String msg) {
-		if (imp == null || imp.getWindow() == null) return;
-		new GuiUtils(imp.getWindow()).tempMsg(msg, true);
 	}
 
 	public static String micrometre() {

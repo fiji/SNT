@@ -26,6 +26,7 @@ import io.scif.services.DatasetIOService;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Window;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
@@ -615,19 +616,18 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected boolean editModeAllowed(final boolean warnUserIfNot) {
 		final boolean uiReady = uiReadyForModeChange();
 		if (warnUserIfNot && !uiReady) {
-			guiUtils.error("Please finish current operation before editing paths", "Invalid State");
+			discreteMsg("Please finish current operation before editing paths");
 			return false;
 		}
 		setEditingPath();
 		final boolean pathExists = editingPath != null;
 		if (warnUserIfNot && !pathExists) {
-			guiUtils.msgAtPointer("You must select a single path in order to edit it");
+			discreteMsg("You must select a single path in order to edit it");
 			return false;
 		}
 		final boolean validPath = pathExists && !editingPath.getUseFitted();
 		if (warnUserIfNot && !validPath) {
-			guiUtils.msgAtPointer(
-				"Only unfitted paths can be edited. Run \"Un-fit volume\" to proceed");
+			discreteMsg("Only unfitted paths can be edited.\nRun \"Un-fit volume\" to proceed");
 			return false;
 		}
 		final boolean editAllowed = uiReady && pathExists && validPath;
@@ -649,9 +649,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		} else {
 			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 			setCanvasLabelAllPanes(null);
-			editingPath = null;
 		}
-		if (pathAndFillManager.selectedPathsSet.size() == 1) {
+		if (enable && pathAndFillManager.selectedPathsSet.size() == 1) {
 			editingPath = getSelectedPaths().iterator().next();
 		} else {
 			editingPath = null;
@@ -679,7 +678,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			
 		}
 		else {
-			if (xy != null && xy.isLocked() && !guiUtils.getConfirmation(
+			if (xy != null && xy.isLocked() && !getConfirmation(
 				"Image appears to be locked by other process. Activate SNT nevertheless?",
 				"Image Locked")) return;
 			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
@@ -1191,7 +1190,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	synchronized public void cancelTemporary() {
 
 		if (!lastStartPointSet) {
-			discreteError(
+			discreteMsg(
 				"No initial start point has been set yet.  Do that with a mouse click or\na Shift+" +
 					GuiUtils.ctrlKey() +
 					"-click if the start of the path should join another neurite.");
@@ -1199,7 +1198,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 
 		if (temporaryPath == null) {
-			discreteError("There's no temporary path to cancel!");
+			discreteMsg("There's no temporary path to cancel!");
 			return;
 		}
 
@@ -1222,7 +1221,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
-			discreteError(
+			discreteMsg(
 				"There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
 			return;
 		}
@@ -1250,17 +1249,17 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
-			discreteError(
+			discreteMsg(
 				"There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
 			return;
 		}
 
 		if (currentPath == null) {
-			discreteError("Cannot finish current path: Path is invalid"); // this should never happen
+			discreteMsg("No temporary path to finish..."); // this can happen through repeated shortcut triggers
 			return;
 		}
 
-		if (justFirstPoint() && !guiUtils.getConfirmation("Create a single point path? (such path is typically used to mark the cell soma)", "Create Single Point Path?")) {
+		if (justFirstPoint() && !getConfirmation("Create a single point path? (such path is typically used to mark the cell soma)", "Create Single Point Path?")) {
 			return;
 		}
 
@@ -1857,7 +1856,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
-	public StackWindow getWindow(final int plane) {
+	protected StackWindow getWindow(final int plane) {
 		switch (plane) {
 			case MultiDThreePanes.XY_PLANE:
 				return xy_window;
@@ -1868,6 +1867,19 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			default:
 				return null;
 		}
+	}
+
+	private Window getActiveWindow() {
+		final Window[] images = { xy_window, xz_window, zy_window };
+		for (final Window win : images) {
+			if (win.isActive()) return win;
+		}
+		if (!isReady()) return null;
+		final Window[] frames = { resultsDialog, resultsDialog.getPathWindow(), resultsDialog.getFillWindow() };
+		for (final Window win : frames) {
+			if (win.isActive()) return win;
+		}
+		return null;
 	}
 
 	public boolean getSinglePane() {
@@ -2190,9 +2202,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
-	/** Does nothing if image is not being displayed */
-	private void discreteError(String msg) {
-		GuiUtils.floatingMsg(getImagePlus(), msg);
+	protected void discreteMsg(final String msg) {  /* HTML allowed */
+		new GuiUtils(getActiveWindow()).tempMsg(msg, true);
+	}
+
+	protected boolean getConfirmation(final String msg, final String title) {
+		return new GuiUtils(getActiveWindow()).getConfirmation(msg, title);
 	}
 
 	protected void updateViewPathChoice() {
@@ -2286,10 +2301,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 */
 	public NeuriteTracerResultsDialog getUI() {
 		return resultsDialog;
-	}
-
-	protected void floatingMsg(final String msg) {
-		GuiUtils.floatingMsg(getImagePlus(), msg);
 	}
 
 	@Override

@@ -176,14 +176,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				}
 			});
 		} else {
-			tracerPlugin.floatingMsg("You must have a path selected in order to start Sholl analysis");
+			tracerPlugin.discreteMsg("You must have a path selected in order to start Sholl analysis");
 		}
 	}
 
 	public void selectNearestPathToMousePointer(final boolean addToExistingSelection) {
 
 		if (pathAndFillManager.size() == 0) {
-			tracerPlugin.floatingMsg("There are no paths yet, so you can't select one with 'g'");
+			tracerPlugin.discreteMsg("There are no paths yet, so you can't select one with 'g'");
 			return;
 		}
 
@@ -200,7 +200,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
 
 		if (np == null) {
-			tracerPlugin.floatingMsg("BUG: No nearby path was found within " + diagonalLength + " of the pointer");
+			tracerPlugin.discreteMsg("No nearby path was found within " + diagonalLength + " of the pointer!");
 			return;
 		}
 
@@ -301,7 +301,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE) {
 
-			tracerPlugin.floatingMsg("You must close the sigma palette to continue");
+			tracerPlugin.discreteMsg("You must close the sigma palette to continue");
 
 		} else if (tracerPlugin.setupTrace) {
 
@@ -347,7 +347,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	private boolean impossibleEdit(final boolean displayError) {
 		final boolean invalid = (tracerPlugin.getEditingNode() == -1);
-		if (invalid && displayError) tracerPlugin.floatingMsg("No node selected");
+		if (invalid && displayError) tracerPlugin.discreteMsg("No node selected");
 		return invalid;
 	}
 
@@ -470,7 +470,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	 */
 	private class AListener implements ActionListener, ItemListener {
 
-		public static final String PAUSE_TOOGLE = "Pause SNT...";
+		public static final String PAUSE_TOOGLE = "Pause Tracing";
 		public static final String EDIT_TOOGLE = "Edit Paths";
 		private final static String NODE_DELETE = "Delete Selected Node  [Backspace]";
 		private final static String NODE_INSERT = "Connect Selected Node to Cursor Position  [Insert]";

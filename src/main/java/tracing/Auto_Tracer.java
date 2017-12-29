@@ -49,6 +49,7 @@ import util.BatchOpener;
 
 /** @deprecated Will be removed in v3.3 */
 @Deprecated
+@SuppressWarnings("all")
 public class Auto_Tracer extends MultiDThreePanes implements PlugIn, PaneOwner, SearchProgressCallback {
 
 	int width;

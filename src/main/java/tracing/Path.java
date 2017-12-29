@@ -261,21 +261,21 @@ public class Path implements Comparable<Path> {
 	 */
 	void setJoin(final int startOrEnd, final Path other, final PointInImage joinPoint) {
 		if (other == null) {
-			throw new RuntimeException("BUG: setJoin now should never take a null other path");
+			throw new IllegalArgumentException("BUG: setJoin now should never take a null other path");
 		}
 		if (startOrEnd == PATH_START) {
 			// If there was an existing path, that's an error:
 			if (startJoins != null)
-				throw new RuntimeException("BUG: setJoin for START should not replace another join");
+				throw new IllegalArgumentException("BUG: setJoin for START should not replace another join");
 			startJoins = other;
 			startJoinsPoint = joinPoint;
 		} else if (startOrEnd == PATH_END) {
 			if (endJoins != null)
-				throw new RuntimeException("BUG: setJoin for END should not replace another join");
+				throw new IllegalArgumentException("BUG: setJoin for END should not replace another join");
 			endJoins = other;
 			endJoinsPoint = joinPoint;
 		} else {
-			SNT.error("BUG: unknown first parameter to setJoin");
+			SNT.debug("BUG: unknown first parameter to setJoin");
 		}
 		// Also update the somehowJoins list:
 		if (somehowJoins.indexOf(other) < 0) {

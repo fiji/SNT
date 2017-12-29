@@ -348,16 +348,17 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				final Calibration colorImageCalibration = intendedColorImage
 					.getCalibration();
 				if (!SNT.similarCalibrations(calibration, colorImageCalibration)) {
-					SNT.error("Warning: the calibration of '" + intendedColorImage
+					guiUtils.centeredMsg("The calibration of '" + intendedColorImage
 						.getTitle() + "' is different from the image you're tracing ('" +
-						image.getTitle() + "')'\nThis may produce unexpected results.");
+						image.getTitle() + "')'\nThis may produce unexpected results.", "Warning");
 				}
 				if (!(intendedColorImage.getWidth() == image.getWidth() &&
 					intendedColorImage.getHeight() == image.getHeight() &&
-					intendedColorImage.getStackSize() == image.getStackSize())) SNT.error(
-						"Warning: the dimensions (in voxels) of '" + intendedColorImage
+					intendedColorImage.getStackSize() == image.getStackSize())) guiUtils.centeredMsg(
+						"the dimensions (in voxels) of '" + intendedColorImage
 							.getTitle() + "' is different from the image you're tracing ('" +
-							image.getTitle() + "')'\nThis may produce unexpected results.");
+							image.getTitle() + "')'\nThis may produce unexpected results.", "Warning");
+				
 			}
 			currentColorImage = intendedColorImage;
 			plugin.setColorImage(currentColorImage);
@@ -1703,8 +1704,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					@Override
 					public void run() {
 						if (noPathsError()) return;
-						String modKey = IJ.isMacOSX() ? "Alt" : "Ctrl";
-						modKey += "+Shift";
+						final String modKey = GuiUtils.modKey() + "+Shift";
 						final String url1 = Sholl_Analysis.URL +
 							"#Analysis_of_Traced_Cells";
 						final String url2 =
@@ -1800,7 +1800,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				showStatus("Instruction ignored: Nothing to abort");
 				break; // nothing to abort;
 			default:
-				SNT.error("BUG: Wrong state for aborting operation...");
+				SNT.debug("BUG: Wrong state for aborting operation...");
 				break;
 		}
 	}
@@ -1961,12 +1961,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 				final File file = new File(savePath);
 				if (file.exists()) {
-					if (!IJ.showMessageWithCancel("Save traces file...", "The file " +
-						savePath + " already exists.\n" + "Do you want to replace it?"))
+					if (!guiUtils.getConfirmation("The file " +
+						savePath + " already exists.\n" + "Do you want to replace it?", "Override traces file?"))
 						return;
 				}
 
-				IJ.showStatus("Saving traces to " + savePath);
+				showStatus("Saving traces to " + savePath);
 
 				final int preSavingState = currentState;
 				changeState(SAVING);
@@ -1974,13 +1974,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					pathAndFillManager.writeXML(savePath, plugin.useCompressedXML);
 				}
 				catch (final IOException ioe) {
-					IJ.showStatus("Saving failed.");
-					SNT.error("Writing traces to '" + savePath + "' failed: " + ioe);
+					showStatus("Saving failed.");
+					guiUtils.error("Writing traces to '" + savePath + "' failed: " + ioe);
 					changeState(preSavingState);
 					return;
 				}
 				changeState(preSavingState);
-				IJ.showStatus("Saving completed.");
+				showStatus("Saving completed.");
 
 				plugin.unsavedPaths = false;
 
@@ -2063,12 +2063,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 				final File file = new File(savePath);
 				if (file.exists()) {
-					if (!IJ.showMessageWithCancel("Export as CSV...", "The file " +
-						savePath + " already exists.\n" + "Do you want to replace it?"))
+					if (!guiUtils.getConfirmation("The file " +
+						savePath + " already exists.\n" + "Do you want to replace it?", "Override CSV file?"))
 						return;
 				}
 
-				IJ.showStatus("Exporting as CSV to " + savePath);
+				showStatus("Exporting as CSV to " + savePath);
 
 				final int preExportingState = currentState;
 				changeState(SAVING);
@@ -2081,12 +2081,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					}
 				}
 				catch (final IOException ioe) {
-					IJ.showStatus("Exporting failed.");
-					SNT.error("Writing traces to '" + savePath + "' failed:\n" + ioe);
+					showStatus("Exporting failed.");
+					guiUtils.error("Writing traces to '" + savePath + "' failed:\n" + ioe);
 					changeState(preExportingState);
 					return;
 				}
-				IJ.showStatus("Export complete.");
+				showStatus("Export complete.");
 				changeState(preExportingState);
 
 			}

@@ -23,6 +23,7 @@
 package tracing;
 
 @Deprecated
+@SuppressWarnings("all")
 public class EigenResultsDouble {
 
 	public double[] sortedValues;

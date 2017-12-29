@@ -64,7 +64,6 @@ import org.scijava.ui.swing.SwingDialog;
 import org.scijava.ui.swing.widget.SwingColorWidget;
 import org.scijava.util.PlatformUtils;
 
-import ij.ImagePlus;
 import tracing.SNT;
 
 public class GuiUtils {

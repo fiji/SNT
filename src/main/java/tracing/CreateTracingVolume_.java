@@ -35,6 +35,7 @@ import util.FileAndChannel;
 import vib.oldregistration.RegistrationAlgorithm;
 
 @Deprecated
+@SuppressWarnings("all")
 public class CreateTracingVolume_ implements PlugIn {
 
 

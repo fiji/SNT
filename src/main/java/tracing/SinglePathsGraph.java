@@ -36,6 +36,8 @@ import java.util.zip.GZIPOutputStream;
 
 import ij.IJ;
 
+@Deprecated
+@SuppressWarnings("all")
 public class SinglePathsGraph {
 
 	int width, height, depth;

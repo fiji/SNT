@@ -36,8 +36,8 @@ import tracing.SearchInterface;
 import tracing.SimpleNeuriteTracer;
 import tracing.TracerCanvas;
 
-@SuppressWarnings("serial")
 @Deprecated
+@SuppressWarnings("all")
 public class LegacyTracerCanvas extends TracerCanvas {
 
 	protected PathAndFillManager pathAndFillManager;

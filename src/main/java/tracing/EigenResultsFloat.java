@@ -24,6 +24,7 @@
 package tracing;
 
 @Deprecated
+@SuppressWarnings("all")
 public class EigenResultsFloat {
 
 	public float[] sortedValues;

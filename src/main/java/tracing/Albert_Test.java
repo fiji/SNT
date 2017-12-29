@@ -35,6 +35,7 @@ import ij.plugin.PlugIn;
 
 /** @deprecated Will be removed in v3.3 */
 @Deprecated
+@SuppressWarnings("all")
 public class Albert_Test implements PlugIn {
 
 	@Override

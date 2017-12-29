@@ -32,7 +32,7 @@ import ij.gui.ColorChooser;
 import tracing.SimpleNeuriteTracer;
 
 @Deprecated
-@SuppressWarnings("serial")
+@SuppressWarnings("all")
 public class PathColorsCanvas extends Canvas implements MouseListener {
 
 	SimpleNeuriteTracer plugin;

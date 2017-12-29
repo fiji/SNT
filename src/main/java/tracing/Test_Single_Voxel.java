@@ -43,6 +43,7 @@ import ij3d.Image3DUniverse;
 
 /** @deprecated Will be removed in v3.3 */
 @Deprecated
+@SuppressWarnings("all")
 public class Test_Single_Voxel implements PlugIn {
 	@Override
 	public void run(final String ignore) {

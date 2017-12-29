@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import ij.ImagePlus;
 
 @Deprecated
+@SuppressWarnings("all")
 public class AutoSearchThread extends SearchThread {
 
 	float[][] tubeValues;

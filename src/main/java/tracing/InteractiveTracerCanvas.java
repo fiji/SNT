@@ -317,34 +317,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			SNT.debug("BUG: No operation chosen");
 	}
 
-	private void drawSquare(final Graphics g, final PointInImage p, final Color fillColor, final Color edgeColor,
-		final int side) {
-
-		int x, y;
-
-		if (plane == MultiDThreePanes.XY_PLANE) {
-			x = myScreenXD(p.x / tracerPlugin.x_spacing);
-			y = myScreenYD(p.y / tracerPlugin.y_spacing);
-		} else if (plane == MultiDThreePanes.XZ_PLANE) {
-			x = myScreenXD(p.x / tracerPlugin.x_spacing);
-			y = myScreenYD(p.z / tracerPlugin.z_spacing);
-		} else { // MultiDThreePanes.ZY_PLANE
-			x = myScreenXD(p.z / tracerPlugin.z_spacing);
-			y = myScreenYD(p.y / tracerPlugin.y_spacing);
-		}
-
-		final int rectX = x - side / 2;
-		final int rectY = y - side / 2;
-
-		g.setColor(fillColor);
-		g.fillRect(rectX, rectY, side, side);
-
-		if (edgeColor != null) {
-			g.setColor(edgeColor);
-			g.drawRect(rectX, rectY, side, side);
-		}
-	}
-
 	private boolean impossibleEdit(final boolean displayError) {
 		final boolean invalid = (tracerPlugin.getEditingNode() == -1);
 		if (invalid && displayError) tracerPlugin.discreteMsg("No node selected");

@@ -1198,7 +1198,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 
 		if (temporaryPath == null) {
-			discreteMsg("There's no temporary path to cancel!");
+			discreteMsg("There's no temporary path to discard!");
 			return;
 		}
 

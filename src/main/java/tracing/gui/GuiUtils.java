@@ -408,6 +408,19 @@ public class GuiUtils {
 		return spinner;
 	}
 
+	public static JSpinner doubleSpinner(final double value, final double min,
+		final double max, final double step, final int nDecimals)
+	{
+		final int maxDigits = SNT.formatDouble(max, nDecimals).length();
+		final SpinnerModel model = new SpinnerNumberModel(value, min, max, step);
+		final JSpinner spinner = new JSpinner(model);
+		final JFormattedTextField textfield = ((DefaultEditor) spinner.getEditor())
+			.getTextField();
+		textfield.setColumns(maxDigits);
+		textfield.setEditable(false);
+		return spinner;
+	}
+
 	public static double extractDouble(final JTextField textfield) {
 		try {
 			return Double.parseDouble(textfield.getText());

@@ -823,6 +823,43 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return intPanel;
 	}
 
+	
+	private JPanel nodePanel() {
+		final JPanel nodePanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+		nodePanel.add(leftAlignedLabel("Rendered nodes diameter ", true));
+		final JSpinner nodeSpinner = GuiUtils.doubleSpinner(plugin.getXYCanvas().nodeDiameter(), 0, 50, 1, 0);
+		nodePanel.add(nodeSpinner);
+		nodeSpinner.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(final ChangeEvent e) {
+				final double value = (double) (nodeSpinner.getValue());
+				plugin.xy_tracer_canvas.setNodeDiameter(value);
+				if (!plugin.getSinglePane()) {
+					plugin.xz_tracer_canvas.setNodeDiameter(value);
+					plugin.zy_tracer_canvas.setNodeDiameter(value);
+				}
+				plugin.repaintAllPanes();
+			};
+		});
+		final JButton defaultsButton = new JButton("Default");
+		defaultsButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				plugin.xy_tracer_canvas.setNodeDiameter(-1);
+				if (!plugin.getSinglePane()) {
+					plugin.xz_tracer_canvas.setNodeDiameter(-1);
+					plugin.zy_tracer_canvas.setNodeDiameter(-1);
+				}
+				nodeSpinner.setValue(plugin.xy_tracer_canvas.nodeDiameter());
+				showStatus("Node diameters reset");
+			}
+		});
+		nodePanel.add(defaultsButton);
+		return nodePanel;
+	}
+
 	private JPanel extraColorsPanel() {
 
 		final LinkedHashMap<String, Color> hm = new LinkedHashMap<>();
@@ -905,6 +942,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JPanel miscPanel() {
 		final JPanel miscPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
+		
+		miscPanel.add(nodePanel(), gdb);
+		++gdb.gridy;
+		
 		final JCheckBox manualModeCheckBox = new JCheckBox(
 			"Disable A* search algorithm", plugin.isAstarDisabled());
 		manualModeCheckBox.addItemListener(new ItemListener() {
@@ -978,7 +1019,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		gbc.weightx = 0.25;
 		statusChoicesPanel.add(keepSegment, gbc);
 		gbc.ipadx = 2;
-		junkSegment = GuiUtils.smallButton("<html><b>N</b>o");
+		junkSegment = GuiUtils.smallButton("<html>&thinsp;<b>N</b>o&thinsp;");
 		junkSegment.addActionListener(listener);
 		gbc.gridx = 1;
 		statusChoicesPanel.add(junkSegment, gbc);

@@ -386,42 +386,33 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 
 		// Now render temporary/incomplete paths
-		//FIXME: do this only once
-		final double magnification = getMagnification();
-		int pixel_size = magnification < 1 ? 1 : (int) magnification;
-		if (magnification >= 4)
-			pixel_size = (int) (magnification / 2);
-
-		final int spotDiameter = 5 * pixel_size;
+		final double spotDiameter = 2 * nodeDiameter();
 
 		if (unconfirmedSegment != null) {
-			unconfirmedSegment.drawPathAsPoints(this, g, getUnconfirmedPathColor(), plane, drawDiametersXY, sliceZeroIndexed,
-				eitherSideParameter);
-
+			unconfirmedSegment.drawPathAsPoints(this, g, getUnconfirmedPathColor(), plane, drawDiametersXY,
+					sliceZeroIndexed,
+					eitherSideParameter);
 			if (unconfirmedSegment.endJoins != null) {
-				final int n = unconfirmedSegment.size();
-				final PointInImage p = unconfirmedSegment.getPointInImage(n - 1);
-				drawSquare(g, p, Color.BLUE, Color.GREEN, spotDiameter);
+				final PathNode pn = new PathNode(unconfirmedSegment, unconfirmedSegment.size()-1, this);
+				pn.setSize(spotDiameter);
+				pn.draw(g, getUnconfirmedPathColor());
 			}
 		}
 
 		final Path currentPathFromTracer = tracerPlugin.getCurrentPath();
 
 		if (currentPathFromTracer != null) {
-			currentPathFromTracer.drawPathAsPoints(this, g, Color.RED, plane, drawDiametersXY, sliceZeroIndexed,
+			currentPathFromTracer.drawPathAsPoints(this, g, getTemporaryPathColor(), plane, drawDiametersXY, sliceZeroIndexed,
 				eitherSideParameter);
 
-			if (lastPathUnfinished && currentPath.size() == 0) {
-
+			if (lastPathUnfinished && currentPath.size() == 0) { // first point in path
 				final PointInImage p = new PointInImage(tracerPlugin.last_start_point_x * tracerPlugin.x_spacing,
-					tracerPlugin.last_start_point_y * tracerPlugin.y_spacing,
-					tracerPlugin.last_start_point_z * tracerPlugin.z_spacing);
-
-				Color edgeColour = null;
-				if (currentPathFromTracer.startJoins != null)
-					edgeColour = Color.GREEN;
-
-				drawSquare(g, p, Color.BLUE, edgeColour, spotDiameter); //FIXME:
+						tracerPlugin.last_start_point_y * tracerPlugin.y_spacing,
+						tracerPlugin.last_start_point_z * tracerPlugin.z_spacing);
+				p.onPath = currentPath;
+				final PathNode pn = new PathNode(p, this);
+				pn.setSize(spotDiameter);
+				pn.draw(g, getUnconfirmedPathColor());
 			}
 		}
 

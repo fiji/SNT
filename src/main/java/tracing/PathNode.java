@@ -42,71 +42,125 @@ public class PathNode {
 	public static final int JOINT = 3;
 	/** Flag describing a slab node */
 	public static final int SLAB = 4;
+	/** Flag describing a single point path */
+	public static final int HERMIT= 5;
 
 	private final Path path;
+	private final TracerCanvas canvas;
+	private double size = -1; //see assignRenderingSize()
 	private int type;
-	private double size;
 	private boolean editable;
 	protected double x;
 	protected double y;
 
 	/**
+	 * Creates a path node from a {@link PointInImage}.
+	 *
+	 * @param pim the position of the node (z-position ignored)
+	 * @param canvas the canvas to render this node. Cannot be null
+	 */
+	public PathNode(final PointInImage pim, final TracerCanvas canvas) {
+		this.path = pim.onPath;
+		this.canvas = canvas;
+		setXYcoordinates(pim);
+	}
+
+	/**
 	 * Creates a node from a Path position.
 	 *
-	 * @param path the path holding this node
+	 * @param path the path holding this node. Cannot be null
 	 * @param index the position of this node within path
-	 * @param canvas the canvas to render this node
+	 * @param canvas the canvas to render this node. Cannot be null
 	 */
 	public PathNode(final Path path, final int index, final TracerCanvas canvas) {
 		this.path = path;
-
-		// Retrieve x,y coordinates of node
-		switch (canvas.getPlane()) {
-			case MultiDThreePanes.XY_PLANE:
-				x = canvas.myScreenXDprecise(path.getXUnscaledDouble(index));
-				y = canvas.myScreenYDprecise(path.getYUnscaledDouble(index));
-				break;
-			case MultiDThreePanes.XZ_PLANE:
-				x = canvas.myScreenXDprecise(path.getXUnscaledDouble(index));
-				y = canvas.myScreenYDprecise(path.getZUnscaledDouble(index));
-				break;
-			case MultiDThreePanes.ZY_PLANE:
-				x = canvas.myScreenXDprecise(path.getZUnscaledDouble(index));
-				y = canvas.myScreenYDprecise(path.getYUnscaledDouble(index));
-				break;
-			default:
-				throw new IllegalArgumentException("BUG: Unknown plane! (" + canvas
-					.getPlane() + ")");
-		}
-
-		size = canvas.nodeDiameter();
+		this.canvas = canvas;
+		setXYcoordinates(path.getPointInImage(index));
 
 		// Define which type of node we're dealing with
-		if (index == 0 && path.startJoins == null) {
+		if (path.size() == 1) {
+			type = HERMIT;
+		}
+		else if (index == 0 && path.startJoins == null) {
 			type = START;
-			size *= 2;
 		}
 		else if (index == path.points - 1 && path.endJoins == null) {
 			type = END;
-			size *= 1.5;
 		}
 		else if ((index == 0 && path.startJoins != null) || (index == path.points -
 			1 && path.endJoins != null))
 		{
 			type = JOINT;
-			size *= 3;
 		}
 		else {
 			type = SLAB;
 		}
+	}
 
+	private void setXYcoordinates(final PointInImage pim) {
+		switch (canvas.getPlane()) {
+		case MultiDThreePanes.XY_PLANE:
+			x = canvas.myScreenXDprecise(pim.x / path.x_spacing);
+			y = canvas.myScreenYDprecise(pim.y / path.y_spacing);
+			break;
+		case MultiDThreePanes.XZ_PLANE:
+			x = canvas.myScreenXDprecise(pim.x / path.x_spacing);
+			y = canvas.myScreenYDprecise(pim.z / path.z_spacing);
+			break;
+		case MultiDThreePanes.ZY_PLANE:
+			x = canvas.myScreenXDprecise(pim.z / path.z_spacing);
+			y = canvas.myScreenYDprecise(pim.y / path.y_spacing);
+			break;
+		default:
+			throw new IllegalArgumentException("BUG: Unknown plane! (" + canvas.getPlane() + ")");
+		}
+	}
+
+	private void assignRenderingSize() {
+		if (size > -1) return; // size already specified via setSize()
+
+		// TODO: set size according to path thickness?
+		final double baseline = canvas.nodeDiameter();
+		switch (type) {
+		case HERMIT:
+			size = 5 * baseline;
+			break;
+		case START:
+			size = 2 * baseline;
+			break;
+		case END:
+			size = 1.5 * baseline;
+			break;
+		case JOINT:
+			size = 3 * baseline;
+			break;
+		case SLAB:
+		default:
+			size = baseline;
+		}
+	}
+
+	/**
+	 * @return the rendering diameter of this node.
+	 */
+	public double getSize() {
+		return size;
+	}
+
+	/**
+	 * @param size
+	 *            the rendering diameter of this node. Set it to -1 to use the
+	 *            default value.
+	 * @see TracerCanvas#nodeDiameter()
+	 */
+	public void setSize(double size) {
+		this.size = size;
 	}
 
 	/**
 	 * Returns the type of node.
 	 *
-	 * @return the node type: PathNode.END, PathNode.JOINT, PathNode.SLAB or
-	 *         PathNode.START
+	 * @return the node type: PathNode.END, PathNode.JOINT, PathNode.SLAB, etc.
 	 */
 	public int type() {
 		return type;
@@ -114,9 +168,10 @@ public class PathNode {
 
 	public void draw(final Graphics2D g, final Color c) {
 
-		// TODO: set size according to path thickness?
+		assignRenderingSize();
 		final Shape node = new Ellipse2D.Double(x - size / 2, y - size / 2, size,
 			size);
+
 		if (editable) {
 			// editable node: opaque border with cross hairs
 			g.setColor(c);

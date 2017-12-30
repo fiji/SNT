@@ -28,15 +28,13 @@ package tracing;
 public class PointInImage {
 
 	public double x, y, z;
+	public Path onPath = null; // You can optionally set this value:
 
 	public PointInImage(final double x, final double y, final double z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
 	}
-
-	// You can optionally set this value:
-	public Path onPath = null;
 
 	public double distanceSquaredTo(final double ox, final double oy, final double oz) {
 		final double xdiff = x - ox;

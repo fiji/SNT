@@ -379,7 +379,7 @@ public class Path implements Comparable<Path> {
 	public PointInImage getPointInImage(final int i) {
 
 		if ((i < 0) || i >= size()) {
-			throw new RuntimeException("BUG: getPointInImage was asked for an out-of-range point: " + i);
+			throw new IllegalArgumentException("getPointInImage() was asked for an out-of-range point: " + i);
 		}
 
 		final PointInImage result = new PointInImage(precise_x_positions[i], precise_y_positions[i],
@@ -481,20 +481,28 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Gets the index of the closest node associated with the specified image coordinates.
-	 * Returns -1 if no such node was found.
-	 *
-	 * @param x the x-coordinates (calibrated units)
-	 * @param y the y-coordinates (calibrated units)
-	 * @param z the z-coordinates (calibrated units)
-	 * @return the index of the closest node to the specified coordinates.
+	 * Gets the index of the closest node associated with the specified world
+	 * coordinates.
+	 * 
+	 * @param x
+	 *            the x-coordinates (spatially calibrated image units)
+	 * @param y
+	 *            the y-coordinates (spatially calibrated image units)
+	 * @param z
+	 *            the z-coordinates (spatially calibrated image units)
+	 * @param within
+	 *            sets the search sensitivity. E.g., Setting it to Double.MAX_VALUE
+	 *            (or the image's largest dimension) will always return a valid
+	 *            index.
+	 * @return the index of the closest node to the specified coordinates. Returns
+	 *         -1 if no such node was found.
 	 */
-	public int indexNearestTo(final double x, final double y, final double z) {
+	public int indexNearestTo(final double x, final double y, final double z, final double within) {
 
 		if (size() < 1)
 			throw new IllegalArgumentException("indexNearestTo called on a Path of size() = 0");
 
-		double minimumDistanceSquared = Double.MAX_VALUE;
+		double minimumDistanceSquared = within * within;
 		int indexOfMinimum = -1;
 
 		for (int i = 0; i < size(); ++i) {
@@ -512,6 +520,25 @@ public class Path implements Comparable<Path> {
 		}
 
 		return indexOfMinimum;
+	}
+
+	protected int indexNearestTo2D(final double x, final double y, final double within) {
+		double minimumDistanceSquared = within * within;
+		int indexOfMinimum = -1;
+		for (int i = 0; i < size(); ++i) {
+			final double diff_x = x - precise_x_positions[i];
+			final double diff_y = y - precise_y_positions[i];
+			final double thisDistanceSquared = diff_x * diff_x + diff_y * diff_y;
+			if (thisDistanceSquared < minimumDistanceSquared) {
+				indexOfMinimum = i;
+				minimumDistanceSquared = thisDistanceSquared;
+			}
+		}
+		return indexOfMinimum;
+	}
+
+	protected int indexNearestTo(final double x, final double y, final double z) {
+		return indexNearestTo(x, y, z, Double.MAX_VALUE);
 	}
 
 	/**

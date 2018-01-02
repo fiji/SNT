@@ -650,6 +650,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (enable) {
 			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
+			//getUI().showPartsNearby.setSelected(true);
 		} else {
 			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 			setCanvasLabelAllPanes(null);
@@ -2218,11 +2219,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	protected boolean getConfirmation(final String msg, final String title) {
 		return new GuiUtils(getActiveWindow()).getConfirmation(msg, title);
-	}
-
-	protected void updateViewPathChoice() {
-		if (!resultsDialog.justShowPartsNearby.isEnabled()) return;
-		resultsDialog.justShowPartsNearby.setSelected(xy_tracer_canvas.just_near_slices);
 	}
 
 	protected void toogleSnapCursor() {

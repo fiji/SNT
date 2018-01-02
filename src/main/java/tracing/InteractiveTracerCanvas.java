@@ -79,6 +79,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private void buildPpupMenu() { // We are extending ImageCanvas: we'll avoid swing components here
 		pMenu = new PopupMenu();
 		final AListener listener = new AListener();
+		pMenu.add(menuItem(AListener.SELECT_NEAREST, listener));
+		pMenu.addSeparator();
 		togglePauseModeMenuItem = new CheckboxMenuItem(AListener.PAUSE_TOOGLE);
 		togglePauseModeMenuItem.addItemListener(listener);
 		pMenu.add(togglePauseModeMenuItem);
@@ -200,12 +202,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
 
 		if (np == null) {
-			tracerPlugin.discreteMsg("No nearby path was found within " + diagonalLength + " of the pointer!");
+			tracerPlugin.discreteMsg("No nearby path was found within " + diagonalLength + tracerPlugin.spacing_units + " of the pointer!");
 			return;
 		}
 
 		final Path path = np.getPath();
 		tracerPlugin.selectPath(path, addToExistingSelection);
+
 	}
 
 	@Override
@@ -402,9 +405,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			tracerPlugin.enableEditMode(true);
 		} else {
 			tracerPlugin.enableEditMode(false);
-			toggleEditModeMenuItem.setState(false);
 		}
-		tracerPlugin.repaintAllPanes();
 	}
 
 	public void setTemporaryPathColor(final Color color) {
@@ -424,7 +425,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	public Color getUnconfirmedPathColor() {
-		return (unconfirmedColor == null) ? Color.BLUE : unconfirmedColor;
+		return (unconfirmedColor == null) ? Color.CYAN : unconfirmedColor;
 	}
 
 	public Color getFillColor() {
@@ -439,12 +440,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	 */
 	private class AListener implements ActionListener, ItemListener {
 
+		public static final String SELECT_NEAREST = "Select Nearest Path  [G, Shift+G]";
 		public static final String PAUSE_TOOGLE = "Pause Tracing";
-		public static final String EDIT_TOOGLE = "Edit Paths";
-		private final static String NODE_DELETE = "Delete Selected Node  [Backspace]";
-		private final static String NODE_INSERT = "Connect Selected Node to Cursor Position  [Insert]";
-		private final static String NODE_MOVE = "Move Selected Node to Cursor Position  [M]";
-		private final static String NODE_MOVE_Z = "Bring Selected Node to current Z-plane";
+		public static final String EDIT_TOOGLE = "Edit Path";
+		private final static String NODE_DELETE = "Delete Active Node  [D, Backspace]";
+		private final static String NODE_INSERT = "Insert New Node at Cursor Position  [I, Ins]";
+		private final static String NODE_MOVE = "Move Active Node to Cursor Position  [M]";
+		private final static String NODE_MOVE_Z = "Bring Active Node to current Z-plane  [B]";
 
 		@Override
 		public void itemStateChanged(final ItemEvent e) {
@@ -458,7 +460,11 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		@Override
 		public void actionPerformed(final ActionEvent e) {
 
-			if (impossibleEdit(true)) return;
+			if (e.getActionCommand().equals(SELECT_NEAREST)) {
+				final boolean add = ((e.getModifiers() & ActionEvent.SHIFT_MASK) >0);
+				selectNearestPathToMousePointer(add);
+			}
+			else if (impossibleEdit(true)) return;
 
 			if (e.getActionCommand().equals(NODE_DELETE)) {
 				deleteEditingNode(true);

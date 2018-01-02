@@ -492,7 +492,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			redrawEditingPath();
 		} else { // single point path
 			tracerPlugin.getPathAndFillManager().deletePath(editingPath);
-			tracerPlugin.setEditingPath();
+			tracerPlugin.detectEditingPath();
 			tracerPlugin.repaintAllPanes();
 		}
 	}
@@ -515,7 +515,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final int editingNode = editingPath.getEditableNodeIndex();
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
-		editingPath.moveNode(editingNode, new PointInImage(p[0], p[1], p[2]));
+		editingPath.moveNode(editingNode, new PointInImage(p[0]*tracerPlugin.x_spacing, p[1]*tracerPlugin.y_spacing, p[2]*tracerPlugin.z_spacing));
 		redrawEditingPath();
 		return;
 	}
@@ -527,13 +527,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		double newZ = editingPath.precise_z_positions[editingNode];
 		switch (plane) {
 			case MultiDThreePanes.XY_PLANE:
-				newZ = (imp.getZ() - 1) * editingPath.z_spacing;
+				newZ = (imp.getZ() - 1) * tracerPlugin.z_spacing;
 				break;
 			case MultiDThreePanes.XZ_PLANE:
-				newZ = last_y_in_pane_precise;
+				newZ = last_y_in_pane_precise * tracerPlugin.y_spacing;
 				break;
 			case MultiDThreePanes.ZY_PLANE:
-				newZ = last_x_in_pane_precise;
+				newZ = last_x_in_pane_precise * tracerPlugin.x_spacing;;
 				break;
 		}
 		editingPath.moveNode(editingNode, new PointInImage(

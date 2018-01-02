@@ -619,7 +619,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			discreteMsg("Please finish current operation before editing paths");
 			return false;
 		}
-		setEditingPath();
+		detectEditingPath();
 		final boolean pathExists = editingPath != null;
 		if (warnUserIfNot && !pathExists) {
 			discreteMsg("You must select a single path in order to edit it");
@@ -634,14 +634,18 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return editAllowed;
 	}
 
-	protected void setEditingPath() {
+	protected void setEditingPath(final Path path) {
+		editingPath = path;
+	}
+
+	protected void detectEditingPath() {
 		if (pathAndFillManager.selectedPathsSet.size() == 1) {
 			editingPath = getSelectedPaths().iterator().next();
 		} else {
 			editingPath = null;
 		}
 	}
-
+	
 	protected void enableEditMode(final boolean enable) {
 		if (enable) {
 			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);

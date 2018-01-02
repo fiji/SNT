@@ -41,12 +41,15 @@ class QueueJumpingKeyListener implements KeyListener {
 	private int lastKeyPressedCode;
 	private final boolean mac;
 
-	/* Define which keys are always waved back to IJ listeners */
+	/* Define which keys are always parsed by IJ listeners */
 	private static final int[] W_KEYS = new int[] { //
 			KeyEvent.VK_SPACE, // pan tool shortcut
-			KeyEvent.VK_PLUS, KeyEvent.VK_EQUALS, KeyEvent.VK_MINUS // zoom shortcuts
+			KeyEvent.VK_EQUALS, KeyEvent.VK_MINUS, KeyEvent.VK_UP, KeyEvent.VK_DOWN, // zoom keys
+			KeyEvent.VK_COMMA, KeyEvent.VK_PERIOD, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, // navigation keys
+			KeyEvent.VK_L, // Command Finder
+			KeyEvent.VK_4, KeyEvent.VK_5, // advanced zoom keys
+			KeyEvent.VK_PLUS, KeyEvent.VK_LESS, KeyEvent.VK_GREATER, // extra navigation/zoom keys
 	};
-
 
 	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin,
 		final InteractiveTracerCanvas canvas)
@@ -64,8 +67,11 @@ class QueueJumpingKeyListener implements KeyListener {
 			return;
 		}
 
+		// NB: we don't want accidental keystrokes to interfere with SNT tasks
+		// so we'll block any keys from reaching other listeners, unless: 1)
+		// the keystroke is white-listed or 2) the user pressed a modifier key
+
 		final int keyCode = e.getKeyCode();
-		final char keyChar = e.getKeyChar();
 		final boolean doublePress = isDoublePress(e);
 
 		if (keyCode == KeyEvent.VK_ESCAPE) {
@@ -74,117 +80,128 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 			return;
 		}
-
-		else if (canvas.isEventsDisabled() || Arrays.stream(W_KEYS).anyMatch(i -> i == keyCode)) {
-			waiveKeyPress(e);
-			return;
-		}
 		else if (keyCode == KeyEvent.VK_ENTER) {
 			tracerPlugin.getUI().toFront();
 			e.consume();
 			return;
 		}
-		else if (canvas.isEditMode()) {
-
-			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
-				canvas.deleteEditingNode(false);
-			} else if (keyCode == KeyEvent.VK_INSERT) {
-				canvas.apppendLastPositionToEditingNode(false);
-			} else if (keyChar == 'm' || keyChar == 'M') {
-				canvas.moveEditingNodeToLastPosition(false);
-			}
-			e.consume();
+		else if (Arrays.stream(W_KEYS).anyMatch(i -> i == keyCode)) {
+			waiveKeyPress(e);
 			return;
-
 		}
-	
-		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
-		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT
-			: keyCode == KeyEvent.VK_CONTROL;
-
+		
+		final char keyChar = e.getKeyChar();		
 		final int modifiers = e.getModifiersEx();
 		final boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
 		final boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
 		final boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
+		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
+		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT
+			: keyCode == KeyEvent.VK_CONTROL;
 
-		SNT.debug("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode) +
-			") keyChar=\"" + keyChar + "\" (" + (int) keyChar + ") " + KeyEvent
-				.getKeyModifiersText(canvas.getModifiers()));
+		// SNT Hotkeys that do not override defaults
+		if (shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A)) {
+				canvas.startShollAnalysis();
+				e.consume();
+		}
 
-		if (keyChar == 'y' || keyChar == 'Y') {
+		// SNT Keystrokes that override IJ defaults. These
+		// are common to both tracing and edit mode
+		else if (shift_pressed || join_modifier_pressed) {
+			/*
+			 * This case is just so that when someone starts holding down
+			 * the modified immediately see the effect, rather than having
+			 * to wait for the next mouse move event
+			 */
+			canvas.fakeMouseMoved(shift_pressed, join_modifier_pressed);
+			e.consume();
+		}
+		else if (keyChar == 'g' || keyChar == 'G') {
+			// IJ1 built-in: Shift+G Take a screenshot
+			canvas.selectNearestPathToMousePointer(shift_down);
+			e.consume();
+		}
+
+		// Exceptions above aside, do not intercept any other
+		// keystrokes that include a modifier key
+		else if (shift_down || control_down || alt_down) {
+			waiveKeyPress(e);
+			return;
+		}
+		
+		// Hotkeys common to both tracing and edit mode
+		else if (keyChar == 'a' || keyChar == 'A') {
+			// IJ1 built-in: Select All
+			tracerPlugin.getUI().togglePathsChoice();
+			e.consume();
+		}
+
+		else if (keyChar == 'z' || keyChar == 'Z') {
+			// IJ1 built-in: Undo
+			tracerPlugin.getUI().togglePartsChoice();
+			e.consume();
+		}
+
+		// Keystrokes exclusive to edit mode
+		else if (canvas.isEditMode()) {
+			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE || keyChar == 'd' || keyChar =='D') {
+				canvas.deleteEditingNode(false);
+			}
+			else if (keyCode == KeyEvent.VK_INSERT || keyChar == 'i' || keyChar =='I') {
+				canvas.apppendLastPositionToEditingNode(false);
+			}
+			else if (keyChar == 'm' || keyChar == 'M') {
+				canvas.moveEditingNodeToLastPosition(false);
+			}
+			else if (keyChar == 'b' || keyChar == 'B') {
+				canvas.assignLastZPositionToEditNode(false);
+			}
+			e.consume();
+			return;
+		}
+		
+		// Keystrokes exclusive to tracing mode
+		else if (keyChar == 'y' || keyChar == 'Y') {
+			//IJ1 built-in: ROI Properties...
 			if (tracerPlugin.getUI().finishOnDoubleConfimation &&
 				doublePress) tracerPlugin.finishedPath();
 			else tracerPlugin.confirmTemporary();
 			e.consume();
 		}
-
-		else if (keyChar == 'n' || keyChar == 'N') {
+		else if (keyChar == 'n' || keyChar == 'N') { 
+			// IJ1 built-in: New Image
 			if (tracerPlugin.getUI().discardOnDoubleCancellation &&
 				doublePress) tracerPlugin.cancelPath();
 			else tracerPlugin.cancelTemporary();
 			e.consume();
 		}
-
 		else if (keyChar == 'c' || keyChar == 'C') {
+			// IJ1 built-in: Copy
 			tracerPlugin.cancelPath();
 			e.consume();
 		}
-
 		else if (keyChar == 'f' || keyChar == 'F') {
-
-			// if (verbose) SNT.log( "Finalizing that path" );
+			// IJ1 built-in: Fill
 			tracerPlugin.finishedPath();
 			e.consume();
-
-//		} else if (keyChar == 'v' || keyChar == 'V') {
-//
-//			// if (verbose) SNT.log( "View paths as a stack" );
-//			tracerPlugin.makePathVolume();
-//			e.consume();
-
 		}
-
-		else if (keyChar == '5') {
-			canvas.toggleJustNearSlices();
-			tracerPlugin.updateViewPathChoice();
+		else if (keyChar == 'h' || keyChar == 'H') {
+			// IJ1 built-in: Histogram
+			tracerPlugin.getUI().toggleHessian();
 			e.consume();
 		}
-
 		else if (keyChar == 'm' || keyChar == 'M') {
+			// IJ1 built-in: Measure
 			canvas.clickAtMaxPoint();
 			e.consume();
 		}
-
 		else if (keyChar == 's' || keyChar == 's') {
+			// IJ1 built-in: Save
 			tracerPlugin.toogleSnapCursor();
 			e.consume();
 		}
 
-		else if (keyChar == 'g' || keyChar == 'G') {
-			canvas.selectNearestPathToMousePointer(shift_down);
-			e.consume();
-		}
-
-		else if (shift_pressed || join_modifier_pressed) {
-
-			/*
-			 * This case is just so that when someone starts holding down the
-			 * modified they immediately see the effect, rather than having to
-			 * wait for the next mouse move event.
-			 */
-
-			canvas.fakeMouseMoved(shift_pressed, join_modifier_pressed);
-			e.consume();
-		}
-
-		else if (shift_down && (control_down || alt_down) &&
-			(keyCode == KeyEvent.VK_A))
-		{
-			canvas.startShollAnalysis();
-			e.consume();
-		}
-		
-		// should we pass on other key presses?
+		// Uncomment below to pass on any other key press to existing listeners
 		//else waiveKeyPress(e); 
 
 	}

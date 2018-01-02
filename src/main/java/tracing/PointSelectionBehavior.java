@@ -41,6 +41,8 @@ import ij3d.behaviors.Picker;
 /* This class is based on Albert Cardona's code in
  * Blob_Segmentation_in_3D.java */
 
+@Deprecated
+@SuppressWarnings("all")
 public class PointSelectionBehavior extends InteractiveBehavior {
 
 	protected SimpleNeuriteTracer tracerPlugin; //TODO: implement QueueJumpingKeyListener doublekeypress
@@ -89,17 +91,15 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 					tracerPlugin.finishedPath();
 					e.consume();
 
-				} else if (keyChar == 'v' || keyChar == 'V') {
+				// } else if (keyChar == 'v' || keyChar == 'V') {
+				//
+				//	tracerPlugin.makePathVolume();
+				//	e.consume();
 
-					tracerPlugin.makePathVolume();
+				} else if (keyChar == 'z' || keyChar == 'Z') {
+					// IJ1 built-in: undo
+					tracerPlugin.getUI().togglePartsChoice();
 					e.consume();
-
-				} else if (keyChar == '5') {
-
-					tracerPlugin.getXYCanvas().toggleJustNearSlices();
-					tracerPlugin.updateViewPathChoice();
-					e.consume();
-
 				} else if (keyChar == 'g' || keyChar == 'G') {
 
 					final Point p = univ.getCanvas().getMousePosition();

@@ -97,12 +97,12 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private void showPopupMenu(int x, int y) {
 		final boolean be = uiReadyForModeChange(NeuriteTracerResultsDialog.EDITING_MODE);
 		toggleEditModeMenuItem.setEnabled(be);
-		togglePauseModeMenuItem.setState(be && editMode);
+		toggleEditModeMenuItem.setState(be && editMode);
 		final boolean bp = uiReadyForModeChange(NeuriteTracerResultsDialog.PAUSED);
 		togglePauseModeMenuItem.setEnabled(bp);
 		togglePauseModeMenuItem.setState(bp && tracerPlugin.getUIState()==NeuriteTracerResultsDialog.PAUSED);
-		for (int i = 4; i < pMenu.getItemCount(); i++) {
-			// First 4 items: Edit mode, separator, Pause mode, separator
+		for (int i = 6; i < pMenu.getItemCount(); i++) {
+			// First 6 items: Select nearest, sep, Edit mode, sep, Pause mode, separator
 			pMenu.getItem(i).setEnabled(editMode);
 		}
 		pMenu.show(this, x, y);
@@ -318,8 +318,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	private boolean impossibleEdit(final boolean displayError) {
-		final boolean invalid = (tracerPlugin.getEditingNode() == -1);
-		if (invalid && displayError) tracerPlugin.discreteMsg("No node selected");
+		boolean invalid = !tracerPlugin.pathAndFillManager.isSelected(tracerPlugin.getEditingPath());
+		if (invalid && displayError)
+			tracerPlugin.discreteMsg("Editing path not selected");
+		if (!invalid) {
+			invalid = (tracerPlugin.getEditingNode() == -1);
+			if (invalid && displayError)
+				tracerPlugin.discreteMsg("No node selected");
+		}
 		return invalid;
 	}
 

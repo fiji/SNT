@@ -666,6 +666,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			xz_tracer_canvas.setEditMode(enable);
 			zy_tracer_canvas.setEditMode(enable);
 		}
+		repaintAllPanes();
 	}
 
 	protected void pause(final boolean pause) {
@@ -899,50 +900,50 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		y = pd[1];
 		z = pd[2];
 
-		if (isEditModeEnabled() && editingPath != null) {
-			final int eNode = editingPath.getNodeIndex(new PointInImage(x, y, z));
-			if (eNode != -1) editingPath.setEditableNode(eNode);
-		}
-		else if (join_modifier_down && pathAndFillManager.anySelected()) {
-
-			final PointInImage pointInImage = pathAndFillManager
-				.nearestJoinPointOnSelectedPaths(x, y, z);
-			if (pointInImage != null) {
-				x = pointInImage.x / x_spacing;
-				y = pointInImage.y / y_spacing;
-				z = pointInImage.z / z_spacing;
+		final boolean joining = join_modifier_down && pathAndFillManager.anySelected();
+		final boolean editing = isEditModeEnabled() && editingPath != null && editingPath.isSelected();
+		PointInImage pim = null;
+		if (joining) {
+			// find the nearest node to this cursor position
+			pim = pathAndFillManager.nearestJoinPointOnSelectedPaths(x, y, z);
+		} else if (editing) {
+			// find the nearest node to this cursor 2D position. 
+			// then activate the Z-slice of the retrieved node
+			final int eNode = editingPath.indexNearestTo2D(x * x_spacing, y * y_spacing, getMinimumSeparation());
+			if (eNode != -1) {
+				pim = editingPath.getPointInImage(eNode);
+				editingPath.setEditableNode(eNode);
 			}
+		}
+		if (pim != null) {
+			x = pim.x / x_spacing;
+			y = pim.y / y_spacing;
+			z = pim.z / z_spacing;
 		}
 
 		final int ix = (int) Math.round(x);
 		final int iy = (int) Math.round(y);
 		final int iz = (int) Math.round(z);
 
-		final double x_scaled = ix * x_spacing;
-		final double y_scaled = iy * y_spacing;
-		final double z_scaled = iz * z_spacing;
+		if (shift_key_down || editing) setSlicesAllPanes(ix, iy, iz);
 
-		if (shift_key_down) setSlicesAllPanes(ix, iy, iz);
-
-		if ((xy_tracer_canvas != null) && ((xz_tracer_canvas != null) ||
-			single_pane) && ((zy_tracer_canvas != null) || single_pane))
-		{
-
-			String statusMessage = "World: (" + SNT.formatDouble(x_scaled,2) + ", " + SNT.formatDouble(y_scaled,2) + ", " +
-					SNT.formatDouble(z_scaled,2) + "); Image: (" + ix + ", " + iy + ", " + (iz+1) + ")";
-			updateCursor(x, y, z);
+		String statusMessage = "";
+		if (editing) {
+			statusMessage = editingPath.getName() + ", Node " + editingPath.getEditableNodeIndex();
+		} else { // tracing
+			statusMessage = "World: (" + SNT.formatDouble(ix * x_spacing, 2) + ", "
+					+ SNT.formatDouble(iy * y_spacing, 2) + ", " + SNT.formatDouble(iz * z_spacing, 2) + ");";
 			if (labelData != null) {
-
 				final byte b = labelData[iz][iy * width + ix];
 				final int m = b & 0xFF;
-
 				final String material = materialList[m];
-				statusMessage += ", material: " + material;
+				statusMessage += ", " + material;
 			}
-			statusService.showStatus(statusMessage);
-
-			repaintAllPanes(); // Or the crosshair isn't updated....//FIXME:
 		}
+		statusMessage += " Image: (" + ix + ", " + iy + ", " + (iz + 1) + ")";
+		updateCursor(x, y, z);
+		statusService.showStatus(statusMessage);
+		repaintAllPanes(); // Or the crosshair isn't updated...
 
 		if (filler != null) {
 			synchronized (filler) {
@@ -1964,6 +1965,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final HashSet<Path> pathsToSelect = new HashSet<>();
 		if (p.isFittedVersionOfAnotherPath()) pathsToSelect.add(p.fittedVersionOf);
 		else pathsToSelect.add(p);
+		if (isEditModeEnabled()) { // impose a single editing path
+			resultsDialog.getPathWindow().setSelectedPaths(pathsToSelect, this);
+			setEditingPath(p);
+			return;
+		}
 		if (addToExistingSelection) {
 			pathsToSelect.addAll(resultsDialog.getPathWindow().getSelectedPaths());
 		}

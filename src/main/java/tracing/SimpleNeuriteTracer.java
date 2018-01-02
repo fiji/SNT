@@ -130,6 +130,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	volatile protected int cursorSnapWindowXY;
 	volatile protected int cursorSnapWindowZ;
 	volatile protected boolean autoCanvasActivation;
+	volatile protected boolean panMode;
 	volatile protected boolean snapCursor;
 	volatile protected boolean unsavedPaths = false;
 

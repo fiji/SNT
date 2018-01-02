@@ -43,12 +43,11 @@ class QueueJumpingKeyListener implements KeyListener {
 
 	/* Define which keys are always parsed by IJ listeners */
 	private static final int[] W_KEYS = new int[] { //
-			KeyEvent.VK_SPACE, // pan tool shortcut
 			KeyEvent.VK_EQUALS, KeyEvent.VK_MINUS, KeyEvent.VK_UP, KeyEvent.VK_DOWN, // zoom keys
 			KeyEvent.VK_COMMA, KeyEvent.VK_PERIOD, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, // navigation keys
 			KeyEvent.VK_L, // Command Finder
 			KeyEvent.VK_4, KeyEvent.VK_5, // advanced zoom keys
-			KeyEvent.VK_PLUS, KeyEvent.VK_LESS, KeyEvent.VK_GREATER, // extra navigation/zoom keys
+			KeyEvent.VK_PLUS, KeyEvent.VK_LESS, KeyEvent.VK_GREATER, KeyEvent.VK_TAB // extra navigation/zoom keys
 	};
 
 	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin,
@@ -69,12 +68,17 @@ class QueueJumpingKeyListener implements KeyListener {
 
 		// NB: we don't want accidental keystrokes to interfere with SNT tasks
 		// so we'll block any keys from reaching other listeners, unless: 1)
-		// the keystroke is white-listed or 2) the user pressed a modifier key
-
+		// the keystroke is white-listed, 2) the user pressed a modifier key,
+		// 3) it is a numeric keypad or 'action' (eg, fn) key
 		final int keyCode = e.getKeyCode();
 		final boolean doublePress = isDoublePress(e);
 
-		if (keyCode == KeyEvent.VK_ESCAPE) {
+		if (keyCode == KeyEvent.VK_SPACE) {// IJ's pan tool shortcut
+			tracerPlugin.panMode = true;
+			waiveKeyPress(e);
+			return;
+		}
+		else if (keyCode == KeyEvent.VK_ESCAPE) {
 			if (doublePress) tracerPlugin.getUI().reset();
 			else tracerPlugin.getUI().abortCurrentOperation();
 			e.consume();
@@ -89,8 +93,8 @@ class QueueJumpingKeyListener implements KeyListener {
 			waiveKeyPress(e);
 			return;
 		}
-		
-		final char keyChar = e.getKeyChar();		
+
+		final char keyChar = e.getKeyChar();
 		final int modifiers = e.getModifiersEx();
 		final boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
 		final boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
@@ -108,11 +112,10 @@ class QueueJumpingKeyListener implements KeyListener {
 		// SNT Keystrokes that override IJ defaults. These
 		// are common to both tracing and edit mode
 		else if (shift_pressed || join_modifier_pressed) {
-			/*
-			 * This case is just so that when someone starts holding down
-			 * the modified immediately see the effect, rather than having
-			 * to wait for the next mouse move event
-			 */
+
+			// This case is just so that when someone starts holding down
+			// the modified immediately see the effect, rather than having
+			// to wait for the next mouse move event
 			canvas.fakeMouseMoved(shift_pressed, join_modifier_pressed);
 			e.consume();
 		}
@@ -143,7 +146,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 
 		// Keystrokes exclusive to edit mode
-		else if (canvas.isEditMode()) {
+		else if (canvas.isEditMode() && !doublePress) { // skip hasty keystrokes
 			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE || keyChar == 'd' || keyChar =='D') {
 				canvas.deleteEditingNode(false);
 			}
@@ -159,7 +162,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 			return;
 		}
-		
+
 		// Keystrokes exclusive to tracing mode
 		else if (keyChar == 'y' || keyChar == 'Y') {
 			//IJ1 built-in: ROI Properties...
@@ -201,8 +204,12 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 		}
 
+		else if (e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD || e.isActionKey()) {
+			waiveKeyPress(e);
+		}
+
 		// Uncomment below to pass on any other key press to existing listeners
-		//else waiveKeyPress(e); 
+		//else waiveKeyPress(e);
 
 	}
 
@@ -215,6 +222,9 @@ class QueueJumpingKeyListener implements KeyListener {
 
 	@Override
 	public void keyReleased(final KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.VK_SPACE) { // IJ's pan tool shortcut
+			tracerPlugin.panMode = false;
+		}
 		for (final KeyListener kl : listeners) {
 			if (e.isConsumed()) break;
 			kl.keyReleased(e);

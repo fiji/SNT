@@ -271,7 +271,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			return;
 		}
 
-		if (isEventsDisabled() || !tracerPlugin.isReady()) {
+		if (tracerPlugin.panMode || isEventsDisabled() && !tracerPlugin.isReady()) {
 			super.mousePressed(me);
 			return;
 		}

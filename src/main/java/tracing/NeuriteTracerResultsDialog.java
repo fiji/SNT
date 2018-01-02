@@ -1846,6 +1846,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				showStatus("Tracing mode reinstated...");
 				plugin.pause(false);
 				break;
+			case (EDITING_MODE):
+				showStatus("Tracing mode reinstated...");
+				plugin.enableEditMode(false);
+				break;
 			case (WAITING_FOR_SIGMA_CHOICE):
 				showStatus("Close the sigma palette to abort sigma input...");
 				break; // do nothing: 

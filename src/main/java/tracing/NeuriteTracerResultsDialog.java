@@ -1534,13 +1534,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			getMultiplier(), 1), 5);
 		final Object[] contents = {
 			"<html><b>Sigma</b><br>Enter the approximate radius of the structures you are<br>" +
-				"tracing (the default is the minimum voxel separation,<br>i.e., <tt>" +
-				SNT.formatDouble(plugin.getMinimumSeparation(), 5) + "</tt> " + plugin
+				"tracing (the default is the minimum voxel separation,<br>i.e., " +
+				SNT.formatDouble(plugin.getMinimumSeparation(), 3) + plugin
 					.getImagePlus().getCalibration().getUnit() + ")", sigmaField,
 			"<html><br><b>Multiplier</b><br>Enter the scaling factor to apply " +
-				"(the default is <tt>4.0</tt>):", multiplierField, };
+				"(the default is 4.0):", multiplierField, };
 		final int result = JOptionPane.showConfirmDialog(this, contents,
-			"Select Scale of Structures", JOptionPane.OK_CANCEL_OPTION,
+			"Select Scale of Traced Structures", JOptionPane.OK_CANCEL_OPTION,
 			JOptionPane.PLAIN_MESSAGE);
 		if (result == JOptionPane.OK_OPTION) {
 			final double sigma = GuiUtils.extractDouble(sigmaField);

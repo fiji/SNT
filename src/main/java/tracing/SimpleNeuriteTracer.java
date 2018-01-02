@@ -627,7 +627,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 		final boolean validPath = pathExists && !editingPath.getUseFitted();
 		if (warnUserIfNot && !validPath) {
-			discreteMsg("Only unfitted paths can be edited.\nRun \"Un-fit volume\" to proceed");
+			discreteMsg("Only unfitted paths can be edited.<br>Run \"Un-fit volume\" to proceed");
 			return false;
 		}
 		final boolean editAllowed = uiReady && pathExists && validPath;
@@ -1195,14 +1195,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		if (!lastStartPointSet) {
 			discreteMsg(
-				"No initial start point has been set yet.  Do that with a mouse click or\na Shift+" +
+				"No initial start point has been set yet.<br>Do that with a mouse click or a Shift+" +
 					GuiUtils.ctrlKey() +
-					"-click if the start of the path should join another neurite.");
+					"-click if the start of the path should join another.");
 			return;
 		}
 
 		if (temporaryPath == null) {
-			discreteMsg("There's no temporary path to discard!");
+			discreteMsg("There is no temporary path to discard");
 			return;
 		}
 
@@ -1226,7 +1226,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
 			discreteMsg(
-				"There is an unconfirmed path: You need to\nconfirm the last segment before canceling the path.");
+				"You need to confirm the last segment before canceling the path.");
 			return;
 		}
 
@@ -1254,7 +1254,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		// Is there an unconfirmed path? If so, warn people about it...
 		if (temporaryPath != null) {
 			discreteMsg(
-				"There is an unconfirmed path: You need to\nconfirm the last segment before finishing the path.");
+				"There is an unconfirmed path: You need to confirm the last segment before finishing the path.");
 			return;
 		}
 
@@ -2206,7 +2206,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
-	protected void discreteMsg(final String msg) {  /* HTML allowed */
+	protected void discreteMsg(final String msg) {  /* HTML format */
 		new GuiUtils(getActiveWindow()).tempMsg(msg, true);
 	}
 

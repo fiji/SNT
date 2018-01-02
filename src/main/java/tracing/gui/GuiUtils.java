@@ -103,7 +103,7 @@ public class GuiUtils {
 		dialog.setModal(false);
 		dialog.getContentPane().setBackground(Color.WHITE);
 		dialog.setBackground(Color.WHITE);
-		final JLabel label = new JLabel(msg);
+		final JLabel label = getLabel(msg);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		label.setBorder(new EmptyBorder(10, 10, 10, 10));
 		label.setBackground(Color.WHITE);
@@ -304,9 +304,10 @@ public class GuiUtils {
 	}
 
 	private JLabel getLabel(final String text) {
-		if (text == null || text.startsWith("<") || text.length() < 60) new JLabel(
-			text);
-		return new JLabel("<html><body><div style='width:400;'>" + text);
+		if (text == null || text.startsWith("<") || text.length() < 60)
+			return new JLabel(text);
+		else
+			return new JLabel("<html><body><div style='width:500;'>" + text);
 	}
 
 	public void blinkingError(final JComponent blinkingComponent,

@@ -640,13 +640,16 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected void detectEditingPath() {
-		if (pathAndFillManager.selectedPathsSet.size() == 1) {
-			editingPath = getSelectedPaths().iterator().next();
-		} else {
-			editingPath = null;
-		}
+		editingPath = getSingleSelectedPath();
 	}
-	
+
+	protected Path getSingleSelectedPath() {
+		if (pathAndFillManager.selectedPathsSet.size() == 1)
+			return getSelectedPaths().iterator().next();
+		else
+			return null;
+	}
+
 	protected void enableEditMode(final boolean enable) {
 		if (enable) {
 			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
@@ -1254,10 +1257,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	synchronized public void finishedPath() {
 
-		// Is there an unconfirmed path? If so, warn people about it...
+		// Is there an unconfirmed path? If so, confirm it first
 		if (temporaryPath != null) {
-			discreteMsg(
-				"There is an unconfirmed path: You need to confirm the last segment before finishing the path.");
+			confirmTemporary();
+			finishedPath();
 			return;
 		}
 

@@ -97,9 +97,11 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	private void showPopupMenu(int x, int y) {
+		final Path activePath = tracerPlugin.getSingleSelectedPath();
 		final boolean be = uiReadyForModeChange(NeuriteTracerResultsDialog.EDITING_MODE);
 		toggleEditModeMenuItem.setEnabled(be);
 		toggleEditModeMenuItem.setState(be && editMode);
+		toggleEditModeMenuItem.setLabel((activePath != null) ? "Edit " + activePath.getName() : AListener.EDIT_TOOGLE);
 		final boolean bp = uiReadyForModeChange(NeuriteTracerResultsDialog.PAUSED);
 		togglePauseModeMenuItem.setEnabled(bp);
 		togglePauseModeMenuItem.setState(bp && tracerPlugin.getUIState()==NeuriteTracerResultsDialog.PAUSED);
@@ -202,7 +204,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
 
 		if (np == null) {
-			tracerPlugin.discreteMsg("No nearby path was found within " + diagonalLength + tracerPlugin.spacing_units + " of the pointer!");
+			tracerPlugin.discreteMsg("No nearby path was found within " + diagonalLength + tracerPlugin.spacing_units + " of the pointer! (temporary and single-point paths were ignored)");
 			return;
 		}
 

@@ -52,12 +52,82 @@ import pal.math.ConjugateDirectionSearch;
 import pal.math.MultivariateFunction;
 import tracing.hyperpanes.MultiDThreePanes;
 
-/* This class represents a list of points, and has methods for drawing
- * them onto ThreePanes-style image canvases. */
-
+/**
+ * This class represents a traced path. It has methods to manipulate its points
+ * (nodes) with sup-pixel accuracy, including drawing them onto threePanes-style
+ * image canvases and export as ROIs.
+ **/
 public class Path implements Comparable<Path> {
 
+
+	/* Path properties */
+	private int points; // n. of nodes
+	private int id = -1; // should be assigned by PathAndFillManager
 	private int editableNodeIndex = -1;
+	private boolean selected;
+	private boolean primary = false;
+	protected Path startJoins;
+	PointInImage startJoinsPoint = null;
+	Path endJoins;
+	PointInImage endJoinsPoint = null;
+
+	// Paths should always be given a name (since the name
+	// idpublicentifies them to the 3D viewer)...
+	private String name;
+	/*
+	 * This is a symmetrical relationship, showing all the other paths this one
+	 * is joined to...
+	 */
+	ArrayList<Path> somehowJoins;
+
+	/*
+	 * We sometimes impose a tree structure on the Path graph, which is largely
+	 * for display purposes. When this is done, we regerated this list. This
+	 * should always be a subset of 'somehowJoins'...
+	 */
+	ArrayList<Path> children;
+	/* Spatial calibration definitions */
+	protected double x_spacing;
+	protected double y_spacing;
+	protected double z_spacing;
+	protected String spacing_units;
+
+	/* Fitting */
+	protected Path fitted; // If this path has a fitted version, this is it.
+	protected boolean useFitted = false; // Use the fitted version in preference to this
+								// path
+	protected Path fittedVersionOf; // If this path is a fitted version of another one,
+							// this is the original
+
+	/* Color definitions */
+	private Color color;
+	protected Color3f realColor;
+	protected boolean hasCustomColor = false;
+
+	/* Internal fields */
+	private static final int PATH_START = 0;
+	private static final int PATH_END = 1;
+	private int maxPoints;
+
+
+	Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units) {
+		this(x_spacing, y_spacing, z_spacing, spacing_units, 128);
+	}
+
+	Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units,
+			final int reserve) {
+		this.x_spacing = x_spacing;
+		this.y_spacing = y_spacing;
+		this.z_spacing = z_spacing;
+		this.spacing_units = spacing_units;
+		points = 0;
+		maxPoints = reserve;
+		precise_x_positions = new double[maxPoints];
+		precise_y_positions = new double[maxPoints];
+		precise_z_positions = new double[maxPoints];
+		somehowJoins = new ArrayList<>();
+		children = new ArrayList<>();
+	}
 
 	@Override
 	public int compareTo(final Path o) {
@@ -68,12 +138,6 @@ public class Path implements Comparable<Path> {
 		return 1;
 	}
 
-	/*
-	 * The path's ID should be assigned by the PathAndFillManager when it's
-	 * added:
-	 */
-	private int id = -1;
-
 	public int getID() {
 		return id;
 	}
@@ -81,16 +145,6 @@ public class Path implements Comparable<Path> {
 	void setID(final int id) {
 		this.id = id;
 	}
-
-	static final boolean verbose = SNT.isDebugMode();
-
-	boolean selected;
-
-	Path startJoins;
-	PointInImage startJoinsPoint = null;
-
-	Path endJoins;
-	PointInImage endJoinsPoint = null;
 
 	public Path getStartJoins() {
 		return startJoins;
@@ -108,13 +162,6 @@ public class Path implements Comparable<Path> {
 		return endJoinsPoint;
 	}
 
-	public static final int PATH_START = 0;
-	public static final int PATH_END = 1;
-
-	// Paths should always be given a name (since the name
-	// identifies them to the 3D viewer)...
-	String name;
-
 	public void setName(final String newName) {
 		this.name = newName;
 	}
@@ -128,19 +175,6 @@ public class Path implements Comparable<Path> {
 			throw new RuntimeException("In Path.getName() for id " + id + ", name was null");
 		return name;
 	}
-
-	/*
-	 * This is a symmetrical relationship, showing all the other paths this one
-	 * is joined to...
-	 */
-	ArrayList<Path> somehowJoins;
-
-	/*
-	 * We sometimes impose a tree structure on the Path graph, which is largely
-	 * for display purposes. When this is done, we regerated this list. This
-	 * should always be a subset of 'somehowJoins'...
-	 */
-	ArrayList<Path> children;
 
 	private String pathsToIDListString(final ArrayList<Path> a) {
 		final StringBuffer s = new StringBuffer("");
@@ -206,8 +240,6 @@ public class Path implements Comparable<Path> {
 		tangents_z = new double[maxPoints];
 		radiuses = new double[maxPoints];
 	}
-
-	boolean primary = false;
 
 	void setPrimary(final boolean primary) {
 		this.primary = primary;
@@ -320,46 +352,9 @@ public class Path implements Comparable<Path> {
 		}
 	}
 
-	double x_spacing;
-	double y_spacing;
-	double z_spacing;
-	String spacing_units;
-
 	public double getMinimumSeparation() {
 		return Math.min(Math.abs(x_spacing), Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
 	}
-
-	Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units) {
-		this.x_spacing = x_spacing;
-		this.y_spacing = y_spacing;
-		this.z_spacing = z_spacing;
-		this.spacing_units = spacing_units;
-		points = 0;
-		maxPoints = 128;
-		precise_x_positions = new double[maxPoints];
-		precise_y_positions = new double[maxPoints];
-		precise_z_positions = new double[maxPoints];
-		somehowJoins = new ArrayList<>();
-		children = new ArrayList<>();
-	}
-
-	Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units,
-			final int reserve) {
-		this.x_spacing = x_spacing;
-		this.y_spacing = y_spacing;
-		this.z_spacing = z_spacing;
-		this.spacing_units = spacing_units;
-		points = 0;
-		maxPoints = reserve;
-		precise_x_positions = new double[maxPoints];
-		precise_y_positions = new double[maxPoints];
-		precise_z_positions = new double[maxPoints];
-		somehowJoins = new ArrayList<>();
-		children = new ArrayList<>();
-	}
-
-	public int points;
-	public int maxPoints;
 
 	public int size() {
 		return points;
@@ -405,7 +400,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Removes the specified node from paths with at least two nodes. Does nothing
+	 * Removes the specified node if this path has at least two nodes. Does nothing
 	 * if this is a single point path.
 	 *
 	 * @param index
@@ -428,7 +423,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Assigns a new location to an existing node.
+	 * Assigns a new location to the specified node.
 	 *
 	 * @param index the zero-based index of the node to be modified
 	 * @param destination the new node location
@@ -542,6 +537,8 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
+	 * Gets the position of the node tagged as 'editable', if any.
+	 *
 	 * @return the index of the point currently tagged as editable, or -1 if no
 	 *         such point exists
 	 */
@@ -560,38 +557,32 @@ public class Path implements Comparable<Path> {
 	}
 
 	public int getXUnscaled(final int i) {
-		if ((i < 0) || i >= size())
-			throw new RuntimeException("BUG: getXUnscaled was asked for an out-of-range point: " + i);
-		return (int) Math.round(precise_x_positions[i] / x_spacing);
+		return (int) Math.round(getXUnscaledDouble(i));
 	}
 
 	public int getYUnscaled(final int i) {
-		if ((i < 0) || i >= size())
-			throw new RuntimeException("BUG: getYUnscaled was asked for an out-of-range point: " + i);
-		return (int) Math.round(precise_y_positions[i] / y_spacing);
+		return (int) Math.round(getYUnscaledDouble(i));
 	}
 
 	public int getZUnscaled(final int i) {
-		if ((i < 0) || i >= size())
-			throw new RuntimeException("BUG: getZUnscaled was asked for an out-of-range point: " + i);
-		return (int) Math.round(precise_z_positions[i] / z_spacing);
+		return (int) Math.round(getZUnscaledDouble(i));
 	}
 
 	public double getXUnscaledDouble(final int i) {
 		if ((i < 0) || i >= size())
-			throw new RuntimeException("BUG: getXUnscaled was asked for an out-of-range point: " + i);
+			throw new IllegalArgumentException("getXUnscaled was asked for an out-of-range point: " + i);
 		return precise_x_positions[i] / x_spacing;
 	}
 
 	public double getYUnscaledDouble(final int i) {
 		if ((i < 0) || i >= size())
-			throw new RuntimeException("BUG: getYUnscaled was asked for an out-of-range point: " + i);
+			throw new IllegalArgumentException("getYUnscaled was asked for an out-of-range point: " + i);
 		return precise_y_positions[i] / y_spacing;
 	}
 
 	public double getZUnscaledDouble(final int i) {
 		if ((i < 0) || i >= size())
-			throw new RuntimeException("BUG: getZUnscaled was asked for an out-of-range point: " + i);
+			throw new IllegalArgumentException("getZUnscaled was asked for an out-of-range point: " + i);
 		return precise_z_positions[i] / z_spacing;
 	}
 
@@ -637,7 +628,7 @@ public class Path implements Comparable<Path> {
 	 * return result; }
 	 */
 
-	PointInImage lastPoint() {
+	protected PointInImage lastPoint() {
 		if (points < 1)
 			return null;
 		else
@@ -645,7 +636,7 @@ public class Path implements Comparable<Path> {
 					precise_z_positions[points - 1]);
 	}
 
-	void expandTo(final int newMaxPoints) {
+	private void expandTo(final int newMaxPoints) {
 
 		final double[] new_precise_x_positions = new double[newMaxPoints];
 		final double[] new_precise_y_positions = new double[newMaxPoints];
@@ -673,7 +664,7 @@ public class Path implements Comparable<Path> {
 		maxPoints = newMaxPoints;
 	}
 
-	void add(final Path other) {
+	protected void add(final Path other) {
 
 		if (other == null) {
 			SNT.warn("BUG: Trying to add null Path");
@@ -932,11 +923,6 @@ public class Path implements Comparable<Path> {
 
 	}
 
-	/* Color definitions */
-	protected Color color;
-	protected Color3f realColor;
-	protected boolean hasCustomColor = false;
-
 	public Color getColor() {
 		return color;
 	}
@@ -1060,12 +1046,9 @@ public class Path implements Comparable<Path> {
 	// FIXME: adapt these for Path rather than SegmentedConnection, down to
 	// EOFIT
 
-	class CircleAttempt implements MultivariateFunction, Comparable<CircleAttempt> {
+	private class CircleAttempt implements MultivariateFunction, Comparable<CircleAttempt> {
 
 		double min;
-		double[] best;
-		double[] initial;
-
 		float[] data;
 		float minValueInData;
 		float maxValueInData;
@@ -1080,7 +1063,6 @@ public class Path implements Comparable<Path> {
 			this.side = side;
 
 			min = Double.MAX_VALUE;
-			initial = start;
 		}
 
 		@Override
@@ -1113,7 +1095,7 @@ public class Path implements Comparable<Path> {
 			final double badness = evaluateCircle(x[0], x[1], x[2]);
 
 			if (badness < min) {
-				best = x.clone();
+				x.clone();
 				min = badness;
 			}
 
@@ -1153,12 +1135,6 @@ public class Path implements Comparable<Path> {
 	public boolean isFittedVersionOfAnotherPath() {
 		return fittedVersionOf != null;
 	}
-
-	Path fitted; // If this path has a fitted version, this is it.
-	boolean useFitted = false; // Use the fitted version in preference to this
-								// path
-	Path fittedVersionOf; // If this path is a fitted version of another one,
-							// this is the original
 
 	public void setFitted(final Path p) {
 		if (fitted != null) {
@@ -1284,7 +1260,7 @@ public class Path implements Comparable<Path> {
 		final double by_s = by * step;
 		final double bz_s = bz * step;
 
-		if (verbose) {
+		if (SNT.isDebugMode()) {
 			SNT.log("a (in normal plane) is " + ax + "," + ay + "," + az);
 			SNT.log("b (in normal plane) is " + bx + "," + by + "," + bz);
 		}
@@ -1298,7 +1274,7 @@ public class Path implements Comparable<Path> {
 			final double a_dot_n = ax * nx + ay * ny + az * nz;
 			final double b_dot_n = bx * nx + by * ny + bz * nz;
 
-			if (verbose) {
+			if (SNT.isDebugMode()) {
 				SNT.log("a_dot_b: " + a_dot_b);
 				SNT.log("a_dot_n: " + a_dot_n);
 				SNT.log("b_dot_n: " + b_dot_n);
@@ -1448,16 +1424,16 @@ public class Path implements Comparable<Path> {
 
 		final Path fitted = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 
-		// if (verbose) SNT.log("Generating normal planes stack.");
+		// if (SNT.isDebugMode()) SNT.log("Generating normal planes stack.");
 
 		final int totalPoints = size();
 
-		if (verbose)
+		if (SNT.isDebugMode())
 			SNT.log("There are: " + totalPoints + " in the stack.");
 
 		final int pointsEitherSide = 4;
 
-		if (verbose)
+		if (SNT.isDebugMode())
 			SNT.log("Using spacing: " + x_spacing + "," + y_spacing + "," + z_spacing);
 
 		final int width = image.getWidth();
@@ -1541,7 +1517,7 @@ public class Path implements Comparable<Path> {
 			startValues[1] = side / 2.0;
 			startValues[2] = 3;
 
-			if (verbose)
+			if (SNT.isDebugMode())
 				SNT.log("start search at: " + startValues[0] + "," + startValues[1] + " with radius: "
 						+ startValues[2]);
 
@@ -1562,7 +1538,7 @@ public class Path implements Comparable<Path> {
 				return null;
 			}
 
-			if (verbose)
+			if (SNT.isDebugMode())
 				// SNT.log("u is: "+u[0]+","+u[1]+","+u[2]);
 				SNT.log("search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
 						+ startValues[2]);
@@ -1582,14 +1558,14 @@ public class Path implements Comparable<Path> {
 			moved[i] = scaleInNormalPlane * Math.sqrt(
 					x_from_centre_in_plane * x_from_centre_in_plane + y_from_centre_in_plane * y_from_centre_in_plane);
 
-			if (verbose)
+			if (SNT.isDebugMode())
 				SNT.log("vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
 
 			double centre_real_x = x_world;
 			double centre_real_y = y_world;
 			double centre_real_z = z_world;
 
-			if (verbose)
+			if (SNT.isDebugMode())
 				SNT.log("original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
 						+ centre_real_z);
 
@@ -1603,7 +1579,7 @@ public class Path implements Comparable<Path> {
 			centre_real_z -= x_basis_in_plane[2] * x_from_centre_in_plane
 					+ y_basis_in_plane[2] * y_from_centre_in_plane;
 
-			if (verbose)
+			if (SNT.isDebugMode())
 				SNT.log("adjusted original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
 						+ centre_real_z);
 
@@ -1615,7 +1591,7 @@ public class Path implements Comparable<Path> {
 			int y_in_image = (int) Math.round(centre_real_y / y_spacing);
 			int z_in_image = (int) Math.round(centre_real_z / z_spacing);
 
-			if (verbose)
+			if (SNT.isDebugMode())
 				SNT.log("gives in image co-ordinates: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			if (x_in_image < 0)
@@ -1631,14 +1607,14 @@ public class Path implements Comparable<Path> {
 			if (z_in_image >= depth)
 				z_in_image = depth - 1;
 
-			if (verbose)
+			if (SNT.isDebugMode())
 				SNT.log("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			xs_in_image[i] = x_in_image;
 			ys_in_image[i] = y_in_image;
 			zs_in_image[i] = z_in_image;
 
-			if (verbose)
+			if (SNT.isDebugMode())
 				SNT.log("Adding a real slice.");
 
 			final FloatProcessor bp = new FloatProcessor(side, side);
@@ -2235,7 +2211,7 @@ public class Path implements Comparable<Path> {
 	synchronized void updateContent3D(final Image3DUniverse univ, final boolean visible, final int paths3DDisplay,
 			final Color3f color, final ImagePlus colorImage) {
 
-		if (verbose) {
+		if (SNT.isDebugMode()) {
 			SNT.log("In updateContent3D, colorImage is: " + colorImage);
 			SNT.log("In updateContent3D, color is: " + color);
 		}
@@ -2273,7 +2249,7 @@ public class Path implements Comparable<Path> {
 			pathToUse = this;
 		}
 
-		if (verbose) {
+		if (SNT.isDebugMode()) {
 			SNT.log("pathToUse is: " + pathToUse);
 			SNT.log("  pathToUse.content3D is: " + pathToUse.content3D);
 			SNT.log("  pathToUse.content3DExtra is: " + pathToUse.content3DExtra);
@@ -2560,12 +2536,12 @@ public class Path implements Comparable<Path> {
 			total_length_in_image_space += Math.sqrt(x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
 		}
 		final double mean_inter_point_distance_in_image_space = total_length_in_image_space / (pointsToUse - 1);
-		if (verbose)
+		if (SNT.isDebugMode())
 			SNT.log("For path " + this + ", got mean_inter_point_distance_in_image_space: "
 					+ mean_inter_point_distance_in_image_space);
 		final boolean resample = mean_inter_point_distance_in_image_space < 3;
 
-		if (verbose)
+		if (SNT.isDebugMode())
 			SNT.log("... so" + (resample ? "" : " not") + " resampling");
 
 		final ArrayList<Color3f> tubeColors = new ArrayList<>();

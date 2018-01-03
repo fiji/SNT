@@ -398,7 +398,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pi = pathsLeft.iterator();
 			while (pi.hasNext()) {
 				final Path p = pi.next();
-				if (p.startJoins == null) {
+				if (p.getStartJoins() == null) {
 					foundOne = true;
 					pi.remove();
 					primaryPaths.add(p);
@@ -496,11 +496,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			int nearestParentSWCPointID = -1;
 			PointInImage connectingPoint = null;
 			if (parent != null) {
-				if (currentPath.startJoins != null && currentPath.startJoins == parent)
+				if (currentPath.getStartJoins() != null && currentPath.getStartJoins() == parent)
 					connectingPoint = currentPath.startJoinsPoint;
 				else if (currentPath.endJoins != null && currentPath.endJoins == parent)
 					connectingPoint = currentPath.endJoinsPoint;
-				else if (parent.startJoins != null && parent.startJoins == currentPath)
+				else if (parent.getStartJoins() != null && parent.getStartJoins() == currentPath)
 					connectingPoint = parent.startJoinsPoint;
 				else if (parent.endJoins != null && parent.endJoins == currentPath)
 					connectingPoint = parent.endJoinsPoint;
@@ -530,7 +530,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			SWCPoint firstSWCPoint = null;
 
 			final boolean realRadius = pathToUse.hasRadii();
-			for (int i = indexToStartAt; i < pathToUse.points; ++i) {
+			for (int i = indexToStartAt; i < pathToUse.size(); ++i) {
 				double radius = 0;
 				if (realRadius)
 					radius = pathToUse.radiuses[i];
@@ -611,8 +611,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			String name = p.getName();
 			if (name == null)
 				name = "Path [" + p.getID() + "]";
-			if (p.startJoins != null) {
-				name += ", starts on " + p.startJoins.getName();
+			if (p.getStartJoins() != null) {
+				name += ", starts on " + p.getStartJoins().getName();
 			}
 			if (p.endJoins != null) {
 				name += ", ends on " + p.endJoins.getName();
@@ -661,7 +661,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 		if (maxUsedID < p.getID())
 			maxUsedID = p.getID();
-		if (p.name == null || forceNewName) {
+		if (p.getName() == null || forceNewName) {
 			final String suggestedName = getDefaultName(p);
 			p.setName(suggestedName);
 		}
@@ -741,7 +741,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		// in other paths (for start and end joins):
 
 		for (final Path p : allPaths) {
-			if (p.startJoins == unfittedPathToDelete) {
+			if (p.getStartJoins() == unfittedPathToDelete) {
 				p.startJoins = null;
 				p.startJoinsPoint = null;
 			}
@@ -939,8 +939,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				}
 				pw.print(startsString);
 				pw.print(endsString);
-				if (p.name != null) {
-					pw.print(" name=\"" + XMLFunctions.escapeForXMLAttributeValue(p.name) + "\"");
+				if (p.getName() != null) {
+					pw.print(" name=\"" + XMLFunctions.escapeForXMLAttributeValue(p.getName()) + "\"");
 				}
 				pw.print(" reallength=\"" + p.getRealLength() + "\"");
 				pw.println(">");
@@ -2190,7 +2190,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		@Override
 		public boolean hasNext() {
-			if (currentPath == null || currentPointIndex == currentPath.points - 1) {
+			if (currentPath == null || currentPointIndex == currentPath.size() - 1) {
 				/*
 				 * Find out if there is a non-empty path after this:
 				 */
@@ -2212,7 +2212,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		@Override
 		public PointInImage next() {
-			if (currentPath == null || currentPointIndex == currentPath.points - 1) {
+			if (currentPath == null || currentPointIndex == currentPath.size() - 1) {
 				currentPointIndex = 0;
 				/* Move to the next non-empty path: */
 				while (true) {

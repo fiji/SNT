@@ -945,7 +945,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	public static void addPathPointsToShollList(final Path p, final double x_start, final double y_start,
 			final double z_start, final List<ShollPoint> shollPointsList) {
 
-		for (int i = 0; i < p.points - 1; ++i) {
+		for (int i = 0; i < p.size() - 1; ++i) {
 			final double xdiff_first = p.precise_x_positions[i] - x_start;
 			final double ydiff_first = p.precise_y_positions[i] - y_start;
 			final double zdiff_first = p.precise_z_positions[i] - z_start;

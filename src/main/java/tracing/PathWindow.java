@@ -468,7 +468,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		if (p.getUseFitted()) fitVolumeMenuItem.setText("Un-fit Volume");
 		else fitVolumeMenuItem.setText("Fit Volume");
 		fitVolumeSetEnabled(true);
-		colorMenu.selectSWCColor(new SWCColor(p.color, p.getSWCType()));
+		colorMenu.selectSWCColor(new SWCColor(p.getColor(), p.getSWCType()));
 		selectSWCTypeMenuEntry(p.getSWCType());
 	}
 
@@ -809,7 +809,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 						.getLastPathComponent());
 					if (node == null || node == root) return c;
 					final Path p = (Path) node.getUserObject();
-					final Color color = p.color;
+					final Color color = p.getColor();
 					if (color == null) return c;
 					if (isLeaf) setIcon(new NodeIcon(NodeIcon.EMPTY, color));
 					else if (!expanded) setIcon(new NodeIcon(NodeIcon.PLUS, color));

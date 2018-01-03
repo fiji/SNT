@@ -20,48 +20,89 @@
  * #L%
  */
 
-package tracing.gui;
+package tracing.util;
 
 import java.awt.Color;
+
 
 /**
  * A simple class that associates an AWT Color to a SWC type integer tag.
  */
 public class SWCColor {
 
-	public static final int SWC_TYPE_IGNORED = -1;
+	protected static final int SWC_TYPE_IGNORED = -1;
 	private Color color;
 	private int swcType;
 
+	/**
+	 * Instantiates a new SWC color.
+	 *
+	 * @param color the AWT color
+	 * @param swcType the SWC type integer flag
+	 * @see {@link tracing.Path#getSWCtypeName(int)}
+	 */
 	public SWCColor(final Color color, final int swcType) {
 		this.color = color;
 		this.swcType = swcType;
 	}
 
+	/**
+	 * Instantiates a new SWC color without SWC type association
+	 *
+	 * @param color the AWT color
+	 */
 	public SWCColor(final Color color) {
 		this(color, SWC_TYPE_IGNORED);
 	}
 
+	/**
+	 * Retrieves the Color
+	 *
+	 * @return the AWT color
+	 */
 	public Color color() {
 		return color;
 	}
 
+	/**
+	 * Retrieves the 
+	 *
+	 * @return the SWC type integer flag
+	 */
 	public int type() {
 		return swcType;
 	}
 
+	/**
+	 * Checks if an SWC type has been defined.
+	 *
+	 * @return true, if an SWC integer flag has been specified
+	 */
 	public boolean isTypeDefined() {
 		return swcType != SWC_TYPE_IGNORED;
 	}
 
+	/**
+	 * Re-assigns a AWT color.
+	 *
+	 * @param color the new color
+	 */
 	public void setAWTColor(final Color color) {
 		this.color = color;
 	}
 
+	/**
+	 * Re-assigns a SWC type integer flag
+	 *
+	 * @param swcType the new SWC type
+	 */
 	public void setSWCType(final int swcType) {
 		this.swcType = swcType;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -71,6 +112,9 @@ public class SWCColor {
 		return result;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -97,7 +141,12 @@ public class SWCColor {
 		return true;
 	}
 
-	/** Returns the color encoded as hex string with the format #rrggbbaa */
+	/**
+	 *  Returns the color encoded as hex string with the format #rrggbbaa.
+	 *
+	 * @param color the input AWT color
+	 * @return the converted string
+	 */
 	public static String colorToString(final Color color) {
 		if (color == null) throw new IllegalArgumentException(
 			"Cannot convert null object");
@@ -105,7 +154,12 @@ public class SWCColor {
 			color.getBlue(), color.getAlpha());
 	}
 
-	/** Returns an AWT Color from a (#)RRGGBB(AA) hex string */
+	/**
+	 *  Returns an AWT Color from a (#)RRGGBB(AA) hex string.
+	 *
+	 * @param hex the input string
+	 * @return the converted AWT color
+	 */
 	public static Color stringToColor(final String hex) {
 		if (hex.length() < 6) throw new IllegalArgumentException(
 			"Unsupported format. Only (#)RRGGBB(AA) allowed");
@@ -119,10 +173,10 @@ public class SWCColor {
 	}
 
 	/**
-	 * Returns an RGB color with an alpha component.
+	 * Adds an alpha component to a AWT colot.
 	 *
 	 * @param c the input color
-	 * @param percent alpha value in percentage (0%: fully transparent)
+	 * @param percent alpha value in percentage
 	 * @return the color with an alpha component
 	 */
 	public static Color alphaColor(final Color c, final double percent) {
@@ -130,10 +184,10 @@ public class SWCColor {
 	}
 
 	/**
-	 * Returns a 'contrast' color.
+	 * Returns a suitable 'contrast' color.
 	 *
 	 * @param c the input color
-	 * @return Either white or black, as per input color
+	 * @return Either white or black, as per hue of input color.
 	 */
 	public static Color contrastColor(final Color c) {
 		final int intensity = (c.getRed() + c.getGreen() + c.getBlue()) / 3;

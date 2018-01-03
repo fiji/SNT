@@ -46,6 +46,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
 
 import tracing.Path;
+import tracing.util.SWCColor;
 
 /**
  * This class generates a simplified color widget holding both predetermined
@@ -157,7 +158,7 @@ public class ColorMenu extends JMenu {
 	}
 
 	public void selectColor(final Color c) {
-		selectSWCColor(new SWCColor(c, SWCColor.SWC_TYPE_IGNORED));
+		selectSWCColor(new SWCColor(c));
 	}
 
 	public void selectSWCColor(final SWCColor c) {
@@ -213,7 +214,7 @@ public class ColorMenu extends JMenu {
 		private void setPanelSWCColor(final SWCColor sColor) {
 			swcColor = sColor;
 			setBackground(swcColor.color());
-			final String msg = (swcColor.type() == SWCColor.SWC_TYPE_IGNORED)
+			final String msg = (!swcColor.isTypeDefined())
 				? "RGB: " + swcColor.color().getRed() + ", " + swcColor.color()
 					.getGreen() + ", " + swcColor.color().getBlue() : Path.getSWCtypeName(
 						swcColor.type());
@@ -271,8 +272,7 @@ public class ColorMenu extends JMenu {
 
 				// Prompt user for new color
 				final GuiUtils gUtils = new GuiUtils(getTopLevelAncestor());
-				final String promptTitle = (swcColor
-					.type() == SWCColor.SWC_TYPE_IGNORED) ? "New Color"
+				final String promptTitle = (!swcColor.isTypeDefined()) ? "New Color"
 						: "New color for SWC Type: " + Path.getSWCtypeName(swcColor.type());
 				final Color c = gUtils.getColor(promptTitle, swcColor.color(), "HSB");
 				if (c != null && !c.equals(swcColor.color())) {

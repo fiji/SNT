@@ -30,7 +30,7 @@ import java.awt.event.MouseListener;
 
 import ij.gui.ColorChooser;
 import tracing.SimpleNeuriteTracer;
-import tracing.gui.SWCColor;
+import tracing.util.SWCColor;
 
 @Deprecated
 @SuppressWarnings("all")

@@ -50,8 +50,8 @@ import ij3d.Image3DUniverse;
 import ij3d.Pipe;
 import pal.math.ConjugateDirectionSearch;
 import pal.math.MultivariateFunction;
-import tracing.gui.SWCColor;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.SWCColor;
 
 /**
  * This class represents a traced path. It has methods to manipulate its points

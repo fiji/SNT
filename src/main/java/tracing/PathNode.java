@@ -30,8 +30,8 @@ import java.awt.Stroke;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 
-import tracing.gui.SWCColor;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.SWCColor;
 
 /** Convenience class used to render Path nodes (vertices). */
 public class PathNode {

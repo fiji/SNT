@@ -24,7 +24,6 @@ package tracing;
 
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -40,8 +39,8 @@ import java.awt.event.WindowEvent;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Menus;
-import tracing.gui.SWCColor;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.SWCColor;
 
 public class InteractiveTracerCanvas extends TracerCanvas {
 

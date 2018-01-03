@@ -86,10 +86,10 @@ import javax.swing.tree.TreeSelectionModel;
 
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
-import tracing.gui.SWCColor;
 import tracing.gui.SwingSafeResult;
 import tracing.plugin.RoiConverter;
 import tracing.plugin.SkeletonConverter;
+import tracing.util.SWCColor;
 
 @SuppressWarnings("serial")
 public class PathWindow extends JFrame implements PathAndFillListener,

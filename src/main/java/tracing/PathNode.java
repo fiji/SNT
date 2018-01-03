@@ -22,9 +22,11 @@
 
 package tracing;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 
@@ -84,10 +86,10 @@ public class PathNode {
 		else if (index == 0 && path.startJoins == null) {
 			type = START;
 		}
-		else if (index == path.points - 1 && path.endJoins == null) {
+		else if (index == path.size() - 1 && path.endJoins == null) {
 			type = END;
 		}
-		else if ((index == 0 && path.startJoins != null) || (index == path.points -
+		else if ((index == 0 && path.startJoins != null) || (index == path.size() -
 			1 && path.endJoins != null))
 		{
 			type = JOINT;
@@ -138,6 +140,7 @@ public class PathNode {
 		default:
 			size = baseline;
 		}
+		if (editable) size *= 2;
 	}
 
 	/**
@@ -168,33 +171,46 @@ public class PathNode {
 
 	public void draw(final Graphics2D g, final Color c) {
 
+		if (path.isBeingEdited() && !editable) return; // draw only editable node
+
 		assignRenderingSize();
 		final Shape node = new Ellipse2D.Double(x - size / 2, y - size / 2, size,
 			size);
 
 		if (editable) {
-			// editable node: opaque border with cross hairs
+			// opaque crosshair and border, transparent fill
 			g.setColor(c);
+			final Stroke stroke = g.getStroke();
+			g.setStroke(new BasicStroke(3));
+			double length = size/2;
+			double offset = size/4;
+			g.draw(new Line2D.Double(x-offset - length, y, x -offset, y));
+			g.draw(new Line2D.Double(x+offset + length, y, x +offset, y));
+			g.draw(new Line2D.Double(x, y-offset - length, x, y -offset));
+			g.draw(new Line2D.Double(x, y+offset + length, x, y +offset));
 			g.draw(node);
-			g.draw(new Line2D.Double(x - size / 2, y, x + size / 2, y)); // W/E
-			g.draw(new Line2D.Double(x, y - size / 2, x, y + size / 2)); // N/S
-			g.draw(new Line2D.Double(x - size / 2, y - size / 2, x + size / 2, y +
-				size / 2)); // NW/SE
-			g.draw(new Line2D.Double(x - size / 2, y + size / 2, x + size / 2, y -
-				size / 2)); // SW/NE
-		}
-		else if (path.isSelected()) {
-			// selected path node: opaque border and 75% transparency fill
-			g.setColor(c);
-			g.draw(node);
-			g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 191));
+			g.setColor(SWCColor.alphaColor(c, 20));
 			g.fill(node);
+			g.setStroke(stroke);
+
+		} else {
+	
+			if (path.isSelected()) {
+				// opaque border and more opaque fill
+				g.setColor(c);
+				g.draw(node);
+				g.setColor(SWCColor.alphaColor(c, 70));
+				g.fill(node);
+			} else {
+				// semi-border and more transparent fill
+				g.setColor(SWCColor.alphaColor(c, 30));
+				g.fill(node);
+			}
+
 		}
-		else {
-			// 'regular' node: filled @ 50% transparency
-			g.setColor(SWCColor.addTransparency(c));
-			g.fill(node);
-		}
+	
+		g.setColor(c); // not really needed
+
 	}
 
 	/**

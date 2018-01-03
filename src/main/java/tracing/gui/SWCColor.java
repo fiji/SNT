@@ -119,13 +119,25 @@ public class SWCColor {
 	}
 
 	/**
-	 * Adds 50% transparency to a specified color.
+	 * Returns an RGB color with an alpha component.
 	 *
 	 * @param c the input color
-	 * @return the color with an alpha component of 128 (0 - 255) range
+	 * @param percent alpha value in percentage (0%: fully transparent)
+	 * @return the color with an alpha component
 	 */
-	public static Color addTransparency(final Color c) {
-		return new Color(c.getRed(), c.getGreen(), c.getBlue(), 128);
+	public static Color alphaColor(final Color c, final double percent) {
+		return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int)Math.round(percent/100 * 255));
+	}
+
+	/**
+	 * Returns a 'contrast' color.
+	 *
+	 * @param c the input color
+	 * @return Either white or black, as per input color
+	 */
+	public static Color contrastColor(final Color c) {
+		final int intensity = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
+		return intensity < 128 ? Color.WHITE : Color.BLACK;
 	}
 
 }

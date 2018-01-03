@@ -50,6 +50,7 @@ import ij3d.Image3DUniverse;
 import ij3d.Pipe;
 import pal.math.ConjugateDirectionSearch;
 import pal.math.MultivariateFunction;
+import tracing.gui.SWCColor;
 import tracing.hyperpanes.MultiDThreePanes;
 
 /**
@@ -556,6 +557,14 @@ public class Path implements Comparable<Path> {
 		this.editableNodeIndex = index;
 	}
 
+	protected boolean isBeingEdited() {
+		return editableNodeIndex != -1;
+	}
+
+	protected void stopBeingEdited() {
+		editableNodeIndex = -1;
+	}
+
 	public int getXUnscaled(final int i) {
 		return (int) Math.round(getXUnscaledDouble(i));
 	}
@@ -848,26 +857,25 @@ public class Path implements Comparable<Path> {
 
 
 			final PathNode pn = new PathNode(this, i, canvas);
+			final boolean outOfDepthBounds = (either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side);
+			g2.setColor(SWCColor.alphaColor(c, (outOfDepthBounds)?50:100));
 
-			// If there was a previous point in this path, draw a line from
-			// there to here:
+			// If there was a previous point in this path, draw a line from there to here:
 			if (notFirstPoint) {
-				// Don't redraw the line if we drew it the previous time,
-				// though:
+				// Don't redraw the line if we drew it the previous time, though:
 				if (startIndexOfLastDrawnLine != i - 1) {
 					g2.draw(new Line2D.Double(previous_x_on_screen, previous_y_on_screen, pn.x, pn.y));
 					startIndexOfLastDrawnLine = i - 1;
 				}
 			}
-			// If there's a next point in this path, draw a line from here to
-			// there:
+
+			// If there's a next point in this path, draw a line from here to there:
 			if (notLastPoint) {
 				g2.draw(new Line2D.Double(pn.x, pn.y, next_x_on_screen, next_y_on_screen));
 				startIndexOfLastDrawnLine = i;
 			}
 
-			if ((either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side))
-				continue;
+			if (outOfDepthBounds) continue; // draw nothing more for points out-of-bounds
 
 			// If we've been asked to draw the diameters, just do it in XY
 			if (drawDiameter && plane == MultiDThreePanes.XY_PLANE) {
@@ -919,6 +927,7 @@ public class Path implements Comparable<Path> {
 			// Draw node
 			pn.setEditable(getEditableNodeIndex()==i);
 			pn.draw(g2, c);
+			g2.setColor(c); // reset color transparencies. Not really needed
 		}
 
 	}

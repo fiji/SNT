@@ -662,6 +662,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (enable && pathAndFillManager.selectedPathsSet.size() == 1) {
 			editingPath = getSelectedPaths().iterator().next();
 		} else {
+			if (editingPath != null) editingPath.setEditableNode(-1);
 			editingPath = null;
 		}
 		setDrawCrosshairsAllPanes(!enable);
@@ -945,7 +946,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				statusMessage += ", " + material;
 			}
 		}
-		statusMessage += " Image: (" + ix + ", " + iy + ", " + (iz + 1) + ")";
+		statusMessage += " | Image: (" + ix + ", " + iy + ", " + (iz + 1) + ")";
 		updateCursor(x, y, z);
 		statusService.showStatus(statusMessage);
 		repaintAllPanes(); // Or the crosshair isn't updated...
@@ -984,23 +985,22 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	synchronized public void setCurrentPath(final Path path) {
-
 		final Path oldCurrentPath = this.currentPath;
-
+		currentPath = path;
+		if (currentPath != null) {
+			currentPath.setName("Current Path");
+			path.setSelected(true); // so it is rendered as an active path
+		}
 		xy_tracer_canvas.setCurrentPath(path);
 		if (!single_pane) {
 			zy_tracer_canvas.setCurrentPath(path);
 			xz_tracer_canvas.setCurrentPath(path);
 		}
-
-		currentPath = path;
-		if (currentPath != null) currentPath.setName("Current Path");
-
 		if (use3DViewer) {
 			if (oldCurrentPath != null) {
 				oldCurrentPath.removeFrom3DViewer(univ);
 			}
-			if (currentPath != null) currentPath.addTo3DViewer(univ, Color.RED, null);
+			if (currentPath != null) currentPath.addTo3DViewer(univ, getXYCanvas().getTemporaryPathColor(), null);
 		}
 	}
 

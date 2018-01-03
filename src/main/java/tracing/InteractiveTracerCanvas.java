@@ -120,8 +120,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	public void setFillTransparent(final boolean transparent) {
 		this.fillTransparent = transparent;
-		if (transparent && fillColor != null) setFillColor(SWCColor.addTransparency(
-			fillColor));
+		if (transparent && fillColor != null) setFillColor(SWCColor.alphaColor(fillColor, 50));
 	}
 
 	public void setPathUnfinished(final boolean unfinished) {
@@ -433,7 +432,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	public Color getFillColor() {
 		if (fillColor == null) fillColor =  new Color(0, 128, 0);
-		if (fillTransparent) fillColor = SWCColor.addTransparency(fillColor);
+		if (fillTransparent) fillColor = SWCColor.alphaColor(fillColor, 50);
 		return fillColor;
 	}
 

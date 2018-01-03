@@ -30,6 +30,7 @@ import java.awt.event.MouseListener;
 
 import ij.gui.ColorChooser;
 import tracing.SimpleNeuriteTracer;
+import tracing.gui.SWCColor;
 
 @Deprecated
 @SuppressWarnings("all")
@@ -69,8 +70,7 @@ public class PathColorsCanvas extends Canvas implements MouseListener {
 	}
 
 	private Color contrastColor(final Color c) {
-		final int intensity = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
-		return intensity < 128 ? Color.WHITE : Color.BLACK;
+		return SWCColor.contrastColor(c);
 	}
 
 	@Override

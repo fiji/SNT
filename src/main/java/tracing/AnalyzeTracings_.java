@@ -40,6 +40,8 @@ import util.BatchOpener;
 import util.FileAndChannel;
 import vib.oldregistration.RegistrationAlgorithm;
 
+@Deprecated
+@SuppressWarnings("all")
 class PointInPath {
 
 	public PointInPath() {
@@ -124,6 +126,7 @@ class PointInPath {
 		return distance_squared <= within_squared;
 	}
 }
+
 /** @deprecated Will be removed in v3.3 */
 @Deprecated
 @SuppressWarnings("all")

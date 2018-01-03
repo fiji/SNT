@@ -22,6 +22,9 @@
 
 package tracing;
 
+/** @deprecated Will be removed in v3.3 */
+@Deprecated
+@SuppressWarnings("all")
 class GraphNode implements Comparable {
 
 	public int id;

@@ -26,6 +26,9 @@ import util.CMTKTransformation;
 
 /* And now some helpful implementations: */
 
+/** @deprecated Will be removed in v3.3 */
+@Deprecated
+@SuppressWarnings("all")
 public class CMTKInversePathTransformer implements PathTransformer {
 
 	private final CMTKTransformation.Inverse t;

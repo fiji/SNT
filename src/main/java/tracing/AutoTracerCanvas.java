@@ -26,8 +26,9 @@ import ij.ImagePlus;
 import tracing.hyperpanes.PaneOwner;
 import tracing.legacy.LegacyTracerCanvas;
 
-@SuppressWarnings("serial")
+/** @deprecated Will be removed in v3.3 */
 @Deprecated
+@SuppressWarnings("all")
 public class AutoTracerCanvas extends LegacyTracerCanvas {
 
 	public AutoTracerCanvas(final ImagePlus imagePlus, final PaneOwner owner, final int plane,

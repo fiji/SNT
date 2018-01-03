@@ -32,14 +32,14 @@ import org.scijava.util.PlatformUtils;
 
 class QueueJumpingKeyListener implements KeyListener {
 
-	protected SimpleNeuriteTracer tracerPlugin;
-	protected InteractiveTracerCanvas canvas;
-	ArrayList<KeyListener> listeners = new ArrayList<>();
+	private final SimpleNeuriteTracer tracerPlugin;
+	private final InteractiveTracerCanvas canvas;
+	private final ArrayList<KeyListener> listeners = new ArrayList<>();
+	private final boolean mac;
 
 	private static final int DOUBLE_PRESS_INTERVAL = 300; // ms
 	private long timeKeyDown = 0; // last time key was pressed
 	private int lastKeyPressedCode;
-	private final boolean mac;
 
 	/* Define which keys are always parsed by IJ listeners */
 	private static final int[] W_KEYS = new int[] { //
@@ -61,7 +61,7 @@ class QueueJumpingKeyListener implements KeyListener {
 	@Override
 	public void keyPressed(final KeyEvent e) {
 
-		if (!tracerPlugin.isReady()) {
+		if (!tracerPlugin.isReady() || canvas.isEventsDisabled()) {
 			waiveKeyPress(e);
 			return;
 		}
@@ -105,8 +105,8 @@ class QueueJumpingKeyListener implements KeyListener {
 
 		// SNT Hotkeys that do not override defaults
 		if (shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A)) {
-				canvas.startShollAnalysis();
-				e.consume();
+			canvas.startShollAnalysis();
+			e.consume();
 		}
 
 		// SNT Keystrokes that override IJ defaults. These
@@ -146,7 +146,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 
 		// Keystrokes exclusive to edit mode
-		else if (canvas.isEditMode() && !doublePress) { // skip hasty keystrokes
+		else if (canvas.isEditMode() && !doublePress) { // skip hasty keystrokes to avoid mis-editing
 			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE || keyChar == 'd' || keyChar =='D') {
 				canvas.deleteEditingNode(false);
 			}
@@ -222,7 +222,7 @@ class QueueJumpingKeyListener implements KeyListener {
 
 	@Override
 	public void keyReleased(final KeyEvent e) {
-		if (e.getKeyCode() == KeyEvent.VK_SPACE) { // IJ's pan tool shortcut
+		if (e.getKeyCode() == KeyEvent.VK_SPACE && !canvas.isEventsDisabled()) { // IJ's pan tool shortcut
 			tracerPlugin.panMode = false;
 		}
 		for (final KeyListener kl : listeners) {

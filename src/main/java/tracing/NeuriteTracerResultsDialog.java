@@ -252,7 +252,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 			@Override
 			public void stateChanged(final ChangeEvent e) {
-				if (tabbedPane.getSelectedIndex() == 1 && getCurrentState() > 0) {
+				if (tabbedPane.getSelectedIndex() == 1 &&
+						getCurrentState() > WAITING_TO_START_PATH && getCurrentState() < EDITING_MODE) {
 					tabbedPane.setSelectedIndex(0);
 					guiUtils.blinkingError(statusText,
 						"Please complete current task before selecting the \"Options\" tab.");

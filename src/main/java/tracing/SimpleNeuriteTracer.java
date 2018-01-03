@@ -1879,7 +1879,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	private Window getActiveWindow() {
 		final Window[] images = { xy_window, xz_window, zy_window };
 		for (final Window win : images) {
-			if (win.isActive()) return win;
+			if (win!=null && win.isActive()) return win;
 		}
 		if (!isReady()) return null;
 		final Window[] frames = { resultsDialog, resultsDialog.getPathWindow(), resultsDialog.getFillWindow() };

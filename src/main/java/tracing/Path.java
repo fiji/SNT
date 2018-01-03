@@ -855,6 +855,26 @@ public class Path implements Comparable<Path> {
 				throw new IllegalArgumentException("BUG: Unknown plane! (" + plane + ")");
 			}
 
+
+			final PathNode pn = new PathNode(this, i, canvas);
+
+			// If there was a previous point in this path, draw a line from
+			// there to here:
+			if (notFirstPoint) {
+				// Don't redraw the line if we drew it the previous time,
+				// though:
+				if (startIndexOfLastDrawnLine != i - 1) {
+					g2.draw(new Line2D.Double(previous_x_on_screen, previous_y_on_screen, pn.x, pn.y));
+					startIndexOfLastDrawnLine = i - 1;
+				}
+			}
+			// If there's a next point in this path, draw a line from here to
+			// there:
+			if (notLastPoint) {
+				g2.draw(new Line2D.Double(pn.x, pn.y, next_x_on_screen, next_y_on_screen));
+				startIndexOfLastDrawnLine = i;
+			}
+
 			if ((either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side))
 				continue;
 
@@ -905,27 +925,8 @@ public class Path implements Comparable<Path> {
 
 			}
 
-			final PathNode pn = new PathNode(this, i, canvas);
-			pn.setEditable(getEditableNodeIndex()==i);
-
-			// If there was a previous point in this path, draw a line from
-			// there to here:
-			if (notFirstPoint) {
-				// Don't redraw the line if we drew it the previous time,
-				// though:
-				if (startIndexOfLastDrawnLine != i - 1) {
-					g2.draw(new Line2D.Double(previous_x_on_screen, previous_y_on_screen, pn.x, pn.y));
-					startIndexOfLastDrawnLine = i - 1;
-				}
-			}
-			// If there's a next point in this path, draw a line from here to
-			// there:
-			if (notLastPoint) {
-				g2.draw(new Line2D.Double(pn.x, pn.y, next_x_on_screen, next_y_on_screen));
-				startIndexOfLastDrawnLine = i;
-			}
-
 			// Draw node
+			pn.setEditable(getEditableNodeIndex()==i);
 			pn.draw(g2, c);
 		}
 

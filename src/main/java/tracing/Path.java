@@ -51,6 +51,7 @@ import ij3d.Pipe;
 import pal.math.ConjugateDirectionSearch;
 import pal.math.MultivariateFunction;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
 /**

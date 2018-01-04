@@ -51,6 +51,7 @@ import sholl.gui.EnhancedGenericDialog;
 import sholl.gui.Utils;
 import tracing.ShollAnalysisDialog.ShollPoint;
 import tracing.ShollAnalysisDialog.ShollResults;
+import tracing.util.PointInImage;
 
 public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 

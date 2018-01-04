@@ -20,7 +20,10 @@
  * #L%
  */
 
-package tracing;
+package tracing.util;
+
+import tracing.Path;
+import tracing.PathTransformer;
 
 /* The x, y and z here are in world coordinates, i.e. already scaled
    by the calibration values. */

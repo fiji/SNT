@@ -31,6 +31,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
 /** Convenience class used to render Path nodes (vertices). */

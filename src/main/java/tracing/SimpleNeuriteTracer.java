@@ -80,6 +80,7 @@ import tracing.gui.SWCImportOptionsDialog;
 import tracing.gui.SigmaPalette;
 import tracing.gui.SwingSafeResult;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.PointInImage;
 
 /* Note on terminology:
 

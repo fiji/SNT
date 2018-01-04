@@ -25,6 +25,8 @@ package tracing;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import tracing.util.PointInImage;
+
 public class SWCPoint implements Comparable<SWCPoint> {
 	ArrayList<SWCPoint> nextPoints;
 	SWCPoint previousPoint;

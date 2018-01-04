@@ -70,6 +70,7 @@ import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij3d.Content;
 import ij3d.UniverseListener;
+import tracing.util.PointInImage;
 import util.Bresenham3D;
 import util.XMLFunctions;
 

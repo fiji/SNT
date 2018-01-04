@@ -40,6 +40,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.Menus;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
 public class InteractiveTracerCanvas extends TracerCanvas {

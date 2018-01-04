@@ -433,7 +433,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			return;
 		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
-		prefs.savePluginPrefs();
+		prefs.savePluginPrefs(true);
 		pw.dispose();
 		fw.dispose();
 		dispose();

@@ -60,15 +60,29 @@ public class SNTPrefs { //TODO: Adopt PrefService
 	private final int UNSET_PREFS = -1;
 	private int currentBooleans;
 	private final SimpleNeuriteTracer snt;
+	private boolean ij1ReverseSliderOrder;
+	private boolean ij1PointerCursor;
 
 	public SNTPrefs(final SimpleNeuriteTracer snt) {
 		this.snt = snt;
 		getBooleans();
+		storeIJ1Prefs();
+		imposeIJ1Prefs();
 	}
 
-	public SNTPrefs(final Simple_Neurite_Tracer snt) {
-		this.snt = (SimpleNeuriteTracer) snt;
-		getBooleans();
+	private void storeIJ1Prefs() {
+		ij1ReverseSliderOrder = Prefs.reverseNextPreviousOrder;
+		ij1PointerCursor = Prefs.usePointerCursor;
+	}
+
+	private void imposeIJ1Prefs() {
+		Prefs.reverseNextPreviousOrder = true; // required for scroll wheel z-tracing
+		Prefs.usePointerCursor = false; // required for tracing mode/editing mode distinction
+	}
+
+	private void restoreIJ1Prefs() {
+		Prefs.reverseNextPreviousOrder = ij1ReverseSliderOrder;
+		Prefs.usePointerCursor = ij1PointerCursor;
 	}
 
 	private int getDefaultBooleans() {
@@ -131,7 +145,7 @@ public class SNTPrefs { //TODO: Adopt PrefService
 		Prefs.savePreferences();
 	}
 
-	protected void savePluginPrefs() {
+	protected void savePluginPrefs(final boolean restoreIJ1prefs) {
 		setPref(COMPRESSED_XML, snt.useCompressedXML);
 		setPref(AUTO_CANVAS_ACTIVATION, snt.autoCanvasActivation);
 		setPref(SNAP_CURSOR, snt.snapCursor);
@@ -154,6 +168,7 @@ public class SNTPrefs { //TODO: Adopt PrefService
 			if (fw != null)
 				Prefs.saveLocation(FILLWIN_LOC, fw.getLocation());
 		}
+		if (restoreIJ1prefs) restoreIJ1Prefs();
 	}
 
 	protected boolean isSaveWinLocations() {

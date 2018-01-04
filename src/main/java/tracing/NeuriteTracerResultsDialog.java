@@ -2229,7 +2229,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				preSigmaPaletteState = currentState;
 				changeState(WAITING_FOR_SIGMA_POINT);
 
-				plugin.getXYCanvas().setCursorText("  Sigma");
+				plugin.setCursorTextAllPanes("  Sigma");
 			}
 
 			else if (source == colorImageChoice) {

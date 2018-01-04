@@ -84,7 +84,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		final Point2d pos = getCursorPos();
 		g.setColor(getAnnotationsColor());
 		if (draw_crosshairs) drawCrosshairs(g, pos.x, pos.y);
-		if (draw_string) drawString(g, cursorText, (float)pos.x, (float)pos.y);
+		if (draw_string) drawString(g, cursorText, (float)pos.x+2, (float)pos.y);
 	}
 
 	/**
@@ -164,18 +164,25 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		g.draw(new Line2D.Double(x_on_screen - 1, y_on_screen, x_on_screen - hairLength, y_on_screen));
 	}
 
+	private Font getScaledFont() {
+		final double size = Math.max(9, Math.min(18 * magnification, 30));
+		final Font font = new Font("SansSerif", Font.PLAIN, 18).deriveFont(
+			(float) size);
+		return font;
+	}
+
 	private void drawString(final Graphics2D g, final String str,
 		final float x_on_screen, final float y_on_screen)
 	{
+		g.setFont(getScaledFont());
+		g.setColor(getAnnotationsColor());
 		g.drawString(str, x_on_screen, y_on_screen);
 	}
 
 	private void drawCanvasText(final Graphics2D g, final String text) {
 		if (!validString(text)) return;
 		final int edge = 4;
-		final double size = Math.max(9, Math.min(18 * magnification, 30));
-		final Font font = new Font("SansSerif", Font.PLAIN, 18).deriveFont(
-			(float) size);
+		final Font font = getScaledFont();
 		final FontMetrics fm = getFontMetrics(font);
 		final double w = fm.stringWidth(text) + edge;
 		final double h = fm.getHeight() + edge;

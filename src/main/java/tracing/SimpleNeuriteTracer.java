@@ -907,8 +907,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		y = pd[1];
 		z = pd[2];
 
-		final boolean joining = join_modifier_down && pathAndFillManager.anySelected();
 		final boolean editing = isEditModeEnabled() && editingPath != null && editingPath.isSelected();
+		final boolean joining = !editing && join_modifier_down && pathAndFillManager.anySelected();
+
 		PointInImage pim = null;
 		if (joining) {
 			// find the nearest node to this cursor position
@@ -926,6 +927,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			x = pim.x / x_spacing;
 			y = pim.y / y_spacing;
 			z = pim.z / z_spacing;
+			setCursorTextAllPanes((joining) ? " Fork Point" : null);
+		} else {
+			setCursorTextAllPanes(null);
 		}
 
 		final int ix = (int) Math.round(x);

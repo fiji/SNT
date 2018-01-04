@@ -118,8 +118,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	@Override
 	public void mouseMoved(final MouseEvent e) {
 
-		if (!cursorLocked) super.mouseMoved(e);
-//		if (isEventsDisabled()) return;
+		if (!cursorLocked || isEventsDisabled()) super.mouseMoved(e);
 
 		final double off_screen_x = offScreenX(e.getX());
 		final double off_screen_y = offScreenY(e.getY());

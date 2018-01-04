@@ -36,7 +36,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import ij.IJ;
+import org.scijava.util.PlatformUtils;
 import ij.ImagePlus;
 import ij.Menus;
 import tracing.hyperpanes.MultiDThreePanes;
@@ -215,7 +215,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseMoved(final MouseEvent e) {
 
-		if (super.isEventsDisabled() || !tracerPlugin.isReady()) {
+		if (isEventsDisabled() || !tracerPlugin.isReady()) {
 			super.mouseMoved(e);
 			return;
 		}
@@ -226,20 +226,18 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		last_x_in_pane_precise = myOffScreenXD(rawX);
 		last_y_in_pane_precise = myOffScreenYD(rawY);
 
-		final boolean mac = IJ.isMacintosh();
+		final boolean mac = PlatformUtils.isMac();
 
 		boolean shift_key_down = (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
 		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
 			: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 
-		super.mouseMoved(e);
-
 		if (!editMode && tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down && !shift_key_down) {
-				final double[] p = new double[3];
-				tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise, last_y_in_pane_precise, p);
-				last_x_in_pane_precise = p[0];
-				last_y_in_pane_precise = p[1];
-				shift_key_down = true;
+			final double[] p = new double[3];
+			tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise, last_y_in_pane_precise, p);
+			last_x_in_pane_precise = p[0];
+			last_y_in_pane_precise = p[1];
+			shift_key_down = tracerPlugin.cursorSnapWindowZ > 0; // always sync panes in Z-snapping mode
 		}
 		
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down,
@@ -310,7 +308,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		} else if (tracerPlugin.setupTrace) {
 
-			final boolean join = IJ.isMacintosh() ? e.isAltDown() : e.isControlDown();
+			final boolean join = PlatformUtils.isMac() ? e.isAltDown() : e.isControlDown();
 
 			if (tracerPlugin.snapCursor && !join && !e.isShiftDown()) {
 				tracerPlugin.clickForTrace(last_x_in_pane_precise, last_y_in_pane_precise, plane, join);

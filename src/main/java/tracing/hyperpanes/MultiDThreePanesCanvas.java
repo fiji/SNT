@@ -46,7 +46,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	protected PaneOwner owner;
 	protected int plane;
 	private double current_x, current_y, current_z;
-	private boolean draw_crosshairs;
+	private boolean draw_crosshairs = true; // render crosshairs by default
 	private String cursorText; // text to be rendered near cursor
 	private String canvasText; // text to be rendered NW corner of canvas
 	private Color annotationsColor;
@@ -64,11 +64,10 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	protected MultiDThreePanesCanvas(final ImagePlus imagePlus, final int plane) {
-		super(imagePlus);
-		this.plane = plane;
+		this(imagePlus, null, plane);
 	}
 
-	static public Object newThreePanesCanvas(final ImagePlus imagePlus,
+	public static Object newThreePanesCanvas(final ImagePlus imagePlus,
 		final PaneOwner owner, final int plane)
 	{
 		return new MultiDThreePanesCanvas(imagePlus, owner, plane);
@@ -141,7 +140,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 
 	@Override
 	public void zoomIn(final int sx, final int sy) {
-		if (isZoomDisabled())
+		if (isZoomDisabled()) 
 			super.zoomIn(sx, sy);
 		else
 			owner.zoom(true, offScreenX(sx), offScreenX(sy), plane);
@@ -158,7 +157,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	protected void drawCrosshairs(final Graphics2D g,
 		final double x_on_screen, final double y_on_screen)
 	{
-		final int hairLength = 8;
+		final int hairLength = 10;
 		g.draw(new Line2D.Double(x_on_screen, y_on_screen, x_on_screen, y_on_screen + hairLength));
 		g.draw(new Line2D.Double(x_on_screen, y_on_screen - 1, x_on_screen, y_on_screen - hairLength));
 		g.draw(new Line2D.Double(x_on_screen + 1, y_on_screen, x_on_screen + hairLength, y_on_screen));

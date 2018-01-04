@@ -1491,7 +1491,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JLabel leftAlignedLabel(final String text, final boolean enabled) {
 		final JLabel label = new JLabel(text);
 		label.setHorizontalAlignment(SwingConstants.LEFT);
-		if (!enabled) label.setForeground(GuiUtils.getDisabledComponentColor());
+		label.setEnabled(enabled);
+		if (!enabled) label.setForeground(GuiUtils.getDisabledComponentColor()); // required for MACOS!?
 		return label;
 	}
 

@@ -223,6 +223,14 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 	}
 
+	public void setCursorTextAllPanes(final String label) {
+		xy_canvas.setCursorText(label);
+		if (!single_pane) {
+			xz_canvas.setCursorText(label);
+			zy_canvas.setCursorText(label);
+		}
+	}
+
 	public void closeAndResetAllPanes() {
 		if (!single_pane) {
 			zy.close();

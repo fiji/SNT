@@ -20,29 +20,18 @@
  * #L%
  */
 
-package tracing;
+package tracing.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Button;
-import java.awt.Checkbox;
-import java.awt.CheckboxGroup;
-import java.awt.Dialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Label;
-import java.awt.Panel;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.TextEvent;
-import java.awt.event.TextListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,13 +47,21 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
@@ -85,11 +82,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.Prefs;
-import ij.gui.GUI;
 import ij.io.FileInfo;
 import ij.io.SaveDialog;
 import ij.measure.Calibration;
@@ -99,49 +93,199 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import sholl.Sholl_Analysis;
 import sholl.Sholl_Utils;
+import tracing.Path;
+import tracing.PathAndFillManager;
+import tracing.SNT;
+import tracing.SimpleNeuriteTracer;
+import tracing.util.PointInImage;
 import util.FindConnectedRegions;
 
-@SuppressWarnings("serial")
-public class ShollAnalysisDialog extends Dialog implements WindowListener, ActionListener, TextListener, ItemListener {
+public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
-	protected double x_start, y_start, z_start;
+	private static final long serialVersionUID = 1L;
 
-	protected CheckboxGroup pathsGroup = new CheckboxGroup();
-	protected Checkbox useAllPathsCheckbox = new Checkbox("Use all paths in analysis?", pathsGroup, true);
-	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup,
-			false);
+	private double x_start, y_start, z_start;
 
-	protected JButton swcTypesButton = new JButton("SWC Type Filtering...");
-	protected JPopupMenu swcTypesMenu = new JPopupMenu();
-	protected ArrayList<String> filteredTypes = Path.getSWCtypeNames();
-	protected JLabel filteredTypesWarningLabel = new JLabel();
+	private ButtonGroup pathsGroup;
+	private JRadioButton useAllPathsCheckbox;
+	private JRadioButton useSelectedPathsCheckbox;
 
-	protected Button makeShollImageButton = new Button("Sholl Image");
-	protected Button exportProfileButton = new Button("Save Profile...");
-	protected Button drawShollGraphButton = new Button("Preview Plot");
-	protected Button analyzeButton = new Button("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
+	private JButton swcTypesButton = new JButton("SWC Type Filtering...");
+	private JPopupMenu swcTypesMenu = new JPopupMenu();
+	private ArrayList<String> filteredTypes = Path.getSWCtypeNames();
+	private JLabel filteredTypesWarningLabel = new JLabel();
 
-	protected int numberOfSelectedPaths;
-	protected int numberOfAllPaths;
+	private JButton makeShollImageButton = new JButton("Sholl Image");
+	private JButton exportProfileButton = new JButton("Save Profile...");
+	private JButton drawShollGraphButton = new JButton("Preview Plot");
+	private JButton analyzeButton = new JButton("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
 
-	protected CheckboxGroup axesGroup = new CheckboxGroup();
-	protected Checkbox normalAxes = new Checkbox("Use standard axes", axesGroup, true);
-	protected Checkbox semiLogAxes = new Checkbox("Use semi-log axes", axesGroup, false);
-	protected Checkbox logLogAxes = new Checkbox("Use log-log axes", axesGroup, false);
+	private ButtonGroup axesGroup;
+	private JRadioButton normalAxes;
+	private JRadioButton semiLogAxes;
+	private JRadioButton logLogAxes;
 
-	protected CheckboxGroup normalizationGroup = new CheckboxGroup();
-	protected Checkbox noNormalization = new Checkbox("No normalization of intersections", normalizationGroup, true);
-	protected Checkbox normalizationForSphereVolume = new Checkbox("[BUG: should be set in the constructor]",
-			normalizationGroup, false);
-
-	protected TextField sampleSeparation = new TextField(
-			"" + Prefs.get("tracing.ShollAnalysisDialog.sampleSeparation", 0));
-
-	protected ShollResults currentResults;
-	protected ImagePlus originalImage;
+	private ButtonGroup normalizationGroup;
+	private JRadioButton noNormalization;
+	private JRadioButton normalizationForSphereVolume;
 	private String exportPath;
+	private final int margin = 10;
 
-	GraphFrame graphFrame;
+	private GraphFrame graphFrame;
+	private int numberOfSelectedPaths;
+	private int numberOfAllPaths;
+	private double sampleSeparation;
+	private ArrayList<ShollPoint> shollPointsAllPaths;
+	private ArrayList<ShollPoint> shollPointsSelectedPaths;
+	private PathAndFillManager shollpafm;
+	private ResultsPanel resultsPanel = new ResultsPanel();
+	private GuiUtils gUtils;
+	private SimpleNeuriteTracer plugin;
+
+	public ShollAnalysisDialog(final String title, final double x_start, final double y_start, final double z_start,
+			final SimpleNeuriteTracer plugin) {
+
+		super(plugin.getUI(), title, false);
+
+		this.x_start = x_start;
+		this.y_start = y_start;
+		this.z_start = z_start;
+		this.plugin = plugin;
+		gUtils = new GuiUtils(this);
+		shollPointsAllPaths = new ArrayList<>();
+		shollPointsSelectedPaths = new ArrayList<>();
+		shollpafm = plugin.getPathAndFillManager();
+		reloadPaths();
+
+		pathsGroup = new ButtonGroup();
+		useAllPathsCheckbox = new JRadioButton("Include all paths (" + numberOfAllPaths + ")", true);
+		useSelectedPathsCheckbox = new JRadioButton("Include only selected path(s) ("+ numberOfSelectedPaths + ")", false);
+		pathsGroup.add(useAllPathsCheckbox);
+		pathsGroup.add(useSelectedPathsCheckbox);
+
+		axesGroup = new ButtonGroup();
+		normalAxes = new JRadioButton("Standard (linear) axes");
+		semiLogAxes = new JRadioButton("Semi-log axes");
+		logLogAxes = new JRadioButton("Log-log axes");
+		normalAxes.setSelected(true);
+		axesGroup.add(normalAxes);
+		axesGroup.add(semiLogAxes);
+		axesGroup.add(logLogAxes);
+
+		normalizationGroup = new ButtonGroup();
+		noNormalization = new JRadioButton("No normalization of intersections", true);
+		normalizationForSphereVolume = new JRadioButton("[BUG: should be set in the constructor]", false);
+		normalizationGroup.add(noNormalization);
+		normalizationGroup.add(normalizationForSphereVolume);
+
+		setLayout(new GridBagLayout());
+		final GridBagConstraints c = GuiUtils.defaultGbc();
+		c.fill =  GridBagConstraints.NONE;
+
+		c.insets = new Insets(margin, margin, 0, margin);
+		useAllPathsCheckbox.addActionListener(this);
+		add(useAllPathsCheckbox, c);
+
+		++c.gridy;
+		c.insets = new Insets(0, margin, margin, margin);
+		add(useSelectedPathsCheckbox, c);
+		useSelectedPathsCheckbox.addActionListener(this);
+
+		++c.gridy;
+		c.insets = new Insets(0, margin, 0, margin);
+		buildTypeFilteringMenu();
+		add(swcTypesButton, c);
+		++c.gridy;
+		c.insets = new Insets(0, margin, margin, margin);
+		add(filteredTypesWarningLabel, c);
+		makePromptInteractive(true);
+
+		++c.gridy;
+		c.insets = new Insets(margin, margin, 0, margin);
+		add(normalAxes, c);
+		normalAxes.addActionListener(this);
+		++c.gridy;
+		c.insets = new Insets(0, margin, 0, margin);
+		add(semiLogAxes, c);
+		semiLogAxes.addActionListener(this);
+		++c.gridy;
+		c.insets = new Insets(0, margin, margin, margin);
+		add(logLogAxes, c);
+		logLogAxes.addActionListener(this);
+
+		++c.gridy;
+		c.insets = new Insets(margin, margin, 0, margin);
+		add(noNormalization, c);
+		noNormalization.addActionListener(this);
+		++c.gridy;
+		c.insets = new Insets(0, margin, margin, margin);
+		if (plugin.is2D())
+			normalizationForSphereVolume.setText("Normalize for area of sampling circle");
+		else
+			normalizationForSphereVolume.setText("Normalize for volume of sampling sphere");
+		add(normalizationForSphereVolume, c);
+		normalizationForSphereVolume.addActionListener(this);
+
+		++c.gridy;
+		c.gridx = 0;
+		c.insets = new Insets(margin, margin, 0, margin);
+		final JPanel separationPanel = new JPanel();
+		separationPanel.setBorder(null);
+		JSpinner spinner = GuiUtils.doubleSpinner(0, 0, plugin.getLargestDimension()/2, plugin.getMinimumSeparation(), 2);
+		spinner.addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(final ChangeEvent e) {
+				sampleSeparation = (double) spinner.getValue();
+				updateResults();
+			}
+		});
+		separationPanel.add(new JLabel("Radius step size:"));
+		separationPanel.add(spinner);
+		final String unit = plugin.getImagePlus().getCalibration().getUnit();
+		if (unit != null && !unit.equals("unknown") && !unit.equals("pixel"))
+			separationPanel.add(new JLabel(unit));
+		add(separationPanel, c);
+		c.gridx = 0;
+		++c.gridy;
+		c.insets = new Insets(0, margin, margin, margin);
+		add(new JLabel("(0 for continuous sampling)"), c);
+		++c.gridy;
+
+		c.insets = new Insets(margin *2, margin, margin*2, margin);
+		add(resultsPanel, c);
+
+		++c.gridy;
+		final JPanel buttonsPanel = new JPanel();
+		buttonsPanel.setLayout(new BorderLayout());
+		final JPanel topRow = new JPanel();
+		final JPanel middleRow = new JPanel();
+		final JPanel bottomRow = new JPanel();
+
+		topRow.add(makeShollImageButton);
+		makeShollImageButton.addActionListener(this);
+
+		topRow.add(drawShollGraphButton);
+		drawShollGraphButton.addActionListener(this);
+
+		topRow.add(exportProfileButton);
+		exportProfileButton.addActionListener(this);
+
+		middleRow.add(analyzeButton);
+		analyzeButton.addActionListener(this);
+
+		buttonsPanel.add(topRow, BorderLayout.NORTH);
+		buttonsPanel.add(middleRow, BorderLayout.CENTER);
+		buttonsPanel.add(bottomRow, BorderLayout.SOUTH);
+
+		add(buttonsPanel, c);
+		updateResults();
+		pack();
+		setLocationRelativeTo(plugin.getUI());
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		setVisible(true);
+		toFront();
+	}
 
 	@Override
 	public void actionPerformed(final ActionEvent e) {
@@ -151,11 +295,11 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			results = getCurrentResults();
 		}
 		if (results == null) {
-			IJ.error("The sphere separation field must be a number, not '" + sampleSeparation.getText() + "'");
+			gUtils.error("The sphere separation field must be a valid number");
 			return;
 		}
 		if (source == makeShollImageButton) {
-			results.makeShollCrossingsImagePlus(originalImage);
+			results.makeShollCrossingsImagePlus(plugin.getImagePlus());
 
 		} else if (source == analyzeButton) {
 
@@ -163,9 +307,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				@Override
 				public void run() {
 					analyzeButton.setEnabled(false);
-					analyzeButton.setLabel("Running Analysis. Please wait...");
+					analyzeButton.setText("Running Analysis. Please wait...");
 					results.analyzeWithShollAnalysisPlugin(getExportPath(), shollpafm.getPathsStructured().length);
-					analyzeButton.setLabel("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
+					analyzeButton.setText("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
 					analyzeButton.setEnabled(true);
 				}
 			});
@@ -178,7 +322,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			// be handled by sholl.Sholl_Analysis
 
 			final SaveDialog sd = new SaveDialog("Export data as...", getExportPath(),
-					originalImage.getTitle() + "-sholl" + results.getSuggestedSuffix(), ".csv");
+					plugin.getImagePlus().getTitle() + "-sholl" + results.getSuggestedSuffix(), ".csv");
 
 			if (sd.getFileName() == null) {
 				return;
@@ -186,42 +330,28 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 			final File saveFile = new File(exportPath = sd.getDirectory(), sd.getFileName());
 			if ((saveFile != null) && saveFile.exists()) {
-				if (!IJ.showMessageWithCancel("Export data...",
+				if (!gUtils.getConfirmation("Export data...",
 						"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?"))
 					return;
 			}
 
-			IJ.showStatus("Exporting CSV data to " + saveFile.getAbsolutePath());
+			plugin.getUI().showStatus("Exporting CSV to " + saveFile.getAbsolutePath());
 
 			try {
 				results.exportDetailToCSV(saveFile);
 			} catch (final IOException ioe) {
-				IJ.error("Saving to " + saveFile.getAbsolutePath() + " failed");
+				gUtils.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;
 			}
 
 		} else if (source == drawShollGraphButton) {
 			graphFrame.setVisible(true);
+		} else {
+			updateResults();
 		}
 	}
 
-	@Override
-	public void textValueChanged(final TextEvent e) {
-		final Object source = e.getSource();
-		if (source == sampleSeparation) {
-			final String sampleSeparationText = sampleSeparation.getText();
-			float s;
-			try {
-				s = Float.parseFloat(sampleSeparationText);
-			} catch (final NumberFormatException nfe) {
-				return;
-			}
-			if (s >= 0)
-				updateResults();
-		}
-	}
-
-	protected synchronized void updateResults() {
+	private synchronized void updateResults() {
 		JFreeChart chart;
 
 		if (numberOfAllPaths <= 0) {
@@ -247,8 +377,10 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			final ShollResults results = getCurrentResults();
 			resultsPanel.updateFromResults(results);
 			chart = results.createGraph();
-			if (chart == null)
+			if (chart == null) {
+				gUtils.error("Invalid data. Please revise options");
 				return;
+			}
 			if (graphFrame == null)
 				graphFrame = new GraphFrame(chart, results.getSuggestedSuffix());
 			else
@@ -277,16 +409,11 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		makeShollImageButton.setEnabled(interactive);
 	}
 
-	@Override
-	public void itemStateChanged(final ItemEvent e) {
-		updateResults();
-	}
-
-	public ShollResults getCurrentResults() {
+	private ShollResults getCurrentResults() {
 		List<ShollPoint> pointsToUse;
 		String description = "Sholl analysis ";
-		final String postDescription = " for " + originalImage.getTitle();
-		final boolean useAllPaths = !useSelectedPathsCheckbox.getState();
+		final String postDescription = " for " + plugin.getImagePlus().getTitle();
+		final boolean useAllPaths = !useSelectedPathsCheckbox.isSelected();
 		if (useAllPaths) {
 			pointsToUse = shollPointsAllPaths;
 			description += "of all paths" + postDescription;
@@ -296,51 +423,48 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 
 		int axes = 0;
-		if (normalAxes.getState())
+		if (normalAxes.isSelected())
 			axes = AXES_NORMAL;
-		else if (semiLogAxes.getState())
+		else if (semiLogAxes.isSelected())
 			axes = AXES_SEMI_LOG;
-		else if (logLogAxes.getState())
+		else if (logLogAxes.isSelected())
 			axes = AXES_LOG_LOG;
 		else
 			throw new RuntimeException("BUG: somehow no axis checkbox was selected");
 
 		int normalization = 0;
-		if (noNormalization.getState())
+		if (noNormalization.isSelected())
 			normalization = NOT_NORMALIZED;
-		else if (normalizationForSphereVolume.getState())
+		else if (normalizationForSphereVolume.isSelected())
 			normalization = NORMALIZED_FOR_SPHERE_VOLUME;
 		else
 			throw new RuntimeException("BUG: somehow no normalization checkbox was selected");
 
-		final String sphereSeparationString = sampleSeparation.getText();
-		double sphereSeparation = Double.MIN_VALUE;
-
-		try {
-			sphereSeparation = Double.parseDouble(sphereSeparationString);
-		} catch (final NumberFormatException nfe) {
-			return null;
-		}
-
-		final ShollResults results = new ShollResults(pointsToUse, originalImage, useAllPaths,
+		final ShollResults results = new ShollResults(pointsToUse, plugin.getImagePlus(), useAllPaths,
 				useAllPaths ? numberOfAllPaths : numberOfSelectedPaths, x_start, y_start, z_start, description, axes,
-				normalization, sphereSeparation, twoDimensional);
+						normalization, sampleSeparation, plugin.is2D());
 
 		return results;
 	}
 
-	public static class GraphFrame extends JFrame implements ActionListener {
-		JButton exportButton;
-		JFreeChart chart = null;
-		ChartPanel chartPanel = null;
-		JPanel mainPanel;
-		String suggestedSuffix;
+	private JDialog getDialog() {
+		return this;
+	}
 
-		public void updateWithNewChart(final JFreeChart chart, final String suggestedSuffix) {
+	private class GraphFrame extends JFrame implements ActionListener {
+
+		private static final long serialVersionUID = 1L;
+		private JButton exportButton;
+		private JFreeChart chart = null;
+		private ChartPanel chartPanel = null;
+		private JPanel mainPanel;
+		private String suggestedSuffix;
+
+		private void updateWithNewChart(final JFreeChart chart, final String suggestedSuffix) {
 			updateWithNewChart(chart, suggestedSuffix, false);
 		}
 
-		synchronized public void updateWithNewChart(final JFreeChart chart, final String suggestedSuffix,
+		synchronized private void updateWithNewChart(final JFreeChart chart, final String suggestedSuffix,
 				final boolean setSize) {
 			this.suggestedSuffix = suggestedSuffix;
 			if (chartPanel != null)
@@ -354,7 +478,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			validate();
 		}
 
-		public GraphFrame(final JFreeChart chart, final String suggestedSuffix) {
+		private GraphFrame(final JFreeChart chart, final String suggestedSuffix) {
 			super();
 
 			this.suggestedSuffix = suggestedSuffix;
@@ -373,7 +497,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			setContentPane(mainPanel);
 			validate();
 			setSize(new java.awt.Dimension(500, 270));
-			GUI.center(this);
+			setLocationRelativeTo(getDialog());
+			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		}
 
 		@Override
@@ -384,7 +509,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 		}
 
-		public void exportGraphAsSVG() {
+		private void exportGraphAsSVG() {
 
 			final SaveDialog sd = new SaveDialog("Export graph as...", "sholl" + suggestedSuffix, ".svg");
 
@@ -394,17 +519,17 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 			final File saveFile = new File(sd.getDirectory(), sd.getFileName());
 			if ((saveFile != null) && saveFile.exists()) {
-				if (!IJ.showMessageWithCancel("Export graph...",
+				if (!gUtils.getConfirmation("Export graph...",
 						"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?"))
 					return;
 			}
 
-			IJ.showStatus("Exporting graph to " + saveFile.getAbsolutePath());
+			plugin.getUI().showStatus("Exporting graph to " + saveFile.getAbsolutePath());
 
 			try {
 				exportChartAsSVG(chart, chartPanel.getBounds(), saveFile);
 			} catch (final IOException ioe) {
-				IJ.error("Saving to " + saveFile.getAbsolutePath() + " failed");
+				gUtils.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;
 			}
 
@@ -425,7 +550,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		 *             This method is taken from:
 		 *             http://dolf.trieschnigg.nl/jfreechart/
 		 */
-		void exportChartAsSVG(final JFreeChart chart, final Rectangle bounds, final File svgFile) throws IOException {
+		private void exportChartAsSVG(final JFreeChart chart, final Rectangle bounds, final File svgFile) throws IOException {
 
 			// Get a DOMImplementation and create an XML document
 			final DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
@@ -447,41 +572,41 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	}
 
 	public static final int AXES_NORMAL = 1;
-	public static final int AXES_SEMI_LOG = 2;
-	public static final int AXES_LOG_LOG = 3;
+	private static final int AXES_SEMI_LOG = 2;
+	private static final int AXES_LOG_LOG = 3;
 
-	public static final String[] axesParameters = { null, "normal", "semi-log", "log-log" };
+	private static final String[] axesParameters = { null, "normal", "semi-log", "log-log" };
 
 	public static final int NOT_NORMALIZED = 1;
 	public static final int NORMALIZED_FOR_SPHERE_VOLUME = 2;
 
-	public static final String[] normalizationParameters = { null, "not-normalized", "normalized" };
+	private static final String[] normalizationParameters = { null, "not-normalized", "normalized" };
 
 	public static class ShollResults {
-		protected double[] squaredRangeStarts;
-		protected int[] crossingsPastEach;
-		protected int n;
-		protected double x_start, y_start, z_start;
+		private double[] squaredRangeStarts;
+		private int[] crossingsPastEach;
+		private int n;
+		private double x_start, y_start, z_start;
 		/* maxCrossings is the same as the "Dendrite Maximum". */
-		protected int maxCrossings = Integer.MIN_VALUE;
-		protected double criticalValue = Double.MIN_VALUE;
-		protected String description;
-		protected int axes;
-		protected int normalization;
-		protected double sphereSeparation;
-		protected double[] x_graph_points;
-		protected double[] y_graph_points;
-		protected double minY;
-		protected double maxY;
-		protected int graphPoints;
-		protected String yAxisLabel;
-		protected String xAxisLabel;
-		protected double regressionGradient = Double.MIN_VALUE;
-		protected double regressionIntercept = Double.MIN_VALUE;
-		protected double regressionRSquare = Double.NaN;
-		protected int n_samples;
-		protected double[] sampled_distances;
-		protected double[] sampled_counts;
+		private int maxCrossings = Integer.MIN_VALUE;
+		private double criticalValue = Double.MIN_VALUE;
+		private String description;
+		private int axes;
+		private int normalization;
+		private double sphereSeparation;
+		private double[] x_graph_points;
+		private double[] y_graph_points;
+		private double minY;
+		private double maxY;
+		private int graphPoints;
+		private String yAxisLabel;
+		private String xAxisLabel;
+		private double regressionGradient = Double.MIN_VALUE;
+		private double regressionIntercept = Double.MIN_VALUE;
+		private double regressionRSquare = Double.NaN;
+		private int n_samples;
+		private double[] sampled_distances;
+		private double[] sampled_counts;
 		String parametersSuffix;
 
 		public double[] getSampledDistances() {
@@ -647,8 +772,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			x_graph_points = Arrays.copyOf(sampled_distances, n_samples);
 			y_graph_points = Arrays.copyOf(sampled_counts, n_samples);
 
-			xAxisLabel = "Distance from (" + IJ.d2s(x_start, 3) + ", " + IJ.d2s(y_start, 3) + ", " + IJ.d2s(z_start, 3)
-					+ ")";
+			xAxisLabel = "Distance from (" + SNT.formatDouble(x_start, 3) + ", " + SNT.formatDouble(y_start, 3) + ", " + SNT.formatDouble(z_start, 3)
+			+ ")";
 			yAxisLabel = "N. of Intersections";
 
 			if (normalization == NORMALIZED_FOR_SPHERE_VOLUME) {
@@ -703,10 +828,10 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				throw new RuntimeException("[BUG] Somehow there were no valid points found");
 		}
 
-		public JFreeChart createGraph() {
+		private JFreeChart createGraph() {
 
+			if (graphPoints < 2) return null;
 			XYSeriesCollection data = null;
-
 			double minX = Double.MAX_VALUE;
 			double maxX = Double.MIN_VALUE;
 
@@ -928,8 +1053,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	}
 
 	public static class ShollPoint implements Comparable<ShollPoint> {
-		protected boolean nearer;
-		protected double distanceSquared;
+		private boolean nearer;
+		private double distanceSquared;
 
 		@Override
 		public int compareTo(final ShollPoint other) {
@@ -946,12 +1071,14 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			final double z_start, final List<ShollPoint> shollPointsList) {
 
 		for (int i = 0; i < p.size() - 1; ++i) {
-			final double xdiff_first = p.precise_x_positions[i] - x_start;
-			final double ydiff_first = p.precise_y_positions[i] - y_start;
-			final double zdiff_first = p.precise_z_positions[i] - z_start;
-			final double xdiff_second = p.precise_x_positions[i + 1] - x_start;
-			final double ydiff_second = p.precise_y_positions[i + 1] - y_start;
-			final double zdiff_second = p.precise_z_positions[i + 1] - z_start;
+			final PointInImage pim1 = p.getPointInImage(i);
+			final PointInImage pim2 = p.getPointInImage(i+1);
+			final double xdiff_first = pim1.x - x_start;
+			final double ydiff_first = pim1.y - y_start;
+			final double zdiff_first = pim1.z - z_start;
+			final double xdiff_second = pim2.x - x_start;
+			final double ydiff_second = pim2.y - y_start;
+			final double zdiff_second = pim2.z - z_start;
 			final double distanceSquaredFirst = xdiff_first * xdiff_first + ydiff_first * ydiff_first
 					+ zdiff_first * zdiff_first;
 			final double distanceSquaredSecond = xdiff_second * xdiff_second + ydiff_second * ydiff_second
@@ -962,137 +1089,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	}
 
-	ArrayList<ShollPoint> shollPointsAllPaths;
-	ArrayList<ShollPoint> shollPointsSelectedPaths;
-	PathAndFillManager shollpafm;
-	ResultsPanel resultsPanel = new ResultsPanel();
-
-	protected boolean twoDimensional;
-
-	public ShollAnalysisDialog(final String title, final double x_start, final double y_start, final double z_start,
-			final PathAndFillManager pafm, final ImagePlus originalImage) {
-
-		super(IJ.getInstance(), title, false);
-
-		this.x_start = x_start;
-		this.y_start = y_start;
-		this.z_start = z_start;
-
-		this.originalImage = originalImage;
-		twoDimensional = (originalImage.getStackSize() == 1);
-
-		shollPointsAllPaths = new ArrayList<>();
-		shollPointsSelectedPaths = new ArrayList<>();
-		shollpafm = pafm;
-		reloadPaths();
-
-		useAllPathsCheckbox.setLabel("Use all " + numberOfAllPaths + " paths in analysis?");
-		useSelectedPathsCheckbox.setLabel("Use only the " + numberOfSelectedPaths + " selected paths in analysis?");
-
-		addWindowListener(this);
-
-		setLayout(new GridBagLayout());
-
-		final GridBagConstraints c = new GridBagConstraints();
-
-		c.gridx = 0;
-		c.gridy = 0;
-		c.anchor = GridBagConstraints.LINE_START;
-		final int margin = 10;
-		c.insets = new Insets(margin, margin, 0, margin);
-		useAllPathsCheckbox.addItemListener(this);
-		add(useAllPathsCheckbox, c);
-
-		++c.gridy;
-		c.insets = new Insets(0, margin, margin, margin);
-		add(useSelectedPathsCheckbox, c);
-		useSelectedPathsCheckbox.addItemListener(this);
-
-		++c.gridy;
-		c.insets = new Insets(0, margin, 0, margin);
-		buildTypeFilteringMenu();
-		add(swcTypesButton, c);
-		++c.gridy;
-		c.insets = new Insets(0, margin, margin, margin);
-		add(filteredTypesWarningLabel, c);
-		makePromptInteractive(true);
-
-		++c.gridy;
-		c.insets = new Insets(margin, margin, 0, margin);
-		add(normalAxes, c);
-		normalAxes.addItemListener(this);
-		++c.gridy;
-		c.insets = new Insets(0, margin, 0, margin);
-		add(semiLogAxes, c);
-		semiLogAxes.addItemListener(this);
-		++c.gridy;
-		c.insets = new Insets(0, margin, margin, margin);
-		add(logLogAxes, c);
-		logLogAxes.addItemListener(this);
-
-		++c.gridy;
-		c.insets = new Insets(margin, margin, 0, margin);
-		add(noNormalization, c);
-		noNormalization.addItemListener(this);
-		++c.gridy;
-		c.insets = new Insets(0, margin, margin, margin);
-		if (twoDimensional)
-			normalizationForSphereVolume.setLabel("Normalize for area enclosed by circle");
-		else
-			normalizationForSphereVolume.setLabel("Normalize for volume enclosed by circle");
-		add(normalizationForSphereVolume, c);
-		normalizationForSphereVolume.addItemListener(this);
-
-		++c.gridy;
-		c.gridx = 0;
-		final Panel separationPanel = new Panel();
-		separationPanel.add(new Label("Radius step size (0 for continuous sampling)"));
-		sampleSeparation.addTextListener(this);
-		separationPanel.add(sampleSeparation);
-		final String unit = shollpafm.spacing_units;
-		if (unit != null && !unit.equals("unknown") && !unit.equals("pixel"))
-			separationPanel.add(new Label(unit));
-		add(separationPanel, c);
-
-		c.gridx = 0;
-		++c.gridy;
-		c.insets = new Insets(margin, margin, margin, margin);
-		add(resultsPanel, c);
-
-		++c.gridy;
-		final Panel buttonsPanel = new Panel();
-		buttonsPanel.setLayout(new BorderLayout());
-		final Panel topRow = new Panel();
-		final Panel middleRow = new Panel();
-		final Panel bottomRow = new Panel();
-
-		topRow.add(makeShollImageButton);
-		makeShollImageButton.addActionListener(this);
-
-		topRow.add(drawShollGraphButton);
-		drawShollGraphButton.addActionListener(this);
-
-		topRow.add(exportProfileButton);
-		exportProfileButton.addActionListener(this);
-
-		middleRow.add(analyzeButton);
-		analyzeButton.addActionListener(this);
-
-		buttonsPanel.add(topRow, BorderLayout.NORTH);
-		buttonsPanel.add(middleRow, BorderLayout.CENTER);
-		buttonsPanel.add(bottomRow, BorderLayout.SOUTH);
-
-		add(buttonsPanel, c);
-
-		pack();
-
-		updateResults();
-
-		GUI.center(this);
-		setVisible(true);
-		toFront();
-
-	}
 
 	private void reloadPaths() {
 
@@ -1103,11 +1099,11 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		shollPointsSelectedPaths.clear();
 
 		// load paths considering only those whose type has been chosen by user
-		for (Path p : shollpafm.allPaths) {
+		for (Path p : shollpafm.getPaths()) {
 			final boolean selected = p.isSelected();
 			if (p.getUseFitted()) {
-				p = p.fitted;
-			} else if (p.fittedVersionOf != null)
+				p = p.getFitted();
+			} else if (p.isFittedVersionOfAnotherPath())
 				continue;
 
 			if (filteredTypes.contains(Path.getSWCtypeName(p.getSWCType()))) {
@@ -1161,21 +1157,23 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	}
 
-	public class ResultsPanel extends Panel {
-		Label headingLabel = new Label("Results:");
-		String defaultText = "[Not calculated yet]";
-		Label criticalValuesLabel = new Label(defaultText, Label.RIGHT);
-		Label dendriteMaximumLabel = new Label(defaultText, Label.RIGHT);
-		// Label schoenenRamificationIndexLabel = new Label(defaultText);
-		Label shollsRegressionCoefficientLabel = new Label(defaultText, Label.RIGHT);
-		Label shollsRegressionInterceptLabel = new Label(defaultText, Label.RIGHT);
-		Label shollsRegressionRSquaredLabel = new Label(defaultText, Label.RIGHT);
+	private class ResultsPanel extends JPanel {
 
-		public ResultsPanel() {
+		private static final long serialVersionUID = 1L;
+		private JLabel headingLabel = new JLabel("Results Preview:");
+		private String defaultText = "[Not calculated yet]";
+		private JLabel criticalValuesLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private JLabel dendriteMaximumLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private JLabel shollsRegressionCoefficientLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private JLabel shollsRegressionInterceptLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private JLabel shollsRegressionRSquaredLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+
+		private ResultsPanel() {
 			super();
 			setLayout(new GridBagLayout());
 			final GridBagConstraints c = new GridBagConstraints();
 			c.anchor = GridBagConstraints.LINE_START;
+			c.ipadx = margin;
 			c.gridx = 0;
 			c.gridy = 0;
 			c.gridwidth = 2;
@@ -1184,12 +1182,12 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			c.gridx = 0;
 			++c.gridy;
 			c.gridwidth = 1;
-			add(new Label("Max inters. radius: "), c);
+			add(new JLabel("Max inters. radius: "), c);
 			c.gridx = 1;
 			add(criticalValuesLabel, c);
 			c.gridx = 0;
 			++c.gridy;
-			add(new Label("Max inters.: "), c);
+			add(new JLabel("Max inters.: "), c);
 			c.gridx = 1;
 			add(dendriteMaximumLabel, c);
 			// c.gridx = 0;
@@ -1199,65 +1197,33 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			// add(schoenenRamificationIndexLabel,c);
 			c.gridx = 0;
 			++c.gridy;
-			add(new Label("Regression coeff.: "), c);
+			add(new JLabel("Regression coeff.: "), c);
 			c.gridx = 1;
 			add(shollsRegressionCoefficientLabel, c);
 			c.gridx = 0;
 			++c.gridy;
-			add(new Label("Regression intercept: "), c);
+			add(new JLabel("Regression intercept: "), c);
 			c.gridx = 1;
 			add(shollsRegressionInterceptLabel, c);
 			c.gridx = 0;
 			++c.gridy;
-			add(new Label("Regression R2: "), c);
+			add(new JLabel("Regression R2: "), c);
 			c.gridx = 1;
 			add(shollsRegressionRSquaredLabel, c);
 		}
 
-		public void updateFromResults(final ShollResults results) {
+		private void updateFromResults(final ShollResults results) {
 			dendriteMaximumLabel.setText("" + results.getDendriteMaximum());
-			criticalValuesLabel.setText(IJ.d2s(results.getCriticalValue(), 3));
-			shollsRegressionCoefficientLabel.setText(IJ.d2s(results.getShollRegressionCoefficient(), -3));
-			shollsRegressionInterceptLabel.setText(IJ.d2s(results.getRegressionIntercept(), 3));
-			shollsRegressionRSquaredLabel.setText(IJ.d2s(results.getRegressionRSquare(), 3));
+			criticalValuesLabel.setText(SNT.formatDouble(results.getCriticalValue(), 3));
+			shollsRegressionCoefficientLabel.setText(SNT.formatDouble(results.getShollRegressionCoefficient(), -3));
+			shollsRegressionInterceptLabel.setText(SNT.formatDouble(results.getRegressionIntercept(), 3));
+			shollsRegressionRSquaredLabel.setText(SNT.formatDouble(results.getRegressionRSquare(), 3));
 		}
 	}
 
-	@Override
-	public void windowClosing(final WindowEvent e) {
-		dispose();
-	}
-
-	@Override
-	public void windowActivated(final WindowEvent e) {
-	}
-
-	@Override
-	public void windowDeactivated(final WindowEvent e) {
-	}
-
-	@Override
-	public void windowClosed(final WindowEvent e) {
-	}
-
-	@Override
-	public void windowOpened(final WindowEvent e) {
-	}
-
-	@Override
-	public void windowIconified(final WindowEvent e) {
-	}
-
-	@Override
-	public void windowDeiconified(final WindowEvent e) {
-	}
-
-	/**
-	 * @return the path to save current profile
-	 */
 	private String getExportPath() {
-		if (this.exportPath == null && originalImage != null) {
-			final FileInfo fi = originalImage.getOriginalFileInfo();
+		if (this.exportPath == null && plugin.getImagePlus() != null) {
+			final FileInfo fi = plugin.getImagePlus().getOriginalFileInfo();
 			if (fi != null && fi.directory != null)
 				this.exportPath = fi.directory;
 		}

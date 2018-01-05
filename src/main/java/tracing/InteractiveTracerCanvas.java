@@ -39,6 +39,7 @@ import java.awt.event.WindowEvent;
 import org.scijava.util.PlatformUtils;
 import ij.ImagePlus;
 import ij.Menus;
+import tracing.gui.ShollAnalysisDialog;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInImage;
 import tracing.util.SWCColor;

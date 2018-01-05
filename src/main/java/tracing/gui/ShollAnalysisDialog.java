@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing;
+package tracing.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -99,6 +99,9 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import sholl.Sholl_Analysis;
 import sholl.Sholl_Utils;
+import tracing.Path;
+import tracing.PathAndFillManager;
+import tracing.util.PointInImage;
 import util.FindConnectedRegions;
 
 @SuppressWarnings("serial")
@@ -946,12 +949,14 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			final double z_start, final List<ShollPoint> shollPointsList) {
 
 		for (int i = 0; i < p.size() - 1; ++i) {
-			final double xdiff_first = p.precise_x_positions[i] - x_start;
-			final double ydiff_first = p.precise_y_positions[i] - y_start;
-			final double zdiff_first = p.precise_z_positions[i] - z_start;
-			final double xdiff_second = p.precise_x_positions[i + 1] - x_start;
-			final double ydiff_second = p.precise_y_positions[i + 1] - y_start;
-			final double zdiff_second = p.precise_z_positions[i + 1] - z_start;
+			final PointInImage pim1 = p.getPointInImage(i);
+			final PointInImage pim2 = p.getPointInImage(i+1);
+			final double xdiff_first = pim1.x - x_start;
+			final double ydiff_first = pim1.y - y_start;
+			final double zdiff_first = pim1.z - z_start;
+			final double xdiff_second = pim2.x - x_start;
+			final double ydiff_second = pim2.y - y_start;
+			final double zdiff_second = pim2.z - z_start;
 			final double distanceSquaredFirst = xdiff_first * xdiff_first + ydiff_first * ydiff_first
 					+ zdiff_first * zdiff_first;
 			final double distanceSquaredSecond = xdiff_second * xdiff_second + ydiff_second * ydiff_second
@@ -1103,11 +1108,11 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		shollPointsSelectedPaths.clear();
 
 		// load paths considering only those whose type has been chosen by user
-		for (Path p : shollpafm.allPaths) {
+		for (Path p : shollpafm.getPaths()) {
 			final boolean selected = p.isSelected();
 			if (p.getUseFitted()) {
-				p = p.fitted;
-			} else if (p.fittedVersionOf != null)
+				p = p.getFitted();
+			} else if (p.isFittedVersionOfAnotherPath())
 				continue;
 
 			if (filteredTypes.contains(Path.getSWCtypeName(p.getSWCType()))) {

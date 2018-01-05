@@ -1450,7 +1450,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		showStatus(null);
 	}
 
-	protected void showStatus(String msg) {
+	public void showStatus(String msg) {
 		final String defaultText = "Tracing " + plugin.getImagePlus()
 			.getShortTitle() + ", C=" + plugin.channel + ", T=" + plugin.frame;
 		if (msg == null || msg.isEmpty()) {

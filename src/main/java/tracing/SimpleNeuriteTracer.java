@@ -292,6 +292,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		this.frame = frame;
 		loadData();
 		reloadZYXZpanes(frame);
+		hessian = null;
 	}
 
 	public void rebuildZYXZpanes() {
@@ -1286,8 +1287,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			savedCurrentPath.addPointDouble(p.x, p.y, p.z);
 			savedCurrentPath.endJoinsPoint = p;
 			savedCurrentPath.startJoinsPoint = p;
+			cancelSearch(false);
 		} else {
-			removeSphere(startBallName);			
+			removeSphere(startBallName);
 		}
 
 		removeSphere(targetBallName);

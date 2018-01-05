@@ -141,7 +141,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private volatile boolean ignoreColorImageChoiceEvents = false;
 	private volatile boolean ignorePreprocessEvents = false;
 	private volatile int preGaussianState;
-	private volatile int preSigmaPaletteState;
 
 	private final SimpleNeuriteTracer plugin;
 	private final PathAndFillManager pathAndFillManager;
@@ -550,7 +549,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case CALCULATING_GAUSSIAN:
 						updateStatusText("Calculating Gaussian...");
 						disableEverything();
-//						abortButton.setEnabled(true);
+						abortButton.setEnabled(true);
 //						keepSegment.setEnabled(false);
 //						junkSegment.setEnabled(false);
 						break;
@@ -686,6 +685,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					return;
 				}
 				plugin.reloadImage(newC, newT);
+				preprocess.setEnabled(false);
 				showStatus(reload ? "Image reloaded into memory..." : null);
 			}
 		});
@@ -1439,7 +1439,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JPanel statusBar() {
 		final JPanel statusBar = new JPanel();
 		statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.X_AXIS));
-		statusBarText = leftAlignedLabel("Ready to trace...", false);
+		statusBarText = leftAlignedLabel("Ready to trace...", true);
 		statusBarText.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, MARGIN/2, 0));
 		statusBar.add(statusBarText);
 		refreshStatus();
@@ -1830,7 +1830,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				break;
 			case (WAITING_FOR_SIGMA_POINT):
 				showStatus("Sigma adjustment cancelled...");
-				changeState(preSigmaPaletteState);
+				listener.restorePreSigmaState();
 				break;
 			case (PARTIAL_PATH):
 				showStatus("Last temporary path cancelled...");
@@ -1945,6 +1945,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		SigmaPalette.SigmaPaletteListener, ImageListener
 	{
 
+		private int preSigmaPaletteState;
+
 		public GuiListener(){
 			ImagePlus.addImageListener(this);
 		}
@@ -1983,7 +1985,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 				@Override
 				public void run() {
-					changeState(preSigmaPaletteState);
+					restorePreSigmaState();
 				}
 			});
 		}
@@ -2018,7 +2020,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			final Object source = e.getSource();
 
 			if (source == preprocess) {
-				toggleHessian();
+				enableHessian(preprocess.isSelected());
 			}
 			else if (source == saveMenuItem && !noPathsError()) {
 
@@ -2077,15 +2079,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 			else if (source == loadMenuItem) {
 
-				if (plugin.pathsUnsaved() && guiUtils.getConfirmation(
-					"There are unsaved paths. Do you really want to load new traces?",
-					"Warning"))
-				{
-					final int preLoadingState = currentState;
-					changeState(LOADING);
-					plugin.loadTracings();
-					changeState(preLoadingState);
-				}
+				if (plugin.pathsUnsaved() && !guiUtils
+						.getConfirmation("There are unsaved paths. Do you really want to load new traces?", "Warning"))
+					return;
+				final int preLoadingState = currentState;
+				changeState(LOADING);
+				plugin.loadTracings();
+				changeState(preLoadingState);
 
 			}
 			else if (source == exportAllSWCMenuItem && !noPathsError()) {
@@ -2228,8 +2228,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 				preSigmaPaletteState = currentState;
 				changeState(WAITING_FOR_SIGMA_POINT);
-
-				plugin.setCursorTextAllPanes("  Sigma");
+				plugin.setCanvasLabelAllPanes("Choosing Sigma");
 			}
 
 			else if (source == colorImageChoice) {
@@ -2239,6 +2238,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		}
 
+		private void restorePreSigmaState() {
+			changeState(preSigmaPaletteState);
+			plugin.setCanvasLabelAllPanes(null);
+		}
 	}
 
 }

@@ -200,11 +200,11 @@ public class PathNode {
 				// opaque border and more opaque fill
 				g.setColor(c);
 				g.draw(node);
-				g.setColor(SWCColor.alphaColor(c, 70));
+				g.setColor(SWCColor.alphaColor(c, 80));
 				g.fill(node);
 			} else {
 				// semi-border and more transparent fill
-				g.setColor(SWCColor.alphaColor(c, 30));
+				g.setColor(SWCColor.alphaColor(c, 50));
 				g.fill(node);
 			}
 

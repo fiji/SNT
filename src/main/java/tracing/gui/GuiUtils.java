@@ -356,6 +356,26 @@ public class GuiUtils {
 
 	/* Static methods */
 
+	public static void addSeparator(final JComponent component, final String heading,
+		final boolean vgap, final GridBagConstraints c)
+	{
+		final int previousTopGap = c.insets.top;
+		final JLabel label = leftAlignedLabel(heading, true);
+		Font font = label.getFont();
+		label.setFont(font.deriveFont((float) (font.getSize()*.85)));
+		if (vgap) c.insets.top = component.getFontMetrics(font).getHeight() * 2;
+		component.add(label, c);
+		if (vgap) c.insets.top = previousTopGap;
+	}
+
+	public static JLabel leftAlignedLabel(final String text, final boolean enabled) {
+		final JLabel label = new JLabel(text);
+		label.setHorizontalAlignment(SwingConstants.LEFT);
+		label.setEnabled(enabled);
+		if (!enabled) label.setForeground(getDisabledComponentColor()); // required for MACOS!?
+		return label;
+	}
+
 	public static String ctrlKey() {
 		return (PlatformUtils.isMac()) ? "CMD" : "CTRL";
 	}

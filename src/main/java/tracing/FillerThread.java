@@ -36,8 +36,6 @@ import ij.process.ShortProcessor;
 
 public class FillerThread extends SearchThread {
 
-	static final boolean verbose = SNT.isDebugMode();
-
 	/*
 	 * You should synchronize on this object if you want to rely on the pause
 	 * status not changing. (The run() method is not synchronized itself, for
@@ -90,7 +88,7 @@ public class FillerThread extends SearchThread {
 
 		openAtOrAbove = i;
 
-		if (verbose)
+		if (SNT.isDebugMode())
 			SNT.log("openAtOrAbove is: " + openAtOrAbove);
 
 		for (final SearchNode current : open_from_start) {
@@ -111,7 +109,7 @@ public class FillerThread extends SearchThread {
 
 		fill.setSpacing(x_spacing, y_spacing, z_spacing, spacing_units);
 
-		if (verbose)
+		if (SNT.isDebugMode())
 			SNT.log("... out of a.size() " + a.size() + " entries");
 
 		for (i = 0; i < a.size(); ++i) {
@@ -147,11 +145,11 @@ public class FillerThread extends SearchThread {
 		} else if (metric.equals("256-minus-intensity-scaled")) {
 			reciprocal = false;
 		} else {
-			SNT.error("Trying to load a fill with an unknown metric ('" + metric + "')");
+			SNT.debug("Trying to load a fill with an unknown metric ('" + metric + "')");
 			return null;
 		}
 
-		if (verbose)
+		if (SNT.isDebugMode())
 			SNT.log("loading a fill with threshold: " + fill.getThreshold());
 
 		final FillerThread result = new FillerThread(imagePlus, stackMin, stackMax, startPaused, reciprocal,

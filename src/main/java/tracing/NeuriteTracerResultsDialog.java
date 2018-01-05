@@ -25,7 +25,6 @@ package tracing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
@@ -51,7 +50,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -197,27 +195,27 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final GridBagConstraints c = GuiUtils.defaultGbc();
 		//c.insets.left = MARGIN * 2;
 		c.anchor = GridBagConstraints.NORTHEAST;
-		addSeparator(tab1, "Cursor auto-snapping:", false, c);
+		GuiUtils.addSeparator(tab1, "Cursor auto-snapping:", false, c);
 		++c.gridy;
 		tab1.add(snappingPanel(), c);
 		++c.gridy;
-		addSeparator(tab1, "Curvatures:", true, c);
+		GuiUtils.addSeparator(tab1, "Curvatures:", true, c);
 		++c.gridy;
 		tab1.add(hessianPanel(), c);
 		++c.gridy;
-		addSeparator(tab1, "Additional Segmentation Thread:", true, c);
+		GuiUtils.addSeparator(tab1, "Additional Segmentation Thread:", true, c);
 		++c.gridy;
 		tab1.add(preprocessPanel(), c);
 		++c.gridy;
-		addSeparator(tab1, "Path Rendering:", true, c);
+		GuiUtils.addSeparator(tab1, "Path Rendering:", true, c);
 		++c.gridy;
 		tab1.add(renderingPanel(), c);
 		++c.gridy;
-		addSeparator(tab1, "Path Labelling:", true, c);
+		GuiUtils.addSeparator(tab1, "Path Labelling:", true, c);
 		++c.gridy;
 		tab1.add(colorPanel = colorOptionsPanel(), c);
 		++c.gridy;
-		addSeparator(tab1, "", true, c); // empty separator
+		GuiUtils.addSeparator(tab1, "", true, c); // empty separator
 		++c.gridy;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.insets = new Insets(0, 0, 0, 0);
@@ -230,19 +228,19 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.insets.left = MARGIN * 2;
 		c2.anchor = GridBagConstraints.NORTHEAST;
 		c2.gridwidth = GridBagConstraints.REMAINDER;
-		addSeparator(tab2, "Data source:", false, c2);
+		GuiUtils.addSeparator(tab2, "Data source:", false, c2);
 		++c2.gridy;
 		tab2.add(sourcePanel(), c2);
 		++c2.gridy;
-		addSeparator(tab2, "Views:", true, c2);
+		GuiUtils.addSeparator(tab2, "Views:", true, c2);
 		++c2.gridy;
 		tab2.add(viewsPanel(), c2);
 		++c2.gridy;
-		addSeparator(tab2, "UI Interaction:", true, c2);
+		GuiUtils.addSeparator(tab2, "UI Interaction:", true, c2);
 		++c2.gridy;
 		tab2.add(interactionPanel(), c2);
 		++c2.gridy;
-		addSeparator(tab2, "Misc:", true, c2);
+		GuiUtils.addSeparator(tab2, "Misc:", true, c2);
 		++c2.gridy;
 		c2.weighty = 1;
 		tab2.add(miscPanel(), c2);
@@ -644,11 +642,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final boolean hasFrames = plugin.getImagePlus().getNFrames() > 1;
 		final JPanel positionPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,
 			0, 0));
-		positionPanel.add(leftAlignedLabel("Channel", hasChannels));
+		positionPanel.add(GuiUtils.leftAlignedLabel("Channel", hasChannels));
 		final JSpinner channelSpinner = GuiUtils.integerSpinner(plugin.channel, 1,
 			plugin.getImagePlus().getNChannels(), 1);
 		positionPanel.add(channelSpinner);
-		positionPanel.add(leftAlignedLabel(" Frame", hasFrames));
+		positionPanel.add(GuiUtils.leftAlignedLabel(" Frame", hasFrames));
 		final JSpinner frameSpinner = GuiUtils.integerSpinner(plugin.frame, 1,
 			plugin.getImagePlus().getNFrames(), 1);
 		positionPanel.add(frameSpinner);
@@ -713,7 +711,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 		mipPanel.add(mipSpinner);
-		mipPanel.add(leftAlignedLabel(" % opacity", !plugin.is2D()));
+		mipPanel.add(GuiUtils.leftAlignedLabel(" % opacity", !plugin.is2D()));
 		mipOverlayCheckBox.addActionListener(new ActionListener() {
 
 			@Override
@@ -825,7 +823,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return intPanel;
 	}
 
-	
 	private JPanel nodePanel() {
 		final JSpinner nodeSpinner = GuiUtils.doubleSpinner(plugin.getXYCanvas().nodeDiameter(), 0, 50, 1, 0);
 		nodeSpinner.addChangeListener(new ChangeListener() {
@@ -864,7 +861,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.gridy = 0;
 		c.gridwidth = 3;
 		c.ipadx = 0;
-		p.add(leftAlignedLabel("Rendering scale of path nodes: ", true));
+		p.add(GuiUtils.leftAlignedLabel("Rendering scale of path nodes: ", true));
 		c.gridx = 1;
 		p.add(nodeSpinner, c);
 		c.fill = GridBagConstraints.NONE;
@@ -944,7 +941,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.gridy = 0;
 		c.gridwidth = 3;
 		c.ipadx = 0;
-		p.add(leftAlignedLabel("Colors: ", true));
+		p.add(GuiUtils.leftAlignedLabel("Colors: ", true));
 		c.gridx = 1;
 		p.add(colorChoice, c);
 		c.fill = GridBagConstraints.NONE;
@@ -1159,7 +1156,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					return;
 				}
 				// FIXME: 3D VIEWER exclusive method
-				plugin.showCorrespondencesTo(tracesFile, Color.YELLOW, 2.5);
+				Overlay overlay = plugin.showCorrespondencesTo(tracesFile, Color.YELLOW, 2.5);
+				plugin.getXYCanvas().setOverlay(overlay);
 			}
 		});
 		analysisMenu.add(correspondencesMenuItem);
@@ -1282,7 +1280,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 
 		nearbyPanel.add(nearbyFieldSpinner);
-		nearbyPanel.add(leftAlignedLabel(" nearby slices", isStackAvailable()));
+		nearbyPanel.add(GuiUtils.leftAlignedLabel(" nearby slices", isStackAvailable()));
 		col2.add(row1Panel);
 		col2.add(nearbyPanel);
 
@@ -1373,7 +1371,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 		tracingOptionsPanel.add(snapWindowXYsizeSpinner);
 
-		final JLabel z_spinner_label = leftAlignedLabel("  Z ", isStackAvailable());
+		final JLabel z_spinner_label = GuiUtils.leftAlignedLabel("  Z ", isStackAvailable());
 		z_spinner_label.setBorder(new EmptyBorder(0, 2, 0, 0));
 		tracingOptionsPanel.add(z_spinner_label);
 		snapWindowZsizeSpinner = GuiUtils.integerSpinner(plugin.cursorSnapWindowZ *
@@ -1409,7 +1407,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 		// Add sigma ui
 		JPanel sigmaPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 2, 0));
-		sigmaPanel.add(leftAlignedLabel("Choose Sigma: ", true));	
+		sigmaPanel.add(GuiUtils.leftAlignedLabel("Choose Sigma: ", true));	
 		editSigma = GuiUtils.smallButton("Manually...");
 		editSigma.addActionListener(listener);
 		sigmaPanel.add(editSigma);
@@ -1439,7 +1437,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JPanel statusBar() {
 		final JPanel statusBar = new JPanel();
 		statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.X_AXIS));
-		statusBarText = leftAlignedLabel("Ready to trace...", true);
+		statusBarText = GuiUtils.leftAlignedLabel("Ready to trace...", true);
 		statusBarText.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, MARGIN/2, 0));
 		statusBar.add(statusBarText);
 		refreshStatus();
@@ -1476,26 +1474,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return tab;
 	}
 
-	private void addSeparator(final JComponent component, final String heading,
-		final boolean vgap, final GridBagConstraints c)
-	{
-		final int previousTopGap = c.insets.top;
-		final JLabel label = leftAlignedLabel(heading, true);
-		Font font = label.getFont();
-		label.setFont(font.deriveFont((float) (font.getSize()*.85)));
-		if (vgap) c.insets.top = component.getFontMetrics(font).getHeight() * 2;
-		component.add(label, c);
-		if (vgap) c.insets.top = previousTopGap;
-	}
-
-	private JLabel leftAlignedLabel(final String text, final boolean enabled) {
-		final JLabel label = new JLabel(text);
-		label.setHorizontalAlignment(SwingConstants.LEFT);
-		label.setEnabled(enabled);
-		if (!enabled) label.setForeground(GuiUtils.getDisabledComponentColor()); // required for MACOS!?
-		return label;
-	}
-
 	protected void displayOnStarting() {
 		SwingUtilities.invokeLater(new Runnable() {
 
@@ -1518,11 +1496,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			public void run() {
 				String newStatus = null;
 				if (t < 0) {
-					newStatus = "Cursor position not reached by search yet";
+					newStatus = "Cursor position: Not reached by search yet";
 				}
 				else {
-					newStatus = "Cursor position: Distance from path is " + fw.df4.format(
-						t);
+					newStatus = "Cursor position: Distance from path is " + SNT.formatDouble(t, 3);
 				}
 				fw.fillStatus.setText(newStatus);
 			}

@@ -33,66 +33,208 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.HashSet;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-import ij.IJ;
 import ij.io.SaveDialog;
 import tracing.gui.GuiUtils;
 
-@SuppressWarnings("serial")
 public class FillWindow extends JFrame
 		implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
 
-	protected SimpleNeuriteTracer plugin;
-	protected PathAndFillManager pathAndFillManager;
+
+	private static final long serialVersionUID = 1L;
+	private SimpleNeuriteTracer plugin;
+	private PathAndFillManager pathAndFillManager;
+	private JScrollPane scrollPane;
+	private JList<String> fillList;
+	private DefaultListModel<String> listModel;
+	private JButton deleteFills;
+	private JButton reloadFill;
+	private JPanel fillControlPanel;
+	protected JLabel fillStatus;
+	private float maxThresholdValue = 0;
+	private JTextField thresholdField;
+	private JLabel maxThreshold;
+	private JButton setThreshold;
+	private JButton setMaxThreshold;
+	private JButton view3D;
+	private JCheckBox maskNotReal;
+	private JCheckBox transparent;
+	protected JButton pauseOrRestartFilling;
+	private JButton saveFill;
+	private JButton discardFill;
+	private JButton exportAsCSV;
+	private final GuiUtils gUtils;
+
+	private final int MARGIN = 10;
 
 	public FillWindow(final PathAndFillManager pathAndFillManager, final SimpleNeuriteTracer plugin) {
 		this(pathAndFillManager, plugin, 200, 60);
 	}
 
-	protected JScrollPane scrollPane;
+	public FillWindow(final PathAndFillManager pathAndFillManager, final SimpleNeuriteTracer plugin, final int x,
+			final int y) {
+		super("Fill Manager");
 
-	protected JList<String> fillList;
-	protected DefaultListModel<String> listModel;
+		this.plugin = plugin;
+		this.pathAndFillManager = pathAndFillManager;
 
-	protected JButton deleteFills;
-	protected JButton reloadFill;
+		gUtils = new GuiUtils(this);
+		listModel = new DefaultListModel<>();
+		fillList = new JList<>(listModel);
 
-	protected JPanel fillControlPanel;
+		assert SwingUtilities.isEventDispatchThread();
+		setSize(x, y);
+		setLocationRelativeTo(plugin.getUI());
+		setLayout(new GridBagLayout());
+		final GridBagConstraints c = GuiUtils.defaultGbc();
 
-	protected JLabel fillStatus;
+		{
+			scrollPane = new JScrollPane();
+			scrollPane.getViewport().add(fillList);
+			add(scrollPane, c);
+			++c.gridy;
+		}
 
-	protected float maxThresholdValue = 0;
+		{
+			deleteFills = new JButton("Delete Fill(s)");
+			deleteFills.addActionListener(this);
+			reloadFill = new JButton("Reload Fill");
+			reloadFill.addActionListener(this);
+			final JPanel fillListCommandsPanel = new JPanel(new BorderLayout());
+			fillListCommandsPanel.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, 0, MARGIN));
+			fillListCommandsPanel.add(deleteFills, BorderLayout.WEST);
+			fillListCommandsPanel.add(reloadFill, BorderLayout.EAST);
+			add(fillListCommandsPanel, c);
+			++c.gridy;
+		}
 
-	protected JTextField thresholdField;
-	protected JLabel maxThreshold;
-	protected JButton setThreshold;
-	protected JButton setMaxThreshold;
+		GuiUtils.addSeparator((JComponent) getContentPane(), "  Distance Threshold (Best Set by Clicking on Traced Strucure):", true, c);
+		++c.gridy;
 
-	protected JButton view3D;
-	protected JCheckBox maskNotReal;
-	protected JCheckBox transparent;
+		{t
+			final JSpinner nodeSpinner = GuiUtils.doubleSpinner(plugin.getMinimumSeparation(), 0,
+					plugin.getLargestDimension(), plugin.getMinimumSeparation(), 2);
+			nodeSpinner.addChangeListener(new ChangeListener() {
 
-	protected boolean currentlyFilling = true;
-	protected JButton pauseOrRestartFilling;
+				@Override
+				public void stateChanged(final ChangeEvent e) {
+					final double value = (double) (nodeSpinner.getValue());
+					plugin.xy_tracer_canvas.setNodeDiameter(value);
+					if (!plugin.getSinglePane()) {
+						plugin.xz_tracer_canvas.setNodeDiameter(value);
+						plugin.zy_tracer_canvas.setNodeDiameter(value);
+					}
+					plugin.repaintAllPanes();
+				};
+			});
+			setThreshold = new JButton("Apply");
+			setThreshold.addActionListener(this);
+			maxThreshold = GuiUtils.leftAlignedLabel("Computing max...", true);
+			setMaxThreshold = new JButton(maxThreshold.getText());
+			setMaxThreshold.setEnabled(false);
+			setMaxThreshold.addActionListener(this);
 
-	protected JButton saveFill;
-	protected JButton discardFill;
+			final JPanel fillingOptionsPanel = leftAlignedPanel();
+			fillingOptionsPanel.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, 0, MARGIN));
+			fillingOptionsPanel.add(GuiUtils.leftAlignedLabel("Threshold: ", true));
+			fillingOptionsPanel.add(nodeSpinner);
+			fillingOptionsPanel.add(setThreshold);
+			fillingOptionsPanel.add(setMaxThreshold);
+			add(fillingOptionsPanel, c);
+			++c.gridy;
+		}
 
-	protected JButton exportAsCSV;
+		{
+			fillStatus = GuiUtils.leftAlignedLabel("Cursor position: N/A...", true);
+			final JPanel fillStatusPanel = leftAlignedPanel();
+			fillStatusPanel.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, 0, MARGIN));
+			fillStatusPanel.add(fillStatus);
+			add(fillStatusPanel, c);
+			++c.gridy;
+		}
+
+		GuiUtils.addSeparator((JComponent) getContentPane(), "  Rendering Options:", true, c);
+		++c.gridy;
+
+		{
+			transparent = new JCheckBox("  Transparent fill display (slow!)");
+			transparent.addItemListener(this);
+			final JPanel transparencyPanel = leftAlignedPanel();
+			transparencyPanel.add(transparent);
+			add(transparencyPanel, c);
+			c.gridy++;
+		}
+
+		GuiUtils.addSeparator((JComponent) getContentPane(), "  Export Options:", true, c);
+		++c.gridy;
+
+		{
+			exportAsCSV = new JButton("Export Summary");
+			exportAsCSV.addActionListener(this);
+			view3D = new JButton("Create Image Stack");
+			view3D.addActionListener(this);
+			maskNotReal = new JCheckBox("Binary Mask");
+			maskNotReal.addItemListener(this);
+			final JPanel exportPanel = leftAlignedPanel();
+			exportPanel.add(exportAsCSV);
+			exportPanel.add(view3D);
+			exportPanel.add(maskNotReal);
+			add(exportPanel, c);
+			c.gridy++;
+		}
+
+		GuiUtils.addSeparator((JComponent) getContentPane(), "  Filling Thread Controls:", true, c);
+		++c.gridy;
+
+		{
+			pauseOrRestartFilling = new JButton("Pause Filler");
+			pauseOrRestartFilling.addActionListener(this);
+			discardFill = new JButton("Stop Filler");
+			discardFill.addActionListener(this);
+			saveFill = new JButton("Save Filler Progress");
+			saveFill.addActionListener(this);
+			fillControlPanel = centerAlignedPanel();
+			fillControlPanel.add(pauseOrRestartFilling);
+			fillControlPanel.add(discardFill);
+			fillControlPanel.add(saveFill);
+			add(fillControlPanel, c);
+			++c.gridy;
+		}
+
+		pack();
+
+	}
+
+	private JPanel leftAlignedPanel() {
+		return getPanel(FlowLayout.LEFT);
+	}
+
+	private JPanel centerAlignedPanel() {
+		return getPanel(FlowLayout.CENTER);
+	}
+
+	private JPanel getPanel(final int alignment) {
+		final JPanel panel = new JPanel(new FlowLayout(alignment));
+		panel.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, 0, MARGIN));
+		return panel;
+	}
 
 	public void setEnabledWhileFilling() {
 		assert SwingUtilities.isEventDispatchThread();
@@ -148,169 +290,6 @@ public class FillWindow extends JFrame
 		discardFill.setEnabled(false);
 	}
 
-	public FillWindow(final PathAndFillManager pathAndFillManager, final SimpleNeuriteTracer plugin, final int x,
-			final int y) {
-		super("All Fills");
-		assert SwingUtilities.isEventDispatchThread();
-
-		this.plugin = plugin;
-		this.pathAndFillManager = pathAndFillManager;
-		setBounds(x, y, 350, 400);
-
-		setLayout(new GridBagLayout());
-
-		final GridBagConstraints c = new GridBagConstraints();
-
-		listModel = new DefaultListModel<>();
-		fillList = new JList<>(listModel);
-
-		scrollPane = new JScrollPane();
-		scrollPane.getViewport().add(fillList);
-
-		c.gridx = 0;
-		c.gridy = 0;
-		c.insets = new Insets(8, 8, 1, 8);
-		c.weightx = 1;
-		c.weighty = 1;
-		c.fill = GridBagConstraints.BOTH;
-
-		add(scrollPane, c);
-
-		c.weightx = 0;
-		c.weighty = 0;
-
-		{
-			final JPanel fillListCommandsPanel = new JPanel();
-			fillListCommandsPanel.setLayout(new BorderLayout());
-
-			deleteFills = new JButton("Delete Fill(s)");
-			deleteFills.addActionListener(this);
-			fillListCommandsPanel.add(deleteFills, BorderLayout.WEST);
-
-			reloadFill = new JButton("Reload Fill");
-			reloadFill.addActionListener(this);
-			fillListCommandsPanel.add(reloadFill, BorderLayout.EAST);
-
-			c.insets = new Insets(1, 8, 8, 8);
-			c.gridx = 0;
-			++c.gridy;
-
-			add(fillListCommandsPanel, c);
-		}
-
-		{
-
-			final JPanel fillingOptionsPanel = new JPanel();
-			fillingOptionsPanel.setLayout(new GridBagLayout());
-			final GridBagConstraints cf = new GridBagConstraints();
-			cf.gridx = 0;
-			cf.gridy = 0;
-			cf.gridwidth = 2;
-			cf.anchor = GridBagConstraints.LINE_START;
-			cf.fill = GridBagConstraints.HORIZONTAL;
-			cf.insets = new Insets(0, 0, 0, 0);
-
-			fillStatus = new JLabel("(Not filling at the moment.)");
-			cf.gridwidth = 3;
-			cf.fill = GridBagConstraints.REMAINDER;
-			fillingOptionsPanel.add(fillStatus, cf);
-			++cf.gridy;
-
-			cf.gridx = 0;
-			cf.gridwidth = 1;
-			cf.fill = GridBagConstraints.NONE;
-			fillingOptionsPanel.add(new JLabel("Threshold:"), cf);
-			thresholdField = new JTextField("", 5);
-			thresholdField.addActionListener(this);
-			cf.gridx = 1;
-			cf.gridwidth = 1;
-			cf.fill = GridBagConstraints.NONE;
-			fillingOptionsPanel.add(thresholdField, cf);
-
-			maxThreshold = new JLabel("(Max. not yet determined)", SwingConstants.LEFT);
-			cf.gridx = 2;
-			cf.fill = GridBagConstraints.REMAINDER;
-			fillingOptionsPanel.add(maxThreshold, cf);
-			++cf.gridy;
-
-			setThreshold = GuiUtils.smallButton("Set");
-			setThreshold.addActionListener(this);
-			cf.gridx = 1;
-			cf.gridwidth = 1;
-			cf.fill = GridBagConstraints.NONE;
-			fillingOptionsPanel.add(setThreshold, cf);
-			setMaxThreshold = GuiUtils.smallButton("Set Max");
-			setMaxThreshold.setEnabled(false);
-			setMaxThreshold.addActionListener(this);
-			cf.gridx = 2;
-			cf.fill = GridBagConstraints.REMAINDER;
-			fillingOptionsPanel.add(setMaxThreshold, cf);
-			cf.gridy++;
-
-			transparent = new JCheckBox("Transparent fill display (slow!)");
-			transparent.addItemListener(this);
-			cf.anchor = GridBagConstraints.LINE_START;
-			cf.gridx = 0;
-			cf.insets = new Insets(0, 0, 0, 0);
-			cf.gridwidth = 3;
-			cf.fill = GridBagConstraints.REMAINDER;
-			cf.gridy++;
-			fillingOptionsPanel.add(transparent, cf);
-
-			view3D = new JButton("Create Image Stack from Fill");
-			view3D.addActionListener(this);
-			cf.insets = new Insets(12, 0, 0, 0);
-			cf.gridy++;
-			fillingOptionsPanel.add(view3D, cf);
-
-			maskNotReal = new JCheckBox("Create as mask");
-			maskNotReal.addItemListener(this);
-			cf.insets = new Insets(0, 0, 0, 0);
-			cf.gridy++;
-			fillingOptionsPanel.add(maskNotReal, cf);
-
-			c.gridx = 0;
-			++c.gridy;
-			c.insets = new Insets(8, 8, 8, 8);
-			c.fill = GridBagConstraints.NONE;
-			c.anchor = GridBagConstraints.LINE_START;
-			add(fillingOptionsPanel, c);
-
-			{
-				fillControlPanel = new JPanel();
-				fillControlPanel.setLayout(new FlowLayout());
-
-				pauseOrRestartFilling = new JButton("Pause");
-				currentlyFilling = true;
-				pauseOrRestartFilling.addActionListener(this);
-				fillControlPanel.add(pauseOrRestartFilling);
-
-				saveFill = new JButton("Save Fill");
-				saveFill.addActionListener(this);
-				fillControlPanel.add(saveFill);
-
-				discardFill = new JButton("Cancel Fill");
-				discardFill.addActionListener(this);
-				fillControlPanel.add(discardFill);
-
-				c.gridx = 0;
-				++c.gridy;
-				c.fill = GridBagConstraints.HORIZONTAL;
-				c.anchor = GridBagConstraints.CENTER;
-
-				add(fillControlPanel, c);
-			}
-
-			++c.gridy;
-			c.insets = new Insets(0, 0, 0, 0);
-			c.fill = GridBagConstraints.NONE;
-			exportAsCSV = new JButton("Export as CSV");
-			exportAsCSV.addActionListener(this);
-			add(exportAsCSV, c);
-			pack();
-		}
-	}
-
 	@Override
 	public void setPathList(final String[] pathList, final Path justAdded, final boolean expandAll) {
 	}
@@ -342,7 +321,7 @@ public class FillWindow extends JFrame
 
 			final int[] selectedIndices = fillList.getSelectedIndices();
 			if (selectedIndices.length < 1) {
-				GuiUtils.errorPrompt("No fill was selected for deletion.");
+				gUtils.error("No fill was selected for deletion.");
 				return;
 			}
 			pathAndFillManager.deleteFills(selectedIndices);
@@ -352,7 +331,7 @@ public class FillWindow extends JFrame
 
 			final int[] selectedIndices = fillList.getSelectedIndices();
 			if (selectedIndices.length != 1) {
-				GuiUtils.errorPrompt("You must have a single fill selected in order to reload.");
+				gUtils.error("You must have a single fill selected in order to reload.");
 				return;
 			}
 			pathAndFillManager.reloadFill(selectedIndices[0]);
@@ -366,12 +345,12 @@ public class FillWindow extends JFrame
 			try {
 				final double t = Double.parseDouble(thresholdField.getText());
 				if (t < 0) {
-					GuiUtils.errorPrompt("The fill threshold cannot be negative.");
+					gUtils.error("The fill threshold cannot be negative.");
 					return;
 				}
 				plugin.setFillThreshold(t);
 			} catch (final NumberFormatException nfe) {
-				GuiUtils.errorPrompt("The threshold '" + thresholdField.getText() + "' wasn't a valid number.");
+				gUtils.error("The threshold '" + thresholdField.getText() + "' wasn't a valid number.");
 				return;
 			}
 
@@ -401,18 +380,17 @@ public class FillWindow extends JFrame
 
 			final File saveFile = new File(sd.getDirectory(), sd.getFileName());
 			if (saveFile.exists()) {
-				if (!IJ.showMessageWithCancel("Export data...",
+				if (!gUtils.getConfirmation("Export data...",
 						"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?"))
 					return;
 			}
 
-			IJ.showStatus("Exporting CSV data to " + saveFile.getAbsolutePath());
+			plugin.getUI().showStatus("Exporting CSV data to " + saveFile.getAbsolutePath());
 
 			try {
 				pathAndFillManager.exportFillsAsCSV(saveFile);
-
 			} catch (final IOException ioe) {
-				GuiUtils.errorPrompt("Saving to " + saveFile.getAbsolutePath() + " failed");
+				gUtils.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				SNT.debug(ioe);
 				return;
 			}
@@ -430,14 +408,12 @@ public class FillWindow extends JFrame
 			plugin.setFillTransparent(transparent.isSelected());
 	}
 
-	protected DecimalFormat df4 = new DecimalFormat("#.0000");
-
 	public void thresholdChanged(final double f) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 				assert SwingUtilities.isEventDispatchThread();
-				thresholdField.setText(df4.format(f));
+				thresholdField.setText(SNT.formatDouble(f, 3));
 			}
 		});
 	}
@@ -447,7 +423,7 @@ public class FillWindow extends JFrame
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				maxThreshold.setText("(Max: " + df4.format(f) + ")");
+				maxThreshold.setText("(Max: " + SNT.formatDouble(f, 3) + ")");
 				maxThresholdValue = f;
 				setMaxThreshold.setEnabled(true);
 			}

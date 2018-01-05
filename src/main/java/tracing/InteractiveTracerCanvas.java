@@ -171,7 +171,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			tracerPlugin.autoCanvasActivation = false;
 			final ShollAnalysisDialog sd = new ShollAnalysisDialog(
 				"Sholl analysis for tracing of " + tracerPlugin.getImagePlus().getTitle(), pointInImage.x,
-				pointInImage.y, pointInImage.z, pathAndFillManager, tracerPlugin.getImagePlus());
+				pointInImage.y, pointInImage.z, tracerPlugin);
 			sd.toFront();
 			sd.addWindowListener(new WindowAdapter() {
 				@Override

@@ -397,7 +397,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 			resultsPanel.shollsRegressionCoefficientLabel.setText(noData);
 			resultsPanel.shollsRegressionInterceptLabel.setText(noData);
 			resultsPanel.shollsRegressionRSquaredLabel.setText(noData);
-			filteredTypesWarningLabel.setText("No paths matching current filter(s). Please revise choices...");
+			filteredTypesWarningLabel.setText("No paths matching current filter(s).");
 			filteredTypesWarningLabel.setForeground(java.awt.Color.RED);
 		} else {
 			filteredTypesWarningLabel.setText("" + filteredTypes.size() + " type(s) are currently selected");

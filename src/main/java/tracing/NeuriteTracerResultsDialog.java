@@ -534,13 +534,14 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						break;
 
 					case FILLING_PATHS:
-						updateStatusText("Filling out from neuron...");
+						updateStatusText("Filling out selected paths...");
 						disableEverything();
+						abortButton.setEnabled(true);
 						fw.setEnabledWhileFilling();
 						break;
 
 					case FITTING_PATHS:
-						updateStatusText("Fitting volumes around neurons...");
+						updateStatusText("Fitting volumes around selected paths...");
 						disableEverything();
 						break;
 
@@ -553,7 +554,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						break;
 
 					case WAITING_FOR_SIGMA_POINT:
-						updateStatusText("Click on a neuron in the image");
+						updateStatusText("Click on a representative structure in the image");
 						disableEverything();
 						abortButton.setEnabled(true);
 						break;
@@ -1496,10 +1497,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			public void run() {
 				String newStatus = null;
 				if (t < 0) {
-					newStatus = "Cursor position: Not reached by search yet";
+					newStatus = "Last cursor position: Not reached by search yet";
 				}
 				else {
-					newStatus = "Cursor position: Distance from path is " + SNT.formatDouble(t, 3);
+					newStatus = "Last cursor position: Distance from path is " + SNT.formatDouble(t, 3);
 				}
 				fw.fillStatus.setText(newStatus);
 			}

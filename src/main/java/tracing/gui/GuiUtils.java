@@ -363,7 +363,7 @@ public class GuiUtils {
 		final JLabel label = leftAlignedLabel(heading, true);
 		Font font = label.getFont();
 		label.setFont(font.deriveFont((float) (font.getSize()*.85)));
-		if (vgap) c.insets.top = component.getFontMetrics(font).getHeight() * 2;
+		if (vgap) c.insets.top = (int) (component.getFontMetrics(font).getHeight() * 1.5);
 		component.add(label, c);
 		if (vgap) c.insets.top = previousTopGap;
 	}

@@ -1561,7 +1561,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		// currentlyFilling = true;
 		resultsDialog.getFillWindow().pauseOrRestartFilling.setText("Pause");
-
+		resultsDialog.getFillWindow().thresholdChanged(0.03f);
 		filler = new FillerThread(xy, stackMin, stackMax, false, // startPaused
 			true, // reciprocal
 			0.03f, // Initial threshold to display

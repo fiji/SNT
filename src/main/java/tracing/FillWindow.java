@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.HashSet;
 
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -44,14 +45,16 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
-import ij.io.SaveDialog;
+import ij.ImagePlus;
+//import ij.io.SaveDialog;
+import net.imagej.ImageJ;
 import tracing.gui.GuiUtils;
 
 public class FillWindow extends JFrame
@@ -71,6 +74,7 @@ public class FillWindow extends JFrame
 	private float maxThresholdValue = 0;
 	private JTextField thresholdField;
 	private JLabel maxThreshold;
+	private JLabel currentThreshold;
 	private JButton setThreshold;
 	private JButton setMaxThreshold;
 	private JButton view3D;
@@ -80,6 +84,9 @@ public class FillWindow extends JFrame
 	private JButton saveFill;
 	private JButton discardFill;
 	private JButton exportAsCSV;
+	private JRadioButton manualRButton;
+	private JRadioButton maxRButton;
+
 	private final GuiUtils gUtils;
 
 	private final int MARGIN = 10;
@@ -125,56 +132,81 @@ public class FillWindow extends JFrame
 			++c.gridy;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), "  Distance Threshold (Best Set by Clicking on Traced Strucure):", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Distance Threshold for Fill Search:", true, c);
 		++c.gridy;
 
-		{t
-			final JSpinner nodeSpinner = GuiUtils.doubleSpinner(plugin.getMinimumSeparation(), 0,
-					plugin.getLargestDimension(), plugin.getMinimumSeparation(), 2);
-			nodeSpinner.addChangeListener(new ChangeListener() {
+		{
+			final JPanel distancePanel = new JPanel(new GridBagLayout());
+			final GridBagConstraints gdb = GuiUtils.defaultGbc();
+			final JRadioButton cursorRButton = new JRadioButton("Set by clicking on traced strucure (preferred)");
 
-				@Override
-				public void stateChanged(final ChangeEvent e) {
-					final double value = (double) (nodeSpinner.getValue());
-					plugin.xy_tracer_canvas.setNodeDiameter(value);
-					if (!plugin.getSinglePane()) {
-						plugin.xz_tracer_canvas.setNodeDiameter(value);
-						plugin.zy_tracer_canvas.setNodeDiameter(value);
-					}
-					plugin.repaintAllPanes();
-				};
-			});
-			setThreshold = new JButton("Apply");
+			final JPanel t1Panel = leftAlignedPanel();
+			t1Panel.add(cursorRButton);
+			distancePanel.add(t1Panel, gdb);
+			++gdb.gridy;
+
+			manualRButton = new JRadioButton("Specify manually:");
+			thresholdField = new JTextField("", 6);
+			setThreshold = GuiUtils.smallButton("Apply");
 			setThreshold.addActionListener(this);
-			maxThreshold = GuiUtils.leftAlignedLabel("Computing max...", true);
-			setMaxThreshold = new JButton(maxThreshold.getText());
+			final JPanel t2Panel = leftAlignedPanel();
+			t2Panel.add(manualRButton);
+			t2Panel.add(thresholdField);
+			t2Panel.add(setThreshold);
+			distancePanel.add(t2Panel, gdb);
+			++gdb.gridy;
+
+			maxRButton = new JRadioButton("Use explored maximum");
+			setMaxThreshold = GuiUtils.smallButton("Apply");
 			setMaxThreshold.setEnabled(false);
 			setMaxThreshold.addActionListener(this);
-
-			final JPanel fillingOptionsPanel = leftAlignedPanel();
-			fillingOptionsPanel.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, 0, MARGIN));
-			fillingOptionsPanel.add(GuiUtils.leftAlignedLabel("Threshold: ", true));
-			fillingOptionsPanel.add(nodeSpinner);
-			fillingOptionsPanel.add(setThreshold);
-			fillingOptionsPanel.add(setMaxThreshold);
-			add(fillingOptionsPanel, c);
+			final JPanel t3Panel = leftAlignedPanel();
+			t3Panel.add(maxRButton);
+			t3Panel.add(setMaxThreshold);
+			distancePanel.add(t3Panel, gdb);
+			add(distancePanel, c);
 			++c.gridy;
+
+			final ButtonGroup group = new ButtonGroup();
+			group.add(maxRButton);
+			group.add(manualRButton);
+			group.add(cursorRButton);
+			RadioGroupListener listener = new RadioGroupListener();
+			cursorRButton.addActionListener(listener);
+			manualRButton.addActionListener(listener);
+			maxRButton.addActionListener(listener);
+			cursorRButton.setSelected(true);
+			thresholdField.setEnabled(false);
+			setThreshold.setEnabled(false);
+			setMaxThreshold.setEnabled(false);
 		}
 
-		{
-			fillStatus = GuiUtils.leftAlignedLabel("Cursor position: N/A...", true);
-			final JPanel fillStatusPanel = leftAlignedPanel();
-			fillStatusPanel.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, 0, MARGIN));
-			fillStatusPanel.add(fillStatus);
-			add(fillStatusPanel, c);
-			++c.gridy;
-		}
-
-		GuiUtils.addSeparator((JComponent) getContentPane(), "  Rendering Options:", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Search Status:", true, c);
 		++c.gridy;
 
 		{
-			transparent = new JCheckBox("  Transparent fill display (slow!)");
+			currentThreshold = GuiUtils.leftAlignedLabel("Current threshold distance:  N/A...", true); 
+			maxThreshold = GuiUtils.leftAlignedLabel("Max. explored distance: N/A...", true);
+			fillStatus = GuiUtils.leftAlignedLabel("Last cursor position: N/A...", true);
+			final int storedPady = c.ipady;
+			final Insets storedInsets = c.insets;
+			c.ipady = 0;
+			c.insets = new Insets(0, MARGIN, 0, MARGIN);
+			add(currentThreshold, c);
+			++c.gridy;
+			add(maxThreshold, c);
+			++c.gridy;
+			add(fillStatus, c);
+			++c.gridy;
+			c.ipady = storedPady;
+			c.insets = storedInsets;
+		}
+
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Rendering Options:", true, c);
+		++c.gridy;
+
+		{
+			transparent = new JCheckBox(" Transparent overlay (may slow down filling!)");
 			transparent.addItemListener(this);
 			final JPanel transparencyPanel = leftAlignedPanel();
 			transparencyPanel.add(transparent);
@@ -182,7 +214,7 @@ public class FillWindow extends JFrame
 			c.gridy++;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), "  Export Options:", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Export Options:", true, c);
 		++c.gridy;
 
 		{
@@ -200,7 +232,7 @@ public class FillWindow extends JFrame
 			c.gridy++;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), "  Filling Thread Controls:", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Filler Thread Controls:", true, c);
 		++c.gridy;
 
 		{
@@ -208,7 +240,7 @@ public class FillWindow extends JFrame
 			pauseOrRestartFilling.addActionListener(this);
 			discardFill = new JButton("Stop Filler");
 			discardFill.addActionListener(this);
-			saveFill = new JButton("Save Filler Progress");
+			saveFill = new JButton("Stash Filler Progress");
 			saveFill.addActionListener(this);
 			fillControlPanel = centerAlignedPanel();
 			fillControlPanel.add(pauseOrRestartFilling);
@@ -223,7 +255,7 @@ public class FillWindow extends JFrame
 	}
 
 	private JPanel leftAlignedPanel() {
-		return getPanel(FlowLayout.LEFT);
+		return getPanel(FlowLayout.LEADING);
 	}
 
 	private JPanel centerAlignedPanel() {
@@ -242,11 +274,13 @@ public class FillWindow extends JFrame
 		deleteFills.setEnabled(false);
 		reloadFill.setEnabled(false);
 		fillStatus.setEnabled(true);
-		thresholdField.setEnabled(true);
-		maxThreshold.setEnabled(true);
-		setThreshold.setEnabled(true);
-		setMaxThreshold.setEnabled(true);
+		manualRButton.setEnabled(true);
+		maxThreshold.setEnabled(true && maxRButton.isSelected());
+		currentThreshold.setEnabled(true);
+		fillStatus.setEnabled(true);
+		maxRButton.setEnabled(true && maxRButton.isSelected());
 		view3D.setEnabled(true);
+		exportAsCSV.setEnabled(true);
 		maskNotReal.setEnabled(true);
 		transparent.setEnabled(true);
 		pauseOrRestartFilling.setEnabled(true);
@@ -260,11 +294,13 @@ public class FillWindow extends JFrame
 		deleteFills.setEnabled(true);
 		reloadFill.setEnabled(true);
 		fillStatus.setEnabled(true);
-		thresholdField.setEnabled(false);
+		manualRButton.setEnabled(false);
 		maxThreshold.setEnabled(false);
-		setThreshold.setEnabled(false);
-		setMaxThreshold.setEnabled(false);
+		currentThreshold.setEnabled(false);
+		fillStatus.setEnabled(false);
+		maxRButton.setEnabled(false);
 		view3D.setEnabled(false);
+		exportAsCSV.setEnabled(false);
 		maskNotReal.setEnabled(false);
 		transparent.setEnabled(false);
 		pauseOrRestartFilling.setEnabled(false);
@@ -278,11 +314,13 @@ public class FillWindow extends JFrame
 		deleteFills.setEnabled(false);
 		reloadFill.setEnabled(false);
 		fillStatus.setEnabled(false);
-		thresholdField.setEnabled(false);
+		manualRButton.setEnabled(false);
 		maxThreshold.setEnabled(false);
-		setThreshold.setEnabled(false);
-		setMaxThreshold.setEnabled(false);
+		currentThreshold.setEnabled(false);
+		fillStatus.setEnabled(false);
+		maxRButton.setEnabled(false);
 		view3D.setEnabled(false);
+		exportAsCSV.setEnabled(false);
 		maskNotReal.setEnabled(false);
 		transparent.setEnabled(false);
 		pauseOrRestartFilling.setEnabled(false);
@@ -372,19 +410,12 @@ public class FillWindow extends JFrame
 
 		} else if (source == exportAsCSV) {
 
-			final SaveDialog sd = new SaveDialog("Export fill summary as...", "fills", ".csv");
-
-			if (sd.getFileName() == null) {
-				return;
-			}
-
-			final File saveFile = new File(sd.getDirectory(), sd.getFileName());
+			final File saveFile = gUtils.saveFile("Export CSV Summary...", null);
 			if (saveFile.exists()) {
 				if (!gUtils.getConfirmation("Export data...",
 						"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?"))
 					return;
 			}
-
 			plugin.getUI().showStatus("Exporting CSV data to " + saveFile.getAbsolutePath());
 
 			try {
@@ -413,7 +444,9 @@ public class FillWindow extends JFrame
 			@Override
 			public void run() {
 				assert SwingUtilities.isEventDispatchThread();
+				final String value = SNT.formatDouble(f, 3);
 				thresholdField.setText(SNT.formatDouble(f, 3));
+				currentThreshold.setText("Current threshold distance: "+ value);
 			}
 		});
 	}
@@ -423,9 +456,8 @@ public class FillWindow extends JFrame
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				maxThreshold.setText("(Max: " + SNT.formatDouble(f, 3) + ")");
+				maxThreshold.setText("Max. explored distance: " + SNT.formatDouble(f, 3));
 				maxThresholdValue = f;
-				setMaxThreshold.setEnabled(true);
 			}
 		});
 	}
@@ -466,4 +498,23 @@ public class FillWindow extends JFrame
 		});
 	}
 
+	/** IDE debug method */
+	public static void main(final String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
+		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		final ImageJ ij = new ImageJ();
+		final ImagePlus imp = new ImagePlus();
+		final PathAndFillManager manager = new PathAndFillManager(imp);
+		final SimpleNeuriteTracer snt = new SimpleNeuriteTracer(ij.context(), imp);
+		final FillWindow fw = new FillWindow(manager, snt);
+		fw.setVisible(true);
+	}
+
+	private class RadioGroupListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			setThreshold.setEnabled(manualRButton.isSelected());
+			thresholdField.setEnabled(manualRButton.isSelected());
+			setMaxThreshold.setEnabled(maxRButton.isSelected());
+		}
+	}
 }

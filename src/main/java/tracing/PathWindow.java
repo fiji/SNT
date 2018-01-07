@@ -228,22 +228,22 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		advanced.add(downsampleMenuItem);
 		advanced.addSeparator();
 
-		final JMenuItem toggleDnDMenuItem = new JCheckBoxMenuItem(
-			"Allow Hierarchy Edits");
-		toggleDnDMenuItem.setSelected(tree.getDragEnabled());
-		toggleDnDMenuItem.addItemListener(new ItemListener() {
-
-			// TODO: This is not functional: PathAndFillManager is not aware of any
-			// of these
-			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				tree.setDragEnabled(toggleDnDMenuItem.isSelected() && confirmDnD());
-				if (!tree.getDragEnabled()) displayTmpMsg(
-					"Default behavior restored: Hierarchy is now locked.");
-			}
-
-		});
-		advanced.add(toggleDnDMenuItem);
+//		final JMenuItem toggleDnDMenuItem = new JCheckBoxMenuItem(
+//			"Allow Hierarchy Edits");
+//		toggleDnDMenuItem.setSelected(tree.getDragEnabled());
+//		toggleDnDMenuItem.addItemListener(new ItemListener() {
+//
+//			// TODO: This is not functional: PathAndFillManager is not aware of any
+//			// of these
+//			@Override
+//			public void itemStateChanged(final ItemEvent e) {
+//				tree.setDragEnabled(toggleDnDMenuItem.isSelected() && confirmDnD());
+//				if (!tree.getDragEnabled()) displayTmpMsg(
+//					"Default behavior restored: Hierarchy is now locked.");
+//			}
+//
+//		});
+//		advanced.add(toggleDnDMenuItem);
 
 		popup = new JPopupMenu();
 		JMenuItem pjmi = popup.add(AListener.DELETE_CMD);
@@ -606,14 +606,14 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		return panel;
 	}
 
-	private boolean confirmDnD() {
-		return guiUtils.getConfirmation(
-			"Enabling this option will allow you to re-link paths through drag-and drop " +
-				"of their respective nodes. Re-organizing paths in such way is useful to " +
-				"proof-edit ill-relashionships but can also render the existing hierarchy " +
-				"of paths meaningless. Please save your work before enabling this option. " +
-				"Enable it now?", "Confirm Hierarchy Edits?");
-	}
+//	private boolean confirmDnD() {
+//		return guiUtils.getConfirmation(
+//			"Enabling this option will allow you to re-link paths through drag-and drop " +
+//				"of their respective nodes. Re-organizing paths in such way is useful to " +
+//				"proof-edit ill-relashionships but can also render the existing hierarchy " +
+//				"of paths meaningless. Please save your work before enabling this option. " +
+//				"Enable it now?", "Confirm Hierarchy Edits?");
+//	}
 
 	private void noPathsMsg() {
 		displayTmpMsg("No paths are currently selected.");
@@ -1143,7 +1143,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private final static String DELETE_CMD = "Delete";
 		private final static String RENAME_CMD = "Rename";
 		private final static String MAKE_PRIMARY_CMD = "Make Primary";
-		private final static String DISCONNECT_CMD = "Disconnect Path...";
+		private final static String DISCONNECT_CMD = "Disconnect...";
 
 		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-Type Colors";
 		private final static String REMOVE_COLOR_CMD = "Remove Color Tags";

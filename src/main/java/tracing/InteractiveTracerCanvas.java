@@ -25,6 +25,7 @@ package tracing;
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.event.ActionEvent;
@@ -51,7 +52,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private PopupMenu pMenu;
 	private CheckboxMenuItem toggleEditModeMenuItem;
 	private CheckboxMenuItem togglePauseModeMenuItem;
-
+	private Menu deselectedEditingPathsMenu;
 	private double last_x_in_pane_precise = Double.MIN_VALUE;
 	private double last_y_in_pane_precise = Double.MIN_VALUE;
 	private boolean fillTransparent = false;
@@ -59,7 +60,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private Path currentPath;
 	private boolean lastPathUnfinished;
 	private boolean editMode; // convenience flag to monitor SNT's edit mode
-	
+
 	private Color temporaryColor;
 	private Color unconfirmedColor;
 	private Color fillColor;
@@ -94,6 +95,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		pMenu.add(menuItem(AListener.NODE_INSERT, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE_Z, listener));
+		pMenu.addSeparator();
+		deselectedEditingPathsMenu = new Menu("Connect To");
+		pMenu.add(deselectedEditingPathsMenu);
 		if (Menus.getFontSize()!=0) pMenu.setFont(Menus.getFont());
 	}
 
@@ -110,7 +114,53 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			// First 6 items: Select nearest, sep, Edit mode, sep, Pause mode, separator
 			pMenu.getItem(i).setEnabled(editMode);
 		}
+		assembleDeselectedEditingPathsMenu(be && editMode);
 		pMenu.show(this, x, y);
+	}
+
+	private void assembleDeselectedEditingPathsMenu(final boolean computeList) {
+		System.setProperty("awt.useSystemAAFontSettings","on");
+		System.setProperty("swing.aatext", "true");
+		deselectedEditingPathsMenu.removeAll();
+		if (!computeList) {
+			deselectedEditingPathsMenu.setEnabled(false);
+			return;
+		}
+		final Path source = tracerPlugin.getEditingPath();
+		final boolean startJoins = (source.getEditableNodeIndex() <= source.size() / 2);
+		deselectedEditingPathsMenu.setLabel("Connect To ("+ (startJoins?"Start":"End") +" Join)");
+		int count = 0;
+		for (final Path p : pathAndFillManager.getPaths()) {
+			if (p.equals(tracerPlugin.getEditingPath()) || !p.isBeingEdited())
+				continue;
+			final MenuItem mitem = new MenuItem(p.getName());
+			deselectedEditingPathsMenu.add(mitem);
+			mitem.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(final ActionEvent e) {
+					final Path source = tracerPlugin.getEditingPath();
+					if (startJoins) {
+						if (source.getStartJoins() != null)
+							source.unsetStartJoin();
+						source.setStartJoin(p, p.getPointInImage(p.getEditableNodeIndex()));
+					} else {
+						if (source.getEndJoins() != null)
+							source.unsetEndJoin();
+						source.setEndJoin(p, p.getPointInImage(p.getEditableNodeIndex()));
+					}
+					pathAndFillManager.resetListeners(null);
+					tracerPlugin.repaintAllPanes();
+				}
+
+			});
+			++count;
+		}
+		if (count == 0) {
+			final MenuItem mitem = new MenuItem("No Other Editable Nodes Exist...");
+			mitem.setEnabled(false);
+			deselectedEditingPathsMenu.add(mitem);
+		}
 	}
 
 	private MenuItem menuItem(final String cmdName, final ActionListener lstnr) {
@@ -187,7 +237,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	public void selectNearestPathToMousePointer(final boolean addToExistingSelection) {
 
 		if (pathAndFillManager.size() == 0) {
-			tracerPlugin.discreteMsg("There are no paths yet, so you can't select one with 'g'");
+			tracerPlugin.discreteMsg("There are no finished paths yet, so you can't select one with 'G'");
 			return;
 		}
 

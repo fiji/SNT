@@ -33,6 +33,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 
 import javax.swing.BorderFactory;
@@ -413,11 +414,12 @@ public class FillWindow extends JFrame
 
 		} else if (source == exportAsCSV) {
 
-			final File saveFile = gUtils.saveFile("Export CSV Summary...", null);
-			if (saveFile.exists()) {
-				if (!gUtils.getConfirmation("Export data...",
-						"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?"))
-					return;
+			final File file = SNT.findClosestPair(plugin.loadedImageFile(), "swc)");
+			final File saveFile = gUtils.saveFile("Export CSV Summary...", file, Collections.singletonList(".swc"));
+			if (saveFile == null) return; // user pressed cancel;
+			if (saveFile.exists() && !gUtils.getConfirmation("Export data...",
+					"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?")) {
+				return;
 			}
 			plugin.getUI().showStatus("Exporting CSV data to " + saveFile.getAbsolutePath());
 

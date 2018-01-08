@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -419,7 +420,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		}
 
 		File saveFile = new File(plugin.getImagePlus().getShortTitle(), ".swc");
-		saveFile = guiUtils.saveFile("Export SWC file ...", saveFile);
+		saveFile = guiUtils.saveFile("Export SWC file ...", saveFile, Collections.singletonList(".swc"));
 
 		if (saveFile == null) {
 			return; // user pressed cancel

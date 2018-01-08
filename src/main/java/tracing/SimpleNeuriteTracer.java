@@ -760,36 +760,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	}
 
-	synchronized public void loadLabels() {
-
-		String fileName;
-		String directory;
-
-		if (file_info != null) {
-
-			fileName = file_info.fileName;
-			directory = file_info.directory;
-
-			final File possibleLoadFile = new File(directory, fileName + ".labels");
-
-			final String path = possibleLoadFile.getPath();
-
-			if (possibleLoadFile.exists()) {
-				if (guiUtils.getConfirmation("Load the default labels file?\n(" + path +
-					")", "Load Labels?"))
-				{
-					loadLabelsFile(path);
-					return;
-				}
-			}
+	protected File loadedImageFile() {
+		try {
+			final FileInfo fInfo = getImagePlus().getFileInfo();
+			return new File(fInfo.directory, fInfo.fileName);
+		} catch (final NullPointerException npe) {
+			return null;
 		}
-
-		final File file = guiUtils.openFile("Select labels file...", null);
-		if (file != null) {
-			loadLabelsFile(file.getAbsolutePath());
-			return;
-		}
-
 	}
 
 	synchronized public void loadTracings() {

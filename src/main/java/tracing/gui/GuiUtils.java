@@ -58,6 +58,7 @@ import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
+import javax.swing.filechooser.FileFilter;
 
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.ui.swing.SwingDialog;
@@ -241,17 +242,17 @@ public class GuiUtils {
 		}
 	}
 
-	public File saveFile(final String title, final File file) {
+	public File saveFile(final String title, final File file, final List<String> allowedExtensions) {
 		final JFileChooser chooser = fileChooser(title, file,
-			JFileChooser.FILES_ONLY);
+			JFileChooser.FILES_ONLY, allowedExtensions);
 		if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION)
 			return chooser.getSelectedFile();
 		return null;
 	}
 
-	public File openFile(final String title, final File file) {
+	public File openFile(final String title, final File file, final List<String> allowedExtensions) {
 		final JFileChooser chooser = fileChooser(title, file,
-			JFileChooser.FILES_ONLY);
+			JFileChooser.FILES_ONLY, allowedExtensions);
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
 			return chooser.getSelectedFile();
 		return null;
@@ -259,19 +260,40 @@ public class GuiUtils {
 
 	public File chooseDirectory(final String title, final File file) {
 		final JFileChooser chooser = fileChooser(title, file,
-			JFileChooser.DIRECTORIES_ONLY);
+			JFileChooser.DIRECTORIES_ONLY, null);
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
 			return chooser.getSelectedFile();
 		return null;
 	}
 
 	private JFileChooser fileChooser(final String title, final File file,
-		final int type)
+		final int type, final List<String> allowedExtensions)
 	{
 		final JFileChooser chooser = new JFileChooser(file);
 		chooser.setDialogTitle(title);
 		chooser.setFileSelectionMode(type);
 		chooser.setDragEnabled(true);
+		if (allowedExtensions != null && !allowedExtensions.isEmpty()) {
+			chooser.setFileFilter(new FileFilter() {
+
+				public String getDescription() {
+					return String.join(",", allowedExtensions);
+				}
+
+				public boolean accept(final File f) {
+					if (f.isDirectory()) {
+						return true;
+					} else {
+						final String filename = f.getName().toLowerCase();
+						for (final String ext : allowedExtensions) {
+							if (filename.endsWith(ext))
+								return true;
+						}
+						return false;
+					}
+				}
+			});
+		}
 		return chooser;
 	}
 

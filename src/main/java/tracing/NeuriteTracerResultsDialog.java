@@ -40,6 +40,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
@@ -116,7 +117,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JButton displayFiltered;
 	private JButton showOrHidePathList;
 	private JButton showOrHideFillList;
-	private JMenuItem loadMenuItem;
+	private JMenuItem loadTracesMenuItem;
+	private JMenuItem loadSWCMenuItem;
 	private JMenuItem loadLabelsMenuItem;
 	private JMenuItem saveMenuItem;
 	private JMenuItem exportCSVMenuItem;
@@ -439,16 +441,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	protected void disableImageDependentComponents() {
 		assert SwingUtilities.isEventDispatchThread();
-		loadMenuItem.setEnabled(false);
 		loadLabelsMenuItem.setEnabled(false);
-//		keepSegment.setEnabled(false);
-//		junkSegment.setEnabled(false);
-//		completePath.setEnabled(false);
-//		cancelPath.setEnabled(false);
 		preprocess.setEnabled(false);
 		sigmaWizard.setEnabled(false);
 		editSigma.setEnabled(false);
-		//justShowSelected.setEnabled(false);
 		fw.setEnabledNone();
 		GuiUtils.enableComponents(colorPanel, false);
 	}
@@ -456,6 +452,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private void disableEverything() {
 		assert SwingUtilities.isEventDispatchThread();
 		disableImageDependentComponents();
+		loadTracesMenuItem.setEnabled(false);
+		loadSWCMenuItem.setEnabled(false);
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
 		exportCSVMenuItemAgain.setEnabled(false);
@@ -489,7 +487,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						fw.setEnabledWhileNotFilling();
 						loadLabelsMenuItem.setEnabled(true);
 						saveMenuItem.setEnabled(true);
-						loadMenuItem.setEnabled(true);
+						loadTracesMenuItem.setEnabled(true);
+						loadSWCMenuItem.setEnabled(true);
+
 						exportCSVMenuItem.setEnabled(true);
 						exportAllSWCMenuItem.setEnabled(true);
 						exportCSVMenuItemAgain.setEnabled(true);
@@ -1102,29 +1102,22 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final JMenuBar menuBar = new JMenuBar();
 		final JMenu fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);
+		final JMenu importSubmenu = new JMenu("Import");
+		final JMenu exportSubmenu = new JMenu("Export");
 		final JMenu analysisMenu = new JMenu("Analysis");
 		menuBar.add(analysisMenu);
 		final JMenu viewMenu = new JMenu("View");
 		menuBar.add(viewMenu);
 		menuBar.add(helpMenu());
 
-		loadMenuItem = new JMenuItem("Load Traces / (e)SWC File...");
-		loadMenuItem.addActionListener(listener);
-		fileMenu.add(loadMenuItem);
-		loadLabelsMenuItem = new JMenuItem("Load Labels (AmiraMesh) File...");
-		loadLabelsMenuItem.addActionListener(listener);
-		fileMenu.add(loadLabelsMenuItem);
-		fileMenu.addSeparator();
-		saveMenuItem = new JMenuItem("Save Traces File...");
+		loadTracesMenuItem = new JMenuItem("Load Session...");
+		loadTracesMenuItem.addActionListener(listener);
+		fileMenu.add(loadTracesMenuItem);
+
+		saveMenuItem = new JMenuItem("Save Session...");
 		saveMenuItem.addActionListener(listener);
 		fileMenu.add(saveMenuItem);
-		exportAllSWCMenuItem = new JMenuItem("Save All Paths as SWC...");
-		exportAllSWCMenuItem.addActionListener(listener);
-		fileMenu.add(exportAllSWCMenuItem);
-		fileMenu.addSeparator();
-		exportCSVMenuItem = new JMenuItem("Export Path Properties...");
-		exportCSVMenuItem.addActionListener(listener);
-		fileMenu.add(exportCSVMenuItem);
+
 		sendToTrakEM2 = new JMenuItem("Send to TrakEM2");
 		sendToTrakEM2.addActionListener(new ActionListener() {
 
@@ -1133,7 +1126,26 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				plugin.notifyListeners(new SNTEvent(SNTEvent.SEND_TO_TRAKEM2));
 			}
 		});
+		fileMenu.addSeparator();
 		fileMenu.add(sendToTrakEM2);
+		fileMenu.addSeparator();
+
+		loadSWCMenuItem = new JMenuItem("(e)SWC File...");
+		loadSWCMenuItem.addActionListener(listener);
+		importSubmenu.add(loadSWCMenuItem);
+		loadLabelsMenuItem = new JMenuItem("Labels (AmiraMesh)...");
+		loadLabelsMenuItem.addActionListener(listener);
+		importSubmenu.add(loadLabelsMenuItem);
+		fileMenu.add(importSubmenu);
+
+		exportAllSWCMenuItem = new JMenuItem("All Paths as SWC...");
+		exportAllSWCMenuItem.addActionListener(listener);
+		exportSubmenu.add(exportAllSWCMenuItem);
+		exportCSVMenuItem = new JMenuItem("All Paths Properties...");
+		exportCSVMenuItem.addActionListener(listener);
+		exportSubmenu.add(exportCSVMenuItem);
+		fileMenu.add(exportSubmenu);
+
 		fileMenu.addSeparator();
 		quitMenuItem = new JMenuItem("Quit");
 		quitMenuItem.addActionListener(listener);
@@ -1150,7 +1162,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				final File tracesFile = guiUtils.openFile("Select other traces file...",
-					null);
+					null, Collections.singletonList(".traces"));
 				if (tracesFile == null) return;
 				if (!tracesFile.exists()) {
 					guiUtils.error(tracesFile.getAbsolutePath() + " is not available");
@@ -2002,50 +2014,25 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 			else if (source == saveMenuItem && !noPathsError()) {
 
-				final FileInfo info = plugin.file_info;
-				SaveDialog sd;
-
-				if (info == null) {
-
-					sd = new SaveDialog("Save traces as...", "image", ".traces");
-
-				}
-				else {
-
-					final String fileName = info.fileName;
-					final String directory = info.directory;
-
-					String suggestedSaveFilename;
-
-					suggestedSaveFilename = fileName;
-
-					sd = new SaveDialog("Save traces as...", directory,
-						suggestedSaveFilename, ".traces");
-				}
-
-				String savePath;
-				if (sd.getFileName() == null) {
-					return;
-				}
-				savePath = sd.getDirectory() + sd.getFileName();
-
-				final File file = new File(savePath);
-				if (file.exists()) {
-					if (!guiUtils.getConfirmation("The file " +
-						savePath + " already exists.\n" + "Do you want to replace it?", "Override traces file?"))
+				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(), "traces)");
+				final File saveFile = guiUtils.saveFile("Save traces as...", suggestedFile, Collections.singletonList(".traces"));
+				if (saveFile == null) return; // user pressed cancel;
+				if (saveFile.exists() && !guiUtils.getConfirmation("The file " +
+						saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?", "Override traces file?")) {
 						return;
 				}
 
-				showStatus("Saving traces to " + savePath);
+				showStatus("Saving traces to " + saveFile.getAbsolutePath());
 
 				final int preSavingState = currentState;
 				changeState(SAVING);
 				try {
-					pathAndFillManager.writeXML(savePath, plugin.useCompressedXML);
+					pathAndFillManager.writeXML(saveFile.getAbsolutePath(), plugin.useCompressedXML);
 				}
 				catch (final IOException ioe) {
 					showStatus("Saving failed.");
-					guiUtils.error("Writing traces to '" + savePath + "' failed: " + ioe);
+					guiUtils.error("Writing traces to '" + saveFile.getAbsolutePath() + "' failed.");
+					SNT.debug(ioe);
 					changeState(preSavingState);
 					return;
 				}
@@ -2055,7 +2042,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				plugin.unsavedPaths = false;
 
 			}
-			else if (source == loadMenuItem) {
+			else if (source == loadTracesMenuItem || source == loadSWCMenuItem) {
 
 				if (plugin.pathsUnsaved() && !guiUtils
 						.getConfirmation("There are unsaved paths. Do you really want to load new traces?", "Warning"))
@@ -2076,31 +2063,15 @@ public class NeuriteTracerResultsDialog extends JDialog {
 							". Do you really want to proceed " + "with the SWC export?",
 						"Warning")) return;
 
-				final FileInfo info = plugin.file_info;
-				SaveDialog sd;
-
-				if (info == null) {
-
-					sd = new SaveDialog("Export all as SWC...", "exported", "");
-
+				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(), ".swc)");
+				final File saveFile = guiUtils.saveFile("Export All Paths as SWC...", suggestedFile, Collections.singletonList(".swc"));
+				if (saveFile.exists()) {
+					if (!guiUtils.getConfirmation("The file " +
+						saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?", "Override SWC file?"))
+						return;
 				}
-				else {
-
-					String suggestedFilename;
-					final int extensionIndex = info.fileName.lastIndexOf(".");
-					if (extensionIndex == -1) suggestedFilename = info.fileName;
-					else suggestedFilename = info.fileName.substring(0, extensionIndex);
-
-					sd = new SaveDialog("Export all as SWC...", info.directory,
-						suggestedFilename + "-exported", "");
-				}
-
-				String savePath;
-				if (sd.getFileName() == null) {
-					return;
-				}
-				savePath = sd.getDirectory() + sd.getFileName();
-				if (verbose) SNT.log("Got savePath: " + savePath);
+				final String savePath = saveFile.getAbsolutePath();
+				SNT.debug("Exporting paths to "+ saveFile);
 				if (!pathAndFillManager.checkOKToWriteAllAsSWC(savePath)) return;
 				pathAndFillManager.exportAllAsSWC(savePath);
 
@@ -2109,48 +2080,30 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				source == exportCSVMenuItemAgain) && !noPathsError())
 			{
 
-				final FileInfo info = plugin.file_info;
-				SaveDialog sd;
-
-				if (info == null) {
-
-					sd = new SaveDialog("Export Paths as CSV...", "traces", ".csv");
-
-				}
-				else {
-
-					sd = new SaveDialog("Export Paths as CSV...", info.directory,
-						info.fileName, ".csv");
-				}
-
-				String savePath;
-				if (sd.getFileName() == null) {
-					return;
-				}
-				savePath = sd.getDirectory() + sd.getFileName();
-
-				final File file = new File(savePath);
-				if (file.exists()) {
+				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(), ".csv)");
+				final File saveFile = guiUtils.saveFile("Export All Paths as CSV...", suggestedFile, Collections.singletonList(".csv"));
+				if (saveFile.exists()) {
 					if (!guiUtils.getConfirmation("The file " +
-						savePath + " already exists.\n" + "Do you want to replace it?", "Override CSV file?"))
+						saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?", "Override CSV file?"))
 						return;
 				}
-
+				final String savePath = saveFile.getAbsolutePath();
 				showStatus("Exporting as CSV to " + savePath);
 
 				final int preExportingState = currentState;
 				changeState(SAVING);
 				// Export here...
 				try {
-					pathAndFillManager.exportToCSV(file);
+					pathAndFillManager.exportToCSV(saveFile);
 					if (source == exportCSVMenuItemAgain) {
 						final ResultsTable rt = ResultsTable.open(savePath);
-						rt.show(sd.getFileName());
+						rt.show(saveFile.getName());
 					}
 				}
 				catch (final IOException ioe) {
 					showStatus("Exporting failed.");
-					guiUtils.error("Writing traces to '" + savePath + "' failed:\n" + ioe);
+					guiUtils.error("Writing traces to '" + savePath + "' failed.");
+					SNT.debug(ioe);
 					changeState(preExportingState);
 					return;
 				}
@@ -2160,7 +2113,18 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 			else if (source == loadLabelsMenuItem) {
 
-				plugin.loadLabels();
+				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(), ".labels)");
+				final File saveFile = guiUtils.openFile("Select Labels File...", suggestedFile, Collections.singletonList("labels"));
+				if (saveFile == null) return; // user pressed cancel;
+				if (saveFile.exists()) {
+					if (!guiUtils.getConfirmation("The file " +
+						saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?", "Override SWC file?"))
+						return;
+				}
+				if (saveFile != null) {
+					plugin.loadLabelsFile(saveFile.getAbsolutePath());
+					return;
+				}
 
 			}
 			else if (source == abortButton) {

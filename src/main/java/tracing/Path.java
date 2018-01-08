@@ -339,7 +339,7 @@ public class Path implements Comparable<Path> {
 			leaveAloneJoin = startJoins;
 		}
 		if (other == null) {
-			throw new RuntimeException("Don't call unsetJoin if the other Path is already null");
+			throw new IllegalArgumentException("Don't call unsetJoin if the other Path is already null");
 		}
 		if (!(other.startJoins == this || other.endJoins == this || leaveAloneJoin == other)) {
 			somehowJoins.remove(other);
@@ -2138,7 +2138,8 @@ public class Path implements Comparable<Path> {
 		String name = getName();
 		if (name == null)
 			name = "Path " + id;
-		name += " [" + getRealLengthString() + " " + spacing_units + "]";
+		if (size()==1)
+		name += (size()==1) ? " [Single Point]" : " [" + getRealLengthString() + " " + spacing_units + "]";
 		if (startJoins != null) {
 			name += ", starts on " + startJoins.getName();
 		}

@@ -825,7 +825,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	}
 
 	private JPanel nodePanel() {
-		final JSpinner nodeSpinner = GuiUtils.doubleSpinner(plugin.getXYCanvas().nodeDiameter(), 0, 50, 1, 0);
+		final JSpinner nodeSpinner = GuiUtils.doubleSpinner(plugin.getXYCanvas().nodeDiameter(), 0, 100, 1, 0);
 		nodeSpinner.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -862,7 +862,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.gridy = 0;
 		c.gridwidth = 3;
 		c.ipadx = 0;
-		p.add(GuiUtils.leftAlignedLabel("Rendering scale of path nodes: ", true));
+		p.add(GuiUtils.leftAlignedLabel("Path nodes rendering scale: ", true));
 		c.gridx = 1;
 		p.add(nodeSpinner, c);
 		c.fill = GridBagConstraints.NONE;

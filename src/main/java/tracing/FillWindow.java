@@ -53,7 +53,6 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import ij.ImagePlus;
-//import ij.io.SaveDialog;
 import net.imagej.ImageJ;
 import tracing.gui.GuiUtils;
 
@@ -107,7 +106,10 @@ public class FillWindow extends JFrame
 		fillList = new JList<>(listModel);
 
 		assert SwingUtilities.isEventDispatchThread();
-		setSize(x, y);
+
+		fillList.setVisibleRowCount(5);
+		fillList.setPrototypeCellValue("Fill (90) from Path (90)");
+		setBounds(x, y, 300, 400);
 		setLocationRelativeTo(plugin.getUI());
 		setLayout(new GridBagLayout());
 		final GridBagConstraints c = GuiUtils.defaultGbc();
@@ -115,7 +117,9 @@ public class FillWindow extends JFrame
 		{
 			scrollPane = new JScrollPane();
 			scrollPane.getViewport().add(fillList);
-			add(scrollPane, c);
+			final JPanel listPanel = new JPanel(new BorderLayout());
+			listPanel.add(scrollPane, BorderLayout.CENTER);
+			add(listPanel, c);
 			++c.gridy;
 		}
 
@@ -125,7 +129,6 @@ public class FillWindow extends JFrame
 			reloadFill = new JButton("Reload Fill");
 			reloadFill.addActionListener(this);
 			final JPanel fillListCommandsPanel = new JPanel(new BorderLayout());
-			fillListCommandsPanel.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, 0, MARGIN));
 			fillListCommandsPanel.add(deleteFills, BorderLayout.WEST);
 			fillListCommandsPanel.add(reloadFill, BorderLayout.EAST);
 			add(fillListCommandsPanel, c);
@@ -222,7 +225,7 @@ public class FillWindow extends JFrame
 			exportAsCSV.addActionListener(this);
 			view3D = new JButton("Create Image Stack");
 			view3D.addActionListener(this);
-			maskNotReal = new JCheckBox("Binary Mask");
+			maskNotReal = new JCheckBox("Binary");
 			maskNotReal.addItemListener(this);
 			final JPanel exportPanel = leftAlignedPanel();
 			exportPanel.add(exportAsCSV);

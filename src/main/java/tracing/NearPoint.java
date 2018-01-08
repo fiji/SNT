@@ -96,7 +96,7 @@ public class NearPoint implements Comparable<NearPoint> {
 		if (cachedDistanceToPathNearPoint != null)
 			return cachedDistanceToPathNearPoint.doubleValue();
 		final int pathSize = path.size();
-		if (pathSize <= 1) {
+		if (pathSize < 1) {
 			cachedDistanceToPathNearPoint = new Double(-1);
 			return -1;
 		}
@@ -118,8 +118,15 @@ public class NearPoint implements Comparable<NearPoint> {
 				endY = pathPointY;
 				endZ = pathPointZ;
 			}
-			final IntersectionOnLine intersection = distanceToLineSegment(nearX, nearY, nearZ, startX, startY, startZ,
+			final IntersectionOnLine intersection;
+			if (path.size()==1) {
+				intersection = distanceFromSinglePointPath(path.precise_x_positions[0],
+						path.precise_x_positions[0],path.precise_x_positions[0],
+						nearX, nearY, nearZ);
+			} else {
+				intersection = distanceToLineSegment(nearX, nearY, nearZ, startX, startY, startZ,
 					endX, endY, endZ);
+			}
 			if (intersection == null) {
 				closestIntersection = null;
 				cachedDistanceToPathNearPoint = new Double(-1);
@@ -279,4 +286,16 @@ public class NearPoint implements Comparable<NearPoint> {
 		return i;
 	}
 
+	protected static IntersectionOnLine distanceFromSinglePointPath(final double pathX, final double pathY,
+			final double pathZ, final double nearPointX, final double nearPointY, final double nearPointZ) {
+		final IntersectionOnLine i = new IntersectionOnLine();
+		i.x = pathX;
+		i.y = pathY;
+		i.z = pathZ;
+		final double xdiff = i.x - nearPointX;
+		final double ydiff = i.y - nearPointY;
+		final double zdiff = i.z - nearPointZ;
+		i.distance = Math.sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
+		return i;
+	}
 }

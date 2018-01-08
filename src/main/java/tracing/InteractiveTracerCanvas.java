@@ -254,7 +254,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
 
 		if (np == null) {
-			tracerPlugin.discreteMsg("No nearby path was found within " + diagonalLength + tracerPlugin.spacing_units + " of the pointer! (temporary and single-point paths were ignored)");
+			tracerPlugin.discreteMsg("No finished path was found within " + SNT.formatDouble(diagonalLength, 3) + tracerPlugin.spacing_units + " of the pointer!");
 			return;
 		}
 

@@ -59,6 +59,8 @@ import util.RGBToLuminance;
 
  */
 
+@Deprecated
+@SuppressWarnings("all")
 public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn {
 
 	public Simple_Neurite_Tracer() {

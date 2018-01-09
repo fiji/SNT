@@ -1110,11 +1110,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		menuBar.add(viewMenu);
 		menuBar.add(helpMenu());
 
-		loadTracesMenuItem = new JMenuItem("Load Session...");
+		loadTracesMenuItem = new JMenuItem("Load Traces...");
 		loadTracesMenuItem.addActionListener(listener);
 		fileMenu.add(loadTracesMenuItem);
 
-		saveMenuItem = new JMenuItem("Save Session...");
+		saveMenuItem = new JMenuItem("Save Traces...");
 		saveMenuItem.addActionListener(listener);
 		fileMenu.add(saveMenuItem);
 
@@ -2049,7 +2049,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					return;
 				final int preLoadingState = currentState;
 				changeState(LOADING);
-				plugin.loadTracings();
+				if (source == loadTracesMenuItem )
+					plugin.loadTracesFile();
+				else
+					plugin.loadSWCFile();
 				changeState(preLoadingState);
 
 			}

@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -66,7 +67,6 @@ import ij.gui.ImageRoi;
 import ij.gui.Overlay;
 import ij.gui.StackWindow;
 import ij.io.FileInfo;
-import ij.io.OpenDialog;
 import ij.measure.Calibration;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
@@ -176,7 +176,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * file and checking if a "tubes.tif" file already exists:
 	 */
 
-	public FileInfo file_info;
+	@Deprecated
+	protected FileInfo file_info;
 
 	/* Labels*/
 	protected String[] materialList;
@@ -769,104 +770,110 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
+	synchronized protected void loadTracesFile() {
+		loading = true;
+		final File suggestedFile = SNT.findClosestPair(loadedImageFile(), ".traces)");
+		final File chosenFile = guiUtils.openFile("Open .traces file...", suggestedFile,
+				Collections.singletonList(".traces"));
+		if (chosenFile == null)
+			return; // user pressed cancel;
+
+		if (!chosenFile.exists()) {
+			guiUtils.error(chosenFile.getAbsolutePath() + " is no longer available");
+			loading = false;
+			return;
+		}
+
+		final int guessedType = PathAndFillManager.guessTracesFileType(chosenFile.getAbsolutePath());
+		switch (guessedType) {
+		case PathAndFillManager.TRACES_FILE_TYPE_COMPRESSED_XML:
+			if (pathAndFillManager.loadCompressedXML(chosenFile.getAbsolutePath()))
+				unsavedPaths = false;
+			break;
+		case PathAndFillManager.TRACES_FILE_TYPE_UNCOMPRESSED_XML:
+			if (pathAndFillManager.loadUncompressedXML(chosenFile.getAbsolutePath()))
+				unsavedPaths = false;
+			break;
+		default:
+			guiUtils.error(chosenFile.getAbsolutePath() + " is not a valid traces file.");
+			break;
+		}
+
+		loading = false;
+	}
+
+	synchronized protected void loadSWCFile() {
+		loading = true;
+		final File suggestedFile = SNT.findClosestPair(loadedImageFile(), ".swc)");
+		final File chosenFile = guiUtils.openFile("Open SWC file...", suggestedFile, Arrays.asList(".swc", ".eswc"));
+		if (chosenFile == null)
+			return; // user pressed cancel;
+
+		if (!chosenFile.exists()) {
+			guiUtils.error(chosenFile.getAbsolutePath() + " is no longer available");
+			loading = false;
+			return;
+		}
+
+		final int guessedType = PathAndFillManager.guessTracesFileType(chosenFile.getAbsolutePath());
+		switch (guessedType) {
+		case PathAndFillManager.TRACES_FILE_TYPE_SWC: {
+			final SWCImportOptionsDialog swcImportDialog = new SWCImportOptionsDialog(
+					"SWC import options for " + chosenFile.getName());
+			if (swcImportDialog.succeeded() && pathAndFillManager.importSWC(chosenFile.getAbsolutePath(),
+					swcImportDialog.getIgnoreCalibration(), swcImportDialog.getXOffset(), swcImportDialog.getYOffset(),
+					swcImportDialog.getZOffset(), swcImportDialog.getXScale(), swcImportDialog.getYScale(),
+					swcImportDialog.getZScale(), swcImportDialog.getReplaceExistingPaths()))
+				unsavedPaths = false;
+			break;
+		}
+		default:
+			guiUtils.error(chosenFile.getAbsolutePath() + " does not seem to contain valid SWC data.");
+			break;
+		}
+		loading = false;
+	}
+
 	synchronized public void loadTracings() {
 
 		loading = true;
+		final File suggestedFile = SNT.findClosestPair(loadedImageFile(), ".traces)"); 
+		final File chosenFile = guiUtils.openFile("Open .traces or .(e)swc file...", suggestedFile, Arrays.asList(".traces", ".swc", ".eswc")); 
+		if (chosenFile == null) return; // user pressed cancel; 
 
-		String fileName = null;
-		String directory = null;
-
-		if (file_info != null) {
-
-			fileName = file_info.fileName;
-			directory = file_info.directory;
-
-			File possibleLoadFile = null;
-
-			final int dotIndex = fileName.lastIndexOf(".");
-			if (dotIndex >= 0) {
-				possibleLoadFile = new File(directory, fileName.substring(0, dotIndex) +
-					".traces");
-
-				final String path = possibleLoadFile.getPath();
-
-				if (possibleLoadFile.exists()) {
-
-					if (guiUtils.getConfirmation("Load the default traces file?\n(" +
-						path + ")", "Load Traces?"))
-					{
-						if (pathAndFillManager.loadGuessingType(path)) unsavedPaths = false;
-
-						Prefs.set("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory",
-							directory);
-						Prefs.savePreferences();
-					}
-					loading = false;
-					return;
-				}
-			}
+		if (!chosenFile.exists()) {
+			guiUtils.error(chosenFile.getAbsolutePath() + " is no longer available");
+			loading = false;
+			return;
 		}
 
-		directory = Prefs.get(
-			"tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory", null);
-		if (directory == null && file_info != null && file_info.directory != null)
-			directory = file_info.directory;
-
-		// Presumably "No" was pressed...
-
-		OpenDialog od;
-
-		od = new OpenDialog("Select .traces or .(e)swc file...", directory, null);
-
-		fileName = od.getFileName();
-		directory = od.getDirectory();
-
-		if (fileName != null) {
-
-			final File chosenFile = new File(directory, fileName);
-			if (!chosenFile.exists()) {
-				guiUtils.error("The file '" + chosenFile.getAbsolutePath() +
-					"' didn't exist");
-				loading = false;
-				return;
-			}
-
-			Prefs.set("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory",
-				directory);
-			Prefs.savePreferences();
-
-			final int guessedType = PathAndFillManager.guessTracesFileType(chosenFile
-				.getAbsolutePath());
-
-			switch (guessedType) {
-				case PathAndFillManager.TRACES_FILE_TYPE_SWC: {
-					final SWCImportOptionsDialog swcImportDialog =
-						new SWCImportOptionsDialog("SWC import options for " + chosenFile
+		final int guessedType = PathAndFillManager.guessTracesFileType(chosenFile.getAbsolutePath());
+		switch (guessedType) {
+		case PathAndFillManager.TRACES_FILE_TYPE_SWC: {
+			final SWCImportOptionsDialog swcImportDialog =
+					new SWCImportOptionsDialog("SWC import options for " + chosenFile
 							.getName());
-					// FIXME: pop up a dialog to ask about options:
-					// .. and then call the full importSWC.=:
-					if (swcImportDialog.succeeded() && pathAndFillManager.importSWC(
-						chosenFile.getAbsolutePath(), swcImportDialog
-							.getIgnoreCalibration(), swcImportDialog.getXOffset(),
-						swcImportDialog.getYOffset(), swcImportDialog.getZOffset(),
-						swcImportDialog.getXScale(), swcImportDialog.getYScale(),
-						swcImportDialog.getZScale(), swcImportDialog
-							.getReplaceExistingPaths())) unsavedPaths = false;
-					break;
-				}
-				case PathAndFillManager.TRACES_FILE_TYPE_COMPRESSED_XML:
-					if (pathAndFillManager.loadCompressedXML(chosenFile
-						.getAbsolutePath())) unsavedPaths = false;
-					break;
-				case PathAndFillManager.TRACES_FILE_TYPE_UNCOMPRESSED_XML:
-					if (pathAndFillManager.loadUncompressedXML(chosenFile
-						.getAbsolutePath())) unsavedPaths = false;
-					break;
-				default:
-					guiUtils.error("The file '" + chosenFile.getAbsolutePath() +
-						"' was of unknown type (" + guessedType + ")");
-					break;
-			}
+			if (swcImportDialog.succeeded() && pathAndFillManager.importSWC(
+					chosenFile.getAbsolutePath(), swcImportDialog
+					.getIgnoreCalibration(), swcImportDialog.getXOffset(),
+					swcImportDialog.getYOffset(), swcImportDialog.getZOffset(),
+					swcImportDialog.getXScale(), swcImportDialog.getYScale(),
+					swcImportDialog.getZScale(), swcImportDialog
+					.getReplaceExistingPaths())) unsavedPaths = false;
+			break;
+		}
+		case PathAndFillManager.TRACES_FILE_TYPE_COMPRESSED_XML:
+			if (pathAndFillManager.loadCompressedXML(chosenFile
+					.getAbsolutePath())) unsavedPaths = false;
+			break;
+		case PathAndFillManager.TRACES_FILE_TYPE_UNCOMPRESSED_XML:
+			if (pathAndFillManager.loadUncompressedXML(chosenFile
+					.getAbsolutePath())) unsavedPaths = false;
+			break;
+		default:
+			guiUtils.error("The file '" + chosenFile.getAbsolutePath() +
+					"' was of unknown type (" + guessedType + ")");
+			break;
 		}
 
 		loading = false;

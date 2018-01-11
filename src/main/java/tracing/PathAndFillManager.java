@@ -381,7 +381,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		Path primaryPath = null;
 		while (pi.hasNext()) {
 			final Path p = pi.next();
-			if (p.getPrimary()) {
+			if (p.isPrimary()) {
 				pi.remove();
 				primaryPaths.add(p);
 			}
@@ -929,7 +929,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					if (nearestIndexOnEndPath >= 0)
 						endsString += " endsindex=\"" + nearestIndexOnEndPath + "\"";
 				}
-				if (p.getPrimary())
+				if (p.isPrimary())
 					pw.print(" primary=\"true\"");
 				pw.print(" usefitted=\"" + p.getUseFitted() + "\"");
 				if (p.fitted != null) {

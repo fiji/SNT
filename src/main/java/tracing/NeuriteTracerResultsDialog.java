@@ -70,23 +70,28 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.scijava.display.Display;
+import org.scijava.display.DisplayService;
+
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.HTMLDialog;
+import ij.gui.Overlay;
 import ij.gui.StackWindow;
 import ij.io.FileInfo;
 import ij.io.SaveDialog;
 import ij.measure.Calibration;
-import ij.measure.ResultsTable;
 import ij3d.ImageWindow3D;
+import net.imagej.table.DefaultGenericTable;
 import sholl.Sholl_Analysis;
 import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 import tracing.gui.SigmaPalette;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.plugin.PathAnalyzer;
 
 @SuppressWarnings("serial")
 public class NeuriteTracerResultsDialog extends JDialog {
@@ -124,7 +129,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JMenuItem exportCSVMenuItem;
 	private JMenuItem exportAllSWCMenuItem;
 	private JMenuItem quitMenuItem;
-	private JMenuItem exportCSVMenuItemAgain;
+	private JMenuItem measureMenuItem;
 	private JMenuItem sendToTrakEM2;
 	private JLabel statusText;
 	private JLabel statusBarText;
@@ -142,6 +147,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private volatile boolean ignorePreprocessEvents = false;
 	private volatile int preGaussianState;
 
+	private DefaultGenericTable table = null;
 	private final SimpleNeuriteTracer plugin;
 	private final PathAndFillManager pathAndFillManager;
 	private final GuiUtils guiUtils;
@@ -456,7 +462,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		loadSWCMenuItem.setEnabled(false);
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
-		exportCSVMenuItemAgain.setEnabled(false);
+		measureMenuItem.setEnabled(false);
 		sendToTrakEM2.setEnabled(false);
 		saveMenuItem.setEnabled(false);
 		quitMenuItem.setEnabled(false);
@@ -492,7 +498,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 						exportCSVMenuItem.setEnabled(true);
 						exportAllSWCMenuItem.setEnabled(true);
-						exportCSVMenuItemAgain.setEnabled(true);
+						measureMenuItem.setEnabled(true);
 						sendToTrakEM2.setEnabled(plugin.anyListeners());
 						quitMenuItem.setEnabled(true);
 						GuiUtils.enableComponents(colorPanel, true);
@@ -1138,10 +1144,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		importSubmenu.add(loadLabelsMenuItem);
 		fileMenu.add(importSubmenu);
 
-		exportAllSWCMenuItem = new JMenuItem("All Paths as SWC...");
+		exportAllSWCMenuItem = new JMenuItem("As SWC (All Paths)...");
 		exportAllSWCMenuItem.addActionListener(listener);
 		exportSubmenu.add(exportAllSWCMenuItem);
-		exportCSVMenuItem = new JMenuItem("All Paths Properties...");
+		exportCSVMenuItem = new JMenuItem("Path Properties (All Paths)...");
 		exportCSVMenuItem.addActionListener(listener);
 		exportSubmenu.add(exportCSVMenuItem);
 		fileMenu.add(exportSubmenu);
@@ -1152,9 +1158,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		fileMenu.add(quitMenuItem);
 
 		analysisMenu.addSeparator();
-		exportCSVMenuItemAgain = new JMenuItem("Measure Paths...");
-		exportCSVMenuItemAgain.addActionListener(listener);
-		analysisMenu.add(exportCSVMenuItemAgain);
+		measureMenuItem = new JMenuItem("Summary Statistics...");
+		measureMenuItem.addActionListener(listener);
+		analysisMenu.add(measureMenuItem);
 		final JMenuItem correspondencesMenuItem = new JMenuItem(
 			"Show correspondences with file..");
 		correspondencesMenuItem.addActionListener(new ActionListener() {
@@ -2079,9 +2085,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				pathAndFillManager.exportAllAsSWC(savePath);
 
 			}
-			else if ((source == exportCSVMenuItem ||
-				source == exportCSVMenuItemAgain) && !noPathsError())
-			{
+			else if (source == exportCSVMenuItem && !noPathsError()) {
 
 				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(), ".csv)");
 				final File saveFile = guiUtils.saveFile("Export All Paths as CSV...", suggestedFile, Collections.singletonList(".csv"));
@@ -2098,10 +2102,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				// Export here...
 				try {
 					pathAndFillManager.exportToCSV(saveFile);
-					if (source == exportCSVMenuItemAgain) {
-						final ResultsTable rt = ResultsTable.open(savePath);
-						rt.show(saveFile.getName());
-					}
 				}
 				catch (final IOException ioe) {
 					showStatus("Exporting failed.");
@@ -2113,6 +2113,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				showStatus("Export complete.");
 				changeState(preExportingState);
 
+			}
+			else if (source == measureMenuItem) {
+				final PathAnalyzer pa = new PathAnalyzer(plugin.getContext(), pathAndFillManager.getPaths());
+				pa.run();
+				return;
 			}
 			else if (source == loadLabelsMenuItem) {
 

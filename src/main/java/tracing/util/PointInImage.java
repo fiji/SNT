@@ -73,4 +73,8 @@ public class PointInImage {
 				|| Double.isInfinite(z));
 	}
 
+	public boolean isSameLocation(final PointInImage pim) {
+		return (this.x == pim.x) && (this.y == pim.y) && (this.z == pim.z);
+	}
+
 }

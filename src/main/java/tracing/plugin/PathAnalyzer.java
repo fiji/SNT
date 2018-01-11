@@ -104,13 +104,27 @@ public class PathAnalyzer {
 	}
 
 	private HashSet<PointInImage> getTips() {
-		if (joints == null) joints = getBranchPoints();
-		final HashSet<PointInImage> tips = joints;
+
+		// retrieve all start/end points
+		final HashSet<PointInImage> tips = new HashSet<>();
 		for (final Path p : paths) {
-			final PointInImage pim = p.getPointInImage(p.size() - 1);
-			if (tips.contains(pim)) tips.remove(pim);
+			IntStream.of(0, p.size() - 1).forEach(i -> {
+				tips.add(p.getPointInImage(i));
+			});
+		}
+
+		// now remove any joint-associated point
+		if (joints == null) joints = getBranchPoints();
+		final Iterator<PointInImage> tipIt = tips.iterator();
+		while (tipIt.hasNext()) {
+			final PointInImage tip = tipIt.next();
+			joints.forEach(joint -> {
+				if (joints.contains(tip) || tip.isSameLocation(joint))
+					tipIt.remove();
+			});
 		}
 		return tips;
+
 	}
 
 	private HashSet<PointInImage> getBranchPoints() {

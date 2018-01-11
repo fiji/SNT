@@ -247,7 +247,7 @@ public class Path implements Comparable<Path> {
 		this.primary = primary;
 	}
 
-	boolean getPrimary() {
+	public boolean isPrimary() {
 		return primary;
 	}
 

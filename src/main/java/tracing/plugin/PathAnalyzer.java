@@ -22,19 +22,20 @@
 
 package tracing.plugin;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.stream.IntStream;
+
 import org.scijava.Context;
-
-import tracing.Path;
-import tracing.util.PointInImage;
-
-import net.imagej.table.DefaultResultsTable;
-import net.imagej.table.ResultsTable;
-
 import org.scijava.app.StatusService;
 import org.scijava.display.DisplayService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
+
+import net.imagej.table.DefaultGenericTable;
+import tracing.Path;
+import tracing.util.PointInImage;
 
 
 public class PathAnalyzer {
@@ -48,34 +49,52 @@ public class PathAnalyzer {
 	@Parameter
 	private LogService logService;
 
-	private ResultsTable table;
+	private DefaultGenericTable table;
 	private final HashSet<Path> paths;
 	private HashSet<PointInImage> joints;
 
+	public PathAnalyzer(final Context context, final ArrayList<Path> paths) {
+		this(context, new HashSet<Path>(paths));
+	}
+
 	public PathAnalyzer(final Context context, final HashSet<Path> paths) {
 		context.inject(this);
-		this.paths = paths;
+
+		// Remove all paths with less than 2 points (e.g., those marking
+		// the soma), and (duplicated) paths that may exist only as just
+		// fitted versions of existing ones. If the fitted flavor of a
+		// path exists, use it instead
+		this.paths = new HashSet<Path>();
+		for (final Path p : paths) {
+			if (p == null || p.size() < 2 || p.isFittedVersionOfAnotherPath())
+				continue;
+			Path pathToAdd;
+			if (p.getUseFitted() && p.getFitted() != null)
+				pathToAdd = p.getFitted();
+			else
+				pathToAdd = p;
+			this.paths.add(pathToAdd);
+		}
+
 	}
 
 	public void summarize() {
-		if (table == null) {
-			table = new DefaultResultsTable();
-			table.appendColumns(new String[] {"# Paths", "# Primary", "# Branch Points", "# Tips", "# Total Length"});
-			table.appendRow();
-		}
+		if (table == null) table = new DefaultGenericTable();
+		table.appendRow();
 		final int row = Math.max(0, table.getRowCount() - 1);
-		table.set("# Paths", row, (double) getNPaths());
-		table.set("# Primary", row, (double) getPrimaryPaths().size());
-		table.set("# Branch Points", row, (double) getBranchPoints().size());
-		table.set("# Tips", row, (double) getTips().size());
-		table.set("# Total Length", row, getLength());
+		table.set(getCol("# Paths"), row, getNPaths());
+		table.set(getCol("# Primary"), row, getPrimaryPaths().size());
+		table.set(getCol("# Branch Points"), row, getBranchPoints().size());
+		table.set(getCol("# Tips"), row, getTips().size());
+		table.set(getCol("Total Length"), row, getLength());
+		table.set(getCol("Notes"), row, "Single point paths ignored");
 	}
 
-	public void setTable(ResultsTable table) {
+	public void setTable(final DefaultGenericTable table) {
 		this.table = table;
 	}
 
-	public ResultsTable getTable() {
+	public DefaultGenericTable getTable() {
 		return table;
 	}
 
@@ -86,8 +105,18 @@ public class PathAnalyzer {
 		}
 		statusService.showStatus("Measuring Paths...");
 		summarize();
-		displayService.createDisplay("Path Measurements", table);
+		displayService.createDisplay("Summary Measurements", table);
 		statusService.clearStatus();
+	}
+
+
+	private int getCol(final String header) {
+		int idx = table.getColumnIndex(header);
+		if (idx == -1) {
+			table.appendColumn(header);
+			idx = table.getColumnCount() - 1;
+		}
+		return idx;
 	}
 
 	private int getNPaths() {

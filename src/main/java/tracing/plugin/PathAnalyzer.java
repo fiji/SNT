@@ -27,18 +27,21 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.stream.IntStream;
 
-import org.scijava.Context;
 import org.scijava.app.StatusService;
+import org.scijava.command.ContextCommand;
 import org.scijava.display.DisplayService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
 
+import net.imagej.DatasetService;
 import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
 import tracing.util.PointInImage;
 
 
-public class PathAnalyzer {
+@Plugin(type = ContextCommand.class, visible = false)
+public class PathAnalyzer extends ContextCommand {
 
 	@Parameter
 	private StatusService statusService;
@@ -49,16 +52,19 @@ public class PathAnalyzer {
 	@Parameter
 	private LogService logService;
 
-	private DefaultGenericTable table;
 	private final HashSet<Path> paths;
 	private HashSet<PointInImage> joints;
+	private HashSet<PointInImage> tips;
+	private DefaultGenericTable table;
 
-	public PathAnalyzer(final Context context, final ArrayList<Path> paths) {
-		this(context, new HashSet<Path>(paths));
+	private String tableTitle;
+
+
+	public PathAnalyzer(final ArrayList<Path> paths) {
+		this(new HashSet<Path>(paths));
 	}
 
-	public PathAnalyzer(final Context context, final HashSet<Path> paths) {
-		context.inject(this);
+	public PathAnalyzer(final HashSet<Path> paths) {
 
 		// Remove all paths with less than 2 points (e.g., those marking
 		// the soma), and (duplicated) paths that may exist only as just
@@ -98,9 +104,10 @@ public class PathAnalyzer {
 		return table;
 	}
 
+	@Override
 	public void run() {
 		if (paths == null || paths.isEmpty()) {
-			statusService.showStatus("No Paths to Measure");
+			cancel("No Paths to Measure");
 			return;
 		}
 		statusService.showStatus("Measuring Paths...");

@@ -22,241 +22,256 @@
 
 package tracing.plugin;
 
-import java.awt.Checkbox;
+import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Vector;
+import java.util.HashSet;
 
-import ij.ImagePlus;
-import ij.Prefs;
-import ij.gui.GenericDialog;
 import ij.gui.Overlay;
+import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.plugin.frame.RoiManager;
-import tracing.NeuriteTracerResultsDialog;
+import ij.process.FloatPolygon;
 import tracing.Path;
-import tracing.PathAndFillManager;
-import tracing.SimpleNeuriteTracer;
-import tracing.gui.GuiUtils;
+import tracing.PathNode;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.PointInImage;
 
 /**
- * Convenience class for converting SNT paths into ROIs.
+ * Converts SNT paths into (IJ1) ROIs.
+ * @see {@link RoiExporterCmd}
  *
  * @author Tiago Ferreira
  */
 public class RoiConverter {
 
-	/** Flag describing SNT's XY view */
+
+	/** SNT's XY view (the default export plane)*/
 	public static final int XY_PLANE = MultiDThreePanes.XY_PLANE;
-	/** Flag describing SNT's ZY view */
+	/** SNT's ZY view */
 	public static final int ZY_PLANE = MultiDThreePanes.ZY_PLANE;
-	/** Flag describing SNT's XZ view */
+	/** SNT's XZ view */
 	public static final int XZ_PLANE = MultiDThreePanes.XZ_PLANE;
 
 	private int width = -1; // flag to use mean path diameter
 	private int exportPlane = XY_PLANE;
 	private boolean useSWCcolors;
-	private final SimpleNeuriteTracer plugin;
-	private final PathAndFillManager pathAndFillManager;
+	final ArrayList<Path> paths;
 
-	public RoiConverter(final SimpleNeuriteTracer plugin) {
-		this.plugin = plugin;
-		pathAndFillManager = plugin.getPathAndFillManager();
-	}
-
-	/** Runs SNT's ROI converter dialog. */
-	public void runGui() {
-		final NeuriteTracerResultsDialog pluginUI = plugin.getUI();
-		if (pluginUI == null) {
-			throw new IllegalArgumentException("UI method called but SNTs UI null");
-		}
-		final GuiUtils gUtils = new GuiUtils(pluginUI.getPathWindow());
-		if (!pathAndFillManager.anySelected()) {
-			gUtils.error("No paths selected.");
-			return;
-		}
-
-		final GenericDialog gd = new GenericDialog("Selected Paths to ROIs");
-
-		final int[] PLANES_ID = { XY_PLANE, XZ_PLANE, ZY_PLANE };
-		final String[] PLANES_STRING = { "XY_view", "XZ_view", "ZY_view" };
-
-		final boolean[] destinationPlanes = new boolean[PLANES_ID.length];
-		for (int i = 0; i < PLANES_ID.length; i++)
-			destinationPlanes[i] = pluginUI.getImagePlus(PLANES_ID[i]) != null;
-
-		gd.setInsets(0, 10, 0);
-		gd.addMessage("Create 2D Path-ROIs from:");
-		gd.setInsets(0, 20, 0);
-		gd.addCheckboxGroup(1, 3, PLANES_STRING, destinationPlanes);
-
-		// 2D traces?
-		final Vector<?> cbxs = gd.getCheckboxes();
-		for (int i = 1; i < PLANES_ID.length; i++)
-			((Checkbox) cbxs.get(i)).setEnabled(!plugin.is2D());
-
-		final String[] scopes = { "Image overlay", "ROI Manager" };
-		gd.addRadioButtonGroup("Store ROIs in:", scopes, 1, 2, scopes[0]);
-
-		gd.addMessage(""); // spacer
-		gd.addCheckbox("Impose default SWC colors", false);
-		gd.addCheckbox("Use average path diameter as stroke width", false);
-		gd.addCheckbox("Discard pre-existing ROIs in Overlay/Manager", true);
-		gd.showDialog();
-		if (gd.wasCanceled()) return;
-
-		for (int i = 0; i < PLANES_ID.length; i++)
-			destinationPlanes[i] = gd.getNextBoolean();
-		final String scope = gd.getNextRadioButton();
-		useSWCcolors(gd.getNextBoolean());
-		setStrokeWidth((gd.getNextBoolean()) ? -1 : 0);
-		final boolean reset = gd.getNextBoolean();
-
-		if (scopes[1].equals(scope)) { // ROI Manager
-
-			final Overlay overlay = new Overlay();
-			for (int i = 0; i < destinationPlanes.length; i++) {
-				if (destinationPlanes[i]) {
-					final int lastPlaneIdx = overlay.size() - 1;
-					convert(pathAndFillManager, overlay, PLANES_ID[i]);
-					if (plugin.is2D()) continue;
-					for (int j = lastPlaneIdx + 1; j < overlay.size(); j++) {
-						final Roi roi = overlay.get(j);
-						roi.setName(roi.getName() + " [" + PLANES_STRING[i] + "]");
-					}
-				}
-			}
-			RoiManager rm = RoiManager.getInstance2();
-			if (rm == null) rm = new RoiManager();
-			else if (reset) rm.reset();
-			Prefs.showAllSliceOnly = !plugin.is2D();
-			rm.setEditMode(plugin.getImagePlus(), false);
-			for (final Roi path : overlay.toArray())
-				rm.addRoi(path);
-			rm.runCommand("sort");
-			rm.setEditMode(plugin.getImagePlus(), true);
-			rm.runCommand("show all without labels");
-
-		}
-		else { // Overlay
-
-			String error = "";
-			for (int i = 0; i < destinationPlanes.length; i++) {
-				if (destinationPlanes[i]) {
-					final ImagePlus imp = pluginUI.getImagePlus(PLANES_ID[i]);
-					if (imp == null) {
-						error += PLANES_STRING[i] + ", ";
-						continue;
-					}
-					Overlay overlay = imp.getOverlay();
-					if (overlay == null) {
-						overlay = new Overlay();
-						imp.setOverlay(overlay);
-					}
-					else if (reset) overlay.clear();
-					convert(pathAndFillManager, overlay, PLANES_ID[i]);
-				}
-			}
-			if (error.isEmpty()) {
-				gUtils.tempMsg("ROI conversion concluded", true);
-			}
-			else {
-				gUtils.error("Some ROIs were not converted because some views (" //
-					+ error.substring(0, error.length() - 2)//
-					+ ") are not being displayed. Please generate them and " +
-					"re-run the conversion (or choose to store ROIs in ROI Manager instead).");
-			}
-		}
-	}
-
-	private void convert(final PathAndFillManager pathAndFillManager,
-		final Overlay overlay, final int plane)
-	{
-		setView(plane);
-		convert(pathAndFillManager, true, overlay);
-	}
-
-	private boolean convertablePath(final Path path) {
-		return path != null && !path.isFittedVersionOfAnotherPath();
-	}
 
 	/**
-	 * Converts paths associated with a PathAndFillManager instance.
+	 * Instantiates a new ROI converter.
 	 *
-	 * @param pathAndFillManager a valid pathAndFillManager instance
-	 * @param onlySelected if true only selected paths are converted into ROI
-	 * @param overlay the target overlay holding the converted paths
+	 * @param paths
+	 *            the list of paths to be converted. Note that if an input path is
+	 *            deemed invalid it will not be considered
+	 * @see #getParsedPaths()
 	 */
-	public void convert(final PathAndFillManager pathAndFillManager,
-		final boolean onlySelected, final Overlay overlay)
-	{
-		final ArrayList<Path> paths = new ArrayList<>();
-		for (int i = 0; i < pathAndFillManager.size(); ++i) {
-			final Path p = pathAndFillManager.getPath(i);
-			if (!convertablePath(p)) continue;
-			if (onlySelected && !pathAndFillManager.isSelected(p)) continue;
-			paths.add(p);
+	public RoiConverter(final ArrayList<Path> paths) {
+		this.paths = new ArrayList<Path>();
+		for (final Path p : paths) {
+			if (p == null || p.isFittedVersionOfAnotherPath())
+				continue;
+			Path pathToAdd;
+			if (p.getUseFitted() && p.getFitted() != null)
+				pathToAdd = p.getFitted();
+			else
+				pathToAdd = p;
+			this.paths.add(pathToAdd);
 		}
-		convert(paths, overlay);
 	}
 
 	/**
-	 * Converts a list of paths into 2D polyline ROIs
+	 * Converts paths into 2D polyline ROIs (segment paths)
 	 *
-	 * @param paths the paths being converted
 	 * @param overlay the target overlay to hold converted paths
 	 */
-	public void convert(final ArrayList<Path> paths, Overlay overlay) {
+	public void convertPaths(Overlay overlay) {
 		if (overlay == null) overlay = new Overlay();
 		for (final Path p : paths) {
-			if (!convertablePath(p)) continue;
-
-			// Monitor how many 2D ROIs we'll be generating;
-			final int firstIdx = Math.max(overlay.size() - 1, 0);
-
-			// If path suggests using fitted version, draw that instead
-			final Path drawPath = (p.getUseFitted()) ? p.getFitted() : p;
-			if (useSWCcolors) drawPath.setColorBySWCtype();
-			drawPath.drawPathAsPoints(overlay, exportPlane);
-
-			// Set ROI widths
-			for (int i = firstIdx; i < overlay.size(); i++) {
-				final double w = (width == -1) ? drawPath.getMeanRadius() * 2 : width;
-				overlay.get(i).setStrokeWidth(w);
+			if (p.size() > 1) {
+				drawPathSegments(p, overlay);
+			} else {
+				final HashSet<PointInImage> pim = new HashSet<>();
+				pim.add(p.getPointInImage(0));
+				convertPoints(pim, overlay, "SPP"); // Single Point Path
 			}
 		}
 	}
 
 	/**
-	 * Sets the exporting view (XY by default).
+	 * Converts all the tips associated with the parsed paths into {@link PointROi}s
+	 * 
+	 * @see PathAnalyzer#getTips()
+	 * @param overlay
+	 *            the target overlay to hold converted point
+	 */
+	public void convertTips(Overlay overlay) {
+		if (overlay == null) overlay = new Overlay();
+		final PathAnalyzer pa = new PathAnalyzer(paths);
+		convertPoints(pa.getTips(), overlay, "Tip");
+	}
+
+	/**
+	 * Converts all the branch points associated with the parsed paths into
+	 * {@link PointROi}s
+	 * 
+	 * @see PathAnalyzer#getBranchPoints()
+	 * @param overlay
+	 *            the target overlay to hold converted point
+	 */
+	public void convertBranchPoints(Overlay overlay) {
+		if (overlay == null) overlay = new Overlay();
+		final PathAnalyzer pa = new PathAnalyzer(paths);
+		convertPoints(pa.getTips(), overlay, "BP");
+	}
+
+	/**
+	 * Sets the exporting view for segment paths (XY by default).
 	 *
 	 * @param view either {@link XY_PLANE}, {@link XZ_PLANE} or {@link ZY_PLANE}.
 	 */
 	public void setView(final int view) {
 		if (view != XY_PLANE && view != ZY_PLANE && view != XZ_PLANE)
 			throw new IllegalArgumentException(
-				"plane is not a valid MultiDThreePanes flag");
+					"plane is not a valid MultiDThreePanes flag");
 		this.exportPlane = view;
 	}
 
 	/**
 	 * Specifies coloring of ROIs by SWC type.
 	 *
-	 * @param useSWCcolors if true exported paths are colored according to their
-	 *          SWC type integer flag.
+	 * @param useSWCcolors if true converted ROIs are colored according to their
+	 *          SWC type integer flag
 	 */
 	public void useSWCcolors(final boolean useSWCcolors) {
 		this.useSWCcolors = useSWCcolors;
 	}
 
 	/**
-	 * Sets the line width of converted ROIs. Set it to -1 to have ROIs plotted
+	 * Sets the line width of converted segment paths. Set it to -1 to have ROIs plotted
 	 * using the average diameter of the path
 	 *
 	 * @see {@link Path#getMeanRadius()}, {@link Roi#getStrokeWidth()}
 	 */
 	public void setStrokeWidth(final int width) {
 		this.width = width;
+	}
+
+	/**
+	 * Returns the list of parsed paths.
+	 *
+	 * @return the parsed paths, which may be a subset of the paths specified in the
+	 *         constructor since , e.g., paths that may exist only as just fitted
+	 *         versions of existing ones are ignored by the class.
+	 */
+	public ArrayList<Path> getParsedPaths() {
+		return paths;
+	}
+
+	private void drawPathSegments(final Path path, final Overlay overlay) {
+
+		final String basename = path.getName();
+		final Color color = (useSWCcolors)?path.getSWCcolor():path.getColor();
+		final double stroke = (width == -1) ? path.getMeanRadius() * 2 : width;
+
+		FloatPolygon polygon = new FloatPolygon();
+		int current_roi_slice = Integer.MIN_VALUE;
+		int roi_identifier = 1;
+
+		for (int i = 0; i < path.size(); ++i) {
+
+			double x = Integer.MIN_VALUE;
+			double y = Integer.MIN_VALUE;
+			int slice_of_point = Integer.MIN_VALUE;
+
+			switch (exportPlane) {
+			case XY_PLANE:
+				x = path.getXUnscaledDouble(i);
+				y = path.getYUnscaledDouble(i);
+				slice_of_point = path.getZUnscaled(i);
+				break;
+			case XZ_PLANE:
+				x = path.getXUnscaledDouble(i);
+				y = path.getZUnscaledDouble(i);
+				slice_of_point = path.getYUnscaled(i);
+				break;
+			case ZY_PLANE:
+				x = path.getZUnscaledDouble(i);
+				y = path.getYUnscaledDouble(i);
+				slice_of_point = path.getXUnscaled(i);
+				break;
+			default:
+				throw new IllegalArgumentException("exportPlane is not valid");
+			}
+
+			if (current_roi_slice == slice_of_point || i == 0) {
+				polygon.addPoint(x, y);
+			} else {
+				addPolyLineToOverlay(polygon, current_roi_slice, basename, roi_identifier++, color, stroke, overlay);
+				polygon = new FloatPolygon(); // reset ROI
+				polygon.addPoint(x, y);
+			}
+			current_roi_slice = slice_of_point;
+
+		}
+
+		// Create ROI from any remaining points
+		addPolyLineToOverlay(polygon, current_roi_slice, basename, roi_identifier, color, stroke, overlay);
+
+	}
+
+	private void addPolyLineToOverlay(final FloatPolygon p, final int z_position, final String basename, final int roi_id,
+			final Color color, final double strokeWidth, final Overlay overlay) {
+		final String sPlane = getExportPlaneAsString();
+		if (p.npoints > 0) {
+			if (p.npoints == 1) {
+				// create 1-pixel length lines for single points
+				p.xpoints[0] -= 0.5f;
+				p.ypoints[0] -= 0.5f;
+				p.addPoint(p.xpoints[0] + 0.5f, p.ypoints[0] + 0.5f);
+			}
+			final PolygonRoi polyline = new PolygonRoi(p, Roi.FREELINE);
+			polyline.enableSubPixelResolution();
+			// polyline.fitSplineForStraightening();
+			polyline.setStrokeColor(color);
+			polyline.setStrokeWidth(strokeWidth);
+			polyline.setName(String.format("%s-%s-%04d-Z%d", basename, sPlane, roi_id, z_position));
+			polyline.setPosition(0, z_position, 0);
+			overlay.add(polyline);
+		}
+	}
+
+	private void convertPoints(final HashSet<PointInImage> points, Overlay overlay, final String id) {
+		if (overlay == null)
+			overlay = new Overlay();
+		PointRoi roi = null;
+		int counter = 1;
+		final String sPlane = getExportPlaneAsString();
+		for (final PointInImage p : points) {
+			final Path path = p.onPath;
+			if (path == null) {
+				//debug("Converting "+ path +" failed. Skipping it...");
+				continue;
+			}
+			final double[] coordinates = PathNode.unScale(p, exportPlane);
+			if (roi == null) {
+				roi = new PointRoi(coordinates[0], coordinates[1]);
+			} else {
+				roi.addPoint(coordinates[0], coordinates[1]);
+			}
+			roi.setStrokeColor((useSWCcolors)?path.getSWCcolor():path.getColor());
+			roi.setPosition(0, (int) Math.round(coordinates[2]), 0);
+			roi.setName(String.format("%s-%s-%s-%03d", id, path.getName(), sPlane, counter++));
+		}
+		overlay.add(roi);
+	}
+
+	private String getExportPlaneAsString() {
+		switch(exportPlane) {
+		case XZ_PLANE: return "XZ";
+		case ZY_PLANE: return "ZY";
+		default: return "XY";
+		}
 	}
 
 }

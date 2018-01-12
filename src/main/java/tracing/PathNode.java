@@ -230,4 +230,31 @@ public class PathNode {
 		this.editable = editable;
 	}
 
+	public static double[] unScale(PointInImage pim) {
+		if (pim.onPath == null)
+			throw new IllegalArgumentException("Only path-associated points can be unscaled");
+		double x = pim.x / pim.onPath.x_spacing;
+		double y = pim.y / pim.onPath.y_spacing;
+		double z = pim.z / pim.onPath.z_spacing;
+		return new double[] {x,y,z};
+	}
+
+	public static double[] unScale(PointInImage pim, int plane) {
+		final Path path = pim.onPath;
+		if (path == null)
+			throw new IllegalArgumentException("Only path-associated points can be unscaled");
+		double x = pim.x / pim.onPath.x_spacing;
+		double y = pim.y / pim.onPath.y_spacing;
+		double z = pim.z / pim.onPath.z_spacing;
+		switch (plane) {
+		case MultiDThreePanes.XY_PLANE:
+			return new double[] { x, y, z };
+		case MultiDThreePanes.XZ_PLANE:
+			return new double[] { x, z, y };
+		case MultiDThreePanes.ZY_PLANE:
+			return new double[] { z, y, x };
+		default:
+			throw new IllegalArgumentException("BUG: Unknown plane! (" + plane + ")");
+		}
+	}
 }

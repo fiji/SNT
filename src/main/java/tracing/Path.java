@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.DoubleStream;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.stat.StatUtils;
@@ -173,8 +174,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	public String getName() {
-		if (name == null)
-			throw new RuntimeException("In Path.getName() for id " + id + ", name was null");
+		if (name == null) setDefaultName();
 		return name;
 	}
 
@@ -243,7 +243,7 @@ public class Path implements Comparable<Path> {
 		radiuses = new double[maxPoints];
 	}
 
-	void setPrimary(final boolean primary) {
+	void setIsPrimary(final boolean primary) {
 		this.primary = primary;
 	}
 
@@ -383,6 +383,12 @@ public class Path implements Comparable<Path> {
 				precise_z_positions[i]);
 		result.onPath = this;
 		return result;
+	}
+
+	public boolean contains(PointInImage pim) {
+		return (DoubleStream.of(precise_x_positions).anyMatch(x -> x == pim.x)
+				&& DoubleStream.of(precise_y_positions).anyMatch(y -> y == pim.y)
+				&& DoubleStream.of(precise_z_positions).anyMatch(z -> z == pim.z));
 	}
 
 	/**
@@ -744,7 +750,7 @@ public class Path implements Comparable<Path> {
 		for (final Path p : somehowJoins) {
 			if (pathsExplored.contains(p))
 				continue;
-			p.setPrimary(false);
+			p.setIsPrimary(false);
 			pathsExplored.add(p);
 			p.unsetPrimaryForConnected(pathsExplored);
 		}
@@ -976,80 +982,6 @@ public class Path implements Comparable<Path> {
 
 	public Color getSWCcolor() {
 		return getSWCcolor(swcType);
-	}
-
-	public void drawPathAsPoints(final Overlay overlay) {
-		drawPathAsPoints(overlay, MultiDThreePanes.XY_PLANE);
-	}
-
-	public void drawPathAsPoints(final Overlay overlay, final int plane) {
-
-		FloatPolygon polygon = new FloatPolygon();
-		int current_roi_slice = Integer.MIN_VALUE;
-		int roi_identifier = 1;
-
-		for (int i = 0; i < points; ++i) {
-
-			double x = Integer.MIN_VALUE;
-			double y = Integer.MIN_VALUE;
-			int slice_of_point = Integer.MIN_VALUE;
-
-			switch (plane) {
-			case MultiDThreePanes.XY_PLANE:
-				x = getXUnscaledDouble(i);
-				y = getYUnscaledDouble(i);
-				slice_of_point = getZUnscaled(i);
-				break;
-			case MultiDThreePanes.XZ_PLANE:
-				x = getXUnscaledDouble(i);
-				y = getZUnscaledDouble(i);
-				slice_of_point = getYUnscaled(i);
-				break;
-			case MultiDThreePanes.ZY_PLANE:
-				x = getZUnscaledDouble(i);
-				y = getYUnscaledDouble(i);
-				slice_of_point = getXUnscaled(i);
-				break;
-			default:
-				throw new IllegalArgumentException(
-						"plane is not a valid MultiDThreePanes flag");
-			}
-
-			if (current_roi_slice == slice_of_point || i == 0) {
-				polygon.addPoint(x, y);
-			} else {
-				addPolyLineToOverlay(polygon, current_roi_slice, roi_identifier++, overlay);
-				polygon = new FloatPolygon(); // reset ROI
-				polygon.addPoint(x, y);
-			}
-			current_roi_slice = slice_of_point;
-
-		}
-
-		// Create ROI from any remaining points
-		addPolyLineToOverlay(polygon, current_roi_slice, roi_identifier, overlay);
-
-	}
-
-	private void addPolyLineToOverlay(final FloatPolygon p, final int z_position, final int roi_id,
-			final Overlay overlay) {
-		if (p.npoints > 0) {
-			if (p.npoints == 1) {
-				// create 1-pixel length lines for single points
-				p.xpoints[0] -= 0.5f;
-				p.ypoints[0] -= 0.5f;
-				p.addPoint(p.xpoints[0] + 0.5f, p.ypoints[0] + 0.5f);
-			}
-			final PolygonRoi polyline = new PolygonRoi(p, Roi.FREELINE);
-			polyline.enableSubPixelResolution();
-			// polyline.fitSplineForStraightening();
-			if (name == null)
-				setDefaultName();
-			polyline.setStrokeColor(getColor());
-			polyline.setName(String.format(name + "-%04d-Z%d", roi_id, z_position));
-			polyline.setPosition(z_position + 1); // index 1
-			overlay.add(polyline);
-		}
 	}
 
 	// ------------------------------------------------------------------------

@@ -1830,33 +1830,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setShowOnlySelectedPaths(showOnlySelectedPaths, true);
 	}
 
-	public void addPathsToOverlay(Overlay overlay, final int plane,
-		final boolean SWTColoring)
-	{
-
-		if (overlay == null) overlay = new Overlay();
-
-		if (pathAndFillManager != null) {
-			for (int i = 0; i < pathAndFillManager.size(); ++i) {
-
-				final Path p = pathAndFillManager.getPath(i);
-				if (p == null) continue;
-
-				if (p.fittedVersionOf != null) continue;
-
-				// If the path suggests using the fitted version, draw that
-				// instead
-				final Path drawPath = (p.useFitted) ? p.fitted : p;
-
-				if (showOnlySelectedPaths && !pathAndFillManager.isSelected(p))
-					continue;
-
-				if (SWTColoring) drawPath.setColorBySWCtype();
-				drawPath.drawPathAsPoints(overlay, plane);
-			}
-		}
-	}
-
 	protected StackWindow getWindow(final int plane) {
 		switch (plane) {
 			case MultiDThreePanes.XY_PLANE:

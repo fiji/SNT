@@ -92,7 +92,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 
 	private SimpleNeuriteTracer plugin;
-	ImagePlus imagePlus;
+	private ImagePlus imagePlus;
 
 	int maxUsedID = -1;
 
@@ -1155,7 +1155,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			Integer fittedVersionOfIDInteger = null;
 
 			if (primaryString != null && primaryString.equals("true"))
-				current_path.setPrimary(true);
+				current_path.setIsPrimary(true);
 
 			int id = -1;
 

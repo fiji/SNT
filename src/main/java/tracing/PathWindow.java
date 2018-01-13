@@ -1233,7 +1233,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				final Path[] singlePath = selectedPaths.toArray(new Path[] {});
 				final Path p = singlePath[0];
 				final HashSet<Path> pathsExplored = new HashSet<>();
-				p.setPrimary(true);
+				p.setIsPrimary(true);
 				pathsExplored.add(p);
 				p.unsetPrimaryForConnected(pathsExplored);
 				pathAndFillManager.resetListeners(null);

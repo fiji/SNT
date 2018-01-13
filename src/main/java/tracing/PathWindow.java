@@ -46,8 +46,10 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -85,9 +87,13 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import org.scijava.command.CommandModule;
+import org.scijava.command.CommandService;
+
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SwingSafeResult;
+import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.RoiConverter;
 import tracing.plugin.SkeletonConverter;
 import tracing.util.SWCColor;
@@ -1312,8 +1318,10 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			}
 			else if (source == exportAsRoiMenuItem) {
 
-				new RoiConverter(plugin).runGui();
-				return;
+				final Map<String, Object> input= new HashMap<>();
+				input.put("paths", pathAndFillManager.getSelectedPaths());
+				CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				cmdService.run(ROIExporterCmd.class, true, input);
 
 			}
 			else if (source == makeLineStackMenuItem) {

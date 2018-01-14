@@ -140,7 +140,7 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 	private Graphics2D backBufferGraphics;
 	private Image backBufferImage;
 
-	private void resetBackBuffer() {
+	protected void resetBackBuffer() {
 
 		if (backBufferGraphics != null) {
 			backBufferGraphics.dispose();

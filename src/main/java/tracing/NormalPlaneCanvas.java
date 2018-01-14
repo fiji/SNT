@@ -22,23 +22,48 @@
 
 package tracing;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Image;
+import java.awt.Graphics2D;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 
+import org.scijava.display.DisplayService;
+
 import ij.ImagePlus;
-import ij.gui.ImageCanvas;
+import ij.gui.StackWindow;
+import tracing.hyperpanes.MultiDThreePanes;
+
 
 @SuppressWarnings("serial")
-class NormalPlaneCanvas extends ImageCanvas {
+class NormalPlaneCanvas extends TracerCanvas {
 
-	HashMap<Integer, Integer> indexToValidIndex = new HashMap<>();
+	private double maxScore = -1;
+	private int last_slice = -1;
 
-	public NormalPlaneCanvas(final ImagePlus imp, final SimpleNeuriteTracer plugin, final double[] centre_x_positions,
+	private final double[] centre_x_positions;
+	private final double[] centre_y_positions;
+	private final double[] radiuses;
+	private final double[] scores;
+	private final double[] modeRadiuses;
+	private final boolean[] valid;
+	private final double[] angles;
+
+	private final Path fittedPath;
+	private final SimpleNeuriteTracer tracerPlugin;
+	private final HashMap<Integer, Integer> indexToValidIndex = new HashMap<>();
+
+
+	protected NormalPlaneCanvas(final ImagePlus imp, final SimpleNeuriteTracer plugin, final double[] centre_x_positions,
 			final double[] centre_y_positions, final double[] radiuses, final double[] scores,
 			final double[] modeRadiuses, final double[] angles, final boolean[] valid, final Path fittedPath) {
-		super(imp);
+		super(imp, plugin, MultiDThreePanes.XY_PLANE, plugin.getPathAndFillManager());
+
+		SNT.debug("Generating NormalPlaneCanvas");
 		tracerPlugin = plugin;
 		this.centre_x_positions = centre_x_positions;
 		this.centre_y_positions = centre_y_positions;
@@ -58,112 +83,42 @@ class NormalPlaneCanvas extends ImageCanvas {
 				++a;
 			}
 		}
-	}
 
-	double maxScore = -1;
+		// Make ImageCanvas fully independent from SNT
+		disableEvents(true);
+		setDrawCrosshairs(false);
+		disableZoom(true);
+		//setAnnotationsColor(Color.BLUE);
 
-	double[] centre_x_positions;
-	double[] centre_y_positions;
-	double[] radiuses;
-	double[] scores;
-	double[] modeRadiuses;
-	boolean[] valid;
-	double[] angles;
-
-	Path fittedPath;
-
-	SimpleNeuriteTracer tracerPlugin;
-
-	/* Keep another Graphics for double-buffering... */
-
-	private int backBufferWidth;
-	private int backBufferHeight;
-
-	private Graphics backBufferGraphics;
-	private Image backBufferImage;
-
-	private void resetBackBuffer() {
-
-		if (backBufferGraphics != null) {
-			backBufferGraphics.dispose();
-			backBufferGraphics = null;
-		}
-
-		if (backBufferImage != null) {
-			backBufferImage.flush();
-			backBufferImage = null;
-		}
-
-		backBufferWidth = getSize().width;
-		backBufferHeight = getSize().height;
-
-		backBufferImage = createImage(backBufferWidth, backBufferHeight);
-		backBufferGraphics = backBufferImage.getGraphics();
 	}
 
 	@Override
-	public void paint(final Graphics g) {
-
-		if (backBufferWidth != getSize().width || backBufferHeight != getSize().height || backBufferImage == null
-				|| backBufferGraphics == null)
-			resetBackBuffer();
-
-		super.paint(backBufferGraphics);
-		drawOverlay(backBufferGraphics);
-		g.drawImage(backBufferImage, 0, 0, this);
-	}
-
-	int last_slice = -1;
-
-	// FIXME: drawOverlay in ImageCanvas arrived after I wrote this code, I
-	// think
-	protected void drawOverlay(final Graphics g) {
+	protected void drawOverlay(final Graphics2D g) {
 
 		final int z = imp.getZ() - 1;
 
-		if (z != last_slice) {
-			final Integer fittedIndex = indexToValidIndex.get(z);
-			if (fittedIndex != null) {
-				final int px = fittedPath.getXUnscaled(fittedIndex.intValue());
-				final int py = fittedPath.getYUnscaled(fittedIndex.intValue());
-				final int pz = fittedPath.getZUnscaled(fittedIndex.intValue());
-				tracerPlugin.setSlicesAllPanes(px, py, pz);
-				tracerPlugin.setCrosshair(px, py, pz);
-				last_slice = z;
-			}
-		}
-
-		if (valid[z])
-			g.setColor(Color.RED);
-		else
-			g.setColor(Color.MAGENTA);
-
-		SNT.log("radiuses[" + z + "] is: " + radiuses[z]);
-
-		final int x_top_left = screenXD(centre_x_positions[z] - radiuses[z]);
-		final int y_top_left = screenYD(centre_y_positions[z] - radiuses[z]);
-
-		g.fillRect(screenXD(centre_x_positions[z]) - 2, screenYD(centre_y_positions[z]) - 2, 5, 5);
-
-		final int diameter = screenXD(centre_x_positions[z] + radiuses[z])
-				- screenXD(centre_x_positions[z] - radiuses[z]);
-
-		g.drawOval(x_top_left, y_top_left, diameter, diameter);
-
+		// build label
 		final double proportion = scores[z] / maxScore;
-		final int drawToX = (int) (proportion * (imp.getWidth() - 1));
-		if (valid[z])
-			g.setColor(Color.GREEN);
-		else
-			g.setColor(Color.RED);
-		g.fillRect(screenX(0), screenY(0), screenX(drawToX) - screenX(0), screenY(2) - screenY(0));
+		setCanvasLabel(String.format("r=%s score=%s", SNT.formatDouble(radiuses[z], 2), SNT.formatDouble(proportion, 2)));
 
-		final int modeOvalX = screenXD(imp.getWidth() / 2.0 - modeRadiuses[z]);
-		final int modeOvalY = screenYD(imp.getHeight() / 2.0 - modeRadiuses[z]);
-		final int modeOvalDiameter = screenXD(imp.getWidth() / 2.0 + modeRadiuses[z]) - modeOvalX;
+		// mark center
+		g.setStroke(new BasicStroke(2));
+		g.setColor((valid[z])?Color.RED:Color.MAGENTA);
+		final double x_top_left = myScreenXDprecise(centre_x_positions[z] - radiuses[z]);
+		final double y_top_left = myScreenYDprecise(centre_y_positions[z] - radiuses[z]);
+		g.fill(new Rectangle2D.Double(myScreenXDprecise(centre_x_positions[z]) - 2, myScreenYDprecise(centre_y_positions[z]) - 2, 5, 5));
+
+		// mark diameter
+		final double diameter = myScreenXDprecise(centre_x_positions[z] + radiuses[z])
+				- myScreenXDprecise(centre_x_positions[z] - radiuses[z]);
+		g.draw(new Ellipse2D.Double(x_top_left, y_top_left, diameter, diameter));
+
+		final double modeOvalX = myScreenXDprecise(imp.getWidth() / 2.0 - modeRadiuses[z]);
+		final double modeOvalY = myScreenYDprecise(imp.getHeight() / 2.0 - modeRadiuses[z]);
+		final double modeOvalDiameter = myScreenXDprecise(imp.getWidth() / 2.0 + modeRadiuses[z]) - modeOvalX;
 
 		g.setColor(Color.YELLOW);
-		g.drawOval(modeOvalX, modeOvalY, modeOvalDiameter, modeOvalDiameter);
+		g.draw(new Ellipse2D.Double(modeOvalX, modeOvalY, modeOvalDiameter, modeOvalDiameter));
 
 		// Show the angle between this one and the other two
 		// so we can see where the path is "pinched":
@@ -176,8 +131,42 @@ class NormalPlaneCanvas extends ImageCanvas {
 		final double rightY = centreY - h * Math.cos(halfAngle);
 		final double leftX = centreX + h * Math.sin(-halfAngle);
 		final double leftY = centreX - h * Math.cos(halfAngle);
-		g.drawLine(screenXD(centreX), screenYD(centreY), screenXD(rightX), screenYD(rightY));
-		g.drawLine(screenXD(centreX), screenYD(centreY), screenXD(leftX), screenYD(leftY));
+		g.draw(new Line2D.Double(myScreenXDprecise(centreX), myScreenYDprecise(centreY), myScreenXDprecise(rightX), myScreenYDprecise(rightY)));
+		g.draw(new Line2D.Double(myScreenXDprecise(centreX), myScreenYDprecise(centreY), myScreenXDprecise(leftX), myScreenYDprecise(leftY)));
+
+		super.drawOverlay(g); // draw canvas label
+
+		if (syncWithTracingCanvas() && z != last_slice) {
+			final Integer fittedIndex = indexToValidIndex.get(z);
+			if (fittedIndex != null) {
+				final int px = fittedPath.getXUnscaled(fittedIndex.intValue());
+				final int py = fittedPath.getYUnscaled(fittedIndex.intValue());
+				final int pz = fittedPath.getZUnscaled(fittedIndex.intValue());
+				tracerPlugin.setSlicesAllPanes(px, py, pz);
+				last_slice = z;
+			}
+		}
+
+	}
+
+	private boolean syncWithTracingCanvas() {
+		return (tracerPlugin.isReady() && (tracerPlugin.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH
+				|| tracerPlugin.getUIState() == NeuriteTracerResultsDialog.PAUSED
+				|| tracerPlugin.getUIState() == NeuriteTracerResultsDialog.EDITING_MODE));
+	}
+
+	protected void showImage() {
+		final DisplayService displayService = tracerPlugin.getContext().getService(DisplayService.class);
+		final StackWindow win = new StackWindow(imp, this);
+		win.addWindowListener(new WindowAdapter() {
+
+			@Override
+			public void windowGainedFocus(final WindowEvent e) {
+				if (syncWithTracingCanvas() && pathAndFillManager.getPaths().contains(fittedPath)) {
+					tracerPlugin.selectPath(fittedPath, false);
+				}
+			}});
+		displayService.createDisplay(win);
 	}
 
 }

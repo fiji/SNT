@@ -148,7 +148,7 @@ public class LegacyTracerCanvas extends TracerCanvas {
 	private Graphics backBufferGraphics;
 	private Image backBufferImage;
 
-	private void resetBackBuffer() {
+	protected void resetBackBuffer() {
 
 		if (backBufferGraphics != null) {
 			backBufferGraphics.dispose();

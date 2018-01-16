@@ -34,7 +34,6 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.DatasetService;
 import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
 import tracing.util.PointInImage;
@@ -53,34 +52,46 @@ public class PathAnalyzer extends ContextCommand {
 	private LogService logService;
 
 	private final HashSet<Path> paths;
+	private HashSet<Path> primaries;
+	private HashSet<Path> terminals;
 	private HashSet<PointInImage> joints;
 	private HashSet<PointInImage> tips;
 	private DefaultGenericTable table;
 
 	private String tableTitle;
-
+	private int fittedPathsCounter = 0;
 
 	public PathAnalyzer(final ArrayList<Path> paths) {
 		this(new HashSet<Path>(paths));
 	}
 
+	/**
+	 * Instantiates a new path analyzer.
+	 *
+	 * @param paths
+	 *            list of paths to be analyzed. Note that some paths may be excluded
+	 *            from analysis: I.e., those with less than 2 points (e.g.,used to
+	 *            mark the soma), and (duplicated) paths that may exist only as just
+	 *            fitted versions of existing ones.
+	 * @throws IllegalArgumentException
+	 *             if none of input paths can be analyzed.
+	 */
 	public PathAnalyzer(final HashSet<Path> paths) {
-
-		// Remove all paths with less than 2 points (e.g., those marking
-		// the soma), and (duplicated) paths that may exist only as just
-		// fitted versions of existing ones. If the fitted flavor of a
-		// path exists, use it instead
 		this.paths = new HashSet<Path>();
 		for (final Path p : paths) {
 			if (p == null || p.size() < 2 || p.isFittedVersionOfAnotherPath())
 				continue;
 			Path pathToAdd;
-			if (p.getUseFitted() && p.getFitted() != null)
+			// If fitted flavor of path exists use it instead
+			if (p.getUseFitted() && p.getFitted() != null) { 
 				pathToAdd = p.getFitted();
-			else
+				fittedPathsCounter++;
+			} else {
 				pathToAdd = p;
+			}
 			this.paths.add(pathToAdd);
 		}
+		if (this.paths.isEmpty()) throw new IllegalArgumentException("No valid paths to be analyzed");
 
 	}
 
@@ -88,16 +99,25 @@ public class PathAnalyzer extends ContextCommand {
 		if (table == null) table = new DefaultGenericTable();
 		table.appendRow();
 		final int row = Math.max(0, table.getRowCount() - 1);
-		table.set(getCol("# Paths"), row, getNPaths());
-		table.set(getCol("# Primary"), row, getPrimaryPaths().size());
+		table.set(getCol("# Paths (Fitted)"), row, getNPaths());
 		table.set(getCol("# Branch Points"), row, getBranchPoints().size());
 		table.set(getCol("# Tips"), row, getTips().size());
-		table.set(getCol("Total Length"), row, getLength());
-		table.set(getCol("Notes"), row, "Single point paths ignored");
+		table.set(getCol("Total Length"), row, getTotalLength());
+		table.set(getCol("# Primary Paths (PP)"), row, getPrimaryPaths().size());
+		table.set(getCol("# Terminal Paths (TP)"), row, getTerminalPaths().size());
+		table.set(getCol("Sum length PP"), row, getPrimaryLength());
+		table.set(getCol("Sum length TP"), row, getTerminalLength());
+		table.set(getCol("# Fitted Paths"), row, fittedPathsCounter);
+		table.set(getCol("Notes"), row, "Single point paths ignored. ");
 	}
 
 	public void setTable(final DefaultGenericTable table) {
 		this.table = table;
+	}
+
+	public void setTable(final DefaultGenericTable table, final String title) {
+		this.table = table;
+		this.tableTitle = title;
 	}
 
 	public DefaultGenericTable getTable() {
@@ -112,7 +132,7 @@ public class PathAnalyzer extends ContextCommand {
 		}
 		statusService.showStatus("Measuring Paths...");
 		summarize();
-		displayService.createDisplay("Summary Measurements", table);
+		displayService.createDisplay((tableTitle == null) ? "Summary Measurements" : tableTitle, table);
 		statusService.clearStatus();
 	}
 
@@ -126,12 +146,12 @@ public class PathAnalyzer extends ContextCommand {
 		return idx;
 	}
 
-	private int getNPaths() {
+	public int getNPaths() {
 		return paths.size();
 	}
 
-	private HashSet<Path> getPrimaryPaths() {
-		final HashSet<Path> primaries = new HashSet<Path>();
+	public HashSet<Path> getPrimaryPaths() {
+		primaries = new HashSet<Path>();
 		for (final Path p : paths) {
 			if (p.isPrimary())
 				primaries.add(p);
@@ -139,10 +159,26 @@ public class PathAnalyzer extends ContextCommand {
 		return primaries;
 	}
 
-	private HashSet<PointInImage> getTips() {
+	public HashSet<Path> getTerminalPaths() {
+		if (tips == null) getTips();
+		terminals = new HashSet<Path>();
+		for (final PointInImage tip : tips) {
+			if (tip.onPath != null) {
+				terminals.add(tip.onPath);
+			} else {
+				for (final Path p : paths) {
+					if (p.contains(tip))
+						terminals.add(p);
+				}
+			}
+		}
+		return terminals;
+	}
+
+	public HashSet<PointInImage> getTips() {
 
 		// retrieve all start/end points
-		final HashSet<PointInImage> tips = new HashSet<>();
+		tips = new HashSet<>();
 		for (final Path p : paths) {
 			IntStream.of(0, p.size() - 1).forEach(i -> {
 				tips.add(p.getPointInImage(i));
@@ -150,7 +186,7 @@ public class PathAnalyzer extends ContextCommand {
 		}
 
 		// now remove any joint-associated point
-		if (joints == null) joints = getBranchPoints();
+		if (joints == null) getBranchPoints();
 		final Iterator<PointInImage> tipIt = tips.iterator();
 		while (tipIt.hasNext()) {
 			final PointInImage tip = tipIt.next();
@@ -163,7 +199,7 @@ public class PathAnalyzer extends ContextCommand {
 
 	}
 
-	private HashSet<PointInImage> getBranchPoints() {
+	public HashSet<PointInImage> getBranchPoints() {
 		joints = new HashSet<PointInImage>();
 		for (final Path p : paths) {
 			joints.addAll(p.findJoinedPoints());
@@ -171,7 +207,21 @@ public class PathAnalyzer extends ContextCommand {
 		return joints;
 	}
 
-	private double getLength() {
+	public double getTotalLength() {
+		return sumLength(paths);
+	}
+
+	public double getPrimaryLength() {
+		if (primaries == null) getPrimaryPaths();
+		return sumLength(primaries);
+	}
+
+	public double getTerminalLength() {
+		if (terminals == null) getTerminalPaths();
+		return sumLength(terminals);
+	}
+
+	private double sumLength(final HashSet<Path>paths) {
 		double sum = 0;
 		for (final Path p : paths) {
 			sum += p.getRealLength();

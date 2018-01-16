@@ -2117,6 +2117,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			else if (source == measureMenuItem) {
 				final PathAnalyzer pa = new PathAnalyzer(pathAndFillManager.getPaths());
 				pa.setContext(plugin.getContext());
+				pa.setTable(null, "SNT Summary Measurements (All Paths)");
 				pa.run();
 				return;
 			}

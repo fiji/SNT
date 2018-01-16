@@ -237,8 +237,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 */
 	public synchronized void setSelected(final Path[] selectedPaths, final Object sourceOfMessage) {
 		selectedPathsSet.clear();
-		for (int i = 0; i < selectedPaths.length; ++i)
-			selectedPathsSet.add(selectedPaths[i]);
+		for (int i = 0; i < selectedPaths.length; ++i) {
+			Path pathToSelect = selectedPaths[i];
+			if (pathToSelect.getUseFitted())
+				pathToSelect = pathToSelect.fitted;
+			//pathToSelect.setSelected(true);
+			selectedPathsSet.add(pathToSelect);
+		}
 		for (final PathAndFillListener pafl : listeners) {
 			if (pafl != sourceOfMessage)
 				// The source of the message already knows the states:

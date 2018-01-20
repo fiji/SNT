@@ -2076,6 +2076,16 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return allPaths;
 	}
 
+	protected ArrayList<Path> getPathsFiltered() {
+		final ArrayList<Path> paths = new ArrayList<Path>();
+		for (final Path p : getPaths()) {
+			if (p == null || p.isFittedVersionOfAnotherPath())
+				continue;
+			paths.add(p);
+		}
+		return paths;
+	}
+
 	// Methods we need to implement for UniverseListener:
 	@Override
 	public void transformationStarted(final View view) {

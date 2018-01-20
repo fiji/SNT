@@ -25,14 +25,18 @@ package tracing.gui;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dialog.ModalityType;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,7 +73,7 @@ import tracing.SNT;
 
 public class GuiUtils {
 
-	private final Component parent;
+	final private Component parent;
 
 	public GuiUtils(final Component parent) {
 		this.parent = parent;
@@ -87,53 +91,13 @@ public class GuiUtils {
 		centeredDialog(msg, title, JOptionPane.ERROR_MESSAGE);
 	}
 
-	public void tempMsg(final String msg, final boolean snapToParent) {
-		tempMsg(msg, -1, -1, snapToParent);
+	public JDialog floatingMsg(final String msg) {
+		return new FloatingDialog(msg);
 	}
 
-	public void tempMsg(final String msg, final Point location) {
-		tempMsg(msg, location.x, location.y, true);
-	}
-
-	private void tempMsg(final String msg, final int x, final int y,
-		final boolean snapToParent)
-	{
-		assert SwingUtilities.isEventDispatchThread();
-		final JDialog dialog = new JDialog();
-		dialog.setUndecorated(true);
-		dialog.setModal(false);
-		dialog.getContentPane().setBackground(Color.WHITE);
-		dialog.setBackground(Color.WHITE);
-		final JLabel label = getLabel(msg);
-		label.setHorizontalAlignment(SwingConstants.CENTER);
-		label.setBorder(new EmptyBorder(10, 10, 10, 10));
-		label.setBackground(Color.WHITE);
-		dialog.add(label);
-		dialog.pack();
-		if (snapToParent && parent != null) {
-			dialog.setPreferredSize(new Dimension(parent.getWidth(), dialog
-				.getHeight()));
-			final Point p = new Point(parent.getWidth() / 2 - dialog.getWidth() / 2,
-				parent.getHeight() / 2 - dialog.getHeight() / 2);
-			dialog.setLocation(p.x + parent.getX(), p.y + parent.getY());
-		}
-		else if (x != -1 && y != -1) {
-			dialog.setLocation(x, y);
-		}
-		else {
-			dialog.setLocationRelativeTo(null);
-		}
-		final Timer timer = new Timer(2500, new ActionListener() {
-
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-			}
-		});
-		timer.setRepeats(false);
-		timer.start();
-		dialog.setAlwaysOnTop(true);
+	public void tempMsg(final String msg) {
+		JDialog dialog = new FloatingDialog(msg);
+		GuiUtils.setAutoDismiss(dialog);
 		dialog.toFront();
 		dialog.setVisible(true);
 	}
@@ -364,18 +328,6 @@ public class GuiUtils {
 		blinkingComponent.setForeground(prevColor);
 	}
 
-	/**
-	 * Displays an auto-dismiss dialog (temporary message) at current cursor
-	 * location.
-	 *
-	 * @param msg the message to be displayed. HMTL allowed.
-	 */
-	public void msgAtPointer(final String msg) {
-		final Point loc = MouseInfo.getPointerInfo().getLocation();
-		tempMsg(msg, loc.x, loc.y, false);
-		return;
-	}
-
 	/* Static methods */
 
 	public static void addSeparator(final JComponent component, final String heading,
@@ -491,6 +443,133 @@ public class GuiUtils {
 
 	public static void errorPrompt(final String msg) {
 		new GuiUtils().error(msg, "SNT v"+ SNT.VERSION);
+	}
+
+	public static void setAutoDismiss(final JDialog dialog) {
+		dialog.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseClicked(final MouseEvent e) {
+				dialog.dispose();
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				dialog.dispose();
+			}
+		});
+		final Timer timer = new Timer(2500, new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				dialog.dispose();
+			}
+		});
+		timer.setRepeats(false);
+		timer.start();
+	}
+
+	private class FloatingDialog extends JDialog implements ComponentListener, WindowListener {
+
+		private static final long serialVersionUID = 1L;
+
+		public FloatingDialog(final String msg) {
+			super();
+			setUndecorated(true);
+			setModal(false);
+			setResizable(false);
+			setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			setAlwaysOnTop(true);
+			getContentPane().setBackground(Color.WHITE);
+			setBackground(Color.WHITE);
+			final JLabel label = getLabel(msg);
+			label.setHorizontalAlignment(SwingConstants.CENTER);
+			label.setBorder(new EmptyBorder(10, 10, 10, 10));
+			label.setBackground(Color.WHITE);
+			add(label);
+			pack();
+			centerOnParent();
+			if (parent != null) parent.addComponentListener(this);
+			setVisible(true);
+			toFront();
+		}
+
+		@Override
+		public void dispose() {
+			parent.removeComponentListener(this);
+			super.dispose();
+		}
+
+		private void centerOnParent() {
+			if (parent == null) return;
+			final Point p = new Point(parent.getWidth() / 2 - getWidth() / 2, parent.getHeight() / 2 - getHeight() / 2);
+			setLocation(p.x + parent.getX(), p.y + parent.getY());
+		}
+
+		private void recenter() {
+			assert SwingUtilities.isEventDispatchThread();
+			setVisible(false);
+			centerOnParent();
+			setVisible(true);
+		}
+
+		@Override
+		public void componentResized(final ComponentEvent e) {
+			recenter();
+		}
+
+		@Override
+		public void componentMoved(final ComponentEvent e) {
+			recenter();
+		}
+
+		@Override
+		public void componentShown(final ComponentEvent e) {
+			setVisible(true);
+			toFront();
+		}
+
+		@Override
+		public void componentHidden(final ComponentEvent e) {
+			setVisible(false);
+		}
+
+		@Override
+		public void windowClosing(WindowEvent e) {
+			setVisible(false);
+		}
+
+		@Override
+		public void windowIconified(WindowEvent e) {
+			setVisible(false);
+		}
+
+		@Override
+		public void windowDeiconified(WindowEvent e) {
+			setVisible(true);
+			toFront();
+		}
+
+		@Override
+		public void windowOpened(WindowEvent e) {
+			// do nothing
+		}
+
+		@Override
+		public void windowClosed(WindowEvent e) {
+			setVisible(false);
+		}
+
+		@Override
+		public void windowActivated(WindowEvent e) {
+			// do nothing
+		}
+
+		@Override
+		public void windowDeactivated(WindowEvent e) {
+			// do nothing
+		}
+
 	}
 
 }

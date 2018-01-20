@@ -24,18 +24,22 @@ package tracing;
 
 import java.util.ArrayList;
 
-import ij.IJ;
+import org.scijava.app.StatusService;
+
 
 /**
- * An implementation of the MultiTaskProgress interface that updates the ImageJ
- * progress bar
+ * An implementation of the MultiTaskProgress interface that updates the
+ * {@link StatusService} progress bar
  */
-
 public class FittingProgress implements MultiTaskProgress {
-	ArrayList<Double> tasksProportionsDone;
-	int totalTasks;
 
-	public FittingProgress(final int totalTasks) {
+	int totalTasks;
+	double progress;
+	private final StatusService statusService;
+	private final ArrayList<Double> tasksProportionsDone;
+
+	public FittingProgress(final StatusService statusService, final int totalTasks) {
+		this.statusService = statusService;
 		tasksProportionsDone = new ArrayList<>();
 		this.totalTasks = totalTasks;
 		for (int i = 0; i < totalTasks; ++i)
@@ -52,11 +56,16 @@ public class FittingProgress implements MultiTaskProgress {
 		double totalDone = 0;
 		for (final double p : tasksProportionsDone)
 			totalDone += p;
-		IJ.showProgress(totalDone / totalTasks);
+		statusService.showStatus((int) totalDone, totalTasks, "Fitting... ");
+	}
+
+	protected double getProgress() {
+		return progress;
 	}
 
 	@Override
 	public void done() {
-		IJ.showProgress(1.0);
+		statusService.clearStatus();
+		statusService.showProgress(0, 0);
 	}
 }

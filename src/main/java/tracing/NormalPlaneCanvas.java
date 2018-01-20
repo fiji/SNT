@@ -44,6 +44,7 @@ class NormalPlaneCanvas extends TracerCanvas {
 
 	private double maxScore = -1;
 	private int last_slice = -1;
+	private int last_editable_node = -1;
 
 	private final double[] centre_x_positions;
 	private final double[] centre_y_positions;
@@ -136,36 +137,42 @@ class NormalPlaneCanvas extends TracerCanvas {
 
 		super.drawOverlay(g); // draw canvas label
 
-		if (syncWithTracingCanvas() && z != last_slice) {
-			final Integer fittedIndex = indexToValidIndex.get(z);
-			if (fittedIndex != null) {
-				final int px = fittedPath.getXUnscaled(fittedIndex.intValue());
-				final int py = fittedPath.getYUnscaled(fittedIndex.intValue());
-				final int pz = fittedPath.getZUnscaled(fittedIndex.intValue());
-				tracerPlugin.setSlicesAllPanes(px, py, pz);
-				last_slice = z;
-			}
+		if (!syncWithTracingCanvas() || z == last_slice) {
+			//fittedPath.setEditableNode(-1);
+			return;
+		}
+
+		final Integer fittedIndex = indexToValidIndex.get(z);
+		if (fittedIndex != null) {
+			final int px = fittedPath.getXUnscaled(fittedIndex.intValue());
+			final int py = fittedPath.getYUnscaled(fittedIndex.intValue());
+			final int pz = fittedPath.getZUnscaled(fittedIndex.intValue());
+			tracerPlugin.setSlicesAllPanes(px, py, pz);
+			last_slice = z;
+			last_editable_node = fittedIndex.intValue();
+			fittedPath.setEditableNode(last_editable_node);
 		}
 
 	}
 
 	private boolean syncWithTracingCanvas() {
-		return (tracerPlugin.isReady() && (tracerPlugin.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH
-				|| tracerPlugin.getUIState() == NeuriteTracerResultsDialog.PAUSED
-				|| tracerPlugin.getUIState() == NeuriteTracerResultsDialog.EDITING_MODE));
+		return (tracerPlugin.isReady() && tracerPlugin.getUIState() == NeuriteTracerResultsDialog.EDITING_MODE);
 	}
 
 	protected void showImage() {
 		final DisplayService displayService = tracerPlugin.getContext().getService(DisplayService.class);
 		final StackWindow win = new StackWindow(imp, this);
+		while (magnification < 8)
+			zoomIn(0, 0);
 		win.addWindowListener(new WindowAdapter() {
 
 			@Override
-			public void windowGainedFocus(final WindowEvent e) {
-				if (syncWithTracingCanvas() && pathAndFillManager.getPaths().contains(fittedPath)) {
+			public void windowActivated(final WindowEvent e) {
+				if (syncWithTracingCanvas()) {
 					tracerPlugin.selectPath(fittedPath, false);
 				}
-			}});
+			}
+		});
 		displayService.createDisplay(win);
 	}
 

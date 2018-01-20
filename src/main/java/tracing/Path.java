@@ -1759,25 +1759,22 @@ public class Path implements Comparable<Path> {
 		}
 
 		if (added != fittedLength)
-			throw new RuntimeException("Mismatch of lengths, added=" + added + " and fittedLength=" + fittedLength);
+			throw new IllegalArgumentException("Mismatch of lengths, added=" + added + " and fittedLength=" + fittedLength);
 
 		fitted.setFittedCircles(fitted_ts_x, fitted_ts_y, fitted_ts_z, fitted_rs, fitted_optimized_x,
 				fitted_optimized_y, fitted_optimized_z);
+		fitted.setName("Fitted Path [" + getID() + "]");
+		fitted.setColor(getColor());
+		fitted.setSWCType(getSWCType());
+		setFitted(fitted);
 
 		if (display) {
-
-			final ImagePlus imp = new ImagePlus("normal stack", stack);
-
+			SNT.debug("displaying normal plane image");
+			final ImagePlus imp = new ImagePlus("Normal Plane " + fitted.name, stack);
 			final NormalPlaneCanvas normalCanvas = new NormalPlaneCanvas(imp, plugin, centre_x_positionsUnscaled,
 					centre_y_positionsUnscaled, rsUnscaled, scores, modeRadiusesUnscaled, angles, valid, fitted);
-
-			new StackWindow(imp, normalCanvas);
-
-			imp.show();
-
+			normalCanvas.showImage();
 		}
-
-		fitted.setName("Fitted Path [" + getID() + "]");
 
 		return fitted;
 	}

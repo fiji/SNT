@@ -209,6 +209,13 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		fitVolumeMenuItem = new JMenuItem("Fit Diameters");
 		fitVolumeMenuItem.addActionListener(multiPathListener);
 		fitMenu.add(fitVolumeMenuItem);
+		jmi = new JMenuItem(SinglePathActionListener.EXPLORE_FIT_CMD);
+		jmi.addActionListener(singlePathListener);
+		fitMenu.add(jmi);
+		fitMenu.addSeparator();
+		jmi = new JMenuItem(MultiPathActionListener.RESET_FITS);
+		jmi.addActionListener(multiPathListener);
+		fitMenu.add(jmi);
 		fitMenu.addSeparator();
 		jmi = new JMenuItem(MultiPathActionListener.FILL_OUT_CMD);
 		jmi.addActionListener(multiPathListener);
@@ -1109,6 +1116,62 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		tree.setEnabled(enabled);
 		menuBar.setEnabled(enabled);
 	}
+
+	private void exploreFit(final Path p) {
+		assert SwingUtilities.isEventDispatchThread();
+
+		// Announce computation
+		final NeuriteTracerResultsDialog ui = plugin.getUI();
+		final String statusMsg = "Fitting " + p.toString();
+		ui.showStatus(statusMsg);
+		setEnabledCommands(false);
+
+		// Improve browsability of path, while updating the GUI
+		if (!ui.nearbySlices()) ui.togglePartsChoice();
+		if (!plugin.showOnlySelectedPaths) ui.togglePathsChoice();
+		plugin.enableEditMode(true);
+		plugin.setEditingPath(p);
+		final String text = "Once opened, you can peruse the fit by "
+				+ "navigating the 'Normal Plane' image. Nodes are "
+				+ "automatically synchronized with tracing canvas(es).";
+		final JDialog msg = guiUtils.floatingMsg(text);
+
+		new Thread(() -> {
+
+			// No image is displayed if run on EDT
+			SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
+
+				@Override
+				protected Object doInBackground() throws Exception {
+
+					try {
+						// Compute verbose fit
+						final PathFitter fitter = new PathFitter(plugin, p, true);
+						final ExecutorService executor = Executors.newSingleThreadExecutor();
+						final Future<Path> future = executor.submit(fitter);
+						Path result = future.get();
+						pathAndFillManager.addPath(result);
+						refreshManager(true);
+					} catch (InterruptedException | ExecutionException | RuntimeException e) {
+						msg.dispose();
+						guiUtils.error("Unfortunately an exception occured. See Console for details");
+						e.printStackTrace();
+					}
+					return null;
+				}
+
+				@Override
+				protected void done() {
+					// It may take longer to read the text than to compute
+					// Normal Views: we will not call msg.dispose();
+					GuiUtils.setAutoDismiss(msg);
+					setEnabledCommands(true);
+				}
+			};
+			worker.execute();
+		}).start();
+	}
+
 	private void refreshManager(final boolean refreshCmds) {
 		pathAndFillManager.resetListeners(null);
 		if (!refreshCmds) return;
@@ -1162,6 +1225,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private final static String RENAME_CMD = "Rename...";
 		private final static String MAKE_PRIMARY_CMD = "Make Primary";
 		private final static String DISCONNECT_CMD = "Disconnect...";
+		private final static String EXPLORE_FIT_CMD = "Explore Fit";
 
 		@Override
 		public void actionPerformed(final ActionEvent e) {
@@ -1208,6 +1272,21 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				refreshManager(false);
 				return;
 			}
+			else if (e.getActionCommand().equals(EXPLORE_FIT_CMD)) {
+				if (plugin.getImagePlus() == null) {
+					displayTmpMsg("Tracing image is not available. Radii cannot be calculated.");
+					return;
+				}
+				if (p.getFitted() != null) {
+					final boolean cf = guiUtils.getConfirmation(
+							p.toString() + " has already been fitted. Recalculate radii?", "Recalculate?");
+					if (!cf) return;
+					p.setUseFitted(false);
+					p.fitted = null;
+					refreshManager(true);
+				}
+				if (!plugin.editModeAllowed(true)) return;
+				exploreFit(p);
 				return;
 			}
 			SNT.debug("Unexpectedly got an event from an unknown source: " + e);
@@ -1223,6 +1302,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-Type Colors";
 		private final static String REMOVE_COLOR_CMD = "Remove Color Tags";
 		private static final String FILL_OUT_CMD = "Fill Out...";
+		private static final String RESET_FITS = "Reset Fits...";
 		private final static String MEASURE_CMD = "Measure";
 		private final static String CONVERT_TO_ROI_CMD = "Send to ROI Manager...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
@@ -1320,6 +1400,16 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				}
 				// Make sure that the 3D viewer and the stacks are redrawn:
 				refreshPluginViewers();
+			}
+			else if (RESET_FITS.equals(cmd)) {
+				if (!guiUtils.getConfirmation("Discard fitted diameters?", "Confirm Reset?"))
+				return;
+				for (final Path p : selectedPaths) {
+					p.setUseFitted(false);
+					p.fitted = null;
+				}
+				refreshManager(true);
+				return;
 			}
 			else if (e.getSource().equals(fitVolumeMenuItem)) {
 

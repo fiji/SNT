@@ -27,9 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.imagej.ImageJ;
-import tracing.Path;
-
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -41,6 +38,8 @@ import org.scijava.ui.UIService;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
+import net.imagej.ImageJ;
+import tracing.Path;
 
 /**
  * Command providing a GUI for {@link RoiExporterCmd} and allowing export
@@ -48,7 +47,7 @@ import ij.plugin.frame.RoiManager;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false)
+@Plugin(type = Command.class, visible = false, label="ROI Exporter")
 public class ROIExporterCmd implements Command {
 
 	@Parameter

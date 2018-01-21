@@ -26,6 +26,8 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import ij.IJ;
+import ij.ImagePlus;
 import ij.gui.Overlay;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
@@ -33,6 +35,7 @@ import ij.gui.Roi;
 import ij.process.FloatPolygon;
 import tracing.Path;
 import tracing.PathNode;
+import tracing.SNT;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInImage;
 
@@ -55,7 +58,7 @@ public class RoiConverter {
 	private int width = -1; // flag to use mean path diameter
 	private int exportPlane = XY_PLANE;
 	private boolean useSWCcolors;
-	final ArrayList<Path> paths;
+	private final ArrayList<Path> paths;
 
 
 	/**
@@ -90,10 +93,10 @@ public class RoiConverter {
 		for (final Path p : paths) {
 			if (p.size() > 1) {
 				drawPathSegments(p, overlay);
-			} else {
+			} else { // Single Point Path
 				final HashSet<PointInImage> pim = new HashSet<>();
 				pim.add(p.getPointInImage(0));
-				convertPoints(pim, overlay, "SPP"); // Single Point Path
+				convertPoints(pim, overlay, (useSWCcolors) ? p.getSWCcolor() : p.getColor(), "SPP");
 			}
 		}
 	}
@@ -108,7 +111,7 @@ public class RoiConverter {
 	public void convertTips(Overlay overlay) {
 		if (overlay == null) overlay = new Overlay();
 		final PathAnalyzer pa = new PathAnalyzer(paths);
-		convertPoints(pa.getTips(), overlay, "Tip");
+		convertPoints(pa.getTips(), overlay, Path.getSWCcolor(Path.SWC_END_POINT), Path.SWC_END_POINT_LABEL);
 	}
 
 	/**
@@ -122,7 +125,7 @@ public class RoiConverter {
 	public void convertBranchPoints(Overlay overlay) {
 		if (overlay == null) overlay = new Overlay();
 		final PathAnalyzer pa = new PathAnalyzer(paths);
-		convertPoints(pa.getTips(), overlay, "BP");
+		convertPoints(pa.getTips(), overlay, Path.getSWCcolor(Path.SWC_FORK_POINT), Path.SWC_FORK_POINT_LABEL);
 	}
 
 	/**
@@ -241,29 +244,49 @@ public class RoiConverter {
 		}
 	}
 
-	private void convertPoints(final HashSet<PointInImage> points, Overlay overlay, final String id) {
-		if (overlay == null)
-			overlay = new Overlay();
-		PointRoi roi = null;
-		int counter = 1;
+	/* this will generate single multipoint ROI */
+	private void convertPoints(final HashSet<PointInImage> points, Overlay overlay, final Color color,
+			final String id) {
+		final Path referencePath = points.iterator().next().onPath;
+		final ImagePlus boundsImp = getBoundingImage(points, referencePath); // NB: this image is just required to
+																				// assign Z -positions to points. It is
+																				// an overhead and not required for 2D
+																				// images
+		SNTPointRoi roi = new SNTPointRoi(boundsImp);
 		final String sPlane = getExportPlaneAsString();
 		for (final PointInImage p : points) {
 			final Path path = p.onPath;
 			if (path == null) {
-				//debug("Converting "+ path +" failed. Skipping it...");
+				SNT.debug("Converting " + path + " failed. Skipping it...");
 				continue;
 			}
 			final double[] coordinates = PathNode.unScale(p, exportPlane);
-			if (roi == null) {
-				roi = new PointRoi(coordinates[0], coordinates[1]);
-			} else {
-				roi.addPoint(coordinates[0], coordinates[1]);
-			}
-			roi.setStrokeColor((useSWCcolors)?path.getSWCcolor():path.getColor());
-			roi.setPosition(0, (int) Math.round(coordinates[2]), 0);
-			roi.setName(String.format("%s-%s-%s-%03d", id, path.getName(), sPlane, counter++));
+			int slice = (int) Math.round(coordinates[2]);
+			roi.addPoint(coordinates[0], coordinates[1], slice);
 		}
+		roi.setStrokeColor(color);
+		roi.setName(String.format("%s-roi-%s", id, sPlane));
 		overlay.add(roi);
+	}
+
+	/* since no image is available we need this will generate single point ROIs (as many as input points) */
+	private ImagePlus getBoundingImage(final HashSet<PointInImage> points, final Path referencePath) {
+		final double pimXmin = points.stream().mapToDouble(pim -> pim.x).min().getAsDouble();
+		final double pimYmin = points.stream().mapToDouble(pim -> pim.y).min().getAsDouble();
+		final double pimZmin = points.stream().mapToDouble(pim -> pim.z).min().getAsDouble();
+		final double pimXmax = points.stream().mapToDouble(pim -> pim.x).max().getAsDouble();
+		final double pimYmax = points.stream().mapToDouble(pim -> pim.y).max().getAsDouble();
+		final double pimZmax = points.stream().mapToDouble(pim -> pim.z).max().getAsDouble();
+		final PointInImage p1 = new PointInImage(pimXmin, pimYmin, pimZmin);
+		final PointInImage p2 = new PointInImage(pimXmax, pimYmax, pimZmax);
+		p1.onPath = referencePath;
+		p2.onPath = referencePath;
+		final double[] bound1 = PathNode.unScale(p1, exportPlane);
+		final double[] bound2 = PathNode.unScale(p2, exportPlane);
+		final int w = (int) (bound2[0] - bound1[0]) + 2;
+		final int h = (int) (bound2[1] - bound1[1]) + 2;
+		final int d = (int) (bound2[2] - bound1[2]) + 2;
+		return IJ.createImage(null, w, h, d, 8);
 	}
 
 	private String getExportPlaneAsString() {
@@ -274,4 +297,26 @@ public class RoiConverter {
 		}
 	}
 
+	/**
+	 * With current IJ1.51u API the only way to set the z-position of a point is to
+	 * activate the corresponding image z-slice. This class makes it easier to do
+	 * so.
+	 */
+	private static class SNTPointRoi extends PointRoi {
+
+		private static final long serialVersionUID = 1L;
+		private final ImagePlus imp;
+
+		public SNTPointRoi(final ImagePlus imp) {
+			super(0, 0);
+			deletePoint(0);
+			this.imp = imp;
+		}
+
+		public void addPoint(double ox, double oy, int slice) {
+			imp.setPositionWithoutUpdate(1, slice, 1);
+			super.addPoint(imp, ox, oy);
+			System.out.println(slice);
+		}
+	}
 }

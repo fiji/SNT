@@ -51,13 +51,12 @@ public class PathAnalyzer extends ContextCommand {
 	@Parameter
 	private LogService logService;
 
-	private final HashSet<Path> paths;
+	protected final HashSet<Path> paths;
 	private HashSet<Path> primaries;
 	private HashSet<Path> terminals;
 	private HashSet<PointInImage> joints;
 	private HashSet<PointInImage> tips;
 	private DefaultGenericTable table;
-
 	private String tableTitle;
 	private int fittedPathsCounter = 0;
 
@@ -73,8 +72,8 @@ public class PathAnalyzer extends ContextCommand {
 	 *            from analysis: I.e., those with less than 2 points (e.g.,used to
 	 *            mark the soma), and (duplicated) paths that may exist only as just
 	 *            fitted versions of existing ones.
-	 * @throws IllegalArgumentException
-	 *             if none of input paths can be analyzed.
+	 *
+	 * @see #getParsedPaths()
 	 */
 	public PathAnalyzer(final HashSet<Path> paths) {
 		this.paths = new HashSet<Path>();
@@ -91,8 +90,17 @@ public class PathAnalyzer extends ContextCommand {
 			}
 			this.paths.add(pathToAdd);
 		}
-		if (this.paths.isEmpty()) throw new IllegalArgumentException("No valid paths to be analyzed");
+	}
 
+	/**
+	 * Returns the set of parsed paths.
+	 *
+	 * @return the parsed paths, which may be a subset of the paths specified in the
+	 *         constructor, since, e.g., paths that may exist only as just fitted
+	 *         versions of existing ones are ignored by the class.
+	 */
+	public HashSet<Path> getParsedPaths() {
+		return paths;
 	}
 
 	public void summarize() {

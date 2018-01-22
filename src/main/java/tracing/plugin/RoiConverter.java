@@ -23,7 +23,6 @@
 package tracing.plugin;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import ij.IJ;
@@ -45,7 +44,7 @@ import tracing.util.PointInImage;
  *
  * @author Tiago Ferreira
  */
-public class RoiConverter {
+public class RoiConverter extends PathAnalyzer {
 
 
 	/** SNT's XY view (the default export plane)*/
@@ -58,29 +57,10 @@ public class RoiConverter {
 	private int width = -1; // flag to use mean path diameter
 	private int exportPlane = XY_PLANE;
 	private boolean useSWCcolors;
-	private final ArrayList<Path> paths;
 
 
-	/**
-	 * Instantiates a new ROI converter.
-	 *
-	 * @param paths
-	 *            the list of paths to be converted. Note that if an input path is
-	 *            deemed invalid it will not be considered
-	 * @see #getParsedPaths()
-	 */
-	public RoiConverter(final ArrayList<Path> paths) {
-		this.paths = new ArrayList<Path>();
-		for (final Path p : paths) {
-			if (p == null || p.isFittedVersionOfAnotherPath())
-				continue;
-			Path pathToAdd;
-			if (p.getUseFitted() && p.getFitted() != null)
-				pathToAdd = p.getFitted();
-			else
-				pathToAdd = p;
-			this.paths.add(pathToAdd);
-		}
+	public RoiConverter(final HashSet<Path> paths) {
+		super(paths);
 	}
 
 	/**
@@ -110,8 +90,7 @@ public class RoiConverter {
 	 */
 	public void convertTips(Overlay overlay) {
 		if (overlay == null) overlay = new Overlay();
-		final PathAnalyzer pa = new PathAnalyzer(paths);
-		convertPoints(pa.getTips(), overlay, Path.getSWCcolor(Path.SWC_END_POINT), Path.SWC_END_POINT_LABEL);
+		convertPoints(getTips(), overlay, Path.getSWCcolor(Path.SWC_END_POINT), Path.SWC_END_POINT_LABEL);
 	}
 
 	/**
@@ -124,8 +103,7 @@ public class RoiConverter {
 	 */
 	public void convertBranchPoints(Overlay overlay) {
 		if (overlay == null) overlay = new Overlay();
-		final PathAnalyzer pa = new PathAnalyzer(paths);
-		convertPoints(pa.getTips(), overlay, Path.getSWCcolor(Path.SWC_FORK_POINT), Path.SWC_FORK_POINT_LABEL);
+		convertPoints(getBranchPoints(), overlay, Path.getSWCcolor(Path.SWC_FORK_POINT), Path.SWC_FORK_POINT_LABEL);
 	}
 
 	/**
@@ -158,17 +136,6 @@ public class RoiConverter {
 	 */
 	public void setStrokeWidth(final int width) {
 		this.width = width;
-	}
-
-	/**
-	 * Returns the list of parsed paths.
-	 *
-	 * @return the parsed paths, which may be a subset of the paths specified in the
-	 *         constructor since , e.g., paths that may exist only as just fitted
-	 *         versions of existing ones are ignored by the class.
-	 */
-	public ArrayList<Path> getParsedPaths() {
-		return paths;
 	}
 
 	private void drawPathSegments(final Path path, final Overlay overlay) {
@@ -244,15 +211,16 @@ public class RoiConverter {
 		}
 	}
 
-	/* this will generate single multipoint ROI */
-	private void convertPoints(final HashSet<PointInImage> points, Overlay overlay, final Color color,
+	/* this will aggregate all points into a single multipoint ROI */
+	private void convertPoints(final HashSet<PointInImage> points, final Overlay overlay, final Color color,
 			final String id) {
+		if (points.isEmpty()) return;
 		final Path referencePath = points.iterator().next().onPath;
-		final ImagePlus boundsImp = getBoundingImage(points, referencePath); // NB: this image is just required to
+		final ImagePlus boundsImp = assembleBoundingImage(points, referencePath); // NB: this image is just required to
 																				// assign Z -positions to points. It is
 																				// an overhead and not required for 2D
 																				// images
-		SNTPointRoi roi = new SNTPointRoi(boundsImp);
+		final SNTPointRoi roi = new SNTPointRoi(boundsImp);
 		final String sPlane = getExportPlaneAsString();
 		for (final PointInImage p : points) {
 			final Path path = p.onPath;
@@ -261,7 +229,7 @@ public class RoiConverter {
 				continue;
 			}
 			final double[] coordinates = PathNode.unScale(p, exportPlane);
-			int slice = (int) Math.round(coordinates[2]);
+			final int slice = (int) Math.round(coordinates[2]);
 			roi.addPoint(coordinates[0], coordinates[1], slice);
 		}
 		roi.setStrokeColor(color);
@@ -269,8 +237,7 @@ public class RoiConverter {
 		overlay.add(roi);
 	}
 
-	/* since no image is available we need this will generate single point ROIs (as many as input points) */
-	private ImagePlus getBoundingImage(final HashSet<PointInImage> points, final Path referencePath) {
+	private ImagePlus assembleBoundingImage(final HashSet<PointInImage> points, final Path referencePath) {
 		final double pimXmin = points.stream().mapToDouble(pim -> pim.x).min().getAsDouble();
 		final double pimYmin = points.stream().mapToDouble(pim -> pim.y).min().getAsDouble();
 		final double pimZmin = points.stream().mapToDouble(pim -> pim.z).min().getAsDouble();
@@ -313,10 +280,9 @@ public class RoiConverter {
 			this.imp = imp;
 		}
 
-		public void addPoint(double ox, double oy, int slice) {
+		public void addPoint(final double ox, final double oy, final int slice) {
 			imp.setPositionWithoutUpdate(1, slice, 1);
 			super.addPoint(imp, ox, oy);
-			System.out.println(slice);
 		}
 	}
 }

@@ -235,15 +235,16 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 *
 	 * (b) All the registered PathAndFillListener objects.
 	 */
-	public synchronized void setSelected(final Path[] selectedPaths, final Object sourceOfMessage) {
+	public synchronized void setSelected(final HashSet<Path>selectedPaths, final Object sourceOfMessage) {
 		selectedPathsSet.clear();
-		for (int i = 0; i < selectedPaths.length; ++i) {
-			Path pathToSelect = selectedPaths[i];
+		//selectedPathsSet.addAll(selectedPaths);
+		selectedPaths.forEach( p -> {
+			Path pathToSelect = p;
 			if (pathToSelect.getUseFitted())
 				pathToSelect = pathToSelect.fitted;
 			//pathToSelect.setSelected(true);
 			selectedPathsSet.add(pathToSelect);
-		}
+		});
 		for (final PathAndFillListener pafl : listeners) {
 			if (pafl != sourceOfMessage)
 				// The source of the message already knows the states:
@@ -444,7 +445,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		if (structuredPathSet.size() == 0)
 			throw new SWCExportException(
-					"The paths you select for SWC export must include a primary path\n(i.e. one at the top level in the Path Window's tree)");
+					"The paths you select for SWC export must include a primary path\n(i.e. one at the top level in the Path Manager tree)");
 		if (structuredPathSet.size() > 1)
 			throw new SWCExportException("You can only select one connected set of paths for SWC export");
 
@@ -1528,7 +1529,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				f.setSourcePaths(realSourcePaths);
 			}
 
-			setSelected(new Path[0], this);
+			setSelected(new HashSet<Path>(), this);
 			resetListeners(null, true);
 			if (plugin != null)
 				plugin.repaintAllPanes();

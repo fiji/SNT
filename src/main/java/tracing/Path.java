@@ -39,12 +39,7 @@ import org.scijava.vecmath.Point3f;
 
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.Overlay;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import ij.gui.StackWindow;
 import ij.measure.Calibration;
-import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
@@ -75,7 +70,7 @@ public class Path implements Comparable<Path> {
 	PointInImage endJoinsPoint = null;
 
 	// Paths should always be given a name (since the name
-	// idpublicentifies them to the 3D viewer)...
+	// identifies them to the 3D viewer)...
 	private String name;
 	/*
 	 * This is a symmetrical relationship, showing all the other paths this one
@@ -211,14 +206,6 @@ public class Path implements Comparable<Path> {
 			c.setChildren(pathsLeft);
 	}
 
-	/*
-	 * public DefaultMutableTreeNode getNode( ) { DefaultMutableTreeNode
-	 * thisNode = new DefaultMutableTreeNode( this ); for( int i = 0; i <
-	 * children.size(); ++i ) { DefaultMutableTreeNode childNode = new
-	 * DefaultMutableTreeNode( children.get(i) ); thisNode.add( childNode ); }
-	 * return thisNode; }
-	 */
-
 	public double getRealLength() {
 		double totalLength = 0;
 		for (int i = 1; i < points; ++i) {
@@ -236,14 +223,14 @@ public class Path implements Comparable<Path> {
 
 	public void createCircles() {
 		if (tangents_x != null || tangents_y != null || tangents_z != null || radiuses != null)
-			throw new RuntimeException("BUG: Trying to create circles data arrays when at least one is already there");
+			throw new IllegalArgumentException("Trying to create circles data arrays when at least one is already there");
 		tangents_x = new double[maxPoints];
 		tangents_y = new double[maxPoints];
 		tangents_z = new double[maxPoints];
 		radiuses = new double[maxPoints];
 	}
 
-	void setIsPrimary(final boolean primary) {
+	protected void setIsPrimary(final boolean primary) {
 		this.primary = primary;
 	}
 
@@ -254,8 +241,7 @@ public class Path implements Comparable<Path> {
 	/*
 	 * We call this if we're going to delete the path represented by this object
 	 */
-
-	void disconnectFromAll() {
+	protected void disconnectFromAll() {
 		/*
 		 * This path can be connected to other ones either if: - this starts on
 		 * other - this ends on other - other starts on this - other ends on
@@ -293,19 +279,19 @@ public class Path implements Comparable<Path> {
 	/*
 	 * This should be the only method that links one path to another
 	 */
-	void setJoin(final int startOrEnd, final Path other, final PointInImage joinPoint) {
+	protected void setJoin(final int startOrEnd, final Path other, final PointInImage joinPoint) {
 		if (other == null) {
-			throw new IllegalArgumentException("BUG: setJoin now should never take a null other path");
+			throw new IllegalArgumentException("setJoin should never take a null path");
 		}
 		if (startOrEnd == PATH_START) {
 			// If there was an existing path, that's an error:
 			if (startJoins != null)
-				throw new IllegalArgumentException("BUG: setJoin for START should not replace another join");
+				throw new IllegalArgumentException("setJoin for START should not replace another join");
 			startJoins = other;
 			startJoinsPoint = joinPoint;
 		} else if (startOrEnd == PATH_END) {
 			if (endJoins != null)
-				throw new IllegalArgumentException("BUG: setJoin for END should not replace another join");
+				throw new IllegalArgumentException("setJoin for END should not replace another join");
 			endJoins = other;
 			endJoinsPoint = joinPoint;
 		} else {
@@ -446,25 +432,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Gets the node index associated with the specified image position.
-	 * Returns -1 if no such node exists.
-	 *
-	 * @param xcoord the x-position in pixel coordinates
-	 * @param ycoord the y-position in pixel coordinates
-	 * @return the node at the index of the first occurrence of the specified
-	 *         coordinates, or -1 if there is no such occurrence
-	 */
-	public int getNodeIndex(int xcoord, int ycoord) {
-		for (int i = 0; i < points; ++i) {
-			if (getXUnscaled(i) == xcoord && getYUnscaled(i) == ycoord) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	/**
-	 * Gets the node index associated with the specified image coordinates.
+	 * Gets the first node index associated with the specified image coordinates.
 	 * Returns -1 if no such node was found.
 	 *
 	 * @param pim the image position (calibrated coordinates)
@@ -746,7 +714,7 @@ public class Path implements Comparable<Path> {
 		}
 	}
 
-	void unsetPrimaryForConnected(final HashSet<Path> pathsExplored) {
+	protected void unsetPrimaryForConnected(final HashSet<Path> pathsExplored) {
 		for (final Path p : somehowJoins) {
 			if (pathsExplored.contains(p))
 				continue;
@@ -756,7 +724,7 @@ public class Path implements Comparable<Path> {
 		}
 	}
 
-	Path reversed() {
+	protected Path reversed() {
 		final Path c = new Path(x_spacing, y_spacing, z_spacing, spacing_units, points);
 		c.points = points;
 		for (int i = 0; i < points; ++i) {
@@ -767,7 +735,7 @@ public class Path implements Comparable<Path> {
 		return c;
 	}
 
-	void addPointDouble(final double x, final double y, final double z) {
+	public void addPointDouble(final double x, final double y, final double z) {
 		if (points >= maxPoints) {
 			final int newReserved = (int) (maxPoints * 1.2 + 1);
 			expandTo(newReserved);
@@ -777,22 +745,18 @@ public class Path implements Comparable<Path> {
 		precise_z_positions[points++] = z;
 	}
 
-	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
-			final boolean drawDiameter) {
-		drawPathAsPoints(canvas, g, c, plane, false, drawDiameter, 0, -1);
-	}
-
+	@Deprecated
 	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
 			final boolean highContrast, final boolean drawDiameter) {
 		drawPathAsPoints(canvas, g, c, plane, highContrast, drawDiameter, 0, -1);
 	}
 
-	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
+	protected void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
 			final boolean drawDiameter, final int slice, final int either_side) {
 		drawPathAsPoints(canvas, g, c, plane, false, drawDiameter, slice, either_side);
 	}
 
-	public void drawPathAsPoints(final Graphics2D g2, TracerCanvas canvas, SimpleNeuriteTracer snt) {
+	protected void drawPathAsPoints(final Graphics2D g2, TracerCanvas canvas, SimpleNeuriteTracer snt) {
 		final boolean customColor = (hasCustomColor && snt.displayCustomPathColors);
 		Color color = snt.deselectedColor;
 		if (isSelected() && !customColor) color = snt.selectedColor;
@@ -1087,14 +1051,8 @@ public class Path implements Comparable<Path> {
 	}
 
 	public void setUseFitted(final boolean useFitted) {
-		setUseFitted(useFitted, null);
-	}
-
-	public void setUseFitted(final boolean useFitted, final SimpleNeuriteTracer plugin) {
-
 		if (useFitted && fitted == null)
-			throw new RuntimeException("BUG: setUseFitted(true) was called, but the 'fitted' member was null");
-
+			throw new IllegalArgumentException("setUseFitted(true) called, but 'fitted' member was null");
 		this.useFitted = useFitted;
 	}
 
@@ -1132,7 +1090,7 @@ public class Path implements Comparable<Path> {
 		result[2] = precise_z_positions[max_index] - precise_z_positions[min_index];
 	}
 
-	public float[] squareNormalToVector(final int side, // The number of samples
+	private float[] squareNormalToVector(final int side, // The number of samples
 														// in x and y in the
 														// plane, separated by
 														// step
@@ -1202,27 +1160,20 @@ public class Path implements Comparable<Path> {
 		final double by_s = by * step;
 		final double bz_s = bz * step;
 
-		if (SNT.isDebugMode()) {
-			SNT.log("a (in normal plane) is " + ax + "," + ay + "," + az);
-			SNT.log("b (in normal plane) is " + bx + "," + by + "," + bz);
-		}
+		SNT.debug("a (in normal plane) is " + ax + "," + ay + "," + az);
+		SNT.debug("b (in normal plane) is " + bx + "," + by + "," + bz);
 
-		if (true) {
 
-			// a and b must be perpendicular:
-			final double a_dot_b = ax * bx + ay * by + az * bz;
+		// a and b must be perpendicular:
+		final double a_dot_b = ax * bx + ay * by + az * bz;
 
-			// ... and each must be perpendicular to the normal
-			final double a_dot_n = ax * nx + ay * ny + az * nz;
-			final double b_dot_n = bx * nx + by * ny + bz * nz;
+		// ... and each must be perpendicular to the normal
+		final double a_dot_n = ax * nx + ay * ny + az * nz;
+		final double b_dot_n = bx * nx + by * ny + bz * nz;
 
-			if (SNT.isDebugMode()) {
-				SNT.log("a_dot_b: " + a_dot_b);
-				SNT.log("a_dot_n: " + a_dot_n);
-				SNT.log("b_dot_n: " + b_dot_n);
-			}
-
-		}
+		SNT.debug("a_dot_b: " + a_dot_b);
+		SNT.debug("a_dot_n: " + a_dot_n);
+		SNT.debug("b_dot_n: " + b_dot_n);
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
@@ -1357,35 +1308,28 @@ public class Path implements Comparable<Path> {
 		return result;
 	}
 
-	public Path fitCircles(final int side, final ImagePlus image, final boolean display) {
-		return fitCircles(side, image, display, null, -1, null);
+	public Path fitCircles(final int side, final ImagePlus image) {
+		return fitCircles(side, image, false, null, -1, null);
 	}
 
-	public Path fitCircles(final int side, final ImagePlus image, final boolean display,
+	protected Path fitCircles(final int side, final ImagePlus image, boolean display,
 			final SimpleNeuriteTracer plugin, final int progressIndex, final MultiTaskProgress progress) {
 
 		final Path fitted = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
-
-		// if (SNT.isDebugMode()) SNT.log("Generating normal planes stack.");
-
 		final int totalPoints = size();
-
-		if (SNT.isDebugMode())
-			SNT.log("There are: " + totalPoints + " in the stack.");
-
 		final int pointsEitherSide = 4;
 
-		if (SNT.isDebugMode())
-			SNT.log("Using spacing: " + x_spacing + "," + y_spacing + "," + z_spacing);
+		SNT.debug("Started fitting: "+ this.getName() +". Generating normal planes stack....");
+		SNT.debug("There are: " + totalPoints + " in the stack.");
+		SNT.debug("Spacing: " + x_spacing + "," + y_spacing + "," + z_spacing +" ("+ spacing_units +")");
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
-		final int depth = image.getNSlices(); //FIXME: Check hyperstack support
+		final int depth = image.getNSlices();
 
 		final ImageStack stack = new ImageStack(side, side);
 
 		// We assume that the first and the last in the stack are fine;
-
 		final double[] centre_x_positionsUnscaled = new double[totalPoints];
 		final double[] centre_y_positionsUnscaled = new double[totalPoints];
 		final double[] rs = new double[totalPoints];
@@ -1459,9 +1403,8 @@ public class Path implements Comparable<Path> {
 			startValues[1] = side / 2.0;
 			startValues[2] = 3;
 
-			if (SNT.isDebugMode())
-				SNT.log("start search at: " + startValues[0] + "," + startValues[1] + " with radius: "
-						+ startValues[2]);
+			SNT.debug("start search at: " + startValues[0] + "," + startValues[1] + " with radius: "
+					+ startValues[2]);
 
 			float minValueInSquare = Float.MAX_VALUE;
 			float maxValueInSquare = Float.MIN_VALUE;
@@ -1480,10 +1423,8 @@ public class Path implements Comparable<Path> {
 				return null;
 			}
 
-			if (SNT.isDebugMode())
-				// SNT.log("u is: "+u[0]+","+u[1]+","+u[2]);
-				SNT.log("search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
-						+ startValues[2]);
+			SNT.debug("search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
+					+ startValues[2]);
 
 			centre_x_positionsUnscaled[i] = startValues[0];
 			centre_y_positionsUnscaled[i] = startValues[1];
@@ -1500,16 +1441,14 @@ public class Path implements Comparable<Path> {
 			moved[i] = scaleInNormalPlane * Math.sqrt(
 					x_from_centre_in_plane * x_from_centre_in_plane + y_from_centre_in_plane * y_from_centre_in_plane);
 
-			if (SNT.isDebugMode())
-				SNT.log("vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
+			SNT.debug("vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
 
 			double centre_real_x = x_world;
 			double centre_real_y = y_world;
 			double centre_real_z = z_world;
 
-			if (SNT.isDebugMode())
-				SNT.log("original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
-						+ centre_real_z);
+			SNT.debug("original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+					+ centre_real_z);
 
 			// FIXME: I really think these should be +=, but it seems clear from
 			// the results that I've got a sign wrong somewhere :(
@@ -1521,9 +1460,8 @@ public class Path implements Comparable<Path> {
 			centre_real_z -= x_basis_in_plane[2] * x_from_centre_in_plane
 					+ y_basis_in_plane[2] * y_from_centre_in_plane;
 
-			if (SNT.isDebugMode())
-				SNT.log("adjusted original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
-						+ centre_real_z);
+			SNT.debug("adjusted original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+					+ centre_real_z);
 
 			optimized_x[i] = centre_real_x;
 			optimized_y[i] = centre_real_y;
@@ -1533,8 +1471,7 @@ public class Path implements Comparable<Path> {
 			int y_in_image = (int) Math.round(centre_real_y / y_spacing);
 			int z_in_image = (int) Math.round(centre_real_z / z_spacing);
 
-			if (SNT.isDebugMode())
-				SNT.log("gives in image co-ordinates: " + x_in_image + "," + y_in_image + "," + z_in_image);
+			SNT.debug("gives in image co-ordinates: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			if (x_in_image < 0)
 				x_in_image = 0;
@@ -1549,19 +1486,17 @@ public class Path implements Comparable<Path> {
 			if (z_in_image >= depth)
 				z_in_image = depth - 1;
 
-			if (SNT.isDebugMode())
-				SNT.log("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
+			SNT.debug("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			xs_in_image[i] = x_in_image;
 			ys_in_image[i] = y_in_image;
 			zs_in_image[i] = z_in_image;
 
-			if (SNT.isDebugMode())
-				SNT.log("Adding a real slice.");
+			SNT.debug("Adding a real slice.");
 
 			final FloatProcessor bp = new FloatProcessor(side, side);
 			bp.setPixels(normalPlane);
-			stack.addSlice(null, bp);
+			stack.addSlice("Node "+ (i+1), bp);
 
 			if (progress != null)
 				progress.updateProgress(((double) i + 1) / totalPoints, progressIndex);
@@ -1771,6 +1706,7 @@ public class Path implements Comparable<Path> {
 		if (display) {
 			SNT.debug("displaying normal plane image");
 			final ImagePlus imp = new ImagePlus("Normal Plane " + fitted.name, stack);
+			imp.setCalibration(plugin.getImagePlus().getCalibration());
 			final NormalPlaneCanvas normalCanvas = new NormalPlaneCanvas(imp, plugin, centre_x_positionsUnscaled,
 					centre_y_positionsUnscaled, rsUnscaled, scores, modeRadiusesUnscaled, angles, valid, fitted);
 			normalCanvas.showImage();
@@ -1876,9 +1812,10 @@ public class Path implements Comparable<Path> {
 		return typeName;
 	}
 
-	public boolean circlesOverlap(final double n1x, final double n1y, final double n1z, final double c1x,
+	private boolean circlesOverlap(final double n1x, final double n1y, final double n1z, final double c1x,
 			final double c1y, final double c1z, final double radius1, final double n2x, final double n2y,
-			final double n2z, final double c2x, final double c2y, final double c2z, final double radius2) {
+			final double n2z, final double c2x, final double c2y, final double c2z, final double radius2)
+			throws IllegalArgumentException {
 		/*
 		 * Roughly following the steps described here:
 		 * http://local.wasp.uwa.edu.au/~pbourke/geometry/planeplane/
@@ -1964,7 +1901,7 @@ public class Path implements Comparable<Path> {
 		}
 
 		if (Math.abs(a1) < epsilon) {
-			SNT.log("WARNING: a1 was nearly zero: " + a1);
+			SNT.warn("CirclesOverlap: a1 was nearly zero: " + a1);
 			return true;
 		}
 
@@ -2002,22 +1939,18 @@ public class Path implements Comparable<Path> {
 		 * We only reach here if something has gone badly wrong, so dump helpful
 		 * values to aid in debugging:
 		 */
+		SNT.debug("CirclesOverlap seems to have failed: Current settings");
+		SNT.debug("det: " + det);
+		SNT.debug("discriminant1: " + discriminant1);
+		SNT.debug("discriminant2: " + discriminant2);
+		SNT.debug("n1: (" + n1x + "," + n1y + "," + n1z + ")");
+		SNT.debug("n2: (" + n2x + "," + n2y + "," + n2z + ")");
+		SNT.debug("c1: (" + c1x + "," + c1y + "," + c1z + ")");
+		SNT.debug("c2: (" + c2x + "," + c2y + "," + c2z + ")");
+		SNT.debug("radius1: " + radius1);
+		SNT.debug("radius2: " + radius2);
 
-		SNT.log("det is: " + det);
-
-		SNT.log("discriminant1 is: " + discriminant1);
-		SNT.log("discriminant2 is: " + discriminant2);
-
-		SNT.log("n1: (" + n1x + "," + n1y + "," + n1z + ")");
-		SNT.log("n2: (" + n2x + "," + n2y + "," + n2z + ")");
-
-		SNT.log("c1: (" + c1x + "," + c1y + "," + c1z + ")");
-		SNT.log("c2: (" + c2x + "," + c2y + "," + c2z + ")");
-
-		SNT.log("radius1: " + radius1);
-		SNT.log("radius2: " + radius2);
-
-		throw new RuntimeException("BUG: some overlapping case missed: " + "u1_smaller=" + u1_smaller + "u1_larger="
+		throw new IllegalArgumentException("Some overlapping case missed: " + "u1_smaller=" + u1_smaller + "u1_larger="
 				+ u1_larger + "u2_smaller=" + u2_smaller + "u2_larger=" + u2_larger);
 	}
 
@@ -2522,8 +2455,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	public void setSelected(final boolean newSelectedStatus) {
-		if (newSelectedStatus != selected)
-			selected = newSelectedStatus;
+		selected = newSelectedStatus;
 	}
 
 	public boolean isSelected() {

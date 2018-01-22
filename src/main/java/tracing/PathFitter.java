@@ -29,25 +29,27 @@ import java.util.concurrent.Callable;
 
 public class PathFitter implements Callable<Path> {
 
-	protected SimpleNeuriteTracer plugin;
-	protected int fitterIndex;
-	protected Path path;
-	protected MultiTaskProgress progress;
-	protected boolean showDetailedFittingResults;
-	protected boolean succeeded;
+	private final SimpleNeuriteTracer plugin;
+	private final Path path;
+	private final boolean showDetailedFittingResults;
+	private int fitterIndex;
+	private MultiTaskProgress progress;
+	private boolean succeeded;
 
 	public boolean getSucceeded() {
 		return succeeded;
 	}
 
 	public PathFitter(final SimpleNeuriteTracer plugin, final Path path, final boolean showDetailedFittingResults) {
+		if (path == null)
+			throw new IllegalArgumentException("Cannot fit a null path");
+		if (path.isFittedVersionOfAnotherPath())
+			throw new IllegalArgumentException("Trying to fit an already fitted path");
 		this.plugin = plugin;
 		this.path = path;
 		this.fitterIndex = -1;
 		this.progress = null;
 		this.showDetailedFittingResults = showDetailedFittingResults;
-		if (path.isFittedVersionOfAnotherPath())
-			throw new RuntimeException("BUG: trying to fit a fitted path");
 	}
 
 	public void setProgressCallback(final int fitterIndex, final MultiTaskProgress progress) {
@@ -56,17 +58,15 @@ public class PathFitter implements Callable<Path> {
 	}
 
 	@Override
-	public Path call() throws Exception {
-		final Path fitted = path.fitCircles(40, plugin.getImagePlus(), showDetailedFittingResults, plugin, fitterIndex,
+	public Path call() throws IllegalArgumentException {
+		final Path fitted = path.fitCircles(40, plugin.getLoadedDataAsImp(), showDetailedFittingResults, plugin, fitterIndex,
 				progress);
 		if (fitted == null) {
 			succeeded = false;
 			return null;
 		}
 		succeeded = true;
-		fitted.setColor(path.getColor());
-		path.setFitted(fitted);
-		path.setUseFitted(true, plugin);
+		path.setUseFitted(true);
 		return fitted;
 	}
 

@@ -85,6 +85,7 @@ import ij.io.SaveDialog;
 import ij.measure.Calibration;
 import ij3d.ImageWindow3D;
 import net.imagej.table.DefaultGenericTable;
+import net.imagej.table.ResultsTable;
 import sholl.Sholl_Analysis;
 import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
@@ -1653,7 +1654,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return noPaths;
 	}
 
-	protected void setPathListVisible(final boolean makeVisible,
+	private void setPathListVisible(final boolean makeVisible,
 		final boolean toFront)
 	{
 		assert SwingUtilities.isEventDispatchThread();
@@ -1668,7 +1669,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		}
 	}
 
-	protected void togglePathListVisibility() {
+	private void togglePathListVisibility() {
 		assert SwingUtilities.isEventDispatchThread();
 		synchronized (pw) {
 			setPathListVisible(!pw.isVisible(), true);
@@ -1695,11 +1696,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		}
 	}
 
-	public void thresholdChanged(final double f) {
+	protected void thresholdChanged(final double f) {
 		fw.thresholdChanged(f);
 	}
 
-	public boolean nearbySlices() {
+	protected boolean nearbySlices() {
 		assert SwingUtilities.isEventDispatchThread();
 		return showPartsNearby.isSelected();
 	}

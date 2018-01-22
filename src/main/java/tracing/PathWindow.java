@@ -332,11 +332,11 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	}
 
 //TODO: include children
-	public Set<Path> getSelectedPaths(final boolean ifNoneSelectedGetAll) {
-		return SwingSafeResult.getResult(new Callable<Set<Path>>() {
+	public HashSet<Path> getSelectedPaths(final boolean ifNoneSelectedGetAll) {
+		return SwingSafeResult.getResult(new Callable<HashSet<Path>>() {
 
 			@Override
-			public Set<Path> call() {
+			public HashSet<Path> call() {
 				if (ifNoneSelectedGetAll && tree.getSelectionCount()== 0)
 					return new HashSet<Path>(pathAndFillManager.getPathsFiltered());
 				final HashSet<Path> result = new HashSet<>();
@@ -1318,7 +1318,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			final boolean assumeAll = noSelection && guiUtils.getConfirmation("Currently no paths are selected. Apply command to all paths?", cmd);
 			if (noSelection && !assumeAll) return;
 	
-			final Set<Path> selectedPaths = getSelectedPaths(true);
+			final HashSet<Path> selectedPaths = getSelectedPaths(true);
 			final int n = selectedPaths.size();
 
 			// Case 1: Non-destructive commands that do not require confirmation

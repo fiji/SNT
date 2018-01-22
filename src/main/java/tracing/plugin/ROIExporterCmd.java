@@ -23,8 +23,8 @@
 package tracing.plugin;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import org.scijava.app.StatusService;
@@ -40,6 +40,7 @@ import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import net.imagej.ImageJ;
 import tracing.Path;
+
 
 /**
  * Command providing a GUI for {@link RoiExporterCmd} and allowing export
@@ -59,7 +60,7 @@ public class ROIExporterCmd implements Command {
 	@Parameter
 	private StatusService statusService;
 
-	@Parameter(required = false, label = "Convert", choices = { "Path segments", "Branch Points", "Tips" })
+	@Parameter(required = false, label = "Convert", choices = { "Path segments", "Branch Points", "Tips", "All"})
 	private String roiChoice;
 
 	@Parameter(required = false, label = "View", choices = { "XY (default)", "XZ", "ZY" })
@@ -75,29 +76,27 @@ public class ROIExporterCmd implements Command {
 	private boolean discardExisting;
 
 	@Parameter(required= true)
-	private ArrayList<Path> paths;
+	private HashSet<Path> paths;
 
 	private Overlay overlay;
 	private RoiConverter converter;
+	private boolean warningsExist = false;
 
 
 	@Override
 	public void run() {
 
 		converter = new RoiConverter(paths);
-
 		if (converter.getParsedPaths().isEmpty()) {
-			uiService.getDefaultUI().dialogPrompt("No Paths to Convert",
-					"Error", DialogPrompt.MessageType.WARNING_MESSAGE,
-					DialogPrompt.OptionType.DEFAULT_OPTION);
+			warnUser("None of the input paths could be converted to ROIs.");
 			return;
 		}
 
 		final int skippedPaths = paths.size() - converter.getParsedPaths().size(); 
+		logService.info("Converting paths to ROIs...");
+		statusService.showStatus("Converting paths to ROIs...");
 		if (skippedPaths > 0)
-			logService.warn(""+ skippedPaths + " were rejected and will not be converted");
-		logService.info("Converting paths...");
-		statusService.showStatus("Converting paths...");
+			warn(""+ skippedPaths + " were rejected and will not be converted");
 
 		converter.useSWCcolors(useSWCcolors);
 		converter.setStrokeWidth((avgWidth) ? -1 : 0);
@@ -111,12 +110,30 @@ public class ROIExporterCmd implements Command {
 			converter.setView(RoiConverter.XY_PLANE);
 
 		roiChoice = roiChoice.toLowerCase();
-		if (roiChoice.contains("tips"))
+		if (roiChoice.contains("all")) roiChoice = "tips branch points paths";
+
+		int size = 0;
+		if (roiChoice.contains("tips")) {
+			size = overlay.size();
 			converter.convertTips(overlay);
-		else if (roiChoice.contains("branch points"))
+			if (overlay.size() == size) warn(noConversion("tips"));
+		}
+		if (roiChoice.contains("branch points")) {
+			size = overlay.size();
 			converter.convertBranchPoints(overlay);
-		else
+			if (overlay.size() == size) warn(noConversion("branch points"));
+		}
+		if (roiChoice.contains("paths")) {
+			size = overlay.size();
 			converter.convertPaths(overlay);
+			if (overlay.size() == size) warn(noConversion("paths"));
+		}
+
+		if (overlay.size()==0) {
+			warnUser("None of the input paths could be converted to ROIs.");
+			return;
+		}
+
 		RoiManager rm = RoiManager.getInstance2();
 		if (rm == null)
 			rm = new RoiManager();
@@ -131,7 +148,27 @@ public class ROIExporterCmd implements Command {
 		rm.runCommand("show all without labels");
 		statusService.clearStatus();
 
+		if (warningsExist) {
+			warnUser("ROIs generated but some exceptions occured.\nPlease see Console for details.");
+		}
+
 	}
+
+	private String noConversion(final String roiType) {
+		return "Conversion did not generated valid "+roiType 
+				+". Specified features do not exist on input path(s)?";
+	}
+
+	private void warn(final String msg) {
+		warningsExist = true;
+		logService.warn(msg);
+	}
+
+	private void warnUser(final String msg) {
+		uiService.getDefaultUI().dialogPrompt(msg, "Warning", DialogPrompt.MessageType.WARNING_MESSAGE,
+				DialogPrompt.OptionType.DEFAULT_OPTION).prompt();
+	}
+
 
 	/**
 	 * IDE debug method
@@ -142,7 +179,7 @@ public class ROIExporterCmd implements Command {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input= new HashMap<>();
-		input.put("paths", new ArrayList<Path>());
+		input.put("paths", new HashSet<Path>());
 		ij.command().run(ROIExporterCmd.class, true, input);
 	}
 

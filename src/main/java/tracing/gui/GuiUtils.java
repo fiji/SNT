@@ -446,6 +446,14 @@ public class GuiUtils {
 	}
 
 	public static void setAutoDismiss(final JDialog dialog) {
+		final Timer timer = new Timer(2500, new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				dialog.dispose();
+			}
+		});
+		timer.setRepeats(false);
 		dialog.addMouseListener(new MouseAdapter() {
 
 			@Override
@@ -457,15 +465,13 @@ public class GuiUtils {
 			public void mouseExited(MouseEvent e) {
 				dialog.dispose();
 			}
-		});
-		final Timer timer = new Timer(2500, new ActionListener() {
 
 			@Override
-			public void actionPerformed(final ActionEvent e) {
-				dialog.dispose();
+			public void mouseEntered(MouseEvent e) {
+				timer.stop();
 			}
+
 		});
-		timer.setRepeats(false);
 		timer.start();
 	}
 

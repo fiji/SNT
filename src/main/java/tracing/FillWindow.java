@@ -218,13 +218,13 @@ public class FillWindow extends JFrame
 			c.gridy++;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), " Export Options:", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Export Fill(s):", true, c);
 		++c.gridy;
 
 		{
-			exportAsCSV = new JButton("Export Summary");
+			exportAsCSV = new JButton("CSV Summary");
 			exportAsCSV.addActionListener(this);
-			view3D = new JButton("Create Image Stack");
+			view3D = new JButton("Image Stack");
 			view3D.addActionListener(this);
 			maskNotReal = new JCheckBox("Binary");
 			maskNotReal.addItemListener(this);
@@ -240,11 +240,11 @@ public class FillWindow extends JFrame
 		++c.gridy;
 
 		{
-			pauseOrRestartFilling = new JButton("Pause Filler");
+			pauseOrRestartFilling = new JButton("Pause");
 			pauseOrRestartFilling.addActionListener(this);
-			discardFill = new JButton("Stop Filler");
+			discardFill = new JButton("Stop");
 			discardFill.addActionListener(this);
-			saveFill = new JButton("Stash Filler Progress");
+			saveFill = new JButton("Stash Progress");
 			saveFill.addActionListener(this);
 			fillControlPanel = centerAlignedPanel();
 			fillControlPanel.add(pauseOrRestartFilling);

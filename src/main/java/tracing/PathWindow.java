@@ -137,7 +137,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		root = new DefaultMutableTreeNode("All Paths");
 		tree = new HelpfulJTree(root);
 		tree.setRootVisible(false);
-		tree.setVisibleRowCount(30);
+		tree.setVisibleRowCount(25);
 		tree.setDoubleBuffered(true);
 		tree.addTreeSelectionListener(this);
 		scrollPane = new JScrollPane();
@@ -183,11 +183,16 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 				@Override
 				public void actionPerformed(final ActionEvent e) {
+					final HashSet<Path> selectedPaths = getSelectedPaths(true);
+					if (selectedPaths.size() == 0) {
+						displayTmpMsg("There are no traced paths");
+						return;
+					}
 					if (tree.getSelectionCount()==0 &&
 						!guiUtils.getConfirmation("Currently no paths are selected. Change type of all paths?", "Apply to All?")) {
 						return;
 					}
-					setSWCType(getSelectedPaths(true), type);
+					setSWCType(selectedPaths, type);
 					refreshManager(true);
 				}
 			});
@@ -204,7 +209,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		jmi.addActionListener(multiPathListener);
 		colorMenu.add(jmi);
 
-		final JMenu fitMenu = new JMenu("Fits & Fills");
+		final JMenu fitMenu = new JMenu("Fit/Fill");
 		menuBar.add(fitMenu);
 		fitVolumeMenuItem = new JMenuItem("Fit Diameters");
 		fitVolumeMenuItem.addActionListener(multiPathListener);
@@ -367,7 +372,8 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		ui.changeState(NeuriteTracerResultsDialog.FITTING_PATHS);
 		final int numberOfPathsToFit = pathsToFit.size();
 		final int processors = Math.min(numberOfPathsToFit, Runtime.getRuntime().availableProcessors());
-		final String statusMsg = "Fitting " + numberOfPathsToFit + " paths (" + processors + " threads)...";
+		final String statusMsg = (processors == 1) ? "Fitting 1 path..."
+				: "Fitting " + numberOfPathsToFit + " paths (" + processors + " threads)...";
 		ui.showStatus(statusMsg);
 		setEnabledCommands(false);
 		final JDialog msg = guiUtils.floatingMsg(statusMsg);
@@ -1296,7 +1302,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	/** ActionListener for commands that can operate on multiple paths */
 	private class MultiPathActionListener implements ActionListener {
 
-		private final static String COLORS_MENU = "Tags";
+		private final static String COLORS_MENU = "Tag";
 		private final static String DELETE_CMD = "Delete...";
 		private final static String DOWNSAMPLE_CMD = "Douglas–Peucker Downsampling...";
 		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-Type Colors";
@@ -1312,14 +1318,18 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		public void actionPerformed(final ActionEvent e) {
 
 			final String cmd = e.getActionCommand();
+			final HashSet<Path> selectedPaths = getSelectedPaths(true);
+			final int n = selectedPaths.size();
 
+			if (n == 0) {
+				displayTmpMsg("There are no traced paths");
+				return;
+			}
+	
 			// If no path is selected, remind user that action applies to all paths
 			final boolean noSelection = tree.getSelectionCount() == 0;
 			final boolean assumeAll = noSelection && guiUtils.getConfirmation("Currently no paths are selected. Apply command to all paths?", cmd);
 			if (noSelection && !assumeAll) return;
-	
-			final HashSet<Path> selectedPaths = getSelectedPaths(true);
-			final int n = selectedPaths.size();
 
 			// Case 1: Non-destructive commands that do not require confirmation
 			if (REMOVE_COLOR_CMD.equals(cmd)) {

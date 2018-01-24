@@ -508,8 +508,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						break;
 
 					case PARTIAL_PATH:
-						updateStatusText(
-							"Select a point further along the structure...");
+						updateStatusText("Select a point further along the structure...");
 						disableEverything();
 						keepSegment.setEnabled(false);
 						junkSegment.setEnabled(false);
@@ -531,13 +530,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						break;
 
 					case QUERY_KEEP:
-						 // TODO: use plugin.confirmSegments
 						updateStatusText("Keep this new path segment?");
 						disableEverything();
 						keepSegment.setEnabled(true);
 						junkSegment.setEnabled(true);
 						abortButton.setEnabled(true);
-						//plugin.confirmTemporary();
 						break;
 
 					case FILLING_PATHS:
@@ -561,7 +558,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						break;
 
 					case WAITING_FOR_SIGMA_POINT:
-						updateStatusText("Click on a representative structure in the image");
+						updateStatusText("Click on a representative structure...");
 						disableEverything();
 						abortButton.setEnabled(true);
 						break;
@@ -1110,8 +1107,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final JMenu fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);
 		final JMenu importSubmenu = new JMenu("Import");
-		final JMenu exportSubmenu = new JMenu("Export");
-		final JMenu analysisMenu = new JMenu("Analysis");
+		final JMenu exportSubmenu = new JMenu("Export (All Paths)");
+		final JMenu analysisMenu = new JMenu("Utilities");
 		menuBar.add(analysisMenu);
 		final JMenu viewMenu = new JMenu("View");
 		menuBar.add(viewMenu);
@@ -1137,7 +1134,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		fileMenu.add(sendToTrakEM2);
 		fileMenu.addSeparator();
 
-		loadSWCMenuItem = new JMenuItem("(e)SWC File...");
+		loadSWCMenuItem = new JMenuItem("(e)SWC...");
 		loadSWCMenuItem.addActionListener(listener);
 		importSubmenu.add(loadSWCMenuItem);
 		loadLabelsMenuItem = new JMenuItem("Labels (AmiraMesh)...");
@@ -1145,10 +1142,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		importSubmenu.add(loadLabelsMenuItem);
 		fileMenu.add(importSubmenu);
 
-		exportAllSWCMenuItem = new JMenuItem("As SWC (All Paths)...");
+		exportAllSWCMenuItem = new JMenuItem("SWC...");
 		exportAllSWCMenuItem.addActionListener(listener);
 		exportSubmenu.add(exportAllSWCMenuItem);
-		exportCSVMenuItem = new JMenuItem("Path Properties (All Paths)...");
+		exportCSVMenuItem = new JMenuItem("CSV Properties...");
 		exportCSVMenuItem.addActionListener(listener);
 		exportSubmenu.add(exportCSVMenuItem);
 		fileMenu.add(exportSubmenu);
@@ -1161,9 +1158,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		analysisMenu.addSeparator();
 		measureMenuItem = new JMenuItem("Summary Statistics...");
 		measureMenuItem.addActionListener(listener);
-		analysisMenu.add(measureMenuItem);
 		final JMenuItem correspondencesMenuItem = new JMenuItem(
 			"Show correspondences with file..");
+		correspondencesMenuItem.setEnabled(false); // disable command until it is re-written
 		correspondencesMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -1176,13 +1173,15 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					return;
 				}
 				// FIXME: 3D VIEWER exclusive method
-				Overlay overlay = plugin.showCorrespondencesTo(tracesFile, Color.YELLOW, 2.5);
-				plugin.getXYCanvas().setOverlay(overlay);
+//				Overlay overlay = plugin.showCorrespondencesTo(tracesFile, Color.YELLOW, 2.5);
+//				plugin.getXYCanvas().setOverlay(overlay);
 			}
 		});
-		analysisMenu.add(correspondencesMenuItem);
-		analysisMenu.addSeparator();
 		analysisMenu.add(shollAnalysisHelpMenuItem());
+		analysisMenu.add(measureMenuItem);
+		analysisMenu.addSeparator();
+		analysisMenu.add(correspondencesMenuItem);
+
 
 		final JCheckBoxMenuItem xyCanvasMenuItem = new JCheckBoxMenuItem(
 			"Hide XY View");
@@ -1346,7 +1345,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 		final JComboBox<String> pathsColorChoice = new JComboBox<>();
 		pathsColorChoice.addItem("Default colors");
-		pathsColorChoice.addItem("Path Manager tags");
+		pathsColorChoice.addItem("Path Manager tags (if any)");
 		pathsColorChoice.setSelectedIndex(plugin.displayCustomPathColors ? 1 : 0);
 		pathsColorChoice.addActionListener(new ActionListener() {
 
@@ -1811,6 +1810,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	}
 
 	protected void reset() {
+		abortCurrentOperation();
 		showStatus("Resetting");
 		changeState(WAITING_TO_START_PATH);
 	}
@@ -2075,6 +2075,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(), ".swc)");
 				final File saveFile = guiUtils.saveFile("Export All Paths as SWC...", suggestedFile, Collections.singletonList(".swc"));
+				if (saveFile == null) return; // user pressed cancel
 				if (saveFile.exists()) {
 					if (!guiUtils.getConfirmation("The file " +
 						saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?", "Override SWC file?"))
@@ -2090,6 +2091,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(), ".csv)");
 				final File saveFile = guiUtils.saveFile("Export All Paths as CSV...", suggestedFile, Collections.singletonList(".csv"));
+				if (saveFile == null) return; // user pressed cancel
 				if (saveFile.exists()) {
 					if (!guiUtils.getConfirmation("The file " +
 						saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?", "Override CSV file?"))
@@ -2115,8 +2117,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				changeState(preExportingState);
 
 			}
-			else if (source == measureMenuItem) {
-				final PathAnalyzer pa = new PathAnalyzer(pathAndFillManager.getPaths());
+			else if (source == measureMenuItem && !noPathsError()) {
+				final PathAnalyzer pa = new PathAnalyzer(pathAndFillManager.getPathsFiltered());
 				pa.setContext(plugin.getContext());
 				pa.setTable(null, "SNT Summary Measurements (All Paths)");
 				pa.run();

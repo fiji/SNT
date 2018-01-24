@@ -85,7 +85,6 @@ import ij.io.SaveDialog;
 import ij.measure.Calibration;
 import ij3d.ImageWindow3D;
 import net.imagej.table.DefaultGenericTable;
-import net.imagej.table.ResultsTable;
 import sholl.Sholl_Analysis;
 import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
@@ -2120,7 +2119,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			else if (source == measureMenuItem && !noPathsError()) {
 				final PathAnalyzer pa = new PathAnalyzer(pathAndFillManager.getPathsFiltered());
 				pa.setContext(plugin.getContext());
-				pa.setTable(null, "SNT Summary Measurements (All Paths)");
+				pa.setTable(pw.getTable(), "SNT Measurements");
 				pa.run();
 				return;
 			}

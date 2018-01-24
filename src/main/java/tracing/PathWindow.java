@@ -86,10 +86,12 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import org.scijava.command.CommandService;
+import org.scijava.display.Display;
 
 import com.jidesoft.swing.SearchableBar;
 import com.jidesoft.swing.TreeSearchable;
 
+import net.imagej.table.DefaultGenericTable;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SwingSafeResult;
@@ -116,7 +118,10 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	private final ButtonGroup swcTypeButtonGroup;
 	private final ColorMenu colorMenu;
 	private final JMenuItem fitVolumeMenuItem;
+	private final TreeSearchable searchable;
 
+	private DefaultGenericTable table;
+	private Display<?> tableDisplay;
 
 	public PathWindow(final PathAndFillManager pathAndFillManager,
 		final SimpleNeuriteTracer plugin)
@@ -304,6 +309,12 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 		});
 
+		// Search Bar TreeSearchable
+		searchable = new TreeSearchable(tree);
+		searchable.setCaseSensitive(false);
+		searchable.setFromStart(false);
+		searchable.setWildcardEnabled(true);
+		searchable.setRepeats(true);
 		add(bottomPanel(), BorderLayout.PAGE_END);
 		pack();
 	}
@@ -560,11 +571,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	private JPanel bottomPanel() {
 		final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder());
-		final TreeSearchable searchable = new TreeSearchable(tree);
-		searchable.setCaseSensitive(false);
-		searchable.setFromStart(false);
-		searchable.setWildcardEnabled(true);
-		searchable.setRepeats(true);
 		final SearchableBar sBar = new SearchableBar(searchable, true);
 		sBar.setShowMatchCount(true);
 		sBar.setHighlightAll(false); //TODO: update to 3.6.19 see bugfix https://github.com/jidesoft/jide-oss/commit/149bd6a53846a973dfbb589fffcc82abbc49610b
@@ -1188,6 +1194,12 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			updateCmdsManyOrNoneSelected(selectedPaths);
 	}
 
+	protected DefaultGenericTable getTable() {
+		if (table == null)
+			table = new DefaultGenericTable();
+		return table;
+	}
+
 	/** ActionListener for commands that do not deal with paths */
 	private class NoPathActionListener implements ActionListener {
 
@@ -1350,10 +1362,25 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			}
 			else if (MEASURE_CMD.equals(cmd)) {
 				try {
-					final PathAnalyzer pa = new PathAnalyzer(new HashSet<Path>(selectedPaths));
+					final PathAnalyzer pa = new PathAnalyzer(selectedPaths);
 					pa.setContext(plugin.getContext());
-					pa.setTable(null, "SNT Summary Measurements");
-					pa.run();
+					if (pa.getParsedPaths().size() == 0) {
+						guiUtils.error("None of the selected paths could be measured.");
+						return;
+					}
+					pa.setTable(getTable(), "SNT Measurements");
+					String description;
+					if (n == pathAndFillManager.getPathsFiltered().size()) {
+						description = "All Paths";
+					} else if (n > 1 && !searchable.getSearchingText().trim().isEmpty()) {
+						description = "Filter ["+ searchable.getSearchingText() +"]";
+					} else if (n == 1) {
+						description = selectedPaths.iterator().next().getName();
+					} else {
+						description = "Path IDs ["+ Path.pathsToIDListString(new ArrayList<Path>(selectedPaths)) +"]";
+					}
+					pa.summarize(description);
+					pa.updateAndDisplayTable();
 					return;
 				} catch (final IllegalArgumentException ignored) {
 					guiUtils.error("Selected paths do not fullfill requirements for measurements");

@@ -23,6 +23,7 @@
 package tracing;
 
 import java.awt.Point;
+import java.io.File;
 
 import tracing.FillWindow;
 import ij.Prefs;
@@ -56,10 +57,12 @@ public class SNTPrefs { //TODO: Adopt PrefService
 	private static final String SNAP_Z = "tracing.snt.zsnap";
 	private static final String PATHWIN_LOC = "tracing.snt.pwloc";
 	private static final String FILLWIN_LOC = "tracing.snt.fwloc";
+	private static final String LOAD_DIRECTORY_KEY = "tracing.snt.lastdir";
+	private static File recentFile;
 
+	private SimpleNeuriteTracer snt;
 	private final int UNSET_PREFS = -1;
 	private int currentBooleans;
-	private final SimpleNeuriteTracer snt;
 	private boolean ij1ReverseSliderOrder;
 	private boolean ij1PointerCursor;
 
@@ -86,7 +89,7 @@ public class SNTPrefs { //TODO: Adopt PrefService
 	}
 
 	private int getDefaultBooleans() {
-		return DRAW_DIAMETERS_XY + SNAP_CURSOR + AUTO_CANVAS_ACTIVATION + COMPRESSED_XML;
+		return DRAW_DIAMETERS_XY + SNAP_CURSOR + COMPRESSED_XML;
 	}
 
 	private void getBooleans() {
@@ -206,6 +209,25 @@ public class SNTPrefs { //TODO: Adopt PrefService
 
 	private void clearLegacyPrefs() {
 		Prefs.set("tracing.Simple_Neurite_Tracer.drawDiametersXY", null);
+	}
+
+	public void setRecentFile(final File file) {
+		recentFile = file;
+	}
+
+	protected File getRecentFile() {
+		if (recentFile == null)
+			return snt.loadedImageFile();
+		else
+			return recentFile;
+	}
+
+	protected static void setRecentDirectory(final String dir) {
+		Prefs.set(LOAD_DIRECTORY_KEY, dir);
+	}
+
+	protected static String getRecentDirectory() {
+		return Prefs.get(LOAD_DIRECTORY_KEY, null);
 	}
 
 }

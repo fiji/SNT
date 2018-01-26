@@ -414,11 +414,11 @@ public class FillWindow extends JFrame
 
 		} else if (source == exportAsCSV) {
 
-			final File file = SNT.findClosestPair(plugin.loadedImageFile(), "swc)");
-			final File saveFile = gUtils.saveFile("Export CSV Summary...", file, Collections.singletonList(".swc"));
+			final File file = SNT.findClosestPair(plugin.prefs.getRecentFile(), "csv");
+			final File saveFile = gUtils.saveFile("Export CSV Summary...", file, Collections.singletonList(".csv"));
 			if (saveFile == null) return; // user pressed cancel;
 			if (saveFile.exists() && !gUtils.getConfirmation("Export data...",
-					"The file " + saveFile.getAbsolutePath() + " already exists.\n" + "Do you want to replace it?")) {
+					"The file " + saveFile.getAbsolutePath() + " already exists. Do you want to replace it?")) {
 				return;
 			}
 			plugin.getUI().showStatus("Exporting CSV data to " + saveFile.getAbsolutePath());

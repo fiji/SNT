@@ -153,7 +153,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private final GuiUtils guiUtils;
 	private final PathWindow pw;
 	private final FillWindow fw;
-	private final SNTPrefs prefs;
 	protected final GuiListener listener;
 
 	/* These are the states that the UI can be in: */
@@ -188,7 +187,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 		assert SwingUtilities.isEventDispatchThread();
 
-		prefs = plugin.prefs;
 		pathAndFillManager = plugin.getPathAndFillManager();
 		addWindowListener(new WindowAdapter() {
 
@@ -438,7 +436,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			return;
 		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
-		prefs.savePluginPrefs(true);
+		plugin.prefs.savePluginPrefs(true);
 		pw.dispose();
 		fw.dispose();
 		dispose();
@@ -1557,9 +1555,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	}
 
 	private void arrangeDialogs() {
-		Point loc = prefs.getPathWindowLocation();
+		Point loc = plugin.prefs.getPathWindowLocation();
 		if (loc != null) pw.setLocation(loc);
-		loc = prefs.getFillWindowLocation();
+		loc = plugin.prefs.getFillWindowLocation();
 		if (loc != null) fw.setLocation(loc);
 //		final GraphicsDevice activeScreen = getGraphicsConfiguration().getDevice();
 //		final int screenWidth = activeScreen.getDisplayMode().getWidth();
@@ -2020,7 +2018,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 			else if (source == saveMenuItem && !noPathsError()) {
 
-				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(), "traces)");
+				final File suggestedFile = SNT.findClosestPair(plugin.prefs.getRecentFile(), "traces");
 				final File saveFile = guiUtils.saveFile("Save traces as...", suggestedFile, Collections.singletonList(".traces"));
 				if (saveFile == null) return; // user pressed cancel;
 				if (saveFile.exists() && !guiUtils.getConfirmation("The file " +

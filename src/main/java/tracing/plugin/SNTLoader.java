@@ -90,6 +90,7 @@ public class SNTLoader extends DynamicCommand {
 	@Override
 	public void initialize() {
 		// TODO: load defaults from prefService?
+		SNT.setDebugMode(true);
 		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
 			.getActiveImageDisplay());
 		if (sourceImp == null) {

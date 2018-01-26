@@ -384,6 +384,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			pathAndFillManager.loadGuessingType(file.getAbsolutePath());
 			if (isReady()) resultsDialog.changeState(
 				NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			prefs.setRecentFile(file);
 		}
 	}
 
@@ -772,7 +773,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	synchronized protected void loadTracesFile() {
 		loading = true;
-		final File suggestedFile = SNT.findClosestPair(loadedImageFile(), ".traces)");
+		final File suggestedFile = SNT.findClosestPair(prefs.getRecentFile(), ".traces");
 		final File chosenFile = guiUtils.openFile("Open .traces file...", suggestedFile,
 				Collections.singletonList(".traces"));
 		if (chosenFile == null)
@@ -804,7 +805,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	synchronized protected void loadSWCFile() {
 		loading = true;
-		final File suggestedFile = SNT.findClosestPair(loadedImageFile(), ".swc)");
+		final File suggestedFile = SNT.findClosestPair(prefs.getRecentFile(), ".swc");
 		final File chosenFile = guiUtils.openFile("Open SWC file...", suggestedFile, Arrays.asList(".swc", ".eswc"));
 		if (chosenFile == null)
 			return; // user pressed cancel;
@@ -837,7 +838,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	synchronized public void loadTracings() {
 
 		loading = true;
-		final File suggestedFile = SNT.findClosestPair(loadedImageFile(), ".traces)"); 
+		final File suggestedFile = SNT.findClosestPair(prefs.getRecentFile(), ".traces"); 
 		final File chosenFile = guiUtils.openFile("Open .traces or .(e)swc file...", suggestedFile, Arrays.asList(".traces", ".swc", ".eswc")); 
 		if (chosenFile == null) return; // user pressed cancel; 
 

@@ -234,6 +234,7 @@ public class GuiUtils {
 		final int type, final List<String> allowedExtensions)
 	{
 		final JFileChooser chooser = new JFileChooser(file);
+		chooser.setSelectedFile(file);
 		chooser.setDialogTitle(title);
 		chooser.setFileSelectionMode(type);
 		chooser.setDragEnabled(true);

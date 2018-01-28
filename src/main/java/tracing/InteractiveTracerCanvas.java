@@ -40,6 +40,7 @@ import java.awt.event.WindowEvent;
 import org.scijava.util.PlatformUtils;
 import ij.ImagePlus;
 import ij.Menus;
+import tracing.gui.GuiUtils;
 import tracing.gui.ShollAnalysisDialog;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInImage;
@@ -64,7 +65,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private Color temporaryColor;
 	private Color unconfirmedColor;
 	private Color fillColor;
-
+	private final GuiUtils guiUtils;
 	protected static String EDIT_MODE_LABEL = "Edit Mode";
 	protected static String PAUSE_MODE_LABEL = "SNT Paused";
 
@@ -73,6 +74,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final PathAndFillManager pathAndFillManager) {
 		super(imp, plugin, plane, pathAndFillManager);
 		tracerPlugin = plugin;
+		guiUtils = new GuiUtils(this.getParent());
 		buildPpupMenu();
 		super.disablePopupMenu(true); // so that handlePopupMenu is not triggered
 		super.add(pMenu);
@@ -119,8 +121,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	private void assembleDeselectedEditingPathsMenu(final boolean computeList) {
-		System.setProperty("awt.useSystemAAFontSettings","on");
-		System.setProperty("swing.aatext", "true");
 		deselectedEditingPathsMenu.removeAll();
 		if (!computeList) {
 			deselectedEditingPathsMenu.setEnabled(false);
@@ -140,15 +140,25 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				@Override
 				public void actionPerformed(final ActionEvent e) {
 					final Path source = tracerPlugin.getEditingPath();
+					final int nodeIndexP = p.getEditableNodeIndex();
+					final int nodeIndexS = source.getEditableNodeIndex();
+					if (nodeIndexP * nodeIndexS != 0) {
+						guiUtils.error("One of the connecting nodes must be a start or an end node!",
+								"Paths Cannot Contain Loops");
+						return;
+					}
+					final PointInImage tPim = p.getPointInImage(nodeIndexP);
+					source.moveNode(source.getEditableNodeIndex(), tPim);
 					if (startJoins) {
 						if (source.getStartJoins() != null)
 							source.unsetStartJoin();
-						source.setStartJoin(p, p.getPointInImage(p.getEditableNodeIndex()));
+						source.setStartJoin(p, tPim);
 					} else {
 						if (source.getEndJoins() != null)
 							source.unsetEndJoin();
-						source.setEndJoin(p, p.getPointInImage(p.getEditableNodeIndex()));
+						source.setEndJoin(p, tPim);
 					}
+					p.setEditableNode(-1);
 					pathAndFillManager.resetListeners(null);
 					tracerPlugin.repaintAllPanes();
 				}
@@ -161,6 +171,28 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			mitem.setEnabled(false);
 			deselectedEditingPathsMenu.add(mitem);
 		}
+		deselectedEditingPathsMenu.add(helpOnConnecting());
+	}
+
+	private MenuItem helpOnConnecting() {
+		final String msg = "To connect two paths in Edit mode: select the source node "
+				+ "on the first path, then activate the second path and select the "
+				+ "destination node on it. Link the two through the 'Connect To' menu entry.";
+		return helpItem(msg);
+	}
+
+	private MenuItem helpItem(final String msg) {
+		final GuiUtils guiUtils = new GuiUtils(this.getParent());
+		final MenuItem helpItem = new MenuItem("Help...");
+		helpItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				guiUtils.centeredMsg(msg, "Help");
+			}
+
+		});
+		return helpItem;
 	}
 
 	private MenuItem menuItem(final String cmdName, final ActionListener lstnr) {

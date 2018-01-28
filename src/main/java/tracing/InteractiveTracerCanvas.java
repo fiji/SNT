@@ -378,7 +378,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		} else if (currentState == NeuriteTracerResultsDialog.EDITING_MODE) {
 
-			if (impossibleEdit(true)) return;
+			if (e.isPopupTrigger() || impossibleEdit(true)) return;
 			update(getGraphics());
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_POINT) {

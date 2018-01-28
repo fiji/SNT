@@ -434,10 +434,14 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		if (plugin.pathsUnsaved() && !guiUtils.getConfirmation(
 			"There are unsaved paths. Do you really want to quit?", "Really quit?"))
 			return;
+		if (pw.measurementsUnsaved() && !guiUtils.getConfirmation(
+			"There are unsaved measurements. Do you really want to quit?", "Really quit?"))
+			return;
 		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
 		plugin.prefs.savePluginPrefs(true);
 		pw.dispose();
+		pw.closeTable();
 		fw.dispose();
 		dispose();
 		plugin.closeAndResetAllPanes();
@@ -1118,6 +1122,16 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		saveMenuItem = new JMenuItem("Save Traces...");
 		saveMenuItem.addActionListener(listener);
 		fileMenu.add(saveMenuItem);
+		JMenuItem saveTable = new JMenuItem("Save Measurements...");
+		saveTable.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				pw.saveTable();
+				return;
+			}
+		});
+		fileMenu.add(saveTable);
 
 		sendToTrakEM2 = new JMenuItem("Send to TrakEM2");
 		sendToTrakEM2.addActionListener(new ActionListener() {

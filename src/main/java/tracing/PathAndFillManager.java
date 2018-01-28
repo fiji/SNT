@@ -2271,25 +2271,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return result;
 	}
 
-	public static String stringForCSV(final String s) {
-		boolean quote = false;
-		String result = s;
-		if (s.indexOf(',') >= 0)
-			quote = true;
-		if (s.indexOf('"') >= 0) {
-			quote = true;
-			result = s.replaceAll("\"", "\"\"");
-		}
-		if (quote)
-			return "\"" + result + "\"";
-		else
-			return result;
-	}
-
-	public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {
-		pw.print(PathAndFillManager.stringForCSV("" + o));
-	}
-
 	public void exportFillsAsCSV(final File outputFile) throws IOException {
 
 		final String[] headers = new String[] { "FillID", "SourcePaths", "Threshold", "Metric", "Volume",
@@ -2299,24 +2280,24 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
 		final int columns = headers.length;
 		for (int c = 0; c < columns; ++c) {
-			csvQuoteAndPrint(pw, headers[c]);
+			SNT.csvQuoteAndPrint(pw, headers[c]);
 			if (c < (columns - 1))
 				pw.print(",");
 		}
 		pw.print("\r\n");
 		for (int i = 0; i < allFills.size(); ++i) {
 			final Fill f = allFills.get(i);
-			csvQuoteAndPrint(pw, i);
+			SNT.csvQuoteAndPrint(pw, i);
 			pw.print(",");
-			csvQuoteAndPrint(pw, f.getSourcePathsStringMachine());
+			SNT.csvQuoteAndPrint(pw, f.getSourcePathsStringMachine());
 			pw.print(",");
-			csvQuoteAndPrint(pw, f.getThreshold());
+			SNT.csvQuoteAndPrint(pw, f.getThreshold());
 			pw.print(",");
-			csvQuoteAndPrint(pw, f.getMetric());
+			SNT.csvQuoteAndPrint(pw, f.getMetric());
 			pw.print(",");
-			csvQuoteAndPrint(pw, f.getVolume());
+			SNT.csvQuoteAndPrint(pw, f.getVolume());
 			pw.print(",");
-			csvQuoteAndPrint(pw, f.spacing_units);
+			SNT.csvQuoteAndPrint(pw, f.spacing_units);
 			pw.print("\r\n");
 		}
 		pw.close();
@@ -2343,7 +2324,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
 		final int columns = headers.length;
 		for (int c = 0; c < columns; ++c) {
-			pw.print(stringForCSV(headers[c]));
+			SNT.csvQuoteAndPrint(pw, headers[c]);
 			if (c < (columns - 1))
 				pw.print(",");
 		}
@@ -2355,18 +2336,18 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			}
 			if (p.fittedVersionOf != null)
 				continue;
-			pw.print(stringForCSV("" + p.getID()));
+			SNT.csvQuoteAndPrint(pw, p.getID());
 			pw.print(",");
-			pw.print(stringForCSV("" + pForLengthAndName.getName()));
+			SNT.csvQuoteAndPrint(pw, pForLengthAndName.getName());
 			pw.print(",");
-			pw.print(stringForCSV("" + Path.getSWCtypeName(p.getSWCType())));
+			SNT.csvQuoteAndPrint(pw, Path.getSWCtypeName(p.getSWCType()));
 			pw.print(",");
 			final boolean primary = h.contains(p);
-			pw.print(stringForCSV("" + primary));
+			SNT.csvQuoteAndPrint(pw, primary);
 			pw.print(",");
-			pw.print(stringForCSV("" + pForLengthAndName.getRealLength()));
+			SNT.csvQuoteAndPrint(pw, pForLengthAndName.getRealLength());
 			pw.print(",");
-			pw.print(stringForCSV("" + p.spacing_units));
+			SNT.csvQuoteAndPrint(pw, p.spacing_units);
 			pw.print(",");
 			if (p.startJoins != null)
 				pw.print("" + p.startJoins.getID());
@@ -2374,9 +2355,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if (p.endJoins != null)
 				pw.print("" + p.endJoins.getID());
 			pw.print(",");
-			pw.print(stringForCSV(p.somehowJoinsAsString()));
+			SNT.csvQuoteAndPrint(pw, p.somehowJoinsAsString());
 			pw.print(",");
-			pw.print(stringForCSV(p.childrenAsString()));
+			SNT.csvQuoteAndPrint(pw, p.childrenAsString());
 			pw.print(",");
 
 			final double[] startPoint = new double[3];

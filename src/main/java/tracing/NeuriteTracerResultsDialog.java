@@ -70,21 +70,14 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.scijava.display.Display;
-import org.scijava.display.DisplayService;
-
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.HTMLDialog;
-import ij.gui.Overlay;
 import ij.gui.StackWindow;
-import ij.io.FileInfo;
-import ij.io.SaveDialog;
 import ij.measure.Calibration;
 import ij3d.ImageWindow3D;
-import net.imagej.table.DefaultGenericTable;
 import sholl.Sholl_Analysis;
 import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
@@ -147,7 +140,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private volatile boolean ignorePreprocessEvents = false;
 	private volatile int preGaussianState;
 
-	private DefaultGenericTable table = null;
 	private final SimpleNeuriteTracer plugin;
 	private final PathAndFillManager pathAndFillManager;
 	private final GuiUtils guiUtils;
@@ -1167,7 +1159,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		fileMenu.add(quitMenuItem);
 
 		analysisMenu.addSeparator();
-		measureMenuItem = new JMenuItem("Summary Statistics...");
+		measureMenuItem = new JMenuItem("Quick Statistics");
 		measureMenuItem.addActionListener(listener);
 		final JMenuItem correspondencesMenuItem = new JMenuItem(
 			"Show correspondences with file..");
@@ -2131,7 +2123,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			else if (source == measureMenuItem && !noPathsError()) {
 				final PathAnalyzer pa = new PathAnalyzer(pathAndFillManager.getPathsFiltered());
 				pa.setContext(plugin.getContext());
-				pa.setTable(pw.getTable(), "SNT Measurements");
+				pa.setTable(pw.getTable(), PathWindow.TABLE_TITLE);
 				pa.run();
 				return;
 			}

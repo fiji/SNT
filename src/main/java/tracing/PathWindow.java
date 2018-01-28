@@ -87,7 +87,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
-
+import org.scijava.display.DisplayService;
 import com.jidesoft.swing.SearchableBar;
 import com.jidesoft.swing.TreeSearchable;
 
@@ -120,8 +120,9 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	private final JMenuItem fitVolumeMenuItem;
 	private final TreeSearchable searchable;
 
+	protected static final String TABLE_TITLE = "SNT Measurements";
 	private DefaultGenericTable table;
-	private Display<?> tableDisplay;
+	private boolean tableSaved;
 
 	public PathWindow(final PathAndFillManager pathAndFillManager,
 		final SimpleNeuriteTracer plugin)
@@ -1194,10 +1195,76 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			updateCmdsManyOrNoneSelected(selectedPaths);
 	}
 
+	protected void closeTable() {
+		final Display<?> display = plugin.getContext().getService(DisplayService.class).getDisplay(TABLE_TITLE);
+		if (display != null && display.isDisplaying(table)) display.close();
+	}
+
 	protected DefaultGenericTable getTable() {
 		if (table == null)
 			table = new DefaultGenericTable();
+		// we will assume that immediately after being retrieved,
+		// the table will contain unsaved data. //FIXME: sloppy
+		tableSaved = false;
 		return table;
+	}
+
+	protected boolean measurementsUnsaved() {
+		return validTableMeasurements() && !tableSaved;
+	}
+
+	private boolean validTableMeasurements() {
+		return table != null && table.getRowCount() > 0 && table.getColumnCount() > 0;
+	}
+
+	private void saveTable(final File outputFile) throws IOException {
+		final String sep = ",";
+		final PrintWriter pw = new PrintWriter(
+				new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+		final int columns = table.getColumnCount();
+		final int rows = table.getRowCount();
+
+		// Print a column header to hold row headers
+		SNT.csvQuoteAndPrint(pw, "Description");
+		pw.print(sep);
+		for (int col = 0; col < columns; ++col) {
+			SNT.csvQuoteAndPrint(pw, table.getColumnHeader(col));
+			if (col < (columns - 1)) pw.print(sep);
+		}
+		pw.print("\r\n");
+		for (int row = 0; row < rows; row++) {
+			SNT.csvQuoteAndPrint(pw, table.getRowHeader(row));
+			pw.print(sep);
+			for (int col = 0; col < columns; col++) {
+				SNT.csvQuoteAndPrint(pw, table.get(col, row));
+				if (col < (columns - 1)) pw.print(sep);
+			}
+			pw.print("\r\n");
+		}
+		pw.close();
+		tableSaved = true;
+	}
+
+	protected void saveTable() {
+		if (!validTableMeasurements()) {
+			plugin.error("There are no measurements to save.");
+			return;
+		}
+		File saveFile = new File("/home/tferr/Desktop/");
+		saveFile = guiUtils.saveFile("Save SNT Measurements...", saveFile, Collections.singletonList(".csv"));
+		if (saveFile == null) return; // user pressed cancel
+
+		if (saveFile.exists() && !guiUtils.getConfirmation("The file " + saveFile
+			.getAbsolutePath() + " already exists. Replace it?", "Override?")) {
+			return;
+		}
+		plugin.getUI().showStatus("Exporting Measurements..");
+		try {
+			saveTable(saveFile);
+		} catch (final IOException e) {
+			plugin.error("Unfortunately an Exception occured. See Console for details");
+			e.printStackTrace();
+		}
 	}
 
 	/** ActionListener for commands that do not deal with paths */
@@ -1368,7 +1435,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 						guiUtils.error("None of the selected paths could be measured.");
 						return;
 					}
-					pa.setTable(getTable(), "SNT Measurements");
+					pa.setTable(getTable(), TABLE_TITLE);
 					String description;
 					if (n == pathAndFillManager.getPathsFiltered().size()) {
 						description = "All Paths";

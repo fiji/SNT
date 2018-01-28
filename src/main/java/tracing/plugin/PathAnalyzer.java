@@ -29,7 +29,9 @@ import java.util.stream.IntStream;
 
 import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;
+import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
+import org.scijava.io.IOService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -50,6 +52,8 @@ public class PathAnalyzer extends ContextCommand {
 
 	@Parameter
 	private LogService logService;
+	
+	@Parameter IOService ioservice;
 
 	protected final HashSet<Path> paths;
 	private HashSet<Path> primaries;
@@ -103,11 +107,11 @@ public class PathAnalyzer extends ContextCommand {
 		return paths;
 	}
 
-	public void summarize() {
+	public void summarize(final String rowHeader) {
 		if (table == null) table = new DefaultGenericTable();
-		table.appendRow();
+		table.appendRow(rowHeader);
 		final int row = Math.max(0, table.getRowCount() - 1);
-		table.set(getCol("# Paths (Fitted)"), row, getNPaths());
+		table.set(getCol("# Paths"), row, getNPaths());
 		table.set(getCol("# Branch Points"), row, getBranchPoints().size());
 		table.set(getCol("# Tips"), row, getTips().size());
 		table.set(getCol("Total Length"), row, getTotalLength());
@@ -116,7 +120,7 @@ public class PathAnalyzer extends ContextCommand {
 		table.set(getCol("Sum length PP"), row, getPrimaryLength());
 		table.set(getCol("Sum length TP"), row, getTerminalLength());
 		table.set(getCol("# Fitted Paths"), row, fittedPathsCounter);
-		table.set(getCol("Notes"), row, "Single point paths ignored. ");
+		table.set(getCol("Notes"), row, "Single point paths ignored");
 	}
 
 	public void setTable(final DefaultGenericTable table) {
@@ -139,11 +143,19 @@ public class PathAnalyzer extends ContextCommand {
 			return;
 		}
 		statusService.showStatus("Measuring Paths...");
-		summarize();
-		displayService.createDisplay((tableTitle == null) ? "Summary Measurements" : tableTitle, table);
+		summarize("All Paths");
+		updateAndDisplayTable();
 		statusService.clearStatus();
 	}
 
+	public void updateAndDisplayTable() {
+		final Display<?> display = displayService.getDisplay(tableTitle);
+		if (display != null && display.isDisplaying(table)) {
+			display.update();
+		} else {
+			displayService.createDisplay((tableTitle == null) ? "Path Measurements" : tableTitle, table);
+		}
+	}
 
 	private int getCol(final String header) {
 		int idx = table.getColumnIndex(header);

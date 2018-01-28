@@ -25,6 +25,7 @@ package tracing;
 import java.awt.Color;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -94,6 +95,24 @@ public class SNT {
 		}
 	}
 
+	public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {
+		pw.print(stringForCSV("" + o));
+	}
+
+	private static String stringForCSV(final String s) {
+		boolean quote = false;
+		String result = s;
+		if (s.indexOf(',') >= 0)
+			quote = true;
+		if (s.indexOf('"') >= 0) {
+			quote = true;
+			result = s.replaceAll("\"", "\"\"");
+		}
+		if (quote)
+			return "\"" + result + "\"";
+		else
+			return result;
+	}
 	@Deprecated
 	protected static String getColorString(final Color color) {
 		String name = "none";

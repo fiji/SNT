@@ -84,6 +84,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		pMenu = new PopupMenu();
 		final AListener listener = new AListener();
 		pMenu.add(menuItem(AListener.SELECT_NEAREST, listener));
+		pMenu.add(menuItem(listener.FORK_NEAREST, listener));
 		pMenu.addSeparator();
 		togglePauseModeMenuItem = new CheckboxMenuItem(AListener.PAUSE_TOOGLE);
 		togglePauseModeMenuItem.addItemListener(listener);
@@ -523,6 +524,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	 */
 	private class AListener implements ActionListener, ItemListener {
 
+		public final String FORK_NEAREST = "Fork at Nearest Node  ["+ GuiUtils.modKey() +"+Shift+Click]";
 		public static final String SELECT_NEAREST = "Select Nearest Path  [G, Shift+G]";
 		public static final String PAUSE_TOOGLE = "Pause Tracing";
 		public static final String EDIT_TOOGLE = "Edit Path";
@@ -542,8 +544,20 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		@Override
 		public void actionPerformed(final ActionEvent e) {
-
-			if (e.getActionCommand().equals(SELECT_NEAREST)) {
+			if (e.getActionCommand().equals(FORK_NEAREST)) {
+				if (!uiReadyForModeChange(NeuriteTracerResultsDialog.WAITING_TO_START_PATH)) {
+					guiUtils.tempMsg("Please finish current operation before tracing branch");
+					return;
+				}
+				if (pathAndFillManager.size() == 0) {
+					tracerPlugin.discreteMsg("There are no finished paths to branch out from");
+					return;
+				}
+				selectNearestPathToMousePointer(false);
+				tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_x_in_pane_precise, plane, true, true);
+				tracerPlugin.clickForTrace(last_x_in_pane_precise, last_y_in_pane_precise, plane, true);
+			}
+			else if (e.getActionCommand().equals(SELECT_NEAREST)) {
 				final boolean add = ((e.getModifiers() & ActionEvent.SHIFT_MASK) >0);
 				selectNearestPathToMousePointer(add);
 			}
@@ -570,22 +584,24 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			
 		}
 	}
-	
+
 	protected boolean isEditMode() {
 		return editMode;
 	}
-	
+
 	protected void setEditMode(final boolean editMode) {
 		this.editMode = editMode;
 	}
-	
+
 	protected void deleteEditingNode(final boolean warnOnFailure) {
-		if (impossibleEdit(warnOnFailure)) return;
+		if (impossibleEdit(warnOnFailure))
+			return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		if (editingPath.size() > 1) {
 			editingPath.removeNode(editingPath.getEditableNodeIndex());
 			redrawEditingPath();
-		} else { // single point path
+		} else if (new GuiUtils(this.getParent()).getConfirmation("Delete " + editingPath + "?",
+				"Delete Single-Point Path?")) {
 			tracerPlugin.getPathAndFillManager().deletePath(editingPath);
 			tracerPlugin.detectEditingPath();
 			tracerPlugin.repaintAllPanes();

@@ -591,14 +591,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			tracerPlugin.repaintAllPanes();
 		}
 	}
-	
+
 	protected void apppendLastPositionToEditingNode(final boolean warnOnFailure) {
 		if (impossibleEdit(warnOnFailure)) return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		final int editingNode = editingPath.getEditableNodeIndex();
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
-		editingPath.addNode(editingNode, new PointInImage(p[0], p[1], p[2]));
+		editingPath.addNode(editingNode, new PointInImage(p[0]*tracerPlugin.x_spacing, p[1]*tracerPlugin.y_spacing, p[2]*tracerPlugin.z_spacing));
 		editingPath.setEditableNode(editingNode + 1);
 		redrawEditingPath();
 		return;

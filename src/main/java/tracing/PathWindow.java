@@ -174,6 +174,9 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		jmi.addActionListener(singlePathListener);
 		editMenu.add(jmi);
 		editMenu.addSeparator();
+		jmi = new JMenuItem(MultiPathActionListener.MERGE_CMD);
+		jmi.addActionListener(multiPathListener);
+		editMenu.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.DOWNSAMPLE_CMD);
 		jmi.addActionListener(multiPathListener);
 		editMenu.add(jmi);
@@ -1383,6 +1386,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 		private final static String COLORS_MENU = "Tag";
 		private final static String DELETE_CMD = "Delete...";
+		private final static String MERGE_CMD = "Merge...";
 		private final static String DOWNSAMPLE_CMD = "Douglas–Peucker Downsampling...";
 		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-Type Colors";
 		private final static String REMOVE_COLOR_CMD = "Remove Color Tags";
@@ -1478,6 +1482,43 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 						: "Delete the selected " + n + " paths?", "Confirm Deletion?"))
 					deletePaths(selectedPaths);
 				return;
+			}
+			else if (MERGE_CMD.equals(cmd)) {
+				if (n == 1) {
+					displayTmpMsg("You must have at least two paths selected.");
+					return;
+				}
+				final Path refPath = selectedPaths.iterator().next();
+				if (refPath.endJoins != null) {
+					guiUtils.error("The first path in the selection cannot have an end-point junction.", "Invalid Merge Selection");
+					return;
+				}
+				if (!guiUtils.getConfirmation(
+						"Merge " + n + " selected paths? (this destructive operation cannot be undone!)",
+						"Confirm merge?")) {
+					return;
+				}
+				final HashSet<Path> pathsToMerge = new HashSet<Path>();
+				for (final Path p : selectedPaths) {
+					if (refPath.equals(p) || refPath.somehowJoins.contains(p) || p.somehowJoins.contains(refPath))
+						continue;
+					pathsToMerge.add(p);
+				}
+				if (pathsToMerge.size() < n-1
+						&& !guiUtils.getConfirmation(
+								"Some of the selected paths are connected and cannot be merged. "
+										+ "Proceed with the merge of the " + pathsToMerge.size()
+										+ " disconnected path(s) in the selection?",
+								"Only Disconnected Paths Can Be Merged")) {
+					return;
+				}
+				for (final Path p : pathsToMerge) {
+					refPath.add(p);
+					pathAndFillManager.deletePath(p);
+				}
+				// Make sure that the 3D viewer and the stacks are redrawn:
+				refreshPluginViewers();
+				refreshManager(true);
 			}
 			else if (DOWNSAMPLE_CMD.equals(cmd)) {
 				final double minSep = plugin.getMinimumSeparation();

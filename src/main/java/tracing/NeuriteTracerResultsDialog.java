@@ -40,8 +40,10 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.BorderFactory;
@@ -69,6 +71,10 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
+import org.scijava.util.ClassUtils;
 
 import ij.IJ;
 import ij.ImageListener;
@@ -105,12 +111,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JRadioButton showPathsAll;
 	protected JRadioButton showPartsNearby;
 	protected JRadioButton showPartsAll;
-	private JButton editSigma;
-	private JButton sigmaWizard;
+	//private JButton editSigma;
+	//private JButton sigmaWizard;
 	protected JCheckBox useSnapWindow;
 	protected JSpinner snapWindowXYsizeSpinner;
 	protected JSpinner snapWindowZsizeSpinner;
 	private JSpinner nearbyFieldSpinner;
+	private JPanel hessianPanel;
 	private JCheckBox preprocess;
 	private JButton displayFiltered;
 	private JButton showOrHidePathList;
@@ -130,6 +137,15 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JButton junkSegment;
 	protected JButton abortButton;
 	private JButton completePath;
+
+	// UI controls for loading 'filtered image'
+	private JPanel filteredImgPanel;
+	private JTextField filteredImgPathField;
+	private JButton filteredImgInitButton;
+	private JComboBox<String> filteredImgParserChoice;
+	private final List<String> filteredImgAllowedExts = Arrays.asList("tif", "nrrd");
+	private JCheckBox filteredImgActivateCheckbox;
+
 
 	private JPanel colorPanel;
 	private static final int MARGIN = 4;
@@ -197,13 +213,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		++c.gridy;
 		tab1.add(snappingPanel(), c);
 		++c.gridy;
-		GuiUtils.addSeparator(tab1, "Curvatures:", true, c);
+		GuiUtils.addSeparator(tab1, "Auto-tracing:", true, c);
 		++c.gridy;
-		tab1.add(hessianPanel(), c);
+		tab1.add(autoTracingPanel(), c);
 		++c.gridy;
-		GuiUtils.addSeparator(tab1, "Additional Segmentation Thread:", true, c);
-		++c.gridy;
-		tab1.add(preprocessPanel(), c);
+		tab1.add(filteredImagePanel(), c);
 		++c.gridy;
 		GuiUtils.addSeparator(tab1, "Path Rendering:", true, c);
 		++c.gridy;
@@ -439,13 +453,16 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		plugin.closeAndResetAllPanes();
 	}
 
+	private void setEnableAutoTracingComponents(final boolean enable) {
+		GuiUtils.enableComponents(hessianPanel, enable);
+		GuiUtils.enableComponents(filteredImgPanel, enable);
+	}
+
 	protected void disableImageDependentComponents() {
 		assert SwingUtilities.isEventDispatchThread();
 		loadLabelsMenuItem.setEnabled(false);
-		preprocess.setEnabled(false);
-		sigmaWizard.setEnabled(false);
-		editSigma.setEnabled(false);
 		fw.setEnabledNone();
+		setEnableAutoTracingComponents(false);
 		GuiUtils.enableComponents(colorPanel, false);
 	}
 
@@ -479,11 +496,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						completePath.setEnabled(false);
 						abortButton.setEnabled(false);
 
-						sigmaWizard.setEnabled(true);
-						editSigma.setEnabled(true);
 						pw.valueChanged(null); // Fake a selection change in the path tree:
 						showPartsNearby.setEnabled(isStackAvailable());
-						preprocess.setEnabled(true);
+						setEnableAutoTracingComponents(!plugin.isAstarDisabled());
 						fw.setEnabledWhileNotFilling();
 						loadLabelsMenuItem.setEnabled(true);
 						saveMenuItem.setEnabled(true);
@@ -508,7 +523,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						abortButton.setEnabled(true);
 						completePath.setEnabled(true);
 						showPartsNearby.setEnabled(isStackAvailable());
-						preprocess.setEnabled(true);
+						setEnableAutoTracingComponents(!plugin.isAstarDisabled());
 						quitMenuItem.setEnabled(false);
 						break;
 
@@ -580,7 +595,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						abortButton.setEnabled(true);
 						completePath.setEnabled(false);
 						showPartsNearby.setEnabled(isStackAvailable());
-						preprocess.setEnabled(false);
+						setEnableAutoTracingComponents(false);
 						getFillWindow().setVisible(false);
 						showOrHideFillList.setEnabled(false);
 						break;
@@ -594,7 +609,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						abortButton.setEnabled(true);
 						completePath.setEnabled(false);
 						showPartsNearby.setEnabled(isStackAvailable());
-						preprocess.setEnabled(false);
+						setEnableAutoTracingComponents(false);
 						getFillWindow().setVisible(false);
 						showOrHideFillList.setEnabled(false);
 						break;
@@ -602,8 +617,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case IMAGE_CLOSED:
 						updateStatusText("Tracing image is no longer available...");
 						disableImageDependentComponents();
-						editSigma.setEnabled(false);
-						sigmaWizard.setEnabled(false);
+						setEnableAutoTracingComponents(false);
 						plugin.discardFill(false);
 						quitMenuItem.setEnabled(true);
 						break;
@@ -681,7 +695,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					return;
 				}
 				plugin.reloadImage(newC, newT);
-				preprocess.setEnabled(false);
+				preprocess.setSelected(false);
 				showStatus(reload ? "Image reloaded into memory..." : null);
 			}
 		});
@@ -951,23 +965,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JPanel miscPanel() {
 		final JPanel miscPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
-
-		final JCheckBox manualModeCheckBox = new JCheckBox(
-			"Disable A* search algorithm", plugin.isAstarDisabled());
-		manualModeCheckBox.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				final boolean mode = e.getStateChange() == ItemEvent.SELECTED &&
-					guiUtils.getConfirmation(
-						"Disable computation of paths? You will be effectively tracing using straight lines.",
-						"Are you sure?");
-				manualModeCheckBox.setSelected(mode);
-				plugin.disableAstar(mode);
-			}
-		});
-		miscPanel.add(manualModeCheckBox, gdb);
-		++gdb.gridy;
 		final JCheckBox compressedXMLCheckBox = new JCheckBox(
 			"Use compression when saving traces", plugin.useCompressedXML);
 		compressedXMLCheckBox.addItemListener(new ItemListener() {
@@ -1058,10 +1055,137 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return statusPanel;
 	}
 
-	private JPanel preprocessPanel() {
-		final JPanel filteringOptionsPanel = new JPanel();
-		filteringOptionsPanel.setLayout(new GridBagLayout());
-		final GridBagConstraints c = GuiUtils.defaultGbc();
+	private JPanel filteredImagePanel() {
+		filteredImgPathField = new JTextField();
+		final JButton pathButton = GuiUtils.smallButton("Choose...");
+		filteredImgParserChoice = new JComboBox<>();
+		filteredImgParserChoice.addItem("Simple Neurite Tracer");
+		filteredImgParserChoice.addItem("ITK: Tubular Geodesics");
+		filteredImgInitButton = GuiUtils.smallButton("Initialize...");
+		filteredImgActivateCheckbox = new JCheckBox(hotKeyLabel("Trace Using Filtered image", "F"));
+		filteredImgActivateCheckbox.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				if (plugin.isFilteredImageTracingAvailable()) {
+					plugin.doSearchOnFilteredData = filteredImgActivateCheckbox.isSelected();
+					return;
+				}
+				guiUtils.error("Filtered image has not yet been loaded. Please "
+						+ (!SNT.fileAvailable(plugin.getFilteredImage())
+								? "specify the file path of filtered image, then "
+								: "")
+						+ "initialize its parser.", "Filtered Image Unavailable");
+				filteredImgActivateCheckbox.setSelected(false);
+				plugin.doSearchOnFilteredData = false;
+				updateFilteredFileField();
+			}
+		});
+
+		filteredImgPathField.getDocument().addDocumentListener(new DocumentListener() {
+			public void changedUpdate(final DocumentEvent e) {
+				updateFilteredFileField();
+			}
+
+			public void removeUpdate(final DocumentEvent e) {
+				updateFilteredFileField();
+			}
+
+			public void insertUpdate(final DocumentEvent e) {
+				updateFilteredFileField();
+			}
+
+		});
+		
+		pathButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				final File file = guiUtils.openFile("Choose filtered image", new File(filteredImgPathField.getText()), filteredImgAllowedExts);
+				if (file == null) return;
+				filteredImgPathField.setText(file.getAbsolutePath());
+			}
+		});
+
+		filteredImgInitButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				if (plugin.isFilteredImageTracingAvailable()) { // Toggle: set action to disable filtered tracing
+					if (!guiUtils.getConfirmation("Are you sure?", "Disable Auxiliary Tracing?"))
+						return;
+					plugin.filteredData = null;
+					if (plugin.isTubularGeodesicsAlive()) {
+						plugin.tubularGeodesicsThread.requestStop();
+						plugin.tubularGeodesicsThread = null;
+					}
+					System.gc();
+					filteredImgInitButton.setText("Initialize...");
+					filteredImgParserChoice.setEnabled(true);
+					pathButton.setEnabled(true);
+					filteredImgPathField.setEnabled(true);
+					filteredImgPathField.setEnabled(true);
+					filteredImgActivateCheckbox.setEnabled(false);
+
+				} else { // toggle: set action to enable filtered tracing
+					final File file = new File(filteredImgPathField.getText());
+					if (!SNT.fileAvailable(file)) {
+						guiUtils.error(file.getAbsolutePath()
+								+ " is not available. Image could not be loaded.", "File Unavailable");
+						return;
+					}
+					plugin.setFilteredImage(file);
+
+					if (filteredImgParserChoice.getSelectedIndex() == 0) { // SNT if (!"Simple Neurite Tracer".equals(parserChoice.getSelectedItem()) {
+						final int byteDepth = 32 / 8;
+						final ImagePlus tracingImp = plugin.getImagePlus();
+						final long megaBytesExtra = (((long) tracingImp.getWidth()) * tracingImp.getHeight()
+								* tracingImp.getNSlices() * byteDepth * 2) / (1024 * 1024);
+						final long maxMemory = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+						if (!guiUtils.getConfirmation(
+								"Load " + file.getAbsolutePath() + "? This operation will likely require "
+										+ megaBytesExtra + "MiB of RAM (currently available: " + maxMemory + " MiB).",
+								"Confirm Loading?"))
+							return;
+						try {
+							plugin.loadFilteredImage();
+						} catch (final IllegalArgumentException e1) {
+							guiUtils.error("Could not load " + file.getAbsolutePath() + ":<br>" + e1.getMessage());
+							return;
+						} catch (final IOException e2) {
+							guiUtils.error("Loading of image failed. See Console for details");
+							e2.printStackTrace();
+							return;
+						} catch (final OutOfMemoryError e3) {
+							plugin.filteredData = null;
+							guiUtils.error("It seems you there is not enough memory to proceed. See Console for details");
+							e3.printStackTrace();
+						}
+					} else if (filteredImgParserChoice.getSelectedIndex() == 1) { // Tubular Geodesics
+
+						if (ClassUtils.loadClass("FijiITKInterface.TubularGeodesics") == null) {
+							guiUtils.error("The 'Tubular Geodesics' plugin does not seem to be installed!");
+							return;
+						}
+						try {
+							// TODO: Tubular geodesics here
+							plugin.tubularGeodesicsTracingEnabled = true;
+							plugin.tubularGeodesicsThread.start();
+						} catch (final IllegalArgumentException e1) {
+							guiUtils.error("ITK could not be used. See console for details");
+							e1.printStackTrace();
+						}
+					}
+					final boolean successfullyLoaded = plugin.isFilteredImageTracingAvailable();
+					filteredImgParserChoice.setEnabled(!successfullyLoaded);
+					filteredImgPathField.setEnabled(!successfullyLoaded);
+					filteredImgInitButton.setText((successfullyLoaded)?"Reset":"Initialize...");
+					pathButton.setEnabled(!successfullyLoaded);
+					filteredImgActivateCheckbox.setEnabled(successfullyLoaded);
+				}
+			}
+		});
+
 		filterChoice = new JComboBox<>();
 		filterChoice.addItem("None");
 		filterChoice.addItem("Frangi Vesselness");
@@ -1078,21 +1202,58 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 
+		filteredImgPanel = new JPanel();
+		filteredImgPanel.setLayout(new GridBagLayout());
+		GridBagConstraints c = GuiUtils.defaultGbc();
+		c.gridwidth = GridBagConstraints.REMAINDER;
+
+		// Header
+		GuiUtils.addSeparator(filteredImgPanel, "Tracing on Filtered Image:", true, c);
+
+		c = new GridBagConstraints();
+		c.ipadx = 0; 
+		c.insets = new Insets(0, 0, 0, 0);
+		c.anchor = GridBagConstraints.LINE_START;
 		c.fill = GridBagConstraints.HORIZONTAL;
+
+		// row 1
+		c.gridy = 1;
 		c.gridx = 0;
-		c.gridy = 0;
-		c.ipadx = 2;
-		c.gridwidth = 2;
-		filteringOptionsPanel.add(filterChoice, c);
+		filteredImgPanel.add(GuiUtils.leftAlignedLabel("Image: ", true), c);
+		c.gridx++;
+		c.weightx = 1;
+		filteredImgPanel.add(filteredImgPathField, c);
+		c.gridx++;
+		c.weightx = 0;
+		filteredImgPanel.add(pathButton, c);
+		c.gridx++;
 
-		displayFiltered = GuiUtils.smallButton("Display Image");
-		displayFiltered.addActionListener(listener);
-		c.fill = GridBagConstraints.NONE;
-		c.gridx = 1;
-		c.ipadx = 0;
+		// row 2
+		c.gridy++; c.gridx = 0;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		filteredImgPanel.add(GuiUtils.leftAlignedLabel("Parser: ", true), c);
+		c.gridx++;
+		filteredImgPanel.add(filteredImgParserChoice, c);
+		c.gridx++;
+		c.gridwidth = GridBagConstraints.REMAINDER;
+		filteredImgPanel.add(filteredImgInitButton, c);
+		c.gridx++;
 
-		filteringOptionsPanel.add(displayFiltered);
-		return filteringOptionsPanel;
+		// row 3
+		c.gridy++; c.gridx=0;
+		filteredImgPanel.add(filteredImgActivateCheckbox, c);
+		return filteredImgPanel;
+	}
+
+	private void updateFilteredFileField() {
+		final String path = filteredImgPathField.getText();
+		final boolean validFile = path != null && SNT.fileAvailable(new File(path))
+				&& filteredImgAllowedExts.stream().anyMatch(e -> path.endsWith(e));
+		filteredImgPathField.setForeground((validFile) ? new JTextField().getForeground() : Color.RED);
+		filteredImgInitButton.setEnabled(validFile);
+		filteredImgParserChoice.setEnabled(validFile);
+		filteredImgActivateCheckbox.setEnabled(validFile);
+		filteredImgPathField.setToolTipText((validFile) ? path : "Not a valid file path");
 	}
 
 	private JMenuBar createMenuBar() {
@@ -1414,30 +1575,51 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return container;
 	}
 
-	private JPanel hessianPanel() {
-		final JPanel hessianOptionsPanel = new JPanel(new GridBagLayout());
-		final GridBagConstraints oop_c = GuiUtils.defaultGbc();
+	private JPanel autoTracingPanel() {
+		final JPanel autoTracePanel = new JPanel(new GridBagLayout());
+		final GridBagConstraints atp_c = GuiUtils.defaultGbc();
+		final JCheckBox aStarCheckBox = new JCheckBox(
+				"Enable A* search algorithm", !plugin.isAstarDisabled());
+		aStarCheckBox.addActionListener(new ActionListener() {
 
-		// Add hessian checkbox
+				@Override
+				public void actionPerformed(final ActionEvent e) {
+					final boolean disable = !aStarCheckBox.isSelected();
+					if (disable && !guiUtils.getConfirmation(
+							"Disable computation of paths? All segmentation tasks will be disabled.",
+							"Enable Manual Tracing?")) {
+						aStarCheckBox.setSelected(true);
+						return;
+					}
+					plugin.disableAstar(disable);
+					setEnableAutoTracingComponents(!disable);
+				}
+			});
+		autoTracePanel.add(aStarCheckBox, atp_c);
+		++atp_c.gridy;
+
+		hessianPanel = new JPanel(new GridBagLayout());
+		final GridBagConstraints hc = GuiUtils.defaultGbc();
 		preprocess = new JCheckBox();
 		setSigma(plugin.getMinimumSeparation(), false);
 		setMultiplier(4);
 		updateHessianLabel();
 		preprocess.addActionListener(listener);
-		hessianOptionsPanel.add(preprocess, oop_c);
-		++oop_c.gridy;
+		hessianPanel.add(preprocess, hc);
+		++hc.gridy;
 
 		// Add sigma ui
-		JPanel sigmaPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 2, 0));
-		sigmaPanel.add(GuiUtils.leftAlignedLabel("Choose Sigma: ", true));	
-		editSigma = GuiUtils.smallButton("Manually...");
+		final JPanel sigmaPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 2, 0));
+		sigmaPanel.add(GuiUtils.leftAlignedLabel("Choose Sigma: ", !plugin.isAstarDisabled()));	
+		final JButton editSigma = GuiUtils.smallButton(GuiListener.EDIT_SIGMA_MANUALLY);
 		editSigma.addActionListener(listener);
 		sigmaPanel.add(editSigma);
-		sigmaWizard = GuiUtils.smallButton("Visually...");
+		final JButton sigmaWizard = GuiUtils.smallButton(GuiListener.EDIT_SIGMA_VISUALLY);
 		sigmaWizard.addActionListener(listener);
 		sigmaPanel.add(sigmaWizard);
-		hessianOptionsPanel.add(sigmaPanel, oop_c);
-		return hessianOptionsPanel;
+		hessianPanel.add(sigmaPanel, hc);
+		autoTracePanel.add(hessianPanel, atp_c);
+		return autoTracePanel;
 	}
 
 	private JPanel hideWindowsPanel() {
@@ -1945,6 +2127,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		SigmaPalette.SigmaPaletteListener, ImageListener
 	{
 
+		private final static String EDIT_SIGMA_MANUALLY = "Manually...";
+		private final static String EDIT_SIGMA_VISUALLY = "Visually...";
 		private int preSigmaPaletteState;
 
 		public GuiListener(){
@@ -2177,12 +2361,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				toggleFillListVisibility();
 
 			}
-			else if (source == editSigma) {
+			else if (e.getActionCommand().equals(EDIT_SIGMA_MANUALLY)) {
 
 				setSigmaFromUser();
 
 			}
-			else if (source == sigmaWizard) {
+			else if (e.getActionCommand().equals(EDIT_SIGMA_VISUALLY)) {
 
 				preSigmaPaletteState = currentState;
 				changeState(WAITING_FOR_SIGMA_POINT);

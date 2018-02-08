@@ -151,23 +151,37 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected double z_spacing = 1;
 	protected String spacing_units = "";
 	protected boolean setupTrace = false;
-
 	protected int channel;
 	protected int frame;
 
+	/* loaded pixels (main image) */
 	protected byte[][] slices_data_b;
-
 	protected short[][] slices_data_s;
 	protected float[][] slices_data_f;
 	volatile protected float stackMax = Float.MIN_VALUE;
 	volatile protected float stackMin = Float.MAX_VALUE;
+
+	/* loaded pixels (secondary image) 'Additional Segmentation Thread' */
+	protected boolean doSearchOnFilteredData;
+	protected float[][] filteredData;
+	private File filteredFileImage = null;
+
+	/* The main searching thread */
+	private TracerThread currentSearchThread = null;
+	/* The thread for manual tracing */
+	private ManualTracerThread manualSearchThread = null;
+
+	/* Threads for external tracing methods (e.g. tubular geodesics) */
+	protected boolean tubularGeodesicsTracingEnabled = false;
+	protected TubularGeodesicsTracer tubularGeodesicsThread;
+	protected File externalFileImage = null;
+
 
 	/*
 	 * pathUnfinished indicates that we have started to create a path, but not
 	 * yet finished it (in the sense of moving on to a new path with a differen
 	 * starting point.) FIXME: this may be redundant - check that.
 	 */
-
 	volatile boolean pathUnfinished = false;
 	private Path editingPath; // Path being edited when in 'Edit Mode'
 

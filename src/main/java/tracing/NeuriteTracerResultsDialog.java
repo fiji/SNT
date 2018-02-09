@@ -1067,8 +1067,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				if (plugin.isFilteredImageTracingAvailable()) {
-					plugin.doSearchOnFilteredData = filteredImgActivateCheckbox.isSelected();
+				if (plugin.isTracingOnFilteredImageAvailable()) {
+					if (filteredImgParserChoice.getSelectedIndex() == 0) {
+						plugin.doSearchOnFilteredData = filteredImgActivateCheckbox.isSelected();
+					} else if (filteredImgParserChoice.getSelectedIndex() == 1) {
+						plugin.tubularGeodesicsTracingEnabled = filteredImgActivateCheckbox.isSelected();
+					}
 					return;
 				}
 				guiUtils.error("Filtered image has not yet been loaded. Please "
@@ -1111,13 +1115,17 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				if (plugin.isFilteredImageTracingAvailable()) { // Toggle: set action to disable filtered tracing
-					if (!guiUtils.getConfirmation("Are you sure?", "Disable Auxiliary Tracing?"))
+				if (plugin.isTracingOnFilteredImageAvailable()) { // Toggle: set action to disable filtered tracing
+					if (!guiUtils.getConfirmation("Disable auxiliary tracing on filtered image?", "Unload Image?"))
 						return;
+
+					// reset cached filtered image/Tubular Geodesics
 					plugin.filteredData = null;
-					if (plugin.isTubularGeodesicsAlive()) {
-						plugin.tubularGeodesicsThread.requestStop();
+					plugin.doSearchOnFilteredData = false;
+					if (plugin.tubularGeodesicsTracingEnabled) {
+						if (plugin.tubularGeodesicsThread!=null) plugin.tubularGeodesicsThread.requestStop();
 						plugin.tubularGeodesicsThread = null;
+						plugin.tubularGeodesicsTracingEnabled = false;
 					}
 					System.gc();
 					filteredImgInitButton.setText("Initialize...");
@@ -1167,16 +1175,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 							guiUtils.error("The 'Tubular Geodesics' plugin does not seem to be installed!");
 							return;
 						}
-						try {
-							// TODO: Tubular geodesics here
-							plugin.tubularGeodesicsTracingEnabled = true;
-							plugin.tubularGeodesicsThread.start();
-						} catch (final IllegalArgumentException e1) {
-							guiUtils.error("ITK could not be used. See console for details");
-							e1.printStackTrace();
-						}
+						plugin.tubularGeodesicsTracingEnabled = true;
 					}
-					final boolean successfullyLoaded = plugin.isFilteredImageTracingAvailable();
+					final boolean successfullyLoaded = plugin.isTracingOnFilteredImageAvailable();
 					filteredImgParserChoice.setEnabled(!successfullyLoaded);
 					filteredImgPathField.setEnabled(!successfullyLoaded);
 					filteredImgInitButton.setText((successfullyLoaded)?"Reset":"Initialize...");

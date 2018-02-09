@@ -161,20 +161,22 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	volatile protected float stackMax = Float.MIN_VALUE;
 	volatile protected float stackMin = Float.MAX_VALUE;
 
-	/* loaded pixels (secondary image) 'Additional Segmentation Thread' */
-	protected boolean doSearchOnFilteredData;
-	protected float[][] filteredData;
-	private File filteredFileImage = null;
-
-	/* The main searching thread */
+	/* The main auto-tracing thread */
 	private TracerThread currentSearchThread = null;
 	/* The thread for manual tracing */
 	private ManualTracerThread manualSearchThread = null;
 
-	/* Threads for external tracing methods (e.g. tubular geodesics) */
+	/*
+	 * Fields for tracing on secondary data: a filtered image.
+	 * This can work in one of two ways: image is loaded into
+	 * memory or we waive its file path to a third-party class
+	 * that will parse it
+	 */
+	protected boolean doSearchOnFilteredData;
+	protected float[][] filteredData;
+	protected File filteredFileImage = null;
 	protected boolean tubularGeodesicsTracingEnabled = false;
 	protected TubularGeodesicsTracer tubularGeodesicsThread;
-	protected File externalFileImage = null;
 
 
 	/*
@@ -1074,13 +1076,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return makePathVolume(pathAndFillManager.allPaths);
 	}
 
-	/* If non-null, holds a reference to the currently searching thread: */
-
-	TracerThread currentSearchThread;
-	ManualTracerThread currentManualThread;
-
-	TubularGeodesicsTracer tubularGeodesicsThread = null;
-
 	/* Start a search thread looking for the goal in the arguments: */
 
 	synchronized void testPathTo(final double world_x, final double world_y,
@@ -1664,74 +1659,72 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
-	private File tubenessFile;
-	protected float[][] tubeness;
-
 	/**
-	 * Specifies the "tubeness" image to be used during a tracing session.
+	 * Specifies the "filtered" image to be used during a tracing session.
 	 *
-	 * @file The file containing the "tubeness" image (typically named
-	 *       {@code <image-basename>.tubes.tif}
-	 **/
-	public void setTubenessFile(final File file) {
-		tubenessFile = file;
-	}
-
-	public boolean tubenessDataLoaded() {
-		return tubeness != null;
+	 * @param file The file containing the "filtered" image (typically named
+	 *       {@code <image-basename>.tubes.tif} (tubeness),
+	 *       {@code <image-basename>.frangi.tif} (Frangi Vesselness), or
+	 *       {@code <image-basename>.oof.tif} (tubular geodesics))
+	 */
+	public void setFilteredImage(final File file) {
+		filteredFileImage = file;
 	}
 
 	/**
-	 * loads the (32-bit) "tubeness" image specified by
-	 * {@link #setTubenessFile(File)}
+	 * Returns the file of the 'filtered' image, if any.
+	 *
+	 * @return the filtered image file, or null if no file has been set
 	 */
-	public void loadTubeness() throws IOException, IllegalArgumentException {
-		if (xy == null || !SNT.fileAvailable(tubenessFile))
-			throw new IllegalArgumentException(
-				"data can only be loaded after tracing image and data file are known");
-		final Dataset ds = datasetIOService.open(tubenessFile.getAbsolutePath());
+	public File getFilteredImage() {
+		return filteredFileImage;
+	}
+
+	/**
+	 * Assesses if a 'filtered image' has been loaded into memory. Note that
+	 * while some tracers will load the image into memory, others may waive the
+	 * loading to third party libraries
+	 * 
+	 * @return true, if image has been loaded into memory.
+	 */
+	public boolean filteredImageLoaded() {
+		return filteredData != null;
+	}
+
+	protected boolean isTracingOnFilteredImageAvailable() {
+		return filteredImageLoaded() || tubularGeodesicsTracingEnabled;
+	}
+
+	/**
+	 * loads the 'filtered image' specified by {@link #setFilteredImage(File) into
+	 * memory as 32-bit data}
+	 */
+	public void loadFilteredImage() throws IOException, IllegalArgumentException {
+		if (xy == null)
+			throw new IllegalArgumentException("Data can only be loaded after main tracing image is known");
+		if (!SNT.fileAvailable(filteredFileImage))
+			throw new IllegalArgumentException("File path of input data unknown");
+		final Dataset ds = datasetIOService.open(filteredFileImage.getAbsolutePath());
 		final int bitsPerPix = ds.getType().getBitsPerPixel();
-		if (bitsPerPix != 32) throw new IllegalArgumentException(tubenessFile
-			.getName() + " must be a 32-bit image.");
-		if (ds.getWidth() != xy.getWidth() || ds.getHeight() != xy.getHeight() || ds
-			.getDepth() != xy.getNSlices())
-		{
-			throw new IllegalArgumentException(tubenessFile.getAbsolutePath() +
-				": Dimensions mismatch");
-		}
+		final StringBuilder sBuilder = new StringBuilder();
+		if (bitsPerPix != 32)
+			sBuilder.append("Not a 32-bit image. ");
+		if (ds.dimension(Axes.CHANNEL) > 1 || ds.dimension(Axes.TIME) > 1)
+			sBuilder.append("Too many dimensions: C,T images are not supported. ");
+		if (ds.getWidth() != xy.getWidth() || ds.getHeight() != xy.getHeight() || ds.getDepth() != xy.getNSlices())
+			sBuilder.append("XYZ Dimensions do not match those of " + xy.getTitle() + ".");
+		if (!sBuilder.toString().isEmpty())
+			throw new IllegalArgumentException(sBuilder.toString());
 
-		// TODO: extract values without IJ1: Rewrite method for ImgLib
-		final ImagePlus tubesImp = convertService.convert(ds, ImagePlus.class);
-		final int depth = tubesImp.getNSlices();
-		final ImageStack stack = tubesImp.getStack();
-		tubeness = new float[depth][];
+		statusService.showStatus("Loading alternative tracing images");
+		final ImagePlus imp = convertService.convert(ds, ImagePlus.class);
+		final ImageStack s = imp.getStack();
+		filteredData = new float[depth][];
 		for (int z = 0; z < depth; ++z) {
-			final FloatProcessor fp = (FloatProcessor) stack.getProcessor(xy.getStackIndex(channel, z+1, frame));
-			tubeness[z] = (float[]) fp.getPixels();
+			statusService.showStatus(z, depth, "Loading stack...");
+			filteredData[z] = (float[]) s.getPixels(z + 1);
 		}
-	}
-
-	/*
-	 * If there appears to be a local file called <image-basename>.oof.nrrd then
-	 * we assume that we can use the Tubular Geodesics tracing method. This
-	 * variable null if not such file was found.
-	 */
-
-	public boolean oofFileAvailable() {
-		return oofFile != null && oofFile.exists();
-	}
-
-	/*
-	 * If there appears to be a local file called <image-basename>.oof.nrrd then
-	 * we assume that we can use the Tubular Geodesics tracing method. This
-	 * variable null if not such file was found.
-	 */
-
-	protected File oofFile = null;
-	protected boolean tubularGeodesicsTracingEnabled = false;
-
-	public synchronized void enableTubularGeodesicsTracing(final boolean enable) {
-		tubularGeodesicsTracingEnabled = enable;
+		statusService.clearStatus();
 	}
 
 	public synchronized void enableHessian(final boolean enable) {

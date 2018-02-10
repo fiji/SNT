@@ -182,6 +182,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	static final int IMAGE_CLOSED = -1;
 
 	// TODO: Internal preferences: should be migrated to SNTPrefs
+	protected boolean confirmTemporarySegments = true;
 	protected boolean finishOnDoubleConfimation = true;
 	protected boolean discardOnDoubleCancellation = true;
 
@@ -247,6 +248,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		GuiUtils.addSeparator(tab2, "Views:", true, c2);
 		++c2.gridy;
 		tab2.add(viewsPanel(), c2);
+		++c2.gridy;
+		GuiUtils.addSeparator(tab2, "Tracing:", true, c2);
+		++c2.gridy;
+		tab2.add(tracingPanel(), c2);
 		++c2.gridy;
 		GuiUtils.addSeparator(tab2, "UI Interaction:", true, c2);
 		++c2.gridy;
@@ -779,11 +784,25 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return viewsPanel;
 	}
 
-	private JPanel interactionPanel() {
-		final JPanel intPanel = new JPanel(new GridBagLayout());
+	private JPanel tracingPanel() {
+		final JPanel tPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
+		final JCheckBox confirmTemporarySegmentsCheckbox = new JCheckBox("Confirm temporary segments",
+				confirmTemporarySegments);
 		final JCheckBox confirmCheckbox = new JCheckBox("Pressing 'Y' twice finishes path",
-			finishOnDoubleConfimation);
+				finishOnDoubleConfimation);
+		final JCheckBox finishCheckbox = new JCheckBox(
+				"Pressing 'N' twice cancels path", discardOnDoubleCancellation);
+		confirmTemporarySegmentsCheckbox.addItemListener(new ItemListener() {
+
+				@Override
+				public void itemStateChanged(final ItemEvent e) {
+					confirmTemporarySegments = (e.getStateChange() == ItemEvent.SELECTED);
+					confirmCheckbox.setEnabled(confirmTemporarySegments);
+					finishCheckbox.setEnabled(confirmTemporarySegments);
+				}
+			});
+		
 		confirmCheckbox.addItemListener(new ItemListener() {
 
 			@Override
@@ -791,19 +810,28 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				finishOnDoubleConfimation = (e.getStateChange() == ItemEvent.SELECTED);
 			}
 		});
-		intPanel.add(confirmCheckbox, gdb);
-		++gdb.gridy;
-		final JCheckBox finishCheckbox = new JCheckBox(
-			"Pressing 'N' twice cancels path", discardOnDoubleCancellation);
 		confirmCheckbox.addItemListener(new ItemListener() {
 
 			@Override
 			public void itemStateChanged(final ItemEvent e) {
-				discardOnDoubleCancellation = (e.getStateChange() == ItemEvent.SELECTED);// TODO
+				discardOnDoubleCancellation = (e.getStateChange() == ItemEvent.SELECTED);
 			}
 		});
-		intPanel.add(finishCheckbox, gdb);
+		tPanel.add(confirmTemporarySegmentsCheckbox, gdb);
 		++gdb.gridy;
+		gdb.insets = new Insets(0, MARGIN * 3, 0, 0);
+		tPanel.add(confirmCheckbox, gdb);
+		++gdb.gridy;
+		tPanel.add(finishCheckbox, gdb);
+		++gdb.gridy;
+		gdb.insets = new Insets(0, 0, 0, 0);
+		return tPanel;
+
+	}
+
+	private JPanel interactionPanel() {
+		final JPanel intPanel = new JPanel(new GridBagLayout());
+		final GridBagConstraints gdb = GuiUtils.defaultGbc();
 		final JCheckBox canvasCheckBox = new JCheckBox(
 			"Activate canvas on mouse hovering", plugin.autoCanvasActivation);
 		canvasCheckBox.addItemListener(new ItemListener() {

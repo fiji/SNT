@@ -565,8 +565,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				}
 				setTemporaryPath(result);
 
-				resultsDialog.changeState(NeuriteTracerResultsDialog.QUERY_KEEP);
-
+				if (resultsDialog.confirmTemporarySegments) {
+					resultsDialog.changeState(NeuriteTracerResultsDialog.QUERY_KEEP);
+				} else {
+					confirmTemporary();
+					resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
+				}
 			}
 			else {
 

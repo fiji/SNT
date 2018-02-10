@@ -30,19 +30,67 @@ import ij.ImagePlus;
 
 public class TracerThread extends SearchThread {
 
-	int start_x;
-	int start_y;
-	int start_z;
-	int goal_x;
-	int goal_y;
-	int goal_z;
+	private final int start_x;
+	private final int start_y;
+	private final int start_z;
+	private final int goal_x;
+	private final int goal_y;
+	private final int goal_z;
+	private final boolean reciprocal;
+	private final ComputeCurvatures hessian;
+	private final double multiplier;
+	private final float[][] filtered;
+	private final boolean useHessian;
+	private final boolean singleSlice;
+	private Path result;
 
-	boolean reciprocal;
+	/* If you specify 0 for timeoutSeconds then there is no timeout. */
+	public TracerThread(final ImagePlus imagePlus, final float stackMin, final float stackMax, final int timeoutSeconds,
+			final long reportEveryMilliseconds, final int start_x, final int start_y, final int start_z,
+			final int goal_x, final int goal_y, final int goal_z, final boolean reciprocal, final boolean singleSlice,
+			final ComputeCurvatures hessian, final double multiplier, final float[][] filtered,
+			final boolean useHessian) {
 
-	ComputeCurvatures hessian;
-	double multiplier;
+		super(imagePlus, stackMin, stackMax, true, // bidirectional
+				true, // definedGoal
+				false, // startPaused,
+				timeoutSeconds, reportEveryMilliseconds);
 
-	Path result;
+		this.reciprocal = reciprocal;
+		this.singleSlice = singleSlice;
+		this.hessian = hessian;
+		this.filtered = filtered;
+		this.multiplier = multiplier;
+		// need to do this again since it needs to know if hessian is set...
+		minimum_cost_per_unit_distance = minimumCostPerUnitDistance();
+		this.useHessian = useHessian;
+		this.start_x = start_x;
+		this.start_y = start_y;
+		this.start_z = start_z;
+		this.goal_x = goal_x;
+		this.goal_y = goal_y;
+		this.goal_z = goal_z;
+
+		final SearchNode s = createNewNode(start_x, start_y, start_z, 0,
+				estimateCostToGoal(start_x, start_y, start_z, true), null, OPEN_FROM_START);
+		addNode(s, true);
+
+		final SearchNode g = createNewNode(goal_x, goal_y, goal_z, 0, estimateCostToGoal(goal_x, goal_y, goal_z, false),
+				null, OPEN_FROM_GOAL);
+
+		addNode(g, false);
+
+		this.result = null;
+	}
+
+	/* If you specify 0 for timeoutSeconds then there is no timeout. */
+	public TracerThread(final ImagePlus imagePlus, final float stackMin, final float stackMax, final int start_x,
+			final int start_y, final int start_z, final int goal_x, final int goal_y, final int goal_z,
+			final boolean reciprocal, final boolean singleSlice, final ComputeCurvatures hessian,
+			final double multiplier) {
+		this(imagePlus, stackMin, stackMax, 0, 1000, start_x, start_y, start_z, goal_x, goal_y, goal_z, true,
+				imagePlus.getNSlices() == 1, hessian, multiplier, null, true);
+	}
 
 	@Override
 	protected boolean atGoal(final int x, final int y, final int z, final boolean fromStart) {
@@ -70,55 +118,6 @@ public class TracerThread extends SearchThread {
 		}
 
 		return minimum_cost;
-	}
-
-	float[][] tubeness;
-	boolean useHessian;
-
-	boolean singleSlice;
-
-	/* If you specify 0 for timeoutSeconds then there is no timeout. */
-
-	public TracerThread(final ImagePlus imagePlus, final float stackMin, final float stackMax, final int timeoutSeconds,
-			final long reportEveryMilliseconds, final int start_x, final int start_y, final int start_z,
-			final int goal_x, final int goal_y, final int goal_z, final boolean reciprocal, final boolean singleSlice,
-			final ComputeCurvatures hessian, final double multiplier, final float[][] tubeness,
-			final boolean useHessian) {
-
-		super(imagePlus, stackMin, stackMax, true, // bidirectional
-				true, // definedGoal
-				false, // startPaused,
-				timeoutSeconds, reportEveryMilliseconds);
-
-		this.reciprocal = reciprocal;
-		this.singleSlice = singleSlice;
-		this.hessian = hessian;
-		this.tubeness = tubeness;
-		this.multiplier = multiplier;
-		// need to do this again since it needs to know if hessian is set...
-		minimum_cost_per_unit_distance = minimumCostPerUnitDistance();
-
-		this.tubeness = tubeness;
-
-		this.useHessian = useHessian;
-
-		this.start_x = start_x;
-		this.start_y = start_y;
-		this.start_z = start_z;
-		this.goal_x = goal_x;
-		this.goal_y = goal_y;
-		this.goal_z = goal_z;
-
-		final SearchNode s = createNewNode(start_x, start_y, start_z, 0,
-				estimateCostToGoal(start_x, start_y, start_z, true), null, OPEN_FROM_START);
-		addNode(s, true);
-
-		final SearchNode g = createNewNode(goal_x, goal_y, goal_z, 0, estimateCostToGoal(goal_x, goal_y, goal_z, false),
-				null, OPEN_FROM_GOAL);
-
-		addNode(g, false);
-
-		this.result = null;
 	}
 
 	@Override
@@ -173,7 +172,7 @@ public class TracerThread extends SearchThread {
 
 		if (useHessian) {
 
-			if (tubeness == null) {
+			if (filtered == null) {
 
 				if (singleSlice) {
 
@@ -248,7 +247,7 @@ public class TracerThread extends SearchThread {
 			} else {
 
 				// Then this saves a lot of time:
-				float measure = tubeness[new_z][new_y * width + new_x];
+				float measure = filtered[new_z][new_y * width + new_x];
 				if (measure == 0)
 					measure = 0.2f;
 				cost = 1 / measure;

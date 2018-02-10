@@ -25,7 +25,7 @@ package tracing.hyperpanes;
 
 public interface PaneOwner {
 
-	public void mouseMovedTo( int x, int y, int plane, boolean shift_down );
+	public void mouseMovedTo( double x, double y, int plane, boolean shift_down );
 
 	public void zoom( boolean zoomIn, int x, int y, int plane );
 

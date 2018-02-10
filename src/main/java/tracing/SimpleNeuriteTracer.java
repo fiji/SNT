@@ -202,9 +202,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	volatile boolean loading = false;
 	volatile boolean lastStartPointSet = false;
 
-	int last_start_point_x;
-	int last_start_point_y;
-	int last_start_point_z;
+	double last_start_point_x;
+	double last_start_point_y;
+	double last_start_point_z;
 
 	Path endJoin;
 	PointInImage endJoinPoint;
@@ -450,7 +450,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public void cancelSearch(final boolean cancelFillToo) {
 		if (currentSearchThread != null) currentSearchThread.requestStop();
-		if (currentManualThread != null) currentManualThread.requestStop();
+		if (manualSearchThread != null) manualSearchThread.requestStop();
 		if (tubularGeodesicsThread != null) tubularGeodesicsThread.requestStop();
 		endJoin = null;
 		endJoinPoint = null;
@@ -550,7 +550,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		 * these cases:
 		 */
 
-		if (source == currentSearchThread || source == tubularGeodesicsThread || source == currentManualThread) {
+		if (source == currentSearchThread || source == tubularGeodesicsThread || source == manualSearchThread) {
 
 			removeSphere(targetBallName);
 
@@ -1133,8 +1133,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 			// [xyz]_spacing
 
-			tubularGeodesicsThread = new TubularGeodesicsTracer(oofFile,
-				last_start_point_x, last_start_point_y, last_start_point_z, x_end,
+			tubularGeodesicsThread = new TubularGeodesicsTracer(filteredFileImage,
+					(int)Math.round(last_start_point_x), (int)Math.round(last_start_point_y), (int)Math.round(last_start_point_z), x_end,
 				y_end, z_end, x_spacing, y_spacing, z_spacing, spacing_units);
 			addThreadToDraw(tubularGeodesicsThread);
 			tubularGeodesicsThread.addProgressListener(this);
@@ -1143,21 +1143,22 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 
 		else if (isAstarDisabled()) {
-			currentManualThread = new ManualTracerThread(this, last_start_point_x,
+			manualSearchThread = new ManualTracerThread(this, last_start_point_x,
 				last_start_point_y, last_start_point_z, x_end, y_end, z_end);
-			addThreadToDraw(currentManualThread);
-			currentManualThread.addProgressListener(this);
-			currentManualThread.start();
+			addThreadToDraw(manualSearchThread);
+			manualSearchThread.addProgressListener(this);
+			manualSearchThread.start();
 		}
 		else {
 			currentSearchThread = new TracerThread(xy, stackMin, stackMax, 0, // timeout
 				// in
 				// seconds
 				1000, // reportEveryMilliseconds
-				last_start_point_x, last_start_point_y, last_start_point_z, x_end,
-				y_end, z_end, true, // reciprocal
+				(int)Math.round(last_start_point_x), (int)Math.round(last_start_point_y), (int)Math.round(last_start_point_z),
+				x_end, y_end, z_end, //
+				true, // reciprocal
 				singleSlice, (hessianEnabled ? hessian : null), resultsDialog
-					.getMultiplier(), tubeness, hessianEnabled);
+					.getMultiplier(), doSearchOnFilteredData?filteredData:null, hessianEnabled);
 
 			addThreadToDraw(currentSearchThread);
 			currentSearchThread.setDrawingColors(Color.CYAN, null);
@@ -1424,9 +1425,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			ballColor = Color.GREEN;
 		}
 
-		last_start_point_x = (int) Math.round(real_last_start_x / x_spacing);
-		last_start_point_y = (int) Math.round(real_last_start_y / y_spacing);
-		last_start_point_z = (int) Math.round(real_last_start_z / z_spacing);
+		last_start_point_x = real_last_start_x / x_spacing;
+		last_start_point_y = real_last_start_y / y_spacing;
+		last_start_point_z = real_last_start_z / z_spacing;
 
 		addSphere(startBallName, real_last_start_x, real_last_start_y,
 			real_last_start_z, ballColor, x_spacing * ballRadiusMultiplier);

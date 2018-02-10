@@ -39,9 +39,9 @@ public class ManualTracerThread extends Thread implements SearchInterface {
 	private volatile int threadStatus = SearchThread.PAUSED;
 	private Path result;
 
-	public ManualTracerThread(final SimpleNeuriteTracer plugin, final int start_x,
-		final int start_y, final int start_z, final int goal_x, final int goal_y,
-		final int goal_z)
+	public ManualTracerThread(final SimpleNeuriteTracer plugin, final double start_x,
+		final double start_y, final double start_z, final double goal_x, final double goal_y,
+		final double goal_z)
 	{
 		if (goal_x > plugin.width || goal_y > plugin.width || goal_z > plugin.depth)
 			throw new IllegalArgumentException("Out-of bounds goal");

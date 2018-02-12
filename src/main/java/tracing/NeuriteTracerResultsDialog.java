@@ -111,8 +111,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JRadioButton showPathsAll;
 	protected JRadioButton showPartsNearby;
 	protected JRadioButton showPartsAll;
-	//private JButton editSigma;
-	//private JButton sigmaWizard;
 	protected JCheckBox useSnapWindow;
 	protected JSpinner snapWindowXYsizeSpinner;
 	protected JSpinner snapWindowZsizeSpinner;
@@ -211,7 +209,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final GridBagConstraints c = GuiUtils.defaultGbc();
 		//c.insets.left = MARGIN * 2;
 		c.anchor = GridBagConstraints.NORTHEAST;
-		GuiUtils.addSeparator(tab1, "Cursor auto-snapping:", false, c);
+		GuiUtils.addSeparator(tab1, "Cursor Auto-snapping:", false, c);
 		++c.gridy;
 		tab1.add(snappingPanel(), c);
 		++c.gridy;
@@ -242,7 +240,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.insets.left = MARGIN * 2;
 		c2.anchor = GridBagConstraints.NORTHEAST;
 		c2.gridwidth = GridBagConstraints.REMAINDER;
-		GuiUtils.addSeparator(tab2, "Data source:", false, c2);
+		GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
 		++c2.gridy;
 		tab2.add(sourcePanel(), c2);
 		++c2.gridy;
@@ -250,7 +248,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		++c2.gridy;
 		tab2.add(viewsPanel(), c2);
 		++c2.gridy;
-		GuiUtils.addSeparator(tab2, "Tracing:", true, c2);
+		GuiUtils.addSeparator(tab2, "Temporary Paths:", true, c2);
 		++c2.gridy;
 		tab2.add(tracingPanel(), c2);
 		++c2.gridy;
@@ -462,6 +460,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private void setEnableAutoTracingComponents(final boolean enable) {
 		GuiUtils.enableComponents(hessianPanel, enable);
 		GuiUtils.enableComponents(filteredImgPanel, enable);
+		if (enable) updateFilteredFileField();
 	}
 
 	protected void disableImageDependentComponents() {
@@ -475,6 +474,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private void disableEverything() {
 		assert SwingUtilities.isEventDispatchThread();
 		disableImageDependentComponents();
+		abortButton.setEnabled(getState()!=WAITING_TO_START_PATH);
 		loadTracesMenuItem.setEnabled(false);
 		loadSWCMenuItem.setEnabled(false);
 		exportCSVMenuItem.setEnabled(false);
@@ -526,7 +526,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						disableEverything();
 						keepSegment.setEnabled(false);
 						junkSegment.setEnabled(false);
-						abortButton.setEnabled(true);
 						completePath.setEnabled(true);
 						showPartsNearby.setEnabled(isStackAvailable());
 						setEnableAutoTracingComponents(!plugin.isAstarDisabled());
@@ -536,11 +535,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case SEARCHING:
 						updateStatusText("Searching for path between points...");
 						disableEverything();
-//						abortButton.setEnabled(true);
-//						keepSegment.setEnabled(false);
-//						junkSegment.setEnabled(false);
-//						completePath.setEnabled(false);
-						quitMenuItem.setEnabled(true);
 						break;
 
 					case QUERY_KEEP:
@@ -548,27 +542,22 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						disableEverything();
 						keepSegment.setEnabled(true);
 						junkSegment.setEnabled(true);
-						abortButton.setEnabled(true);
 						break;
 
 					case FILLING_PATHS:
 						updateStatusText("Filling out selected paths...");
 						disableEverything();
-						abortButton.setEnabled(true);
 						fw.setEnabledWhileFilling();
 						break;
 
 					case FITTING_PATHS:
 						updateStatusText("Fitting volumes around selected paths...");
-						disableEverything();
+						abortButton.setEnabled(true);
 						break;
 
 					case CALCULATING_GAUSSIAN:
 						updateStatusText("Calculating Gaussian...");
 						disableEverything();
-						abortButton.setEnabled(true);
-//						keepSegment.setEnabled(false);
-//						junkSegment.setEnabled(false);
 						break;
 
 					case LOADING_FILTERED_IMAGE:
@@ -579,7 +568,6 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case WAITING_FOR_SIGMA_POINT:
 						updateStatusText("Click on a representative structure...");
 						disableEverything();
-						abortButton.setEnabled(true);
 						break;
 
 					case WAITING_FOR_SIGMA_CHOICE:
@@ -603,14 +591,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						disableEverything();
 						keepSegment.setEnabled(false);
 						junkSegment.setEnabled(false);
-						abortButton.setEnabled(true);
 						completePath.setEnabled(false);
 						showPartsNearby.setEnabled(isStackAvailable());
 						setEnableAutoTracingComponents(false);
 						getFillWindow().setVisible(false);
 						showOrHideFillList.setEnabled(false);
 						break;
-
 
 					case PAUSED:
 						updateStatusText("SNT is paused. Tracing functions disabled...");
@@ -628,10 +614,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case IMAGE_CLOSED:
 						updateStatusText("Tracing image is no longer available...");
 						disableImageDependentComponents();
-						setEnableAutoTracingComponents(false);
 						plugin.discardFill(false);
 						quitMenuItem.setEnabled(true);
-						break;
+						return;
 
 					default:
 						SNT.debug("BUG: switching to an unknown state");
@@ -838,34 +823,22 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JPanel interactionPanel() {
 		final JPanel intPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
-		final JCheckBox canvasCheckBox = new JCheckBox(
-			"Activate canvas on mouse hovering", plugin.autoCanvasActivation);
-		canvasCheckBox.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				plugin.enableAutoActivation(e.getStateChange() == ItemEvent.SELECTED);
-			}
-		});
-		intPanel.add(canvasCheckBox, gdb);
-		++gdb.gridy;
-		final JCheckBox winLocCheckBox = new JCheckBox("Remember window locations across restarts",
-			plugin.prefs.isSaveWinLocations());
-		winLocCheckBox.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				plugin.prefs.setSaveWinLocations(e
-					.getStateChange() == ItemEvent.SELECTED);
-			}
-		});
-		intPanel.add(winLocCheckBox, gdb);
-		++gdb.gridy;
-		gdb.ipady = MARGIN; //spacer
 		intPanel.add(extraColorsPanel(), gdb);
-		gdb.ipady = 0;
 		++gdb.gridy;
 		intPanel.add(nodePanel(), gdb);
+		++gdb.gridy;
+
+		final JCheckBox canvasCheckBox = new JCheckBox(
+				"Activate canvas on mouse hovering", plugin.autoCanvasActivation);
+			canvasCheckBox.addItemListener(new ItemListener() {
+
+				@Override
+				public void itemStateChanged(final ItemEvent e) {
+					plugin.enableAutoActivation(e.getStateChange() == ItemEvent.SELECTED);
+				}
+			});
+		intPanel.add(canvasCheckBox, gdb);
+		++gdb.gridy;
 		return intPanel;
 	}
 
@@ -999,6 +972,18 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JPanel miscPanel() {
 		final JPanel miscPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
+		final JCheckBox winLocCheckBox = new JCheckBox("Remember window locations",
+			plugin.prefs.isSaveWinLocations());
+		winLocCheckBox.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(final ItemEvent e) {
+				plugin.prefs.setSaveWinLocations(e
+					.getStateChange() == ItemEvent.SELECTED);
+			}
+		});
+		miscPanel.add(winLocCheckBox, gdb);
+		++gdb.gridy;
 		final JCheckBox compressedXMLCheckBox = new JCheckBox(
 			"Use compression when saving traces", plugin.useCompressedXML);
 		compressedXMLCheckBox.addItemListener(new ItemListener() {
@@ -1096,7 +1081,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		filteredImgParserChoice.addItem("Simple Neurite Tracer");
 		filteredImgParserChoice.addItem("ITK: Tubular Geodesics");
 		filteredImgInitButton = GuiUtils.smallButton("Initialize...");
-		filteredImgActivateCheckbox = new JCheckBox(hotKeyLabel("Trace Using Filtered image", "F"));
+		filteredImgActivateCheckbox = new JCheckBox(hotKeyLabel("Trace using filtered Image", "I"));
 		filteredImgActivateCheckbox.addActionListener(new ActionListener() {
 
 			@Override

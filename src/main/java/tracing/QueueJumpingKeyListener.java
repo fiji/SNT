@@ -193,6 +193,11 @@ class QueueJumpingKeyListener implements KeyListener {
 			tracerPlugin.getUI().toggleHessian();
 			e.consume();
 		}
+		else if (keyChar == 'i' || keyChar == 'I') {
+			// IJ1 built-in: Get Info
+			tracerPlugin.getUI().toggleFilteredImgTracing();
+			e.consume();
+		}
 		else if (keyChar == 'm' || keyChar == 'M') {
 			// IJ1 built-in: Measure
 			canvas.clickAtMaxPoint();

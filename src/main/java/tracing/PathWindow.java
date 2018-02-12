@@ -109,8 +109,12 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	private DefaultMutableTreeNode root;
 	private SimpleNeuriteTracer plugin;
 	private PathAndFillManager pathAndFillManager;
-	private final GuiUtils guiUtils;
+	private DefaultGenericTable table;
+	private boolean tableSaved;
+	protected SwingWorker<Object, Object> fitWorker;
 
+	protected static final String TABLE_TITLE = "SNT Measurements";
+	private final GuiUtils guiUtils;
 	private final JScrollPane scrollPane;
 	private final JMenuBar menuBar;
 	private final JPopupMenu popup;
@@ -120,9 +124,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	private final JMenuItem fitVolumeMenuItem;
 	private final TreeSearchable searchable;
 
-	protected static final String TABLE_TITLE = "SNT Measurements";
-	private DefaultGenericTable table;
-	private boolean tableSaved;
 
 	public PathWindow(final PathAndFillManager pathAndFillManager,
 		final SimpleNeuriteTracer plugin)
@@ -1152,7 +1153,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		setEnabledCommands(false);
 
 		// Improve browsability of path, while updating the GUI
-		if (!ui.nearbySlices()) ui.togglePartsChoice();
 		if (!plugin.showOnlySelectedPaths) ui.togglePathsChoice();
 		plugin.enableEditMode(true);
 		plugin.setEditingPath(p);
@@ -1351,7 +1351,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 					refreshManager(false);
 				}
 				return;
-
 			}
 			else if (e.getActionCommand().equals(MAKE_PRIMARY_CMD)) {
 				final HashSet<Path> pathsExplored = new HashSet<>();

@@ -113,21 +113,26 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	@Override
-	public void mouseMovedTo(final int off_screen_x, final int off_screen_y,
+	public void mouseMovedTo(final double off_screen_x, final double off_screen_y,
 		final int in_plane, final boolean shift_down)
 	{
 
-		final int point[] = new int[3];
+		final double point[] = new double[3];
 
-		findPointInStack(off_screen_x, off_screen_y, in_plane, point);
+		findPointInStackPrecise(off_screen_x, off_screen_y, in_plane, point);
 
 		xy_canvas.updatePosition(point[0], point[1], point[2]);
 		if (!single_pane) {
 			xz_canvas.updatePosition(point[0], point[1], point[2]);
 			zy_canvas.updatePosition(point[0], point[1], point[2]);
 		}
-
-		if (shift_down) setSlicesAllPanes(point[0], point[1], point[2]);
+		if (shift_down) {
+			xy.setZ((int)point[2] + 1);
+			if (!single_pane) {
+				xz.setZ((int)point[1] + 1);
+				zy.setZ((int)point[0] + 1);
+			}
+		}
 	}
 
 	@Override
@@ -252,7 +257,7 @@ public class MultiDThreePanes implements PaneOwner {
 	 *          ImagePlus in order to not be warned about insufficient memory
 	 * @return true, if sufficient memory was detected, false otherwise
 	 */
-	public boolean memoryCheck(final ImagePlus imagePlus,
+	private boolean memoryCheck(final ImagePlus imagePlus,
 		final int memoryMultipleNeeded)
 	{
 

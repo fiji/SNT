@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.image.IndexColorModel;
 import java.io.File;
+import java.io.IOException;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 
@@ -297,7 +298,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				if (beforeExtension != null) {
 					final File possibleOOFFile = new File(file_info.directory, beforeExtension + ".oof.nrrd");
 					if (possibleOOFFile.exists()) {
-						oofFile = possibleOOFFile;
+						filteredFileImage = possibleOOFFile;
 					}
 				}
 			}
@@ -309,7 +310,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 					final int lastDot = originalFileName.lastIndexOf(".");
 					if (lastDot > 0) {
 						final String tubesFileName = SNT.stripExtension(originalFileName) + ".tubes.tif";
-						ImagePlus tubenessImage = null;
 						final File tubesFile = new File(file_info.directory, tubesFileName);
 						SNT.debug("Testing for the existence of " + tubesFile.getAbsolutePath());
 						if (tubesFile.exists()) {
@@ -321,25 +321,13 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 							if (d.cancelPressed())
 								return;
 							else if (d.yesPressed()) {
-								IJ.showStatus("Loading tubes file.");
-								tubenessImage = BatchOpener.openFirstChannel(tubesFile.getAbsolutePath());
-								SNT.debug("Loaded the tubeness file");
-								if (tubenessImage == null) {
-									SNT.error("Failed to load tubes image from " + tubesFile.getAbsolutePath()
-											+ " although it existed");
-									return;
-								}
-								if (tubenessImage.getType() != ImagePlus.GRAY32) {
-									SNT.error("The tubeness file must be a 32 bit float image - "
-											+ tubesFile.getAbsolutePath() + " was not.");
-									return;
-								}
-								final int depth = tubenessImage.getStackSize();
-								final ImageStack tubenessStack = tubenessImage.getStack();
-								tubeness = new float[depth][];
-								for (int z = 0; z < depth; ++z) {
-									final FloatProcessor fp = (FloatProcessor) tubenessStack.getProcessor(z + 1);
-									tubeness[z] = (float[]) fp.getPixels();
+								SNT.debug("Loading the tubeness file");
+								super.setFilteredImage(tubesFile);
+								try {
+									loadFilteredImage();
+								} catch (IllegalArgumentException | IOException exc) {
+									error("Could not load 'tubes' image. See console for details");
+									exc.printStackTrace();
 								}
 							}
 						}

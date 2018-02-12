@@ -39,7 +39,6 @@ import javax.swing.JPopupMenu;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.Prefs;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.measure.Calibration;
@@ -70,7 +69,6 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 	private EnhancedGenericDialog gd;
 	private Label infoMsg;
 	private static final String defaultInfoMsg = getDefaultInfoMessage();
-	private static final String LOAD_DIRECTORY_KEY = "tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory";
 	private boolean debug;
 
 	private String tracesPath;
@@ -118,7 +116,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			return;
 		}
 
-		Prefs.set(LOAD_DIRECTORY_KEY, new File(tracesPath).getParent());
+		SNTPrefs.setRecentDirectory(new File(tracesPath).getParent());
 		final Path[] primaryPaths = pafm.getPathsStructured();
 		PointInImage shollCenter = null;
 
@@ -383,7 +381,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 	}
 
 	private void guessInitialPaths() {
-		final String lastDirPath = Prefs.get(LOAD_DIRECTORY_KEY, null);
+		final String lastDirPath = SNTPrefs.getRecentDirectory();
 		if (lastDirPath != null && !lastDirPath.isEmpty()) {
 			final File lastDir = new File(lastDirPath);
 			final File[] tracing_files = lastDir.listFiles(new FileFilter() {

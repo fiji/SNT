@@ -48,8 +48,7 @@ public class PathDownsampler {
 	 * @param permittedDeviation
 	 * @return
 	 */
-
-	public static ArrayList<SimplePoint> downsample(final ArrayList<SimplePoint> points,
+	protected static ArrayList<SimplePoint> downsample(final ArrayList<SimplePoint> points,
 			final double permittedDeviation) {
 		final int n = points.size();
 		final SimplePoint startPoint = points.get(0);

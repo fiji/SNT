@@ -964,10 +964,6 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 			return result;
 		}
 
-		public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {
-			pw.print(PathAndFillManager.stringForCSV("" + o));
-		}
-
 		public String getOriginalFilename() {
 			final FileInfo originalFileInfo = originalImage.getOriginalFileInfo();
 			if (originalFileInfo.directory == null)
@@ -986,32 +982,32 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 					new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
 			final int columns = headers.length;
 			for (int c = 0; c < columns; ++c) {
-				csvQuoteAndPrint(pw, headers[c]);
+				SNT.csvQuoteAndPrint(pw, headers[c]);
 				if (c < (columns - 1))
 					pw.print(",");
 			}
 			pw.print("\r\n");
-			csvQuoteAndPrint(pw, getOriginalFilename());
+			SNT.csvQuoteAndPrint(pw, getOriginalFilename());
 			pw.print(",");
-			csvQuoteAndPrint(pw, useAllPaths);
+			SNT.csvQuoteAndPrint(pw, useAllPaths);
 			pw.print(",");
-			csvQuoteAndPrint(pw, numberOfPathsUsed);
+			SNT.csvQuoteAndPrint(pw, numberOfPathsUsed);
 			pw.print(",");
-			csvQuoteAndPrint(pw, sphereSeparation);
+			SNT.csvQuoteAndPrint(pw, sphereSeparation);
 			pw.print(",");
-			csvQuoteAndPrint(pw, normalizationParameters[normalization]);
+			SNT.csvQuoteAndPrint(pw, normalizationParameters[normalization]);
 			pw.print(",");
-			csvQuoteAndPrint(pw, axesParameters[axes]);
+			SNT.csvQuoteAndPrint(pw, axesParameters[axes]);
 			pw.print(",");
-			csvQuoteAndPrint(pw, getCriticalValue());
+			SNT.csvQuoteAndPrint(pw, getCriticalValue());
 			pw.print(",");
-			csvQuoteAndPrint(pw, getDendriteMaximum());
+			SNT.csvQuoteAndPrint(pw, getDendriteMaximum());
 			pw.print(",");
-			csvQuoteAndPrint(pw, getShollRegressionCoefficient());
+			SNT.csvQuoteAndPrint(pw, getShollRegressionCoefficient());
 			pw.print(",");
-			csvQuoteAndPrint(pw, getRegressionGradient());
+			SNT.csvQuoteAndPrint(pw, getRegressionGradient());
 			pw.print(",");
-			csvQuoteAndPrint(pw, getRegressionIntercept());
+			SNT.csvQuoteAndPrint(pw, getRegressionIntercept());
 			pw.print("\r\n");
 
 			pw.close();
@@ -1025,7 +1021,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 					new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
 			final int columns = headers.length;
 			for (int c = 0; c < columns; ++c) {
-				csvQuoteAndPrint(pw, headers[c]);
+				SNT.csvQuoteAndPrint(pw, headers[c]);
 				if (c < (columns - 1))
 					pw.print(",");
 			}
@@ -1040,11 +1036,11 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 					normalizedCrossings = y / (Math.PI * distanceSquared);
 				else
 					normalizedCrossings = y / ((4.0 * Math.PI * x * distanceSquared) / 3.0);
-				csvQuoteAndPrint(pw, x);
+				SNT.csvQuoteAndPrint(pw, x);
 				pw.print(",");
-				csvQuoteAndPrint(pw, y);
+				SNT.csvQuoteAndPrint(pw, y);
 				pw.print(",");
-				csvQuoteAndPrint(pw, normalizedCrossings);
+				SNT.csvQuoteAndPrint(pw, normalizedCrossings);
 				pw.print("\r\n");
 			}
 			pw.close();

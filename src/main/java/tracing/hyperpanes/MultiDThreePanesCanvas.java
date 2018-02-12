@@ -120,13 +120,13 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 
 		if (!cursorLocked || isEventsDisabled()) super.mouseMoved(e);
 
-		final double off_screen_x = offScreenX(e.getX());
-		final double off_screen_y = offScreenY(e.getY());
+		final double off_screen_x = offScreenXD(e.getX());
+		final double off_screen_y = offScreenYD(e.getY());
 
 		final boolean shift_key_down = (e.getModifiersEx() &
 			InputEvent.SHIFT_DOWN_MASK) != 0;
 
-		owner.mouseMovedTo((int) off_screen_x, (int) off_screen_y, plane,
+		owner.mouseMovedTo( off_screen_x, off_screen_y, plane,
 			shift_key_down);
 	}
 

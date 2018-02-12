@@ -43,6 +43,7 @@ import java.util.concurrent.Callable;
 import javax.swing.UIManager;
 
 import net.imagej.Dataset;
+import net.imagej.axis.Axes;
 import net.imagej.legacy.LegacyService;
 
 import org.scijava.Context;
@@ -113,7 +114,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected static final int MIN_SNAP_CURSOR_WINDOW_XY = 2;
 	protected static final int MIN_SNAP_CURSOR_WINDOW_Z = 0;
 	protected static final int MAX_SNAP_CURSOR_WINDOW_XY = 20;
-	protected static final int MAX_SNAP_CURSOR_WINDOW_Z = 8;
+	protected static final int MAX_SNAP_CURSOR_WINDOW_Z = 10;
 
 	protected static final String startBallName = "Start point";
 	protected static final String targetBallName = "Target point";
@@ -143,7 +144,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected InteractiveTracerCanvas xz_tracer_canvas;
 	protected InteractiveTracerCanvas zy_tracer_canvas;
 
-	protected int width, height, depth;
+	/* Image properties */
+	protected final int width, height, depth;
 	protected int imageType = -1;
 	private boolean singleSlice;
 	protected double x_spacing = 1;
@@ -323,9 +325,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (!xz.isVisible()) xz.show();
 	}
 
-	private void loadData() {//FIXME needs to becalled before init
+	private void loadData() {
 		final ImageStack s = xy.getStack();
-
 		switch (imageType) {
 			case ImagePlus.GRAY8:
 			case ImagePlus.COLOR_256:
@@ -639,7 +640,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected boolean editModeAllowed(final boolean warnUserIfNot) {
-		final boolean uiReady = uiReadyForModeChange();
+		final boolean uiReady = uiReadyForModeChange() || isEditModeEnabled();
 		if (warnUserIfNot && !uiReady) {
 			discreteMsg("Please finish current operation before editing paths");
 			return false;
@@ -678,7 +679,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (enable) {
 			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
-			//getUI().showPartsNearby.setSelected(true);
+			if (isReady() && !getUI().nearbySlices())
+				getUI().togglePartsChoice();
 		} else {
 			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 			setCanvasLabelAllPanes(null);
@@ -724,7 +726,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected boolean isEditModeEnabled() {
-		return NeuriteTracerResultsDialog.EDITING_MODE == getUIState();
+		return isReady() && NeuriteTracerResultsDialog.EDITING_MODE == getUIState();
 	}
 
 	@Deprecated
@@ -1602,7 +1604,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * @return the loaded data corresponding to the C,T position currently being
 	 *         traced
 	 */
-	private ImagePlus getLoadedDataAsImp() {
+	protected ImagePlus getLoadedDataAsImp() {
 		final ImageStack stack = new ImageStack(xy.getWidth(), xy.getHeight());
 		switch (imageType) {
 			case ImagePlus.GRAY8:
@@ -1856,6 +1858,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
+	@Override
+	public void error(final String msg) {
+		new GuiUtils(getActiveWindow()).error(msg);
+	}
+
 	private Window getActiveWindow() {
 		final Window[] images = { xy_window, xz_window, zy_window };
 		for (final Window win : images) {
@@ -1953,14 +1960,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			return;
 		}
 		if (addToExistingSelection) {
-			pathsToSelect.addAll(resultsDialog.getPathWindow().getSelectedPaths());
+			pathsToSelect.addAll(resultsDialog.getPathWindow().getSelectedPaths(false));
 		}
 		resultsDialog.getPathWindow().setSelectedPaths(pathsToSelect, this);
 	}
 
 	public Set<Path> getSelectedPaths() {
 		if (resultsDialog.getPathWindow() != null) {
-			return resultsDialog.getPathWindow().getSelectedPaths();
+			return resultsDialog.getPathWindow().getSelectedPaths(false);
 		}
 		throw new RuntimeException(
 			"getSelectedPaths was called when resultsDialog.pw was null");
@@ -2195,7 +2202,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected void discreteMsg(final String msg) {  /* HTML format */
-		new GuiUtils(getActiveWindow()).tempMsg(msg, true);
+		new GuiUtils(getActiveWindow()).tempMsg(msg);
 	}
 
 	protected boolean getConfirmation(final String msg, final String title) {

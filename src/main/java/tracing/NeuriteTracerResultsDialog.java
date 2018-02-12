@@ -145,7 +145,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JComboBox<String> filteredImgParserChoice;
 	private final List<String> filteredImgAllowedExts = Arrays.asList("tif", "nrrd");
 	private JCheckBox filteredImgActivateCheckbox;
-
+	private Thread filteredImgLoadingThread;
 
 	private JPanel colorPanel;
 	private static final int MARGIN = 4;
@@ -168,8 +168,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	static final int PARTIAL_PATH = 1;
 	static final int SEARCHING = 2;
 	static final int QUERY_KEEP = 3;
-	static final int LOGGING_POINTS = 4;
-	static final int DISPLAY_EVS = 5;
+	// static final int LOGGING_POINTS = 4;
+	// static final int DISPLAY_EVS = 5;
 	static final int FILLING_PATHS = 6;
 	static final int CALCULATING_GAUSSIAN = 7;
 	static final int WAITING_FOR_SIGMA_POINT = 8;
@@ -177,8 +177,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	static final int SAVING = 10;
 	static final int LOADING = 11;
 	static final int FITTING_PATHS = 12;
-	static final int EDITING_MODE = 13;
-	static final int PAUSED = 14;
+	static final int LOADING_FILTERED_IMAGE = 13;
+	static final int EDITING_MODE = 14;
+	static final int PAUSED = 15;
 	static final int IMAGE_CLOSED = -1;
 
 	// TODO: Internal preferences: should be migrated to SNTPrefs
@@ -568,6 +569,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						abortButton.setEnabled(true);
 //						keepSegment.setEnabled(false);
 //						junkSegment.setEnabled(false);
+						break;
+
+					case LOADING_FILTERED_IMAGE:
+						updateStatusText("Loading Filtered Image...");
+						disableEverything();
 						break;
 
 					case WAITING_FOR_SIGMA_POINT:
@@ -1095,22 +1101,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				if (plugin.isTracingOnFilteredImageAvailable()) {
-					if (filteredImgParserChoice.getSelectedIndex() == 0) {
-						plugin.doSearchOnFilteredData = filteredImgActivateCheckbox.isSelected();
-					} else if (filteredImgParserChoice.getSelectedIndex() == 1) {
-						plugin.tubularGeodesicsTracingEnabled = filteredImgActivateCheckbox.isSelected();
-					}
-					return;
-				}
-				guiUtils.error("Filtered image has not yet been loaded. Please "
-						+ (!SNT.fileAvailable(plugin.getFilteredImage())
-								? "specify the file path of filtered image, then "
-								: "")
-						+ "initialize its parser.", "Filtered Image Unavailable");
-				filteredImgActivateCheckbox.setSelected(false);
-				plugin.doSearchOnFilteredData = false;
-				updateFilteredFileField();
+				enableFilteredImgTracing(filteredImgActivateCheckbox.isSelected());
 			}
 		});
 
@@ -1183,20 +1174,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 										+ megaBytesExtra + "MiB of RAM (currently available: " + maxMemory + " MiB).",
 								"Confirm Loading?"))
 							return;
-						try {
-							plugin.loadFilteredImage();
-						} catch (final IllegalArgumentException e1) {
-							guiUtils.error("Could not load " + file.getAbsolutePath() + ":<br>" + e1.getMessage());
-							return;
-						} catch (final IOException e2) {
-							guiUtils.error("Loading of image failed. See Console for details");
-							e2.printStackTrace();
-							return;
-						} catch (final OutOfMemoryError e3) {
-							plugin.filteredData = null;
-							guiUtils.error("It seems you there is not enough memory to proceed. See Console for details");
-							e3.printStackTrace();
-						}
+						startFilteredImgLoadingThread();
 					} else if (filteredImgParserChoice.getSelectedIndex() == 1) { // Tubular Geodesics
 
 						if (ClassUtils.loadClass("FijiITKInterface.TubularGeodesics") == null) {
@@ -1272,6 +1250,30 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.gridy++; c.gridx=0;
 		filteredImgPanel.add(filteredImgActivateCheckbox, c);
 		return filteredImgPanel;
+	}
+
+	private void startFilteredImgLoadingThread() {
+		filteredImgLoadingThread = new Thread(() -> {
+			try {
+				changeState(LOADING_FILTERED_IMAGE);
+				plugin.loadFilteredImage();
+			} catch (final IllegalArgumentException e1) {
+				guiUtils.error(
+						"Could not load " + plugin.getFilteredImage().getAbsolutePath() + ":<br>" + e1.getMessage());
+				return;
+			} catch (final IOException e2) {
+				guiUtils.error("Loading of image failed. See Console for details");
+				e2.printStackTrace();
+				return;
+			} catch (final OutOfMemoryError e3) {
+				plugin.filteredData = null;
+				guiUtils.error("It seems you there is not enough memory to proceed. See Console for details");
+				e3.printStackTrace();
+			} finally {
+				changeState(WAITING_TO_START_PATH);
+			}
+		});
+		filteredImgLoadingThread.start();
 	}
 
 	private void updateFilteredFileField() {
@@ -2035,6 +2037,15 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				updateStatusText("Cancelling path search...", true);
 				plugin.cancelSearch(false);
 				break;
+			case (LOADING_FILTERED_IMAGE):
+				updateStatusText("Unloading filtered image", true);
+				if (filteredImgLoadingThread != null && filteredImgLoadingThread.isAlive())
+					filteredImgLoadingThread.interrupt();
+				plugin.doSearchOnFilteredData = false;
+				plugin.tubularGeodesicsTracingEnabled = false;
+				plugin.filteredData = null;
+				changeState(WAITING_TO_START_PATH);
+				break;
 			case (CALCULATING_GAUSSIAN):
 				updateStatusText("Cancelling Gaussian generation...", true);
 				plugin.cancelGaussian();
@@ -2065,10 +2076,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				break;
 			case (WAITING_FOR_SIGMA_CHOICE):
 				showStatus("Close the sigma palette to abort sigma input...");
-				break; // do nothing: 
+				break; // do nothing: Currently we have no control over the sigma palette window
 			case (WAITING_TO_START_PATH):
-				showStatus("Instruction ignored: Nothing to abort");
-				break; // nothing to abort;
+			case (LOADING):
+			case (SAVING):
+			case (IMAGE_CLOSED):
+				showStatus("Instruction ignored: No task to be aborted");
+				break; // none of this states needs to be aborted
 			default:
 				SNT.debug("BUG: Wrong state for aborting operation...");
 				break;
@@ -2085,10 +2099,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				return "SEARCHING";
 			case QUERY_KEEP:
 				return "QUERY_KEEP";
-			case LOGGING_POINTS:
-				return "LOGGING_POINTS";
-			case DISPLAY_EVS:
-				return "DISPLAY_EVS";
+//			case LOGGING_POINTS:
+//				return "LOGGING_POINTS";
+//			case DISPLAY_EVS:
+//				return "DISPLAY_EVS";
 			case FILLING_PATHS:
 				return "FILLING_PATHS";
 			case CALCULATING_GAUSSIAN:
@@ -2120,6 +2134,32 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			showPathsSelected.setSelected(true);
 		else
 			showPathsAll.setSelected(true);
+	}
+
+	protected void enableFilteredImgTracing(final boolean enable) {
+		if (plugin.isTracingOnFilteredImageAvailable()) {
+			if (filteredImgParserChoice.getSelectedIndex() == 0) {
+				plugin.doSearchOnFilteredData = enable;
+			} else if (filteredImgParserChoice.getSelectedIndex() == 1) {
+				plugin.tubularGeodesicsTracingEnabled = enable;
+			}
+		}
+		else if (enable) {
+			guiUtils.error("Filtered image has not yet been loaded. Please "
+					+ (!SNT.fileAvailable(plugin.getFilteredImage()) ? "specify the file path of filtered image, then "
+							: "")
+					+ "initialize its parser.", "Filtered Image Unavailable");
+			filteredImgActivateCheckbox.setSelected(false);
+			plugin.doSearchOnFilteredData = false;
+			updateFilteredFileField();
+		}
+	}
+
+	protected void toggleFilteredImgTracing() {
+		assert SwingUtilities.isEventDispatchThread();
+		// Do nothing if we are not allowed to enable FilteredImgTracing
+		if (!filteredImgActivateCheckbox.isEnabled()) return;
+		enableFilteredImgTracing(!filteredImgActivateCheckbox.isSelected());
 	}
 
 	protected void toggleHessian() {

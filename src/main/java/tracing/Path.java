@@ -173,7 +173,7 @@ public class Path implements Comparable<Path> {
 		return name;
 	}
 
-	private String pathsToIDListString(final ArrayList<Path> a) {
+	protected static String pathsToIDListString(final ArrayList<Path> a) {
 		final StringBuffer s = new StringBuffer("");
 		final int n = a.size();
 		for (int i = 0; i < n; ++i) {
@@ -745,7 +745,6 @@ public class Path implements Comparable<Path> {
 		precise_z_positions[points++] = z;
 	}
 
-	@Deprecated
 	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
 			final boolean highContrast, final boolean drawDiameter) {
 		drawPathAsPoints(canvas, g, c, plane, highContrast, drawDiameter, 0, -1);

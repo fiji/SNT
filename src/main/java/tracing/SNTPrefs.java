@@ -211,7 +211,7 @@ public class SNTPrefs { //TODO: Adopt PrefService
 		Prefs.set("tracing.Simple_Neurite_Tracer.drawDiametersXY", null);
 	}
 
-	public void setRecentFile(final File file) {
+	protected void setRecentFile(final File file) {
 		recentFile = file;
 	}
 

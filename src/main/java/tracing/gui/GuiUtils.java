@@ -291,10 +291,14 @@ public class GuiUtils {
 	}
 
 	private JLabel getLabel(final String text) {
-		if (text == null || text.startsWith("<") || text.length() < 60)
+		if (text == null || text.startsWith("<")) {
 			return new JLabel(text);
-		else
-			return new JLabel("<html><body><div style='width:500;'>" + text);
+		} else {
+			final JLabel label = new JLabel();
+			final int width = Math.round(label.getFontMetrics(label.getFont()).stringWidth(text));
+			label.setText("<html><body><div style='width:" + Math.min(width, 500) + ";'>" + text);
+			return label;
+		}
 	}
 
 	public void blinkingError(final JComponent blinkingComponent,
@@ -352,11 +356,11 @@ public class GuiUtils {
 	}
 
 	public static String ctrlKey() {
-		return (PlatformUtils.isMac()) ? "CMD" : "CTRL";
+		return (PlatformUtils.isMac()) ? "Cmd" : "Ctrl";
 	}
 
 	public static String modKey() {
-		return (PlatformUtils.isMac()) ? "ALT" : "CTRL";
+		return (PlatformUtils.isMac()) ? "Alt" : "Ctrl";
 	}
 
 	public static GridBagConstraints defaultGbc() {
@@ -447,7 +451,8 @@ public class GuiUtils {
 	}
 
 	public static void setAutoDismiss(final JDialog dialog) {
-		final Timer timer = new Timer(2500, new ActionListener() {
+		final int DELAY = 2500;
+		final Timer timer = new Timer(DELAY, new ActionListener() {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
@@ -457,6 +462,7 @@ public class GuiUtils {
 		timer.setRepeats(false);
 		dialog.addMouseListener(new MouseAdapter() {
 
+			private long lastUpdate;
 			@Override
 			public void mouseClicked(final MouseEvent e) {
 				dialog.dispose();
@@ -464,11 +470,15 @@ public class GuiUtils {
 
 			@Override
 			public void mouseExited(MouseEvent e) {
-				dialog.dispose();
+				if (System.currentTimeMillis() - lastUpdate > DELAY)
+					dialog.dispose();
+				else
+					timer.start();//
 			}
 
 			@Override
 			public void mouseEntered(MouseEvent e) {
+				lastUpdate = System.currentTimeMillis();
 				timer.stop();
 			}
 

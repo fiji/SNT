@@ -43,8 +43,10 @@ import org.scijava.widget.Button;
 import org.scijava.widget.FileWidget;
 
 import ij.ImagePlus;
+import ij.measure.Calibration;
 import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
+import tracing.gui.GuiUtils;
 
 @Plugin(type = DynamicCommand.class, visible = true, menuPath = "SNT>SNTLoader",
 	initializer = "initialize")
@@ -164,7 +166,7 @@ public class SNTLoader extends DynamicCommand {
 				return;
 			}
 		}
-
+		promptUserForZTSwap();
 		final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(
 			getContext(), sourceImp);
 		sntInstance.initialize(uiChoice.equals(UI_SIMPLE), channel, sourceImp
@@ -174,11 +176,24 @@ public class SNTLoader extends DynamicCommand {
 
 	}
 
-	/**
+	private void promptUserForZTSwap() {
+		final int[] dims = sourceImp.getDimensions();
+		if (dims[4] == 1 && dims[3] > 1) {
+			GuiUtils guiUtils = new GuiUtils(sourceImp.getWindow());
+			if (!guiUtils.getConfirmation("It appears that image has 1 timepoint but " + dims[3] + " slices",
+									 "Swap Z<>T Dimensions?")) return;
+			sourceImp.setDimensions(dims[2], dims[4], dims[3]);
+			final Calibration calibration = sourceImp.getCalibration();
+			calibration.frameInterval = 1;
+			calibration.setTimeUnit("frame");
+		}
+	}
+
+	/*
 	 * IDE debug method
 	 * 
 	 * @throws IOException
-	 **/
+	 */
 	public static void main(final String[] args) throws IOException {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();

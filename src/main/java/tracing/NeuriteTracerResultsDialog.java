@@ -2064,7 +2064,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				break;
 			case (FILLING_PATHS):
 				showStatus("Filling out cancelled...");
-				plugin.discardFill();
+				plugin.discardFill(); // will change status
+				break;
+			case (FITTING_PATHS):
+				showStatus("Fitting cancelled...");
+				pw.cancelFit(true);
 				break;
 			case (PAUSED):
 				showStatus("Tracing mode reinstated...");

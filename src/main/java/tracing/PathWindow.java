@@ -393,7 +393,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		setEnabledCommands(false);
 		final JDialog msg = guiUtils.floatingMsg(statusMsg);
 
-		SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
+		fitWorker = new SwingWorker<Object, Object>() {
 
 			@Override
 			protected Object doInBackground() {
@@ -424,13 +424,22 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				setEnabledCommands(true);
 			}
 		};
-		worker.execute();
+		fitWorker.execute();
+	}
+
+	synchronized protected void cancelFit(final boolean updateUIState) {
+		if (fitWorker != null) {
+			synchronized (fitWorker) {
+				fitWorker.cancel(true);
+				if (updateUIState)
+					plugin.changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+				fitWorker = null;
+			}
+		}
 	}
 
 	private void exportSelectedPaths(final Set<Path> paths) {
 
-		// plugin.context.uiService.chooseFile(title, file,
-		// FileWidget.DIRECTORY_STYLE);
 		ArrayList<SWCPoint> swcPoints = null;
 		try {
 			swcPoints = pathAndFillManager.getSWCFor(paths);

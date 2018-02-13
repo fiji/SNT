@@ -110,7 +110,7 @@ public class ROIExporterCmd implements Command {
 			converter.setView(RoiConverter.XY_PLANE);
 
 		roiChoice = roiChoice.toLowerCase();
-		if (roiChoice.contains("all")) roiChoice = "tips branch points paths";
+		if (roiChoice.contains("all")) roiChoice = "tips branch points segments";
 
 		int size = 0;
 		if (roiChoice.contains("tips")) {
@@ -123,10 +123,10 @@ public class ROIExporterCmd implements Command {
 			converter.convertBranchPoints(overlay);
 			if (overlay.size() == size) warn(noConversion("branch points"));
 		}
-		if (roiChoice.contains("paths")) {
+		if (roiChoice.contains("segments")) {
 			size = overlay.size();
 			converter.convertPaths(overlay);
-			if (overlay.size() == size) warn(noConversion("paths"));
+			if (overlay.size() == size) warn(noConversion("segments"));
 		}
 
 		if (overlay.size()==0) {

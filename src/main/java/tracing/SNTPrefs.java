@@ -107,7 +107,7 @@ public class SNTPrefs { //TODO: Adopt PrefService
 		snt.drawDiametersXY = getPref(DRAW_DIAMETERS_XY);
 		snt.displayCustomPathColors = !getPref(ENFORCE_DEFAULT_PATH_COLORS);
 		snt.setShowOnlySelectedPaths(getPref(SHOW_ONLY_SELECTED), false);
-		SNT.setDebugMode(getPref(DEBUG));
+		if (!SNT.isDebugMode()) SNT.setDebugMode(getPref(DEBUG));
 		snt.cursorSnapWindowXY = (int) Prefs.get(SNAP_XY, 4);
 		snt.cursorSnapWindowXY = whithinBoundaries(snt.cursorSnapWindowXY,
 				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY);

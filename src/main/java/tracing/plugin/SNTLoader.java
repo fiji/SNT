@@ -92,7 +92,6 @@ public class SNTLoader extends DynamicCommand {
 	@Override
 	public void initialize() {
 		// TODO: load defaults from prefService?
-		SNT.setDebugMode(true);
 		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
 			.getActiveImageDisplay());
 		if (sourceImp == null) {
@@ -166,7 +165,7 @@ public class SNTLoader extends DynamicCommand {
 				return;
 			}
 		}
-		promptUserForZTSwap();
+		if (!validateImageDimensions()) return;
 		final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(
 			getContext(), sourceImp);
 		sntInstance.initialize(uiChoice.equals(UI_SIMPLE), channel, sourceImp
@@ -176,17 +175,21 @@ public class SNTLoader extends DynamicCommand {
 
 	}
 
-	private void promptUserForZTSwap() {
+	// this exists only to address issue #25 and avoid the propagation
+	// of swc files in pixel coordinates
+	private boolean validateImageDimensions() {
 		final int[] dims = sourceImp.getDimensions();
-		if (dims[4] == 1 && dims[3] > 1) {
-			GuiUtils guiUtils = new GuiUtils(sourceImp.getWindow());
-			if (!guiUtils.getConfirmation("It appears that image has 1 timepoint but " + dims[3] + " slices",
-									 "Swap Z<>T Dimensions?")) return;
+		if (dims[4] > 1 && dims[3] == 1 && new GuiUtils().getConfirmation(
+				"It appears that image has " + dims[4] + " timepoints but only 1 slice", "Swap Z,T Dimensions?")) {
 			sourceImp.setDimensions(dims[2], dims[4], dims[3]);
-			final Calibration calibration = sourceImp.getCalibration();
-			calibration.frameInterval = 1;
-			calibration.setTimeUnit("frame");
 		}
+		final Calibration cal = sourceImp.getCalibration();
+		if (!cal.scaled() || cal.pixelDepth < cal.pixelHeight || cal.pixelDepth < cal.pixelWidth) {
+			return new GuiUtils().getConfirmation("Spatial calibration of " + sourceImp.getTitle()
+					+ " appears to be unset or innacurate. Continue nevertheless?",
+					"Innacurated Spatial Calibration?");
+		}
+		return true;
 	}
 
 	/*
@@ -199,6 +202,7 @@ public class SNTLoader extends DynamicCommand {
 		ij.ui().showUI();
 		Object img = ij.io().open("/home/tferr/Fiji.app/samples/t1-head.zip");
 		ij.ui().show("test", img);
+		SNT.setDebugMode(true);
 		ij.command().run(SNTLoader.class, true);
 	}
 

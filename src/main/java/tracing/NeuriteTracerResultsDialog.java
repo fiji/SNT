@@ -644,12 +644,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final JPanel sourcePanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
 		gdb.gridwidth = 1;
-		gdb.ipadx = 2;
 
 		final boolean hasChannels = plugin.getImagePlus().getNChannels() > 1;
 		final boolean hasFrames = plugin.getImagePlus().getNFrames() > 1;
 		final JPanel positionPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,
-			0, 0));
+			4, 0));
 		positionPanel.add(GuiUtils.leftAlignedLabel("Channel", hasChannels));
 		final JSpinner channelSpinner = GuiUtils.integerSpinner(plugin.channel, 1,
 			plugin.getImagePlus().getNChannels(), 1);

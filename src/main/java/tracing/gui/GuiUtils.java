@@ -513,7 +513,7 @@ public class GuiUtils {
 
 		@Override
 		public void dispose() {
-			parent.removeComponentListener(this);
+			if (parent != null) parent.removeComponentListener(this);
 			super.dispose();
 		}
 

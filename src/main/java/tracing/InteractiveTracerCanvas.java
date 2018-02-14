@@ -65,7 +65,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private Color temporaryColor;
 	private Color unconfirmedColor;
 	private Color fillColor;
-	private final GuiUtils guiUtils;
+	private GuiUtils guiUtils;
 	protected static String EDIT_MODE_LABEL = "Edit Mode";
 	protected static String PAUSE_MODE_LABEL = "SNT Paused";
 
@@ -74,7 +74,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final PathAndFillManager pathAndFillManager) {
 		super(imp, plugin, plane, pathAndFillManager);
 		tracerPlugin = plugin;
-		guiUtils = new GuiUtils(this.getParent());
 		buildPpupMenu();
 		super.disablePopupMenu(true); // so that handlePopupMenu is not triggered
 		super.add(pMenu);
@@ -144,7 +143,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 					final int nodeIndexP = p.getEditableNodeIndex();
 					final int nodeIndexS = source.getEditableNodeIndex();
 					if (nodeIndexP * nodeIndexS != 0) {
-						guiUtils.error("One of the connecting nodes must be a start or an end node!",
+						getGuiUtils().error("One of the connecting nodes must be a start or an end node!",
 								"Paths Cannot Contain Loops");
 						return;
 					}
@@ -561,7 +560,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		public void actionPerformed(final ActionEvent e) {
 			if (e.getActionCommand().equals(FORK_NEAREST)) {
 				if (!uiReadyForModeChange(NeuriteTracerResultsDialog.WAITING_TO_START_PATH)) {
-					guiUtils.tempMsg("Please finish current operation before tracing branch");
+					getGuiUtils().tempMsg("Please finish current operation before creating branch");
 					return;
 				}
 				if (pathAndFillManager.size() == 0) {
@@ -598,6 +597,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			}
 			
 		}
+	}
+
+	private GuiUtils getGuiUtils() {
+		return (guiUtils == null) ? new GuiUtils(getParent()) : guiUtils;
 	}
 
 	protected boolean isEditMode() {

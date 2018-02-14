@@ -831,7 +831,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 //			setDragEnabled(true);
 //			setDropMode(DropMode.ON_OR_INSERT);
 //			setTransferHandler(new TreeTransferHandler());
-			setRowHeight(NodeIcon.SIZE + 2);
+			setRowHeight(getPreferredRowSize());
 		}
 
 		public boolean isExpanded(final Object[] path) {
@@ -860,7 +860,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	 */
 	private static class NodeIcon implements Icon {
 
-		private final static int SIZE = PathWindow.getPreferredIconSize();
+		private final static int SIZE = getPreferredIconSize();
 		private static final char PLUS = '+';
 		private static final char MINUS = '-';
 		private static final char EMPTY = ' ';
@@ -1136,12 +1136,16 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		}
 	}
 
+	private static int getPreferredRowSize() {
+		final JTree tree = new JTree();
+		return tree.getFontMetrics(tree.getFont()).getHeight();
+	}
+
 	private static int getPreferredIconSize() {
 		final JTree tree = new JTree();
 		int size = tree.getFontMetrics(tree.getFont()).getAscent();
 		return (size % 2 == 0) ? size - 1 : size;
 	}
-
 
 	private void setEnabledCommands(final boolean enabled) {
 		assert SwingUtilities.isEventDispatchThread();

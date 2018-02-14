@@ -66,32 +66,46 @@ public class SNT {
 		return VersionUtils.getVersion(tracing.SimpleNeuriteTracer.class);
 	}
 
-	@Deprecated
-	protected static void error(final String string) {
-		// IJ.error("Simple Neurite Tracer v" + VERSION, string);
+	protected static synchronized void error(final String string) {
+		if (!SNT.isDebugMode()) return;
 		if (!initialized) initialize();
 		logService.error("[SNT] " + string);
 	}
 
-	protected static void error(final String string, final Throwable t) {
+	protected static synchronized void error(final String string, final Throwable t) {
+		if (!SNT.isDebugMode()) return;
 		if (!initialized) initialize();
 		logService.error("[SNT] " + string, t);
 	}
 
-	protected static void log(final String string) {
+	public static synchronized void log(final String string) {
+		if (!SNT.isDebugMode()) return;
 		if (!initialized) initialize();
 		logService.info("[SNT] " + string);
 	}
 
-	protected static void warn(final String string) {
+	protected static synchronized void warn(final String string) {
+		if (!SNT.isDebugMode()) return;
 		if (!initialized) initialize();
 		logService.warn("[SNT] " + string);
 	}
 
-	public static void debug(final Object msg) {
-		if (SNT.isDebugMode()) { // FIXME: Use PrefService
+	protected static synchronized void debug(final int logServiceFlag, final Object msg) {
+		if (SNT.isDebugMode()) {
 			if (!initialized) initialize();
-			logService.debug("[SNT] " + msg);
+			switch (logServiceFlag) {
+			case (LogService.INFO):
+				logService.info(msg);
+				break;
+			case (LogService.WARN):
+				logService.warn(msg);
+				break;
+			case (LogService.ERROR):
+				logService.error(msg);
+				break;
+			default:
+				logService.debug(msg);
+			}
 		}
 	}
 

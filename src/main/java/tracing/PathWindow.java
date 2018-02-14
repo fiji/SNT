@@ -303,6 +303,11 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		tree.addMouseListener(new MouseAdapter() {
 
 			@Override
+			public void mouseReleased(final MouseEvent me) { // Required for Windows
+				if (me.isPopupTrigger()) showPopup(me);
+			}
+
+			@Override
 			public void mousePressed(final MouseEvent me) {
 				if (me.isPopupTrigger()) {
 					showPopup(me);
@@ -826,6 +831,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 //			setDragEnabled(true);
 //			setDropMode(DropMode.ON_OR_INSERT);
 //			setTransferHandler(new TreeTransferHandler());
+			setRowHeight(NodeIcon.SIZE + 2);
 		}
 
 		public boolean isExpanded(final Object[] path) {
@@ -854,7 +860,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 	 */
 	private static class NodeIcon implements Icon {
 
-		private final int SIZE = PathWindow.getPreferredIconSize();
+		private final static int SIZE = PathWindow.getPreferredIconSize();
 		private static final char PLUS = '+';
 		private static final char MINUS = '-';
 		private static final char EMPTY = ' ';

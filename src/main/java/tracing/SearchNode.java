@@ -22,7 +22,7 @@
 
 package tracing;
 
-public class SearchNode implements Comparable {
+public class SearchNode implements Comparable<SearchNode> {
 
 	public int x;
 	public int y;
@@ -97,9 +97,7 @@ public class SearchNode implements Comparable {
 	/* This is used by PriorityQueue: */
 
 	@Override
-	public int compareTo(final Object other) {
-
-		final SearchNode o = (SearchNode) other;
+	public int compareTo(final SearchNode o) {
 
 		int compare_f_result = 0;
 		if (f > o.f)

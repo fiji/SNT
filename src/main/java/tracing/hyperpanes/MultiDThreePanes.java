@@ -247,39 +247,6 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 	}
 
-	/**
-	 * Assesses whether enough memory exists to analyze an image. A dialog message
-	 * warning the user is displayed if assessment was negative.
-	 *
-	 * @param imagePlus the image to be loaded by the plugin
-	 * @param memoryMultipleNeeded the memory cutoff multiplier. E.g., 3 means
-	 *          that the user will need 3x the memory used by the supplied
-	 *          ImagePlus in order to not be warned about insufficient memory
-	 * @return true, if sufficient memory was detected, false otherwise
-	 */
-	private boolean memoryCheck(final ImagePlus imagePlus,
-		final int memoryMultipleNeeded)
-	{
-
-		final long sizeOfImagePlus = imagePlus.getWidth() * imagePlus.getHeight() *
-			imagePlus.getStackSize() * (imagePlus.getBitDepth() / 8);
-
-		final long bytesNeededEstimate = (memoryMultipleNeeded + 1) *
-			sizeOfImagePlus;
-
-		System.gc();
-		final long maxMemory = Runtime.getRuntime().maxMemory();
-
-		final boolean sufficientMem = bytesNeededEstimate > maxMemory;
-		if (!sufficientMem) {
-			error("It looks as if the amount of memory required for the " +
-				"three pane view (" + (bytesNeededEstimate / (1024 * 1024)) +
-				"MiB) exceeds the maximum memory available (" + (maxMemory / (1024 *
-					1024)) + "MiB)");
-		}
-		return sufficientMem;
-	}
-
 	public static String imageTypeToString(final int type) {
 		String result;
 		switch (type) {

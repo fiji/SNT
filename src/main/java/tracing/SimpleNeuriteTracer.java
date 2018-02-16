@@ -669,7 +669,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected Path getSingleSelectedPath() {
-		if (pathAndFillManager.selectedPathsSet.size() == 1)
+		if (pathAndFillManager.getSelectedPaths().size() == 1)
 			return getSelectedPaths().iterator().next();
 		else
 			return null;
@@ -685,7 +685,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 			setCanvasLabelAllPanes(null);
 		}
-		if (enable && pathAndFillManager.selectedPathsSet.size() == 1) {
+		if (enable && pathAndFillManager.getSelectedPaths().size() == 1) {
 			editingPath = getSelectedPaths().iterator().next();
 		} else {
 			if (editingPath != null) editingPath.setEditableNode(-1);
@@ -1079,7 +1079,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	synchronized public ImagePlus makePathVolume() {
-		return makePathVolume(pathAndFillManager.allPaths);
+		return makePathVolume(pathAndFillManager.getPaths());
 	}
 
 	/* Start a search thread looking for the goal in the arguments: */

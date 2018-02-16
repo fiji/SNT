@@ -168,7 +168,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			shollPoints = new ArrayList<>();
 			int chosenPaths = 0;
 			double maxDepth = 0d;
-			for (Path p : pafm.allPaths) {
+			for (Path p : pafm.getPaths()) {
 				if (p.getUseFitted())
 					p = p.fitted;
 				else if (p.fittedVersionOf != null)
@@ -210,7 +210,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			sa.setDescription(
 					analyzedFile.getName() + " " + swcTypeCodesToString() + " (" + pointToString(shollCenter) + ")",
 					false);
-			sa.setUnit(pafm.spacing_units);
+			sa.setUnit(pafm.getCalibration().getUnits());
 			sa.setPrimaryBranches(primaryPaths.length);
 			sa.setStepRadius(radiusStepSize);
 			if (impRequired) {

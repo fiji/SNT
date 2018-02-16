@@ -22,6 +22,7 @@
 
 package tracing;
 
+import java.awt.GraphicsEnvironment;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -70,33 +71,60 @@ import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij3d.Content;
 import ij3d.UniverseListener;
+import tracing.gui.GuiUtils;
 import tracing.util.PointInImage;
 import util.Bresenham3D;
 import util.XMLFunctions;
 
-@SuppressWarnings("serial")
-class TracesFileFormatException extends SAXException {
-	public TracesFileFormatException(final String message) {
-		super(message);
-	}
-}
-
-@SuppressWarnings("serial")
-class SWCExportException extends Exception {
-	public SWCExportException(final String message) {
-		super(message);
-	}
-}
 
 public class PathAndFillManager extends DefaultHandler implements UniverseListener {
 
+	public static final int TRACES_FILE_TYPE_COMPRESSED_XML = 1;
+	public static final int TRACES_FILE_TYPE_UNCOMPRESSED_XML = 2;
+	public static final int TRACES_FILE_TYPE_SWC = 3;
 
 	private SimpleNeuriteTracer plugin;
 	private ImagePlus imagePlus;
+	private int maxUsedID = -1;
+	private boolean needImageDataFromTracesFile;
+	private static boolean headless = false;
+	private int width;
+	private int height;
+	private int depth;
+	private double x_spacing;
+	private double y_spacing;
+	private double z_spacing;
+	private String spacing_units;
+	private ArrayList<Path> allPaths;
+	private ArrayList<Fill> allFills;
+	private ArrayList<PathAndFillListener> listeners;
+	private HashSet<Path> selectedPathsSet;
 
-	int maxUsedID = -1;
+	private double parsed_x_spacing;
+	private double parsed_y_spacing;
+	private double parsed_z_spacing;
+	private String parsed_units;
+	private int parsed_width;
+	private int parsed_height;
+	private int parsed_depth;
 
-	boolean needImageDataFromTracesFile;
+	private Fill current_fill;
+	private Path current_path;
+	private HashMap<Integer, Integer> startJoins;
+	private HashMap<Integer, Integer> startJoinsIndices;
+	private HashMap<Integer, PointInImage> startJoinsPoints;
+	private HashMap<Integer, Integer> endJoins;
+	private HashMap<Integer, Integer> endJoinsIndices;
+	private HashMap<Integer, PointInImage> endJoinsPoints;
+	private HashMap<Integer, Boolean> useFittedFields;
+	private HashMap<Integer, Integer> fittedFields;
+	private HashMap<Integer, Integer> fittedVersionOfFields;
+	private ArrayList<int[]> sourcePathIDForFills;
+
+	private int last_fill_node_id;
+	private int last_fill_id;
+	private HashSet<Integer> foundIDs;
+
 
 	public PathAndFillManager() {
 		allPaths = new ArrayList<>();
@@ -126,7 +154,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			this.spacing_units = "" + c.getUnit();
 		this.width = imagePlus.getWidth();
 		this.height = imagePlus.getHeight();
-		this.depth = imagePlus.getNSlices(); //FIXME: Check hyperstack support
+		this.depth = imagePlus.getNSlices();
 		needImageDataFromTracesFile = false;
 	}
 
@@ -157,22 +185,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		needImageDataFromTracesFile = false;
 	}
 
-	int width;
-	int height;
-	int depth;
-
-	double x_spacing;
-	double y_spacing;
-	double z_spacing;
-	String spacing_units;
-
-	ArrayList<Path> allPaths;
-	ArrayList<Fill> allFills;
-
-	ArrayList<PathAndFillListener> listeners;
-
-	HashSet<Path> selectedPathsSet;
-
 	public int size() {
 		return allPaths.size();
 	}
@@ -181,7 +193,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * This is used by the interface to have changes in the path manager
 	 * reported so that they can be reflected in the UI.
 	 */
-
 	public synchronized void addPathAndFillListener(final PathAndFillListener listener) {
 		listeners.add(listener);
 	}
@@ -313,7 +324,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			try {
 				swcPoints = getSWCFor(connectedPaths);
 			} catch (final SWCExportException see) {
-				SNT.error("" + see.getMessage());
+				error("" + see.getMessage());
 				return false;
 			}
 
@@ -322,13 +333,33 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(swcFile), "UTF-8"));
 				flushSWCPoints(swcPoints, pw);
 			} catch (final IOException ioe) {
-				SNT.error("Saving to " + swcFile.getAbsolutePath() + " failed");
+				error("Saving to " + swcFile.getAbsolutePath() + " failed.");
+				SNT.error("IOException", ioe);
 				return false;
 			}
 			++i;
 		}
 		IJ.showStatus("Export finished.");
 		return true;
+	}
+
+	public void setHeadless(final boolean headless) {
+		PathAndFillManager.headless = headless;
+	}
+
+	private static void errorStatic(final String msg) {
+		if (headless || GraphicsEnvironment.isHeadless()) {
+			SNT.error(msg);
+		} else {
+			GuiUtils.errorPrompt(msg);
+		}
+	}
+
+	private void error(final String msg) {
+		if (!headless && plugin != null && plugin.isReady()) 
+			plugin.error(msg);
+		else
+			errorStatic(msg);
 	}
 
 	protected void flushSWCPoints(final ArrayList<SWCPoint> swcPoints, final PrintWriter pw) {
@@ -350,6 +381,36 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	protected boolean usingNonPhysicalUnits() {
 		return (new Calibration().getUnits()).equals(spacing_units)
 				|| ("unknown".equals(spacing_units) && x_spacing * y_spacing * z_spacing == 1d);
+	}
+
+	/**
+	 *
+	 * @return the spatial calibration details associated by this
+	 *         PathAndFillManager instance
+	 */
+	public Calibration getCalibration() {
+		final Calibration cal = new Calibration();
+		cal.setUnit(spacing_units);
+		cal.pixelWidth = x_spacing;
+		cal.pixelHeight = y_spacing;
+		cal.pixelDepth = z_spacing;
+		return cal;
+	}
+
+	/**
+	 *
+	 * @return the spatial calibration details parsed from the imported swc/traces
+	 *         file or null if no file has been imported
+	 */
+	public Calibration getParsedCalibration() {
+		if (parsed_units == null && parsed_x_spacing == 0.0d && parsed_y_spacing == 0.0d)
+			return null;
+		final Calibration cal = new Calibration();
+		cal.setUnit(parsed_units);
+		cal.pixelWidth = parsed_x_spacing;
+		cal.pixelHeight = parsed_y_spacing;
+		cal.pixelDepth = parsed_z_spacing;
+		return cal;
 	}
 
 	/*
@@ -639,7 +700,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			final Fill f = allFills.get(i);
 			if (f == null) {
-				SNT.debug("fill was null with i " + i + " out of " + fills);
+				SNT.log("fill was null with i " + i + " out of " + fills);
 				continue;
 			}
 
@@ -984,37 +1045,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 	}
 
-	public double parsed_x_spacing;
-	public double parsed_y_spacing;
-	public double parsed_z_spacing;
-
-	public String parsed_units;
-
-	public int parsed_width;
-	public int parsed_height;
-	public int parsed_depth;
-
-	Fill current_fill;
-	Path current_path;
-
-	HashMap<Integer, Integer> startJoins;
-	HashMap<Integer, Integer> startJoinsIndices;
-	HashMap<Integer, PointInImage> startJoinsPoints;
-	HashMap<Integer, Integer> endJoins;
-	HashMap<Integer, Integer> endJoinsIndices;
-	HashMap<Integer, PointInImage> endJoinsPoints;
-	HashMap<Integer, Boolean> useFittedFields;
-	HashMap<Integer, Integer> fittedFields;
-	HashMap<Integer, Integer> fittedVersionOfFields;
-
-	ArrayList<int[]> sourcePathIDForFills;
-
-	int last_fill_node_id;
-
-	int last_fill_id;
-
-	HashSet<Integer> foundIDs;
-
 	@Override
 	public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
 			throws TracesFileFormatException {
@@ -1041,11 +1071,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			 * ones:
 			 */
 
-			SNT.debug("Clearing old paths and fills...");
+			SNT.log("Clearing old paths and fills...");
 
 			clearPathsAndFills();
 
-			SNT.debug("Now " + allPaths.size() + " paths and " + allFills.size() + " fills");
+			SNT.log("Now " + allPaths.size() + " paths and " + allFills.size() + " fills");
 
 		} else if (qName.equals("imagesize")) {
 
@@ -1575,25 +1605,27 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		} catch (final javax.xml.parsers.ParserConfigurationException e) {
 
 			clearPathsAndFills();
-			SNT.error("There was a ParserConfigurationException: " + e);
+			SNT.error("ParserConfigurationException", e);
 			return false;
 
 		} catch (final SAXException e) {
 
 			clearPathsAndFills();
-			SNT.error(e.toString());
+			error(e.getMessage());
 			return false;
 
 		} catch (final FileNotFoundException e) {
 
 			clearPathsAndFills();
-			SNT.error("File not found: " + e);
+			SNT.error("FileNotFoundException", e);
+			e.printStackTrace();
 			return false;
 
 		} catch (final IOException e) {
 
 			clearPathsAndFills();
-			SNT.error("There was an IO exception while reading the file: " + e);
+			error("There was an IO exception while reading the file. See console for details");
+			e.printStackTrace();
 			return false;
 
 		}
@@ -1602,7 +1634,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	}
 
-	void clearPathsAndFills() {
+	private void clearPathsAndFills() {
 		maxUsedID = -1;
 		if (plugin != null && plugin.use3DViewer) {
 			for (final Path p : allPaths)
@@ -1691,7 +1723,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				continue;
 			final String[] fields = line.split("\\s+");
 			if (fields.length < 7) {
-				SNT.error("Wrong number of fields (" + fields.length + ") in line: " + line);
+				error("Wrong number of fields (" + fields.length + ") in line: " + line);
 				return false;
 			}
 			try {
@@ -1725,7 +1757,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 				final int previous = Integer.parseInt(fields[6]);
 				if (alreadySeen.contains(id)) {
-					SNT.error("Point with ID " + id + " found more than once");
+					error("Point with ID " + id + " found more than once");
 					return false;
 				}
 				alreadySeen.add(id);
@@ -1749,7 +1781,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					}
 				}
 			} catch (final NumberFormatException nfe) {
-				SNT.error("There was a malformed number in line: " + line);
+				error("There was a malformed number in line: " + line);
 				return false;
 			}
 		}
@@ -1815,12 +1847,15 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		if (alreadySeen.size() > 0) {
-			SNT.error("Malformed file: there are some misconnected points.\n"
+			error("Malformed file: there are some misconnected points.\n"
 					+ "(List will now be shown in ImageJ's Console)");
+			final boolean currentDebug = SNT.isDebugMode();
+			SNT.setDebugMode(true);
 			for (final int i : alreadySeen) {
 				final SWCPoint p = idToSWCPoint.get(i);
 				SNT.log("  Misconnected: " + p);
 			}
+			SNT.setDebugMode(currentDebug);
 			return false;
 		}
 
@@ -1847,8 +1882,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			final double z_scale, final boolean replaceAllPaths) {
 
 		final File f = new File(filename);
-		if (!f.exists()) {
-			SNT.error("The traces file '" + filename + "' does not exist.");
+		if (!SNT.fileAvailable(f)) {
+			error("The traces file '" + filename + "' is not available.");
 			return false;
 		}
 
@@ -1867,17 +1902,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				is.close();
 
 		} catch (final IOException ioe) {
-			SNT.error("Couldn't open file '" + filename + "' for reading.");
+			error("Could not read " + filename);
 			return false;
 		}
 
 		return result;
 
 	}
-
-	public static final int TRACES_FILE_TYPE_COMPRESSED_XML = 1;
-	public static final int TRACES_FILE_TYPE_UNCOMPRESSED_XML = 2;
-	public static final int TRACES_FILE_TYPE_SWC = 3;
 
 	public static int guessTracesFileType(final String filename) {
 
@@ -1893,8 +1924,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		 */
 
 		final File f = new File(filename);
-		if (!f.exists()) {
-			SNT.error("The traces file '" + filename + "' does not exist.");
+		if (!SNT.fileAvailable(f)) {
+			errorStatic("The traces file '" + filename + "' is not available.");
 			return -1;
 		}
 
@@ -1904,7 +1935,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			is = new FileInputStream(filename);
 			is.read(buf, 0, 8);
 			is.close();
-			SNT.debug("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
+			SNT.log("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
 			if (((buf[0] & 0xFF) == 0x1F) && ((buf[1] & 0xFF) == 0x8B))
 				return TRACES_FILE_TYPE_COMPRESSED_XML;
 			else if (((buf[0] == '<') && (buf[1] == '?') && (buf[2] == 'x') && (buf[3] == 'm') && (buf[4] == 'l')
@@ -1912,7 +1943,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				return TRACES_FILE_TYPE_UNCOMPRESSED_XML;
 
 		} catch (final IOException e) {
-			SNT.error("Couldn't read from file: " + filename);
+			SNT.error("Couldn't read from file: " + filename, e);
 			return -1;
 		}
 
@@ -1921,20 +1952,20 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	public boolean loadCompressedXML(final String filename) {
 		try {
-			SNT.debug("Loading gzipped file...");
+			SNT.log("Loading gzipped file...");
 			return load(new GZIPInputStream(new BufferedInputStream(new FileInputStream(filename))), null);
 		} catch (final IOException ioe) {
-			SNT.error("Couldn't open file '" + filename + "' for reading\n(n.b. it was expected to be compressed XML)");
+			error("Could not read file '" + filename + "' (it was expected to be compressed XML)");
 			return false;
 		}
 	}
 
 	public boolean loadUncompressedXML(final String filename) {
 		try {
-			SNT.debug("Loading uncompressed file...");
+			SNT.log("Loading uncompressed file...");
 			return load(new BufferedInputStream(new FileInputStream(filename)), null);
 		} catch (final IOException ioe) {
-			SNT.error("Couldn't open file '" + filename + "' for reading\n(n.b. it was expected to be XML)");
+			error("Could not read '" + filename + "' (it was expected to be XML)");
 			return false;
 		}
 	}
@@ -1951,7 +1982,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		case TRACES_FILE_TYPE_SWC:
 			return importSWC(filename, false, 0, 0, 0, 1, 1, 1, true);
 		default:
-			SNT.error("guessTracesFileType() return an unknown type" + guessedType);
+			SNT.warn("guessTracesFileType() return an unknown type" + guessedType);
 			return false;
 		}
 	}
@@ -2023,7 +2054,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 							final int y = Math.min(height - 1, Math.max(0, ip.y));
 							final int z = Math.min(depth - 1, Math.max(0, ip.z));
 							slices[z][y * width + x] = (byte) 255;
-							SNT.debug(String.format(
+							SNT.warn(String.format(
 								"Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]",
 								z, y, width, x));
 						}
@@ -2522,10 +2553,25 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/**
+	 *
 	 * @return the SNT instance associated with this PathManager (if any)
 	 */
 	public SimpleNeuriteTracer getPlugin() {
 		return plugin;
 	}
 
+	@SuppressWarnings("serial")
+	private class TracesFileFormatException extends SAXException {
+		public TracesFileFormatException(final String message) {
+			super(message);
+		}
+	}
+
+}
+
+@SuppressWarnings("serial")
+class SWCExportException extends Exception {
+	public SWCExportException(final String message) {
+		super(message);
+	}
 }

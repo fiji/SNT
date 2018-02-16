@@ -238,7 +238,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final int y = (int) Math.round(last_y_in_pane_precise);
 		final int[] p = new int[3];
 		tracerPlugin.findPointInStack(x, y, plane, p);
-		SNT.debug("Clicking on x="+x + " y= "+ y + "on pane " + plane 
+		SNT.log("Clicking on x="+x + " y= "+ y + "on pane " + plane 
 			+ " which corresponds to image position x="+ p[0] +", y="+ p[1] + " z="+ p[2]);
 		tracerPlugin.clickAtMaxPoint(x, y, plane);
 		tracerPlugin.setSlicesAllPanes(p[0], p[1], p[2]);
@@ -415,7 +415,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			}
 
 		} else
-			SNT.debug("BUG: No operation chosen");
+			SNT.error("BUG: No operation chosen");
 	}
 
 	private boolean impossibleEdit(final boolean displayError) {
@@ -592,7 +592,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				assignLastZPositionToEditNode(true);
 			}
 			else {
-				SNT.debug("Unexpectedly got an event from an unknown source: ");
+				SNT.error("Unexpectedly got an event from an unknown source: ");
 				return;
 			}
 			

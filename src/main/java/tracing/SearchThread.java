@@ -214,19 +214,19 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 	@Override
 	public void requestStop() {
-		SNT.debug("requestStop called, about to enter synchronized");
+		SNT.log("requestStop called, about to enter synchronized");
 		synchronized (this) {
-			SNT.debug("... entered synchronized");
+			SNT.log("... entered synchronized");
 			if (threadStatus == PAUSED) {
-				SNT.debug("was paused so interrupting");
+				SNT.log("was paused so interrupting");
 				this.interrupt();
-				SNT.debug("done interrupting");
+				SNT.log("done interrupting");
 			}
 			threadStatus = STOPPING;
 			reportThreadStatus();
-			SNT.debug("... leaving synchronized");
+			SNT.log("... leaving synchronized");
 		}
-		SNT.debug("requestStop finished (threadStatus now " + threadStatus + ")");
+		SNT.log("requestStop finished (threadStatus now " + threadStatus + ")");
 	}
 
 	/**
@@ -250,27 +250,27 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 	public void pauseOrUnpause() {
 		// Toggle the paused status:
-		SNT.debug("pauseOrUnpause called, about to enter synchronized");
+		SNT.log("pauseOrUnpause called, about to enter synchronized");
 		synchronized (this) {
-			SNT.debug("... entered synchronized");
+			SNT.log("... entered synchronized");
 			switch (threadStatus) {
 			case PAUSED:
-				SNT.debug("paused, going to switch to running - interrupting first");
+				SNT.log("paused, going to switch to running - interrupting first");
 				this.interrupt();
-				SNT.debug("finished interrupting");
+				SNT.log("finished interrupting");
 				threadStatus = RUNNING;
 				break;
 			case RUNNING:
-				SNT.debug("running, going to switch to paused");
+				SNT.log("running, going to switch to paused");
 				threadStatus = PAUSED;
 				break;
 			default:
 				// Do nothing, we're actually stopping anyway.
 			}
 			reportThreadStatus();
-			SNT.debug("... leaving synchronized");
+			SNT.log("... leaving synchronized");
 		}
-		SNT.debug("pauseOrUnpause finished");
+		SNT.log("pauseOrUnpause finished");
 	}
 
 	int imageType = -1;
@@ -379,10 +379,10 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 		try {
 
-			SNT.debug("New SearchThread running!");
+			SNT.log("New SearchThread running!");
 			if (verbose)
 				printStatus();
-			SNT.debug("... was asked to start it in the " + (startPaused ? "paused" : "unpaused") + " state.");
+			SNT.log("... was asked to start it in the " + (startPaused ? "paused" : "unpaused") + " state.");
 
 			synchronized (this) {
 				threadStatus = startPaused ? PAUSED : RUNNING;
@@ -429,7 +429,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 					final long millisecondsSinceStart = currentMilliseconds - started_at;
 
 					if ((timeoutSeconds > 0) && (millisecondsSinceStart > (1000 * timeoutSeconds))) {
-						SNT.debug("Timed out...");
+						SNT.log("Timed out...");
 						setExitReason(TIMED_OUT);
 						reportFinished(false);
 						return;
@@ -440,7 +440,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 					if ((reportEveryMilliseconds > 0) && (since_last_report > reportEveryMilliseconds)) {
 
 						final int loops_since_last_report = loops - loops_at_last_report;
-						SNT.debug("milliseconds per loop: " + (since_last_report / (double) loops_since_last_report));
+						SNT.log("milliseconds per loop: " + (since_last_report / (double) loops_since_last_report));
 
 						if (verbose)
 							printStatus();
@@ -476,7 +476,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 				// Has the route from the start found the goal?
 				if (definedGoal && atGoal(p.x, p.y, p.z, fromStart)) {
-					SNT.debug("Found the goal!");
+					SNT.log("Found the goal!");
 					if (fromStart)
 						foundGoal(p.asPath(x_spacing, y_spacing, z_spacing, spacing_units));
 					else
@@ -606,7 +606,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 											result.add(
 													p.asPathReversed(x_spacing, y_spacing, z_spacing, spacing_units));
 										}
-										SNT.debug("Searches met!");
+										SNT.log("Searches met!");
 										foundGoal(result);
 										setExitReason(SUCCESS);
 										reportFinished(true);
@@ -627,7 +627,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			 * path so far anyway...
 			 */
 
-			SNT.debug("FAILED to find a route.  Shouldn't happen...");
+			SNT.log("FAILED to find a route.  Shouldn't happen...");
 			setExitReason(POINTS_EXHAUSTED);
 			reportFinished(false);
 		} catch (final OutOfMemoryError oome) {

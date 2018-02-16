@@ -295,7 +295,7 @@ public class Path implements Comparable<Path> {
 			endJoins = other;
 			endJoinsPoint = joinPoint;
 		} else {
-			SNT.debug("BUG: unknown first parameter to setJoin");
+			SNT.log("BUG: unknown first parameter to setJoin");
 		}
 		// Also update the somehowJoins list:
 		if (somehowJoins.indexOf(other) < 0) {
@@ -1159,8 +1159,8 @@ public class Path implements Comparable<Path> {
 		final double by_s = by * step;
 		final double bz_s = bz * step;
 
-		SNT.debug("a (in normal plane) is " + ax + "," + ay + "," + az);
-		SNT.debug("b (in normal plane) is " + bx + "," + by + "," + bz);
+		SNT.log("a (in normal plane) is " + ax + "," + ay + "," + az);
+		SNT.log("b (in normal plane) is " + bx + "," + by + "," + bz);
 
 
 		// a and b must be perpendicular:
@@ -1170,9 +1170,9 @@ public class Path implements Comparable<Path> {
 		final double a_dot_n = ax * nx + ay * ny + az * nz;
 		final double b_dot_n = bx * nx + by * ny + bz * nz;
 
-		SNT.debug("a_dot_b: " + a_dot_b);
-		SNT.debug("a_dot_n: " + a_dot_n);
-		SNT.debug("b_dot_n: " + b_dot_n);
+		SNT.log("a_dot_b: " + a_dot_b);
+		SNT.log("a_dot_n: " + a_dot_n);
+		SNT.log("b_dot_n: " + b_dot_n);
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
@@ -1318,9 +1318,9 @@ public class Path implements Comparable<Path> {
 		final int totalPoints = size();
 		final int pointsEitherSide = 4;
 
-		SNT.debug("Started fitting: "+ this.getName() +". Generating normal planes stack....");
-		SNT.debug("There are: " + totalPoints + " in the stack.");
-		SNT.debug("Spacing: " + x_spacing + "," + y_spacing + "," + z_spacing +" ("+ spacing_units +")");
+		SNT.log("Started fitting: "+ this.getName() +". Generating normal planes stack....");
+		SNT.log("There are: " + totalPoints + " in the stack.");
+		SNT.log("Spacing: " + x_spacing + "," + y_spacing + "," + z_spacing +" ("+ spacing_units +")");
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
@@ -1402,7 +1402,7 @@ public class Path implements Comparable<Path> {
 			startValues[1] = side / 2.0;
 			startValues[2] = 3;
 
-			SNT.debug("start search at: " + startValues[0] + "," + startValues[1] + " with radius: "
+			SNT.log("start search at: " + startValues[0] + "," + startValues[1] + " with radius: "
 					+ startValues[2]);
 
 			float minValueInSquare = Float.MAX_VALUE;
@@ -1422,7 +1422,7 @@ public class Path implements Comparable<Path> {
 				return null;
 			}
 
-			SNT.debug("search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
+			SNT.log("search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
 					+ startValues[2]);
 
 			centre_x_positionsUnscaled[i] = startValues[0];
@@ -1440,13 +1440,13 @@ public class Path implements Comparable<Path> {
 			moved[i] = scaleInNormalPlane * Math.sqrt(
 					x_from_centre_in_plane * x_from_centre_in_plane + y_from_centre_in_plane * y_from_centre_in_plane);
 
-			SNT.debug("vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
+			SNT.log("vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
 
 			double centre_real_x = x_world;
 			double centre_real_y = y_world;
 			double centre_real_z = z_world;
 
-			SNT.debug("original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+			SNT.log("original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
 					+ centre_real_z);
 
 			// FIXME: I really think these should be +=, but it seems clear from
@@ -1459,7 +1459,7 @@ public class Path implements Comparable<Path> {
 			centre_real_z -= x_basis_in_plane[2] * x_from_centre_in_plane
 					+ y_basis_in_plane[2] * y_from_centre_in_plane;
 
-			SNT.debug("adjusted original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+			SNT.log("adjusted original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
 					+ centre_real_z);
 
 			optimized_x[i] = centre_real_x;
@@ -1470,7 +1470,7 @@ public class Path implements Comparable<Path> {
 			int y_in_image = (int) Math.round(centre_real_y / y_spacing);
 			int z_in_image = (int) Math.round(centre_real_z / z_spacing);
 
-			SNT.debug("gives in image co-ordinates: " + x_in_image + "," + y_in_image + "," + z_in_image);
+			SNT.log("gives in image co-ordinates: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			if (x_in_image < 0)
 				x_in_image = 0;
@@ -1485,13 +1485,13 @@ public class Path implements Comparable<Path> {
 			if (z_in_image >= depth)
 				z_in_image = depth - 1;
 
-			SNT.debug("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
+			SNT.log("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			xs_in_image[i] = x_in_image;
 			ys_in_image[i] = y_in_image;
 			zs_in_image[i] = z_in_image;
 
-			SNT.debug("Adding a real slice.");
+			SNT.log("Adding a real slice.");
 
 			final FloatProcessor bp = new FloatProcessor(side, side);
 			bp.setPixels(normalPlane);
@@ -1703,7 +1703,7 @@ public class Path implements Comparable<Path> {
 		setFitted(fitted);
 
 		if (display) {
-			SNT.debug("displaying normal plane image");
+			SNT.log("displaying normal plane image");
 			final ImagePlus imp = new ImagePlus("Normal Plane " + fitted.name, stack);
 			imp.setCalibration(plugin.getImagePlus().getCalibration());
 			final NormalPlaneCanvas normalCanvas = new NormalPlaneCanvas(imp, plugin, centre_x_positionsUnscaled,
@@ -1938,16 +1938,16 @@ public class Path implements Comparable<Path> {
 		 * We only reach here if something has gone badly wrong, so dump helpful
 		 * values to aid in debugging:
 		 */
-		SNT.debug("CirclesOverlap seems to have failed: Current settings");
-		SNT.debug("det: " + det);
-		SNT.debug("discriminant1: " + discriminant1);
-		SNT.debug("discriminant2: " + discriminant2);
-		SNT.debug("n1: (" + n1x + "," + n1y + "," + n1z + ")");
-		SNT.debug("n2: (" + n2x + "," + n2y + "," + n2z + ")");
-		SNT.debug("c1: (" + c1x + "," + c1y + "," + c1z + ")");
-		SNT.debug("c2: (" + c2x + "," + c2y + "," + c2z + ")");
-		SNT.debug("radius1: " + radius1);
-		SNT.debug("radius2: " + radius2);
+		SNT.log("CirclesOverlap seems to have failed: Current settings");
+		SNT.log("det: " + det);
+		SNT.log("discriminant1: " + discriminant1);
+		SNT.log("discriminant2: " + discriminant2);
+		SNT.log("n1: (" + n1x + "," + n1y + "," + n1z + ")");
+		SNT.log("n2: (" + n2x + "," + n2y + "," + n2z + ")");
+		SNT.log("c1: (" + c1x + "," + c1y + "," + c1z + ")");
+		SNT.log("c2: (" + c2x + "," + c2y + "," + c2z + ")");
+		SNT.log("radius1: " + radius1);
+		SNT.log("radius2: " + radius2);
 
 		throw new IllegalArgumentException("Some overlapping case missed: " + "u1_smaller=" + u1_smaller + "u1_larger="
 				+ u1_larger + "u2_smaller=" + u2_smaller + "u2_larger=" + u2_larger);
@@ -2083,10 +2083,8 @@ public class Path implements Comparable<Path> {
 	synchronized void updateContent3D(final Image3DUniverse univ, final boolean visible, final int paths3DDisplay,
 			final Color3f color, final ImagePlus colorImage) {
 
-		if (SNT.isDebugMode()) {
-			SNT.log("In updateContent3D, colorImage is: " + colorImage);
-			SNT.log("In updateContent3D, color is: " + color);
-		}
+		SNT.log("In updateContent3D, colorImage is: " + colorImage);
+		SNT.log("In updateContent3D, color is: " + color);
 
 		// So, go through each of the reasons why we might
 		// have to remove (and possibly add back) the path:
@@ -2285,7 +2283,6 @@ public class Path implements Comparable<Path> {
 		addTo3DViewer(univ, new Color3f(c), colorImage);
 	}
 
-	@Deprecated
 	synchronized public void addTo3DViewer(final Image3DUniverse univ, final Color3f c, final ImagePlus colorImage) {
 		if (c == null)
 			throw new RuntimeException("In addTo3DViewer, Color3f can no longer be null");
@@ -2408,13 +2405,11 @@ public class Path implements Comparable<Path> {
 			total_length_in_image_space += Math.sqrt(x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
 		}
 		final double mean_inter_point_distance_in_image_space = total_length_in_image_space / (pointsToUse - 1);
-		if (SNT.isDebugMode())
-			SNT.log("For path " + this + ", got mean_inter_point_distance_in_image_space: "
+		SNT.log("For path " + this + ", got mean_inter_point_distance_in_image_space: "
 					+ mean_inter_point_distance_in_image_space);
 		final boolean resample = mean_inter_point_distance_in_image_space < 3;
 
-		if (SNT.isDebugMode())
-			SNT.log("... so" + (resample ? "" : " not") + " resampling");
+		SNT.log("... so" + (resample ? "" : " not") + " resampling");
 
 		final ArrayList<Color3f> tubeColors = new ArrayList<>();
 

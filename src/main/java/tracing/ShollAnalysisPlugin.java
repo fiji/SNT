@@ -48,6 +48,7 @@ import sholl.Options;
 import sholl.Sholl_Analysis;
 import sholl.gui.EnhancedGenericDialog;
 import sholl.gui.Utils;
+import tracing.gui.GuiUtils;
 import tracing.gui.ShollAnalysisDialog;
 import tracing.gui.ShollAnalysisDialog.ShollPoint;
 import tracing.gui.ShollAnalysisDialog.ShollResults;
@@ -101,7 +102,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 
 		imp = (impRequired) ? IJ.openImage(imgPath) : null;
 		if (impRequired && imp == null || !validTracesFile(new File(tracesPath))) {
-			SNT.error("Invalid image or invalid Traces/(e)SWC file\n \n" + imgPath + "\n" + tracesPath);
+			GuiUtils.errorPrompt("Invalid image or invalid Traces/(e)SWC file\n \n" + imgPath + "\n" + tracesPath);
 			return;
 		}
 
@@ -112,7 +113,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		else
 			pafm = new PathAndFillManager(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, 1f, 1f, 1f, null);
 		if (!pafm.loadGuessingType(tracesPath)) {
-			SNT.error("File could not be loaded:\n" + tracesPath);
+			GuiUtils.errorPrompt("File could not be loaded:\n" + tracesPath);
 			return;
 		}
 

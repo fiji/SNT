@@ -64,7 +64,7 @@ class NormalPlaneCanvas extends TracerCanvas {
 			final double[] modeRadiuses, final double[] angles, final boolean[] valid, final Path fittedPath) {
 		super(imp, plugin, MultiDThreePanes.XY_PLANE, plugin.getPathAndFillManager());
 
-		SNT.debug("Generating NormalPlaneCanvas");
+		SNT.log("Generating NormalPlaneCanvas");
 		tracerPlugin = plugin;
 		this.centre_x_positions = centre_x_positions;
 		this.centre_y_positions = centre_y_positions;

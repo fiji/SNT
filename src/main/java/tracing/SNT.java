@@ -67,7 +67,10 @@ public class SNT {
 	}
 
 	protected static synchronized void error(final String string) {
-		if (!SNT.isDebugMode()) return;
+		if (SNT.isDebugMode()) nonDebugError(string);
+	}
+
+	protected static synchronized void nonDebugError(final String string) {
 		if (!initialized) initialize();
 		logService.error("[SNT] " + string);
 	}
@@ -90,25 +93,6 @@ public class SNT {
 		logService.warn("[SNT] " + string);
 	}
 
-	protected static synchronized void debug(final int logServiceFlag, final Object msg) {
-		if (SNT.isDebugMode()) {
-			if (!initialized) initialize();
-			switch (logServiceFlag) {
-			case (LogService.INFO):
-				logService.info(msg);
-				break;
-			case (LogService.WARN):
-				logService.warn(msg);
-				break;
-			case (LogService.ERROR):
-				logService.error(msg);
-				break;
-			default:
-				logService.debug(msg);
-			}
-		}
-	}
-
 	public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {
 		pw.print(stringForCSV("" + o));
 	}
@@ -127,7 +111,7 @@ public class SNT {
 		else
 			return result;
 	}
-	@Deprecated
+
 	protected static String getColorString(final Color color) {
 		String name = "none";
 		name = Colors.getColorName(color, name);
@@ -135,7 +119,6 @@ public class SNT {
 		return name;
 	}
 
-	@Deprecated
 	protected static Color getColor(String colorName) {
 		if (colorName == null) colorName = "none";
 		Color color = null;
@@ -195,7 +178,7 @@ public class SNT {
 
 	public static File findClosestPair(final File file, final String pairExt) {
 		try {
-			SNT.debug("Finding closest pair for " + file);
+			SNT.log("Finding closest pair for " + file);
 			final File dir = file.getParentFile();
 			final String[] list = dir.list(new FilenameFilter() {
 
@@ -204,7 +187,7 @@ public class SNT {
 					return s.endsWith(pairExt);
 				}
 			});
-			SNT.debug("Found " + list.length + " " + pairExt + " files");
+			SNT.log("Found " + list.length + " " + pairExt + " files");
 			if (list.length == 0) return null;
 			Arrays.sort(list);
 			String dirPath = dir.getAbsolutePath();
@@ -217,13 +200,13 @@ public class SNT {
 				final String filename = stripExtension(Paths.get(item).getFileName()
 					.toString()).toLowerCase();
 				final int currentCost = levenshtein.cost(seed, filename);
-				SNT.debug("Levenshtein cost for '" + item + "': " + currentCost);
+				SNT.log("Levenshtein cost for '" + item + "': " + currentCost);
 				if (currentCost <= cost) {
 					cost = currentCost;
 					closest = item;
 				}
 			}
-			SNT.debug("Identified pair '" + closest + "'");
+			SNT.log("Identified pair '" + closest + "'");
 			return new File(dirPath + closest);
 		}
 		catch (final SecurityException | NullPointerException ignored) {
@@ -236,22 +219,26 @@ public class SNT {
 	{
 		double ax = 1, ay = 1, az = 1;
 		double bx = 1, by = 1, bz = 1;
+		String aunit = "", bunit = "";
 		if (a != null) {
 			ax = a.pixelWidth;
 			ay = a.pixelHeight;
 			az = a.pixelDepth;
+			aunit = a.getUnit();
 		}
 		if (b != null) {
 			bx = b.pixelWidth;
 			by = b.pixelHeight;
 			bz = b.pixelDepth;
+			bunit = a.getUnit();
 		}
-		final double pixelWidthDifference = Math.abs(ax - bx);
-		final double pixelHeightDifference = Math.abs(ay - by);
-		final double pixelDepthDifference = Math.abs(az - bz);
+		if (!aunit.equals(bunit)) return false;
 		final double epsilon = 0.000001;
+		final double pixelWidthDifference = Math.abs(ax - bx);
 		if (pixelWidthDifference > epsilon) return false;
+		final double pixelHeightDifference = Math.abs(ay - by);
 		if (pixelHeightDifference > epsilon) return false;
+		final double pixelDepthDifference = Math.abs(az - bz);
 		if (pixelDepthDifference > epsilon) return false;
 		return true;
 	}

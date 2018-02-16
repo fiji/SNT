@@ -110,7 +110,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			} else {
 				currentImage = BatchOpener.openFirstChannel(macroImageFilename);
 				if (currentImage == null) {
-					SNT.error("Opening the image file specified in the macro parameters (" + macroImageFilename
+					SNT.log("Opening the image file specified in the macro parameters (" + macroImageFilename
 							+ ") failed.");
 					return;
 				}
@@ -197,11 +197,11 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 				resamplingFactor = defaultResamplingFactor;
 				if (!java3DAvailable) {
 					final String message = "(Java3D doesn't seem to be available, so no 3D viewer option is available.)";
-					SNT.debug(message);
+					SNT.log(message);
 					gd.addMessage(message);
 				} else if (currentImage.getBitDepth() != 8) {
 					final String message = "(3D viewer option is only currently available for 8 bit images)";
-					SNT.debug(message);
+					SNT.log(message);
 					gd.addMessage(message);
 				} else {
 					showed3DViewerOption = true;
@@ -305,13 +305,13 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 
 			if (look4tubesFile && file_info != null) {
 				final String originalFileName = file_info.fileName;
-				SNT.debug("originalFileName was: " + originalFileName);
+				SNT.log("originalFileName was: " + originalFileName);
 				if (originalFileName != null) {
 					final int lastDot = originalFileName.lastIndexOf(".");
 					if (lastDot > 0) {
 						final String tubesFileName = SNT.stripExtension(originalFileName) + ".tubes.tif";
 						final File tubesFile = new File(file_info.directory, tubesFileName);
-						SNT.debug("Testing for the existence of " + tubesFile.getAbsolutePath());
+						SNT.log("Testing for the existence of " + tubesFile.getAbsolutePath());
 						if (tubesFile.exists()) {
 							final long megaBytesExtra = (((long) width) * height * depth * 4) / (1024 * 1024);
 							final String extraMemoryNeeded = megaBytesExtra + "MiB";
@@ -321,7 +321,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 							if (d.cancelPressed())
 								return;
 							else if (d.yesPressed()) {
-								SNT.debug("Loading the tubeness file");
+								SNT.log("Loading the tubeness file");
 								super.setFilteredImage(tubesFile);
 								try {
 									loadFilteredImage();

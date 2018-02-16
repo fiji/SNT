@@ -426,13 +426,13 @@ public class FillWindow extends JFrame
 			try {
 				pathAndFillManager.exportFillsAsCSV(saveFile);
 			} catch (final IOException ioe) {
-				gUtils.error("Saving to " + saveFile.getAbsolutePath() + " failed");
-				SNT.debug(ioe);
+				gUtils.error("Saving to " + saveFile.getAbsolutePath() + " failed. See console for details");
+				SNT.error("IO Error", ioe);
 				return;
 			}
 
 		} else {
-			SNT.debug("BUG: FillWindow received an event from an unknown source.");
+			SNT.error("BUG: FillWindow received an event from an unknown source.");
 		}
 
 	}

@@ -1321,7 +1321,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 					tree.collapseRow(i);
 				return;
 			}
-			else SNT.debug("Unexpectedly got an event from an unknown source: " +
+			else SNT.error("Unexpectedly got an event from an unknown source: " +
 					e);
 		}
 	}
@@ -1395,7 +1395,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				exploreFit(p);
 				return;
 			}
-			SNT.debug("Unexpectedly got an event from an unknown source: " + e);
+			SNT.error("Unexpectedly got an event from an unknown source: " + e);
 		}
 	}
 
@@ -1627,7 +1627,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 			}
 			else {
-				SNT.debug("Unexpectedly got an event from an unknown source: " + e);
+				SNT.error("Unexpectedly got an event from an unknown source: " + e);
 				return;
 			}
 		}

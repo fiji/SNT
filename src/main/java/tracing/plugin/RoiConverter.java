@@ -225,7 +225,7 @@ public class RoiConverter extends PathAnalyzer {
 		for (final PointInImage p : points) {
 			final Path path = p.onPath;
 			if (path == null) {
-				SNT.debug("Converting " + path + " failed. Skipping it...");
+				SNT.log("Converting " + path + " failed. Skipping it...");
 				continue;
 			}
 			final double[] coordinates = PathNode.unScale(p, exportPlane);

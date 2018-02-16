@@ -489,7 +489,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	public void changeState(final int newState) {
 
-		SNT.debug("changing state to: " + getState(newState));
+		SNT.log("changing state to: " + getState(newState));
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
@@ -621,7 +621,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						return;
 
 					default:
-						SNT.debug("BUG: switching to an unknown state");
+						SNT.error("BUG: switching to an unknown state");
 						return;
 				}
 
@@ -2092,7 +2092,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				showStatus("Instruction ignored: No task to be aborted");
 				break; // none of this states needs to be aborted
 			default:
-				SNT.debug("BUG: Wrong state for aborting operation...");
+				SNT.error("BUG: Wrong state for aborting operation...");
 				break;
 		}
 	}
@@ -2306,9 +2306,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				}
 				catch (final IOException ioe) {
 					showStatus("Saving failed.");
-					guiUtils.error("Writing traces to '" + saveFile.getAbsolutePath() + "' failed.");
-					SNT.debug(ioe);
+					guiUtils.error("Writing traces to '" + saveFile.getAbsolutePath() + "' failed. See Console for details.");
 					changeState(preSavingState);
+					ioe.printStackTrace();
 					return;
 				}
 				changeState(preSavingState);
@@ -2350,7 +2350,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						return;
 				}
 				final String savePath = saveFile.getAbsolutePath();
-				SNT.debug("Exporting paths to "+ saveFile);
+				SNT.log("Exporting paths to "+ saveFile);
 				if (!pathAndFillManager.checkOKToWriteAllAsSWC(savePath)) return;
 				pathAndFillManager.exportAllAsSWC(savePath);
 
@@ -2376,9 +2376,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				}
 				catch (final IOException ioe) {
 					showStatus("Exporting failed.");
-					guiUtils.error("Writing traces to '" + savePath + "' failed.");
-					SNT.debug(ioe);
+					guiUtils.error("Writing traces to '" + savePath + "' failed. See Console for details.");
 					changeState(preExportingState);
+					ioe.printStackTrace();
 					return;
 				}
 				showStatus("Export complete.");

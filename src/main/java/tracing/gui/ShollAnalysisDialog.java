@@ -886,7 +886,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 			} else {
 				final XYBarRenderer barRenderer = new XYBarRenderer();
 				barRenderer.setShadowVisible(false);
-				barRenderer.setGradientPaintTransformer(null);
+				//barRenderer.setGradientPaintTransformer(null);
 				barRenderer.setDrawBarOutline(false);
 				barRenderer.setBarPainter(new StandardXYBarPainter());
 				renderer = barRenderer;

@@ -11,7 +11,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>3.1.6-SNAPSHOT</version>
+	<version>3.1.6</version>
 
 	<name>Simple Neurite Tracer</name>
 	<description>The ImageJ framework for semi-automated tracing of neurons and other tube-like structures.</description>
@@ -89,7 +89,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/fiji/Simple_Neurite_Tracer</connection>
 		<developerConnection>scm:git:git@github.com:fiji/Simple_Neurite_Tracer</developerConnection>
-		<tag>HEAD</tag>
+		<tag>Simple_Neurite_Tracer-3.1.6</tag>
 		<url>https://github.com/fiji/Simple_Neurite_Tracer</url>
 	</scm>
 	<issueManagement>

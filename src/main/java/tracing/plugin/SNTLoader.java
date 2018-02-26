@@ -48,7 +48,7 @@ import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 
-@Plugin(type = DynamicCommand.class, visible = true, menuPath = "SNT>SNTLoader",
+@Plugin(type = DynamicCommand.class, visible = true, menuPath = "Plugins>Tracing>Simple Neurite Tracer...",
 	initializer = "initialize")
 public class SNTLoader extends DynamicCommand {
 
@@ -87,7 +87,7 @@ public class SNTLoader extends DynamicCommand {
 	private boolean loadActiveImage;
 
 	private static final String UI_SIMPLE = "Memory saving: Only XY view";
-	private static final String UI_DEFAULT = "Default: XY, ZY, XZ and 3D views";
+	private static final String UI_DEFAULT = "Default: XY, ZY and XZ views";
 
 	@Override
 	public void initialize() {
@@ -187,7 +187,7 @@ public class SNTLoader extends DynamicCommand {
 		if (!cal.scaled() || cal.pixelDepth < cal.pixelHeight || cal.pixelDepth < cal.pixelWidth) {
 			return new GuiUtils().getConfirmation("Spatial calibration of " + sourceImp.getTitle()
 					+ " appears to be unset or innacurate. Continue nevertheless?",
-					"Innacurated Spatial Calibration?");
+					"Innacurate Spatial Calibration?");
 		}
 		return true;
 	}

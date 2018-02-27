@@ -388,9 +388,9 @@ public class Path implements Comparable<Path> {
 		if (index < 0 || index > size()) throw new IllegalArgumentException(
 			"addNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
-		precise_x_positions = ArrayUtils.add(precise_x_positions, index, point.x);
-		precise_y_positions = ArrayUtils.add(precise_y_positions, index, point.y);
-		precise_z_positions = ArrayUtils.add(precise_z_positions, index, point.z);
+		precise_x_positions = ArrayUtils.insert(index, precise_x_positions, point.x);
+		precise_y_positions = ArrayUtils.insert(index, precise_y_positions, point.y);
+		precise_z_positions = ArrayUtils.insert(index, precise_z_positions, point.z);
 	}
 
 	/**

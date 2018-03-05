@@ -62,6 +62,7 @@ public class Path implements Comparable<Path> {
 	private int points; // n. of nodes
 	private int id = -1; // should be assigned by PathAndFillManager
 	private int editableNodeIndex = -1;
+	private int order = 1;
 	private boolean selected;
 	private boolean primary = false;
 	protected Path startJoins;
@@ -266,6 +267,7 @@ public class Path implements Comparable<Path> {
 		startJoinsPoint = null;
 		endJoins = null;
 		endJoinsPoint = null;
+		setOrder(1);
 	}
 
 	public void setStartJoin(final Path other, final PointInImage joinPoint) {
@@ -304,6 +306,8 @@ public class Path implements Comparable<Path> {
 		if (other.somehowJoins.indexOf(this) < 0) {
 			other.somehowJoins.add(this);
 		}
+		// update order
+		setOrder(other.order + 1);
 	}
 
 	public void unsetStartJoin() {
@@ -338,6 +342,7 @@ public class Path implements Comparable<Path> {
 			endJoins = null;
 			endJoinsPoint = null;
 		}
+		setOrder(-1);
 	}
 
 	public double getMinimumSeparation() {
@@ -1700,6 +1705,7 @@ public class Path implements Comparable<Path> {
 		fitted.setName("Fitted Path [" + getID() + "]");
 		fitted.setColor(getColor());
 		fitted.setSWCType(getSWCType());
+		fitted.setOrder(getOrder());
 		setFitted(fitted);
 
 		if (display) {
@@ -2059,6 +2065,20 @@ public class Path implements Comparable<Path> {
 	 * x_positions[n-1] + ", " + y_positions[n-1] + ", " + z_positions[n-1]; }
 	 * return result; }
 	 */
+
+	/**
+	 * @return the branching order (reverse Horton-Strahler order) of this path or
+	 *         -1 if its branching order is unknown. A primary path is always of
+	 *         order 1.
+	 */
+	public int getOrder() {
+		return (isPrimary()) ? 1 : order;
+	}
+
+	protected void setOrder(int order) {
+		this.order = order;
+		if (fitted != null) fitted.setOrder(order);
+	}
 
 	/*
 	 * These are various fields that have the current 3D representations of this

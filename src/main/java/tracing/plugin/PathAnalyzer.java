@@ -45,10 +45,10 @@ import tracing.util.PointInImage;
 public class PathAnalyzer extends ContextCommand {
 
 	@Parameter
-	private StatusService statusService;
+	protected StatusService statusService;
 
 	@Parameter
-	private DisplayService displayService;
+	protected DisplayService displayService;
 
 	@Parameter
 	private LogService logService;
@@ -60,7 +60,7 @@ public class PathAnalyzer extends ContextCommand {
 	private HashSet<Path> terminals;
 	private HashSet<PointInImage> joints;
 	private HashSet<PointInImage> tips;
-	private DefaultGenericTable table;
+	protected DefaultGenericTable table;
 	private String tableTitle;
 	private int fittedPathsCounter = 0;
 
@@ -157,7 +157,7 @@ public class PathAnalyzer extends ContextCommand {
 		}
 	}
 
-	private int getCol(final String header) {
+	protected int getCol(final String header) {
 		int idx = table.getColumnIndex(header);
 		if (idx == -1) {
 			table.appendColumn(header);

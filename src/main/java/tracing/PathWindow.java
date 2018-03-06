@@ -96,6 +96,7 @@ import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SwingSafeResult;
 import tracing.plugin.PathAnalyzer;
+import tracing.plugin.PathColorCoder;
 import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.SkeletonConverter;
 import tracing.util.SWCColor;
@@ -246,6 +247,9 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.CONVERT_TO_SKEL_CMD);
+		jmi.addActionListener(multiPathListener);
+		advanced.add(jmi);
+		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_CMD);
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
 		advanced.addSeparator();
@@ -1217,6 +1221,11 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			updateCmdsManyOrNoneSelected(selectedPaths);
 	}
 
+	public void refresh() {
+		refreshManager(false);
+		refreshPluginViewers();
+	}
+
 	protected void closeTable() {
 		final Display<?> display = plugin.getContext().getService(DisplayService.class).getDisplay(TABLE_TITLE);
 		if (display != null && display.isDisplaying(table)) display.close();
@@ -1412,6 +1421,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private static final String RESET_FITS = "Reset Fits...";
 		private final static String MEASURE_CMD = "Measure";
 		private final static String CONVERT_TO_ROI_CMD = "Send to ROI Manager...";
+		private final static String COLORIZE_CMD = "Color Coding...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
 		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";
 
@@ -1480,6 +1490,13 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				input.put("paths", selectedPaths);
 				CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(ROIExporterCmd.class, true, input);
+			}
+			else if (COLORIZE_CMD.equals(cmd)) {
+				final Map<String, Object> input = new HashMap<>();
+				input.put("paths", selectedPaths);
+				input.put("manager", getInstance());
+				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				cmdService.run(PathColorCoder.class, true, input);
 			}
 			else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
 				new SkeletonConverter(plugin).runGui();
@@ -1631,6 +1648,10 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				return;
 			}
 		}
+	}
+
+	private PathWindow getInstance() {
+		return this;
 	}
 
 }

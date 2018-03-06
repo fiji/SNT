@@ -85,6 +85,7 @@ import ij.gui.HTMLDialog;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
 import ij3d.ImageWindow3D;
+import net.imagej.table.DefaultGenericTable;
 import sholl.Sholl_Analysis;
 import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
@@ -92,6 +93,7 @@ import tracing.gui.GuiUtils;
 import tracing.gui.SigmaPalette;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.plugin.PathAnalyzer;
+import tracing.plugin.StrahlerAnalyzer;
 
 @SuppressWarnings("serial")
 public class NeuriteTracerResultsDialog extends JDialog {
@@ -129,6 +131,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JMenuItem exportAllSWCMenuItem;
 	private JMenuItem quitMenuItem;
 	private JMenuItem measureMenuItem;
+	private JMenuItem strahlerMenuItem;
 	private JMenuItem sendToTrakEM2;
 	private JLabel statusText;
 	private JLabel statusBarText;
@@ -1358,6 +1361,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		analysisMenu.addSeparator();
 		measureMenuItem = new JMenuItem("Quick Statistics");
 		measureMenuItem.addActionListener(listener);
+		strahlerMenuItem = new JMenuItem("Strahler Analysis");
+		strahlerMenuItem.addActionListener(listener);
 		final JMenuItem correspondencesMenuItem = new JMenuItem(
 			"Show correspondences with file..");
 		correspondencesMenuItem.setEnabled(false); // disable command until it is re-written
@@ -1378,6 +1383,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 		analysisMenu.add(shollAnalysisHelpMenuItem());
+		analysisMenu.add(strahlerMenuItem);
 		analysisMenu.add(measureMenuItem);
 		analysisMenu.addSeparator();
 		analysisMenu.add(correspondencesMenuItem);
@@ -2390,6 +2396,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				pa.setContext(plugin.getContext());
 				pa.setTable(pw.getTable(), PathWindow.TABLE_TITLE);
 				pa.run();
+				return;
+			}
+			else if (source == strahlerMenuItem && !noPathsError()) {
+				final StrahlerAnalyzer sa = new StrahlerAnalyzer(pathAndFillManager.getPathsFiltered());
+				sa.setContext(plugin.getContext());
+				sa.setTable(new DefaultGenericTable(), "SNT: Horton-Strahler Analysis (All Paths)");
+				sa.run();
 				return;
 			}
 			else if (source == loadLabelsMenuItem) {

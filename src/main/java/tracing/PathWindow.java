@@ -88,6 +88,7 @@ import javax.swing.tree.TreeSelectionModel;
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
+
 import com.jidesoft.swing.SearchableBar;
 import com.jidesoft.swing.TreeSearchable;
 
@@ -219,6 +220,23 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		jmi = new JMenuItem(MultiPathActionListener.REMOVE_COLOR_CMD);
 		jmi.addActionListener(multiPathListener);
 		colorMenu.add(jmi);
+		colorMenu.addSeparator();
+		final JMenu orderTagsMenu = new JMenu("Branching Order Tags");
+		jmi = new JMenuItem(MultiPathActionListener.APPEND_ORDER_CMD);
+		jmi.addActionListener(multiPathListener);
+		orderTagsMenu.add(jmi);
+		jmi = new JMenuItem(MultiPathActionListener.REMOVE_ORDER_CMD);
+		jmi.addActionListener(multiPathListener);
+		orderTagsMenu.add(jmi);
+		colorMenu.add(orderTagsMenu);
+		final JMenu customTagsMenu = new JMenu("Custom Tags");
+		jmi = new JMenuItem(MultiPathActionListener.APPEND_TAG_CMD);
+		jmi.addActionListener(multiPathListener);
+		customTagsMenu.add(jmi);
+		jmi = new JMenuItem(MultiPathActionListener.REMOVE_TAG_CMD);
+		jmi.addActionListener(multiPathListener);
+		customTagsMenu.add(jmi);
+		colorMenu.add(customTagsMenu);
 
 		final JMenu fitMenu = new JMenu("Fit/Fill");
 		menuBar.add(fitMenu);
@@ -1417,6 +1435,10 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private final static String DOWNSAMPLE_CMD = "Douglas–Peucker Downsampling...";
 		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-Type Colors";
 		private final static String REMOVE_COLOR_CMD = "Remove Color Tags";
+		private final static String APPEND_ORDER_CMD = "Append Order Tag";
+		private final static String REMOVE_ORDER_CMD = "Remove Order Tag";
+		private final static String APPEND_TAG_CMD = "Append Custom Tag(s)";
+		private final static String REMOVE_TAG_CMD = "Remove Custom Tag(s)";
 		private static final String FILL_OUT_CMD = "Fill Out...";
 		private static final String RESET_FITS = "Reset Fits...";
 		private final static String MEASURE_CMD = "Measure";
@@ -1497,6 +1519,33 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				input.put("manager", getInstance());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(PathColorCoder.class, true, input);
+			}
+			else if (APPEND_ORDER_CMD.equals(cmd)) {
+				for (final Path p : selectedPaths) {
+					p.setName(p.getName() + "<Order " + p.getOrder() +">");
+				}
+				refreshManager(false);
+			}
+			else if (REMOVE_ORDER_CMD.equals(cmd)) {
+				for (final Path p : selectedPaths) {
+					p.setName(p.getName().replaceAll("\\<Order \\d+\\>", ""));
+				}
+				refreshManager(false);
+			}
+			else if (APPEND_TAG_CMD.equals(cmd)) {
+				final String tags = guiUtils.getString("Enter one or more tags (space or comma-separated list):",
+						"Append Tags", "");
+				if (tags == null) return; // user pressed cancel
+				for (final Path p : selectedPaths) {
+					p.setName(p.getName() + "<Tag " + tags + ">");
+				}
+				refreshManager(false);
+			}
+			else if (REMOVE_TAG_CMD.equals(cmd)) {
+				for (final Path p : selectedPaths) {
+					p.setName(p.getName().replaceAll("\\<Tag .+\\>", ""));
+				}
+				refreshManager(false);
 			}
 			else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
 				new SkeletonConverter(plugin).runGui();

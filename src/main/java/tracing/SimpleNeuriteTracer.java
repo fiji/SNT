@@ -373,14 +373,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public void startUI() {
 		final SimpleNeuriteTracer thisPlugin = this;
-		try {
-			// With Ubuntu and java 1.9.0 we need to ensure we're using
-			// GTK+ L&F otherwise no scaling occurs with hiDPI screens
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (final Exception ignored) {
-			// move on
-		}
+
 		resultsDialog = SwingSafeResult.getResult(
 			new Callable<NeuriteTracerResultsDialog>()
 			{

@@ -450,6 +450,17 @@ public class GuiUtils {
 		new GuiUtils().error(msg, "SNT v"+ SNT.VERSION);
 	}
 
+	public static void setSystemLookAndFeel() {
+		try {
+			// With Ubuntu and java 1.9.0 we need to ensure we're using
+			// GTK+ L&F otherwise no scaling occurs with hiDPI screens
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		}
+		catch (final Exception ignored) {
+			// move on
+		}
+	}
+
 	public static void setAutoDismiss(final JDialog dialog) {
 		final int DELAY = 2500;
 		final Timer timer = new Timer(DELAY, new ActionListener() {

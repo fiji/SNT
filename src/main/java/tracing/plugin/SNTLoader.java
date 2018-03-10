@@ -91,6 +91,7 @@ public class SNTLoader extends DynamicCommand {
 
 	@Override
 	public void initialize() {
+		GuiUtils.setSystemLookAndFeel();
 		// TODO: load defaults from prefService?
 		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
 			.getActiveImageDisplay());

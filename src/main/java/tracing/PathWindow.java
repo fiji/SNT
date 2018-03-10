@@ -96,6 +96,7 @@ import net.imagej.table.DefaultGenericTable;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SwingSafeResult;
+import tracing.plugin.HistogramCmd;
 import tracing.plugin.PathAnalyzer;
 import tracing.plugin.PathColorCoder;
 import tracing.plugin.ROIExporterCmd;
@@ -257,6 +258,12 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 		final JMenu advanced = new JMenu("Plugins");
 		menuBar.add(advanced);
+		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_CMD);
+		jmi.addActionListener(multiPathListener);
+		advanced.add(jmi);
+		jmi = new JMenuItem(MultiPathActionListener.HISTOGRAM_CMD);
+		jmi.addActionListener(multiPathListener);
+		advanced.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.MEASURE_CMD);
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
@@ -265,9 +272,6 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.CONVERT_TO_SKEL_CMD);
-		jmi.addActionListener(multiPathListener);
-		advanced.add(jmi);
-		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_CMD);
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
 		advanced.addSeparator();
@@ -1444,6 +1448,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private final static String MEASURE_CMD = "Measure";
 		private final static String CONVERT_TO_ROI_CMD = "Send to ROI Manager...";
 		private final static String COLORIZE_CMD = "Color Coding...";
+		private final static String HISTOGRAM_CMD = "Distribution...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
 		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";
 
@@ -1509,10 +1514,15 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				input.put("manager", getInstance());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(PathColorCoder.class, true, input);
-			}
-			else if (APPEND_ORDER_CMD.equals(cmd)) {
+			} else if (HISTOGRAM_CMD.equals(cmd)) {
+				final Map<String, Object> input = new HashMap<>();
+				input.put("paths", selectedPaths);
+				input.put("frameTitle", "SNT: Hist. " + getDescription(selectedPaths));
+				CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				cmdService.run(HistogramCmd.class, true, input);
+			} else if (APPEND_ORDER_CMD.equals(cmd)) {
 				for (final Path p : selectedPaths) {
-					p.setName(p.getName() + "<Order " + p.getOrder() +">");
+					p.setName(p.getName() + "<Order " + p.getOrder() + ">");
 				}
 				refreshManager(false);
 			}

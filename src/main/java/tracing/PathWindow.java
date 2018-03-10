@@ -1490,17 +1490,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 						return;
 					}
 					pa.setTable(getTable(), TABLE_TITLE);
-					String description;
-					if (n == pathAndFillManager.getPathsFiltered().size()) {
-						description = "All Paths";
-					} else if (n > 1 && !searchable.getSearchingText().trim().isEmpty()) {
-						description = "Filter ["+ searchable.getSearchingText() +"]";
-					} else if (n == 1) {
-						description = selectedPaths.iterator().next().getName();
-					} else {
-						description = "Path IDs ["+ Path.pathsToIDListString(new ArrayList<Path>(selectedPaths)) +"]";
-					}
-					pa.summarize(description);
+					pa.summarize(getDescription(selectedPaths));
 					pa.updateAndDisplayTable();
 					return;
 				} catch (final IllegalArgumentException ignored) {
@@ -1696,6 +1686,30 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				SNT.error("Unexpectedly got an event from an unknown source: " + e);
 				return;
 			}
+		}
+
+		private boolean allPathNamesContain(final HashSet<Path> selectedPaths, final String string) {
+			if (string == null || string.trim().isEmpty())
+				return false;
+			for (Path p : selectedPaths) {
+				if (!p.getName().contains(string)) return false;
+			}
+			return true;
+		}
+	
+		private String getDescription(final HashSet<Path> selectedPaths) {
+			String description;
+			final int n = selectedPaths.size();
+			if (n == pathAndFillManager.getPathsFiltered().size()) {
+				description = "All Paths";
+			} else if (n == 1) {
+				description = selectedPaths.iterator().next().getName();
+			} else if (n > 1 && allPathNamesContain(selectedPaths, searchable.getSearchingText())) {
+				description = "Filter [" + searchable.getSearchingText() + "]";
+			} else {
+				description = "Path IDs [" + Path.pathsToIDListString(new ArrayList<Path>(selectedPaths)) + "]";
+			}
+			return description;
 		}
 	}
 

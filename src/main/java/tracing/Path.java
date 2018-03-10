@@ -109,7 +109,7 @@ public class Path implements Comparable<Path> {
 	private int maxPoints;
 
 
-	Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units) {
+	public Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units) {
 		this(x_spacing, y_spacing, z_spacing, spacing_units, 128);
 	}
 

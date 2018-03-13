@@ -1445,7 +1445,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private final static String CONVERT_TO_ROI_CMD = "Send to ROI Manager...";
 		private final static String COLORIZE_PATH_CMD = "Path Color Coding...";
 		private final static String COLORIZE_NODE_CMD = "Node Color Coding...";
-		private final static String HISTOGRAM_CMD = "Distribution...";
+		private final static String HISTOGRAM_CMD = "Distribution Analysis...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
 		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";
 

@@ -50,9 +50,11 @@ public class PathAnalyzer extends ContextCommand {
 
 	protected static final String BRANCH_ORDER = "Branch order";
 	protected static final String LENGTH = "Length";
-	protected static final String MEAN_RADIUS = "Mean radius";
 	protected static final String N_BRANCH_POINTS = "No. of branch points";
 	protected static final String N_NODES = "No. of nodes";
+	protected static final String NODE_RADIUS = "Node radius";
+	protected static final String MEAN_RADIUS = "Path mean radius";
+	protected static final String INTER_NODE_DISTANCE = "Inter-node distance";
 
 
 	protected final HashSet<Path> paths;

@@ -52,13 +52,15 @@ import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.SNT;
 import tracing.gui.GuiUtils;
+import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
-@Plugin(type = Command.class, visible = false, label = "Measurements Distribution")
+@Plugin(type = Command.class, visible = false, label = "Distribution of Morphometric Measurements")
 public class HistogramCmd implements Command {
 
-	@Parameter(required = true, label = "Measurement", choices = { PathAnalyzer.BRANCH_ORDER, PathAnalyzer.LENGTH,
-			PathAnalyzer.MEAN_RADIUS, PathAnalyzer.N_BRANCH_POINTS, PathAnalyzer.N_NODES })
+	@Parameter(required = true, label = "Measurement", choices = { PathAnalyzer.BRANCH_ORDER,
+			PathAnalyzer.INTER_NODE_DISTANCE, PathAnalyzer.N_BRANCH_POINTS, PathAnalyzer.N_NODES,
+			PathAnalyzer.NODE_RADIUS, PathAnalyzer.MEAN_RADIUS })
 	private String measurementChoice;
 
 	@Parameter(required = true)
@@ -72,8 +74,17 @@ public class HistogramCmd implements Command {
 
 		final List<Double> data = new ArrayList<Double>();
 		for (final Path p : paths) {
-	
-			if (PathAnalyzer.MEAN_RADIUS.equals(measurementChoice))
+			if (PathAnalyzer.NODE_RADIUS.equals(measurementChoice)) {
+				for (int i = 0; i< p.size(); i++) data.add(p.getNodeRadius(i));
+			}
+			else if (PathAnalyzer.INTER_NODE_DISTANCE.equals(measurementChoice)) {
+				for (int i = 0; i < p.size() - 1; i++) {
+					final PointInImage pim1 = p.getPointInImage(i);
+					final PointInImage pim2 = p.getPointInImage(i + 1);
+					data.add(pim1.distanceTo(pim2));
+				}
+			}
+			else if (PathAnalyzer.MEAN_RADIUS.equals(measurementChoice))
 				data.add(p.getMeanRadius());
 			else if (PathAnalyzer.BRANCH_ORDER.equals(measurementChoice))
 				data.add((double) p.getOrder());
@@ -105,9 +116,9 @@ public class HistogramCmd implements Command {
 		final int nBins = (int) Math.ceil((max - min) / binWidth);
 
 		final HistogramDataset dataset = new HistogramDataset();
-		dataset.setType(HistogramType.FREQUENCY);
+		dataset.setType(HistogramType.RELATIVE_FREQUENCY);
 		dataset.addSeries(title, values, Math.max(1, nBins));
-		final JFreeChart chart = ChartFactory.createHistogram(null, title, "Frequency (%)", dataset);
+		final JFreeChart chart = ChartFactory.createHistogram(null, title, "Rel. Frequency", dataset);
 
 		// Customize plot
 		final Color bColor = SWCColor.alphaColor(Color.WHITE, 100);

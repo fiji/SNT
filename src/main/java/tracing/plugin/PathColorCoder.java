@@ -61,7 +61,7 @@ public class PathColorCoder extends DynamicCommand {
 	private LUTService lutService;
 
 	@Parameter(required = true, label = "Color by", choices = { PathAnalyzer.BRANCH_ORDER, PathAnalyzer.LENGTH,
-			PathAnalyzer.MEAN_RADIUS, PathAnalyzer.N_BRANCH_POINTS, PathAnalyzer.N_NODES })
+			PathAnalyzer.N_BRANCH_POINTS, PathAnalyzer.N_NODES, PathAnalyzer.MEAN_RADIUS})
 	private String measurementChoice;
 
 	@Parameter(label = "LUT", callback = "lutChoiceChanged")

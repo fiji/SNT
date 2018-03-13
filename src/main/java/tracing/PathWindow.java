@@ -96,7 +96,7 @@ import net.imagej.table.DefaultGenericTable;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SwingSafeResult;
-import tracing.plugin.HistogramCmd;
+import tracing.plugin.DistributionCmd;
 import tracing.plugin.NodeColorCoder;
 import tracing.plugin.PathAnalyzer;
 import tracing.plugin.PathColorCoder;
@@ -1519,7 +1519,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				input.put("paths", selectedPaths);
 				input.put("frameTitle", "SNT: Hist. " + getDescription(selectedPaths));
 				CommandService cmdService = plugin.getContext().getService(CommandService.class);
-				cmdService.run(HistogramCmd.class, true, input);
+				cmdService.run(DistributionCmd.class, true, input);
 			} else if (APPEND_ORDER_CMD.equals(cmd)) {
 				for (final Path p : selectedPaths) {
 					p.setName(p.getName() + "<Order " + p.getOrder() + ">");

@@ -56,7 +56,7 @@ import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
 @Plugin(type = Command.class, visible = false, label = "Distribution of Morphometric Measurements")
-public class HistogramCmd implements Command {
+public class DistributionCmd implements Command {
 
 	@Parameter(required = true, label = "Measurement", choices = { PathAnalyzer.BRANCH_ORDER,
 			PathAnalyzer.INTER_NODE_DISTANCE, PathAnalyzer.N_BRANCH_POINTS, PathAnalyzer.N_NODES,
@@ -176,7 +176,7 @@ public class HistogramCmd implements Command {
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
 		input.put("paths", new HashSet<Path>(randomPaths()));
-		ij.command().run(HistogramCmd.class, true, input);
+		ij.command().run(DistributionCmd.class, true, input);
 	}
 
 }

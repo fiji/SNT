@@ -102,6 +102,7 @@ public class Path implements Comparable<Path> {
 	private Color color;
 	protected Color3f realColor;
 	protected boolean hasCustomColor = false;
+	private Color[] nodeColors;
 
 	/* Internal fields */
 	private static final int PATH_START = 0;
@@ -902,15 +903,40 @@ public class Path implements Comparable<Path> {
 			// Draw node
 			pn.setEditable(getEditableNodeIndex()==i);
 			pn.draw(g2, c);
-			g2.setColor(c); // reset color transparencies. Not really needed
+			//g2.setColor(c); // reset color transparencies. Not really needed
 		}
 
+	}
+
+	/**
+	 * Sets node colors.
+	 *
+	 * @param colors
+	 *            the colors used to render this path. If null (the default) all
+	 *            nodes are rendered using this Path color.
+	 */
+	public void setNodeColors(final Color[] colors) {
+		if (colors != null && colors.length != size()) {
+			throw new IllegalArgumentException("colors array must have as many elements as nodes");
+		}
+		nodeColors = colors;
+	}
+
+	public Color getNodeColor(final int pos) {
+		return (nodeColors == null) ? null : nodeColors[pos];
 	}
 
 	public Color getColor() {
 		return color;
 	}
 
+	/**
+	 * Sets this path color.
+	 *
+	 * @param color
+	 *            the path color. Set it to null, to have SNT rendered using default
+	 *            settings.
+	 */
 	public void setColor(final Color color) {
 		this.color = color;
 		hasCustomColor = color != null;
@@ -1968,6 +1994,20 @@ public class Path implements Comparable<Path> {
 	public double getMeanRadius() {
 		if (radiuses == null) return 0;
 		return StatUtils.mean(radiuses);
+	}
+
+	/**
+	 * Gets the radius of the specified node
+	 *
+	 * @return the radius at the specified position, or zero if path has no defined
+	 *         thickness
+	 */
+	public double getNodeRadius(final int pos) {
+		if (radiuses == null) return 0;
+		if ((pos < 0) || pos >= size()) {
+			throw new IllegalArgumentException("getNodeRadius() was asked for an out-of-range point: " + pos);
+		}
+		return radiuses[pos];
 	}
 
 	/**

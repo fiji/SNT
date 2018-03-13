@@ -49,6 +49,7 @@ public class PathNode {
 	public static final int HERMIT= 5;
 
 	private final Path path;
+	private Color color;
 	private final TracerCanvas canvas;
 	private double size = -1; //see assignRenderingSize()
 	private int type;
@@ -78,6 +79,7 @@ public class PathNode {
 	public PathNode(final Path path, final int index, final TracerCanvas canvas) {
 		this.path = path;
 		this.canvas = canvas;
+		color = path.getNodeColor(index);
 		setXYcoordinates(path.getPointInImage(index));
 
 		// Define which type of node we're dealing with
@@ -170,6 +172,17 @@ public class PathNode {
 		return type;
 	}
 
+
+	/**
+	 * Draws this node.
+	 *
+	 * @param g
+	 *            the Graphics2D drawing instance
+	 * @param color
+	 *            the rendering color of this node. Note that this parameter is
+	 *            ignored if a color has already been defined through
+	 *            {@link Path#setNodeColors(Color[])}
+	 */
 	public void draw(final Graphics2D g, final Color c) {
 
 		if (path.isBeingEdited() && !editable) return; // draw only editable node
@@ -177,10 +190,10 @@ public class PathNode {
 		assignRenderingSize();
 		final Shape node = new Ellipse2D.Double(x - size / 2, y - size / 2, size,
 			size);
-
+		if (color == null) color = c;
 		if (editable) {
 			// opaque crosshair and border, transparent fill
-			g.setColor(c);
+			g.setColor(color);
 			final Stroke stroke = g.getStroke();
 			g.setStroke(new BasicStroke(3));
 			double length = size/2;
@@ -190,7 +203,7 @@ public class PathNode {
 			g.draw(new Line2D.Double(x, y-offset - length, x, y -offset));
 			g.draw(new Line2D.Double(x, y+offset + length, x, y +offset));
 			g.draw(node);
-			g.setColor(SWCColor.alphaColor(c, 20));
+			g.setColor(SWCColor.alphaColor(color, 20));
 			g.fill(node);
 			g.setStroke(stroke);
 
@@ -198,19 +211,19 @@ public class PathNode {
 	
 			if (path.isSelected()) {
 				// opaque border and more opaque fill
-				g.setColor(c);
+				g.setColor(color);
 				g.draw(node);
-				g.setColor(SWCColor.alphaColor(c, 80));
+				g.setColor(SWCColor.alphaColor(color, 80));
 				g.fill(node);
 			} else {
 				// semi-border and more transparent fill
-				g.setColor(SWCColor.alphaColor(c, 50));
+				g.setColor(SWCColor.alphaColor(color, 50));
 				g.fill(node);
 			}
 
 		}
 	
-		g.setColor(c); // not really needed
+		//g.setColor(c); // not really needed
 
 	}
 
@@ -257,4 +270,5 @@ public class PathNode {
 			throw new IllegalArgumentException("BUG: Unknown plane! (" + plane + ")");
 		}
 	}
+
 }

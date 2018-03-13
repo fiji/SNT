@@ -54,11 +54,12 @@ import tracing.SNT;
 import tracing.gui.GuiUtils;
 import tracing.util.SWCColor;
 
-@Plugin(type = Command.class, visible = false, label = "Path Properties Histogram")
+@Plugin(type = Command.class, visible = false, label = "Measurements Distribution")
 public class HistogramCmd implements Command {
 
-	@Parameter(required = true, label = "Property", choices = { "Length", "Mean radius", "No. branch points", "No. nodes", "Branch order" })
-	private String paramChoice;
+	@Parameter(required = true, label = "Measurement", choices = { PathAnalyzer.BRANCH_ORDER, PathAnalyzer.LENGTH,
+			PathAnalyzer.MEAN_RADIUS, PathAnalyzer.N_BRANCH_POINTS, PathAnalyzer.N_NODES })
+	private String measurementChoice;
 
 	@Parameter(required = true)
 	private HashSet<Path> paths;
@@ -71,18 +72,20 @@ public class HistogramCmd implements Command {
 
 		final List<Double> data = new ArrayList<Double>();
 		for (final Path p : paths) {
-			if (paramChoice.contains("radius"))
+	
+			if (PathAnalyzer.MEAN_RADIUS.equals(measurementChoice))
 				data.add(p.getMeanRadius());
-			else if (paramChoice.contains("order"))
+			else if (PathAnalyzer.BRANCH_ORDER.equals(measurementChoice))
 				data.add((double) p.getOrder());
-			else if (paramChoice.contains("nodes"))
+			else if (PathAnalyzer.N_NODES.equals(measurementChoice))
 				data.add((double)p.size());
-			else if (paramChoice.contains("branch points"))
+			else if (PathAnalyzer.N_BRANCH_POINTS.contains(measurementChoice))
 				data.add((double)p.findJoinedPoints().size());
-			else // length
+			else // PathAnalyzer.LENGTH
 				data.add(p.getRealLength());
+
 		}
-		final JFreeChart getHistogram = getHistogram(data, paramChoice);
+		final JFreeChart getHistogram = getHistogram(data, measurementChoice);
 		final ChartFrame frame = new ChartFrame((frameTitle == null) ? "SNT: Histogram" : frameTitle, getHistogram);
 		frame.setPreferredSize(new Dimension(400, 400));
 		frame.pack();

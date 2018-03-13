@@ -60,7 +60,8 @@ public class PathColorCoder extends DynamicCommand {
 	@Parameter
 	private LUTService lutService;
 
-	@Parameter(required = true, label = "Color by", choices = { "Branch order", "Length", "Mean radius" })
+	@Parameter(required = true, label = "Color by", choices = { PathAnalyzer.BRANCH_ORDER, PathAnalyzer.LENGTH,
+			PathAnalyzer.MEAN_RADIUS, PathAnalyzer.N_BRANCH_POINTS, PathAnalyzer.N_NODES })
 	private String measurementChoice;
 
 	@Parameter(label = "LUT", callback = "lutChoiceChanged")
@@ -84,18 +85,26 @@ public class PathColorCoder extends DynamicCommand {
 	public void run() {
 
 		final List<MappedPath> mappedPaths = new ArrayList<>();
-		switch (measurementChoice.toLowerCase()) {
-		case "branch order":
+		switch (measurementChoice) {
+		case PathAnalyzer.BRANCH_ORDER:
 			for (final Path p : paths)
 				mappedPaths.add(new MappedPath(p, (double) p.getOrder()));
 			break;
-		case "length":
+		case PathAnalyzer.LENGTH:
 			for (final Path p : paths)
 				mappedPaths.add(new MappedPath(p, p.getRealLength()));
 			break;
-		case "mean radius":
+		case PathAnalyzer.MEAN_RADIUS:
 			for (final Path p : paths)
 				mappedPaths.add(new MappedPath(p, p.getMeanRadius()));
+			break;
+		case PathAnalyzer.N_NODES:
+			for (final Path p : paths)
+				mappedPaths.add(new MappedPath(p, (double) p.size()));
+			break;
+		case PathAnalyzer.N_BRANCH_POINTS:
+			for (final Path p : paths)
+				mappedPaths.add(new MappedPath(p, (double) p.findJoinedPoints().size()));
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown parameter");

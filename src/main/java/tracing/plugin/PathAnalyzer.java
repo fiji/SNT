@@ -31,8 +31,6 @@ import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
-import org.scijava.io.IOService;
-import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
@@ -50,10 +48,12 @@ public class PathAnalyzer extends ContextCommand {
 	@Parameter
 	protected DisplayService displayService;
 
-	@Parameter
-	private LogService logService;
-	
-	@Parameter IOService ioservice;
+	protected static final String BRANCH_ORDER = "Branch order";
+	protected static final String LENGTH = "Length";
+	protected static final String MEAN_RADIUS = "Mean radius";
+	protected static final String N_BRANCH_POINTS = "No. of branch points";
+	protected static final String N_NODES = "No. of nodes";
+
 
 	protected final HashSet<Path> paths;
 	private HashSet<Path> primaries;

@@ -310,9 +310,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		renameMitem2.addActionListener(singlePathListener);
 		popup.add(renameMitem2);
 		popup.addSeparator();
-		JMenuItem pjmi = popup.add(NoPathActionListener.SELECT_ALL_CMD);
-		pjmi.addActionListener(noPathListener);
-		pjmi = popup.add(NoPathActionListener.SELECT_NONE_CMD);
+		JMenuItem pjmi = popup.add(NoPathActionListener.SELECT_NONE_CMD);
 		pjmi.addActionListener(noPathListener);
 		popup.addSeparator();
 		pjmi = popup.add(NoPathActionListener.COLLAPSE_ALL_CMD);
@@ -1331,20 +1329,12 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 		private final static String EXPAND_ALL_CMD = "Expand All";
 		private final static String COLLAPSE_ALL_CMD = "Collapse All";
-		private final static String SELECT_ALL_CMD = "Select All";
-		private final static String SELECT_NONE_CMD = "Select None";
+		private final static String SELECT_NONE_CMD = "Deselect / Select All";
 
 		@Override
 		public void actionPerformed(final ActionEvent e) {
 
-			if (e.getActionCommand().equals(SELECT_ALL_CMD)) {
-				final int n = tree.getRowCount();
-				for (int i = 0; i < n; i++)
-					tree.expandRow(i);
-				tree.addSelectionInterval(0, n);
-				return;
-			}
-			else if (e.getActionCommand().equals(SELECT_NONE_CMD)) {
+			if (e.getActionCommand().equals(SELECT_NONE_CMD)) {
 				tree.clearSelection();
 				return;
 			}
@@ -1472,9 +1462,9 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			}
 	
 			// If no path is selected, remind user that action applies to all paths
-			final boolean noSelection = tree.getSelectionCount() == 0;
-			final boolean assumeAll = noSelection && guiUtils.getConfirmation("Currently no paths are selected. Apply command to all paths?", cmd);
-			if (noSelection && !assumeAll) return;
+			final boolean assumeAll = tree.getSelectionCount() == 0;
+			//final boolean assumeAll = noSelection && guiUtils.getConfirmation("Currently no paths are selected. Apply command to all paths?", cmd);
+			//if (noSelection && !assumeAll) return;
 
 			// Case 1: Non-destructive commands that do not require confirmation
 			if (REMOVE_COLOR_CMD.equals(cmd)) {

@@ -97,6 +97,7 @@ import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SwingSafeResult;
 import tracing.plugin.HistogramCmd;
+import tracing.plugin.NodeColorCoder;
 import tracing.plugin.PathAnalyzer;
 import tracing.plugin.PathColorCoder;
 import tracing.plugin.ROIExporterCmd;
@@ -258,9 +259,14 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 		final JMenu advanced = new JMenu("Plugins");
 		menuBar.add(advanced);
-		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_CMD);
+		final JMenu colorCoding = new JMenu("Color Coding");
+		advanced.add(colorCoding);
+		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_PATH_CMD);
 		jmi.addActionListener(multiPathListener);
-		advanced.add(jmi);
+		colorCoding.add(jmi);
+		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_NODE_CMD);
+		jmi.addActionListener(multiPathListener);
+		colorCoding.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.HISTOGRAM_CMD);
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
@@ -1447,7 +1453,8 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private static final String RESET_FITS = "Reset Fits...";
 		private final static String MEASURE_CMD = "Measure";
 		private final static String CONVERT_TO_ROI_CMD = "Send to ROI Manager...";
-		private final static String COLORIZE_CMD = "Color Coding...";
+		private final static String COLORIZE_PATH_CMD = "Path Color Coding...";
+		private final static String COLORIZE_NODE_CMD = "Node Color Coding...";
 		private final static String HISTOGRAM_CMD = "Distribution...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
 		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";
@@ -1508,12 +1515,15 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(ROIExporterCmd.class, true, input);
 			}
-			else if (COLORIZE_CMD.equals(cmd)) {
+			else if (COLORIZE_PATH_CMD.equals(cmd) || COLORIZE_NODE_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("paths", selectedPaths);
 				input.put("manager", getInstance());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
-				cmdService.run(PathColorCoder.class, true, input);
+				if (COLORIZE_PATH_CMD.equals(cmd))
+					cmdService.run(PathColorCoder.class, true, input);
+				else
+					cmdService.run(NodeColorCoder.class, true, input);
 			} else if (HISTOGRAM_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("paths", selectedPaths);

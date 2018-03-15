@@ -92,7 +92,7 @@ import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 import tracing.gui.SigmaPalette;
 import tracing.hyperpanes.MultiDThreePanes;
-import tracing.plugin.PathAnalyzer;
+import tracing.measure.PathAnalyzer;
 import tracing.plugin.StrahlerAnalyzer;
 
 @SuppressWarnings("serial")

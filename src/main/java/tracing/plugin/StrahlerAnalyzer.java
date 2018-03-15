@@ -39,6 +39,7 @@ import net.imagej.plot.LineSeries;
 import net.imagej.plot.PlotService;
 import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
+import tracing.measure.PathAnalyzer;
 
 /**
  * Command to perform Horton-Strahler analysis on a list of paths.

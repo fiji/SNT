@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.plugin;
+package tracing.measure;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -48,13 +48,13 @@ public class PathAnalyzer extends ContextCommand {
 	@Parameter
 	protected DisplayService displayService;
 
-	protected static final String BRANCH_ORDER = "Branch order";
-	protected static final String LENGTH = "Length";
-	protected static final String N_BRANCH_POINTS = "No. of branch points";
-	protected static final String N_NODES = "No. of nodes";
-	protected static final String NODE_RADIUS = "Node radius";
-	protected static final String MEAN_RADIUS = "Path mean radius";
-	protected static final String INTER_NODE_DISTANCE = "Inter-node distance";
+	public static final String BRANCH_ORDER = "Branch order";
+	public static final String LENGTH = "Length";
+	public static final String N_BRANCH_POINTS = "No. of branch points";
+	public static final String N_NODES = "No. of nodes";
+	public static final String NODE_RADIUS = "Node radius";
+	public static final String MEAN_RADIUS = "Path mean radius";
+	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
 
 
 	protected final HashSet<Path> paths;

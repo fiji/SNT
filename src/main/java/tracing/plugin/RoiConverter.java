@@ -36,6 +36,7 @@ import tracing.Path;
 import tracing.PathNode;
 import tracing.SNT;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.measure.PathAnalyzer;
 import tracing.util.PointInImage;
 
 /**

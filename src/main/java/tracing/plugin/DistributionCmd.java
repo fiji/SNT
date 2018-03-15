@@ -52,6 +52,7 @@ import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.SNT;
 import tracing.gui.GuiUtils;
+import tracing.measure.PathAnalyzer;
 import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 

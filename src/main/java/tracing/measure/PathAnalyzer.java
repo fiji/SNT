@@ -23,6 +23,7 @@
 package tracing.measure;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.stream.IntStream;
@@ -36,6 +37,7 @@ import org.scijava.plugin.Plugin;
 
 import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
+import tracing.PathAndFillManager;
 import tracing.util.PointInImage;
 
 
@@ -57,7 +59,8 @@ public class PathAnalyzer extends ContextCommand {
 	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
 
 
-	protected final HashSet<Path> paths;
+	protected HashSet<Path> paths;
+	private HashSet<Path> unfilteredPaths;
 	private HashSet<Path> primaries;
 	private HashSet<Path> terminals;
 	private HashSet<PointInImage> joints;
@@ -65,18 +68,19 @@ public class PathAnalyzer extends ContextCommand {
 	protected DefaultGenericTable table;
 	private String tableTitle;
 	private int fittedPathsCounter = 0;
+	private int unfilteredPathsFittedPathsCounter = 0;
+
 
 	public PathAnalyzer(final ArrayList<Path> paths) {
 		this(new HashSet<Path>(paths));
 	}
 
 	/**
-	 * Instantiates a new path analyzer.
+	 * Instantiates a new Path analyzer.
 	 *
 	 * @param paths
 	 *            list of paths to be analyzed. Note that some paths may be excluded
-	 *            from analysis: I.e., those with less than 2 points (e.g.,used to
-	 *            mark the soma), and (duplicated) paths that may exist only as just
+	 *            from analysis: I.e., null paths, and paths that may exist only as just
 	 *            fitted versions of existing ones.
 	 *
 	 * @see #getParsedPaths()
@@ -84,7 +88,7 @@ public class PathAnalyzer extends ContextCommand {
 	public PathAnalyzer(final HashSet<Path> paths) {
 		this.paths = new HashSet<Path>();
 		for (final Path p : paths) {
-			if (p == null || p.size() < 2 || p.isFittedVersionOfAnotherPath())
+			if (p == null || p.isFittedVersionOfAnotherPath())
 				continue;
 			Path pathToAdd;
 			// If fitted flavor of path exists use it instead
@@ -96,6 +100,100 @@ public class PathAnalyzer extends ContextCommand {
 			}
 			this.paths.add(pathToAdd);
 		}
+		unfilteredPathsFittedPathsCounter = fittedPathsCounter;
+	}
+
+	public PathAnalyzer(final PathAndFillManager pafm) {
+		this(pafm.getPaths());
+	}
+
+
+	public void restrictToSWCType(final int... types) {
+		if (unfilteredPaths == null) {
+			unfilteredPaths = new HashSet <Path>(paths);
+		}
+		final Iterator<Path> it = paths.iterator();
+		while (it.hasNext()) {
+			final Path p = it.next();
+			final boolean valid = Arrays.stream(types).anyMatch(t -> t == p.getSWCType());
+			if (!valid) {
+				updateFittedPathsCounter(p);
+				it.remove();
+			}
+		}
+	}
+
+	public void restrictToOrder(final int... orders) {
+		if (unfilteredPaths == null) {
+			unfilteredPaths = new HashSet<Path>(paths);
+		}
+		final Iterator<Path> it = paths.iterator();
+		while (it.hasNext()) {
+			final Path p = it.next();
+			final boolean valid = Arrays.stream(orders).anyMatch(t -> t == p.getOrder());
+			if (!valid) {
+				updateFittedPathsCounter(p);
+				it.remove();
+			}
+		}
+	}
+
+	public void restrictToSize(final int minSize, final int maxSize) {
+		if (unfilteredPaths == null) {
+			unfilteredPaths = new HashSet <Path>(paths);
+		}
+		final Iterator<Path> it = paths.iterator();
+		while (it.hasNext()) {
+			final Path p = it.next();
+			final int size = p.size();
+			if (minSize >= size || maxSize >= size) {
+				updateFittedPathsCounter(p);
+				it.remove();
+			}
+		}
+	}
+
+	public void restrictToLength(final double lowerBound, final double upperBound) {
+		if (unfilteredPaths == null) {
+			unfilteredPaths = new HashSet <Path>(paths);
+		}
+		final Iterator<Path> it = paths.iterator();
+		while (it.hasNext()) {
+			final Path p = it.next();
+			final double length = p.getRealLength();
+			if (lowerBound >= length || upperBound >= length) {
+				updateFittedPathsCounter(p);
+				it.remove();
+			}
+		}
+	}
+
+	public void restrictToNamePattern(final String pattern) {
+		if (unfilteredPaths == null) {
+			unfilteredPaths = new HashSet <Path>(paths);
+		}
+		final Iterator<Path> it = paths.iterator();
+		while (it.hasNext()) {
+			final Path p = it.next();
+			if (p.getName().contains(pattern)) {
+				updateFittedPathsCounter(p);
+				it.remove();
+			}
+		}
+	}
+
+	public void resetRestrictions() {
+		if (unfilteredPaths == null) return; // no filtering has occurred
+		paths = new HashSet <Path>(unfilteredPaths);
+		joints = null;
+		primaries = null;
+		terminals = null;
+		tips = null;
+		fittedPathsCounter = unfilteredPathsFittedPathsCounter;
+	}
+
+	private void updateFittedPathsCounter(final Path filteredPath) {
+		if (fittedPathsCounter > 0 && filteredPath.isFittedVersionOfAnotherPath()) fittedPathsCounter--;
 	}
 
 	/**
@@ -113,16 +211,18 @@ public class PathAnalyzer extends ContextCommand {
 		if (table == null) table = new DefaultGenericTable();
 		table.appendRow(rowHeader);
 		final int row = Math.max(0, table.getRowCount() - 1);
+		restrictToSWCType(Path.SWC_SOMA);
 		table.set(getCol("# Paths"), row, getNPaths());
 		table.set(getCol("# Branch Points"), row, getBranchPoints().size());
 		table.set(getCol("# Tips"), row, getTips().size());
-		table.set(getCol("Total Length"), row, getTotalLength());
+		table.set(getCol("Cable Length"), row, getCableLength());
 		table.set(getCol("# Primary Paths (PP)"), row, getPrimaryPaths().size());
 		table.set(getCol("# Terminal Paths (TP)"), row, getTerminalPaths().size());
 		table.set(getCol("Sum length PP"), row, getPrimaryLength());
 		table.set(getCol("Sum length TP"), row, getTerminalLength());
+		table.set(getCol("Strahler Root No."), row, getStrahlerRootNumber());
 		table.set(getCol("# Fitted Paths"), row, fittedPathsCounter);
-		table.set(getCol("Notes"), row, "Single point paths ignored");
+		table.set(getCol("Notes"), row, "Soma ignored");
 	}
 
 	public void setTable(final DefaultGenericTable table) {
@@ -181,6 +281,12 @@ public class PathAnalyzer extends ContextCommand {
 		return primaries;
 	}
 
+	/**
+	 * Convenience method to retrieve paths containing terminal points.
+	 *
+	 * @return the set containing paths associated with terminal points
+	 * @see #restrictToOrder(int...)
+	 */
 	public HashSet<Path> getTerminalPaths() {
 		if (tips == null) getTips();
 		terminals = new HashSet<Path>();
@@ -229,7 +335,7 @@ public class PathAnalyzer extends ContextCommand {
 		return joints;
 	}
 
-	public double getTotalLength() {
+	public double getCableLength() {
 		return sumLength(paths);
 	}
 
@@ -241,6 +347,15 @@ public class PathAnalyzer extends ContextCommand {
 	public double getTerminalLength() {
 		if (terminals == null) getTerminalPaths();
 		return sumLength(terminals);
+	}
+
+	public int getStrahlerRootNumber() {
+		int root = -1;
+		for (final Path p : paths) {
+			int order = p.getOrder();
+			if (order > root) root = order;
+		}
+		return root;
 	}
 
 	private double sumLength(final HashSet<Path>paths) {

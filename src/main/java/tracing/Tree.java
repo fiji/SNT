@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import tracing.util.PointInImage;
+
 /**
  * Utility class to access a Collection of Paths.
  *
@@ -33,6 +35,9 @@ import java.util.Iterator;
  */
 public class Tree {
 
+	 public static final int X_AXIS = 1; 
+	public static final int Y_AXIS = 2;
+	public static final int Z_AXIS = 4;
 	private final HashSet<Path> tree;
 
 	/**
@@ -114,7 +119,7 @@ public class Tree {
 	 * @param zOffset
 	 *            the z offset
 	 */
-	public void applyOffset(final double xOffset, final double yOffset, final double zOffset) {
+	public void translate(final double xOffset, final double yOffset, final double zOffset) {
 		for (final Path p : tree) {
 			for (double x : p.precise_x_positions)
 				x = x + xOffset;
@@ -125,4 +130,51 @@ public class Tree {
 		}
 	}
 
+	/**
+	 * Rotates the tree.
+	 *
+	 * @param axis
+	 *            the rotation axis. Either {@link X_AXIS}, {@link Y_AXIS}, or
+	 *            {@link Z_AXIS}
+	 * @param angle
+	 *            the rotation angle
+	 */
+	public void rotate(final int axis, final double angle) {
+		final double sin = Math.sin(angle);
+		final double cos = Math.cos(angle);
+		switch (axis) {
+		case Z_AXIS:
+			for (final Path p : tree) {
+				for (int node = 0; node < p.size(); node++) {
+					final PointInImage pim = p.getPointInImage(node);
+					final double x = pim.x * cos - pim.y * sin;
+					final double y = pim.y * cos + pim.x * sin;
+					p.moveNode(node, new PointInImage(x, y, pim.z));
+				}
+			}
+			break;
+		case Y_AXIS:
+			for (final Path p : tree) {
+				for (int node = 0; node < p.size(); node++) {
+					final PointInImage pim = p.getPointInImage(node);
+					final double x = pim.x * cos - pim.z * sin;
+					final double z = pim.z * cos + pim.x * sin;
+					p.moveNode(node, new PointInImage(x, pim.y, z));
+				}
+			}
+			break;
+		case X_AXIS:
+			for (final Path p : tree) {
+				for (int node = 0; node < p.size(); node++) {
+					final PointInImage pim = p.getPointInImage(node);
+					final double y = pim.y * cos - pim.z * sin;
+					final double z = pim.z * cos + pim.y * sin;
+					p.moveNode(node, new PointInImage(pim.x, y, z));
+				}
+			}
+			break;
+		default:
+			throw new IllegalArgumentException("Unrecognized rotation axis" + axis);
+		}
+	}
 }

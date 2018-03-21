@@ -35,23 +35,35 @@ import tracing.util.PointInImage;
  */
 public class Tree {
 
-	 public static final int X_AXIS = 1; 
+	public static final int X_AXIS = 1;
 	public static final int Y_AXIS = 2;
 	public static final int Z_AXIS = 4;
 	private final HashSet<Path> tree;
 
 	/**
-	 * Instantiates a new tree.
+	 * Instantiates a new empty tree.
 	 */
 	public Tree() {
 		tree = new HashSet<Path>();
 	}
 
 	/**
+	 * Instantiates a new tree from a set of paths.
+	 *
+	 * @param paths
+	 *            the Collection of paths forming this tree. Null not allowed.
+	 */
+	public Tree(final HashSet<Path> paths) {
+		if (paths == null)
+			throw new IllegalArgumentException("Cannot instantiate a new tree from a null collection");
+		tree = paths;
+	}
+
+	/**
 	 * Instantiates a new tree from a SWC or traces file
 	 *
 	 * @param filename
-	 *            the absolute filepathe of the imported file
+	 *            the absolute file path of the file
 	 */
 	public Tree(final String filename) {
 		final PathAndFillManager pafm = PathAndFillManager.createFromTracesFile(filename);
@@ -66,8 +78,9 @@ public class Tree {
 	 * @param filename
 	 *            the filename
 	 * @param swcTypes
-	 *            the SWC type(s) of the paths to be imported (e.g.,
-	 *            {@link Path#SWC_AXON}, {@link Path#SWC_DENDRITE}, etc.)
+	 *            only paths matching the specified SWC type(s) (e.g.,
+	 *            {@link Path#SWC_AXON}, {@link Path#SWC_DENDRITE}, etc.) will be
+	 *            imported
 	 */
 	public Tree(final String filename, final int... swcTypes) {
 		this(filename);

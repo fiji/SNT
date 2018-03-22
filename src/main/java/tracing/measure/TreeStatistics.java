@@ -22,27 +22,17 @@
 
 package tracing.measure;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import tracing.Path;
 import tracing.Tree;
 
 /**
- * The Class TreeStatistics.
+ * Computes summary and descriptive statistics of tree properties.
  */
 public class TreeStatistics extends TreeAnalyzer {
 
-	/** Flag encoding the cable length of a tree */
-	public static final int LENGTH = 1;
-
-	/** Flag encoding number of points in a tree */
-	public static final int N_NODES = 2;
-
-	/** Flag encoding distances between consecutive nodes */
-	public static final int INTER_NODE_DISTANCE = 4;
-
-	/** Flag encoding the node radius */
-	public static final int NODE_RADIUS = 8;
 
 	public TreeStatistics(final Tree tree) {
 		super(tree);
@@ -55,37 +45,90 @@ public class TreeStatistics extends TreeAnalyzer {
 	 *            the measurement ({@link N_NODES}, {@link NODE_RADIUS}, etc.)
 	 * @return the SummaryStatistics object.
 	 */
-	public SummaryStatistics getStatistics(final int measurement) {
-		final SummaryStatistics stat = new SummaryStatistics();
+	public SummaryStatistics getSummaryStats(final String measurement) {
+		final SummaryStatistics sStats = new SummaryStatistics();
+		assembleStats(new StatisticsInstance(sStats), measurement);
+		return sStats;
+	}
+
+	/**
+	 * Computes the {@link DescriptiveStatistics} for the specified measurement.
+	 *
+	 * @param measurement
+	 *            the measurement ({@link N_NODES}, {@link NODE_RADIUS}, etc.)
+	 * @return the DescriptiveStatistics object.
+	 */
+	public DescriptiveStatistics getDescriptiveStats(final String measurement) {
+		final DescriptiveStatistics dStats = new DescriptiveStatistics();
+		assembleStats(new StatisticsInstance(dStats), measurement);
+		return dStats;
+	}
+
+	private void assembleStats(final StatisticsInstance stat, final String measurement) {
 		switch (measurement) {
-		case LENGTH:
+		case TreeAnalyzer.LENGTH:
 			for (final Path p : paths)
 				stat.addValue(p.getRealLength());
 			break;
-		case N_NODES:
+		case TreeAnalyzer.N_NODES:
 			for (final Path p : paths)
 				stat.addValue(p.size());
 			break;
-		case INTER_NODE_DISTANCE:
+		case TreeAnalyzer.INTER_NODE_DISTANCE:
 			for (final Path p : paths) {
 				if (p.size() < 2)
 					continue;
-				for (int i = 0; i < p.size(); i += 2) {
-					stat.addValue(p.getPointInImage(i + 1).distanceTo(p.getPointInImage(i)));
+				for (int i = 1; i < p.size(); i += 1) {
+					stat.addValue(p.getPointInImage(i).distanceTo(p.getPointInImage(i-1)));
 				}
 			}
 			break;
-		case NODE_RADIUS:
+		case TreeAnalyzer.NODE_RADIUS:
 			for (final Path p : paths) {
 				for (int i = 0; i < p.size(); i++) {
 					stat.addValue(p.getNodeRadius(i));
 				}
 			}
 			break;
+		case TreeAnalyzer.MEAN_RADIUS:
+			for (final Path p : paths) {
+				stat.addValue(p.getMeanRadius());
+			}
+			break;
+		case TreeAnalyzer.BRANCH_ORDER:
+			for (final Path p : paths) {
+				stat.addValue(p.getOrder());
+			}
+			break;
+		case TreeAnalyzer.N_BRANCH_POINTS:
+			for (final Path p : paths) {
+				stat.addValue(p.findJoinedPoints().size());
+			}
+			break;
 		default:
 			throw new IllegalArgumentException("Unrecognized parameter " + measurement);
 		}
-		return stat;
+	}
+
+	private class StatisticsInstance {
+
+		private SummaryStatistics sStatistics;
+		private DescriptiveStatistics dStatistics;
+
+		private StatisticsInstance(final SummaryStatistics sStatistics) {
+			this.sStatistics = sStatistics;
+		}
+
+		private StatisticsInstance(final DescriptiveStatistics dStatistics) {
+			this.dStatistics = dStatistics;
+		}
+
+		private void addValue(final double value) {
+			if (sStatistics != null)
+				sStatistics.addValue(value);
+			else
+				dStatistics.addValue(value);
+		}
 	}
 
 }

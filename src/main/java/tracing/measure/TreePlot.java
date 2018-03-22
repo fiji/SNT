@@ -68,11 +68,12 @@ import tracing.util.PointInImage;
  */
 public class TreePlot {
 
-	public static final String BRANCH_ORDER = PathAnalyzer.BRANCH_ORDER;
-	public static final String LENGTH = PathAnalyzer.LENGTH;
-	public static final String N_BRANCH_POINTS = PathAnalyzer.N_BRANCH_POINTS;
-	public static final String N_NODES = PathAnalyzer.N_NODES;
-	public static final String MEAN_RADIUS = PathAnalyzer.MEAN_RADIUS;
+	/* For convenience keep references to TreeAnalyzer fields */
+	public static final String BRANCH_ORDER = TreeAnalyzer.BRANCH_ORDER;
+	public static final String LENGTH = TreeAnalyzer.LENGTH;
+	public static final String N_BRANCH_POINTS = TreeAnalyzer.N_BRANCH_POINTS;
+	public static final String N_NODES = TreeAnalyzer.N_NODES;
+	public static final String MEAN_RADIUS = TreeAnalyzer.MEAN_RADIUS;
 	private static final String INTERNAL_COUNTER = "";
 
 	@Parameter
@@ -124,6 +125,11 @@ public class TreePlot {
 			}
 		}
 		return null;
+	}
+
+	private void initPlot() {
+		if (plot == null)
+			plot = plotService.newXYPlot();
 	}
 
 	private void mapToProperty(final String measurement, final ColorTable colorTable, final double min,
@@ -192,7 +198,7 @@ public class TreePlot {
 		if (paths == null || paths.isEmpty()) {
 			throw new IllegalArgumentException("No paths to plot");
 		}
-		plot = getPlot(false);
+		initPlot();
 		for (final Path p : paths) {
 			final XYSeries series = plot.addXYSeries();
 			series.setLabel(p.getName());
@@ -209,8 +215,6 @@ public class TreePlot {
 			series.setStyle(plot.newSeriesStyle(new ColorRGB(color.getRed(), color.getGreen(), color.getBlue()),
 					LineStyle.SOLID, MarkerStyle.NONE));
 		}
-		plot.yAxis().setAutoRange();
-		plot.xAxis().setAutoRange();
 	}
 
 	/**
@@ -361,15 +365,18 @@ public class TreePlot {
 	 * @return the current plot
 	 */
 	public XYPlot getPlot(final boolean show) {
-		if (plot == null)
-			plot = plotService.newXYPlot();
-		if (show && chart == null) {
-			uiService.show((title == null) ? "SNT Path Plot" : title, plot);
-		} else if (show) {
-			final ChartFrame frame = new ChartFrame(title, chart);
-			frame.setPreferredSize(new Dimension(600, 450));
-			frame.pack();
-			frame.setVisible(true);
+		initPlot();
+		plot.yAxis().setAutoRange();
+		plot.xAxis().setAutoRange();
+		if (show) {
+			if (chart == null) {
+				uiService.show((title == null) ? "SNT Path Plot" : title, plot);
+			} else {
+				final ChartFrame frame = new ChartFrame(title, chart);
+				frame.setPreferredSize(new Dimension(600, 450));
+				frame.pack();
+				frame.setVisible(true);
+			}
 		}
 		return plot;
 	}

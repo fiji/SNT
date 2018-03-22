@@ -35,8 +35,9 @@ import ij.process.FloatPolygon;
 import tracing.Path;
 import tracing.PathNode;
 import tracing.SNT;
+import tracing.Tree;
 import tracing.hyperpanes.MultiDThreePanes;
-import tracing.measure.PathAnalyzer;
+import tracing.measure.TreeAnalyzer;
 import tracing.util.PointInImage;
 
 /**
@@ -45,7 +46,7 @@ import tracing.util.PointInImage;
  *
  * @author Tiago Ferreira
  */
-public class RoiConverter extends PathAnalyzer {
+public class RoiConverter extends TreeAnalyzer {
 
 
 	/** SNT's XY view (the default export plane)*/
@@ -61,7 +62,7 @@ public class RoiConverter extends PathAnalyzer {
 
 
 	public RoiConverter(final HashSet<Path> paths) {
-		super(paths);
+		super(new Tree(paths));
 	}
 
 	/**
@@ -85,7 +86,7 @@ public class RoiConverter extends PathAnalyzer {
 	/**
 	 * Converts all the tips associated with the parsed paths into {@link PointROi}s
 	 * 
-	 * @see PathAnalyzer#getTips()
+	 * @see TreeAnalyzer#getTips()
 	 * @param overlay
 	 *            the target overlay to hold converted point
 	 */
@@ -98,7 +99,7 @@ public class RoiConverter extends PathAnalyzer {
 	 * Converts all the branch points associated with the parsed paths into
 	 * {@link PointROi}s
 	 * 
-	 * @see PathAnalyzer#getBranchPoints()
+	 * @see TreeAnalyzer#getBranchPoints()
 	 * @param overlay
 	 *            the target overlay to hold converted point
 	 */

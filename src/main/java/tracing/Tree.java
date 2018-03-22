@@ -22,6 +22,7 @@
 
 package tracing;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,7 +30,9 @@ import java.util.Iterator;
 import tracing.util.PointInImage;
 
 /**
- * Utility class to access a Collection of Paths.
+ * Utility class to access a Collection of Paths. Note a "Tree" here is
+ * literally a collection of Paths and it does not reflect graph theory
+ * terminology
  *
  * @author Tiago Ferreira
  */
@@ -91,6 +94,10 @@ public class Tree {
 			if (!filteredType)
 				it.remove();
 		}
+	}
+
+	public Tree(ArrayList<Path> paths) {
+		this(new HashSet<Path>(paths));
 	}
 
 	/**

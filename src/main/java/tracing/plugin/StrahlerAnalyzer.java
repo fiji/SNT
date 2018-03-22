@@ -39,14 +39,15 @@ import net.imagej.plot.LineSeries;
 import net.imagej.plot.PlotService;
 import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
-import tracing.measure.PathAnalyzer;
+import tracing.Tree;
+import tracing.measure.TreeAnalyzer;
 
 /**
  * Command to perform Horton-Strahler analysis on a list of paths.
  *
  * @author Tiago Ferreira
  */
-public class StrahlerAnalyzer extends PathAnalyzer {
+public class StrahlerAnalyzer extends TreeAnalyzer {
 
 	@Parameter
 	private PlotService plotService;
@@ -66,7 +67,7 @@ public class StrahlerAnalyzer extends PathAnalyzer {
 	}
 
 	public StrahlerAnalyzer(final HashSet<Path> paths) {
-		super(paths);
+		super(new Tree(paths));
 	}
 
 	@Override
@@ -95,9 +96,9 @@ public class StrahlerAnalyzer extends PathAnalyzer {
 					.collect(Collectors.toCollection(HashSet::new)); // collect the output in a new set
 
 			// now measure the group
-			final PathAnalyzer analyzer = new PathAnalyzer(groupedPaths);
+			final TreeAnalyzer analyzer = new TreeAnalyzer(new Tree(groupedPaths));
 			if (!analyzer.getParsedPaths().isEmpty()) {
-				tLengthMap.put(order, analyzer.getTotalLength());
+				tLengthMap.put(order, analyzer.getCableLength());
 				final int nPaths = analyzer.getNPaths();
 				nPathsMap.put(order, (double) nPaths);
 				bPointsMap.put(order, (double) analyzer.getBranchPoints().size());

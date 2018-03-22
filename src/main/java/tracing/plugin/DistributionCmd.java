@@ -25,7 +25,6 @@ package tracing.plugin;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,16 +51,17 @@ import org.scijava.plugin.Plugin;
 import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.SNT;
+import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.measure.TreeAnalyzer;
-import tracing.util.PointInImage;
+import tracing.measure.TreeStatistics;
 import tracing.util.SWCColor;
 
-@Plugin(type = Command.class, visible = false, label = "Distribution of Morphometric Measurements")
+@Plugin(type = Command.class, visible = false, label = "Distribution of Morphometric Traits")
 public class DistributionCmd implements Command {
 
 	@Parameter(required = true, label = "Measurement", choices = { TreeAnalyzer.BRANCH_ORDER,
-			TreeAnalyzer.INTER_NODE_DISTANCE, TreeAnalyzer.N_BRANCH_POINTS, TreeAnalyzer.N_NODES,
+			TreeAnalyzer.INTER_NODE_DISTANCE, TreeAnalyzer.LENGTH, TreeAnalyzer.N_BRANCH_POINTS, TreeAnalyzer.N_NODES,
 			TreeAnalyzer.NODE_RADIUS, TreeAnalyzer.MEAN_RADIUS })
 	private String measurementChoice;
 
@@ -69,46 +69,31 @@ public class DistributionCmd implements Command {
 	private HashSet<Path> paths;
 
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE, persist = false)
-	private String frameTitle = "SNT: Histogram";
+	private static String title;
 
 	@Override
 	public void run() {
-
-		final List<Double> data = new ArrayList<Double>();
-		for (final Path p : paths) {
-			if (TreeAnalyzer.NODE_RADIUS.equals(measurementChoice)) {
-				for (int i = 0; i< p.size(); i++) data.add(p.getNodeRadius(i));
-			}
-			else if (TreeAnalyzer.INTER_NODE_DISTANCE.equals(measurementChoice)) {
-				for (int i = 0; i < p.size() - 1; i++) {
-					final PointInImage pim1 = p.getPointInImage(i);
-					final PointInImage pim2 = p.getPointInImage(i + 1);
-					data.add(pim1.distanceTo(pim2));
-				}
-			}
-			else if (TreeAnalyzer.MEAN_RADIUS.equals(measurementChoice))
-				data.add(p.getMeanRadius());
-			else if (TreeAnalyzer.BRANCH_ORDER.equals(measurementChoice))
-				data.add((double) p.getOrder());
-			else if (TreeAnalyzer.N_NODES.equals(measurementChoice))
-				data.add((double)p.size());
-			else if (TreeAnalyzer.N_BRANCH_POINTS.contains(measurementChoice))
-				data.add((double)p.findJoinedPoints().size());
-			else // TreeAnalyzer.LENGTH
-				data.add(p.getRealLength());
-
-		}
-		final JFreeChart getHistogram = getHistogram(data, measurementChoice);
-		final ChartFrame frame = new ChartFrame((frameTitle == null) ? "SNT: Histogram" : frameTitle, getHistogram);
-		frame.setPreferredSize(new Dimension(400, 400));
-		frame.pack();
-		frame.setVisible(true);
+		final TreeStatistics treeStats = new TreeStatistics(new Tree(paths));
+		final DescriptiveStatistics dStats = treeStats.getDescriptiveStats(measurementChoice);
+		getHistogram(dStats, measurementChoice, true);
 	}
 
-	public JFreeChart getHistogram(final List<Double> data, final String title) {
+	/**
+	 * Gets the relative frequencies histogram from a univariate dataset. The number
+	 * of bins is determined using the Freedman-Diaconis rule.
+	 *
+	 * @param da
+	 *            the DescriptiveStatistics object holding the univariate data to be
+	 *            plotted
+	 * @param key
+	 *            a non-null descriptor identifying the series to be plotted
+	 * @param show
+	 *            if true, histogram is displayed on a dedicated frame
+	 * @return the assembled histogram
+	 */
+	public static JFreeChart getHistogram(final DescriptiveStatistics da, final String key, final boolean show) {
 
-		final double[] values = data.stream().mapToDouble(d -> d).toArray();
-		final DescriptiveStatistics da = new DescriptiveStatistics(values);
+		final double[] values = da.getValues();
 		final long n = da.getN();
 		final double q1 = da.getPercentile(25);
 		final double q3 = da.getPercentile(75);
@@ -119,8 +104,8 @@ public class DistributionCmd implements Command {
 
 		final HistogramDataset dataset = new HistogramDataset();
 		dataset.setType(HistogramType.RELATIVE_FREQUENCY);
-		dataset.addSeries(title, values, Math.max(1, nBins));
-		final JFreeChart chart = ChartFactory.createHistogram(null, title, "Rel. Frequency", dataset);
+		dataset.addSeries(key, values, Math.max(1, nBins));
+		final JFreeChart chart = ChartFactory.createHistogram(null, key, "Rel. Frequency", dataset);
 
 		// Customize plot
 		final Color bColor = SWCColor.alphaColor(Color.WHITE, 100);
@@ -142,7 +127,7 @@ public class DistributionCmd implements Command {
 		sb.append("Q1: ").append(SNT.formatDouble(q1, 2));
 		sb.append("  Median: ").append(SNT.formatDouble(da.getPercentile(50), 2));
 		sb.append("  Q3: ").append(SNT.formatDouble(q3, 2));
-		sb.append("  IQR: ").append(SNT.formatDouble(q3-q1, 2));
+		sb.append("  IQR: ").append(SNT.formatDouble(q3 - q1, 2));
 		sb.append("\nN: ").append(n);
 		sb.append("  Min: ").append(SNT.formatDouble(min, 2));
 		sb.append("  Max: ").append(SNT.formatDouble(max, 2));
@@ -152,6 +137,12 @@ public class DistributionCmd implements Command {
 		label.setFont(label.getFont().deriveFont(Font.PLAIN));
 		label.setPosition(RectangleEdge.BOTTOM);
 		chart.addSubtitle(label);
+		if (show) {
+			final ChartFrame frame = new ChartFrame(title, chart);
+			frame.setPreferredSize(new Dimension(400, 400));
+			frame.pack();
+			frame.setVisible(true);
+		}
 		return chart;
 	}
 
@@ -159,25 +150,23 @@ public class DistributionCmd implements Command {
 		final List<Path> data = new ArrayList<Path>();
 		for (int i = 0; i < 200; i++) {
 			final Path p = new Path(1, 1, 1, "unit");
-			final double v = new Random().nextGaussian();
-			p.addPointDouble(0, 0, 0);
-			p.addPointDouble(v, v, v);
+			final double v1 = new Random().nextGaussian();
+			final double v2 = new Random().nextGaussian();
+			p.addPointDouble(v1, v2, v1);
+			p.addPointDouble(v2, v1, v2);
 			data.add(p);
 		}
 		return data;
 	}
 
-	/**
-	 * IDE debug method
-	 * 
-	 * @throws IOException
-	 **/
-	public static void main(final String[] args) throws IOException {
+	/** IDE debug method **/
+	public static void main(final String[] args) {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
 		input.put("paths", new HashSet<Path>(randomPaths()));
+		input.put("title", "Bogus test");
 		ij.command().run(DistributionCmd.class, true, input);
 	}
 

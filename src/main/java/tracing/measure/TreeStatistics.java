@@ -1,48 +1,58 @@
-package tracing.measure;
+/*-
+ * #%L
+ * Fiji distribution of ImageJ for the life sciences.
+ * %%
+ * Copyright (C) 2010 - 2018 Fiji developers.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
 
-import java.util.ArrayList;
-import java.util.HashSet;
+package tracing.measure;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import tracing.Path;
-import tracing.PathAndFillManager;
+import tracing.Tree;
 
 /**
- * The Class PathStatistics.
+ * The Class TreeStatistics.
  */
-public class PathStatistics extends PathAnalyzer {
+public class TreeStatistics extends TreeAnalyzer {
 
-	/** Flag encoding the length of a path */
+	/** Flag encoding the cable length of a tree */
 	public static final int LENGTH = 1;
 
-	/** Flag encoding number of nodes in a path */
+	/** Flag encoding number of points in a tree */
 	public static final int N_NODES = 2;
 
-	/** Flag encoding distances between consecutive nodes*/
+	/** Flag encoding distances between consecutive nodes */
 	public static final int INTER_NODE_DISTANCE = 4;
 
-	/** Flag encoding radius of nodes */
+	/** Flag encoding the node radius */
 	public static final int NODE_RADIUS = 8;
 
-
-	public PathStatistics(final ArrayList<Path> paths) {
-		super(paths);
-	}
-
-	public PathStatistics(final HashSet<Path> paths) {
-		super(paths);
-	}
-
-	public PathStatistics(final PathAndFillManager pafm) {
-		super(pafm);
+	public TreeStatistics(final Tree tree) {
+		super(tree);
 	}
 
 	/**
 	 * Computes the {@link SummaryStatistics} for the specified measurement.
 	 *
 	 * @param measurement
-	 *            the measurement ({@link N_NODES}, {@link NODE_RADIUS}, etc.
+	 *            the measurement ({@link N_NODES}, {@link NODE_RADIUS}, etc.)
 	 * @return the SummaryStatistics object.
 	 */
 	public SummaryStatistics getStatistics(final int measurement) {

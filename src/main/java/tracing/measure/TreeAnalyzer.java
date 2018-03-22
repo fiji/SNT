@@ -38,11 +38,12 @@ import org.scijava.plugin.Plugin;
 import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
 import tracing.PathAndFillManager;
+import tracing.Tree;
 import tracing.util.PointInImage;
 
 
 @Plugin(type = ContextCommand.class, visible = false)
-public class PathAnalyzer extends ContextCommand {
+public class TreeAnalyzer extends ContextCommand {
 
 	@Parameter
 	protected StatusService statusService;
@@ -71,22 +72,18 @@ public class PathAnalyzer extends ContextCommand {
 	private int unfilteredPathsFittedPathsCounter = 0;
 
 
-	public PathAnalyzer(final ArrayList<Path> paths) {
-		this(new HashSet<Path>(paths));
-	}
-
 	/**
 	 * Instantiates a new Path analyzer.
 	 *
-	 * @param paths
-	 *            list of paths to be analyzed. Note that some paths may be excluded
+	 * @param tree
+	 *            Collection of paths to be analyzed. Note that some paths may be excluded
 	 *            from analysis: I.e., null paths, and paths that may exist only as just
 	 *            fitted versions of existing ones.
 	 *
 	 * @see #getParsedPaths()
 	 */
-	public PathAnalyzer(final HashSet<Path> paths) {
-		this.paths = new HashSet<Path>();
+	public TreeAnalyzer(final Tree tree) {
+		this.paths = tree.getPaths();
 		for (final Path p : paths) {
 			if (p == null || p.isFittedVersionOfAnotherPath())
 				continue;
@@ -102,11 +99,6 @@ public class PathAnalyzer extends ContextCommand {
 		}
 		unfilteredPathsFittedPathsCounter = fittedPathsCounter;
 	}
-
-	public PathAnalyzer(final PathAndFillManager pafm) {
-		this(pafm.getPaths());
-	}
-
 
 	public void restrictToSWCType(final int... types) {
 		if (unfilteredPaths == null) {

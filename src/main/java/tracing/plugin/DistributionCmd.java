@@ -44,6 +44,7 @@ import org.jfree.chart.title.TextTitle;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.statistics.HistogramType;
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -52,48 +53,48 @@ import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.SNT;
 import tracing.gui.GuiUtils;
-import tracing.measure.PathAnalyzer;
+import tracing.measure.TreeAnalyzer;
 import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
 @Plugin(type = Command.class, visible = false, label = "Distribution of Morphometric Measurements")
 public class DistributionCmd implements Command {
 
-	@Parameter(required = true, label = "Measurement", choices = { PathAnalyzer.BRANCH_ORDER,
-			PathAnalyzer.INTER_NODE_DISTANCE, PathAnalyzer.N_BRANCH_POINTS, PathAnalyzer.N_NODES,
-			PathAnalyzer.NODE_RADIUS, PathAnalyzer.MEAN_RADIUS })
+	@Parameter(required = true, label = "Measurement", choices = { TreeAnalyzer.BRANCH_ORDER,
+			TreeAnalyzer.INTER_NODE_DISTANCE, TreeAnalyzer.N_BRANCH_POINTS, TreeAnalyzer.N_NODES,
+			TreeAnalyzer.NODE_RADIUS, TreeAnalyzer.MEAN_RADIUS })
 	private String measurementChoice;
 
 	@Parameter(required = true)
 	private HashSet<Path> paths;
 
-	@Parameter(required = false)
-	private String frameTitle;
+	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE, persist = false)
+	private String frameTitle = "SNT: Histogram";
 
 	@Override
 	public void run() {
 
 		final List<Double> data = new ArrayList<Double>();
 		for (final Path p : paths) {
-			if (PathAnalyzer.NODE_RADIUS.equals(measurementChoice)) {
+			if (TreeAnalyzer.NODE_RADIUS.equals(measurementChoice)) {
 				for (int i = 0; i< p.size(); i++) data.add(p.getNodeRadius(i));
 			}
-			else if (PathAnalyzer.INTER_NODE_DISTANCE.equals(measurementChoice)) {
+			else if (TreeAnalyzer.INTER_NODE_DISTANCE.equals(measurementChoice)) {
 				for (int i = 0; i < p.size() - 1; i++) {
 					final PointInImage pim1 = p.getPointInImage(i);
 					final PointInImage pim2 = p.getPointInImage(i + 1);
 					data.add(pim1.distanceTo(pim2));
 				}
 			}
-			else if (PathAnalyzer.MEAN_RADIUS.equals(measurementChoice))
+			else if (TreeAnalyzer.MEAN_RADIUS.equals(measurementChoice))
 				data.add(p.getMeanRadius());
-			else if (PathAnalyzer.BRANCH_ORDER.equals(measurementChoice))
+			else if (TreeAnalyzer.BRANCH_ORDER.equals(measurementChoice))
 				data.add((double) p.getOrder());
-			else if (PathAnalyzer.N_NODES.equals(measurementChoice))
+			else if (TreeAnalyzer.N_NODES.equals(measurementChoice))
 				data.add((double)p.size());
-			else if (PathAnalyzer.N_BRANCH_POINTS.contains(measurementChoice))
+			else if (TreeAnalyzer.N_BRANCH_POINTS.contains(measurementChoice))
 				data.add((double)p.findJoinedPoints().size());
-			else // PathAnalyzer.LENGTH
+			else // TreeAnalyzer.LENGTH
 				data.add(p.getRealLength());
 
 		}
@@ -154,7 +155,7 @@ public class DistributionCmd implements Command {
 		return chart;
 	}
 
-	private static List<Path> randomPaths() {
+	public static List<Path> randomPaths() {
 		final List<Path> data = new ArrayList<Path>();
 		for (int i = 0; i < 200; i++) {
 			final Path p = new Path(1, 1, 1, "unit");

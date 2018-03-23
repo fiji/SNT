@@ -949,7 +949,11 @@ public class Path implements Comparable<Path> {
 	}
 
 	public boolean hasCustomColor() {
-		return hasCustomColor && color != null;
+		return (hasCustomColor && color != null) || hasNodeColors();
+	}
+
+	public boolean hasNodeColors() {
+		return nodeColors != null;
 	}
 
 	public static Color getSWCcolor(final int swcType) {

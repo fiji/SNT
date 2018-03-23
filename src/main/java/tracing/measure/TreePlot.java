@@ -24,14 +24,11 @@ package tracing.measure;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.io.IOException;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
@@ -47,7 +44,6 @@ import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
 
 import net.imagej.ImageJ;
-import net.imagej.lut.LUTService;
 import net.imagej.plot.LineStyle;
 import net.imagej.plot.MarkerStyle;
 import net.imagej.plot.PlotService;
@@ -61,23 +57,13 @@ import tracing.plugin.DistributionCmd;
 import tracing.util.PointInImage;
 
 /**
- * Class for rendering trees as 2D plots that can be exported as SVG, PNG or PDF
+ * Class for rendering trees as 2D plots that can be exported as SVG, PNG or
+ * PDF.
  *
  * @author Tiago Ferreira
  *
  */
-public class TreePlot {
-
-	/* For convenience keep references to TreeAnalyzer fields */
-	public static final String BRANCH_ORDER = TreeAnalyzer.BRANCH_ORDER;
-	public static final String LENGTH = TreeAnalyzer.LENGTH;
-	public static final String N_BRANCH_POINTS = TreeAnalyzer.N_BRANCH_POINTS;
-	public static final String N_NODES = TreeAnalyzer.N_NODES;
-	public static final String MEAN_RADIUS = TreeAnalyzer.MEAN_RADIUS;
-	private static final String INTERNAL_COUNTER = "";
-
-	@Parameter
-	private LUTService lutService;
+public class TreePlot extends TreeColorizer {
 
 	@Parameter
 	private PlotService plotService;
@@ -85,27 +71,20 @@ public class TreePlot {
 	@Parameter
 	private UIService uiService;
 
-	private HashSet<Path> paths;
-	private ColorTable colorTable;
 	private XYPlot plot;
 	private String title;
 	private JFreeChart chart;
-	private boolean integerScale;
-
-	private double min = Double.MAX_VALUE;
-	private double max = Double.MIN_VALUE;
 	private Color defaultColor = Color.BLACK;
-	private int internalCounter = 1;
 
 	/**
-	 * Instantiates a new empty plot.
+	 * Instantiates an empty tree plot.
 	 *
 	 * @param context
-	 *            the SciJava application context providing all the services
-	 *            required by the class
+	 *            the SciJava application context providing the services required by
+	 *            the class
 	 */
 	public TreePlot(final Context context) {
-		context.inject(this);
+		super(context);
 	}
 
 	private void addPaths(final HashSet<Path> paths) {
@@ -113,85 +92,9 @@ public class TreePlot {
 		plotPaths();
 	}
 
-	private ColorTable getColorTable(final String lut) {
-		final Map<String, URL> luts = lutService.findLUTs();
-		for (final Map.Entry<String, URL> entry : luts.entrySet()) {
-			if (entry.getKey().contains(lut)) {
-				try {
-					return lutService.loadLUT(entry.getValue());
-				} catch (final IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return null;
-	}
-
 	private void initPlot() {
 		if (plot == null)
 			plot = plotService.newXYPlot();
-	}
-
-	private void mapToProperty(final String measurement, final ColorTable colorTable, final double min,
-			final double max) {
-		if (colorTable == null)
-			return;
-		if (min > max)
-			throw new IllegalArgumentException("min > max.");
-		this.colorTable = colorTable;
-		setTitle("SNT: Plot [" + measurement + "]");
-		final List<MappedPath> mappedPaths = new ArrayList<>();
-		switch (measurement) {
-		case BRANCH_ORDER:
-			integerScale = true;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, (double) p.getOrder()));
-			break;
-		case LENGTH:
-			integerScale = false;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, p.getRealLength()));
-			break;
-		case MEAN_RADIUS:
-			integerScale = false;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, p.getMeanRadius()));
-			break;
-		case N_NODES:
-			integerScale = true;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, (double) p.size()));
-			break;
-		case N_BRANCH_POINTS:
-			integerScale = true;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, (double) p.findJoinedPoints().size()));
-			break;
-		case INTERNAL_COUNTER:
-			integerScale = true;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, (double) internalCounter));
-			break;
-		default:
-			throw new IllegalArgumentException("Unknown parameter");
-		}
-		if (!Double.isNaN(min))
-			this.min = min;
-		if (!Double.isNaN(max))
-			this.max = max;
-		for (final MappedPath mp : mappedPaths) {
-			final int idx;
-			if (mp.mappedValue <= min)
-				idx = 0;
-			else if (mp.mappedValue > max)
-				idx = colorTable.getLength() - 1;
-			else
-				idx = (int) Math
-						.round((colorTable.getLength() - 1) * (mp.mappedValue - this.min) / (this.max - this.min));
-			final Color color = new Color(colorTable.get(ColorTable.RED, idx), colorTable.get(ColorTable.GREEN, idx),
-					colorTable.get(ColorTable.BLUE, idx));
-			mp.path.setColor(color);
-		}
 	}
 
 	private void plotPaths() {
@@ -200,6 +103,10 @@ public class TreePlot {
 		}
 		initPlot();
 		for (final Path p : paths) {
+			if (p.hasNodeColors()) {
+				plotColoredNodePaths(p);
+				continue;
+			}
 			final XYSeries series = plot.addXYSeries();
 			series.setLabel(p.getName());
 			final List<Double> xc = new ArrayList<Double>();
@@ -217,12 +124,27 @@ public class TreePlot {
 		}
 	}
 
+	private void plotColoredNodePaths(final Path p) {
+		for (int node = 0; node < p.size(); node++) {
+			final XYSeries series = plot.addXYSeries();
+			final List<Double> xc = new ArrayList<Double>();
+			final List<Double> yc = new ArrayList<Double>();
+			final PointInImage pim = p.getPointInImage(node);
+			xc.add(pim.x);
+			yc.add(-pim.y);
+			series.setValues(xc, yc);
+			series.setLegendVisible(false);
+			final Color c = p.getNodeColor(node);
+			series.setStyle(plot.newSeriesStyle(new ColorRGB(c.getRed(), c.getGreen(), c.getBlue()), LineStyle.NONE,
+					MarkerStyle.FILLEDCIRCLE));
+		}
+	}
 	/**
 	 * Adds a lookup legend to the plot. Does nothing if no measurement mapping
 	 * occurred successfully.
 	 * 
-	 * Note that when performing mapping to different measurements, the legend will
-	 * reflects the last measurement.
+	 * Note that when performing mapping to different measurements, the legend
+	 * reflects only the last mapped measurement.
 	 */
 	public void addLookupLegend() {
 
@@ -262,6 +184,22 @@ public class TreePlot {
 	}
 
 	/**
+	 * Adds a list of trees while assigning each tree to a LUT index.
+	 *
+	 * @param trees
+	 *            the list of trees to be plotted
+	 * @param lut
+	 *            the lookup table specifying the color mapping
+	 * 
+	 */
+	public void addTrees(final List<Tree> trees, final String lut) {
+		colorizeTrees(trees, lut);
+		for (final ListIterator<Tree> it = trees.listIterator(); it.hasNext();) {
+			addTree(it.next());
+		}
+	}
+
+	/**
 	 * Appends a tree to the plot.
 	 *
 	 * @param tree
@@ -295,7 +233,8 @@ public class TreePlot {
 	public void addTree(final Tree tree, final String measurement, final ColorTable colorTable, final double min,
 			final double max) {
 		this.paths = tree.getPaths();
-		mapToProperty(measurement, colorTable, min, max);
+		setMinMax(min, max);
+		mapToProperty(measurement, colorTable);
 		plotPaths();
 	}
 
@@ -333,14 +272,6 @@ public class TreePlot {
 	public void addTree(final Tree tree, final String measurement, final String lut, final double min,
 			final double max) {
 		addTree(tree, measurement, getColorTable(lut), min, max);
-	}
-
-	public void addTrees(final List<Tree> trees, final String lut) {
-		final double max = trees.size();
-		for (final ListIterator<Tree> it = trees.listIterator(); it.hasNext();) {
-			addTree(it.next(), INTERNAL_COUNTER, lut, 1, max);
-			internalCounter = it.nextIndex();
-		}
 	}
 
 	/**
@@ -405,21 +336,6 @@ public class TreePlot {
 	/** Displays the current plot on a dedicated frame */
 	public void showPlot() {
 		getPlot(true);
-	}
-
-	private class MappedPath {
-
-		private final Path path;
-		private final Double mappedValue;
-
-		private MappedPath(final Path path, final Double mappedValue) {
-			this.path = path;
-			this.mappedValue = mappedValue;
-			if (mappedValue > max)
-				max = mappedValue;
-			if (mappedValue < min)
-				min = mappedValue;
-		}
 	}
 
 	/** IDE debug method */

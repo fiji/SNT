@@ -29,11 +29,19 @@ import tracing.Path;
 import tracing.Tree;
 
 /**
- * Computes summary and descriptive statistics of tree properties.
+ * Computes summary and descriptive statistics from univariate properties of a
+ * tree.
+ *
+ * @author Tiago Ferreira
  */
 public class TreeStatistics extends TreeAnalyzer {
 
-
+	/**
+	 * Instantiates a new instance from a collection of Paths
+	 *
+	 * @param tree
+	 *            the collection of paths to be analyzed.
+	 */
 	public TreeStatistics(final Tree tree) {
 		super(tree);
 	}
@@ -67,42 +75,63 @@ public class TreeStatistics extends TreeAnalyzer {
 	private void assembleStats(final StatisticsInstance stat, final String measurement) {
 		switch (measurement) {
 		case TreeAnalyzer.LENGTH:
-			for (final Path p : paths)
+			for (final Path p : tree.getPaths())
 				stat.addValue(p.getRealLength());
 			break;
 		case TreeAnalyzer.N_NODES:
-			for (final Path p : paths)
+			for (final Path p : tree.getPaths())
 				stat.addValue(p.size());
 			break;
 		case TreeAnalyzer.INTER_NODE_DISTANCE:
-			for (final Path p : paths) {
+			for (final Path p : tree.getPaths()) {
 				if (p.size() < 2)
 					continue;
 				for (int i = 1; i < p.size(); i += 1) {
-					stat.addValue(p.getPointInImage(i).distanceTo(p.getPointInImage(i-1)));
+					stat.addValue(p.getPointInImage(i).distanceTo(p.getPointInImage(i - 1)));
 				}
 			}
 			break;
 		case TreeAnalyzer.NODE_RADIUS:
-			for (final Path p : paths) {
+			for (final Path p : tree.getPaths()) {
 				for (int i = 0; i < p.size(); i++) {
 					stat.addValue(p.getNodeRadius(i));
 				}
 			}
 			break;
 		case TreeAnalyzer.MEAN_RADIUS:
-			for (final Path p : paths) {
+			for (final Path p : tree.getPaths()) {
 				stat.addValue(p.getMeanRadius());
 			}
 			break;
 		case TreeAnalyzer.BRANCH_ORDER:
-			for (final Path p : paths) {
+			for (final Path p : tree.getPaths()) {
 				stat.addValue(p.getOrder());
 			}
 			break;
 		case TreeAnalyzer.N_BRANCH_POINTS:
-			for (final Path p : paths) {
+			for (final Path p : tree.getPaths()) {
 				stat.addValue(p.findJoinedPoints().size());
+			}
+			break;
+		case TreeAnalyzer.X_COORDINATES:
+			for (final Path p : tree.getPaths()) {
+				for (int i = 0; i < p.size(); i++) {
+					stat.addValue(p.getPointInImage(i).x);
+				}
+			}
+			break;
+		case TreeAnalyzer.Y_COORDINATES:
+			for (final Path p : tree.getPaths()) {
+				for (int i = 0; i < p.size(); i++) {
+					stat.addValue(p.getPointInImage(i).y);
+				}
+			}
+			break;
+		case TreeAnalyzer.Z_COORDINATES:
+			for (final Path p : tree.getPaths()) {
+				for (int i = 0; i < p.size(); i++) {
+					stat.addValue(p.getPointInImage(i).z);
+				}
 			}
 			break;
 		default:

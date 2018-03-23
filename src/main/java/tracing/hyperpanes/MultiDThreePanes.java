@@ -40,8 +40,11 @@ import tracing.hyperpanes.PaneOwner;
 /** Convenience class defining methods common to SNT's XY, XZ, and ZY panes */
 public class MultiDThreePanes implements PaneOwner {
 
+	/** SNT's XY view */
 	public static final int XY_PLANE = 0; // constant z
+	/** SNT's XZ view */
 	public static final int XZ_PLANE = 1; // constant y
+	/** SNT's ZY view */
 	public static final int ZY_PLANE = 2; // constant x
 
 	protected ImagePlus xy;

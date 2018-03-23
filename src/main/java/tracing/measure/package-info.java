@@ -21,7 +21,7 @@
  */
 
 /**
- * Classes measuring path properties.
+ * Classes measuring properties of trees.
  *
  * @author Tiago Ferreira
  */

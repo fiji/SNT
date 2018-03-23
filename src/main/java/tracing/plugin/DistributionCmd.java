@@ -148,7 +148,7 @@ public class DistributionCmd implements Command {
 
 	public static List<Path> randomPaths() {
 		final List<Path> data = new ArrayList<Path>();
-		for (int i = 0; i < 200; i++) {
+		for (int i = 0; i < 100; i++) {
 			final Path p = new Path(1, 1, 1, "unit");
 			final double v1 = new Random().nextGaussian();
 			final double v2 = new Random().nextGaussian();

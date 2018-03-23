@@ -40,8 +40,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import javax.swing.UIManager;
-
 import net.imagej.Dataset;
 import net.imagej.axis.Axes;
 import net.imagej.legacy.LegacyService;

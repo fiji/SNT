@@ -62,17 +62,14 @@ public class StrahlerAnalyzer extends TreeAnalyzer {
 	private final Map<Integer, Double> bRatioMap = new TreeMap<>();
 	private final Map<Integer, Double> tLengthMap = new TreeMap<>();
 
-	public StrahlerAnalyzer(final ArrayList<Path> paths) {
-		this(new HashSet<Path>(paths));
-	}
 
-	public StrahlerAnalyzer(final HashSet<Path> paths) {
-		super(new Tree(paths));
+	public StrahlerAnalyzer(final Tree tree) {
+		super(tree);
 	}
 
 	@Override
 	public void run() {
-		if (paths == null || paths.isEmpty()) {
+		if (tree == null || tree.isEmpty()) {
 			cancel("No Paths to Measure");
 			return;
 		}
@@ -85,19 +82,19 @@ public class StrahlerAnalyzer extends TreeAnalyzer {
 
 	public void compute() {
 		maxBranchOrder = 1;
-		for (final Path p : paths) {
+		for (final Path p : tree.getPaths()) {
 			if (p.getOrder() > maxBranchOrder)
 				maxBranchOrder = p.getOrder();
 		}
 		IntStream.rangeClosed(1, maxBranchOrder).forEach(order -> {
 
-			final HashSet<Path> groupedPaths = paths.stream() // convert set of paths to stream
+			final HashSet<Path> groupedPaths = tree.getPaths().stream() // convert set of paths to stream
 					.filter(path -> path.getOrder() == order) // include only those of this order
 					.collect(Collectors.toCollection(HashSet::new)); // collect the output in a new set
 
 			// now measure the group
 			final TreeAnalyzer analyzer = new TreeAnalyzer(new Tree(groupedPaths));
-			if (!analyzer.getParsedPaths().isEmpty()) {
+			if (!analyzer.getParsedTree().isEmpty()) {
 				tLengthMap.put(order, analyzer.getCableLength());
 				final int nPaths = analyzer.getNPaths();
 				nPathsMap.put(order, (double) nPaths);

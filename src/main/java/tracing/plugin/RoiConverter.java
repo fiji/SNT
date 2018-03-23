@@ -25,7 +25,6 @@ package tracing.plugin;
 import java.awt.Color;
 import java.util.HashSet;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Overlay;
 import ij.gui.PointRoi;
@@ -61,8 +60,8 @@ public class RoiConverter extends TreeAnalyzer {
 	private boolean useSWCcolors;
 
 
-	public RoiConverter(final HashSet<Path> paths) {
-		super(new Tree(paths));
+	public RoiConverter(final Tree tree) {
+		super(tree);
 	}
 
 	/**
@@ -72,7 +71,7 @@ public class RoiConverter extends TreeAnalyzer {
 	 */
 	public void convertPaths(Overlay overlay) {
 		if (overlay == null) overlay = new Overlay();
-		for (final Path p : paths) {
+		for (final Path p : tree.getPaths()) {
 			if (p.size() > 1) {
 				drawPathSegments(p, overlay);
 			} else { // Single Point Path
@@ -217,11 +216,10 @@ public class RoiConverter extends TreeAnalyzer {
 	private void convertPoints(final HashSet<PointInImage> points, final Overlay overlay, final Color color,
 			final String id) {
 		if (points.isEmpty()) return;
-		final Path referencePath = points.iterator().next().onPath;
-		final ImagePlus boundsImp = assembleBoundingImage(points, referencePath); // NB: this image is just required to
-																				// assign Z -positions to points. It is
-																				// an overhead and not required for 2D
-																				// images
+		final ImagePlus boundsImp = tree.getImpContainer(exportPlane); // NB: this image is just required to
+																		// assign Z -positions to points. It is
+																		// an overhead and not required for 2D
+																		// images
 		final SNTPointRoi roi = new SNTPointRoi(boundsImp);
 		final String sPlane = getExportPlaneAsString();
 		for (final PointInImage p : points) {
@@ -237,25 +235,6 @@ public class RoiConverter extends TreeAnalyzer {
 		roi.setStrokeColor(color);
 		roi.setName(String.format("%s-roi-%s", id, sPlane));
 		overlay.add(roi);
-	}
-
-	private ImagePlus assembleBoundingImage(final HashSet<PointInImage> points, final Path referencePath) {
-		final double pimXmin = points.stream().mapToDouble(pim -> pim.x).min().getAsDouble();
-		final double pimYmin = points.stream().mapToDouble(pim -> pim.y).min().getAsDouble();
-		final double pimZmin = points.stream().mapToDouble(pim -> pim.z).min().getAsDouble();
-		final double pimXmax = points.stream().mapToDouble(pim -> pim.x).max().getAsDouble();
-		final double pimYmax = points.stream().mapToDouble(pim -> pim.y).max().getAsDouble();
-		final double pimZmax = points.stream().mapToDouble(pim -> pim.z).max().getAsDouble();
-		final PointInImage p1 = new PointInImage(pimXmin, pimYmin, pimZmin);
-		final PointInImage p2 = new PointInImage(pimXmax, pimYmax, pimZmax);
-		p1.onPath = referencePath;
-		p2.onPath = referencePath;
-		final double[] bound1 = PathNode.unScale(p1, exportPlane);
-		final double[] bound2 = PathNode.unScale(p2, exportPlane);
-		final int w = (int) (bound2[0] - bound1[0]) + 2;
-		final int h = (int) (bound2[1] - bound1[1]) + 2;
-		final int d = (int) (bound2[2] - bound1[2]) + 2;
-		return IJ.createImage(null, w, h, d, 8);
 	}
 
 	private String getExportPlaneAsString() {

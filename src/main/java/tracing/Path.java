@@ -2282,6 +2282,15 @@ public class Path implements Comparable<Path> {
 		}
 	}
 
+	protected java.util.List<PointInImage> getPointInImageList() {
+		final ArrayList<PointInImage> linePoints = new ArrayList<>();
+		for (int i = 0; i < points; ++i) {
+			linePoints.add(new PointInImage(precise_x_positions[i], precise_y_positions[i],
+					precise_z_positions[i]));
+		}
+		return linePoints;
+	}
+
 	public java.util.List<Point3f> getPoint3fList() {
 		final ArrayList<Point3f> linePoints = new ArrayList<>();
 		for (int i = 0; i < points; ++i) {

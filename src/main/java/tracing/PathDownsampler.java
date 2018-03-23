@@ -36,18 +36,15 @@ class SimplePoint {
 	}
 }
 
+/**
+ * This is an implementation of the Ramer-Douglas-Peucker algorithm for
+ * simplifying a curve represented by line-segments, as described here:
+ *
+ * {@link https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm}
+ *
+ */
 public class PathDownsampler {
 
-	/**
-	 * This is an implementation of the Ramer-Douglas-Peucker algorithm for
-	 * simplifying a curve represented by line-segments, as described here:
-	 *
-	 * http://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
-	 *
-	 * @param points
-	 * @param permittedDeviation
-	 * @return
-	 */
 	protected static ArrayList<SimplePoint> downsample(final ArrayList<SimplePoint> points,
 			final double permittedDeviation) {
 		final int n = points.size();

@@ -22,9 +22,7 @@
 
 package tracing.plugin;
 
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 import org.scijava.app.StatusService;
@@ -40,6 +38,7 @@ import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import net.imagej.ImageJ;
 import tracing.Path;
+import tracing.Tree;
 
 
 /**
@@ -76,7 +75,7 @@ public class ROIExporterCmd implements Command {
 	private boolean discardExisting;
 
 	@Parameter(required= true)
-	private HashSet<Path> paths;
+	private Tree tree;
 
 	private Overlay overlay;
 	private RoiConverter converter;
@@ -86,13 +85,13 @@ public class ROIExporterCmd implements Command {
 	@Override
 	public void run() {
 
-		converter = new RoiConverter(paths);
-		if (converter.getParsedPaths().isEmpty()) {
+		converter = new RoiConverter(tree);
+		if (converter.getParsedTree().isEmpty()) {
 			warnUser("None of the input paths could be converted to ROIs.");
 			return;
 		}
 
-		final int skippedPaths = paths.size() - converter.getParsedPaths().size(); 
+		final int skippedPaths = tree.size() - converter.getParsedTree().size(); 
 		logService.info("Converting paths to ROIs...");
 		statusService.showStatus("Converting paths to ROIs...");
 		if (skippedPaths > 0)
@@ -170,16 +169,12 @@ public class ROIExporterCmd implements Command {
 	}
 
 
-	/**
-	 * IDE debug method
-	 * 
-	 * @throws IOException
-	 **/
-	public static void main(final String[] args) throws IOException {
+	/** IDE debug method **/
+	public static void main(final String[] args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input= new HashMap<>();
-		input.put("paths", new HashSet<Path>());
+		input.put("tree", new Tree());
 		ij.command().run(ROIExporterCmd.class, true, input);
 	}
 

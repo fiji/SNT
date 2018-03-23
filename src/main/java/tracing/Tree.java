@@ -27,12 +27,18 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+
+import ij.IJ;
+import ij.ImagePlus;
+import tracing.hyperpanes.MultiDThreePanes;
+import tracing.measure.TreeAnalyzer;
+import tracing.measure.TreeStatistics;
 import tracing.util.PointInImage;
 
 /**
  * Utility class to access a Collection of Paths. Note a "Tree" here is
- * literally a collection of Paths and it does not reflect graph theory
- * terminology
+ * literally a set of Paths and it does not reflect graph theory terminology.
  *
  * @author Tiago Ferreira
  */
@@ -41,7 +47,7 @@ public class Tree {
 	public static final int X_AXIS = 1;
 	public static final int Y_AXIS = 2;
 	public static final int Z_AXIS = 4;
-	private final HashSet<Path> tree;
+	private HashSet<Path> tree;
 
 	/**
 	 * Instantiates a new empty tree.
@@ -66,7 +72,7 @@ public class Tree {
 	 * Instantiates a new tree from a SWC or traces file
 	 *
 	 * @param filename
-	 *            the absolute file path of the file
+	 *            the absolute file path of the imported file
 	 */
 	public Tree(final String filename) {
 		final PathAndFillManager pafm = PathAndFillManager.createFromTracesFile(filename);
@@ -79,7 +85,7 @@ public class Tree {
 	 * Instantiates a new tree from a filtered SWC or traces file.
 	 *
 	 * @param filename
-	 *            the filename
+	 *            the absolute file path of the imported file
 	 * @param swcTypes
 	 *            only paths matching the specified SWC type(s) (e.g.,
 	 *            {@link Path#SWC_AXON}, {@link Path#SWC_DENDRITE}, etc.) will be
@@ -87,15 +93,15 @@ public class Tree {
 	 */
 	public Tree(final String filename, final int... swcTypes) {
 		this(filename);
-		final Iterator<Path> it = tree.iterator();
-		while (it.hasNext()) {
-			final Path p = it.next();
-			final boolean filteredType = Arrays.stream(swcTypes).anyMatch(t -> t == p.getSWCType());
-			if (!filteredType)
-				it.remove();
-		}
+		tree = subTree(swcTypes).getPaths();
 	}
 
+	/**
+	 * Instantiates a new tree from a list of paths.
+	 *
+	 * @param paths
+	 *            the list of paths forming this tree. Null not allowed.
+	 */
 	public Tree(ArrayList<Path> paths) {
 		this(new HashSet<Path>(paths));
 	}
@@ -111,17 +117,29 @@ public class Tree {
 	}
 
 	/**
+	 * Replaces all Paths in this tree.
+	 *
+	 * @param paths
+	 *            the replacing Paths
+	 */
+	public void setPaths(final HashSet<Path> paths) {
+		tree.clear();
+		tree.addAll(paths);
+	}
+
+	/**
 	 * Removes a path from this tree.
 	 *
 	 * @param p
 	 *            the Path to be removed
+	 * @return true if this tree contained p
 	 */
-	public void removePath(final Path p) {
-		tree.remove(p);
+	public boolean removePath(final Path p) {
+		return tree.remove(p);
 	}
 
 	/**
-	 * Gets paths from this tree
+	 * Gets all the paths from this tree
 	 *
 	 * @return the paths forming this tree
 	 */
@@ -130,7 +148,52 @@ public class Tree {
 	}
 
 	/**
-	 * Translates the entire tree by the specified offset.
+	 * Returns true if this tree contains no Paths.
+	 *
+	 * @return true if this tree contains no elements.
+	 * 
+	 */
+	public boolean isEmpty() {
+		return tree.isEmpty();
+	}
+
+	/**
+	 * Downsamples the tree.
+	 *
+	 * @param maximumAllowedDeviation
+	 *            the maximum allowed distance between path nodes. Note that
+	 *            upsampling is not supported.
+	 * @see PathDownsampler
+	 */
+	public void downSample(double maximumAllowedDeviation) {
+		for (final Path p : tree) {
+			p.downsample(maximumAllowedDeviation);
+		}
+	}
+
+	/**
+	 * Extracts a subset of paths matching the specified criteria.
+	 *
+	 * @param swcTypes
+	 *            SWC type(s) (e.g., {@link Path#SWC_AXON},
+	 *            {@link Path#SWC_DENDRITE}, etc.) allowed in the subtree
+	 * @return the subset of paths matching the filtering criteria, or an empty Tree
+	 *         if no hits were retrieved
+	 */
+	public Tree subTree(final int... swcTypes) {
+		final Tree subtree = new Tree();
+		final Iterator<Path> it = tree.iterator();
+		while (it.hasNext()) {
+			final Path p = it.next();
+			final boolean filteredType = Arrays.stream(swcTypes).anyMatch(t -> t == p.getSWCType());
+			if (filteredType)
+				subtree.addPath(p);
+		}
+		return subtree;
+	}
+
+	/**
+	 * Translates the tree by the specified offset.
 	 *
 	 * @param xOffset
 	 *            the x offset
@@ -157,11 +220,14 @@ public class Tree {
 	 *            the rotation axis. Either {@link X_AXIS}, {@link Y_AXIS}, or
 	 *            {@link Z_AXIS}
 	 * @param angle
-	 *            the rotation angle
+	 *            the rotation angle in degrees
 	 */
 	public void rotate(final int axis, final double angle) {
-		final double sin = Math.sin(angle);
-		final double cos = Math.cos(angle);
+		// See http://www.petercollingridge.appspot.com/3D-tutorial
+		if (Double.isNaN(angle)) throw new IllegalArgumentException("Angle not valid");
+		final double radAngle = Math.toRadians(angle);
+		final double sin = Math.sin(radAngle);
+		final double cos = Math.cos(radAngle);
 		switch (axis) {
 		case Z_AXIS:
 			for (final Path p : tree) {
@@ -197,4 +263,55 @@ public class Tree {
 			throw new IllegalArgumentException("Unrecognized rotation axis" + axis);
 		}
 	}
+
+	/**
+	 * Gets the all the points (path nodes) forming this tree.
+	 *
+	 * @return the points
+	 */
+	public ArrayList<PointInImage> getPoints() {
+		final ArrayList<PointInImage> list = new ArrayList<PointInImage>();
+		for (final Path p : tree) {
+			list.addAll(p.getPointInImageList());
+		}
+		return list;
+	}
+
+	/**
+	 * Gets an empty image capable of holding the skeletonized version of this tree.
+	 *
+	 * @param multiDThreePaneView
+	 *            the pane flag indicating the SNT view for this image e.g.,
+	 *            {@link MultiDThreePanes#XY_PLANE}
+	 * @return the empty 8-bit {@link ImagePlus} container
+	 */
+	public ImagePlus getImpContainer(int multiDThreePaneView) {
+		if (tree.isEmpty())
+			throw new IllegalArgumentException("tree contains no paths");
+		final TreeStatistics tStats = new TreeStatistics(this);
+		final SummaryStatistics xCoordStats = tStats.getSummaryStats(TreeAnalyzer.X_COORDINATES);
+		final SummaryStatistics yCoordStats = tStats.getSummaryStats(TreeAnalyzer.Y_COORDINATES);
+		final SummaryStatistics zCoordStats = tStats.getSummaryStats(TreeAnalyzer.Z_COORDINATES);
+		final PointInImage p1 = new PointInImage(xCoordStats.getMin(), yCoordStats.getMin(), zCoordStats.getMin());
+		final PointInImage p2 = new PointInImage(xCoordStats.getMax(), yCoordStats.getMax(), zCoordStats.getMax());
+		final Path referencePath = tree.iterator().next();
+		p1.onPath = referencePath;
+		p2.onPath = referencePath;
+		final double[] bound1 = PathNode.unScale(p1, multiDThreePaneView);
+		final double[] bound2 = PathNode.unScale(p2, multiDThreePaneView);
+		final int w = (int) (bound2[0] - bound1[0]) + 2;
+		final int h = (int) (bound2[1] - bound1[1]) + 2;
+		final int d = (int) (bound2[2] - bound1[2]) + 2;
+		return IJ.createImage(null, w, h, d, 8);
+	}
+
+	/**
+	 * Returns the number of Paths in this tree.
+	 *
+	 * @return the number of elements in this collection
+	 */
+	public int size() {
+		return tree.size();
+	}
+
 }

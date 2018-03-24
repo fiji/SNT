@@ -93,15 +93,14 @@ import com.jidesoft.swing.SearchableBar;
 import com.jidesoft.swing.TreeSearchable;
 
 import net.imagej.table.DefaultGenericTable;
+import tracing.analysis.TreeAnalyzer;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SwingSafeResult;
 import tracing.plugin.DistributionCmd;
-import tracing.plugin.NodeColorCoder;
-import tracing.plugin.PathAnalyzer;
-import tracing.plugin.PathColorCoder;
 import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.SkeletonConverter;
+import tracing.plugin.TreeColorizerCmd;
 import tracing.util.SWCColor;
 
 @SuppressWarnings("serial")
@@ -1485,15 +1484,15 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			}
 			else if (MEASURE_CMD.equals(cmd)) {
 				try {
-					final PathAnalyzer pa = new PathAnalyzer(selectedPaths);
-					pa.setContext(plugin.getContext());
-					if (pa.getParsedPaths().size() == 0) {
+					final TreeAnalyzer ta = new TreeAnalyzer(new Tree(selectedPaths));
+					ta.setContext(plugin.getContext());
+					if (ta.getParsedTree().isEmpty()) {
 						guiUtils.error("None of the selected paths could be measured.");
 						return;
 					}
-					pa.setTable(getTable(), TABLE_TITLE);
-					pa.summarize(getDescription(selectedPaths));
-					pa.updateAndDisplayTable();
+					ta.setTable(getTable(), TABLE_TITLE);
+					ta.summarize(getDescription(selectedPaths));
+					ta.updateAndDisplayTable();
 					return;
 				} catch (final IllegalArgumentException ignored) {
 					guiUtils.error("Selected paths do not fullfill requirements for measurements");
@@ -1501,23 +1500,20 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			}
 			else if (CONVERT_TO_ROI_CMD.equals(cmd)) {
 				final Map<String, Object> input= new HashMap<>();
-				input.put("paths", selectedPaths);
+				input.put("tree", new Tree(selectedPaths));
 				CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(ROIExporterCmd.class, true, input);
 			}
-			else if (COLORIZE_PATH_CMD.equals(cmd) || COLORIZE_NODE_CMD.equals(cmd)) {
+			else if (COLORIZE_PATH_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
-				input.put("paths", selectedPaths);
+				input.put("tree", new Tree(selectedPaths));
 				input.put("manager", getInstance());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
-				if (COLORIZE_PATH_CMD.equals(cmd))
-					cmdService.run(PathColorCoder.class, true, input);
-				else
-					cmdService.run(NodeColorCoder.class, true, input);
+				cmdService.run(TreeColorizerCmd.class, true, input);
 			} else if (HISTOGRAM_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
-				input.put("paths", selectedPaths);
-				input.put("frameTitle", "SNT: Hist. " + getDescription(selectedPaths));
+				input.put("tree", new Tree(selectedPaths));
+				input.put("title", "SNT: Hist. " + getDescription(selectedPaths));
 				CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(DistributionCmd.class, true, input);
 			} else if (APPEND_ORDER_CMD.equals(cmd)) {

@@ -42,8 +42,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.BorderFactory;
@@ -75,6 +77,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.scijava.command.CommandService;
 import org.scijava.util.ClassUtils;
 
 import ij.IJ;
@@ -87,13 +90,14 @@ import ij.measure.Calibration;
 import ij3d.ImageWindow3D;
 import net.imagej.table.DefaultGenericTable;
 import sholl.Sholl_Analysis;
+import tracing.analysis.TreeAnalyzer;
 import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 import tracing.gui.SigmaPalette;
 import tracing.hyperpanes.MultiDThreePanes;
-import tracing.measure.PathAnalyzer;
-import tracing.plugin.StrahlerAnalyzer;
+import tracing.plugin.PlotterCmd;
+import tracing.plugin.StrahlerCmd;
 
 @SuppressWarnings("serial")
 public class NeuriteTracerResultsDialog extends JDialog {
@@ -132,6 +136,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private JMenuItem quitMenuItem;
 	private JMenuItem measureMenuItem;
 	private JMenuItem strahlerMenuItem;
+	private JMenuItem plotMenuItem;
 	private JMenuItem sendToTrakEM2;
 	private JLabel statusText;
 	private JLabel statusBarText;
@@ -1363,6 +1368,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		measureMenuItem.addActionListener(listener);
 		strahlerMenuItem = new JMenuItem("Strahler Analysis");
 		strahlerMenuItem.addActionListener(listener);
+		plotMenuItem = new JMenuItem("Plot Traces...");
+		plotMenuItem.addActionListener(listener);
 		final JMenuItem correspondencesMenuItem = new JMenuItem(
 			"Show correspondences with file..");
 		correspondencesMenuItem.setEnabled(false); // disable command until it is re-written
@@ -1385,6 +1392,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
 		analysisMenu.add(measureMenuItem);
+		analysisMenu.add(plotMenuItem);
 		analysisMenu.addSeparator();
 		analysisMenu.add(correspondencesMenuItem);
 
@@ -2392,17 +2400,25 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 			}
 			else if (source == measureMenuItem && !noPathsError()) {
-				final PathAnalyzer pa = new PathAnalyzer(pathAndFillManager.getPathsFiltered());
+				final TreeAnalyzer pa = new TreeAnalyzer(new Tree(pathAndFillManager.getPathsFiltered()));
 				pa.setContext(plugin.getContext());
 				pa.setTable(pw.getTable(), PathWindow.TABLE_TITLE);
 				pa.run();
 				return;
 			}
 			else if (source == strahlerMenuItem && !noPathsError()) {
-				final StrahlerAnalyzer sa = new StrahlerAnalyzer(pathAndFillManager.getPathsFiltered());
+				final StrahlerCmd sa = new StrahlerCmd(new Tree(pathAndFillManager.getPathsFiltered()));
 				sa.setContext(plugin.getContext());
 				sa.setTable(new DefaultGenericTable(), "SNT: Horton-Strahler Analysis (All Paths)");
 				sa.run();
+				return;
+			}
+			else if (source == plotMenuItem && !noPathsError()) {
+				final Map<String, Object> input = new HashMap<>();
+				input.put("tree", new Tree(pathAndFillManager.getPathsFiltered()));
+				input.put("title", (plugin.getImagePlus() == null) ? "All Paths" : plugin.getImagePlus().getTitle());
+				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				cmdService.run(PlotterCmd.class, true, input);
 				return;
 			}
 			else if (source == loadLabelsMenuItem) {

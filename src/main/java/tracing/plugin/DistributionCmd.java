@@ -62,18 +62,19 @@ public class DistributionCmd implements Command {
 
 	@Parameter(required = true, label = "Measurement", choices = { TreeAnalyzer.BRANCH_ORDER,
 			TreeAnalyzer.INTER_NODE_DISTANCE, TreeAnalyzer.LENGTH, TreeAnalyzer.N_BRANCH_POINTS, TreeAnalyzer.N_NODES,
-			TreeAnalyzer.NODE_RADIUS, TreeAnalyzer.MEAN_RADIUS })
+			TreeAnalyzer.NODE_RADIUS, TreeAnalyzer.MEAN_RADIUS, TreeAnalyzer.X_COORDINATES, TreeAnalyzer.Y_COORDINATES,
+			TreeAnalyzer.Z_COORDINATES })
 	private String measurementChoice;
 
 	@Parameter(required = true)
-	private HashSet<Path> paths;
+	private Tree tree;
 
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE, persist = false)
 	private static String title;
 
 	@Override
 	public void run() {
-		final TreeStatistics treeStats = new TreeStatistics(new Tree(paths));
+		final TreeStatistics treeStats = new TreeStatistics(tree);
 		final DescriptiveStatistics dStats = treeStats.getDescriptiveStats(measurementChoice);
 		getHistogram(dStats, measurementChoice, true);
 	}

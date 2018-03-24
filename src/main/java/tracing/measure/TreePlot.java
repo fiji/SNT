@@ -74,7 +74,7 @@ public class TreePlot extends TreeColorizer {
 	private XYPlot plot;
 	private String title;
 	private JFreeChart chart;
-	private Color defaultColor = Color.BLACK;
+	private ColorRGB defaultColor = new ColorRGB("black");
 
 	/**
 	 * Instantiates an empty tree plot.
@@ -118,9 +118,9 @@ public class TreePlot extends TreeColorizer {
 			}
 			series.setValues(xc, yc);
 			series.setLegendVisible(false);
-			final Color color = (p.getColor() == null) ? defaultColor : p.getColor();
-			series.setStyle(plot.newSeriesStyle(new ColorRGB(color.getRed(), color.getGreen(), color.getBlue()),
-					LineStyle.SOLID, MarkerStyle.NONE));
+			final ColorRGB color = (p.getColor() == null) ? defaultColor
+					: new ColorRGB(p.getColor().getRed(), p.getColor().getGreen(), p.getColor().getBlue());
+			series.setStyle(plot.newSeriesStyle(color, LineStyle.SOLID, MarkerStyle.NONE));
 		}
 	}
 
@@ -207,8 +207,8 @@ public class TreePlot extends TreeColorizer {
 	 * @param color
 	 *            the color to render the Tree
 	 */
-	public void addTree(final Tree tree, final Color color) {
-		final Color prevDefaultColor = defaultColor;
+	public void addTree(final Tree tree, final ColorRGB color) {
+		final ColorRGB prevDefaultColor = defaultColor;
 		setDefaultColor(color);
 		addPaths(tree.getPaths());
 		setDefaultColor(prevDefaultColor);
@@ -318,7 +318,7 @@ public class TreePlot extends TreeColorizer {
 	 * @param color
 	 *            null not allowed
 	 */
-	public void setDefaultColor(final Color color) {
+	public void setDefaultColor(final ColorRGB color) {
 		if (color != null)
 			defaultColor = color;
 	}

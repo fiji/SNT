@@ -117,6 +117,15 @@ public class Tree {
 	}
 
 	/**
+	 *  Creates and returns a copy of this Tree.
+	 *
+	 * @return a deep copy of this Tree.
+	 */
+	public Tree duplicate() {
+		return new Tree(new HashSet<Path>(tree));
+	}
+
+	/**
 	 * Replaces all Paths in this tree.
 	 *
 	 * @param paths

@@ -52,9 +52,9 @@ import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.SNT;
 import tracing.Tree;
+import tracing.analysis.TreeAnalyzer;
+import tracing.analysis.TreeStatistics;
 import tracing.gui.GuiUtils;
-import tracing.measure.TreeAnalyzer;
-import tracing.measure.TreeStatistics;
 import tracing.util.SWCColor;
 
 @Plugin(type = Command.class, visible = false, label = "Distribution of Morphometric Traits")

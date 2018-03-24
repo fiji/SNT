@@ -21,8 +21,8 @@
  */
 
 /**
- * Classes measuring properties of trees.
+ * Classes dealing with analysis of trees.
  *
  * @author Tiago Ferreira
  */
-package tracing.measure;
+package tracing.analysis;

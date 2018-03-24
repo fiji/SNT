@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.measure;
+package tracing.analysis;
 
 import java.awt.Color;
 import java.io.IOException;

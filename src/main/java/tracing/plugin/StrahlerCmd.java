@@ -39,14 +39,14 @@ import net.imagej.plot.PlotService;
 import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
 import tracing.Tree;
-import tracing.measure.TreeAnalyzer;
+import tracing.analysis.TreeAnalyzer;
 
 /**
- * Command to perform Horton-Strahler analysis on a list of paths.
+ * Command to perform Horton-Strahler analysis on a tree.
  *
  * @author Tiago Ferreira
  */
-public class StrahlerAnalyzer extends TreeAnalyzer {
+public class StrahlerCmd extends TreeAnalyzer {
 
 	@Parameter
 	private PlotService plotService;
@@ -62,7 +62,7 @@ public class StrahlerAnalyzer extends TreeAnalyzer {
 	private final Map<Integer, Double> tLengthMap = new TreeMap<>();
 
 
-	public StrahlerAnalyzer(final Tree tree) {
+	public StrahlerCmd(final Tree tree) {
 		super(tree);
 	}
 

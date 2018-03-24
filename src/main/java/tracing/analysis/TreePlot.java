@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.measure;
+package tracing.analysis;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -114,7 +114,7 @@ public class TreePlot extends TreeColorizer {
 			for (int node = 0; node < p.size(); node++) {
 				final PointInImage pim = p.getPointInImage(node);
 				xc.add(pim.x);
-				yc.add(-pim.y);
+				yc.add(pim.y);
 			}
 			series.setValues(xc, yc);
 			series.setLegendVisible(false);
@@ -131,7 +131,7 @@ public class TreePlot extends TreeColorizer {
 			final List<Double> yc = new ArrayList<Double>();
 			final PointInImage pim = p.getPointInImage(node);
 			xc.add(pim.x);
-			yc.add(-pim.y);
+			yc.add(pim.y);
 			series.setValues(xc, yc);
 			series.setLegendVisible(false);
 			final Color c = p.getNodeColor(node);

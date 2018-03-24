@@ -44,8 +44,8 @@ import tracing.Path;
 import tracing.PathWindow;
 import tracing.SNT;
 import tracing.Tree;
-import tracing.measure.TreeColorizer;
-import tracing.measure.TreePlot;
+import tracing.analysis.TreeColorizer;
+import tracing.analysis.TreePlot;
 
 /**
  * Command for color coding trees according to their properties using
@@ -54,7 +54,7 @@ import tracing.measure.TreePlot;
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, label = "Tree Color Coder", initializer = "init")
-public class TreeColorCoder extends DynamicCommand {
+public class TreeColorizerCmd extends DynamicCommand {
 
 	@Parameter
 	private PrefService prefService;
@@ -152,7 +152,7 @@ public class TreeColorCoder extends DynamicCommand {
 		final Map<String, Object> input = new HashMap<>();
 		final Tree tree = new Tree(new HashSet<Path>(DistributionCmd.randomPaths()));
 		input.put("tree", tree);
-		ij.command().run(TreeColorCoder.class, true, input);
+		ij.command().run(TreeColorizerCmd.class, true, input);
 	}
 
 }

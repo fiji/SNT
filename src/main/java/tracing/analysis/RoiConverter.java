@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.plugin;
+package tracing.analysis;
 
 import java.awt.Color;
 import java.util.HashSet;
@@ -36,7 +36,6 @@ import tracing.PathNode;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.hyperpanes.MultiDThreePanes;
-import tracing.measure.TreeAnalyzer;
 import tracing.util.PointInImage;
 
 /**

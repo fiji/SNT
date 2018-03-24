@@ -40,7 +40,7 @@ import org.scijava.widget.NumberWidget;
 import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.Tree;
-import tracing.measure.TreePlot;
+import tracing.analysis.TreePlot;
 
 /**
  * Command for interactively plotting trees using {@link TreePlot}

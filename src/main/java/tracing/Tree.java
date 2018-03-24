@@ -31,9 +31,9 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import ij.IJ;
 import ij.ImagePlus;
+import tracing.analysis.TreeAnalyzer;
+import tracing.analysis.TreeStatistics;
 import tracing.hyperpanes.MultiDThreePanes;
-import tracing.measure.TreeAnalyzer;
-import tracing.measure.TreeStatistics;
 import tracing.util.PointInImage;
 
 /**

@@ -26,7 +26,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -139,6 +138,7 @@ public class TreePlot extends TreeColorizer {
 					MarkerStyle.FILLEDCIRCLE));
 		}
 	}
+
 	/**
 	 * Adds a lookup legend to the plot. Does nothing if no measurement mapping
 	 * occurred successfully.

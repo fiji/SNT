@@ -27,7 +27,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 import org.scijava.command.Command;
@@ -40,7 +39,6 @@ import org.scijava.prefs.PrefService;
 import net.imagej.ImageJ;
 import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable;
-import tracing.Path;
 import tracing.PathWindow;
 import tracing.SNT;
 import tracing.Tree;
@@ -150,7 +148,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
-		final Tree tree = new Tree(new HashSet<Path>(DistributionCmd.randomPaths()));
+		final Tree tree = new Tree(DistributionCmd.randomPaths());
 		input.put("tree", tree);
 		ij.command().run(TreeColorizerCmd.class, true, input);
 	}

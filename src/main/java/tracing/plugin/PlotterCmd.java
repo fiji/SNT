@@ -53,12 +53,12 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	@Parameter(required = false, label = "Angle (degrees)", min = "-180", max = "180", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "angleChanged")
 	private int angle = 0;
 
-	@Parameter(required = false, label = "Rotation axis", choices = { Z_AXIS, Y_AXIS,
-			X_AXIS }, callback = "axisChanged")
+	@Parameter(required = false, label = "Rotation axis", choices = { X_AXIS, Y_AXIS,
+			Z_AXIS }, style = "radioButtonHorizontal", callback = "axisChanged")
 	private String rotationAxis = Y_AXIS;
 
-	@Parameter(required = false, label = "Actions", choices = { ACTION_NONE, ACTION_FLIP_H, ACTION_FLIP_V,
-			ACTION_RESET, ACTION_SNAPSHOT}, callback = "runAction")
+	@Parameter(required = false, label = "Actions", choices = { ACTION_NONE, ACTION_FLIP_H, ACTION_FLIP_V, ACTION_RESET,
+			ACTION_SNAPSHOT }, callback = "runAction")
 	private String actionChoice;
 
 	@Parameter(required = true)
@@ -85,7 +85,6 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	private int lastXrotation = 0;
 	private int lastYrotation = 0;
 	private int lastZrotation = 0;
-
 
 	@Override
 	public void run() {
@@ -131,7 +130,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	}
 
 	private void updatePlot() {
-		if (!ACTION_NONE.equals(actionChoice)) return;
+		// if (!ACTION_NONE.equals(actionChoice)) return;
 		buildPlot();
 		chart.getXYPlot().setDataset(plot.getChart().getXYPlot().getDataset());
 		frame.setVisible(true); // re-open frame if it has been closed

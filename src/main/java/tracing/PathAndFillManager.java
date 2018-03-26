@@ -385,7 +385,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	/**
 	 *
-	 * @return the spatial calibration details associated by this
+	 * @return the spatial calibration details associated with this
 	 *         PathAndFillManager instance
 	 */
 	public Calibration getCalibration() {

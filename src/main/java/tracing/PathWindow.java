@@ -258,14 +258,9 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 		final JMenu advanced = new JMenu("Plugins");
 		menuBar.add(advanced);
-		final JMenu colorCoding = new JMenu("Color Coding");
-		advanced.add(colorCoding);
 		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_PATH_CMD);
 		jmi.addActionListener(multiPathListener);
-		colorCoding.add(jmi);
-		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_NODE_CMD);
-		jmi.addActionListener(multiPathListener);
-		colorCoding.add(jmi);
+		advanced.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.HISTOGRAM_CMD);
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
@@ -1442,8 +1437,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 		private static final String RESET_FITS = "Reset Fits...";
 		private final static String MEASURE_CMD = "Measure";
 		private final static String CONVERT_TO_ROI_CMD = "Send to ROI Manager...";
-		private final static String COLORIZE_PATH_CMD = "Path Color Coding...";
-		private final static String COLORIZE_NODE_CMD = "Node Color Coding...";
+		private final static String COLORIZE_PATH_CMD = "Color Coding...";
 		private final static String HISTOGRAM_CMD = "Distribution Analysis...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
 		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";

@@ -26,7 +26,6 @@ import java.awt.Color;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -171,13 +170,11 @@ public class TreeColorizer {
 
 	private void mapToNodeProperty(final String measurement, final ColorTable colorTable) {
 		if (Double.isNaN(min) || Double.isNaN(max) || min > max) {
-			System.out.println("Calculating stats");
 			TreeStatistics tStats = new TreeStatistics(new Tree(paths));
 			SummaryStatistics sStats = tStats.getSummaryStats(measurement);
 			setMinMax(sStats.getMin(), sStats.getMax());
 		}
 		for (final Path p : paths) {
-			System.out.println(p);
 			final Color[] colors = new Color[p.size()];
 			for (int node = 0; node < p.size(); node++) {
 				double value;
@@ -211,7 +208,6 @@ public class TreeColorizer {
 			idx = colorTable.getLength() - 1;
 		else
 			idx = (int) Math.round((colorTable.getLength() - 1) * (mappedValue - min) / (max - min));
-		System.out.println(idx);
 		return new Color(colorTable.get(ColorTable.RED, idx), colorTable.get(ColorTable.GREEN, idx),
 				colorTable.get(ColorTable.BLUE, idx));
 	}

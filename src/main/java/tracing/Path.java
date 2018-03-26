@@ -618,6 +618,20 @@ public class Path implements Comparable<Path> {
 	 * return result; }
 	 */
 
+	/**
+	 * Gets the spatial calibration of this Path.
+	 *
+	 * @return the calibration details associated with this Path
+	 */
+	public Calibration getCalibration() {
+		final Calibration cal = new Calibration();
+		cal.setUnit(spacing_units);
+		cal.pixelWidth = x_spacing;
+		cal.pixelHeight = y_spacing;
+		cal.pixelDepth = z_spacing;
+		return cal;
+	}
+
 	protected PointInImage lastPoint() {
 		if (points < 1)
 			return null;
@@ -909,17 +923,27 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Sets node colors.
+	 * Sets the node colors.
 	 *
 	 * @param colors
-	 *            the colors used to render this path. If null (the default) all
-	 *            nodes are rendered using this Path color.
+	 *            the colors used to render the nodes of this. If null (the default)
+	 *            all nodes are rendered using the Path color.
 	 */
 	public void setNodeColors(final Color[] colors) {
 		if (colors != null && colors.length != size()) {
 			throw new IllegalArgumentException("colors array must have as many elements as nodes");
 		}
 		nodeColors = colors;
+	}
+
+	/**
+	 * Gets the node colors.
+	 *
+	 * @return the colors used to render the nodes of this path, or null if nodes
+	 *         are rendered using the Path color
+	 */
+	public Color[] getNodeColors() {
+		return nodeColors;
 	}
 
 	public Color getNodeColor(final int pos) {

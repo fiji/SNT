@@ -324,6 +324,19 @@ public class TreePlot extends TreeColorizer {
 	}
 
 	/**
+	 * Sets the preferred size of the plot to a constant value.
+	 *
+	 * @param width
+	 *            the preferred width
+	 * @param height
+	 *            the preferred height
+	 */
+	public void setPreferredSize(final int width, final int height) {
+		initPlot();
+		plot.setPreferredSize(width, height);
+	}
+
+	/**
 	 * Sets the plot display title.
 	 *
 	 * @param title
@@ -331,6 +344,15 @@ public class TreePlot extends TreeColorizer {
 	 */
 	public void setTitle(final String title) {
 		this.title = title;
+	}
+
+	/**
+	 * Gets the plot display title.
+	 *
+	 * @return the current display title
+	 */
+	public String getTitle() {
+		return title;
 	}
 
 	/** Displays the current plot on a dedicated frame */

@@ -39,7 +39,8 @@ import tracing.util.PointInImage;
 
 /**
  * Utility class to access a Collection of Paths. Note a "Tree" here is
- * literally a set of Paths and it does not reflect graph theory terminology.
+ * literally a collection of Paths and it does not reflect graph theory
+ * terminology.
  *
  * @author Tiago Ferreira
  */
@@ -135,8 +136,7 @@ public class Tree {
 	 *            the replacing Paths
 	 */
 	public void setPaths(final List<Path> paths) {
-		tree.clear();
-		tree.addAll(paths);
+		tree = new ArrayList<Path>(paths);
 	}
 
 	/**
@@ -184,7 +184,7 @@ public class Tree {
 	}
 
 	/**
-	 * Extracts a subset of paths matching the specified criteria.
+	 * Extracts the subset of paths matching the specified criteria.
 	 *
 	 * @param swcTypes
 	 *            SWC type(s) (e.g., {@link Path#SWC_AXON},

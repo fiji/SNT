@@ -29,16 +29,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
+import org.scijava.widget.Button;
 
 import net.imagej.ImageJ;
 import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable;
+import tracing.Path;
 import tracing.PathWindow;
 import tracing.SNT;
 import tracing.Tree;
@@ -60,6 +63,9 @@ public class TreeColorizerCmd extends DynamicCommand {
 	@Parameter
 	private LUTService lutService;
 
+	@Parameter
+	private StatusService statusService;
+
 	@Parameter(required = true, label = "Color by", choices = { TreeColorizer.BRANCH_ORDER, TreeColorizer.LENGTH,
 			TreeColorizer.N_BRANCH_POINTS, TreeColorizer.N_NODES, TreeColorizer.MEAN_RADIUS,
 			TreeColorizer.NODE_RADIUS, 
@@ -76,6 +82,9 @@ public class TreeColorizerCmd extends DynamicCommand {
 	@Parameter(required = false, label = "Show SVG plot")
 	private boolean showPlot;
 
+	@Parameter(required = false, label = "Remove Existing Color Coding", callback="removeColorCoding")
+	private Button removeColorCoding;
+
 	@Parameter(required = true)
 	private Tree tree;
 
@@ -89,6 +98,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 	public void run() {
 		if (tree == null || tree.isEmpty())
 			cancel("Invalid input tree");
+		statusService.showStatus("Applying Color Code...");
 		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
 		plot = new TreePlot(context());
 		plot.addTree(tree, measurementChoice, lutChoice);
@@ -100,6 +110,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 		SNT.log("Finished...");
 		if (manager != null)
 			manager.refresh();
+		statusService.clearStatus();
 	}
 
 	@SuppressWarnings("unused")
@@ -137,6 +148,17 @@ public class TreeColorizerCmd extends DynamicCommand {
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@SuppressWarnings("unused")
+	private void removeColorCoding() {
+		for (final Path p : tree.getPaths()) {
+			p.setColor(null);
+			p.setNodeColors(null);
+		}
+		if (manager != null)
+			manager.refresh();
+		statusService.showStatus("Color code removed...");
 	}
 
 	/**

@@ -87,7 +87,7 @@ public class TreePlot extends TreeColorizer {
 		super(context);
 	}
 
-	private void addPaths(final HashSet<Path> paths) {
+	private void addPaths(final ArrayList<Path> paths) {
 		this.paths = paths;
 		plotPaths();
 	}
@@ -345,7 +345,7 @@ public class TreePlot extends TreeColorizer {
 		final TreePlot pplot = new TreePlot(ij.context());
 		final List<Tree> trees = new ArrayList<Tree>();
 		for (int i = 0; i < 10; i++) {
-			final Tree tree = new Tree(new HashSet<Path>(DistributionCmd.randomPaths()));
+			final Tree tree = new Tree(DistributionCmd.randomPaths());
 			tree.rotate(Tree.Z_AXIS, i * 20);
 			trees.add(tree);
 		}

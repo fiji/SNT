@@ -23,6 +23,7 @@
 package tracing.analysis;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.stream.IntStream;
@@ -348,7 +349,7 @@ public class TreeAnalyzer extends ContextCommand {
 		return root;
 	}
 
-	private double sumLength(final HashSet<Path> paths) {
+	private double sumLength(final Collection<Path> paths) {
 		double sum = 0;
 		for (final Path p : tree.getPaths()) {
 			sum += p.getRealLength();

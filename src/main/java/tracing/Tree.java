@@ -24,8 +24,9 @@ package tracing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
@@ -47,13 +48,13 @@ public class Tree {
 	public static final int X_AXIS = 1;
 	public static final int Y_AXIS = 2;
 	public static final int Z_AXIS = 4;
-	private HashSet<Path> tree;
+	private ArrayList<Path> tree;
 
 	/**
 	 * Instantiates a new empty tree.
 	 */
 	public Tree() {
-		tree = new HashSet<Path>();
+		tree = new ArrayList<Path>();
 	}
 
 	/**
@@ -62,10 +63,22 @@ public class Tree {
 	 * @param paths
 	 *            the Collection of paths forming this tree. Null not allowed.
 	 */
-	public Tree(final HashSet<Path> paths) {
+	public Tree(final Set<Path> paths) {
 		if (paths == null)
 			throw new IllegalArgumentException("Cannot instantiate a new tree from a null collection");
-		tree = paths;
+		tree = new ArrayList<Path>(paths);
+	}
+
+	/**
+	 * Instantiates a new tree from a list of paths.
+	 *
+	 * @param paths
+	 *            the Collection of paths forming this tree. Null not allowed.
+	 */
+	public Tree(final List<Path> paths) {
+		if (paths == null)
+			throw new IllegalArgumentException("Cannot instantiate a new tree from a null collection");
+		tree = new ArrayList<Path>(paths);
 	}
 
 	/**
@@ -78,7 +91,7 @@ public class Tree {
 		final PathAndFillManager pafm = PathAndFillManager.createFromTracesFile(filename);
 		if (pafm == null)
 			throw new IllegalArgumentException("No paths extracted from " + filename + " Invalid file?");
-		tree = new HashSet<Path>(pafm.getPaths());
+		tree = pafm.getPaths();
 	}
 
 	/**
@@ -97,16 +110,6 @@ public class Tree {
 	}
 
 	/**
-	 * Instantiates a new tree from a list of paths.
-	 *
-	 * @param paths
-	 *            the list of paths forming this tree. Null not allowed.
-	 */
-	public Tree(ArrayList<Path> paths) {
-		this(new HashSet<Path>(paths));
-	}
-
-	/**
 	 * Adds a new Path to this tree.
 	 *
 	 * @param p
@@ -116,14 +119,14 @@ public class Tree {
 		tree.add(p);
 	}
 
-	/**
-	 *  Creates and returns a copy of this Tree.
-	 *
-	 * @return a deep copy of this Tree.
-	 */
-	public Tree duplicate() {
-		return new Tree(new HashSet<Path>(tree));
-	}
+//	/**
+//	 *  Returns a copy of this Tree.
+//	 *
+//	 * @return a copy of this Tree.
+//	 */
+//	public Tree duplicate() {
+//		return new Tree(new HashSet<Path>(tree));
+//	}
 
 	/**
 	 * Replaces all Paths in this tree.
@@ -131,7 +134,7 @@ public class Tree {
 	 * @param paths
 	 *            the replacing Paths
 	 */
-	public void setPaths(final HashSet<Path> paths) {
+	public void setPaths(final List<Path> paths) {
 		tree.clear();
 		tree.addAll(paths);
 	}
@@ -152,7 +155,7 @@ public class Tree {
 	 *
 	 * @return the paths forming this tree
 	 */
-	public HashSet<Path> getPaths() {
+	public ArrayList<Path> getPaths() {
 		return tree;
 	}
 

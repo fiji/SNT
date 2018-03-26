@@ -66,7 +66,7 @@ public class TreeColorizer {
 	@Parameter
 	private LUTService lutService;
 
-	protected HashSet<Path> paths;
+	protected ArrayList<Path> paths;
 	protected ColorTable colorTable;
 	protected boolean integerScale;
 	protected double min = Double.MAX_VALUE;
@@ -314,7 +314,7 @@ public class TreeColorizer {
 		ij.ui().showUI();
 		final List<Tree> trees = new ArrayList<Tree>();
 		for (int i = 0; i < 10; i++) {
-			final Tree tree = new Tree(new HashSet<Path>(DistributionCmd.randomPaths()));
+			final Tree tree = new Tree(DistributionCmd.randomPaths());
 			tree.rotate(Tree.Z_AXIS, i * 20);
 			trees.add(tree);
 		}

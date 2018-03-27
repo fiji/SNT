@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing;
+package tracing.plugin;
 
 import java.awt.AWTEvent;
 import java.awt.Checkbox;
@@ -48,6 +48,11 @@ import sholl.Options;
 import sholl.Sholl_Analysis;
 import sholl.gui.EnhancedGenericDialog;
 import sholl.gui.Utils;
+import tracing.NearPoint;
+import tracing.Path;
+import tracing.PathAndFillManager;
+import tracing.SNT;
+import tracing.SNTPrefs;
 import tracing.gui.GuiUtils;
 import tracing.gui.ShollAnalysisDialog;
 import tracing.gui.ShollAnalysisDialog.ShollPoint;
@@ -170,8 +175,8 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			double maxDepth = 0d;
 			for (Path p : pafm.getPaths()) {
 				if (p.getUseFitted())
-					p = p.fitted;
-				else if (p.fittedVersionOf != null)
+					p = p.getFitted();
+				else if (p.isFittedVersionOfAnotherPath())
 					continue;
 
 				if (!restrictBySWCType || (restrictBySWCType && swcTypeCodes.contains(p.getSWCType()))) {

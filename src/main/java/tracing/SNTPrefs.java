@@ -222,11 +222,11 @@ public class SNTPrefs { //TODO: Adopt PrefService
 			return recentFile;
 	}
 
-	protected static void setRecentDirectory(final String dir) {
+	public static void setRecentDirectory(final String dir) {
 		Prefs.set(LOAD_DIRECTORY_KEY, dir);
 	}
 
-	protected static String getRecentDirectory() {
+	public static String getRecentDirectory() {
 		return Prefs.get(LOAD_DIRECTORY_KEY, null);
 	}
 

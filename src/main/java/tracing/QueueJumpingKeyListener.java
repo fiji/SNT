@@ -46,7 +46,6 @@ class QueueJumpingKeyListener implements KeyListener {
 			KeyEvent.VK_EQUALS, KeyEvent.VK_MINUS, KeyEvent.VK_UP, KeyEvent.VK_DOWN, // zoom keys
 			KeyEvent.VK_COMMA, KeyEvent.VK_PERIOD, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, // navigation keys
 			KeyEvent.VK_L, // Command Finder
-			KeyEvent.VK_4, KeyEvent.VK_5, // advanced zoom keys
 			KeyEvent.VK_PLUS, KeyEvent.VK_LESS, KeyEvent.VK_GREATER, KeyEvent.VK_TAB // extra navigation/zoom keys
 	};
 
@@ -86,6 +85,16 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 		else if (keyCode == KeyEvent.VK_ENTER) {
 			tracerPlugin.getUI().toFront();
+			e.consume();
+			return;
+		}
+		else if (keyCode == KeyEvent.VK_4) {
+			tracerPlugin.unzoomAllPanes();
+			e.consume();
+			return;
+		}
+		else if (keyCode == KeyEvent.VK_5) {
+			tracerPlugin.zoom100PercentAllPanes();
 			e.consume();
 			return;
 		}

@@ -1446,9 +1446,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				try {
-					plugin.resetZoomAllPanes();
+					plugin.zoom100PercentAllPanes();
 					Thread.sleep(50); // allow windows to resize if needed
-					plugin.resetZoomAllPanes();
+					plugin.zoom100PercentAllPanes();
 				} catch (final InterruptedException exc) {
 					// do nothing
 				}

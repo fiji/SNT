@@ -179,11 +179,19 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 	}
 
-	public void resetZoomAllPanes() {
+	public void zoom100PercentAllPanes() {
 		xy_canvas.zoom100Percent();
 		if (!single_pane) {
 			xz_canvas.zoom100Percent();
 			zy_canvas.zoom100Percent();
+		}
+	}
+
+	public void unzoomAllPanes() {
+		xy_canvas.unzoom();
+		if (!single_pane) {
+			xz_canvas.unzoom();
+			zy_canvas.unzoom();
 		}
 	}
 

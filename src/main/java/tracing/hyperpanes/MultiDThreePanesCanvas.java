@@ -28,8 +28,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 
@@ -51,7 +49,6 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	private String canvasText; // text to be rendered NW corner of canvas
 	private Color annotationsColor;
 	private boolean waveInteractionsToIJ;
-	private boolean waveZoomToIJ;
 	protected boolean cursorLocked;
 
 
@@ -115,22 +112,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		return g2;
 	}
 
-	@Override
-	public void mouseMoved(final MouseEvent e) {
-
-		if (!cursorLocked || isEventsDisabled()) super.mouseMoved(e);
-
-		final double off_screen_x = offScreenXD(e.getX());
-		final double off_screen_y = offScreenYD(e.getY());
-
-		final boolean shift_key_down = (e.getModifiersEx() &
-			InputEvent.SHIFT_DOWN_MASK) != 0;
-
-		owner.mouseMovedTo( off_screen_x, off_screen_y, plane,
-			shift_key_down);
-	}
-
-	protected void realZoom(final boolean in, final int off_screen_x, final int off_screen_y) {
+	protected void triggerZoomEvent(final boolean in, final int off_screen_x, final int off_screen_y) {
 		if (in)
 			super.zoomIn(screenX(off_screen_x), screenY(off_screen_y));
 		else
@@ -139,18 +121,14 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 
 	@Override
 	public void zoomIn(final int sx, final int sy) {
-		if (isZoomDisabled()) 
-			super.zoomIn(sx, sy);
-		else
-			owner.zoom(true, offScreenX(sx), offScreenX(sy), plane);
+		super.zoomIn(sx, sy);
+		owner.zoomEventOccured(true, offScreenX(sx), offScreenY(sy), plane);
 	}
 
 	@Override
 	public void zoomOut(final int sx, final int sy) {
-		if (isZoomDisabled())
-			super.zoomOut(sx, sy);
-		else
-			owner.zoom(false, offScreenX(sx), offScreenY(sy), plane);
+		super.zoomOut(sx, sy);
+		owner.zoomEventOccured(false, offScreenX(sx), offScreenY(sy), plane);
 	}
 
 	protected void drawCrosshairs(final Graphics2D g,
@@ -219,37 +197,37 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	   box filter reconstruction.)
 	*/
 
-	/** Converts a screen x-coordinate to an offscreen x-coordinate. */
+	/** Converts a screen x-coordinate to an offscreen (image) x-coordinate. */
 	public int myOffScreenX(final int sx) {
 		return srcRect.x + (int) ((sx - magnification / 2) / magnification);
 	}
 
-	/** Converts a screen y-coordinate to an offscreen y-coordinate. */
+	/** Converts a screen y-coordinate to an offscreen (image) y-coordinate. */
 	public int myOffScreenY(final int sy) {
 		return srcRect.y + (int) ((sy - magnification / 2) / magnification);
 	}
 
 	/**
-	 * Converts a screen x-coordinate to a floating-point offscreen x-coordinate.
+	 * Converts a screen x-coordinate to a floating-point offscreen (image) x-coordinate.
 	 */
 	public double myOffScreenXD(final int sx) {
 		return srcRect.x + (sx - magnification / 2) / magnification;
 	}
 
 	/**
-	 * Converts a screen y-coordinate to a floating-point offscreen y-coordinate.
+	 * Converts a screen y-coordinate to a floating-point offscreen (image) y-coordinate.
 	 */
 	public double myOffScreenYD(final int sy) {
 		return srcRect.y + (sy - magnification / 2) / magnification;
 	}
 
-	/** Converts an offscreen x-coordinate to a screen x-coordinate. */
+	/** Converts an offscreen (image) x-coordinate to a screen x-coordinate. */
 	public int myScreenX(final int ox) {
 		return (int) Math.round((ox - srcRect.x) * magnification + magnification /
 			2);
 	}
 
-	/** Converts an offscreen y-coordinate to a screen y-coordinate. */
+	/** Converts an offscreen (image) y-coordinate to a screen y-coordinate. */
 	public int myScreenY(final int oy) {
 		return (int) Math.round((oy - srcRect.y) * magnification + magnification /
 			2);
@@ -335,23 +313,6 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 
 	protected void setLockCursor(boolean lock) {
 		cursorLocked = lock;
-	}
-
-	/**
-	 * @return whether SNT is being notified/handling zoom changes
-	 */
-	public boolean isZoomDisabled() {
-		return waveZoomToIJ;
-	}
-
-	/**
-	 * Sets whether zoom changes should handled by SNT or IJ.
-	 *
-	 * @param disable
-	 *            If true, SNT will waive all zoom in/out operations to IJ
-	 */
-	public void disableZoom(boolean disable) {
-		waveZoomToIJ = disable;
 	}
 
 	private boolean validString(String string) {

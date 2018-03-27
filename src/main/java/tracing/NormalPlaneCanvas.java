@@ -88,7 +88,6 @@ class NormalPlaneCanvas extends TracerCanvas {
 		// Make ImageCanvas fully independent from SNT
 		disableEvents(true);
 		setDrawCrosshairs(false);
-		disableZoom(true);
 		//setAnnotationsColor(Color.BLUE);
 
 	}

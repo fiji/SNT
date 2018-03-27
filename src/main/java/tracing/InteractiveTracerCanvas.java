@@ -298,19 +298,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseMoved(final MouseEvent e) {
 
-		if (isEventsDisabled() || !tracerPlugin.isReady()) {
-			super.mouseMoved(e);
-			return;
-		}
+		super.mouseMoved(e);
+		if (isEventsDisabled() || !tracerPlugin.isReady()) return;
 
-		final int rawX = e.getX();
-		final int rawY = e.getY();
-
-		last_x_in_pane_precise = myOffScreenXD(rawX);
-		last_y_in_pane_precise = myOffScreenYD(rawY);
+		last_x_in_pane_precise = myOffScreenXD(e.getX());
+		last_y_in_pane_precise = myOffScreenYD(e.getY());
 
 		final boolean mac = PlatformUtils.isMac();
-
 		boolean shift_key_down = (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
 		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
 			: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
@@ -322,17 +316,15 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			last_y_in_pane_precise = p[1];
 			shift_key_down = tracerPlugin.cursorSnapWindowZ > 0; // always sync panes in Z-snapping mode
 		}
-		
+
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down,
 			joiner_modifier_down);
-		
 		if (editMode) {
 			setCursor((tracerPlugin.getEditingNode()==-1) ? defaultCursor : handCursor);
 		} else {
 			setCursor(crosshairCursor);
 		}
-	
-		
+
 	}
 
 	@Override

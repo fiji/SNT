@@ -130,24 +130,25 @@ public class MultiDThreePanes implements PaneOwner {
 			zy_canvas.updatePosition(point[0], point[1], point[2]);
 		}
 		if (shift_down) {
-			xy.setZ((int)point[2] + 1);
-			if (!single_pane) {
-				xz.setZ((int)point[1] + 1);
-				zy.setZ((int)point[0] + 1);
-			}
+			setSlicesAllPanes((int)point[0], (int)point[1], (int)point[2]);
 		}
 	}
 
 	@Override
-	public void zoom(final boolean in, final int off_screen_x,
+	public void zoomEventOccured(final boolean in, final int off_screen_x,
 		final int off_screen_y, final int in_plane)
 	{
+		if (single_pane || isZoomAllPanesDisabled()) return; // do nothing with this news
 		final int point[] = new int[3];
 		findPointInStack(off_screen_x, off_screen_y, in_plane, point);
-		xy_canvas.realZoom(in, point[0], point[1]);
-		if (!single_pane) {
-			xz_canvas.realZoom(in, point[0], point[2]);
-			zy_canvas.realZoom(in, point[2], point[1]);
+		if (in_plane != ZY_PLANE) {
+			zy_canvas.triggerZoomEvent(in, point[2], point[1]);
+		}
+		if (in_plane != XZ_PLANE) {
+			xz_canvas.triggerZoomEvent(in, point[0], point[2]);
+		}
+		if (in_plane != XY_PLANE) {
+			xy_canvas.triggerZoomEvent(in, point[0], point[1]);
 		}
 	}
 
@@ -188,11 +189,6 @@ public class MultiDThreePanes implements PaneOwner {
 
 	public void disableZoomAllPanes(final boolean disable) {
 		disable_zoom = disable;
-		xy_canvas.disableZoom(disable);
-		if (!single_pane) {
-			xz_canvas.disableZoom(disable);
-			zy_canvas.disableZoom(disable);
-		}
 	}
 
 	public boolean isZoomAllPanesDisabled() {

@@ -22,8 +22,8 @@
 
 package tracing.plugin;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -87,9 +87,9 @@ public class StrahlerCmd extends TreeAnalyzer {
 		}
 		IntStream.rangeClosed(1, maxBranchOrder).forEach(order -> {
 
-			final HashSet<Path> groupedPaths = tree.getPaths().stream() // convert set of paths to stream
+			final ArrayList<Path> groupedPaths = tree.getPaths().stream() // convert set of paths to stream
 					.filter(path -> path.getOrder() == order) // include only those of this order
-					.collect(Collectors.toCollection(HashSet::new)); // collect the output in a new set
+					.collect(Collectors.toCollection(ArrayList::new)); // collect the output in a new list
 
 			// now measure the group
 			final TreeAnalyzer analyzer = new TreeAnalyzer(new Tree(groupedPaths));

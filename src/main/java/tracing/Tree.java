@@ -39,7 +39,7 @@ import tracing.util.PointInImage;
 
 /**
  * Utility class to access a Collection of Paths. Note a "Tree" here is
- * literally a collection of Paths and it does not reflect graph theory
+ * literally a collection of {@link Path}s and it does not reflect graph theory
  * terminology.
  *
  * @author Tiago Ferreira

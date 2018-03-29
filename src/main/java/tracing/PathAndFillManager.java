@@ -48,6 +48,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
@@ -384,7 +385,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/**
-	 *
+	 * Returns the voxel dimensions currently set in SNT. When no image is
+	 * available, these typically default to dimensions parsed from the last
+	 * imported file.
+	 * 
+	 * @see getParsedCalibration
 	 * @return the spatial calibration details associated with this
 	 *         PathAndFillManager instance
 	 */
@@ -399,6 +404,15 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	/**
 	 *
+	 * Returns the voxel dimensions parsed from the last imported file.
+	 * 
+	 * With SWC files, the voxel dimensions are assumed to be the separation between
+	 * the closest pair of points in the file. With .traces files the one specified
+	 * by SNT. This information is useful for troubleshooting the cases when a file
+	 * cannot be imported into the loaded image.
+	 * 
+	 * @see getCalibration
+	 * 
 	 * @return the spatial calibration details parsed from the imported swc/traces
 	 *         file or null if no file has been imported
 	 */
@@ -1677,12 +1691,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return importSWC(br, assumeCoordinatesIndexVoxels, 0, 0, 0, 1, 1, 1, true);
 	}
 
-	public boolean importSWC(final BufferedReader br, final boolean assumeCoordinatesIndexVoxels, final double x_offset,
+	public boolean importSWC(final BufferedReader br, final boolean assumeCoordinatesInVoxels, final double x_offset,
 			final double y_offset, final double z_offset, final double x_scale, final double y_scale,
 			final double z_scale, final boolean replaceAllPaths) throws IOException {
-
-		if (needImageDataFromTracesFile)
-			throw new RuntimeException("[BUG] Trying to load SWC file while we still need image data information");
 
 		if (replaceAllPaths)
 			clearPathsAndFills();
@@ -1692,27 +1703,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		final Set<Integer> alreadySeen = new HashSet<>();
 		final Map<Integer, SWCPoint> idToSWCPoint = new HashMap<>();
-
 		final List<SWCPoint> primaryPoints = new ArrayList<>();
-
-		/*
-		 * Some SWC files I've tried use world co-ordinates (good) but some seem
-		 * to have the sign wrong, so calculate what should be the minimum and
-		 * maximum value in each axis so we can test for this later.
-		 */
-
-		final double minX = Math.min(0, width * x_spacing);
-		final double minY = Math.min(0, height * y_spacing);
-		final double minZ = Math.min(0, depth * z_spacing);
-
-		final double maxX = Math.max(0, width * x_spacing);
-		final double maxY = Math.max(0, height * y_spacing);
-		final double maxZ = Math.max(0, depth * z_spacing);
-
-		final double minimumVoxelSpacing = Math.min(Math.abs(x_spacing),
-				Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
-
-		int pointsOutsideImageRange = 0;
 
 		String line;
 		while ((line = br.readLine()) != null) {
@@ -1729,46 +1720,16 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			try {
 				final int id = Integer.parseInt(fields[0]);
 				final int type = Integer.parseInt(fields[1]);
-				double x = x_scale * Double.parseDouble(fields[2]) + x_offset;
-				double y = y_scale * Double.parseDouble(fields[3]) + y_offset;
-				double z = z_scale * Double.parseDouble(fields[4]) + z_offset;
-				if (assumeCoordinatesIndexVoxels) {
-					x *= x_spacing;
-					y *= y_spacing;
-					z *= z_spacing;
-				}
-				double radius = Double.parseDouble(fields[5]);
-				if (assumeCoordinatesIndexVoxels) {
-					/*
-					 * See the comment above; this just seems to be the
-					 * convention in the broken files that I've come across:
-					 */
-					radius *= minimumVoxelSpacing;
-				}
-
-				/*
-				 * If the radius is set to near zero, then artificially set it
-				 * to half of the voxel spacing so that something* appears in
-				 * the 3D Viewer
-				 */
-
-				if (Math.abs(radius) < 0.0000001)
-					radius = minimumVoxelSpacing / 2;
-
+				final double x = x_scale * Double.parseDouble(fields[2]) + x_offset;
+				final double y = y_scale * Double.parseDouble(fields[3]) + y_offset;
+				final double z = z_scale * Double.parseDouble(fields[4]) + z_offset;
+				final double radius = Double.parseDouble(fields[5]);
 				final int previous = Integer.parseInt(fields[6]);
 				if (alreadySeen.contains(id)) {
 					error("Point with ID " + id + " found more than once");
 					return false;
 				}
 				alreadySeen.add(id);
-
-				if (x < minX || x > maxX)
-					++pointsOutsideImageRange;
-				if (y < minY || y > maxY)
-					++pointsOutsideImageRange;
-				if (z < minZ || z > maxZ)
-					++pointsOutsideImageRange;
-
 				final SWCPoint p = new SWCPoint(id, type, x, y, z, radius, previous);
 				idToSWCPoint.put(id, p);
 				if (previous == -1)
@@ -1785,6 +1746,118 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				return false;
 			}
 		}
+
+		// Infer fields for when an image has not been specified. We'll assume
+		// voxel dimensions to be the separation between the 2 closest SWCpoints
+		// in the SWC. We'll assume the image dimensions to be the bounding box
+		// plus extra padding (10pixels XY, 2 slices in Z, if depth exists).
+		// This allows us to open a SWC file without a source image
+		{
+			double maxX = Double.MIN_VALUE;
+			double maxY = Double.MIN_VALUE;
+			double maxZ = Double.MIN_VALUE;
+			double minX = Double.MAX_VALUE;
+			double minY = Double.MAX_VALUE;
+			double minZ = Double.MAX_VALUE;
+			double minXsep = Double.MAX_VALUE;
+			double minYsep = Double.MAX_VALUE;
+			double minZsep = Double.MAX_VALUE;
+
+			final Iterator<Entry<Integer, SWCPoint>> it = idToSWCPoint.entrySet().iterator();
+			while (it.hasNext()) {
+				final SWCPoint point = it.next().getValue();
+				if (point.x < minX)
+					minX = point.x;
+				if (point.y < minY)
+					minY = point.y;
+				if (point.z < minZ)
+					minZ = point.z;
+				if (point.x > maxX)
+					maxX = point.x;
+				if (point.y > maxY)
+					maxY = point.y;
+				if (point.z > maxZ)
+					maxZ = point.z;
+				final double xsep = point.xSeparationFromPreviousPoint();
+				if (xsep > 0.32 && xsep < minXsep)
+					minXsep = xsep;
+				final double ysep = point.ySeparationFromPreviousPoint();
+				if (ysep > 0.32 && ysep < minYsep)
+					minYsep = ysep;
+				final double zsep = point.zSeparationFromPreviousPoint();
+				if (zsep > 0 && zsep < minZsep)
+					minZsep = zsep;
+			}
+
+			parsed_units = "SWC units";
+			parsed_x_spacing = x_spacing;
+			parsed_y_spacing = y_spacing;
+			parsed_z_spacing = z_spacing;
+
+			if (needImageDataFromTracesFile && x_spacing == 0d) {
+				x_spacing = parsed_x_spacing;
+				y_spacing = parsed_y_spacing;
+				z_spacing = parsed_z_spacing;
+				spacing_units = parsed_units;
+				SNT.log("Importing SWC: Voxel separation inferred from node coordinates");
+			}
+			if (needImageDataFromTracesFile && width == 0) {
+				width = (int) (maxX - minX) + 10;
+				height = (int) (maxY - minY) + 10;
+				depth = (int) Math.max(1, (maxZ - minZ));
+				if (depth > 1) depth += 2;
+			}
+		}
+
+		// We'll now iterate (again!) through the points to fix ill-assembled files
+		// that do exist in the wild. We typically encounter two major issues:
+		//     a) Files in world coordinates (good) but with reversed signs
+		//     b) Files in pixel coordinates
+		// While at it, we'll also perform some field validations
+
+		// Fix a): calculate what should be the minimum and maximum
+		// value in each axis so  that we can test for this later
+		final double minX = Math.min(0, width * x_spacing);
+		final double minY = Math.min(0, height * y_spacing);
+		final double minZ = Math.min(0, depth * z_spacing);
+		final double maxX = Math.max(0, width * x_spacing);
+		final double maxY = Math.max(0, height * y_spacing);
+		final double maxZ = Math.max(0, depth * z_spacing);
+		final double minimumVoxelSpacing = Math.min(Math.abs(x_spacing),
+				Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
+
+		int pointsOutsideImageRange = 0;
+		final Iterator<Entry<Integer, SWCPoint>> it = idToSWCPoint.entrySet().iterator();
+		while (it.hasNext()) {
+			final SWCPoint point = it.next().getValue();
+	
+			// Fix b): deal with SWC files that use pixel coordinates
+			if (assumeCoordinatesInVoxels) {
+				point.x *= x_spacing;
+				point.y *= y_spacing;
+				point.z *= z_spacing;
+				// this just seems to be the convention in the broken files we've came across
+				point.radius *= minimumVoxelSpacing;
+			}
+
+			// If the radius is set to near zero, then artificially set it to half
+			// of the voxel spacing so that something* appears in the 3D Viewer!
+			if (Math.abs(point.radius) < 0.0000001)
+				point.radius = minimumVoxelSpacing / 2;
+
+			// If an image has been specified: Is it appropriate for this file?
+			if (!needImageDataFromTracesFile) {
+				if (point.x < minX || point.x > maxX)
+					++pointsOutsideImageRange;
+				if (point.y < minY || point.y > maxY)
+					++pointsOutsideImageRange;
+				if (point.z < minZ || point.z > maxZ)
+					++pointsOutsideImageRange;
+			}
+		}
+
+		// At this point we already have populated all the required fields
+		needImageDataFromTracesFile = false;
 
 		if (pointsOutsideImageRange > 0)
 			SNT.warn("" + pointsOutsideImageRange
@@ -1815,6 +1888,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				++added;
 
 			}
+
 			// Now we can start adding points to the path:
 			SWCPoint currentPoint = start;
 			while (currentPoint != null) {

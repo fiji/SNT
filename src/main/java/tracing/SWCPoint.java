@@ -28,11 +28,13 @@ import java.util.ArrayList;
 import tracing.util.PointInImage;
 
 public class SWCPoint implements Comparable<SWCPoint> {
-	ArrayList<SWCPoint> nextPoints;
-	SWCPoint previousPoint;
-	int id, type, previous;
-	double x, y, z, radius;
-	Path fromPath = null;
+
+	protected final int id, type, previous;
+	protected double x, y, z;
+	protected double radius;
+	protected final ArrayList<SWCPoint> nextPoints;
+	protected Path fromPath = null;
+	protected SWCPoint previousPoint;
 
 	public SWCPoint(final int id, final int type, final double x, final double y, final double z, final double radius,
 			final int previous) {
@@ -57,6 +59,18 @@ public class SWCPoint implements Comparable<SWCPoint> {
 
 	public void setPreviousPoint(final SWCPoint p) {
 		previousPoint = p;
+	}
+
+	public double xSeparationFromPreviousPoint( ) {
+		return (previousPoint == null) ? Double.NaN : Math.abs(this.x - previousPoint.x);
+	}
+
+	public double ySeparationFromPreviousPoint( ) {
+		return (previousPoint == null) ? Double.NaN : Math.abs(this.y - previousPoint.y);
+	}
+
+	public double zSeparationFromPreviousPoint( ) {
+		return (previousPoint == null) ? Double.NaN : (this.z - previousPoint.z);
 	}
 
 	@Override

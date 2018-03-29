@@ -1936,8 +1936,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		// Set the start joins:
 		for (final Path p : allPaths) {
 			final SWCPoint swcPoint = pathStartsOnSWCPoint.get(p);
-			if (swcPoint == null)
+			if (swcPoint == null) {
+				p.setIsPrimary(true);
 				continue;
+			}
 			final Path previousPath = pointToPath.get(swcPoint);
 			final PointInImage pointInImage = pathStartsAtPointInImage.get(p);
 			p.setStartJoin(previousPath, pointInImage);

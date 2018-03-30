@@ -1512,7 +1512,9 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				cmdService.run(DistributionCmd.class, true, input);
 			} else if (APPEND_ORDER_CMD.equals(cmd)) {
 				for (final Path p : selectedPaths) {
-					p.setName(p.getName() + "<Order " + p.getOrder() + ">");
+					final String name = p.getName();
+					if (!name.contains("<Order "))
+						p.setName(name + "<Order " + p.getOrder() + ">");
 				}
 				refreshManager(false);
 			}
@@ -1525,7 +1527,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			else if (APPEND_TAG_CMD.equals(cmd)) {
 				final String tags = guiUtils.getString("Enter one or more tags (space or comma-separated list):",
 						"Append Tags", "");
-				if (tags == null) return; // user pressed cancel
+				if (tags == null || tags.trim().isEmpty()) return; // user pressed cancel or type nothing in the prompt
 				for (final Path p : selectedPaths) {
 					p.setName(p.getName() + "<Tag " + tags + ">");
 				}

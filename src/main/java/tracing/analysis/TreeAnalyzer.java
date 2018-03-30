@@ -22,6 +22,7 @@
 
 package tracing.analysis;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -104,6 +105,18 @@ public class TreeAnalyzer extends ContextCommand {
 			unfilteredTree = new Tree(tree.getPaths());
 		}
 		tree = tree.subTree(types);
+	}
+
+	public void ignoreSWCType(final int... types) {
+		if (unfilteredTree == null) {
+			unfilteredTree = new Tree(tree.getPaths());
+		}
+		final ArrayList<Integer> allowedTypes = Path.getSWCtypes();
+		for (final int type : types) {
+			if (allowedTypes.contains(type))
+				allowedTypes.remove(Integer.valueOf(type));
+		}
+		tree = tree.subTree(allowedTypes.stream().mapToInt(i -> i).toArray());
 	}
 
 	public void restrictToOrder(final int... orders) {
@@ -197,18 +210,19 @@ public class TreeAnalyzer extends ContextCommand {
 			table = new DefaultGenericTable();
 		table.appendRow(rowHeader);
 		final int row = Math.max(0, table.getRowCount() - 1);
-		restrictToSWCType(Path.SWC_SOMA);
-		table.set(getCol("# tree.getPaths()"), row, getNPaths());
+		final int ignoredType = Path.SWC_SOMA;
+		ignoreSWCType(ignoredType);
+		table.set(getCol("# Paths"), row, getNPaths());
 		table.set(getCol("# Branch Points"), row, getBranchPoints().size());
 		table.set(getCol("# Tips"), row, getTips().size());
 		table.set(getCol("Cable Length"), row, getCableLength());
-		table.set(getCol("# Primary tree.getPaths() (PP)"), row, getPrimaryPaths().size());
-		table.set(getCol("# Terminal tree.getPaths() (TP)"), row, getTerminalPaths().size());
+		table.set(getCol("# Primary Paths (PP)"), row, getPrimaryPaths().size());
+		table.set(getCol("# Terminal Paths (TP)"), row, getTerminalPaths().size());
 		table.set(getCol("Sum length PP"), row, getPrimaryLength());
 		table.set(getCol("Sum length TP"), row, getTerminalLength());
 		table.set(getCol("Strahler Root No."), row, getStrahlerRootNumber());
-		table.set(getCol("# Fitted tree.getPaths()"), row, fittedPathsCounter);
-		table.set(getCol("Notes"), row, "Soma ignored");
+		table.set(getCol("# Fitted Paths"), row, fittedPathsCounter);
+		table.set(getCol("Notes"), row, Path.getSWCtypeName(ignoredType) + " ignored");
 	}
 
 	public void setTable(final DefaultGenericTable table) {
@@ -227,11 +241,11 @@ public class TreeAnalyzer extends ContextCommand {
 	@Override
 	public void run() {
 		if (tree.getPaths() == null || tree.getPaths().isEmpty()) {
-			cancel("No tree.getPaths() to Measure");
+			cancel("No Paths to Measure");
 			return;
 		}
-		statusService.showStatus("Measuring tree.getPaths()...");
-		summarize("All tree.getPaths()");
+		statusService.showStatus("Measuring Paths...");
+		summarize("All Paths");
 		updateAndDisplayTable();
 		statusService.clearStatus();
 	}

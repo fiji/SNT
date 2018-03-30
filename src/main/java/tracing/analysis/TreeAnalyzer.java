@@ -41,6 +41,11 @@ import tracing.Path;
 import tracing.Tree;
 import tracing.util.PointInImage;
 
+/**
+ * Class for analysis of Trees
+ *
+ * @author Tiago Ferreira
+ */
 @Plugin(type = ContextCommand.class, visible = false)
 public class TreeAnalyzer extends ContextCommand {
 
@@ -69,6 +74,7 @@ public class TreeAnalyzer extends ContextCommand {
 	private HashSet<PointInImage> tips;
 	protected DefaultGenericTable table;
 	private String tableTitle;
+
 	private int fittedPathsCounter = 0;
 	private int unfilteredPathsFittedPathsCounter = 0;
 
@@ -100,11 +106,23 @@ public class TreeAnalyzer extends ContextCommand {
 		unfilteredPathsFittedPathsCounter = fittedPathsCounter;
 	}
 
+	/**
+	 * Restricts analysis to Paths sharing the specified SWC flag(s).
+	 *
+	 * @param types
+	 *            the allowed SWC flags (e.g., {@link Path.SWC_AXON}, etc.)
+	 */
 	public void restrictToSWCType(final int... types) {
 		initializeSnapshotTree();
 		tree = tree.subTree(types);
 	}
 
+	/**
+	 * Ignores Paths sharing the specified SWC flag(s).
+	 *
+	 * @param types
+	 *            the SWC flags to be ignored (e.g., {@link Path.SWC_AXON}, etc.)
+	 */
 	public void ignoreSWCType(final int... types) {
 		initializeSnapshotTree();
 		final ArrayList<Integer> allowedTypes = Path.getSWCtypes();
@@ -115,6 +133,12 @@ public class TreeAnalyzer extends ContextCommand {
 		tree = tree.subTree(allowedTypes.stream().mapToInt(i -> i).toArray());
 	}
 
+	/**
+	 * Restricts analysis to Paths sharing the specified branching orders.
+	 *
+	 * @param orders
+	 *            the allowed branching orders
+	 */
 	public void restrictToOrder(final int... orders) {
 		initializeSnapshotTree();
 		final Iterator<Path> it = tree.getPaths().iterator();
@@ -128,6 +152,16 @@ public class TreeAnalyzer extends ContextCommand {
 		}
 	}
 
+	/**
+	 * Restricts analysis to paths having the specified number of nodes.
+	 *
+	 * @param minSize
+	 *            the smallest number of nodes a path must have in order to be
+	 *            analyzed. Set it to -1 to disable minSize filtering
+	 * @param maxSize
+	 *            the largest number of nodes a path must have in order to be
+	 *            analyzed. Set it to -1 to disable maxSize filtering
+	 */
 	public void restrictToSize(final int minSize, final int maxSize) {
 		initializeSnapshotTree();
 		final Iterator<Path> it = tree.getPaths().iterator();
@@ -141,6 +175,16 @@ public class TreeAnalyzer extends ContextCommand {
 		}
 	}
 
+	/**
+	 * Restricts analysis to paths sharing the specified length range.
+	 *
+	 * @param lowerBound
+	 *            the smallest length a path must have in order to be analyzed. Set
+	 *            it to Double.NaN to disable lowerBound filtering
+	 * @param upperBound
+	 *            the largest length a path must have in order to be analyzed. Set
+	 *            it to Double.NaN to disable upperBound filtering
+	 */
 	public void restrictToLength(final double lowerBound, final double upperBound) {
 		initializeSnapshotTree();
 		final Iterator<Path> it = tree.getPaths().iterator();
@@ -154,6 +198,12 @@ public class TreeAnalyzer extends ContextCommand {
 		}
 	}
 
+	/**
+	 * Restricts analysis to Paths containing the specified string in their name.
+	 *
+	 * @param pattern
+	 *            the string to search for
+	 */
 	public void restrictToNamePattern(final String pattern) {
 		initializeSnapshotTree();
 		final Iterator<Path> it = tree.getPaths().iterator();
@@ -171,6 +221,11 @@ public class TreeAnalyzer extends ContextCommand {
 			unfilteredTree = new Tree(tree.getPaths());
 	}
 
+	/**
+	 * Removes any filtering restrictions that may have been set. Once called all
+	 * paths parsed by the constructor will be analyzed. Does nothing if no paths
+	 * are currently being excluded from the analysis.
+	 */
 	public void resetRestrictions() {
 		if (unfilteredTree == null)
 			return; // no filtering has occurred
@@ -190,14 +245,21 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Returns the set of parsed Paths.
 	 *
-	 * @return the set of parsed paths, which may be a subset of the tree specified
-	 *         in the constructor, since, e.g., Paths that may exist only as just
-	 *         fitted versions of existing ones are ignored by the class.
+	 * @return the set of paths currently being considered for analysis. Note that
+	 *         even if no analysis filtering as which may be a subset of the tree
+	 *         specified in the constructor, since, e.g., Paths that may exist only
+	 *         as just fitted versions of existing ones are ignored by the class.
 	 */
 	public Tree getParsedTree() {
 		return tree;
 	}
 
+	/**
+	 * Outputs a summary of the current analysis to the Analyzer's tables.
+	 *
+	 * @param rowHeader
+	 *            the String to be used as row header for the summary
+	 */
 	public void summarize(final String rowHeader) {
 		if (table == null)
 			table = new DefaultGenericTable();
@@ -217,19 +279,44 @@ public class TreeAnalyzer extends ContextCommand {
 		table.set(getCol("Notes"), row, "Single point-paths ignored");
 	}
 
+	/**
+	 * Sets the Analyzer table.
+	 *
+	 * @param table
+	 *            the table to be used by the analyzer
+	 * @see #summarize(String)
+	 */
 	public void setTable(final DefaultGenericTable table) {
 		this.table = table;
 	}
 
+	/**
+	 * Sets the table.
+	 *
+	 * @param table
+	 *            the table to be used by the analyzer
+	 * @param title
+	 *            the title of the table display window
+	 */
 	public void setTable(final DefaultGenericTable table, final String title) {
 		this.table = table;
 		this.tableTitle = title;
 	}
 
+	/**
+	 * Gets the table currently being used by the Analyzer
+	 *
+	 * @return the table
+	 */
 	public DefaultGenericTable getTable() {
 		return table;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Runnable#run()
+	 */
 	@Override
 	public void run() {
 		if (tree.getPaths() == null || tree.getPaths().isEmpty()) {
@@ -242,6 +329,9 @@ public class TreeAnalyzer extends ContextCommand {
 		statusService.clearStatus();
 	}
 
+	/**
+	 * Updates and displays the Analyzer table.
+	 */
 	public void updateAndDisplayTable() {
 		final Display<?> display = displayService.getDisplay(tableTitle);
 		if (display != null && display.isDisplaying(table)) {
@@ -260,10 +350,20 @@ public class TreeAnalyzer extends ContextCommand {
 		return idx;
 	}
 
+	/**
+	 * Gets the no. of paths parsed by the Analyzer.
+	 *
+	 * @return the number of paths
+	 */
 	public int getNPaths() {
 		return tree.getPaths().size();
 	}
 
+	/**
+	 * Retrieves Paths tagged as primary.
+	 *
+	 * @return the set of primary paths
+	 */
 	public HashSet<Path> getPrimaryPaths() {
 		primaries = new HashSet<Path>();
 		for (final Path p : tree.getPaths()) {
@@ -274,7 +374,7 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Convenience method to retrieve Paths containing terminal points.
+	 * Retrieves Paths containing terminal points.
 	 *
 	 * @return the set containing Paths associated with terminal points
 	 * @see #restrictToOrder(int...)
@@ -296,6 +396,11 @@ public class TreeAnalyzer extends ContextCommand {
 		return terminals;
 	}
 
+	/**
+	 * Gets the position of all the tips in the analyzed tree.
+	 *
+	 * @return the set of tip points
+	 */
 	public HashSet<PointInImage> getTips() {
 
 		// retrieve all start/end points
@@ -321,6 +426,11 @@ public class TreeAnalyzer extends ContextCommand {
 
 	}
 
+	/**
+	 * Gets the position of all the branch points in the analyzed tree.
+	 *
+	 * @return the branch points positions
+	 */
 	public HashSet<PointInImage> getBranchPoints() {
 		joints = new HashSet<PointInImage>();
 		for (final Path p : tree.getPaths()) {
@@ -329,22 +439,42 @@ public class TreeAnalyzer extends ContextCommand {
 		return joints;
 	}
 
+	/**
+	 * Gets the cable length.
+	 *
+	 * @return the cable length of the tree
+	 */
 	public double getCableLength() {
 		return sumLength(tree.getPaths());
 	}
 
+	/**
+	 * Gets the cable length of primary Paths
+	 *
+	 * @return the primary length
+	 */
 	public double getPrimaryLength() {
 		if (primaries == null)
 			getPrimaryPaths();
 		return sumLength(primaries);
 	}
 
+	/**
+	 * Gets the cable length of terminal Paths
+	 *
+	 * @return the terminal length
+	 */
 	public double getTerminalLength() {
 		if (terminals == null)
 			getTerminalPaths();
 		return sumLength(terminals);
 	}
 
+	/**
+	 * Gets the strahler root number of the analyzed tree
+	 *
+	 * @return the Strahler root number, or -1 if tree has no defined order
+	 */
 	public int getStrahlerRootNumber() {
 		int root = -1;
 		for (final Path p : tree.getPaths()) {

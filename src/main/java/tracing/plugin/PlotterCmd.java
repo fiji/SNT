@@ -50,12 +50,14 @@ import tracing.util.PointInImage;
 @Plugin(type = DynamicCommand.class, visible = false, label = "Interactive Traces Plot")
 public class PlotterCmd extends DynamicCommand implements Interactive {
 
-	@Parameter(required = false, label = "Angle (degrees)", min = "-180", max = "180", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "angleChanged")
-	private int angle = 0;
+	@Parameter(required = false, label = "X rotation", description = "Rotation angle in degrees", min = "0", max = "360", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "currentXangleChanged")
+	private int angleX = 0;
 
-	@Parameter(required = false, label = "Rotation axis", choices = { X_AXIS, Y_AXIS,
-			Z_AXIS }, style = "radioButtonHorizontal", callback = "axisChanged")
-	private String rotationAxis = Y_AXIS;
+	@Parameter(required = false, label = "Y rotation", description = "Rotation angle in degrees", min = "0", max = "360", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "currentYangleChanged")
+	private int angleY = 0;
+
+	@Parameter(required = false, label = "Z rotation", description = "Rotation angle in degrees", min = "0", max = "360", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "currentZangleChanged")
+	private int angleZ = 0;
 
 	@Parameter(required = false, label = "Actions", choices = { ACTION_NONE, ACTION_FLIP_H, ACTION_FLIP_V, ACTION_RESET,
 			ACTION_SNAPSHOT }, callback = "runAction")
@@ -67,9 +69,6 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	@Parameter(required = false)
 	private String title;
 
-	private static final String X_AXIS = "X";
-	private static final String Y_AXIS = "Y";
-	private static final String Z_AXIS = "Z";
 	private static final String ACTION_NONE = "Choose...";
 	private static final String ACTION_RESET = "Reset rotation";
 	private static final String ACTION_FLIP_H = "Flip horizontally";
@@ -81,16 +80,15 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	private ChartFrame frame;
 	private Tree plottingTree;
 	private Tree snapshotTree;
-	private int previousAngle = 0;
-	private int lastXrotation = 0;
-	private int lastYrotation = 0;
-	private int lastZrotation = 0;
+	private int previousXangle = 0;
+	private int previousYangle = 0;
+	private int previousZangle = 0;
 
 	@Override
 	public void run() {
 
-		// Ensure tree is first rendered in its default orientation
-		angle = 0;
+		if (tree == null || tree.isEmpty())
+			cancel("No paths to plot");
 
 		// Tree rotation occurs in place so we'll copy plotting coordinates
 		// to a new Tree. To avoid rotation lags we'll keep it monochrome,
@@ -121,51 +119,59 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 		frame.setVisible(true);
 	}
 
-	void buildPlot() {
+	private void buildPlot() {
 		plot = new TreePlot(context());
 		plot.setDefaultColor(DEF_COLOR);
-		plottingTree.rotate(getRotationAxis(rotationAxis), angle - previousAngle);
 		plot.addTree(plottingTree);
-		previousAngle = angle;
 	}
 
 	private void updatePlot() {
-		// if (!ACTION_NONE.equals(actionChoice)) return;
 		buildPlot();
 		chart.getXYPlot().setDataset(plot.getChart().getXYPlot().getDataset());
 		frame.setVisible(true); // re-open frame if it has been closed
-		frame.toFront();
+		// frame.toFront();
 	}
 
 	private void resetRotation() {
-		plottingTree.rotate(Tree.X_AXIS, -lastXrotation);
-		plottingTree.rotate(Tree.Y_AXIS, -lastYrotation);
-		plottingTree.rotate(Tree.Z_AXIS, -lastZrotation);
+		plottingTree.rotate(Tree.X_AXIS, -angleX);
+		plottingTree.rotate(Tree.Y_AXIS, -angleY);
+		plottingTree.rotate(Tree.Z_AXIS, -angleZ);
 		updatePlot();
-		resetAngle();
-		lastXrotation = 0;
-		lastYrotation = 0;
-		lastZrotation = 0;
-	}
-
-	private void resetAngle() {
-		angle = 0;
-		previousAngle = 0;
+		angleX = 0;
+		angleY = 0;
+		angleZ = 0;
+		previousXangle = 0;
+		previousYangle = 0;
+		previousZangle = 0;
 	}
 
 	@SuppressWarnings("unused")
-	private void axisChanged() {
-		getRotationAxis(rotationAxis);
-		resetAngle();
+	private void currentXangleChanged() {
+		plottingTree.rotate(Tree.X_AXIS, angleX - previousXangle);
+		previousXangle = angleX;
+		updatePlot();
 	}
 
-	private synchronized void angleChanged() {
-		// see https://stackoverflow.com/a/2323034
-		angle = angle % 360;
-		angle = (angle + 360) % 360;
-		if (angle > 180)
-			angle -= 360;
+	@SuppressWarnings("unused")
+	private void currentYangleChanged() {
+		plottingTree.rotate(Tree.Y_AXIS, angleY - previousYangle);
+		previousYangle = angleY;
 		updatePlot();
+	}
+
+	@SuppressWarnings("unused")
+	private void currentZangleChanged() {
+		plottingTree.rotate(Tree.Z_AXIS, angleZ - previousZangle);
+		previousZangle = angleZ;
+		updatePlot();
+	}
+
+	private int getBoundedAngle(int angle) {
+		if (angle >= 360)
+			angle -= 360;
+		if (angle < 0)
+			angle += 360;
+		return angle;
 	}
 
 	@SuppressWarnings("unused")
@@ -182,18 +188,20 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 			actionChoice = ACTION_NONE;
 			return;
 		case ACTION_FLIP_V:
-			rotationAxis = X_AXIS;
-			lastXrotation += 180;
+			angleX = getBoundedAngle(180 + angleX);
+			plottingTree.rotate(Tree.X_AXIS, angleX);
+			previousXangle = angleX;
+			updatePlot();
 			break;
 		case ACTION_FLIP_H:
-			rotationAxis = Y_AXIS;
-			lastYrotation += 180;
+			angleY = getBoundedAngle(180 + angleY);
+			plottingTree.rotate(Tree.Y_AXIS, angleY);
+			previousYangle = angleY;
+			updatePlot();
 			break;
 		default:
 			throw new IllegalArgumentException("Invalid action");
 		}
-		angle += 180;
-		angleChanged();
 		actionChoice = ACTION_NONE;
 	}
 
@@ -206,7 +214,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 			plottingPath.setNodeColors(inputPath.getNodeColors());
 		}
 		buildPlot();
-		plot.setTitle("[" + angle + " degrees " + rotationAxis + "-axis]");
+		plot.setTitle("[X " + angleX + "deg Y " + angleY + "deg Z " + angleZ + "deg]");
 		plot.setPreferredSize(frame.getWidth(), frame.getHeight());
 		plot.showPlot();
 		// make tree monochrome
@@ -216,26 +224,12 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 		}
 	}
 
-	private int getRotationAxis(final String string) {
-		switch (string) {
-		case Y_AXIS:
-			lastYrotation = angle;
-			return Tree.Y_AXIS;
-		case Z_AXIS:
-			lastZrotation = angle;
-			return Tree.Z_AXIS;
-		default:
-			lastXrotation = angle;
-			return Tree.X_AXIS;
-		}
-	}
-
 	/** IDE debug method **/
 	public static void main(final String[] args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
-		final Tree tree = new Tree(DistributionCmd.randomPaths());
+		final Tree tree = new Tree("/home/tferr/Desktop/OP_1/OP_1.traces");
 		input.put("tree", tree);
 		ij.command().run(PlotterCmd.class, true, input);
 	}

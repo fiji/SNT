@@ -1389,10 +1389,10 @@ public class NeuriteTracerResultsDialog extends JDialog {
 //				plugin.getXYCanvas().setOverlay(overlay);
 			}
 		});
+		analysisMenu.add(plotMenuItem);
+		analysisMenu.add(measureMenuItem);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
-		analysisMenu.add(measureMenuItem);
-		analysisMenu.add(plotMenuItem);
 		analysisMenu.addSeparator();
 		analysisMenu.add(correspondencesMenuItem);
 

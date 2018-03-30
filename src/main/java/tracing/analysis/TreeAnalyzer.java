@@ -101,16 +101,12 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	public void restrictToSWCType(final int... types) {
-		if (unfilteredTree == null) {
-			unfilteredTree = new Tree(tree.getPaths());
-		}
+		initializeSnapshotTree();
 		tree = tree.subTree(types);
 	}
 
 	public void ignoreSWCType(final int... types) {
-		if (unfilteredTree == null) {
-			unfilteredTree = new Tree(tree.getPaths());
-		}
+		initializeSnapshotTree();
 		final ArrayList<Integer> allowedTypes = Path.getSWCtypes();
 		for (final int type : types) {
 			if (allowedTypes.contains(type))
@@ -120,9 +116,7 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	public void restrictToOrder(final int... orders) {
-		if (unfilteredTree == null) {
-			unfilteredTree = new Tree(tree.getPaths());
-		}
+		initializeSnapshotTree();
 		final Iterator<Path> it = tree.getPaths().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
@@ -135,14 +129,12 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	public void restrictToSize(final int minSize, final int maxSize) {
-		if (unfilteredTree == null) {
-			unfilteredTree = new Tree(tree.getPaths());
-		}
+		initializeSnapshotTree();
 		final Iterator<Path> it = tree.getPaths().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
 			final int size = p.size();
-			if (minSize >= size || maxSize >= size) {
+			if ((minSize > 0 && size < minSize) || (maxSize > 0 && size > maxSize)) {
 				updateFittedPathsCounter(p);
 				it.remove();
 			}
@@ -150,14 +142,12 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	public void restrictToLength(final double lowerBound, final double upperBound) {
-		if (unfilteredTree == null) {
-			unfilteredTree = new Tree(tree.getPaths());
-		}
+		initializeSnapshotTree();
 		final Iterator<Path> it = tree.getPaths().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
 			final double length = p.getRealLength();
-			if (lowerBound >= length || upperBound >= length) {
+			if (length < lowerBound || length > upperBound) {
 				updateFittedPathsCounter(p);
 				it.remove();
 			}
@@ -165,17 +155,20 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	public void restrictToNamePattern(final String pattern) {
-		if (unfilteredTree == null) {
-			unfilteredTree = new Tree(tree.getPaths());
-		}
+		initializeSnapshotTree();
 		final Iterator<Path> it = tree.getPaths().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
-			if (p.getName().contains(pattern)) {
+			if (!p.getName().contains(pattern)) {
 				updateFittedPathsCounter(p);
 				it.remove();
 			}
 		}
+	}
+
+	private void initializeSnapshotTree() {
+		if (unfilteredTree == null)
+			unfilteredTree = new Tree(tree.getPaths());
 	}
 
 	public void resetRestrictions() {
@@ -210,8 +203,7 @@ public class TreeAnalyzer extends ContextCommand {
 			table = new DefaultGenericTable();
 		table.appendRow(rowHeader);
 		final int row = Math.max(0, table.getRowCount() - 1);
-		final int ignoredType = Path.SWC_SOMA;
-		ignoreSWCType(ignoredType);
+		restrictToSize(2, -1); // include only paths with at least 2 points
 		table.set(getCol("# Paths"), row, getNPaths());
 		table.set(getCol("# Branch Points"), row, getBranchPoints().size());
 		table.set(getCol("# Tips"), row, getTips().size());
@@ -222,7 +214,7 @@ public class TreeAnalyzer extends ContextCommand {
 		table.set(getCol("Sum length TP"), row, getTerminalLength());
 		table.set(getCol("Strahler Root No."), row, getStrahlerRootNumber());
 		table.set(getCol("# Fitted Paths"), row, fittedPathsCounter);
-		table.set(getCol("Notes"), row, Path.getSWCtypeName(ignoredType) + " ignored");
+		table.set(getCol("Notes"), row, "Single point-paths ignored");
 	}
 
 	public void setTable(final DefaultGenericTable table) {

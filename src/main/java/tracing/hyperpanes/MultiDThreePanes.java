@@ -180,18 +180,18 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	public void zoom100PercentAllPanes() {
-		xy_canvas.zoom100Percent();
-		if (!single_pane) {
-			xz_canvas.zoom100Percent();
-			zy_canvas.zoom100Percent();
+		if (xy_canvas != null) xy_canvas.zoom100Percent();
+		if (!disable_zoom) {
+			if (xz_canvas != null) xz_canvas.zoom100Percent();
+			if (zy_canvas != null) zy_canvas.zoom100Percent();
 		}
 	}
 
 	public void unzoomAllPanes() {
-		xy_canvas.unzoom();
-		if (!single_pane) {
-			xz_canvas.unzoom();
-			zy_canvas.unzoom();
+		if (xy_canvas != null) xy_canvas.unzoom();
+		if (!disable_zoom) {
+			if (xz_canvas != null) xz_canvas.unzoom();
+			if (zy_canvas != null) zy_canvas.unzoom();
 		}
 	}
 

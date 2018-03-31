@@ -87,7 +87,6 @@ import ij.WindowManager;
 import ij.gui.HTMLDialog;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
-import ij3d.ImageWindow3D;
 import net.imagej.table.DefaultGenericTable;
 import sholl.Sholl_Analysis;
 import tracing.analysis.TreeAnalyzer;
@@ -1439,22 +1438,16 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 		viewMenu.add(threeDViewerMenuItem);
-		viewMenu.addSeparator();
-		final JMenuItem resetZoomMenuItem = new JMenuItem("Reset Zoom Levels");
-		resetZoomMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				try {
-					plugin.zoom100PercentAllPanes();
-					Thread.sleep(50); // allow windows to resize if needed
-					plugin.zoom100PercentAllPanes();
-				} catch (final InterruptedException exc) {
-					// do nothing
-				}
-			}
-		});
-		viewMenu.add(resetZoomMenuItem);
+//		viewMenu.addSeparator();
+//		final JMenuItem resetZoomMenuItem = new JMenuItem("Reset Zoom Levels");
+//		resetZoomMenuItem.addActionListener(new ActionListener() {
+//
+//			@Override
+//			public void actionPerformed(final ActionEvent e) {
+//				plugin.zoom100PercentAllPanes();
+//			}
+//		});
+//		viewMenu.add(resetZoomMenuItem);
 		viewMenu.addSeparator();
 		final JMenuItem arrangeWindowsMenuItem = new JMenuItem("Arrange Views");
 		arrangeWindowsMenuItem.addActionListener(new ActionListener() {
@@ -1808,8 +1801,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	}
 
 	private void arrangeCanvases() {
+
 		final StackWindow xy_window = plugin.getWindow(MultiDThreePanes.XY_PLANE);
-		if (xy_window == null) return;
+		if (xy_window == null) {
+			guiUtils.error("XY view is not available");
+			return;
+		}
 		final GraphicsConfiguration xy_config = xy_window
 			.getGraphicsConfiguration();
 		final GraphicsDevice xy_screen = xy_config.getDevice();
@@ -1817,22 +1814,16 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final int screenHeight = xy_screen.getDisplayMode().getHeight();
 		final Rectangle bounds = xy_screen.getDefaultConfiguration().getBounds();
 
-		// Place 3D Viewer at lower right of the screen where image was found
-		if (plugin.use3DViewer) {
-			final ImageWindow3D uniWindow = plugin.get3DUniverse().getWindow();
-			uniWindow.setLocation(bounds.x + screenWidth - uniWindow.getWidth(),
-				bounds.y + screenHeight - uniWindow.getHeight());
-		}
+//		// Place 3D Viewer at lower right of the screen where image was found
+//		if (plugin.use3DViewer) {
+//			final ImageWindow3D uniWindow = plugin.get3DUniverse().getWindow();
+//			uniWindow.setLocation(bounds.x + screenWidth - uniWindow.getWidth(),
+//				bounds.y + screenHeight - uniWindow.getHeight());
+//		}
 
-		// We'll avoid centering the image on the screen it was found to
-		// maximize available space. We'll also avoid the upper left of
-		// the screen in case dialog an path window are also on this screen.
-		int x = bounds.x + this.getX() + this.getWidth();
-		if (x > bounds.x + screenWidth / 2 - xy_window.getWidth() / 2) x =
-			bounds.x + screenWidth / 2 - xy_window.getWidth() / 2;
-		int y = bounds.y + pw.getHeight() / 2;
-		if (y > bounds.y + screenHeight / 2 - xy_window.getHeight() / 2) y =
-			bounds.y + screenHeight / 2 - xy_window.getHeight() / 2;
+		// Center the main tracing canvas on the screen it was found
+		int x = bounds.x + screenWidth / 2 - xy_window.getWidth() / 2;
+		int y = bounds.y + screenHeight / 2 - xy_window.getHeight() / 2;
 		xy_window.setLocation(x, y);
 
 		final StackWindow zy_window = plugin.getWindow(MultiDThreePanes.ZY_PLANE);

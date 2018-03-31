@@ -82,17 +82,16 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Instantiates a new Tree analyzer.
 	 *
 	 * @param tree
-	 *            Collection of Paths to be analyzed. Note that some Paths may be
-	 *            excluded from analysis: I.e., null Paths, and Paths that may exist
-	 *            only as just fitted versions of existing ones.
+	 *            Collection of Paths to be analyzed. Note that null Paths are
+	 *            discarded. Also, when a Path has been fitted and its
+	 *            {@link Path#getUseFitted()} is true, its fitted flavor is used.
 	 *
 	 * @see #getParsedTree()
 	 */
 	public TreeAnalyzer(final Tree tree) {
 		this.tree = new Tree();
 		for (final Path p : tree.getPaths()) {
-			if (p == null || p.isFittedVersionOfAnotherPath())
-				continue;
+			if (p == null) continue;
 			Path pathToAdd;
 			// If fitted flavor of path exists use it instead
 			if (p.getUseFitted() && p.getFitted() != null) {
@@ -134,7 +133,7 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Restricts analysis to Paths sharing the specified branching orders.
+	 * Restricts analysis to Paths sharing the specified branching order(s).
 	 *
 	 * @param orders
 	 *            the allowed branching orders
@@ -245,10 +244,7 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Returns the set of parsed Paths.
 	 *
-	 * @return the set of paths currently being considered for analysis. Note that
-	 *         even if no analysis filtering as which may be a subset of the tree
-	 *         specified in the constructor, since, e.g., Paths that may exist only
-	 *         as just fitted versions of existing ones are ignored by the class.
+	 * @return the set of paths currently being considered for analysis.
 	 */
 	public Tree getParsedTree() {
 		return tree;

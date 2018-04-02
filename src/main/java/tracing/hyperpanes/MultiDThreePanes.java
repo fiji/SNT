@@ -29,6 +29,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.ImageCanvas;
 import ij.gui.StackWindow;
+import ij.measure.Calibration;
 import ij.plugin.RGBStackConverter;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -495,8 +496,13 @@ public class MultiDThreePanes implements PaneOwner {
 					}
 				}
 
-				if (zy == null)
+				if (zy == null) {
 					zy = new ImagePlus("ZY " + title, zy_stack);
+					final Calibration zyCal = xy.getCalibration().copy();
+					zyCal.pixelWidth = xy.getCalibration().pixelDepth;
+					zyCal.pixelDepth = xy.getCalibration().pixelWidth;
+					zy.setCalibration(zyCal);
+				}
 				zy.setStack(zy_stack);
 				zy.setTitle("ZY " + title);
 
@@ -623,8 +629,13 @@ public class MultiDThreePanes implements PaneOwner {
 						xz_stack.setColorModel(cm);
 					}
 				}
-				if (xz == null)
+				if (xz == null) {
 					xz = new ImagePlus("XZ " + title, xz_stack);
+					final Calibration xzCal = xy.getCalibration().copy();
+					xzCal.pixelHeight = xy.getCalibration().pixelDepth;
+					xzCal.pixelDepth = xy.getCalibration().pixelHeight;
+					xz.setCalibration(xzCal);
+				}
 				xz.setStack(xz_stack);
 				xz.setTitle("XZ " + title);
 				showStatus(0, 0, "Generating ZY planes...");

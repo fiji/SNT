@@ -22,12 +22,8 @@
 
 package tracing;
 
-import java.awt.CheckboxMenuItem;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Menu;
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -37,7 +33,13 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+
 import org.scijava.util.PlatformUtils;
+
 import ij.ImagePlus;
 import ij.Menus;
 import tracing.gui.GuiUtils;
@@ -50,10 +52,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	private static final long serialVersionUID = 1L;
 	private final SimpleNeuriteTracer tracerPlugin;
-	private PopupMenu pMenu;
-	private CheckboxMenuItem toggleEditModeMenuItem;
-	private CheckboxMenuItem togglePauseModeMenuItem;
-	private Menu deselectedEditingPathsMenu;
+	private JPopupMenu pMenu;
+	private JCheckBoxMenuItem toggleEditModeMenuItem;
+	private JMenuItem togglePauseModeMenuItem;
+	private JMenu deselectedEditingPathsMenu;
 	private double last_x_in_pane_precise = Double.MIN_VALUE;
 	private double last_y_in_pane_precise = Double.MIN_VALUE;
 	private boolean fillTransparent = false;
@@ -76,20 +78,20 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		tracerPlugin = plugin;
 		buildPpupMenu();
 		super.disablePopupMenu(true); // so that handlePopupMenu is not triggered
-		super.add(pMenu);
 	}
 
-	private void buildPpupMenu() { // We are extending ImageCanvas: we'll avoid swing components here
-		pMenu = new PopupMenu();
+	private void buildPpupMenu() {
+		pMenu = new JPopupMenu();
+		pMenu.setLightWeightPopupEnabled(false); // Required because we are mixing lightweight and heavyweight components?
 		final AListener listener = new AListener();
 		pMenu.add(menuItem(AListener.SELECT_NEAREST, listener));
 		pMenu.add(menuItem(listener.FORK_NEAREST, listener));
 		pMenu.addSeparator();
-		togglePauseModeMenuItem = new CheckboxMenuItem(AListener.PAUSE_TOOGLE);
+		togglePauseModeMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_TOOGLE);
 		togglePauseModeMenuItem.addItemListener(listener);
 		pMenu.add(togglePauseModeMenuItem);
 		pMenu.addSeparator();
-		toggleEditModeMenuItem = new CheckboxMenuItem(AListener.EDIT_TOOGLE);
+		toggleEditModeMenuItem = new JCheckBoxMenuItem(AListener.EDIT_TOOGLE);
 		toggleEditModeMenuItem.addItemListener(listener);
 		pMenu.add(toggleEditModeMenuItem);
 		pMenu.addSeparator();
@@ -98,7 +100,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		pMenu.add(menuItem(AListener.NODE_MOVE, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE_Z, listener));
 		pMenu.addSeparator();
-		deselectedEditingPathsMenu = new Menu("Connect To");
+		deselectedEditingPathsMenu = new JMenu("Connect To");
 		pMenu.add(deselectedEditingPathsMenu);
 		if (Menus.getFontSize()!=0) pMenu.setFont(Menus.getFont());
 	}
@@ -108,13 +110,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final boolean be = uiReadyForModeChange(NeuriteTracerResultsDialog.EDITING_MODE);
 		toggleEditModeMenuItem.setEnabled(be);
 		toggleEditModeMenuItem.setState(be && editMode);
-		toggleEditModeMenuItem.setLabel((activePath != null) ? "Edit " + activePath.getName() : AListener.EDIT_TOOGLE);
+		toggleEditModeMenuItem.setText((activePath != null) ? "Edit " + activePath.getName() : AListener.EDIT_TOOGLE);
 		final boolean bp = uiReadyForModeChange(NeuriteTracerResultsDialog.PAUSED);
 		togglePauseModeMenuItem.setEnabled(bp);
-		togglePauseModeMenuItem.setState(bp && tracerPlugin.getUIState()==NeuriteTracerResultsDialog.PAUSED);
-		for (int i = 6; i < pMenu.getItemCount(); i++) {
+		togglePauseModeMenuItem.setSelected(bp && tracerPlugin.getUIState()==NeuriteTracerResultsDialog.PAUSED);
+		for (int i = 6; i < pMenu.getComponentCount(); i++) {
 			// First 6 items: Select nearest, sep, Edit mode, sep, Pause mode, separator
-			pMenu.getItem(i).setEnabled(editMode);
+			pMenu.getComponent(i).setEnabled(editMode);
 		}
 		assembleDeselectedEditingPathsMenu(be && editMode);
 		pMenu.show(this, x, y);
@@ -128,12 +130,12 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 		final Path source = tracerPlugin.getEditingPath();
 		final boolean startJoins = (source.getEditableNodeIndex() <= source.size() / 2);
-		deselectedEditingPathsMenu.setLabel("Connect To ("+ (startJoins?"Start":"End") +" Join)");
+		deselectedEditingPathsMenu.setText("Connect To ("+ (startJoins?"Start":"End") +" Join)");
 		int count = 0;
 		for (final Path p : pathAndFillManager.getPaths()) {
 			if (p.equals(tracerPlugin.getEditingPath()) || !p.isBeingEdited())
 				continue;
-			final MenuItem mitem = new MenuItem(p.getName());
+			final JMenuItem mitem = new JMenuItem(p.getName());
 			deselectedEditingPathsMenu.add(mitem);
 			mitem.addActionListener(new ActionListener() {
 
@@ -167,23 +169,23 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			++count;
 		}
 		if (count == 0) {
-			final MenuItem mitem = new MenuItem("No Other Editable Nodes Exist...");
+			final JMenuItem mitem = new JMenuItem("No Other Editable Nodes Exist...");
 			mitem.setEnabled(false);
 			deselectedEditingPathsMenu.add(mitem);
 		}
 		deselectedEditingPathsMenu.add(helpOnConnecting());
 	}
 
-	private MenuItem helpOnConnecting() {
+	private JMenuItem helpOnConnecting() {
 		final String msg = "To connect two paths in Edit mode: select the source node "
 				+ "on the first path, then activate the second path and select the "
 				+ "destination node on it. Link the two through the 'Connect To' menu entry.";
 		return helpItem(msg);
 	}
 
-	private MenuItem helpItem(final String msg) {
+	private JMenuItem helpItem(final String msg) {
 		final GuiUtils guiUtils = new GuiUtils(this.getParent());
-		final MenuItem helpItem = new MenuItem("Help...");
+		final JMenuItem helpItem = new JMenuItem("Help...");
 		helpItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -195,8 +197,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		return helpItem;
 	}
 
-	private MenuItem menuItem(final String cmdName, final ActionListener lstnr) {
-		final MenuItem mi = new MenuItem(cmdName);
+	private JMenuItem menuItem(final String cmdName, final ActionListener lstnr) {
+		final JMenuItem mi = new JMenuItem(cmdName);
 		mi.addActionListener(lstnr);
 		return mi;
 	}
@@ -545,7 +547,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				enableEditMode(toggleEditModeMenuItem.getState());
 			}
 		else if (e.getSource().equals(togglePauseModeMenuItem))
-			tracerPlugin.pause(togglePauseModeMenuItem.getState());
+			tracerPlugin.pause(togglePauseModeMenuItem.isSelected());
 		}
 
 		@Override

@@ -113,7 +113,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	protected static final int MIN_SNAP_CURSOR_WINDOW_XY = 2;
 	protected static final int MIN_SNAP_CURSOR_WINDOW_Z = 0;
-	protected static final int MAX_SNAP_CURSOR_WINDOW_XY = 20;
+	protected static final int MAX_SNAP_CURSOR_WINDOW_XY = 40;
 	protected static final int MAX_SNAP_CURSOR_WINDOW_Z = 10;
 
 	protected static final String startBallName = "Start point";

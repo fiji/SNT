@@ -985,6 +985,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					default:
 						throw new IllegalArgumentException("Unrecognized option");
 				}
+				plugin.repaintAllPanes();
 			}
 		});
 

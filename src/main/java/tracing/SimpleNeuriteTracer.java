@@ -661,10 +661,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected Path getSingleSelectedPath() {
-		if (pathAndFillManager.getSelectedPaths().size() == 1)
-			return getSelectedPaths().iterator().next();
-		else
-			return null;
+		final Set<Path> sPaths = getSelectedPaths();
+		if (sPaths == null || sPaths.size() != 1) return null;
+		return getSelectedPaths().iterator().next();
 	}
 
 	protected void enableEditMode(final boolean enable) {

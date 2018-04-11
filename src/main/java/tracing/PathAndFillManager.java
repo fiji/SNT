@@ -87,7 +87,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	private SimpleNeuriteTracer plugin;
 	private ImagePlus imagePlus;
 	private int maxUsedID = -1;
-	private boolean needImageDataFromTracesFile;
+	protected boolean needImageDataFromTracesFile;
 	private static boolean headless = false;
 	private int width;
 	private int height;
@@ -105,9 +105,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	private double parsed_y_spacing;
 	private double parsed_z_spacing;
 	private String parsed_units;
-	private int parsed_width;
-	private int parsed_height;
-	private int parsed_depth;
+	protected int parsed_width;
+	protected int parsed_height;
+	protected int parsed_depth;
 
 	private Fill current_fill;
 	private Path current_path;
@@ -400,6 +400,17 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		cal.pixelHeight = y_spacing;
 		cal.pixelDepth = z_spacing;
 		return cal;
+	}
+
+	/**
+	 * Gets the parsed canvas dimensions from the last imported file.
+	 *
+	 * @return the parsed dimensions (width, height, depth) in pixel units of the
+	 *         traced imaged inferred from the last imported .traces/.swc file. All
+	 *         dimensions revert to zero if no file has been imported.
+	 */
+	public int[] getParsedDimensions() {
+		return new int[] { parsed_width, parsed_height, parsed_depth };
 	}
 
 	/**
@@ -1806,6 +1817,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				height = (int) (maxY - minY) + 10;
 				depth = (int) Math.max(1, (maxZ - minZ));
 				if (depth > 1) depth += 2;
+				parsed_width = width;
+				parsed_height = height;
+				parsed_depth = depth;
 			}
 		}
 

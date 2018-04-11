@@ -143,7 +143,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected InteractiveTracerCanvas zy_tracer_canvas;
 
 	/* Image properties */
-	protected final int width, height, depth;
+	protected int width, height, depth;
 	protected int imageType = -1;
 	private boolean singleSlice;
 	protected double x_spacing = 1;

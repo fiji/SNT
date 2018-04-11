@@ -311,9 +311,16 @@ public class Tree {
 		p2.onPath = referencePath;
 		final double[] bound1 = PathNode.unScale(p1, multiDThreePaneView);
 		final double[] bound2 = PathNode.unScale(p2, multiDThreePaneView);
-		final int w = (int) (bound2[0] - bound1[0]) + 2;
-		final int h = (int) (bound2[1] - bound1[1]) + 2;
-		final int d = (int) (bound2[2] - bound1[2]) + 2;
+
+		// Padding is required to accommodate "rounding errors"
+		// in PathAndFillManager.setPathPointsInVolume()
+		final int xyPadding = 5; // 5 extra pixels on each margin
+		final int zPadding = 2; // 1 slice above / below last point
+		final int w = (int) (bound2[0] - bound1[0]) + xyPadding;
+		final int h = (int) (bound2[1] - bound1[1]) + xyPadding;
+		int d = (int) (bound2[2] - bound1[2]);
+		if (d < 1) d = 1;
+		if (d > 1) d += zPadding;
 		return IJ.createImage(null, w, h, d, 8);
 	}
 

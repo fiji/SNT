@@ -22,16 +22,11 @@
 
 package tracing.plugin;
 
-import io.scif.services.DatasetIOService;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
-import net.imagej.Dataset;
-import net.imagej.ImageJ;
-import net.imagej.display.ImageDisplayService;
-import net.imagej.legacy.LegacyService;
-
+import org.scijava.ItemVisibility;
 import org.scijava.command.DynamicCommand;
 import org.scijava.convert.ConvertService;
 import org.scijava.display.DisplayService;
@@ -39,11 +34,16 @@ import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
-import org.scijava.widget.Button;
 import org.scijava.widget.FileWidget;
 
 import ij.ImagePlus;
 import ij.measure.Calibration;
+import ij.plugin.CompositeConverter;
+import io.scif.services.DatasetIOService;
+import net.imagej.Dataset;
+import net.imagej.ImageJ;
+import net.imagej.display.ImageDisplayService;
+import net.imagej.legacy.LegacyService;
 import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
@@ -65,58 +65,62 @@ public class SNTLoader extends DynamicCommand {
 	@Parameter
 	private UIService uiService;
 
-	@Parameter(required = false, label = "Image", style = FileWidget.OPEN_STYLE,
-		callback = "sourceImageChanged")
-	private File sourceFile;
-
-	@Parameter(required = false, label = "Traces/(e)SWC file",
-		style = FileWidget.OPEN_STYLE)
-	private File tracesFile;
-
-	@Parameter(required = false, label = "User interface", choices = { UI_DEFAULT,
-		UI_SIMPLE }) // TODO: Add options for 3D viewer
-	private String uiChoice;
-
-	@Parameter(required = false, label = "Tracing channel", min = "1")
-	private int channel;
-
-	@Parameter(label = "Use current image", callback = "loadActiveImage")
-	private Button useCurrentImg;
-
-	private ImagePlus sourceImp;
-	private boolean loadActiveImage;
-
+	private static final String IMAGE_NONE = "None. Run SNT in Analysis Mode";
+	private static final String IMAGE_FILE = "Image from path specified below";
 	private static final String UI_SIMPLE = "Memory saving: Only XY view";
 	private static final String UI_DEFAULT = "Default: XY, ZY and XZ views";
+
+	@Parameter(required = true, label = "Image", callback = "imageChoiceChanged")
+	private String imageChoice;
+
+	@Parameter(required = false, label = "Path", style = FileWidget.OPEN_STYLE,
+		callback = "sourceImageChanged")
+	private File imageFile;
+
+	@Parameter(required = false, label = "<HTML>&nbsp;", visibility = ItemVisibility.MESSAGE)
+	private String SPACER1;
+
+	@Parameter(required = false, label = "Traces/(e)SWC file", style = FileWidget.OPEN_STYLE, callback = "tracesFileChanged")
+	private File tracesFile;
+
+	@Parameter(required = false, label = "<HTML>&nbsp;", visibility = ItemVisibility.MESSAGE)
+	private String SPACER2;
+
+	@Parameter(required = false, label = "User interface", choices = { UI_DEFAULT, UI_SIMPLE }) // TODO: Add options for
+																								// 3D viewer
+	private String uiChoice;
+
+	@Parameter(required = false, label = "Tracing channel", min = "1", callback = "channelChanged")
+	private int channel;
+
+	private ImagePlus sourceImp;
+	private File currentImageFile;
+
 
 	@Override
 	public void initialize() {
 		GuiUtils.setSystemLookAndFeel();
 		// TODO: load defaults from prefService?
-		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
-			.getActiveImageDisplay());
+		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService.getActiveImageDisplay());
+		final MutableModuleItem<String> imageChoiceInput = getInfo().getMutableInput("imageChoice", String.class);
 		if (sourceImp == null) {
-			final MutableModuleItem<Button> useCurrentImgInput = getInfo()
-				.getMutableInput("useCurrentImg", Button.class);
-			removeInput(useCurrentImgInput);
-		}
-		else {
+			imageChoiceInput.setChoices(Arrays.asList(new String[] { IMAGE_FILE, IMAGE_NONE }));
+		} else {
+			imageChoiceInput.setChoices(Arrays.asList(new String[] { sourceImp.getTitle(), IMAGE_FILE, IMAGE_NONE }));
+			imageChoiceInput.setValue(this, sourceImp.getTitle());
 			adjustChannelInput();
 		}
 	}
 
 	private void adjustChannelInput() {
-		if (sourceImp == null) return;
-		final MutableModuleItem<Integer> channelInput = getInfo().getMutableInput(
-			"channel", Integer.class);
+		if (sourceImp == null)
+			return;
+		final MutableModuleItem<Integer> channelInput = getInfo().getMutableInput("channel", Integer.class);
 		channelInput.setMaximumValue(sourceImp.getNChannels());
 		channelInput.setValue(this, channel = sourceImp.getC());
 	}
 
-	@SuppressWarnings("unused")
 	private void loadActiveImage() {
-		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
-			.getActiveImageDisplay());
 		if (sourceImp == null) {
 			uiService.showDialog("There are no images open.");
 			return;
@@ -124,16 +128,51 @@ public class SNTLoader extends DynamicCommand {
 		if (sourceImp.getOriginalFileInfo() != null) {
 			final String dir = sourceImp.getOriginalFileInfo().directory;
 			final String file = sourceImp.getOriginalFileInfo().fileName;
-			sourceFile = (dir == null || file == null) ? null : new File(dir + file);
+			imageFile = (dir == null || file == null) ? null : new File(dir + file);
 		}
-		loadActiveImage = true;
 		sourceImageChanged();
 	}
 
+	@SuppressWarnings("unused")
+	private void imageChoiceChanged() {
+		switch (imageChoice) {
+		case IMAGE_NONE:
+			clearImageFileChoice();
+			return;
+		case IMAGE_FILE:
+			if (null == imageFile) imageFile = currentImageFile;
+			sourceImageChanged();
+			return;
+		default: // imageChoice is now the title of frontmost image
+			loadActiveImage();
+			if (sourceImp != null) {
+				clearImageFileChoice();
+				if (sourceImp.getNSlices() == 1)
+					uiChoice = UI_SIMPLE;
+			}
+			return;
+		}
+	}
+
+	@SuppressWarnings("unused")
+	private void channelChanged() {
+		if (IMAGE_NONE.equals(imageChoice)) {
+			channel = 1;
+		}
+	}
+
+	private void clearImageFileChoice() {
+		currentImageFile = imageFile;
+		final MutableModuleItem<File> imageFileInput = getInfo().getMutableInput("imageFile", File.class);
+		imageFileInput.setValue(this, null);
+	}
+
 	private void sourceImageChanged() {
-		if (sourceFile == null || !sourceFile.exists()) return;
+		if (imageFile == null || !imageFile.exists())
+			return;
+		if (IMAGE_NONE.equals(imageChoice)) imageChoice = IMAGE_FILE;
 		for (final String ext : new String[] { "traces", "swc" }) {
-			final File candidate = SNT.findClosestPair(sourceFile, ext);
+			final File candidate = SNT.findClosestPair(imageFile, ext);
 			if (candidate != null && candidate.exists()) {
 				tracesFile = candidate;
 				break;
@@ -142,35 +181,73 @@ public class SNTLoader extends DynamicCommand {
 		}
 	}
 
+	@SuppressWarnings("unused")
+	private void tracesFileChanged() {
+		if (!IMAGE_FILE.equals(imageChoice) || tracesFile == null || !tracesFile.exists())
+			return;
+		final File candidate = SNT.findClosestPair(tracesFile, "tif");
+		if (candidate != null && candidate.exists()) {
+			imageFile = candidate;
+			adjustChannelInput();
+		}
+	}
+
 	@Override
 	public void run() {
 
-		if (loadActiveImage && sourceImp == null) {
-			cancel("An image is required but none was found");
-			return;
-		}
-		if (sourceImp == null) {
-			if (sourceFile == null || !sourceFile.exists()) {
-				cancel("No valid image chosen.");
+		if (IMAGE_NONE.equals(imageChoice)) {
+			if (tracesFile == null || !tracesFile.exists()) {
+				cancel("Specified tracings files is not valid");
 				return;
 			}
-			try { // sourceFile is valid but image is not displayed
-				final Dataset ds = datasetIOService.open(sourceFile.getAbsolutePath());
+			final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(getContext(), tracesFile);
+			sntInstance.getImagePlus().show();
+			sntInstance.initialize(uiChoice.equals(UI_SIMPLE), 1, 1);
+			sntInstance.startUI();
+			sntInstance.getPathAndFillManager().resetListeners(null, true);
+			return;
+		}
+
+		else if (IMAGE_FILE.equals(imageChoice)) {
+			if (imageFile == null || !imageFile.exists()) {
+				cancel("Specified image file is not valid.");
+				return;
+			}
+			try {
+				final Dataset ds = datasetIOService.open(imageFile.getAbsolutePath());
 				// displayService.createDisplay(ds); // does not work well in legacy
 				// mode
 				sourceImp = convertService.convert(ds, ImagePlus.class);
 				displayService.createDisplay(sourceImp.getTitle(), sourceImp);
-			}
-			catch (final IOException exc) {
-				cancel("Could not open\n" + sourceFile.getAbsolutePath());
+			} catch (final IOException exc) {
+				cancel("Could not open\n" + imageFile.getAbsolutePath());
 				return;
 			}
+
+		} else if (sourceImp == null) { // frontmost image does not exist
+			cancel("An image is required but none was found");
+			return;
 		}
-		if (!validateImageDimensions()) return;
-		final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(
-			getContext(), sourceImp);
-		sntInstance.initialize(uiChoice.equals(UI_SIMPLE), channel, sourceImp
-			.getFrame());
+
+		// Is spatial calibration set?
+		if (!validateImageDimensions())
+			return;
+
+		// If user loaded an existing image, it is possible it can be RGB
+		if (ImagePlus.COLOR_RGB == sourceImp.getType()) {
+			final boolean convert = new GuiUtils().getConfirmation(
+					"RGB images are (intentionally) not supported. You can however convert " + sourceImp.getTitle()
+							+ " to a multichannel image. Would you like to do it now? (SNT will quit if you choose \"No\")",
+					"Convert to Multichannel?");
+			if (!convert)
+				return;
+			sourceImp.hide();
+			sourceImp = CompositeConverter.makeComposite(sourceImp);
+			sourceImp.show();
+		}
+
+		final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(getContext(), sourceImp);
+		sntInstance.initialize(uiChoice.equals(UI_SIMPLE), channel, sourceImp.getFrame());
 		sntInstance.startUI();
 		sntInstance.loadTracings(tracesFile);
 
@@ -186,8 +263,9 @@ public class SNTLoader extends DynamicCommand {
 		}
 		final Calibration cal = sourceImp.getCalibration();
 		if (!cal.scaled() || cal.pixelDepth < cal.pixelHeight || cal.pixelDepth < cal.pixelWidth) {
-			return new GuiUtils().getConfirmation("Spatial calibration of " + sourceImp.getTitle()
-					+ " appears to be unset or innacurate. Continue nevertheless?",
+			return new GuiUtils().getConfirmation(
+					"Spatial calibration of " + sourceImp.getTitle()
+							+ " appears to be unset or innacurate. Continue nevertheless?",
 					"Innacurate Spatial Calibration?");
 		}
 		return true;

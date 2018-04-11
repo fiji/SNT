@@ -85,7 +85,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		pMenu.setLightWeightPopupEnabled(false); // Required because we are mixing lightweight and heavyweight components?
 		final AListener listener = new AListener();
 		pMenu.add(menuItem(AListener.SELECT_NEAREST, listener));
-		pMenu.add(menuItem(listener.FORK_NEAREST, listener));
+		if (!tracerPlugin.nonInteractiveSession)
+			pMenu.add(menuItem(listener.FORK_NEAREST, listener));
 		pMenu.addSeparator();
 		togglePauseModeMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_TOOGLE);
 		togglePauseModeMenuItem.addItemListener(listener);
@@ -221,9 +222,11 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	private boolean uiReadyForModeChange(int mode) {
-		return tracerPlugin.isReady() && (tracerPlugin
-			.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH ||
-			tracerPlugin.getUIState() == mode);
+		if (!tracerPlugin.isUIready())
+			return false;
+		return tracerPlugin.nonInteractiveSession
+				|| tracerPlugin.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH
+				|| tracerPlugin.getUIState() == mode;
 	}
 
 	public void toggleJustNearSlices() {

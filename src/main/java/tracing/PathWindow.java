@@ -198,7 +198,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 				public void actionPerformed(final ActionEvent e) {
 					final HashSet<Path> selectedPaths = getSelectedPaths(true);
 					if (selectedPaths.size() == 0) {
-						displayTmpMsg("There are no traced paths");
+						guiUtils.error("There are no traced paths.");
 						return;
 					}
 					if (tree.getSelectionCount()==0 &&
@@ -1450,7 +1450,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 			final int n = selectedPaths.size();
 
 			if (n == 0) {
-				displayTmpMsg("There are no traced paths");
+				guiUtils.error("There are no traced paths.");
 				return;
 			}
 	
@@ -1642,7 +1642,9 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 					return;
 				}
 
-				final boolean imageClosed = plugin.getUI().getState() == NeuriteTracerResultsDialog.IMAGE_CLOSED;
+				final int currentState = plugin.getUI().getState();
+				final boolean imagenotAvailable = currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED
+						|| currentState == NeuriteTracerResultsDialog.ANALYSIS_MODE;
 				final ArrayList<PathFitter> pathsToFit = new ArrayList<>();
 				int skippedFits = 0;
 
@@ -1655,7 +1657,7 @@ public class PathWindow extends JFrame implements PathAndFillListener,
 
 					// A fitted version does not exist
 					else if (p.fitted == null) {
-						if (imageClosed) {
+						if (imagenotAvailable) {
 							// Keep a tally of how many computations we are skipping
 							skippedFits++;
 						} else {

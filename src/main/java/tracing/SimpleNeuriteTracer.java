@@ -59,10 +59,12 @@ import amira.AmiraParameters;
 import features.ComputeCurvatures;
 import features.GaussianGenerationCallback;
 import features.TubenessProcessor;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
 import ij.gui.ImageRoi;
+import ij.gui.NewImage;
 import ij.gui.Overlay;
 import ij.gui.StackWindow;
 import ij.io.FileInfo;
@@ -223,6 +225,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	/* GUI */
 	protected NeuriteTracerResultsDialog resultsDialog;
+	protected boolean nonInteractiveSession = false;
 
 	/* Deprecated */
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
@@ -250,6 +253,16 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public Color deselectedColor = DEFAULT_DESELECTED_COLOR;
 	@Deprecated
 	public boolean displayCustomPathColors = true;
+
+
+	protected SimpleNeuriteTracer() {
+		Context context = (Context) IJ.runPlugIn("org.scijava.Context",
+				"");
+		context.inject(this);
+		pathAndFillManager = new PathAndFillManager(this);
+		nonInteractiveSession = true;
+		disableAstar(true);
+	}
 
 	public SimpleNeuriteTracer(final Context context, final ImagePlus sourceImage) {
 
@@ -285,6 +298,55 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		pathAndFillManager = new PathAndFillManager(this);
 		prefs = new SNTPrefs(this);
 		prefs.loadPluginPrefs();
+	}
+
+
+	public SimpleNeuriteTracer(final Context context, final File file) {
+
+		if (context == null)
+			throw new NullContextException();
+		if (file == null)
+			throw new IllegalArgumentException("Input file cannot be null");
+
+		pathAndFillManager = new PathAndFillManager(this);
+		pathAndFillManager.needImageDataFromTracesFile = true;
+		pathAndFillManager.setHeadless(true);
+		if (!pathAndFillManager.loadGuessingType(file.getAbsolutePath())) {
+			throw new IllegalArgumentException(String.format("%s is not a valid file", file.getAbsolutePath()));
+		}
+
+		width = pathAndFillManager.parsed_width;
+		height = pathAndFillManager.parsed_height;
+		depth = pathAndFillManager.parsed_depth;
+		imageType = ImagePlus.GRAY8;
+		singleSlice = depth == 1;
+
+		final Calibration calibration = pathAndFillManager.getParsedCalibration();
+		if (calibration != null) {
+			x_spacing = calibration.pixelWidth;
+			y_spacing = calibration.pixelHeight;
+			z_spacing = calibration.pixelDepth;
+			spacing_units = calibration.getUnits();
+			if (spacing_units == null || spacing_units.length() == 0)
+				spacing_units = "" + calibration.getUnit();
+		}
+		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
+			throw new IllegalArgumentException("One dimension of the calibration information was zero: (" + x_spacing
+					+ "," + y_spacing + "," + z_spacing + ")");
+		}
+		pathAndFillManager.needImageDataFromTracesFile = false;
+		pathAndFillManager.setHeadless(false);
+		xy = NewImage.createByteImage(file.getName(), width, height, depth, NewImage.FILL_BLACK);
+		nonInteractiveSession = true;
+
+		context.inject(this);
+		prefs = new SNTPrefs(this);
+		prefs.loadPluginPrefs();
+
+		// now disable auto-tracing features
+		disableAstar(true);
+		enableSnapCursor(false);
+
 	}
 
 	public void initialize(boolean singlePane, int channel, int frame) {
@@ -406,6 +468,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				}
 			});
 		guiUtils = new GuiUtils(resultsDialog);
+		if (nonInteractiveSession) {
+			changeUIState(NeuriteTracerResultsDialog.ANALYSIS_MODE);
+		}
 		resultsDialog.displayOnStarting();
 	}
 
@@ -2210,9 +2275,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public synchronized void enableSnapCursor(final boolean enable) {
 		snapCursor = enable;
-		resultsDialog.useSnapWindow.setSelected(enable);
-		resultsDialog.snapWindowXYsizeSpinner.setEnabled(enable);
-		resultsDialog.snapWindowZsizeSpinner.setEnabled(enable && !is2D());
+		if (isUIready()) {
+			resultsDialog.useSnapWindow.setSelected(enable);
+			resultsDialog.snapWindowXYsizeSpinner.setEnabled(enable);
+			resultsDialog.snapWindowZsizeSpinner.setEnabled(enable && !is2D());
+		}
 	}
 
 	public void enableAutoActivation(final boolean enable) {

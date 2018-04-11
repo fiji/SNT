@@ -187,6 +187,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	static final int LOADING_FILTERED_IMAGE = 13;
 	static final int EDITING_MODE = 14;
 	static final int PAUSED = 15;
+	static final int ANALYSIS_MODE = 16;
 	static final int IMAGE_CLOSED = -1;
 
 	// TODO: Internal preferences: should be migrated to SNTPrefs
@@ -2094,6 +2095,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			case (LOADING):
 			case (SAVING):
 			case (IMAGE_CLOSED):
+			case (ANALYSIS_MODE):
 				showStatus("Instruction ignored: No task to be aborted");
 				break; // none of this states needs to be aborted
 			default:
@@ -2136,6 +2138,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				return "PAUSED";
 			case IMAGE_CLOSED:
 				return "IMAGE_CLOSED";
+			case ANALYSIS_MODE:
+				return "ANALYSIS_MODE";
 			default:
 				return "UNKNOWN";
 		}

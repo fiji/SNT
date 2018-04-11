@@ -262,7 +262,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				// The source of the message already knows the states:
 				pafl.setSelectedPaths(selectedPathsSet, this);
 		}
-		if (plugin != null) {
+		if (plugin != null && plugin.getImagePlus() != null) {
 			plugin.repaintAllPanes();
 			plugin.update3DViewerContents();
 		}
@@ -1586,7 +1586,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			setSelected(new HashSet<Path>(), this);
 			resetListeners(null, true);
-			if (plugin != null)
+			if (plugin != null && plugin.getImagePlus() != null)
 				plugin.repaintAllPanes();
 		}
 

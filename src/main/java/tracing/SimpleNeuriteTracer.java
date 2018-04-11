@@ -118,6 +118,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected static final String targetBallName = "Target point";
 	protected static final int ballRadiusMultiplier = 5;
 
+	private static final String OVERLAY_IDENTIFIER = "SNT-MIP-OVERLAY";
+
 	protected PathAndFillManager pathAndFillManager;
 	protected SNTPrefs prefs;
 	private GuiUtils guiUtils;
@@ -226,6 +228,28 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
 	protected static final int DISPLAY_PATHS_LINES = 2;
 	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
+
+	// This should only be assigned to when synchronized on this object
+	// (FIXME: check that that is true)
+	FillerThread filler = null;
+
+	/* Colors */
+	private static final Color DEFAULT_SELECTED_COLOR = Color.GREEN;
+	protected static final Color DEFAULT_DESELECTED_COLOR = Color.MAGENTA;
+	protected static final Color3f DEFAULT_SELECTED_COLOR3F = new Color3f(
+		Color.GREEN);
+	protected static final Color3f DEFAULT_DESELECTED_COLOR3F = new Color3f(
+		Color.MAGENTA);
+	protected Color3f selectedColor3f = DEFAULT_SELECTED_COLOR3F;
+	protected Color3f deselectedColor3f = DEFAULT_DESELECTED_COLOR3F;
+	protected ImagePlus colorImage;
+
+	@Deprecated
+	public Color selectedColor = DEFAULT_SELECTED_COLOR;
+	@Deprecated
+	public Color deselectedColor = DEFAULT_DESELECTED_COLOR;
+	@Deprecated
+	public boolean displayCustomPathColors = true;
 
 	public SimpleNeuriteTracer(final Context context, final ImagePlus sourceImage) {
 
@@ -1545,10 +1569,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	}
 
-	// This should only be assigned to when synchronized on this object
-	// (FIXME: check that that is true)
-	FillerThread filler = null;
-
 	synchronized public void startFillingPaths(final Set<Path> fromPaths) {
 
 		// currentlyFilling = true;
@@ -1894,20 +1914,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return univ;
 	}
 
-	public static final Color DEFAULT_SELECTED_COLOR = Color.GREEN;
-	public static final Color DEFAULT_DESELECTED_COLOR = Color.MAGENTA;
-	public static final Color3f DEFAULT_SELECTED_COLOR3F = new Color3f(
-		Color.GREEN);
-	public static final Color3f DEFAULT_DESELECTED_COLOR3F = new Color3f(
-		Color.MAGENTA);
-	public Color3f selectedColor3f = DEFAULT_SELECTED_COLOR3F;
-	public Color3f deselectedColor3f = DEFAULT_DESELECTED_COLOR3F;
-	public Color selectedColor = DEFAULT_SELECTED_COLOR;
-	public Color deselectedColor = DEFAULT_DESELECTED_COLOR;
-	public boolean displayCustomPathColors = true;
-
-	public ImagePlus colorImage;
-
 	public void setSelectedColor(final Color newColor) {
 		selectedColor = newColor;
 		selectedColor3f = new Color3f(newColor);
@@ -1960,7 +1966,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (resultsDialog.getPathWindow() != null) {
 			return resultsDialog.getPathWindow().getSelectedPaths(false);
 		}
-		throw new RuntimeException(
+		throw new IllegalArgumentException(
 			"getSelectedPaths was called when resultsDialog.pw was null");
 	}
 
@@ -2131,8 +2137,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		clickForTrace(p[0] * x_spacing, p[1] * y_spacing, p[2] * z_spacing, false);
 	}
-
-	private static final String OVERLAY_IDENTIFIER = "SNT-MIP-OVERLAY";
 
 	/**
 	 * Overlays a semi-transparent MIP over the tracing canvas(es).

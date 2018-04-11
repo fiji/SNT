@@ -37,11 +37,11 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.MenuElement;
 
 import org.scijava.util.PlatformUtils;
 
 import ij.ImagePlus;
-import ij.Menus;
 import tracing.gui.GuiUtils;
 import tracing.gui.ShollAnalysisDialog;
 import tracing.hyperpanes.MultiDThreePanes;
@@ -96,6 +96,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		toggleEditModeMenuItem.addItemListener(listener);
 		pMenu.add(toggleEditModeMenuItem);
 		pMenu.addSeparator();
+		pMenu.add(menuItem(AListener.NODE_RESET, listener));
 		pMenu.add(menuItem(AListener.NODE_DELETE, listener));
 		pMenu.add(menuItem(AListener.NODE_INSERT, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE, listener));
@@ -114,11 +115,21 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		toggleEditModeMenuItem.setText((activePath != null) ? "Edit " + activePath.getName() : AListener.EDIT_TOOGLE);
 		final boolean bp = uiReadyForModeChange(NeuriteTracerResultsDialog.PAUSED);
 		togglePauseModeMenuItem.setEnabled(bp);
-		togglePauseModeMenuItem.setSelected(bp && tracerPlugin.getUIState()==NeuriteTracerResultsDialog.PAUSED);
-		for (int i = 6; i < pMenu.getComponentCount(); i++) {
-			// First 6 items: Select nearest, sep, Edit mode, sep, Pause mode, separator
-			pMenu.getComponent(i).setEnabled(editMode);
+		togglePauseModeMenuItem.setSelected(bp && tracerPlugin.getUIState() == NeuriteTracerResultsDialog.PAUSED);
+
+		// Disable editing commands
+		for (final MenuElement me : pMenu.getSubElements()) {
+			if (me instanceof JMenuItem) {
+				final JMenuItem mItem = ((JMenuItem) me);
+				final String cmd = mItem.getActionCommand();
+				if (cmd.equals(AListener.NODE_RESET) || cmd.equals(AListener.NODE_DELETE)
+						|| cmd.equals(AListener.NODE_INSERT) || cmd.equals(AListener.NODE_MOVE)
+						|| cmd.equals(AListener.NODE_MOVE_Z)) {
+					mItem.setEnabled(be && editMode);
+				}
+			}
 		}
+
 		assembleDeselectedEditingPathsMenu(be && editMode);
 		pMenu.show(this, x, y);
 	}
@@ -495,12 +506,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	private void enableEditMode(boolean enable) {
-		final boolean activate = enable && tracerPlugin.editModeAllowed(true);
-		if (activate) {
-			tracerPlugin.enableEditMode(true);
-		} else {
-			tracerPlugin.enableEditMode(false);
-		}
+		if (enable && !tracerPlugin.editModeAllowed(true))
+			return;
+		tracerPlugin.enableEditMode(enable);
 	}
 
 	public void setTemporaryPathColor(final Color color) {
@@ -539,6 +547,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		public static final String SELECT_NEAREST = "Select Nearest Path  [G, Shift+G]";
 		public static final String PAUSE_TOOGLE = "Pause Tracing";
 		public static final String EDIT_TOOGLE = "Edit Path";
+		private final static String NODE_RESET = "Reset Active Node";
 		private final static String NODE_DELETE = "Delete Active Node  [D, Backspace]";
 		private final static String NODE_INSERT = "Insert New Node at Cursor Position  [I, Ins]";
 		private final static String NODE_MOVE = "Move Active Node to Cursor Position  [M]";
@@ -574,6 +583,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			}
 			else if (impossibleEdit(true)) return;
 
+			if (e.getActionCommand().equals(NODE_RESET)) {
+				tracerPlugin.getEditingPath().setEditableNode(-1);
+			}
 			if (e.getActionCommand().equals(NODE_DELETE)) {
 				deleteEditingNode(true);
 			}

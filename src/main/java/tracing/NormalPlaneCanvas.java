@@ -155,7 +155,7 @@ class NormalPlaneCanvas extends TracerCanvas {
 	}
 
 	private boolean syncWithTracingCanvas() {
-		return (tracerPlugin.isReady() && tracerPlugin.getUIState() == NeuriteTracerResultsDialog.EDITING_MODE);
+		return (tracerPlugin.isUIready() && tracerPlugin.getUIState() == NeuriteTracerResultsDialog.EDITING_MODE);
 	}
 
 	protected void showImage() {

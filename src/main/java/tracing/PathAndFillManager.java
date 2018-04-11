@@ -357,7 +357,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	private void error(final String msg) {
-		if (!headless && plugin != null && plugin.isReady()) 
+		if (!headless && plugin != null && plugin.isUIready()) 
 			plugin.error(msg);
 		else
 			errorStatic(msg);

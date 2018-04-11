@@ -301,7 +301,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	public void mouseMoved(final MouseEvent e) {
 
 		super.mouseMoved(e);
-		if (isEventsDisabled() || !tracerPlugin.isReady()) return;
+		if (isEventsDisabled() || !tracerPlugin.isUIready()) return;
 
 		last_x_in_pane_precise = myOffScreenXD(e.getX());
 		last_y_in_pane_precise = myOffScreenYD(e.getY());
@@ -332,7 +332,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseEntered(final MouseEvent e) {
 
-		if (super.isEventsDisabled() || !tracerPlugin.isReady()) {
+		if (super.isEventsDisabled() || !tracerPlugin.isUIready()) {
 			super.mouseEntered(e);
 			return;
 		}
@@ -341,7 +341,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	@Override
 	public void mousePressed(final MouseEvent me) {// Mac/Linux
-		final boolean ready = tracerPlugin.isReady();
+		final boolean ready = tracerPlugin.isUIready();
 		if (ready && me.isPopupTrigger()) {
 			showPopupMenu(me.getX(), me.getY());
 			me.consume();
@@ -356,7 +356,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	@Override
 	public void mouseReleased(final MouseEvent me) { // Windows
-		final boolean ready = tracerPlugin.isReady();
+		final boolean ready = tracerPlugin.isUIready();
 		if (ready && me.isPopupTrigger()) {
 			showPopupMenu(me.getX(), me.getY());
 			me.consume();
@@ -372,7 +372,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseClicked(final MouseEvent e) {
 
-		if (isEventsDisabled() || !tracerPlugin.isReady()) {
+		if (isEventsDisabled() || !tracerPlugin.isUIready()) {
 			super.mouseClicked(e);
 			return;
 		}

@@ -61,7 +61,7 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 		if (e.isConsumed())
 			return;
 
-		if (!tracerPlugin.isReady())
+		if (!tracerPlugin.isUIready())
 			return;
 
 		final int keyCode = e.getKeyCode();

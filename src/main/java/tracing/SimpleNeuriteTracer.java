@@ -387,10 +387,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public void loadTracings(File file) {
 		if (file != null && file.exists()) {
-			if (isReady()) resultsDialog.changeState(
+			if (isUIready()) resultsDialog.changeState(
 				NeuriteTracerResultsDialog.LOADING);
 			pathAndFillManager.loadGuessingType(file.getAbsolutePath());
-			if (isReady()) resultsDialog.changeState(
+			if (isUIready()) resultsDialog.changeState(
 				NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 			prefs.setRecentFile(file);
 		}
@@ -610,7 +610,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	private boolean uiReadyForModeChange() {
-		return isReady() && getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH;
+		return isUIready() && (getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH
+				|| getUIState() == NeuriteTracerResultsDialog.ANALYSIS_MODE);
 	}
 
 	protected Path getEditingPath() {
@@ -670,7 +671,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (enable) {
 			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
-			if (isReady() && !getUI().nearbySlices())
+			if (isUIready() && !getUI().nearbySlices())
 				getUI().togglePartsChoice();
 		} else {
 			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
@@ -717,7 +718,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected boolean isEditModeEnabled() {
-		return isReady() && NeuriteTracerResultsDialog.EDITING_MODE == getUIState();
+		return isUIready() && NeuriteTracerResultsDialog.EDITING_MODE == getUIState();
 	}
 
 	@Deprecated
@@ -1488,7 +1489,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
-	public boolean isReady() {
+	protected boolean isUIready() {
 		if (resultsDialog == null) return false;
 		return resultsDialog.isVisible();
 	}
@@ -1859,7 +1860,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		for (final Window win : images) {
 			if (win!=null && win.isActive()) return win;
 		}
-		if (!isReady()) return null;
+		if (!isUIready()) return null;
 		final Window[] frames = { resultsDialog, resultsDialog.getPathWindow(), resultsDialog.getFillWindow() };
 		for (final Window win : frames) {
 			if (win.isActive()) return win;
@@ -2291,7 +2292,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	@Override
 	public void showStatus(int progress, int maximum, String status) {
 		statusService.showStatus(progress, maximum, status);
-		if (isReady()) getUI().showStatus(status);
+		if (isUIready()) getUI().showStatus(status);
 	}
 
 }

@@ -93,7 +93,7 @@ class ClarifyingKeyListener implements KeyListener, ContainerListener {
 	@Override
 	public void keyPressed(final KeyEvent e) {
 
-		if (!plugin.isReady()) return;
+		if (!plugin.isUIready()) return;
 
 		final int keyCode = e.getKeyCode();
 

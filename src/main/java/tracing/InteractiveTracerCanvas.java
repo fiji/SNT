@@ -104,7 +104,6 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		pMenu.addSeparator();
 		deselectedEditingPathsMenu = new JMenu("Connect To");
 		pMenu.add(deselectedEditingPathsMenu);
-		if (Menus.getFontSize()!=0) pMenu.setFont(Menus.getFont());
 	}
 
 	private void showPopupMenu(int x, int y) {
@@ -309,6 +308,12 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final Path path = np.getPath();
 		tracerPlugin.selectPath(path, addToExistingSelection);
 
+	}
+
+	@Override
+	public void setCursor(int sx, int sy, int ox, int oy) {
+		if (isEventsDisabled() || !tracerPlugin.isUIready() || !cursorLocked)
+			super.setCursor(sx, sy, ox, oy);
 	}
 
 	@Override

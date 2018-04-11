@@ -1836,23 +1836,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			guiUtils.error("XY view is not available");
 			return;
 		}
-		final GraphicsConfiguration xy_config = xy_window
-			.getGraphicsConfiguration();
+		final GraphicsConfiguration xy_config = xy_window.getGraphicsConfiguration();
 		final GraphicsDevice xy_screen = xy_config.getDevice();
-		final int screenWidth = xy_screen.getDisplayMode().getWidth();
-		final int screenHeight = xy_screen.getDisplayMode().getHeight();
-		final Rectangle bounds = xy_screen.getDefaultConfiguration().getBounds();
-
-//		// Place 3D Viewer at lower right of the screen where image was found
-//		if (plugin.use3DViewer) {
-//			final ImageWindow3D uniWindow = plugin.get3DUniverse().getWindow();
-//			uniWindow.setLocation(bounds.x + screenWidth - uniWindow.getWidth(),
-//				bounds.y + screenHeight - uniWindow.getHeight());
-//		}
+		final Rectangle xy_screen_bounds = xy_screen.getDefaultConfiguration().getBounds();
 
 		// Center the main tracing canvas on the screen it was found
-		int x = bounds.x + screenWidth / 2 - xy_window.getWidth() / 2;
-		int y = bounds.y + screenHeight / 2 - xy_window.getHeight() / 2;
+		int x = (xy_screen_bounds.width / 2) - (xy_window.getWidth() / 2) + xy_screen_bounds.x;
+		int y = (xy_screen_bounds.height / 2) - (xy_window.getHeight() / 2) + xy_screen_bounds.y;
 		xy_window.setLocation(x, y);
 
 		final StackWindow zy_window = plugin.getWindow(MultiDThreePanes.ZY_PLANE);

@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -114,9 +114,8 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 			try {
 
 				/*
-				 * Unfortunately, we can't be sure that the tubularity plugin
-				 * will be available at compile- or run-time, so we have to try
-				 * to load it via reflection.
+				 * Unfortunately, we can't be sure that the tubularity plugin will be available
+				 * at compile- or run-time, so we have to try to load it via reflection.
 				 */
 
 				final Class<?> c = loader.loadClass("FijiITKInterface.TubularGeodesics");
@@ -192,9 +191,8 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 			try {
 
 				/*
-				 * Unfortunately, we can't be sure that the tubularity plugin
-				 * will be available at compile- or run-time, so we have to try
-				 * to load it via reflection.
+				 * Unfortunately, we can't be sure that the tubularity plugin will be available
+				 * at compile- or run-time, so we have to try to load it via reflection.
 				 */
 
 				final Class<?> c = loader.loadClass("FijiITKInterface.TubularGeodesics");
@@ -254,8 +252,8 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 		if (!success) {
 			final String errorMessage = temporaryPathResult.getErrorMessage();
 			/*
-			 * If this is null, it means that the user cancelled the search, so
-			 * we don't need to report an error:
+			 * If this is null, it means that the user cancelled the search, so we don't
+			 * need to report an error:
 			 */
 			if (errorMessage != null)
 				IJ.error("The tracing failed: " + errorMessage);

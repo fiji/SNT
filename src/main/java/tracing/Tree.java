@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -55,7 +55,7 @@ public class Tree {
 	 * Instantiates a new empty tree.
 	 */
 	public Tree() {
-		tree = new ArrayList<Path>();
+		tree = new ArrayList<>();
 	}
 
 	/**
@@ -67,7 +67,7 @@ public class Tree {
 	public Tree(final Set<Path> paths) {
 		if (paths == null)
 			throw new IllegalArgumentException("Cannot instantiate a new tree from a null collection");
-		tree = new ArrayList<Path>(paths);
+		tree = new ArrayList<>(paths);
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class Tree {
 	public Tree(final List<Path> paths) {
 		if (paths == null)
 			throw new IllegalArgumentException("Cannot instantiate a new tree from a null collection");
-		tree = new ArrayList<Path>(paths);
+		tree = new ArrayList<>(paths);
 	}
 
 	/**
@@ -120,14 +120,14 @@ public class Tree {
 		tree.add(p);
 	}
 
-//	/**
-//	 *  Returns a copy of this Tree.
-//	 *
-//	 * @return a copy of this Tree.
-//	 */
-//	public Tree duplicate() {
-//		return new Tree(new HashSet<Path>(tree));
-//	}
+	// /**
+	// * Returns a copy of this Tree.
+	// *
+	// * @return a copy of this Tree.
+	// */
+	// public Tree duplicate() {
+	// return new Tree(new HashSet<Path>(tree));
+	// }
 
 	/**
 	 * Replaces all Paths in this tree.
@@ -136,7 +136,7 @@ public class Tree {
 	 *            the replacing Paths
 	 */
 	public void setPaths(final List<Path> paths) {
-		tree = new ArrayList<Path>(paths);
+		tree = new ArrayList<>(paths);
 	}
 
 	/**
@@ -163,7 +163,7 @@ public class Tree {
 	 * Returns true if this tree contains no Paths.
 	 *
 	 * @return true if this tree contains no elements.
-	 * 
+	 *
 	 */
 	public boolean isEmpty() {
 		return tree.isEmpty();
@@ -177,7 +177,7 @@ public class Tree {
 	 *            upsampling is not supported.
 	 * @see PathDownsampler
 	 */
-	public void downSample(double maximumAllowedDeviation) {
+	public void downSample(final double maximumAllowedDeviation) {
 		for (final Path p : tree) {
 			p.downsample(maximumAllowedDeviation);
 		}
@@ -236,7 +236,8 @@ public class Tree {
 	 */
 	public void rotate(final int axis, final double angle) {
 		// See http://www.petercollingridge.appspot.com/3D-tutorial
-		if (Double.isNaN(angle)) throw new IllegalArgumentException("Angle not valid");
+		if (Double.isNaN(angle))
+			throw new IllegalArgumentException("Angle not valid");
 		final double radAngle = Math.toRadians(angle);
 		final double sin = Math.sin(radAngle);
 		final double cos = Math.cos(radAngle);
@@ -282,7 +283,7 @@ public class Tree {
 	 * @return the points
 	 */
 	public ArrayList<PointInImage> getPoints() {
-		final ArrayList<PointInImage> list = new ArrayList<PointInImage>();
+		final ArrayList<PointInImage> list = new ArrayList<>();
 		for (final Path p : tree) {
 			list.addAll(p.getPointInImageList());
 		}
@@ -297,7 +298,7 @@ public class Tree {
 	 *            {@link MultiDThreePanes#XY_PLANE}
 	 * @return the empty 8-bit {@link ImagePlus} container
 	 */
-	public ImagePlus getImpContainer(int multiDThreePaneView) {
+	public ImagePlus getImpContainer(final int multiDThreePaneView) {
 		if (tree.isEmpty())
 			throw new IllegalArgumentException("tree contains no paths");
 		final TreeStatistics tStats = new TreeStatistics(this);
@@ -319,8 +320,10 @@ public class Tree {
 		final int w = (int) (bound2[0] - bound1[0]) + xyPadding;
 		final int h = (int) (bound2[1] - bound1[1]) + xyPadding;
 		int d = (int) (bound2[2] - bound1[2]);
-		if (d < 1) d = 1;
-		if (d > 1) d += zPadding;
+		if (d < 1)
+			d = 1;
+		if (d > 1)
+			d += zPadding;
 		return IJ.createImage(null, w, h, d, 8);
 	}
 

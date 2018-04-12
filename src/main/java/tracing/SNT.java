@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -75,7 +75,9 @@ public class SNT {
 		logService.error("[SNT] " + string);
 	}
 
-	protected static synchronized void error(final String string, final Throwable t) {
+	protected static synchronized void error(final String string,
+		final Throwable t)
+	{
 		if (!SNT.isDebugMode()) return;
 		if (!initialized) initialize();
 		logService.error("[SNT] " + string, t);
@@ -100,16 +102,13 @@ public class SNT {
 	private static String stringForCSV(final String s) {
 		boolean quote = false;
 		String result = s;
-		if (s.indexOf(',') >= 0)
-			quote = true;
+		if (s.indexOf(',') >= 0) quote = true;
 		if (s.indexOf('"') >= 0) {
 			quote = true;
 			result = s.replaceAll("\"", "\"\"");
 		}
-		if (quote)
-			return "\"" + result + "\"";
-		else
-			return result;
+		if (quote) return "\"" + result + "\"";
+		else return result;
 	}
 
 	protected static String getColorString(final Color color) {
@@ -144,16 +143,16 @@ public class SNT {
 
 	public static String formatDouble(final double value, final int digits) {
 		String pattern = "0.";
-		while (pattern.length() < digits+2) pattern += "0";
+		while (pattern.length() < digits + 2)
+			pattern += "0";
 		final double absValue = Math.abs(value);
-		if (absValue < 0.01 || absValue >= 1000) 
-			pattern += "E0";
+		if (absValue < 0.01 || absValue >= 1000) pattern += "E0";
 		return new DecimalFormat(pattern).format(value);
 	}
 
 	/**
 	 * Assesses if SNT is running in debug mode
-	 * 
+	 *
 	 * @return the debug flag
 	 */
 	public static boolean isDebugMode() {

@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -84,14 +84,14 @@ public class NearPoint implements Comparable<NearPoint> {
 	IntersectionOnLine closestIntersection;
 
 	/*
-	 * If we can find a corresponding point on the path, returns the distance to
-	 * the path. Returns -1 if no such point can be found, so test for < 0
+	 * If we can find a corresponding point on the path, returns the distance to the
+	 * path. Returns -1 if no such point can be found, so test for < 0
 	 */
 
 	public double distanceToPathNearPoint() {
 		/*
-		 * Currently these objects are immutable, so if there's a cached value
-		 * then just return that:
+		 * Currently these objects are immutable, so if there's a cached value then just
+		 * return that:
 		 */
 		if (cachedDistanceToPathNearPoint != null)
 			return cachedDistanceToPathNearPoint.doubleValue();
@@ -119,13 +119,11 @@ public class NearPoint implements Comparable<NearPoint> {
 				endZ = pathPointZ;
 			}
 			final IntersectionOnLine intersection;
-			if (path.size()==1) {
-				intersection = distanceFromSinglePointPath(path.precise_x_positions[0],
-						path.precise_x_positions[0],path.precise_x_positions[0],
-						nearX, nearY, nearZ);
+			if (path.size() == 1) {
+				intersection = distanceFromSinglePointPath(path.precise_x_positions[0], path.precise_x_positions[0],
+						path.precise_x_positions[0], nearX, nearY, nearZ);
 			} else {
-				intersection = distanceToLineSegment(nearX, nearY, nearZ, startX, startY, startZ,
-					endX, endY, endZ);
+				intersection = distanceToLineSegment(nearX, nearY, nearZ, startX, startY, startZ, endX, endY, endZ);
 			}
 			if (intersection == null) {
 				closestIntersection = null;
@@ -169,8 +167,7 @@ public class NearPoint implements Comparable<NearPoint> {
 				return smallestDistance;
 			}
 			/*
-			 * Otherwise the only other possibility is that it's between the
-			 * planes:
+			 * Otherwise the only other possibility is that it's between the planes:
 			 */
 			final boolean afterPlaneAtEndOfPrevious = 0 < normalSideOfPlane(pathPointX, pathPointY, pathPointZ,
 					pathPointX - previousX, pathPointY - previousY, pathPointZ - previousZ, nearX, nearY, nearZ);
@@ -195,10 +192,9 @@ public class NearPoint implements Comparable<NearPoint> {
 	}
 
 	/*
-	 * This returns null if the perpendicular dropped to the line doesn't lie
-	 * within the segment. Otherwise it returns the shortest distance to this
-	 * line segment and the point of intersection in an IntersectionOnLine
-	 * object
+	 * This returns null if the perpendicular dropped to the line doesn't lie within
+	 * the segment. Otherwise it returns the shortest distance to this line segment
+	 * and the point of intersection in an IntersectionOnLine object
 	 */
 
 	public static IntersectionOnLine distanceToLineSegment(final double x, final double y, final double z,
@@ -225,11 +221,11 @@ public class NearPoint implements Comparable<NearPoint> {
 	}
 
 	/*
-	 * This tests whether a given point (x, y, z) is on the side of a plane in
-	 * the direction of its normal vector (nx,ny,nz). (cx,cy,cz) is any point in
-	 * the plane. If (x,y,z) is in the plane, it returns 0; if (x,y,z) is on the
-	 * side of the plane pointed to by the normal vector then it returns 1;
-	 * otherwise (i.e. it is on the other side) this returns -1
+	 * This tests whether a given point (x, y, z) is on the side of a plane in the
+	 * direction of its normal vector (nx,ny,nz). (cx,cy,cz) is any point in the
+	 * plane. If (x,y,z) is in the plane, it returns 0; if (x,y,z) is on the side of
+	 * the plane pointed to by the normal vector then it returns 1; otherwise (i.e.
+	 * it is on the other side) this returns -1
 	 */
 
 	public static int normalSideOfPlane(final double cx, final double cy, final double cz, final double nx,
@@ -249,18 +245,18 @@ public class NearPoint implements Comparable<NearPoint> {
 	}
 
 	/*
-	 * To find where the perpendicular dropped from the the point to the line
-	 * meets it, with:
+	 * To find where the perpendicular dropped from the the point to the line meets
+	 * it, with:
 	 *
-	 * A = (ax, ay, az) being a point in the line V = (vx, vy, vz) being a
-	 * vector along the line P = (x, y, z) being our point
+	 * A = (ax, ay, az) being a point in the line V = (vx, vy, vz) being a vector
+	 * along the line P = (x, y, z) being our point
 	 *
 	 * [(A + b V) - P] . V = 0
 	 *
 	 * ... which we can reduce to:
 	 *
-	 * b = [ (x - ax) * vx + (y - ay) * vy + (z - az) * vz ] / (vx * vx + vy *
-	 * vy + vz * vz)
+	 * b = [ (x - ax) * vx + (y - ay) * vy + (z - az) * vz ] / (vx * vx + vy * vy +
+	 * vz * vz)
 	 */
 
 	static class IntersectionOnLine {

@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -357,15 +357,15 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		for (int i = 2; i < cbxs.size(); i++)
 			((Checkbox) cbxs.get(i)).setEnabled(restrictBySWCType);
 
-		//boolean enableOK = true;
+		// boolean enableOK = true;
 		String warning = "";
 
 		if (impRequired && !validImageFile(new File(imgPath))) {
-			//enableOK = false;
+			// enableOK = false;
 			warning += "Not a valid image. ";
 		}
 		if (!validTracesFile(new File(tracesPath))) {
-			//enableOK = false;
+			// enableOK = false;
 			warning += "Not a valid .traces/.(e)swc file";
 		}
 		if (!warning.isEmpty()) {
@@ -376,7 +376,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			infoMsg.setText(defaultInfoMsg);
 		}
 
-		return true; //enableOK
+		return true; // enableOK
 	}
 
 	private String getFilePathWithoutExtension(final String filePath) {

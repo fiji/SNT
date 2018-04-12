@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -104,30 +104,31 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 
-	private double x_start, y_start, z_start;
+	private final double x_start, y_start, z_start;
 
-	private ButtonGroup pathsGroup;
-	private JRadioButton useAllPathsCheckbox;
-	private JRadioButton useSelectedPathsCheckbox;
+	private final ButtonGroup pathsGroup;
+	private final JRadioButton useAllPathsCheckbox;
+	private final JRadioButton useSelectedPathsCheckbox;
 
-	private JButton swcTypesButton = new JButton("SWC Type Filtering...");
-	private JPopupMenu swcTypesMenu = new JPopupMenu();
-	private ArrayList<String> filteredTypes = Path.getSWCtypeNames();
-	private JLabel filteredTypesWarningLabel = new JLabel();
+	private final JButton swcTypesButton = new JButton("SWC Type Filtering...");
+	private final JPopupMenu swcTypesMenu = new JPopupMenu();
+	private final ArrayList<String> filteredTypes = Path.getSWCtypeNames();
+	private final JLabel filteredTypesWarningLabel = new JLabel();
 
-	private JButton makeShollImageButton = new JButton("Sholl Image");
-	private JButton exportProfileButton = new JButton("Save Profile...");
-	private JButton drawShollGraphButton = new JButton("Preview Plot");
-	private JButton analyzeButton = new JButton("Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
+	private final JButton makeShollImageButton = new JButton("Sholl Image");
+	private final JButton exportProfileButton = new JButton("Save Profile...");
+	private final JButton drawShollGraphButton = new JButton("Preview Plot");
+	private final JButton analyzeButton = new JButton(
+			"Analyze Profile (Sholl Analysis v" + Sholl_Utils.version() + ")...");
 
-	private ButtonGroup axesGroup;
-	private JRadioButton normalAxes;
-	private JRadioButton semiLogAxes;
-	private JRadioButton logLogAxes;
+	private final ButtonGroup axesGroup;
+	private final JRadioButton normalAxes;
+	private final JRadioButton semiLogAxes;
+	private final JRadioButton logLogAxes;
 
-	private ButtonGroup normalizationGroup;
-	private JRadioButton noNormalization;
-	private JRadioButton normalizationForSphereVolume;
+	private final ButtonGroup normalizationGroup;
+	private final JRadioButton noNormalization;
+	private final JRadioButton normalizationForSphereVolume;
 	private String exportPath;
 	private final int margin = 10;
 
@@ -135,12 +136,12 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	private int numberOfSelectedPaths;
 	private int numberOfAllPaths;
 	private double sampleSeparation;
-	private ArrayList<ShollPoint> shollPointsAllPaths;
-	private ArrayList<ShollPoint> shollPointsSelectedPaths;
-	private PathAndFillManager shollpafm;
-	private ResultsPanel resultsPanel = new ResultsPanel();
-	private GuiUtils gUtils;
-	private SimpleNeuriteTracer plugin;
+	private final ArrayList<ShollPoint> shollPointsAllPaths;
+	private final ArrayList<ShollPoint> shollPointsSelectedPaths;
+	private final PathAndFillManager shollpafm;
+	private final ResultsPanel resultsPanel = new ResultsPanel();
+	private final GuiUtils gUtils;
+	private final SimpleNeuriteTracer plugin;
 
 	public ShollAnalysisDialog(final String title, final double x_start, final double y_start, final double z_start,
 			final SimpleNeuriteTracer plugin) {
@@ -159,7 +160,8 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 		pathsGroup = new ButtonGroup();
 		useAllPathsCheckbox = new JRadioButton("Include all paths (" + numberOfAllPaths + ")", true);
-		useSelectedPathsCheckbox = new JRadioButton("Include only selected path(s) ("+ numberOfSelectedPaths + ")", false);
+		useSelectedPathsCheckbox = new JRadioButton("Include only selected path(s) (" + numberOfSelectedPaths + ")",
+				false);
 		pathsGroup.add(useAllPathsCheckbox);
 		pathsGroup.add(useSelectedPathsCheckbox);
 
@@ -180,7 +182,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 		setLayout(new GridBagLayout());
 		final GridBagConstraints c = GuiUtils.defaultGbc();
-		c.fill =  GridBagConstraints.NONE;
+		c.fill = GridBagConstraints.NONE;
 
 		c.insets = new Insets(margin, margin, 0, margin);
 		useAllPathsCheckbox.addActionListener(this);
@@ -231,7 +233,8 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		c.insets = new Insets(margin, margin, 0, margin);
 		final JPanel separationPanel = new JPanel();
 		separationPanel.setBorder(null);
-		JSpinner spinner = GuiUtils.doubleSpinner(0, 0, plugin.getLargestDimension()/2, plugin.getMinimumSeparation(), 2);
+		final JSpinner spinner = GuiUtils.doubleSpinner(0, 0, plugin.getLargestDimension() / 2,
+				plugin.getMinimumSeparation(), 2);
 		spinner.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -252,7 +255,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		add(new JLabel("(0 for continuous sampling)"), c);
 		++c.gridy;
 
-		c.insets = new Insets(margin *2, margin, margin*2, margin);
+		c.insets = new Insets(margin * 2, margin, margin * 2, margin);
 		add(resultsPanel, c);
 
 		++c.gridy;
@@ -442,7 +445,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 		final ShollResults results = new ShollResults(pointsToUse, plugin.getImagePlus(), useAllPaths,
 				useAllPaths ? numberOfAllPaths : numberOfSelectedPaths, x_start, y_start, z_start, description, axes,
-						normalization, sampleSeparation, plugin.is2D());
+				normalization, sampleSeparation, plugin.is2D());
 
 		return results;
 	}
@@ -454,10 +457,10 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	private class GraphFrame extends JFrame implements ActionListener {
 
 		private static final long serialVersionUID = 1L;
-		private JButton exportButton;
+		private final JButton exportButton;
 		private JFreeChart chart = null;
 		private ChartPanel chartPanel = null;
-		private JPanel mainPanel;
+		private final JPanel mainPanel;
 		private String suggestedSuffix;
 
 		private void updateWithNewChart(final JFreeChart chart, final String suggestedSuffix) {
@@ -547,10 +550,10 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		 * @throws IOException
 		 *             if writing the svgFile fails.
 		 *
-		 *             This method is taken from:
-		 *             http://dolf.trieschnigg.nl/jfreechart/
+		 *             This method is taken from: http://dolf.trieschnigg.nl/jfreechart/
 		 */
-		private void exportChartAsSVG(final JFreeChart chart, final Rectangle bounds, final File svgFile) throws IOException {
+		private void exportChartAsSVG(final JFreeChart chart, final Rectangle bounds, final File svgFile)
+				throws IOException {
 
 			// Get a DOMImplementation and create an XML document
 			final DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
@@ -583,24 +586,24 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	private static final String[] normalizationParameters = { null, "not-normalized", "normalized" };
 
 	public static class ShollResults {
-		private double[] squaredRangeStarts;
-		private int[] crossingsPastEach;
-		private int n;
-		private double x_start, y_start, z_start;
+		private final double[] squaredRangeStarts;
+		private final int[] crossingsPastEach;
+		private final int n;
+		private final double x_start, y_start, z_start;
 		/* maxCrossings is the same as the "Dendrite Maximum". */
 		private int maxCrossings = Integer.MIN_VALUE;
 		private double criticalValue = Double.MIN_VALUE;
-		private String description;
-		private int axes;
-		private int normalization;
-		private double sphereSeparation;
-		private double[] x_graph_points;
-		private double[] y_graph_points;
+		private final String description;
+		private final int axes;
+		private final int normalization;
+		private final double sphereSeparation;
+		private final double[] x_graph_points;
+		private final double[] y_graph_points;
 		private double minY;
 		private double maxY;
-		private int graphPoints;
+		private final int graphPoints;
 		private String yAxisLabel;
-		private String xAxisLabel;
+		private final String xAxisLabel;
 		private double regressionGradient = Double.MIN_VALUE;
 		private double regressionIntercept = Double.MIN_VALUE;
 		private double regressionRSquare = Double.NaN;
@@ -650,8 +653,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		}
 
 		/**
-		 * Instructs the Sholl Analysis plugin to analyze the profile sampled by
-		 * .
+		 * Instructs the Sholl Analysis plugin to analyze the profile sampled by .
 		 */
 		public void analyzeWithShollAnalysisPlugin(final String exportDir, final double primaryBranches) {
 
@@ -772,8 +774,8 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 			x_graph_points = Arrays.copyOf(sampled_distances, n_samples);
 			y_graph_points = Arrays.copyOf(sampled_counts, n_samples);
 
-			xAxisLabel = "Distance from (" + SNT.formatDouble(x_start, 3) + ", " + SNT.formatDouble(y_start, 3) + ", " + SNT.formatDouble(z_start, 3)
-			+ ")";
+			xAxisLabel = "Distance from (" + SNT.formatDouble(x_start, 3) + ", " + SNT.formatDouble(y_start, 3) + ", "
+					+ SNT.formatDouble(z_start, 3) + ")";
 			yAxisLabel = "N. of Intersections";
 
 			if (normalization == NORMALIZED_FOR_SPHERE_VOLUME) {
@@ -830,7 +832,8 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 		private JFreeChart createGraph() {
 
-			if (graphPoints < 2) return null;
+			if (graphPoints < 2)
+				return null;
 			XYSeriesCollection data = null;
 			double minX = Double.MAX_VALUE;
 			double maxX = Double.MIN_VALUE;
@@ -886,7 +889,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 			} else {
 				final XYBarRenderer barRenderer = new XYBarRenderer();
 				barRenderer.setShadowVisible(false);
-				//barRenderer.setGradientPaintTransformer(null);
+				// barRenderer.setGradientPaintTransformer(null);
 				barRenderer.setDrawBarOutline(false);
 				barRenderer.setBarPainter(new StandardXYBarPainter());
 				renderer = barRenderer;
@@ -922,7 +925,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		public ImagePlus makeShollCrossingsImagePlus(final ImagePlus original) {
 			final int width = original.getWidth();
 			final int height = original.getHeight();
-			final int depth = original.getNSlices(); //FIXME: Check hyperstack support
+			final int depth = original.getNSlices(); // FIXME: Check hyperstack support
 			final Calibration c = original.getCalibration();
 			double x_spacing = 1;
 			double y_spacing = 1;
@@ -1049,8 +1052,8 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	}
 
 	public static class ShollPoint implements Comparable<ShollPoint> {
-		private boolean nearer;
-		private double distanceSquared;
+		private final boolean nearer;
+		private final double distanceSquared;
 
 		@Override
 		public int compareTo(final ShollPoint other) {
@@ -1068,7 +1071,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 		for (int i = 0; i < p.size() - 1; ++i) {
 			final PointInImage pim1 = p.getPointInImage(i);
-			final PointInImage pim2 = p.getPointInImage(i+1);
+			final PointInImage pim2 = p.getPointInImage(i + 1);
 			final double xdiff_first = pim1.x - x_start;
 			final double ydiff_first = pim1.y - y_start;
 			final double zdiff_first = pim1.z - z_start;
@@ -1084,7 +1087,6 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		}
 
 	}
-
 
 	private void reloadPaths() {
 
@@ -1156,13 +1158,13 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	private class ResultsPanel extends JPanel {
 
 		private static final long serialVersionUID = 1L;
-		private JLabel headingLabel = new JLabel("Results Preview:");
-		private String defaultText = "[Not calculated yet]";
-		private JLabel criticalValuesLabel = new JLabel(defaultText, SwingConstants.RIGHT);
-		private JLabel dendriteMaximumLabel = new JLabel(defaultText, SwingConstants.RIGHT);
-		private JLabel shollsRegressionCoefficientLabel = new JLabel(defaultText, SwingConstants.RIGHT);
-		private JLabel shollsRegressionInterceptLabel = new JLabel(defaultText, SwingConstants.RIGHT);
-		private JLabel shollsRegressionRSquaredLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private final JLabel headingLabel = new JLabel("Results Preview:");
+		private final String defaultText = "[Not calculated yet]";
+		private final JLabel criticalValuesLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private final JLabel dendriteMaximumLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private final JLabel shollsRegressionCoefficientLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private final JLabel shollsRegressionInterceptLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private final JLabel shollsRegressionRSquaredLabel = new JLabel(defaultText, SwingConstants.RIGHT);
 
 		private ResultsPanel() {
 			super();

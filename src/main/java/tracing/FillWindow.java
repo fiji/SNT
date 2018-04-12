@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -53,20 +53,20 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import ij.ImagePlus;
 import net.imagej.ImageJ;
+
+import ij.ImagePlus;
 import tracing.gui.GuiUtils;
 
 public class FillWindow extends JFrame
 		implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
 
-
 	private static final long serialVersionUID = 1L;
-	private SimpleNeuriteTracer plugin;
-	private PathAndFillManager pathAndFillManager;
+	private final SimpleNeuriteTracer plugin;
+	private final PathAndFillManager pathAndFillManager;
 	private JScrollPane scrollPane;
-	private JList<String> fillList;
-	private DefaultListModel<String> listModel;
+	private final JList<String> fillList;
+	private final DefaultListModel<String> listModel;
 	private JButton deleteFills;
 	private JButton reloadFill;
 	private JPanel fillControlPanel;
@@ -175,7 +175,7 @@ public class FillWindow extends JFrame
 			group.add(maxRButton);
 			group.add(manualRButton);
 			group.add(cursorRButton);
-			RadioGroupListener listener = new RadioGroupListener();
+			final RadioGroupListener listener = new RadioGroupListener();
 			cursorRButton.addActionListener(listener);
 			manualRButton.addActionListener(listener);
 			maxRButton.addActionListener(listener);
@@ -189,7 +189,7 @@ public class FillWindow extends JFrame
 		++c.gridy;
 
 		{
-			currentThreshold = GuiUtils.leftAlignedLabel("Current threshold distance:  N/A...", true); 
+			currentThreshold = GuiUtils.leftAlignedLabel("Current threshold distance:  N/A...", true);
 			maxThreshold = GuiUtils.leftAlignedLabel("Max. explored distance: N/A...", true);
 			fillStatus = GuiUtils.leftAlignedLabel("Last cursor position: N/A...", true);
 			final int storedPady = c.ipady;
@@ -416,7 +416,8 @@ public class FillWindow extends JFrame
 
 			final File file = SNT.findClosestPair(plugin.prefs.getRecentFile(), "csv");
 			final File saveFile = gUtils.saveFile("Export CSV Summary...", file, Collections.singletonList(".csv"));
-			if (saveFile == null) return; // user pressed cancel;
+			if (saveFile == null)
+				return; // user pressed cancel;
 			if (saveFile.exists() && !gUtils.getConfirmation("Export data...",
 					"The file " + saveFile.getAbsolutePath() + " already exists. Do you want to replace it?")) {
 				return;
@@ -451,7 +452,7 @@ public class FillWindow extends JFrame
 				assert SwingUtilities.isEventDispatchThread();
 				final String value = SNT.formatDouble(f, 3);
 				thresholdField.setText(SNT.formatDouble(f, 3));
-				currentThreshold.setText("Current threshold distance: "+ value);
+				currentThreshold.setText("Current threshold distance: " + value);
 			}
 		});
 	}
@@ -504,7 +505,8 @@ public class FillWindow extends JFrame
 	}
 
 	/** IDE debug method */
-	public static void main(final String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
+	public static void main(final String[] args) throws ClassNotFoundException, InstantiationException,
+			IllegalAccessException, UnsupportedLookAndFeelException {
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		final ImageJ ij = new ImageJ();
 		final ImagePlus imp = new ImagePlus();
@@ -516,7 +518,7 @@ public class FillWindow extends JFrame
 
 	private class RadioGroupListener implements ActionListener {
 		@Override
-		public void actionPerformed(ActionEvent e) {
+		public void actionPerformed(final ActionEvent e) {
 			setThreshold.setEnabled(manualRButton.isSelected());
 			thresholdField.setEnabled(manualRButton.isSelected());
 			setMaxThreshold.setEnabled(maxRButton.isSelected());

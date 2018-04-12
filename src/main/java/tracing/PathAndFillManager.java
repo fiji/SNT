@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -77,7 +77,6 @@ import tracing.util.PointInImage;
 import util.Bresenham3D;
 import util.XMLFunctions;
 
-
 public class PathAndFillManager extends DefaultHandler implements UniverseListener {
 
 	public static final int TRACES_FILE_TYPE_COMPRESSED_XML = 1;
@@ -96,10 +95,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	private double y_spacing;
 	private double z_spacing;
 	private String spacing_units;
-	private ArrayList<Path> allPaths;
-	private ArrayList<Fill> allFills;
-	private ArrayList<PathAndFillListener> listeners;
-	private HashSet<Path> selectedPathsSet;
+	private final ArrayList<Path> allPaths;
+	private final ArrayList<Fill> allFills;
+	private final ArrayList<PathAndFillListener> listeners;
+	private final HashSet<Path> selectedPathsSet;
 
 	private double parsed_x_spacing;
 	private double parsed_y_spacing;
@@ -125,7 +124,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	private int last_fill_node_id;
 	private int last_fill_id;
 	private HashSet<Integer> foundIDs;
-
 
 	public PathAndFillManager() {
 		allPaths = new ArrayList<>();
@@ -191,8 +189,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/*
-	 * This is used by the interface to have changes in the path manager
-	 * reported so that they can be reflected in the UI.
+	 * This is used by the interface to have changes in the path manager reported so
+	 * that they can be reflected in the UI.
 	 */
 	public synchronized void addPathAndFillListener(final PathAndFillListener listener) {
 		listeners.add(listener);
@@ -247,14 +245,14 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 *
 	 * (b) All the registered PathAndFillListener objects.
 	 */
-	public synchronized void setSelected(final HashSet<Path>selectedPaths, final Object sourceOfMessage) {
+	public synchronized void setSelected(final HashSet<Path> selectedPaths, final Object sourceOfMessage) {
 		selectedPathsSet.clear();
-		//selectedPathsSet.addAll(selectedPaths);
-		selectedPaths.forEach( p -> {
+		// selectedPathsSet.addAll(selectedPaths);
+		selectedPaths.forEach(p -> {
 			Path pathToSelect = p;
 			if (pathToSelect.getUseFitted())
 				pathToSelect = pathToSelect.fitted;
-			//pathToSelect.setSelected(true);
+			// pathToSelect.setSelected(true);
 			selectedPathsSet.add(pathToSelect);
 		});
 		for (final PathAndFillListener pafl : listeners) {
@@ -357,7 +355,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	private void error(final String msg) {
-		if (!headless && plugin != null && plugin.isUIready()) 
+		if (!headless && plugin != null && plugin.isUIready())
 			plugin.error(msg);
 		else
 			errorStatic(msg);
@@ -388,7 +386,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * Returns the voxel dimensions currently set in SNT. When no image is
 	 * available, these typically default to dimensions parsed from the last
 	 * imported file.
-	 * 
+	 *
 	 * @see getParsedCalibration
 	 * @return the spatial calibration details associated with this
 	 *         PathAndFillManager instance
@@ -416,14 +414,14 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	/**
 	 *
 	 * Returns the voxel dimensions parsed from the last imported file.
-	 * 
+	 *
 	 * With SWC files, the voxel dimensions are assumed to be the separation between
 	 * the closest pair of points in the file. With .traces files the one specified
 	 * by SNT. This information is useful for troubleshooting the cases when a file
 	 * cannot be imported into the loaded image.
-	 * 
+	 *
 	 * @see getCalibration
-	 * 
+	 *
 	 * @return the spatial calibration details parsed from the imported swc/traces
 	 *         file or null if no file has been imported
 	 */
@@ -442,8 +440,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * This method returns an array of the "primary paths", which should be
 	 * displayed at the top of a tree-like hierarchy.
 	 *
-	 * The paths actually form a graph, of course, but most UIs will want to
-	 * display the graph as a tree.
+	 * The paths actually form a graph, of course, but most UIs will want to display
+	 * the graph as a tree.
 	 */
 
 	public synchronized Path[] getPathsStructured() {
@@ -452,8 +450,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		/*
 		 * Some paths may be explicitly marked as primary, so extract those and
-		 * everything connected to them first. If you encounter another path
-		 * marked as primary when exploring from these then that's an error...
+		 * everything connected to them first. If you encounter another path marked as
+		 * primary when exploring from these then that's an error...
 		 */
 
 		final TreeSet<Path> pathsLeft = new TreeSet<>();
@@ -465,8 +463,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		/*
-		 * This is horrendously inefficent but with the number of paths that
-		 * anyone might reasonably add by hand (I hope!) it's acceptable.
+		 * This is horrendously inefficent but with the number of paths that anyone
+		 * might reasonably add by hand (I hope!) it's acceptable.
 		 */
 
 		Iterator<Path> pi = pathsLeft.iterator();
@@ -517,14 +515,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		/*
 		 * Turn the primary paths into a Set. This call also ensures that the
-		 * Path.children and Path.somehowJoins relationships are set up
-		 * correctly:
+		 * Path.children and Path.somehowJoins relationships are set up correctly:
 		 */
 		final Set<Path> structuredPathSet = new HashSet<>(Arrays.asList(getPathsStructured()));
 
 		/*
-		 * Check that there's only one primary path in selectedPaths by taking
-		 * the intersection and checking there's exactly one element in it:
+		 * Check that there's only one primary path in selectedPaths by taking the
+		 * intersection and checking there's exactly one element in it:
 		 */
 
 		structuredPathSet.retainAll(selectedPaths);
@@ -536,8 +533,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			throw new SWCExportException("You can only select one connected set of paths for SWC export");
 
 		/*
-		 * So now we definitely only have one primary path. All the connected
-		 * paths must also be selected, but we'll check that as we go along:
+		 * So now we definitely only have one primary path. All the connected paths must
+		 * also be selected, but we'll check that as we go along:
 		 */
 
 		final ArrayList<SWCPoint> result = new ArrayList<>();
@@ -545,9 +542,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		int currentPointID = 1;
 
 		/*
-		 * nextPathsToAdd is the queue of Paths to add points from, and
-		 * pathsAlreadyDone is the set of Paths that have already had their
-		 * points added
+		 * nextPathsToAdd is the queue of Paths to add points from, and pathsAlreadyDone
+		 * is the set of Paths that have already had their points added
 		 */
 
 		final LinkedList<Path> nextPathsToAdd = new LinkedList<>();
@@ -567,8 +563,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 						+ "\" is connected to other selected paths, but wasn't itself selected");
 
 			/*
-			 * The paths we're dealing with specify connectivity, but we might
-			 * be using the fitted versions - take them for the point positions:
+			 * The paths we're dealing with specify connectivity, but we might be using the
+			 * fitted versions - take them for the point positions:
 			 */
 
 			Path pathToUse = currentPath;
@@ -659,8 +655,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pathsAlreadyDone.add(currentPath);
 
 			/*
-			 * Add all the connected paths that aren't already in
-			 * pathsAlreadyDone
+			 * Add all the connected paths that aren't already in pathsAlreadyDone
 			 */
 
 			for (final Path connectedPath : currentPath.somehowJoins) {
@@ -769,8 +764,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 		p.setName(candidateName);
 		/*
-		 * Generate a new content3D, since it matters that the path is added
-		 * with the right name via update3DViewerContents:
+		 * Generate a new content3D, since it matters that the path is added with the
+		 * right name via update3DViewerContents:
 		 */
 		if (plugin != null && plugin.use3DViewer) {
 			p.removeFrom3DViewer(plugin.univ);
@@ -781,8 +776,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/*
-	 * Find the default name for a new path, making sure it doesn't collide with
-	 * any of the existing names:
+	 * Find the default name for a new path, making sure it doesn't collide with any
+	 * of the existing names:
 	 */
 
 	protected String getDefaultName(final Path p) {
@@ -1092,8 +1087,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			last_fill_id = -1;
 
 			/*
-			 * We need to remove the old paths and fills before loading the
-			 * ones:
+			 * We need to remove the old paths and fills before loading the ones:
 			 */
 
 			SNT.log("Clearing old paths and fills...");
@@ -1676,26 +1670,26 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * doi:10.1016/S0165-0270(98)00091-0
 	 * http://linkinghub.elsevier.com/retrieve/pii/S0165027098000910 J Neurosci
 	 * Methods. 1998 Oct 1;84(1-2):49-54.Links
-	 * "An on-line archive of reconstructed hippocampal neurons." Cannon RC,
-	 * Turner DA, Pyapali GK, Wheal HV.
+	 * "An on-line archive of reconstructed hippocampal neurons." Cannon RC, Turner
+	 * DA, Pyapali GK, Wheal HV.
 	 *
 	 * http://www.personal.soton.ac.uk/dales/morpho/morpho_doc/index.html
 	 *
 	 * Annoyingly, some published SWC files use world coordinates in microns
 	 * (correct as I understand the specification) while some others use image
-	 * coordinates (incorrect and less useful). An example of the latter seems
-	 * to part of the DIADEM Challenge data set.
+	 * coordinates (incorrect and less useful). An example of the latter seems to
+	 * part of the DIADEM Challenge data set.
 	 *
-	 * There aren't any really good workarounds for this, since if we try to
-	 * guess whether the files are broken or not, there are always going to be
-	 * odd cases where the heuristics fail. In addition, it's not at all clear
-	 * what the "radius" column is meant to mean in these files.
+	 * There aren't any really good workarounds for this, since if we try to guess
+	 * whether the files are broken or not, there are always going to be odd cases
+	 * where the heuristics fail. In addition, it's not at all clear what the
+	 * "radius" column is meant to mean in these files.
 	 *
-	 * So, the extent to which I'm going to work around these broken files is
-	 * that there's a flag to this method which says
-	 * "assume that the coordinates are image coordinates". The broken files
-	 * also seem to require that you scale the radius by the minimum voxel
-	 * separation (!) so that flag also turns on that workaround.
+	 * So, the extent to which I'm going to work around these broken files is that
+	 * there's a flag to this method which says
+	 * "assume that the coordinates are image coordinates". The broken files also
+	 * seem to require that you scale the radius by the minimum voxel separation (!)
+	 * so that flag also turns on that workaround.
 	 */
 
 	public boolean importSWC(final BufferedReader br, final boolean assumeCoordinatesIndexVoxels) throws IOException {
@@ -1816,7 +1810,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				width = (int) (maxX - minX) + 10;
 				height = (int) (maxY - minY) + 10;
 				depth = (int) Math.max(1, (maxZ - minZ));
-				if (depth > 1) depth += 2;
+				if (depth > 1)
+					depth += 2;
 				parsed_width = width;
 				parsed_height = height;
 				parsed_depth = depth;
@@ -1825,12 +1820,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		// We'll now iterate (again!) through the points to fix ill-assembled files
 		// that do exist in the wild. We typically encounter two major issues:
-		//     a) Files in world coordinates (good) but with reversed signs
-		//     b) Files in pixel coordinates
+		// a) Files in world coordinates (good) but with reversed signs
+		// b) Files in pixel coordinates
 		// While at it, we'll also perform some field validations
 
 		// Fix a): calculate what should be the minimum and maximum
-		// value in each axis so  that we can test for this later
+		// value in each axis so that we can test for this later
 		final double minX = Math.min(0, width * x_spacing);
 		final double minY = Math.min(0, height * y_spacing);
 		final double minZ = Math.min(0, depth * z_spacing);
@@ -1844,7 +1839,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		final Iterator<Entry<Integer, SWCPoint>> it = idToSWCPoint.entrySet().iterator();
 		while (it.hasNext()) {
 			final SWCPoint point = it.next().getValue();
-	
+
 			// Fix b): deal with SWC files that use pixel coordinates
 			if (assumeCoordinatesInVoxels) {
 				point.x *= x_spacing;
@@ -1911,9 +1906,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				++added;
 				pointToPath.put(currentPoint, currentPath);
 				/*
-				 * Remove each one from "alreadySeen" when we add it to a path,
-				 * just to check that nothing's left at the end, which indicates
-				 * that the file is malformed.
+				 * Remove each one from "alreadySeen" when we add it to a path, just to check
+				 * that nothing's left at the end, which indicates that the file is malformed.
 				 */
 				alreadySeen.remove(currentPoint.id);
 				if (currentPoint.nextPoints.size() > 0) {
@@ -2005,8 +1999,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		/*
 		 * Look at the magic bytes at the start of the file:
 		 *
-		 * If this looks as if it's gzip compressed, assume it's a compressed
-		 * traces file - the native format of this plugin.
+		 * If this looks as if it's gzip compressed, assume it's a compressed traces
+		 * file - the native format of this plugin.
 		 *
 		 * If it begins "<?xml", assume it's an uncompressed traces file.
 		 *
@@ -2082,10 +2076,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/*
-	 * This method will set all the points in array that correspond to points on
-	 * one of the paths to 255, leaving everything else as it is. This is useful
-	 * for creating stacks that can be used in skeleton analysis plugins that
-	 * expect a stack of this kind.
+	 * This method will set all the points in array that correspond to points on one
+	 * of the paths to 255, leaving everything else as it is. This is useful for
+	 * creating stacks that can be used in skeleton analysis plugins that expect a
+	 * stack of this kind.
 	 */
 	synchronized void setPathPointsInVolume(final ArrayList<Path> paths, final byte[][] slices, final int width,
 			final int height, final int depth) {
@@ -2132,8 +2126,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					slices[current.z][current.y * width + current.x] = (byte) 255;
 				} else {
 					/*
-					 * Otherwise draw a line with the 3D version of Bresenham's
-					 * algorithm:
+					 * Otherwise draw a line with the 3D version of Bresenham's algorithm:
 					 */
 					final List<Bresenham3D.IntegerPoint> pointsToDraw = Bresenham3D.bresenham3D(previous, current);
 					for (final Bresenham3D.IntegerPoint ip : pointsToDraw) {
@@ -2144,9 +2137,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 							final int y = Math.min(height - 1, Math.max(0, ip.y));
 							final int z = Math.min(depth - 1, Math.max(0, ip.z));
 							slices[z][y * width + x] = (byte) 255;
-							SNT.warn(String.format(
-								"Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]",
-								z, y, width, x));
+							SNT.warn(String.format("Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]", z,
+									y, width, x));
 						}
 					}
 				}
@@ -2199,7 +2191,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	protected ArrayList<Path> getPathsFiltered() {
-		final ArrayList<Path> paths = new ArrayList<Path>();
+		final ArrayList<Path> paths = new ArrayList<>();
 		for (final Path p : getPaths()) {
 			if (p == null || p.isFittedVersionOfAnotherPath())
 				continue;
@@ -2277,9 +2269,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				return null;
 
 			/*
-			 * Don't bother looking at points that are more than distanceLimit
-			 * away. Since we get them in the order closest to furthest away, if
-			 * we exceed this limit returned:
+			 * Don't bother looking at points that are more than distanceLimit away. Since
+			 * we get them in the order closest to furthest away, if we exceed this limit
+			 * returned:
 			 */
 
 			if (np.distanceToPathPointSquared() > (distanceLimit * distanceLimit))
@@ -2296,8 +2288,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/*
-	 * Note that this returns the number of points in th currently in-use
-	 * version of each path.
+	 * Note that this returns the number of points in th currently in-use version of
+	 * each path.
 	 */
 
 	public int pointsInAllPaths() {
@@ -2342,8 +2334,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				return false;
 			}
 			/*
-			 * So we know that there's a current path and we're not at the end
-			 * of it, so there must be another point:
+			 * So we know that there's a current path and we're not at the end of it, so
+			 * there must be another point:
 			 */
 			return true;
 		}
@@ -2374,9 +2366,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/*
-	 * For each point in *this* PathAndFillManager, find the corresponding point
-	 * on the other one. If there's no corresponding one, include a null
-	 * instead.
+	 * For each point in *this* PathAndFillManager, find the corresponding point on
+	 * the other one. If there's no corresponding one, include a null instead.
 	 */
 
 	public ArrayList<NearPoint> getCorrespondences(final PathAndFillManager other, final double maxDistance) {
@@ -2425,16 +2416,16 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/*
-	 * Output some potentially useful information about the paths as a CSV
-	 * (comma separated values) file.
+	 * Output some potentially useful information about the paths as a CSV (comma
+	 * separated values) file.
 	 */
 
 	public void exportToCSV(final File outputFile) throws IOException {
 		// FIXME: also add statistics on volumes of fills and
 		// reconstructions...
-		final String[] headers = { "PathID", "PathName", "SWCType", "PrimaryPath", "PathLength", "PathLengthUnits", "StartsOnPath",
-				"EndsOnPath", "ConnectedPathIDs", "ChildPathIDs", "StartX", "StartY", "StartZ", "EndX", "EndY", "EndZ",
-				"ApproximateFittedVolume" };
+		final String[] headers = { "PathID", "PathName", "SWCType", "PrimaryPath", "PathLength", "PathLengthUnits",
+				"StartsOnPath", "EndsOnPath", "ConnectedPathIDs", "ChildPathIDs", "StartX", "StartY", "StartZ", "EndX",
+				"EndY", "EndZ", "ApproximateFittedVolume" };
 
 		final Path[] primaryPaths = getPathsStructured();
 		final HashSet<Path> h = new HashSet<>();
@@ -2515,9 +2506,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	/*
 	 * Whatever the state of the paths, update the 3D viewer to make sure that
 	 * they're the right colour, the right version (fitted or unfitted) is being
-	 * used, whether the line or surface representation is being used, or
-	 * whether the path should be displayed at all (it shouldn't if the "Show
-	 * only selected paths" option is set.)
+	 * used, whether the line or surface representation is being used, or whether
+	 * the path should be displayed at all (it shouldn't if the "Show only selected
+	 * paths" option is set.)
 	 */
 
 	public void update3DViewerContents() {

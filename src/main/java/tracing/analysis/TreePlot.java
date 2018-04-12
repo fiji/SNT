@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -29,6 +29,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
+import net.imagej.ImageJ;
+import net.imagej.plot.LineStyle;
+import net.imagej.plot.MarkerStyle;
+import net.imagej.plot.PlotService;
+import net.imagej.plot.XYPlot;
+import net.imagej.plot.XYSeries;
+import net.imagej.ui.swing.viewer.plot.jfreechart.XYPlotConverter;
+import net.imglib2.display.ColorTable;
+
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.AxisLocation;
@@ -42,14 +51,6 @@ import org.scijava.plugin.Parameter;
 import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
 
-import net.imagej.ImageJ;
-import net.imagej.plot.LineStyle;
-import net.imagej.plot.MarkerStyle;
-import net.imagej.plot.PlotService;
-import net.imagej.plot.XYPlot;
-import net.imagej.plot.XYSeries;
-import net.imagej.ui.swing.viewer.plot.jfreechart.XYPlotConverter;
-import net.imglib2.display.ColorTable;
 import tracing.Path;
 import tracing.Tree;
 import tracing.plugin.DistributionCmd;
@@ -108,8 +109,8 @@ public class TreePlot extends TreeColorizer {
 			}
 			final XYSeries series = plot.addXYSeries();
 			series.setLabel(p.getName());
-			final List<Double> xc = new ArrayList<Double>();
-			final List<Double> yc = new ArrayList<Double>();
+			final List<Double> xc = new ArrayList<>();
+			final List<Double> yc = new ArrayList<>();
 			for (int node = 0; node < p.size(); node++) {
 				final PointInImage pim = p.getPointInImage(node);
 				xc.add(pim.x);
@@ -126,8 +127,8 @@ public class TreePlot extends TreeColorizer {
 	private void plotColoredNodePaths(final Path p) {
 		for (int node = 0; node < p.size(); node++) {
 			final XYSeries series = plot.addXYSeries();
-			final List<Double> xc = new ArrayList<Double>();
-			final List<Double> yc = new ArrayList<Double>();
+			final List<Double> xc = new ArrayList<>();
+			final List<Double> yc = new ArrayList<>();
 			final PointInImage pim = p.getPointInImage(node);
 			xc.add(pim.x);
 			yc.add(pim.y);
@@ -142,7 +143,7 @@ public class TreePlot extends TreeColorizer {
 	/**
 	 * Adds a lookup legend to the plot. Does nothing if no measurement mapping
 	 * occurred successfully.
-	 * 
+	 *
 	 * Note that when performing mapping to different measurements, the legend
 	 * reflects only the last mapped measurement.
 	 */
@@ -190,7 +191,7 @@ public class TreePlot extends TreeColorizer {
 	 *            the list of trees to be plotted
 	 * @param lut
 	 *            the lookup table specifying the color mapping
-	 * 
+	 *
 	 */
 	public void addTrees(final List<Tree> trees, final String lut) {
 		colorizeTrees(trees, lut);
@@ -365,7 +366,7 @@ public class TreePlot extends TreeColorizer {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final TreePlot pplot = new TreePlot(ij.context());
-		final List<Tree> trees = new ArrayList<Tree>();
+		final List<Tree> trees = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			final Tree tree = new Tree(DistributionCmd.randomPaths());
 			tree.rotate(Tree.Z_AXIS, i * 20);

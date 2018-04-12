@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -57,7 +57,6 @@ import tracing.util.SWCColor;
  **/
 public class Path implements Comparable<Path> {
 
-
 	/* Path properties */
 	private int points; // n. of nodes
 	private int id = -1; // should be assigned by PathAndFillManager
@@ -74,15 +73,15 @@ public class Path implements Comparable<Path> {
 	// identifies them to the 3D viewer)...
 	private String name;
 	/*
-	 * This is a symmetrical relationship, showing all the other paths this one
-	 * is joined to...
+	 * This is a symmetrical relationship, showing all the other paths this one is
+	 * joined to...
 	 */
 	ArrayList<Path> somehowJoins;
 
 	/*
-	 * We sometimes impose a tree structure on the Path graph, which is largely
-	 * for display purposes. When this is done, we regerated this list. This
-	 * should always be a subset of 'somehowJoins'...
+	 * We sometimes impose a tree structure on the Path graph, which is largely for
+	 * display purposes. When this is done, we regerated this list. This should
+	 * always be a subset of 'somehowJoins'...
 	 */
 	ArrayList<Path> children;
 	/* Spatial calibration definitions */
@@ -94,9 +93,9 @@ public class Path implements Comparable<Path> {
 	/* Fitting */
 	protected Path fitted; // If this path has a fitted version, this is it.
 	protected boolean useFitted = false; // Use the fitted version in preference to this
-								// path
+	// path
 	protected Path fittedVersionOf; // If this path is a fitted version of another one,
-							// this is the original
+	// this is the original
 
 	/* Color definitions */
 	private Color color;
@@ -108,7 +107,6 @@ public class Path implements Comparable<Path> {
 	private static final int PATH_START = 0;
 	private static final int PATH_END = 1;
 	private int maxPoints;
-
 
 	public Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units) {
 		this(x_spacing, y_spacing, z_spacing, spacing_units, 128);
@@ -171,7 +169,8 @@ public class Path implements Comparable<Path> {
 	}
 
 	public String getName() {
-		if (name == null) setDefaultName();
+		if (name == null)
+			setDefaultName();
 		return name;
 	}
 
@@ -225,7 +224,8 @@ public class Path implements Comparable<Path> {
 
 	public void createCircles() {
 		if (tangents_x != null || tangents_y != null || tangents_z != null || radiuses != null)
-			throw new IllegalArgumentException("Trying to create circles data arrays when at least one is already there");
+			throw new IllegalArgumentException(
+					"Trying to create circles data arrays when at least one is already there");
 		tangents_x = new double[maxPoints];
 		tangents_y = new double[maxPoints];
 		tangents_z = new double[maxPoints];
@@ -245,10 +245,10 @@ public class Path implements Comparable<Path> {
 	 */
 	protected void disconnectFromAll() {
 		/*
-		 * This path can be connected to other ones either if: - this starts on
-		 * other - this ends on other - other starts on this - other ends on
-		 * this In any of these cases, we need to also remove this from other's
-		 * somehowJoins and other from this's somehowJoins.
+		 * This path can be connected to other ones either if: - this starts on other -
+		 * this ends on other - other starts on this - other ends on this In any of
+		 * these cases, we need to also remove this from other's somehowJoins and other
+		 * from this's somehowJoins.
 		 */
 		for (final Path other : somehowJoins) {
 			if (other.startJoins != null && other.startJoins == this) {
@@ -377,7 +377,7 @@ public class Path implements Comparable<Path> {
 		return result;
 	}
 
-	public boolean contains(PointInImage pim) {
+	public boolean contains(final PointInImage pim) {
 		return (DoubleStream.of(precise_x_positions).anyMatch(x -> x == pim.x)
 				&& DoubleStream.of(precise_y_positions).anyMatch(y -> y == pim.y)
 				&& DoubleStream.of(precise_z_positions).anyMatch(z -> z == pim.z));
@@ -386,13 +386,16 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Inserts a node at a specified position.
 	 *
-	 * @param index the (zero-based) index of the position of the new node
-	 * @param point the node to be inserted
-	 * @throws IllegalArgumentException if index is out-of-range
+	 * @param index
+	 *            the (zero-based) index of the position of the new node
+	 * @param point
+	 *            the node to be inserted
+	 * @throws IllegalArgumentException
+	 *             if index is out-of-range
 	 */
 	public void addNode(final int index, final PointInImage point) {
-		if (index < 0 || index > size()) throw new IllegalArgumentException(
-			"addNode() asked for an out-of-range point: " + index);
+		if (index < 0 || index > size())
+			throw new IllegalArgumentException("addNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
 		precise_x_positions = ArrayUtils.insert(index, precise_x_positions, point.x);
 		precise_y_positions = ArrayUtils.insert(index, precise_y_positions, point.y);
@@ -409,29 +412,35 @@ public class Path implements Comparable<Path> {
 	 *             if index is out-of-range
 	 */
 	public void removeNode(final int index) {
-		if (points == 1) return;
-		if (index < 0 || index >= points) throw new IllegalArgumentException(
-			"removeNode() asked for an out-of-range point: " + index);
+		if (points == 1)
+			return;
+		if (index < 0 || index >= points)
+			throw new IllegalArgumentException("removeNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
 		final PointInImage p = getPointInImage(index);
 		precise_x_positions = ArrayUtils.remove(precise_x_positions, index);
 		precise_y_positions = ArrayUtils.remove(precise_y_positions, index);
 		precise_z_positions = ArrayUtils.remove(precise_z_positions, index);
 		points -= 1;
-		if (p.equals(startJoinsPoint)) startJoinsPoint = getPointInImage(0);
-		if (p.equals(endJoinsPoint) && points > 0) endJoinsPoint = getPointInImage(points-1);
+		if (p.equals(startJoinsPoint))
+			startJoinsPoint = getPointInImage(0);
+		if (p.equals(endJoinsPoint) && points > 0)
+			endJoinsPoint = getPointInImage(points - 1);
 	}
 
 	/**
 	 * Assigns a new location to the specified node.
 	 *
-	 * @param index the zero-based index of the node to be modified
-	 * @param destination the new node location
-	 * @throws IllegalArgumentException if index is out-of-range
+	 * @param index
+	 *            the zero-based index of the node to be modified
+	 * @param destination
+	 *            the new node location
+	 * @throws IllegalArgumentException
+	 *             if index is out-of-range
 	 */
 	public void moveNode(final int index, final PointInImage destination) {
-		if (index < 0 || index >= size()) throw new IllegalArgumentException(
-			"moveNode() asked for an out-of-range point: " + index);
+		if (index < 0 || index >= size())
+			throw new IllegalArgumentException("moveNode() asked for an out-of-range point: " + index);
 		precise_x_positions[index] = destination.x;
 		precise_y_positions[index] = destination.y;
 		precise_z_positions[index] = destination.z;
@@ -441,16 +450,16 @@ public class Path implements Comparable<Path> {
 	 * Gets the first node index associated with the specified image coordinates.
 	 * Returns -1 if no such node was found.
 	 *
-	 * @param pim the image position (calibrated coordinates)
+	 * @param pim
+	 *            the image position (calibrated coordinates)
 	 * @return the index of the first node occurrence or -1 if there is no such
 	 *         occurrence
 	 */
 	public int getNodeIndex(final PointInImage pim) {
 		for (int i = 0; i < points; ++i) {
-			if (Math.abs(precise_x_positions[i] - pim.x) < x_spacing && Math.abs(
-				precise_y_positions[i] - pim.y) < y_spacing && Math.abs(
-					precise_z_positions[i] - pim.z) < z_spacing)
-			{
+			if (Math.abs(precise_x_positions[i] - pim.x) < x_spacing
+					&& Math.abs(precise_y_positions[i] - pim.y) < y_spacing
+					&& Math.abs(precise_z_positions[i] - pim.z) < z_spacing) {
 				return i;
 			}
 		}
@@ -460,7 +469,7 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Gets the index of the closest node associated with the specified world
 	 * coordinates.
-	 * 
+	 *
 	 * @param x
 	 *            the x-coordinates (spatially calibrated image units)
 	 * @param y
@@ -521,8 +530,8 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Gets the position of the node tagged as 'editable', if any.
 	 *
-	 * @return the index of the point currently tagged as editable, or -1 if no
-	 *         such point exists
+	 * @return the index of the point currently tagged as editable, or -1 if no such
+	 *         point exists
 	 */
 	public int getEditableNodeIndex() {
 		return editableNodeIndex;
@@ -531,10 +540,11 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Tags the specified point position as 'editable'.
 	 *
-	 * @param index the index of the point to be tagged. Set it to -1 to for no
-	 *          tagging
+	 * @param index
+	 *            the index of the point to be tagged. Set it to -1 to for no
+	 *            tagging
 	 */
-	public void setEditableNode(int index) {
+	public void setEditableNode(final int index) {
 		this.editableNodeIndex = index;
 	}
 
@@ -577,8 +587,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Returns an array [3][npoints] of unscaled coordinates (that is, in
-	 * pixels).
+	 * Returns an array [3][npoints] of unscaled coordinates (that is, in pixels).
 	 */
 	public double[][] getXYZUnscaled() {
 		final double[][] p = new double[3][size()];
@@ -605,15 +614,13 @@ public class Path implements Comparable<Path> {
 	 * result.endJoinsIndex = endJoinsIndex;
 	 *
 	 * if( radiuses != null ) { this.radiuses = new double[radiuses.length];
-	 * System.arraycopy( radiuses, 0, result.radiuses, 0, radiuses.length ); }
-	 * if( tangents_x != null ) { this.tangents_x = new
-	 * double[tangents_x.length]; System.arraycopy( tangents_x, 0,
-	 * result.tangents_x, 0, tangents_x.length ); } if( tangents_y != null ) {
-	 * this.tangents_y = new double[tangents_y.length]; System.arraycopy(
-	 * tangents_y, 0, result.tangents_y, 0, tangents_y.length ); } if(
-	 * tangents_z != null ) { this.tangents_z = new double[tangents_z.length];
-	 * System.arraycopy( tangents_z, 0, result.tangents_z, 0, tangents_z.length
-	 * ); }
+	 * System.arraycopy( radiuses, 0, result.radiuses, 0, radiuses.length ); } if(
+	 * tangents_x != null ) { this.tangents_x = new double[tangents_x.length];
+	 * System.arraycopy( tangents_x, 0, result.tangents_x, 0, tangents_x.length ); }
+	 * if( tangents_y != null ) { this.tangents_y = new double[tangents_y.length];
+	 * System.arraycopy( tangents_y, 0, result.tangents_y, 0, tangents_y.length ); }
+	 * if( tangents_z != null ) { this.tangents_z = new double[tangents_z.length];
+	 * System.arraycopy( tangents_z, 0, result.tangents_z, 0, tangents_z.length ); }
 	 *
 	 * return result; }
 	 */
@@ -693,8 +700,8 @@ public class Path implements Comparable<Path> {
 		int toSkip = 0;
 
 		/*
-		 * We may want to skip some points at the beginning of the next path if
-		 * they're the same as the last point on this path:
+		 * We may want to skip some points at the beginning of the next path if they're
+		 * the same as the last point on this path:
 		 */
 
 		if (points > 0) {
@@ -770,26 +777,28 @@ public class Path implements Comparable<Path> {
 		drawPathAsPoints(canvas, g, c, plane, highContrast, drawDiameter, 0, -1);
 	}
 
-	protected void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
-			final boolean drawDiameter, final int slice, final int either_side) {
+	protected void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c,
+			final int plane, final boolean drawDiameter, final int slice, final int either_side) {
 		drawPathAsPoints(canvas, g, c, plane, false, drawDiameter, slice, either_side);
 	}
 
-	protected void drawPathAsPoints(final Graphics2D g2, TracerCanvas canvas, SimpleNeuriteTracer snt) {
+	protected void drawPathAsPoints(final Graphics2D g2, final TracerCanvas canvas, final SimpleNeuriteTracer snt) {
 		final boolean customColor = (hasCustomColor && snt.displayCustomPathColors);
 		Color color = snt.deselectedColor;
-		if (isSelected() && !customColor) color = snt.selectedColor;
-		else if (customColor) color = getColor();
+		if (isSelected() && !customColor)
+			color = snt.selectedColor;
+		else if (customColor)
+			color = getColor();
 		final int sliceZeroIndexed = canvas.getImage().getZ() - 1;
 		int eitherSideParameter = canvas.eitherSide;
 		if (!canvas.just_near_slices)
 			eitherSideParameter = -1;
-		drawPathAsPoints(canvas, g2, color, canvas.getPlane(), customColor,
-			snt.drawDiametersXY, sliceZeroIndexed, eitherSideParameter);
+		drawPathAsPoints(canvas, g2, color, canvas.getPlane(), customColor, snt.drawDiametersXY, sliceZeroIndexed,
+				eitherSideParameter);
 	}
 
-	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g2, final java.awt.Color c, final int plane,
-			final boolean highContrast, boolean drawDiameter, final int slice, final int either_side) {
+	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g2, final java.awt.Color c,
+			final int plane, final boolean highContrast, boolean drawDiameter, final int slice, final int either_side) {
 
 		g2.setColor(c);
 		int startIndexOfLastDrawnLine = -1;
@@ -845,10 +854,9 @@ public class Path implements Comparable<Path> {
 				throw new IllegalArgumentException("BUG: Unknown plane! (" + plane + ")");
 			}
 
-
 			final PathNode pn = new PathNode(this, i, canvas);
 			final boolean outOfDepthBounds = (either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side);
-			g2.setColor(SWCColor.alphaColor(c, (outOfDepthBounds)?50:100));
+			g2.setColor(SWCColor.alphaColor(c, (outOfDepthBounds) ? 50 : 100));
 
 			// If there was a previous point in this path, draw a line from there to here:
 			if (notFirstPoint) {
@@ -865,7 +873,8 @@ public class Path implements Comparable<Path> {
 				startIndexOfLastDrawnLine = i;
 			}
 
-			if (outOfDepthBounds) continue; // draw nothing more for points out-of-bounds
+			if (outOfDepthBounds)
+				continue; // draw nothing more for points out-of-bounds
 
 			// If we've been asked to draw the diameters, just do it in XY
 			if (drawDiameter && plane == MultiDThreePanes.XY_PLANE) {
@@ -915,9 +924,9 @@ public class Path implements Comparable<Path> {
 			}
 
 			// Draw node
-			pn.setEditable(getEditableNodeIndex()==i);
+			pn.setEditable(getEditableNodeIndex() == i);
 			pn.draw(g2, c);
-			//g2.setColor(c); // reset color transparencies. Not really needed
+			// g2.setColor(c); // reset color transparencies. Not really needed
 		}
 
 	}
@@ -982,24 +991,24 @@ public class Path implements Comparable<Path> {
 
 	public static Color getSWCcolor(final int swcType) {
 		switch (swcType) {
-			case Path.SWC_SOMA:
-				return Color.BLUE;
-			case Path.SWC_DENDRITE:
-				return Color.GREEN;
-			case Path.SWC_APICAL_DENDRITE:
-				return Color.CYAN;
-			case Path.SWC_AXON:
-				return Color.RED;
-			case Path.SWC_FORK_POINT:
-				return Color.ORANGE;
-			case Path.SWC_END_POINT:
-				return Color.PINK;
-			case Path.SWC_CUSTOM:
-				return Color.YELLOW;
-			case Path.SWC_UNDEFINED:
-			default:
-				return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
-			}
+		case Path.SWC_SOMA:
+			return Color.BLUE;
+		case Path.SWC_DENDRITE:
+			return Color.GREEN;
+		case Path.SWC_APICAL_DENDRITE:
+			return Color.CYAN;
+		case Path.SWC_AXON:
+			return Color.RED;
+		case Path.SWC_FORK_POINT:
+			return Color.ORANGE;
+		case Path.SWC_END_POINT:
+			return Color.PINK;
+		case Path.SWC_CUSTOM:
+			return Color.YELLOW;
+		case Path.SWC_UNDEFINED:
+		default:
+			return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
+		}
 	}
 
 	public Color getSWCcolor() {
@@ -1149,16 +1158,15 @@ public class Path implements Comparable<Path> {
 	}
 
 	private float[] squareNormalToVector(final int side, // The number of samples
-														// in x and y in the
-														// plane, separated by
-														// step
+															// in x and y in the
+															// plane, separated by
+															// step
 			final double step, // step is in the same units as the _spacing,
 								// etc. variables.
 			final double ox, /* These are scaled now */
 			final double oy, final double oz, final double nx, final double ny, final double nz,
 			final double[] x_basis_vector, /*
-											 * The basis vectors are returned
-											 * here
+											 * The basis vectors are returned here
 											 */
 			final double[] y_basis_vector, /* they *are* scaled by _spacing */
 			final ImagePlus image) {
@@ -1168,9 +1176,9 @@ public class Path implements Comparable<Path> {
 		final double epsilon = 0.000001;
 
 		/*
-		 * To find an arbitrary vector in the normal plane, do the cross product
-		 * with (0,0,1), unless the normal is parallel to that, in which case we
-		 * cross it with (0,1,0) instead...
+		 * To find an arbitrary vector in the normal plane, do the cross product with
+		 * (0,0,1), unless the normal is parallel to that, in which case we cross it
+		 * with (0,1,0) instead...
 		 */
 
 		double ax, ay, az;
@@ -1221,7 +1229,6 @@ public class Path implements Comparable<Path> {
 		SNT.log("a (in normal plane) is " + ax + "," + ay + "," + az);
 		SNT.log("b (in normal plane) is " + bx + "," + by + "," + bz);
 
-
 		// a and b must be perpendicular:
 		final double a_dot_b = ax * bx + ay * by + az * bz;
 
@@ -1235,7 +1242,7 @@ public class Path implements Comparable<Path> {
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
-		final int depth = image.getNSlices(); //FIXME: Check hyperstack support
+		final int depth = image.getNSlices(); // FIXME: Check hyperstack support
 		final float[][] v = new float[depth][];
 		final ImageStack s = image.getStack();
 		final int imageType = image.getType();
@@ -1296,8 +1303,8 @@ public class Path implements Comparable<Path> {
 				final int z_c = (int) Math.ceil(image_z);
 
 				/*
-				 * Check that these values aren't poking off the edge of the
-				 * screen - if so then make them zero.
+				 * Check that these values aren't poking off the edge of the screen - if so then
+				 * make them zero.
 				 */
 
 				double fff;
@@ -1370,16 +1377,16 @@ public class Path implements Comparable<Path> {
 		return fitCircles(side, image, false, null, -1, null);
 	}
 
-	protected Path fitCircles(final int side, final ImagePlus image, boolean display,
+	protected Path fitCircles(final int side, final ImagePlus image, final boolean display,
 			final SimpleNeuriteTracer plugin, final int progressIndex, final MultiTaskProgress progress) {
 
 		final Path fitted = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 		final int totalPoints = size();
 		final int pointsEitherSide = 4;
 
-		SNT.log("Started fitting: "+ this.getName() +". Generating normal planes stack....");
+		SNT.log("Started fitting: " + this.getName() + ". Generating normal planes stack....");
 		SNT.log("There are: " + totalPoints + " in the stack.");
-		SNT.log("Spacing: " + x_spacing + "," + y_spacing + "," + z_spacing +" ("+ spacing_units +")");
+		SNT.log("Spacing: " + x_spacing + "," + y_spacing + "," + z_spacing + " (" + spacing_units + ")");
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
@@ -1461,8 +1468,7 @@ public class Path implements Comparable<Path> {
 			startValues[1] = side / 2.0;
 			startValues[2] = 3;
 
-			SNT.log("start search at: " + startValues[0] + "," + startValues[1] + " with radius: "
-					+ startValues[2]);
+			SNT.log("start search at: " + startValues[0] + "," + startValues[1] + " with radius: " + startValues[2]);
 
 			float minValueInSquare = Float.MAX_VALUE;
 			float maxValueInSquare = Float.MIN_VALUE;
@@ -1554,15 +1560,15 @@ public class Path implements Comparable<Path> {
 
 			final FloatProcessor bp = new FloatProcessor(side, side);
 			bp.setPixels(normalPlane);
-			stack.addSlice("Node "+ (i+1), bp);
+			stack.addSlice("Node " + (i + 1), bp);
 
 			if (progress != null)
 				progress.updateProgress(((double) i + 1) / totalPoints, progressIndex);
 		}
 
 		/*
-		 * Now at each point along the path we calculate the mode of the
-		 * radiuses in the nearby region:
+		 * Now at each point along the path we calculate the mode of the radiuses in the
+		 * nearby region:
 		 */
 
 		final int modeEitherSide = 4;
@@ -1627,11 +1633,11 @@ public class Path implements Comparable<Path> {
 		}
 
 		/*
-		 * Repeatedly build an array indicating how many other valid circles
-		 * each one overlaps with, and remove the worst culprits on each run
-		 * until they're all gone... This is horrendously inefficient (O(n^3) in
-		 * the worst case) but I'm more sure of its correctness than other
-		 * things I've tried, and there should be few overlapping circles.
+		 * Repeatedly build an array indicating how many other valid circles each one
+		 * overlaps with, and remove the worst culprits on each run until they're all
+		 * gone... This is horrendously inefficient (O(n^3) in the worst case) but I'm
+		 * more sure of its correctness than other things I've tried, and there should
+		 * be few overlapping circles.
 		 */
 		final int[] overlapsWith = new int[totalPoints];
 		boolean someStillOverlap = true;
@@ -1752,7 +1758,8 @@ public class Path implements Comparable<Path> {
 		}
 
 		if (added != fittedLength)
-			throw new IllegalArgumentException("Mismatch of lengths, added=" + added + " and fittedLength=" + fittedLength);
+			throw new IllegalArgumentException(
+					"Mismatch of lengths, added=" + added + " and fittedLength=" + fittedLength);
 
 		fitted.setFittedCircles(fitted_ts_x, fitted_ts_y, fitted_ts_z, fitted_rs, fitted_optimized_x,
 				fitted_optimized_y, fitted_optimized_z);
@@ -1881,8 +1888,8 @@ public class Path implements Comparable<Path> {
 		 */
 		final double epsilon = 0.000001;
 		/*
-		 * Take the cross product of n1 and n2 to see if they are colinear, in
-		 * which case there is overlap:
+		 * Take the cross product of n1 and n2 to see if they are colinear, in which
+		 * case there is overlap:
 		 */
 		final double crossx = n1y * n2z - n1z * n2y;
 		final double crossy = n1z * n2x - n1x * n2z;
@@ -1920,14 +1927,14 @@ public class Path implements Comparable<Path> {
 		 *
 		 * constant1 n1 + constant2 n2 + u ( n1 x n2 )
 		 *
-		 * To find if the two circles overlap, we need to find the values of u
-		 * where each crosses that line, in other words, for the first circle:
+		 * To find if the two circles overlap, we need to find the values of u where
+		 * each crosses that line, in other words, for the first circle:
 		 *
 		 * radius1 = |constant1 n1 + constant2 n2 + u ( n1 x n2 ) - c1|
 		 *
-		 * => 0 = [ (constant1 n1 + constant2 n2 - c1).(constant1 n1 + constant2
-		 * n2 - c1) - radius1 ^ 2 ] + [ 2 * ( n1 x n2 ) . ( constant1 n1 +
-		 * constant2 n2 - c1 ) ] * u [ ( n1 x n2 ) . ( n1 x n2 ) ] * u^2 ]
+		 * => 0 = [ (constant1 n1 + constant2 n2 - c1).(constant1 n1 + constant2 n2 -
+		 * c1) - radius1 ^ 2 ] + [ 2 * ( n1 x n2 ) . ( constant1 n1 + constant2 n2 - c1
+		 * ) ] * u [ ( n1 x n2 ) . ( n1 x n2 ) ] * u^2 ]
 		 *
 		 * So we solve that quadratic:
 		 *
@@ -1995,8 +2002,8 @@ public class Path implements Comparable<Path> {
 			return true;
 
 		/*
-		 * We only reach here if something has gone badly wrong, so dump helpful
-		 * values to aid in debugging:
+		 * We only reach here if something has gone badly wrong, so dump helpful values
+		 * to aid in debugging:
 		 */
 		SNT.log("CirclesOverlap seems to have failed: Current settings");
 		SNT.log("det: " + det);
@@ -2020,7 +2027,8 @@ public class Path implements Comparable<Path> {
 	 *         thickness
 	 */
 	public double getMeanRadius() {
-		if (radiuses == null) return 0;
+		if (radiuses == null)
+			return 0;
 		return StatUtils.mean(radiuses);
 	}
 
@@ -2031,7 +2039,8 @@ public class Path implements Comparable<Path> {
 	 *         thickness
 	 */
 	public double getNodeRadius(final int pos) {
-		if (radiuses == null) return 0;
+		if (radiuses == null)
+			return 0;
 		if ((pos < 0) || pos >= size()) {
 			throw new IllegalArgumentException("getNodeRadius() was asked for an out-of-range point: " + pos);
 		}
@@ -2073,8 +2082,8 @@ public class Path implements Comparable<Path> {
 		String name = getName();
 		if (name == null)
 			name = "Path " + id;
-		if (size()==1)
-		name += (size()==1) ? " [Single Point]" : " [" + getRealLengthString() + " " + spacing_units + "]";
+		if (size() == 1)
+			name += (size() == 1) ? " [Single Point]" : " [" + getRealLengthString() + " " + spacing_units + "]";
 		if (startJoins != null) {
 			name += ", starts on " + startJoins.getName();
 		}
@@ -2088,8 +2097,8 @@ public class Path implements Comparable<Path> {
 
 	/**
 	 * This toString() method shows details of the path which is actually being
-	 * displayed, not necessarily this path object. FIXME: this is probably
-	 * horribly confusing.
+	 * displayed, not necessarily this path object. FIXME: this is probably horribly
+	 * confusing.
 	 */
 
 	@Override
@@ -2109,10 +2118,9 @@ public class Path implements Comparable<Path> {
 		swcType = newSWCType;
 		if (alsoSetInFittedVersion) {
 			/*
-			 * If we've been asked to also set the fitted version, this should
-			 * only be called on the non-fitted version of the path, so raise an
-			 * error if it's been called on the fitted version by mistake
-			 * instead:
+			 * If we've been asked to also set the fitted version, this should only be
+			 * called on the non-fitted version of the path, so raise an error if it's been
+			 * called on the fitted version by mistake instead:
 			 */
 			if (isFittedVersionOfAnotherPath() && fittedVersionOf.getSWCType() != newSWCType)
 				throw new RuntimeException("BUG: only call setSWCType on the unfitted path");
@@ -2126,12 +2134,11 @@ public class Path implements Comparable<Path> {
 	}
 
 	/*
-	 * @Override public String toString() { int n = size(); String result = "";
-	 * if( name != null ) result += "\"" + name + "\" "; result += n +
-	 * " points"; if( n > 0 ) { result += " from " + x_positions[0] + ", " +
-	 * y_positions[0] + ", " + z_positions[0]; result += " to " +
-	 * x_positions[n-1] + ", " + y_positions[n-1] + ", " + z_positions[n-1]; }
-	 * return result; }
+	 * @Override public String toString() { int n = size(); String result = ""; if(
+	 * name != null ) result += "\"" + name + "\" "; result += n + " points"; if( n
+	 * > 0 ) { result += " from " + x_positions[0] + ", " + y_positions[0] + ", " +
+	 * z_positions[0]; result += " to " + x_positions[n-1] + ", " + y_positions[n-1]
+	 * + ", " + z_positions[n-1]; } return result; }
 	 */
 
 	/**
@@ -2143,9 +2150,10 @@ public class Path implements Comparable<Path> {
 		return (isPrimary()) ? 1 : order;
 	}
 
-	protected void setOrder(int order) {
+	protected void setOrder(final int order) {
 		this.order = order;
-		if (fitted != null) fitted.setOrder(order);
+		if (fitted != null)
+			fitted.setOrder(order);
 	}
 
 	/*
@@ -2179,8 +2187,7 @@ public class Path implements Comparable<Path> {
 
 		if (!visible) {
 			/*
-			 * It shouldn't be visible - if any of the contents are non-null,
-			 * remove them:
+			 * It shouldn't be visible - if any of the contents are non-null, remove them:
 			 */
 			removeIncludingFittedFrom3DViewer(univ);
 			return;
@@ -2192,8 +2199,7 @@ public class Path implements Comparable<Path> {
 
 		if (useFitted) {
 			/*
-			 * If the non-fitted versions are currently being displayed, remove
-			 * them:
+			 * If the non-fitted versions are currently being displayed, remove them:
 			 */
 			removeFrom3DViewer(univ);
 			pathToUse = fitted;
@@ -2235,8 +2241,8 @@ public class Path implements Comparable<Path> {
 			}
 
 			/*
-			 * ... or, should we now use a colour image, where previously we
-			 * were using a different colour image or no colour image?
+			 * ... or, should we now use a colour image, where previously we were using a
+			 * different colour image or no colour image?
 			 */
 
 		} else {
@@ -2265,9 +2271,8 @@ public class Path implements Comparable<Path> {
 		if (pathToUse.realColor == null || !pathToUse.realColor.equals(color)) {
 
 			/*
-			 * If there's a representation of the path in the 3D viewer anyway,
-			 * just set the color, don't recreate it, since the latter takes a
-			 * long time:
+			 * If there's a representation of the path in the 3D viewer anyway, just set the
+			 * color, don't recreate it, since the latter takes a long time:
 			 */
 
 			if (pathToUse.content3D != null || pathToUse.content3DExtra != null) {
@@ -2313,8 +2318,7 @@ public class Path implements Comparable<Path> {
 	protected java.util.List<PointInImage> getPointInImageList() {
 		final ArrayList<PointInImage> linePoints = new ArrayList<>();
 		for (int i = 0; i < points; ++i) {
-			linePoints.add(new PointInImage(precise_x_positions[i], precise_y_positions[i],
-					precise_z_positions[i]));
+			linePoints.add(new PointInImage(precise_x_positions[i], precise_y_positions[i], precise_z_positions[i]));
 		}
 		return linePoints;
 	}
@@ -2484,14 +2488,13 @@ public class Path implements Comparable<Path> {
 		System.arraycopy(radiuses_d, 0, radiuses_d_trimmed, 0, pointsToUse);
 
 		/*
-		 * Work out whether to resample or not. I've found that the resampling
-		 * is only really required in cases where the points are at adjacent
-		 * voxels. So, work out the mean distance between all the points but in
-		 * image co-ordinates - if there are points only at adjacent voxels this
-		 * will be between 1 and sqrt(3) ~= 1.73. However, after the "fitting"
-		 * process here, we might remove many of these points, so I'll say that
-		 * we won't resample if the mean is rather higher - above 3. Hopefully
-		 * this is a good compromise...
+		 * Work out whether to resample or not. I've found that the resampling is only
+		 * really required in cases where the points are at adjacent voxels. So, work
+		 * out the mean distance between all the points but in image co-ordinates - if
+		 * there are points only at adjacent voxels this will be between 1 and sqrt(3)
+		 * ~= 1.73. However, after the "fitting" process here, we might remove many of
+		 * these points, so I'll say that we won't resample if the mean is rather higher
+		 * - above 3. Hopefully this is a good compromise...
 		 */
 
 		double total_length_in_image_space = 0;
@@ -2503,7 +2506,7 @@ public class Path implements Comparable<Path> {
 		}
 		final double mean_inter_point_distance_in_image_space = total_length_in_image_space / (pointsToUse - 1);
 		SNT.log("For path " + this + ", got mean_inter_point_distance_in_image_space: "
-					+ mean_inter_point_distance_in_image_space);
+				+ mean_inter_point_distance_in_image_space);
 		final boolean resample = mean_inter_point_distance_in_image_space < 3;
 
 		SNT.log("... so" + (resample ? "" : " not") + " resampling");
@@ -2553,7 +2556,7 @@ public class Path implements Comparable<Path> {
 		return selected;
 	}
 
-	//TODO: this should be renamed
+	// TODO: this should be renamed
 	public boolean versionInUse() {
 		if (fittedVersionOf != null)
 			return fittedVersionOf.useFitted;
@@ -2566,12 +2569,12 @@ public class Path implements Comparable<Path> {
 	 * space. This is tough to work out analytically, and this precision isn't
 	 * really warranted given the errors introduced in the fitting process, the
 	 * tracing in the first place, etc. So, this method produces an approximate
-	 * volume assuming that the volume of each of these parts is that of a
-	 * truncated cone, with circles of the same size (i.e. as if the circles had
-	 * simply been reoriented to be parallel and have a common normal vector)
+	 * volume assuming that the volume of each of these parts is that of a truncated
+	 * cone, with circles of the same size (i.e. as if the circles had simply been
+	 * reoriented to be parallel and have a common normal vector)
 	 *
-	 * For more accurate measurements of the volumes of a neuron, you should use
-	 * the filling interface.
+	 * For more accurate measurements of the volumes of a neuron, you should use the
+	 * filling interface.
 	 */
 
 	public double getApproximateFittedVolume() {
@@ -2598,9 +2601,8 @@ public class Path implements Comparable<Path> {
 	}
 
 	/*
-	 * This doesn't deal with the startJoins, endJoins or fitted fields, since
-	 * they involve other paths which were probably also transformed by the
-	 * caller.
+	 * This doesn't deal with the startJoins, endJoins or fitted fields, since they
+	 * involve other paths which were probably also transformed by the caller.
 	 */
 
 	public Path transform(final PathTransformer transformation, final ImagePlus template, final ImagePlus model) {

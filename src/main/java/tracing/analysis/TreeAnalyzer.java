@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -29,6 +29,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.stream.IntStream;
 
+import net.imagej.table.DefaultGenericTable;
+
 import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;
 import org.scijava.display.Display;
@@ -36,7 +38,6 @@ import org.scijava.display.DisplayService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
 import tracing.Tree;
 import tracing.util.PointInImage;
@@ -91,7 +92,8 @@ public class TreeAnalyzer extends ContextCommand {
 	public TreeAnalyzer(final Tree tree) {
 		this.tree = new Tree();
 		for (final Path p : tree.getPaths()) {
-			if (p == null) continue;
+			if (p == null)
+				continue;
 			Path pathToAdd;
 			// If fitted flavor of path exists use it instead
 			if (p.getUseFitted() && p.getFitted() != null) {
@@ -310,7 +312,7 @@ public class TreeAnalyzer extends ContextCommand {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -361,7 +363,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @return the set of primary paths
 	 */
 	public HashSet<Path> getPrimaryPaths() {
-		primaries = new HashSet<Path>();
+		primaries = new HashSet<>();
 		for (final Path p : tree.getPaths()) {
 			if (p.isPrimary())
 				primaries.add(p);
@@ -378,7 +380,7 @@ public class TreeAnalyzer extends ContextCommand {
 	public HashSet<Path> getTerminalPaths() {
 		if (tips == null)
 			getTips();
-		terminals = new HashSet<Path>();
+		terminals = new HashSet<>();
 		for (final PointInImage tip : tips) {
 			if (tip.onPath != null) {
 				terminals.add(tip.onPath);
@@ -428,7 +430,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @return the branch points positions
 	 */
 	public HashSet<PointInImage> getBranchPoints() {
-		joints = new HashSet<PointInImage>();
+		joints = new HashSet<>();
 		for (final Path p : tree.getPaths()) {
 			joints.addAll(p.findJoinedPoints());
 		}

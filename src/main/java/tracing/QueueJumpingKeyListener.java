@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -49,9 +49,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			KeyEvent.VK_PLUS, KeyEvent.VK_LESS, KeyEvent.VK_GREATER, KeyEvent.VK_TAB // extra navigation/zoom keys
 	};
 
-	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin,
-		final InteractiveTracerCanvas canvas)
-	{
+	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin, final InteractiveTracerCanvas canvas) {
 		this.tracerPlugin = tracerPlugin;
 		this.canvas = canvas;
 		mac = PlatformUtils.isMac();
@@ -76,29 +74,26 @@ class QueueJumpingKeyListener implements KeyListener {
 			tracerPlugin.panMode = true;
 			waiveKeyPress(e);
 			return;
-		}
-		else if (keyCode == KeyEvent.VK_ESCAPE) {
-			if (doublePress) tracerPlugin.getUI().reset();
-			else tracerPlugin.getUI().abortCurrentOperation();
+		} else if (keyCode == KeyEvent.VK_ESCAPE) {
+			if (doublePress)
+				tracerPlugin.getUI().reset();
+			else
+				tracerPlugin.getUI().abortCurrentOperation();
 			e.consume();
 			return;
-		}
-		else if (keyCode == KeyEvent.VK_ENTER) {
+		} else if (keyCode == KeyEvent.VK_ENTER) {
 			tracerPlugin.getUI().toFront();
 			e.consume();
 			return;
-		}
-		else if (keyCode == KeyEvent.VK_4) {
+		} else if (keyCode == KeyEvent.VK_4) {
 			tracerPlugin.unzoomAllPanes();
 			e.consume();
 			return;
-		}
-		else if (keyCode == KeyEvent.VK_5) {
+		} else if (keyCode == KeyEvent.VK_5) {
 			tracerPlugin.zoom100PercentAllPanes();
 			e.consume();
 			return;
-		}
-		else if (Arrays.stream(W_KEYS).anyMatch(i -> i == keyCode)) {
+		} else if (Arrays.stream(W_KEYS).anyMatch(i -> i == keyCode)) {
 			waiveKeyPress(e);
 			return;
 		}
@@ -109,8 +104,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		final boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
 		final boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
-		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT
-			: keyCode == KeyEvent.VK_CONTROL;
+		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT : keyCode == KeyEvent.VK_CONTROL;
 
 		// SNT Hotkeys that do not override defaults
 		if (shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A)) {
@@ -127,8 +121,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			// to wait for the next mouse move event
 			canvas.fakeMouseMoved(shift_pressed, join_modifier_pressed);
 			e.consume();
-		}
-		else if (keyChar == 'g' || keyChar == 'G') {
+		} else if (keyChar == 'g' || keyChar == 'G') {
 			// IJ1 built-in: Shift+G Take a screenshot
 			canvas.selectNearestPathToMousePointer(shift_down);
 			e.consume();
@@ -140,7 +133,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			waiveKeyPress(e);
 			return;
 		}
-		
+
 		// Hotkeys common to both tracing and edit mode
 		else if (keyChar == 'a' || keyChar == 'A') {
 			// IJ1 built-in: Select All
@@ -156,16 +149,14 @@ class QueueJumpingKeyListener implements KeyListener {
 
 		// Keystrokes exclusive to edit mode
 		else if (canvas.isEditMode() && !doublePress) { // skip hasty keystrokes to avoid mis-editing
-			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE || keyChar == 'd' || keyChar =='D') {
+			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE || keyChar == 'd'
+					|| keyChar == 'D') {
 				canvas.deleteEditingNode(false);
-			}
-			else if (keyCode == KeyEvent.VK_INSERT || keyChar == 'i' || keyChar =='I') {
+			} else if (keyCode == KeyEvent.VK_INSERT || keyChar == 'i' || keyChar == 'I') {
 				canvas.apppendLastPositionToEditingNode(false);
-			}
-			else if (keyChar == 'm' || keyChar == 'M') {
+			} else if (keyChar == 'm' || keyChar == 'M') {
 				canvas.moveEditingNodeToLastPosition(false);
-			}
-			else if (keyChar == 'b' || keyChar == 'B') {
+			} else if (keyChar == 'b' || keyChar == 'B') {
 				canvas.assignLastZPositionToEditNode(false);
 			}
 			e.consume();
@@ -174,48 +165,43 @@ class QueueJumpingKeyListener implements KeyListener {
 
 		// Keystrokes exclusive to tracing mode
 		else if (keyChar == 'y' || keyChar == 'Y') {
-			//IJ1 built-in: ROI Properties...
-			if (tracerPlugin.getUI().finishOnDoubleConfimation &&
-				doublePress) tracerPlugin.finishedPath();
-			else tracerPlugin.confirmTemporary();
+			// IJ1 built-in: ROI Properties...
+			if (tracerPlugin.getUI().finishOnDoubleConfimation && doublePress)
+				tracerPlugin.finishedPath();
+			else
+				tracerPlugin.confirmTemporary();
 			e.consume();
-		}
-		else if (keyChar == 'n' || keyChar == 'N') { 
+		} else if (keyChar == 'n' || keyChar == 'N') {
 			// IJ1 built-in: New Image
-			if (tracerPlugin.getUI().discardOnDoubleCancellation &&
-				doublePress) tracerPlugin.cancelPath();
-			else tracerPlugin.cancelTemporary();
+			if (tracerPlugin.getUI().discardOnDoubleCancellation && doublePress)
+				tracerPlugin.cancelPath();
+			else
+				tracerPlugin.cancelTemporary();
 			e.consume();
-		}
-		else if (keyChar == 'c' || keyChar == 'C') {
+		} else if (keyChar == 'c' || keyChar == 'C') {
 			// IJ1 built-in: Copy
 			if (tracerPlugin.getUIState() == NeuriteTracerResultsDialog.PARTIAL_PATH)
 				tracerPlugin.cancelPath();
 			else if (doublePress)
 				tracerPlugin.getUI().abortCurrentOperation();
 			e.consume();
-		}
-		else if (keyChar == 'f' || keyChar == 'F') {
+		} else if (keyChar == 'f' || keyChar == 'F') {
 			// IJ1 built-in: Fill
 			tracerPlugin.finishedPath();
 			e.consume();
-		}
-		else if (keyChar == 'h' || keyChar == 'H') {
+		} else if (keyChar == 'h' || keyChar == 'H') {
 			// IJ1 built-in: Histogram
 			tracerPlugin.getUI().toggleHessian();
 			e.consume();
-		}
-		else if (keyChar == 'i' || keyChar == 'I') {
+		} else if (keyChar == 'i' || keyChar == 'I') {
 			// IJ1 built-in: Get Info
 			tracerPlugin.getUI().toggleFilteredImgTracing();
 			e.consume();
-		}
-		else if (keyChar == 'm' || keyChar == 'M') {
+		} else if (keyChar == 'm' || keyChar == 'M') {
 			// IJ1 built-in: Measure
 			canvas.clickAtMaxPoint();
 			e.consume();
-		}
-		else if (keyChar == 's' || keyChar == 's') {
+		} else if (keyChar == 's' || keyChar == 's') {
 			// IJ1 built-in: Save
 			tracerPlugin.toogleSnapCursor();
 			e.consume();
@@ -226,13 +212,14 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 
 		// Uncomment below to pass on any other key press to existing listeners
-		//else waiveKeyPress(e);
+		// else waiveKeyPress(e);
 
 	}
 
 	private void waiveKeyPress(final KeyEvent e) {
 		for (final KeyListener kl : listeners) {
-			if (e.isConsumed()) break;
+			if (e.isConsumed())
+				break;
 			kl.keyPressed(e);
 		}
 	}
@@ -243,7 +230,8 @@ class QueueJumpingKeyListener implements KeyListener {
 			tracerPlugin.panMode = false;
 		}
 		for (final KeyListener kl : listeners) {
-			if (e.isConsumed()) break;
+			if (e.isConsumed())
+				break;
 			kl.keyReleased(e);
 		}
 	}
@@ -251,14 +239,15 @@ class QueueJumpingKeyListener implements KeyListener {
 	@Override
 	public void keyTyped(final KeyEvent e) {
 		for (final KeyListener kl : listeners) {
-			if (e.isConsumed()) break;
+			if (e.isConsumed())
+				break;
 			kl.keyTyped(e);
 		}
 	}
 
 	private boolean isDoublePress(final KeyEvent ke) {
-		if (lastKeyPressedCode == ke.getKeyCode() && ((ke.getWhen() -
-			timeKeyDown) < DOUBLE_PRESS_INTERVAL)) return true;
+		if (lastKeyPressedCode == ke.getKeyCode() && ((ke.getWhen() - timeKeyDown) < DOUBLE_PRESS_INTERVAL))
+			return true;
 		timeKeyDown = ke.getWhen();
 		lastKeyPressedCode = ke.getKeyCode();
 		return false;
@@ -266,12 +255,11 @@ class QueueJumpingKeyListener implements KeyListener {
 
 	/**
 	 * This method should add the other key listeners in 'laterKeyListeners' that
-	 * will be called for 'source' if this key listener isn't interested in the
-	 * key press.
+	 * will be called for 'source' if this key listener isn't interested in the key
+	 * press.
 	 */
 	public void addOtherKeyListeners(final KeyListener[] laterKeyListeners) {
-		final ArrayList<KeyListener> newListeners = new ArrayList<>(Arrays.asList(
-			laterKeyListeners));
+		final ArrayList<KeyListener> newListeners = new ArrayList<>(Arrays.asList(laterKeyListeners));
 		listeners.addAll(newListeners);
 	}
 

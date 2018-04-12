@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -48,11 +48,11 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 										// list yet...
 
 	/*
-	 * This calculates the cost of moving to a new point in the image. This does
-	 * not take into account the distance to this new point, only the value at
-	 * it. This will be post-multiplied by the distance from the last point. So,
-	 * if you want to take into account the curvature of the image at that point
-	 * then you should do so in this method.
+	 * This calculates the cost of moving to a new point in the image. This does not
+	 * take into account the distance to this new point, only the value at it. This
+	 * will be post-multiplied by the distance from the last point. So, if you want
+	 * to take into account the curvature of the image at that point then you should
+	 * do so in this method.
 	 */
 
 	// The default implementation does a simple reciprocal of the
@@ -101,8 +101,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	}
 
 	/*
-	 * This is a factory method for creating specialized search nodes,
-	 * subclasses of SearchNode:
+	 * This is a factory method for creating specialized search nodes, subclasses of
+	 * SearchNode:
 	 */
 
 	protected SearchNode createNewNode(final int x, final int y, final int z, final float g, final float h,
@@ -111,9 +111,9 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	}
 
 	/*
-	 * This is called if the goal has been found in the search. If your search
-	 * has no defined goal, then this will never be called, so don't bother to
-	 * override it.
+	 * This is called if the goal has been found in the search. If your search has
+	 * no defined goal, then this will never be called, so don't bother to override
+	 * it.
 	 */
 
 	protected void foundGoal(final Path pathToGoal) {
@@ -141,8 +141,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 	/*
 	 * If you need to force the distance between two points to always be greater
-	 * than some value (e.g. to make your A star heuristic valid or something,
-	 * then you should override this method and return that value.
+	 * than some value (e.g. to make your A star heuristic valid or something, then
+	 * you should override this method and return that value.
 	 */
 
 	protected double minimumCostPerUnitDistance() {
@@ -172,8 +172,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	boolean bidirectional;
 
 	/*
-	 * If there is no definedGoal then the search is just Dijkstra's algorithm
-	 * (h = 0 in the A* search algorithm.
+	 * If there is no definedGoal then the search is just Dijkstra's algorithm (h =
+	 * 0 in the A* search algorithm.
 	 */
 
 	boolean definedGoal;
@@ -194,8 +194,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	 * The thread can be in one of these states:
 	 *
 	 * - STOPPING: the thread cannot be used again - PAUSED: run() hasn't been
-	 * started yet or the thread is paused - RUNNING: the run method is going
-	 * and the thread is unpaused
+	 * started yet or the thread is paused - RUNNING: the run method is going and
+	 * the thread is unpaused
 	 */
 
 	/* This can only be changed in a block synchronized on this object */
@@ -296,7 +296,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 		width = imagePlus.getWidth();
 		height = imagePlus.getHeight();
-		depth = imagePlus.getNSlices(); //FIXME: Check hyperstack support
+		depth = imagePlus.getNSlices(); // FIXME: Check hyperstack support
 
 		{
 			final ImageStack s = imagePlus.getStack();
@@ -395,13 +395,12 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			int loops = 0;
 
 			/*
-			 * We maintain the list of nodes in the search in a couple of
-			 * different data structures here, which is bad for memory usage but
-			 * good for the speed of the search.
+			 * We maintain the list of nodes in the search in a couple of different data
+			 * structures here, which is bad for memory usage but good for the speed of the
+			 * search.
 			 *
-			 * As well as keeping the nodes in priority lists, we keep them in a
-			 * set of arrays that are indexed in the same way as voxels in the
-			 * image.
+			 * As well as keeping the nodes in priority lists, we keep them in a set of
+			 * arrays that are indexed in the same way as voxels in the image.
 			 */
 
 			while ((open_from_start.size() > 0) || (bidirectional && (open_from_goal.size() > 0))) {
@@ -620,11 +619,10 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			}
 
 			/*
-			 * If we get to here then we haven't found a route to the point.
-			 * (With the current impmlementation this shouldn't happen, so print
-			 * a warning - probably the programmer hasn't populated the open
-			 * list to start with.) However, in this case let's return the best
-			 * path so far anyway...
+			 * If we get to here then we haven't found a route to the point. (With the
+			 * current impmlementation this shouldn't happen, so print a warning - probably
+			 * the programmer hasn't populated the open list to start with.) However, in
+			 * this case let's return the best path so far anyway...
 			 */
 
 			SNT.log("FAILED to find a route.  Shouldn't happen...");
@@ -644,8 +642,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 	/*
 	 * This is the heuristic value for the A* search. There's no defined goal in
-	 * this default superclass implementation, so always return 0 so we end up
-	 * with Dijkstra's algorithm.
+	 * this default superclass implementation, so always return 0 so we end up with
+	 * Dijkstra's algorithm.
 	 */
 
 	float estimateCostToGoal(final int current_x, final int current_y, final int current_z, final boolean fromStart) {
@@ -669,8 +667,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	}
 
 	/*
-	 * Use this to find out why the thread exited if you're not adding listeners
-	 * to do that.
+	 * Use this to find out why the thread exited if you're not adding listeners to
+	 * do that.
 	 */
 	int getExitReason() {
 		return exitReason;
@@ -709,8 +707,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		for (int i = 0; i < 2; ++i) {
 
 			/*
-			 * The first time through we draw the nodes in the open list, the
-			 * second time through we draw the nodes in the closed list.
+			 * The first time through we draw the nodes in the open list, the second time
+			 * through we draw the nodes in the closed list.
 			 */
 
 			final byte start_status = (i == 0) ? OPEN_FROM_START : CLOSED_FROM_START;

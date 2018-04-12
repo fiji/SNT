@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -41,9 +41,8 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 	private final ArrayList<SearchInterface> searchThreads = new ArrayList<>();
 	private double nodeSize = -1;
 
-	public TracerCanvas(final ImagePlus imagePlus, final PaneOwner owner,
-		final int plane, final PathAndFillManager pathAndFillManager)
-	{
+	public TracerCanvas(final ImagePlus imagePlus, final PaneOwner owner, final int plane,
+			final PathAndFillManager pathAndFillManager) {
 
 		super(imagePlus, owner, plane);
 		this.pathAndFillManager = pathAndFillManager;
@@ -60,9 +59,11 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 			int index = -1;
 			for (int i = 0; i < searchThreads.size(); ++i) {
 				final SearchInterface inList = searchThreads.get(i);
-				if (s == inList) index = i;
+				if (s == inList)
+					index = i;
 			}
-			if (index >= 0) searchThreads.remove(index);
+			if (index >= 0)
+				searchThreads.remove(index);
 		}
 	}
 
@@ -72,8 +73,7 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 		/*
 		 * int current_z = -1;
 		 *
-		 * if( plane == ThreePanes.XY_PLANE ) { current_z =
-		 * imp.getZ() - 1; }
+		 * if( plane == ThreePanes.XY_PLANE ) { current_z = imp.getZ() - 1; }
 		 */
 
 		super.drawOverlay(g); // render crosshairs, cursor text and canvas label
@@ -98,9 +98,11 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 			for (int i = 0; i < pathAndFillManager.size(); ++i) {
 
 				final Path p = pathAndFillManager.getPath(i);
-				if (p == null) continue;
+				if (p == null)
+					continue;
 
-				if (p.fittedVersionOf != null) continue;
+				if (p.fittedVersionOf != null)
+					continue;
 
 				Path drawPath = p;
 
@@ -111,21 +113,21 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 				}
 
 				final boolean isSelected = pathAndFillManager.isSelected(p);
-				if (!isSelected && showOnlySelectedPaths) continue;
+				if (!isSelected && showOnlySelectedPaths)
+					continue;
 
-				final boolean customColor = (drawPath.hasCustomColor &&
-					plugin.displayCustomPathColors);
+				final boolean customColor = (drawPath.hasCustomColor && plugin.displayCustomPathColors);
 				Color color = deselectedColor;
-				if (isSelected && !customColor) color = selectedColor;
-				else if (customColor) color = drawPath.getColor();
+				if (isSelected && !customColor)
+					color = selectedColor;
+				else if (customColor)
+					color = drawPath.getColor();
 
 				if (just_near_slices) {
-					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected &&
-						customColor), drawDiametersXY, current_z, eitherSide);
-				}
-				else {
-					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected &&
-						customColor), drawDiametersXY);
+					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected && customColor), drawDiametersXY,
+							current_z, eitherSide);
+				} else {
+					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected && customColor), drawDiametersXY);
 				}
 			}
 		}
@@ -164,9 +166,9 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 	@Override
 	public void paint(final Graphics g) {
 
-		if (backBufferWidth != getSize().width ||
-			backBufferHeight != getSize().height || backBufferImage == null ||
-			backBufferGraphics == null) resetBackBuffer();
+		if (backBufferWidth != getSize().width || backBufferHeight != getSize().height || backBufferImage == null
+				|| backBufferGraphics == null)
+			resetBackBuffer();
 
 		super.paint(backBufferGraphics);
 		drawOverlay(backBufferGraphics);
@@ -189,9 +191,12 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 	 */
 	public double nodeDiameter() {
 		if (nodeSize < 0) {
-			if (magnification < 4) return 2;
-			else if (magnification > 16) return magnification / 2;
-			else return magnification;
+			if (magnification < 4)
+				return 2;
+			else if (magnification > 16)
+				return magnification / 2;
+			else
+				return magnification;
 		}
 		return nodeSize;
 	}
@@ -199,9 +204,10 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 	/**
 	 * Sets the baseline for rendering diameter of path nodes
 	 *
-	 * @param diameter the diameter to be used when rendering path nodes. Set it
-	 *          to -1 for adopting the default value. Set it to zero to suppress
-	 *          node rendering
+	 * @param diameter
+	 *            the diameter to be used when rendering path nodes. Set it to -1
+	 *            for adopting the default value. Set it to zero to suppress node
+	 *            rendering
 	 */
 	public void setNodeDiameter(final double diameter) {
 		nodeSize = diameter;

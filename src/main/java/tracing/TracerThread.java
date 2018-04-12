@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -132,18 +132,18 @@ public class TracerThread extends SearchThread {
 
 	/*
 	 * If we're taking the reciprocal of the value at the new point as our cost,
-	 * then values of zero cause a problem. This is the value that we use
-	 * instead of zero there.
+	 * then values of zero cause a problem. This is the value that we use instead of
+	 * zero there.
 	 */
 
 	static final double RECIPROCAL_FUDGE = 0.5;
 
 	/*
-	 * This cost doesn't take into account the distance between the points - it
-	 * will be post-multiplied by that value.
+	 * This cost doesn't take into account the distance between the points - it will
+	 * be post-multiplied by that value.
 	 *
-	 * The minimum cost should be > 0 - it is the value that is used in
-	 * calculating the heuristic for how far a given point is from the goal.
+	 * The minimum cost should be > 0 - it is the value that is used in calculating
+	 * the heuristic for how far a given point is from the goal.
 	 */
 
 	@Override
@@ -212,10 +212,9 @@ public class TracerThread extends SearchThread {
 							hessianEigenValues, false, true, x_spacing, y_spacing, z_spacing);
 
 					/*
-					 * FIXME: there's lots of literature on how to pick this
-					 * rule (see Sato et al, "Three-dimensional multi-scale line
-					 * filter for segmentation and visualization of curvilinear
-					 * structures in medical images". The rule I'm using here
+					 * FIXME: there's lots of literature on how to pick this rule (see Sato et al,
+					 * "Three-dimensional multi-scale line filter for segmentation and visualization
+					 * of curvilinear structures in medical images". The rule I'm using here
 					 * probably isn't optimal.
 					 */
 

@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -30,13 +30,14 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.scijava.plugin.Parameter;
-import org.scijava.ui.UIService;
-
 import net.imagej.plot.CategoryChart;
 import net.imagej.plot.LineSeries;
 import net.imagej.plot.PlotService;
 import net.imagej.table.DefaultGenericTable;
+
+import org.scijava.plugin.Parameter;
+import org.scijava.ui.UIService;
+
 import tracing.Path;
 import tracing.Tree;
 import tracing.analysis.TreeAnalyzer;
@@ -60,7 +61,6 @@ public class StrahlerCmd extends TreeAnalyzer {
 	private final Map<Integer, Double> bPointsMap = new TreeMap<>();
 	private final Map<Integer, Double> bRatioMap = new TreeMap<>();
 	private final Map<Integer, Double> tLengthMap = new TreeMap<>();
-
 
 	public StrahlerCmd(final Tree tree) {
 		super(tree);

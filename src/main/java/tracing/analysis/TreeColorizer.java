@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -31,13 +31,14 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import net.imagej.ImageJ;
+import net.imagej.lut.LUTService;
+import net.imglib2.display.ColorTable;
+
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.Context;
 import org.scijava.plugin.Parameter;
 
-import net.imagej.ImageJ;
-import net.imagej.lut.LUTService;
-import net.imglib2.display.ColorTable;
 import tracing.Path;
 import tracing.Tree;
 import tracing.plugin.DistributionCmd;
@@ -170,8 +171,8 @@ public class TreeColorizer {
 
 	private void mapToNodeProperty(final String measurement, final ColorTable colorTable) {
 		if (Double.isNaN(min) || Double.isNaN(max) || min > max) {
-			TreeStatistics tStats = new TreeStatistics(new Tree(paths));
-			SummaryStatistics sStats = tStats.getSummaryStats(measurement);
+			final TreeStatistics tStats = new TreeStatistics(new Tree(paths));
+			final SummaryStatistics sStats = tStats.getSummaryStats(measurement);
 			setMinMax(sStats.getMin(), sStats.getMax());
 		}
 		for (final Path p : paths) {
@@ -256,7 +257,7 @@ public class TreeColorizer {
 	 *            the measurement ({@link BRANCH_ORDER} }{@link LENGTH}, etc.)
 	 * @param lut
 	 *            the lookup table specifying the color mapping
-	 * 
+	 *
 	 */
 	public void colorize(final Tree tree, final String measurement, final String lut) {
 		colorize(tree, measurement, getColorTable(lut));
@@ -269,7 +270,7 @@ public class TreeColorizer {
 	 *            the list of trees to be colorized
 	 * @param lut
 	 *            the lookup table specifying the color mapping
-	 * 
+	 *
 	 */
 	public void colorizeTrees(final List<Tree> trees, final String lut) {
 		setMinMax(1, trees.size());
@@ -308,7 +309,7 @@ public class TreeColorizer {
 	public static void main(final String... args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		final List<Tree> trees = new ArrayList<Tree>();
+		final List<Tree> trees = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			final Tree tree = new Tree(DistributionCmd.randomPaths());
 			tree.rotate(Tree.Z_AXIS, i * 20);

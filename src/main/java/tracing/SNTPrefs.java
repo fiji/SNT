@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -25,7 +25,6 @@ package tracing;
 import java.awt.Point;
 import java.io.File;
 
-import tracing.FillWindow;
 import ij.Prefs;
 
 /**
@@ -33,23 +32,23 @@ import ij.Prefs;
  *
  * @author Tiago Ferreira
  */
-public class SNTPrefs { //TODO: Adopt PrefService
+public class SNTPrefs { // TODO: Adopt PrefService
 
 	private static final int DRAW_DIAMETERS_XY = 1;
 	private static final int SNAP_CURSOR = 2;
 	// private static final int SHOW_MIP_OVERLAY = 4;
 	private static final int AUTO_CANVAS_ACTIVATION = 8;
-	//@Deprecated//private static final int ENFORCE_LUT = 16;
+	// @Deprecated//private static final int ENFORCE_LUT = 16;
 	private static final int USE_THREE_PANE = 32;
 	private static final int USE_3D_VIEWER = 64;
-	//@Deprecated//private static final int LOOK_FOR_TUBES = 128;
-	//@Deprecated//private static final int LOOK_FOR_OOF = 256;
+	// @Deprecated//private static final int LOOK_FOR_TUBES = 128;
+	// @Deprecated//private static final int LOOK_FOR_OOF = 256;
 	private static final int SHOW_ONLY_SELECTED = 512;
 	private static final int STORE_WIN_LOCATIONS = 1024;
-	//@Deprecated//private static final int JUST_NEAR_SLICES = 1024;
+	// @Deprecated//private static final int JUST_NEAR_SLICES = 1024;
 	private static final int ENFORCE_DEFAULT_PATH_COLORS = 2048;
 	private static final int DEBUG = 4096;
-	//@Deprecated//private static final int LOOK_FOR_TRACES = 8192;
+	// @Deprecated//private static final int LOOK_FOR_TRACES = 8192;
 	private static final int COMPRESSED_XML = 16384;
 
 	private static final String BOOLEANS = "tracing.snt.booleans";
@@ -60,7 +59,7 @@ public class SNTPrefs { //TODO: Adopt PrefService
 	private static final String LOAD_DIRECTORY_KEY = "tracing.snt.lastdir";
 	private static File recentFile;
 
-	private SimpleNeuriteTracer snt;
+	private final SimpleNeuriteTracer snt;
 	private final int UNSET_PREFS = -1;
 	private int currentBooleans;
 	private boolean ij1ReverseSliderOrder;
@@ -108,7 +107,8 @@ public class SNTPrefs { //TODO: Adopt PrefService
 		snt.drawDiametersXY = getPref(DRAW_DIAMETERS_XY);
 		snt.displayCustomPathColors = !getPref(ENFORCE_DEFAULT_PATH_COLORS);
 		snt.setShowOnlySelectedPaths(getPref(SHOW_ONLY_SELECTED), false);
-		if (!SNT.isDebugMode()) SNT.setDebugMode(getPref(DEBUG));
+		if (!SNT.isDebugMode())
+			SNT.setDebugMode(getPref(DEBUG));
 		snt.cursorSnapWindowXY = (int) Prefs.get(SNAP_XY, 4);
 		snt.cursorSnapWindowXY = whithinBoundaries(snt.cursorSnapWindowXY,
 				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY);
@@ -129,10 +129,10 @@ public class SNTPrefs { //TODO: Adopt PrefService
 
 	@Deprecated
 	protected void loadStartupPrefs() {
-		//snt.forceGrayscale = getPref(ENFORCE_LUT);
-		//snt.look4oofFile = getPref(LOOK_FOR_OOF);
-		//snt.look4tubesFile = getPref(LOOK_FOR_TUBES);
-		//snt.look4tracesFile = getPref(LOOK_FOR_TRACES);
+		// snt.forceGrayscale = getPref(ENFORCE_LUT);
+		// snt.look4oofFile = getPref(LOOK_FOR_OOF);
+		// snt.look4tubesFile = getPref(LOOK_FOR_TUBES);
+		// snt.look4tracesFile = getPref(LOOK_FOR_TRACES);
 		snt.setSinglePane(!getPref(USE_THREE_PANE));
 		snt.use3DViewer = getPref(USE_3D_VIEWER);
 	}
@@ -143,7 +143,7 @@ public class SNTPrefs { //TODO: Adopt PrefService
 
 	@Deprecated
 	protected void saveStartupPrefs() {
-		//setPref(USE_THREE_PANE, !snt.getSinglePane());
+		// setPref(USE_THREE_PANE, !snt.getSinglePane());
 		setPref(USE_3D_VIEWER, snt.use3DViewer);
 		Prefs.set(BOOLEANS, currentBooleans);
 		Prefs.savePreferences();
@@ -173,7 +173,8 @@ public class SNTPrefs { //TODO: Adopt PrefService
 			if (fw != null)
 				Prefs.saveLocation(FILLWIN_LOC, fw.getLocation());
 		}
-		if (restoreIJ1prefs) restoreIJ1Prefs();
+		if (restoreIJ1prefs)
+			restoreIJ1Prefs();
 	}
 
 	protected boolean isSaveWinLocations() {

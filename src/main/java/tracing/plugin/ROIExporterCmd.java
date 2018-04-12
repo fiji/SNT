@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -24,6 +24,8 @@ package tracing.plugin;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import net.imagej.ImageJ;
 
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
@@ -36,19 +38,17 @@ import org.scijava.ui.UIService;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
-import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.Tree;
 import tracing.analysis.RoiConverter;
 
-
 /**
- * Command providing a GUI for {@link RoiExporterCmd} and allowing export
- * of {@link Path}s to the IJ1 ROI Manager.
+ * Command providing a GUI for {@link RoiExporterCmd} and allowing export of
+ * {@link Path}s to the IJ1 ROI Manager.
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label="ROI Exporter")
+@Plugin(type = Command.class, visible = false, label = "ROI Exporter")
 public class ROIExporterCmd implements Command {
 
 	@Parameter
@@ -60,7 +60,7 @@ public class ROIExporterCmd implements Command {
 	@Parameter
 	private StatusService statusService;
 
-	@Parameter(required = false, label = "Convert", choices = { "Path segments", "Branch Points", "Tips", "All"})
+	@Parameter(required = false, label = "Convert", choices = { "Path segments", "Branch Points", "Tips", "All" })
 	private String roiChoice;
 
 	@Parameter(required = false, label = "View", choices = { "XY (default)", "XZ", "ZY" })
@@ -75,13 +75,12 @@ public class ROIExporterCmd implements Command {
 	@Parameter(required = false, label = "Discard existing ROIs in ROI Manager")
 	private boolean discardExisting;
 
-	@Parameter(required= true)
+	@Parameter(required = true)
 	private Tree tree;
 
 	private Overlay overlay;
 	private RoiConverter converter;
 	private boolean warningsExist = false;
-
 
 	@Override
 	public void run() {
@@ -92,11 +91,11 @@ public class ROIExporterCmd implements Command {
 			return;
 		}
 
-		final int skippedPaths = tree.size() - converter.getParsedTree().size(); 
+		final int skippedPaths = tree.size() - converter.getParsedTree().size();
 		logService.info("Converting paths to ROIs...");
 		statusService.showStatus("Converting paths to ROIs...");
 		if (skippedPaths > 0)
-			warn(""+ skippedPaths + " were rejected and will not be converted");
+			warn("" + skippedPaths + " were rejected and will not be converted");
 
 		converter.useSWCcolors(useSWCcolors);
 		converter.setStrokeWidth((avgWidth) ? -1 : 0);
@@ -110,26 +109,30 @@ public class ROIExporterCmd implements Command {
 			converter.setView(RoiConverter.XY_PLANE);
 
 		roiChoice = roiChoice.toLowerCase();
-		if (roiChoice.contains("all")) roiChoice = "tips branch points segments";
+		if (roiChoice.contains("all"))
+			roiChoice = "tips branch points segments";
 
 		int size = 0;
 		if (roiChoice.contains("tips")) {
 			size = overlay.size();
 			converter.convertTips(overlay);
-			if (overlay.size() == size) warn(noConversion("tips"));
+			if (overlay.size() == size)
+				warn(noConversion("tips"));
 		}
 		if (roiChoice.contains("branch points")) {
 			size = overlay.size();
 			converter.convertBranchPoints(overlay);
-			if (overlay.size() == size) warn(noConversion("branch points"));
+			if (overlay.size() == size)
+				warn(noConversion("branch points"));
 		}
 		if (roiChoice.contains("segments")) {
 			size = overlay.size();
 			converter.convertPaths(overlay);
-			if (overlay.size() == size) warn(noConversion("segments"));
+			if (overlay.size() == size)
+				warn(noConversion("segments"));
 		}
 
-		if (overlay.size()==0) {
+		if (overlay.size() == 0) {
 			warnUser("None of the input paths could be converted to ROIs.");
 			return;
 		}
@@ -155,8 +158,7 @@ public class ROIExporterCmd implements Command {
 	}
 
 	private String noConversion(final String roiType) {
-		return "Conversion did not generated valid "+roiType 
-				+". Specified features do not exist on input path(s)?";
+		return "Conversion did not generated valid " + roiType + ". Specified features do not exist on input path(s)?";
 	}
 
 	private void warn(final String msg) {
@@ -169,12 +171,11 @@ public class ROIExporterCmd implements Command {
 				DialogPrompt.OptionType.DEFAULT_OPTION).prompt();
 	}
 
-
 	/** IDE debug method **/
 	public static void main(final String[] args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		final Map<String, Object> input= new HashMap<>();
+		final Map<String, Object> input = new HashMap<>();
 		input.put("tree", new Tree());
 		ij.command().run(ROIExporterCmd.class, true, input);
 	}

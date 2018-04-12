@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -71,9 +71,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	protected static String EDIT_MODE_LABEL = "Edit Mode";
 	protected static String PAUSE_MODE_LABEL = "SNT Paused";
 
-
 	protected InteractiveTracerCanvas(final ImagePlus imp, final SimpleNeuriteTracer plugin, final int plane,
-		final PathAndFillManager pathAndFillManager) {
+			final PathAndFillManager pathAndFillManager) {
 		super(imp, plugin, plane, pathAndFillManager);
 		tracerPlugin = plugin;
 		buildPpupMenu();
@@ -82,7 +81,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	private void buildPpupMenu() {
 		pMenu = new JPopupMenu();
-		pMenu.setLightWeightPopupEnabled(false); // Required because we are mixing lightweight and heavyweight components?
+		pMenu.setLightWeightPopupEnabled(false); // Required because we are mixing lightweight and heavyweight
+													// components?
 		final AListener listener = new AListener();
 		pMenu.add(menuItem(AListener.SELECT_NEAREST, listener));
 		if (!tracerPlugin.nonInteractiveSession)
@@ -106,7 +106,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		pMenu.add(deselectedEditingPathsMenu);
 	}
 
-	private void showPopupMenu(int x, int y) {
+	private void showPopupMenu(final int x, final int y) {
 		final Path activePath = tracerPlugin.getSingleSelectedPath();
 		final boolean be = uiReadyForModeChange(NeuriteTracerResultsDialog.EDITING_MODE);
 		toggleEditModeMenuItem.setEnabled(be);
@@ -141,7 +141,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 		final Path source = tracerPlugin.getEditingPath();
 		final boolean startJoins = (source.getEditableNodeIndex() <= source.size() / 2);
-		deselectedEditingPathsMenu.setText("Connect To ("+ (startJoins?"Start":"End") +" Join)");
+		deselectedEditingPathsMenu.setText("Connect To (" + (startJoins ? "Start" : "End") + " Join)");
 		int count = 0;
 		for (final Path p : pathAndFillManager.getPaths()) {
 			if (p.equals(tracerPlugin.getEditingPath()) || !p.isBeingEdited())
@@ -216,7 +216,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	public void setFillTransparent(final boolean transparent) {
 		this.fillTransparent = transparent;
-		if (transparent && fillColor != null) setFillColor(SWCColor.alphaColor(fillColor, 50));
+		if (transparent && fillColor != null)
+			setFillColor(SWCColor.alphaColor(fillColor, 50));
 	}
 
 	public void setPathUnfinished(final boolean unfinished) {
@@ -231,7 +232,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		this.currentPath = path;
 	}
 
-	private boolean uiReadyForModeChange(int mode) {
+	private boolean uiReadyForModeChange(final int mode) {
 		if (!tracerPlugin.isUIready())
 			return false;
 		return tracerPlugin.nonInteractiveSession
@@ -245,7 +246,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	public void fakeMouseMoved(final boolean shift_pressed, final boolean join_modifier_pressed) {
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_pressed,
-			join_modifier_pressed);
+				join_modifier_pressed);
 	}
 
 	public void clickAtMaxPoint() {
@@ -253,8 +254,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final int y = (int) Math.round(last_y_in_pane_precise);
 		final int[] p = new int[3];
 		tracerPlugin.findPointInStack(x, y, plane, p);
-		SNT.log("Clicking on x="+x + " y= "+ y + "on pane " + plane 
-			+ " which corresponds to image position x="+ p[0] +", y="+ p[1] + " z="+ p[2]);
+		SNT.log("Clicking on x=" + x + " y= " + y + "on pane " + plane + " which corresponds to image position x="
+				+ p[0] + ", y=" + p[1] + " z=" + p[2]);
 		tracerPlugin.clickAtMaxPoint(x, y, plane);
 		tracerPlugin.setSlicesAllPanes(p[0], p[1], p[2]);
 	}
@@ -267,8 +268,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			final boolean autoCanvasActivationState = tracerPlugin.autoCanvasActivation;
 			tracerPlugin.autoCanvasActivation = false;
 			final ShollAnalysisDialog sd = new ShollAnalysisDialog(
-				"Sholl analysis for tracing of " + tracerPlugin.getImagePlus().getTitle(), pointInImage.x,
-				pointInImage.y, pointInImage.z, tracerPlugin);
+					"Sholl analysis for tracing of " + tracerPlugin.getImagePlus().getTitle(), pointInImage.x,
+					pointInImage.y, pointInImage.z, tracerPlugin);
 			sd.toFront();
 			sd.addWindowListener(new WindowAdapter() {
 				@Override
@@ -298,10 +299,11 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		 */
 
 		final NearPoint np = pathAndFillManager.nearestPointOnAnyPath(p[0] * tracerPlugin.x_spacing,
-			p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
+				p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
 
 		if (np == null) {
-			tracerPlugin.discreteMsg("No finished path was found within " + SNT.formatDouble(diagonalLength, 3) + tracerPlugin.spacing_units + " of the pointer!");
+			tracerPlugin.discreteMsg("No finished path was found within " + SNT.formatDouble(diagonalLength, 3)
+					+ tracerPlugin.spacing_units + " of the pointer!");
 			return;
 		}
 
@@ -311,7 +313,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	@Override
-	public void setCursor(int sx, int sy, int ox, int oy) {
+	public void setCursor(final int sx, final int sy, final int ox, final int oy) {
 		if (isEventsDisabled() || !tracerPlugin.isUIready() || !cursorLocked)
 			super.setCursor(sx, sy, ox, oy);
 	}
@@ -320,7 +322,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	public void mouseMoved(final MouseEvent e) {
 
 		super.mouseMoved(e);
-		if (isEventsDisabled() || !tracerPlugin.isUIready()) return;
+		if (isEventsDisabled() || !tracerPlugin.isUIready())
+			return;
 
 		last_x_in_pane_precise = myOffScreenXD(e.getX());
 		last_y_in_pane_precise = myOffScreenYD(e.getY());
@@ -328,9 +331,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final boolean mac = PlatformUtils.isMac();
 		boolean shift_key_down = (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
 		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
-			: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
+				: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 
-		if (!editMode && tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down && !shift_key_down) {
+		if (!editMode && tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down
+				&& !shift_key_down) {
 			final double[] p = new double[3];
 			tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise, last_y_in_pane_precise, p);
 			last_x_in_pane_precise = p[0];
@@ -339,9 +343,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down,
-			joiner_modifier_down);
+				joiner_modifier_down);
 		if (editMode) {
-			setCursor((tracerPlugin.getEditingNode()==-1) ? defaultCursor : handCursor);
+			setCursor((tracerPlugin.getEditingNode() == -1) ? defaultCursor : handCursor);
 		} else {
 			setCursor(crosshairCursor);
 		}
@@ -355,7 +359,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			super.mouseEntered(e);
 			return;
 		}
-		if (tracerPlugin.autoCanvasActivation) imp.getWindow().toFront();
+		if (tracerPlugin.autoCanvasActivation)
+			imp.getWindow().toFront();
 	}
 
 	@Override
@@ -405,7 +410,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		} else if (currentState == NeuriteTracerResultsDialog.EDITING_MODE) {
 
-			if (e.isPopupTrigger() || impossibleEdit(true)) return;
+			if (e.isPopupTrigger() || impossibleEdit(true))
+				return;
 			update(getGraphics());
 
 		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_POINT) {
@@ -482,10 +488,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		if (unconfirmedSegment != null) {
 			unconfirmedSegment.drawPathAsPoints(this, g, getUnconfirmedPathColor(), plane, drawDiametersXY,
-					sliceZeroIndexed,
-					eitherSideParameter);
+					sliceZeroIndexed, eitherSideParameter);
 			if (unconfirmedSegment.endJoins != null) {
-				final PathNode pn = new PathNode(unconfirmedSegment, unconfirmedSegment.size()-1, this);
+				final PathNode pn = new PathNode(unconfirmedSegment, unconfirmedSegment.size() - 1, this);
 				pn.setSize(spotDiameter);
 				pn.draw(g, getUnconfirmedPathColor());
 			}
@@ -494,8 +499,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final Path currentPathFromTracer = tracerPlugin.getCurrentPath();
 
 		if (currentPathFromTracer != null) {
-			currentPathFromTracer.drawPathAsPoints(this, g, getTemporaryPathColor(), plane, drawDiametersXY, sliceZeroIndexed,
-				eitherSideParameter);
+			currentPathFromTracer.drawPathAsPoints(this, g, getTemporaryPathColor(), plane, drawDiametersXY,
+					sliceZeroIndexed, eitherSideParameter);
 
 			if (lastPathUnfinished && currentPath.size() == 0) { // first point in path
 				final PointInImage p = new PointInImage(tracerPlugin.last_start_point_x * tracerPlugin.x_spacing,
@@ -510,7 +515,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	}
 
-	private void enableEditMode(boolean enable) {
+	private void enableEditMode(final boolean enable) {
 		if (enable && !tracerPlugin.editModeAllowed(true))
 			return;
 		tracerPlugin.enableEditMode(enable);
@@ -537,18 +542,20 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	public Color getFillColor() {
-		if (fillColor == null) fillColor =  new Color(0, 128, 0);
-		if (fillTransparent) fillColor = SWCColor.alphaColor(fillColor, 50);
+		if (fillColor == null)
+			fillColor = new Color(0, 128, 0);
+		if (fillTransparent)
+			fillColor = SWCColor.alphaColor(fillColor, 50);
 		return fillColor;
 	}
 
 	/**
-	 * This class implements implements ActionListeners for
-	 * InteractiveTracerCanvas contextual menu.
+	 * This class implements implements ActionListeners for InteractiveTracerCanvas
+	 * contextual menu.
 	 */
 	private class AListener implements ActionListener, ItemListener {
 
-		public final String FORK_NEAREST = "Fork at Nearest Node  ["+ GuiUtils.modKey() +"+Shift+Click]";
+		public final String FORK_NEAREST = "Fork at Nearest Node  [" + GuiUtils.modKey() + "+Shift+Click]";
 		public static final String SELECT_NEAREST = "Select Nearest Path  [G, Shift+G]";
 		public static final String PAUSE_TOOGLE = "Pause Tracing";
 		public static final String EDIT_TOOGLE = "Edit Path";
@@ -562,14 +569,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		public void itemStateChanged(final ItemEvent e) {
 			if (e.getSource().equals(toggleEditModeMenuItem)) {
 				enableEditMode(toggleEditModeMenuItem.getState());
-			}
-		else if (e.getSource().equals(togglePauseModeMenuItem))
-			tracerPlugin.pause(togglePauseModeMenuItem.isSelected());
+			} else if (e.getSource().equals(togglePauseModeMenuItem))
+				tracerPlugin.pause(togglePauseModeMenuItem.isSelected());
 		}
 
 		@Override
 		public void actionPerformed(final ActionEvent e) {
 			if (e.getActionCommand().equals(FORK_NEAREST)) {
+
 				if (!uiReadyForModeChange(NeuriteTracerResultsDialog.WAITING_TO_START_PATH)) {
 					getGuiUtils().tempMsg("Please finish current operation before creating branch");
 					return;
@@ -581,35 +588,28 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				selectNearestPathToMousePointer(false);
 				tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_x_in_pane_precise, plane, true, true);
 				tracerPlugin.clickForTrace(last_x_in_pane_precise, last_y_in_pane_precise, plane, true);
-			}
-			else if (e.getActionCommand().equals(SELECT_NEAREST)) {
-				final boolean add = ((e.getModifiers() & ActionEvent.SHIFT_MASK) >0);
+			} else if (e.getActionCommand().equals(SELECT_NEAREST)) {
+				final boolean add = ((e.getModifiers() & ActionEvent.SHIFT_MASK) > 0);
 				selectNearestPathToMousePointer(add);
-			}
-			else if (impossibleEdit(true)) return;
+			} else if (impossibleEdit(true))
+				return;
 
 			if (e.getActionCommand().equals(NODE_RESET)) {
 				tracerPlugin.getEditingPath().setEditableNode(-1);
 			}
 			if (e.getActionCommand().equals(NODE_DELETE)) {
 				deleteEditingNode(true);
-			}
-			else if (e.getActionCommand().equals(NODE_INSERT)) {
+			} else if (e.getActionCommand().equals(NODE_INSERT)) {
 				apppendLastPositionToEditingNode(true);
-			}
-			else if (e.getActionCommand().equals(NODE_MOVE))
-			{
+			} else if (e.getActionCommand().equals(NODE_MOVE)) {
 				moveEditingNodeToLastPosition(true);
-			}
-			else if (e.getActionCommand().equals(NODE_MOVE_Z))
-			{
+			} else if (e.getActionCommand().equals(NODE_MOVE_Z)) {
 				assignLastZPositionToEditNode(true);
-			}
-			else {
+			} else {
 				SNT.error("Unexpectedly got an event from an unknown source: ");
 				return;
 			}
-			
+
 		}
 	}
 
@@ -641,49 +641,53 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	protected void apppendLastPositionToEditingNode(final boolean warnOnFailure) {
-		if (impossibleEdit(warnOnFailure)) return;
+		if (impossibleEdit(warnOnFailure))
+			return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		final int editingNode = editingPath.getEditableNodeIndex();
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
-		editingPath.addNode(editingNode, new PointInImage(p[0]*tracerPlugin.x_spacing, p[1]*tracerPlugin.y_spacing, p[2]*tracerPlugin.z_spacing));
+		editingPath.addNode(editingNode, new PointInImage(p[0] * tracerPlugin.x_spacing, p[1] * tracerPlugin.y_spacing,
+				p[2] * tracerPlugin.z_spacing));
 		editingPath.setEditableNode(editingNode + 1);
 		redrawEditingPath();
 		return;
 	}
 
 	protected void moveEditingNodeToLastPosition(final boolean warnOnFailure) {
-		if (impossibleEdit(warnOnFailure)) return;
+		if (impossibleEdit(warnOnFailure))
+			return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		final int editingNode = editingPath.getEditableNodeIndex();
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
-		editingPath.moveNode(editingNode, new PointInImage(p[0]*tracerPlugin.x_spacing, p[1]*tracerPlugin.y_spacing, p[2]*tracerPlugin.z_spacing));
+		editingPath.moveNode(editingNode, new PointInImage(p[0] * tracerPlugin.x_spacing, p[1] * tracerPlugin.y_spacing,
+				p[2] * tracerPlugin.z_spacing));
 		redrawEditingPath();
 		return;
 	}
-	
+
 	protected void assignLastZPositionToEditNode(final boolean warnOnFailure) {
-		if (impossibleEdit(warnOnFailure)) return;
+		if (impossibleEdit(warnOnFailure))
+			return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		final int editingNode = editingPath.getEditableNodeIndex();
 		double newZ = editingPath.precise_z_positions[editingNode];
 		switch (plane) {
-			case MultiDThreePanes.XY_PLANE:
-				newZ = (imp.getZ() - 1) * tracerPlugin.z_spacing;
-				break;
-			case MultiDThreePanes.XZ_PLANE:
-				newZ = last_y_in_pane_precise * tracerPlugin.y_spacing;
-				break;
-			case MultiDThreePanes.ZY_PLANE:
-				newZ = last_x_in_pane_precise * tracerPlugin.x_spacing;;
-				break;
+		case MultiDThreePanes.XY_PLANE:
+			newZ = (imp.getZ() - 1) * tracerPlugin.z_spacing;
+			break;
+		case MultiDThreePanes.XZ_PLANE:
+			newZ = last_y_in_pane_precise * tracerPlugin.y_spacing;
+			break;
+		case MultiDThreePanes.ZY_PLANE:
+			newZ = last_x_in_pane_precise * tracerPlugin.x_spacing;
+			;
+			break;
 		}
-		editingPath.moveNode(editingNode, new PointInImage(
-			editingPath.precise_x_positions[editingNode],
-			editingPath.precise_y_positions[editingNode], newZ));
+		editingPath.moveNode(editingNode, new PointInImage(editingPath.precise_x_positions[editingNode],
+				editingPath.precise_y_positions[editingNode], newZ));
 		redrawEditingPath();
 	}
 
 }
-

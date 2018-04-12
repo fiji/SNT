@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import net.imagej.ImageJ;
+
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -48,7 +50,6 @@ import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.SNT;
 import tracing.Tree;
@@ -148,7 +149,7 @@ public class DistributionCmd implements Command {
 	}
 
 	public static List<Path> randomPaths() {
-		final List<Path> data = new ArrayList<Path>();
+		final List<Path> data = new ArrayList<>();
 		for (int i = 0; i < 100; i++) {
 			final Path p = new Path(1, 1, 1, "unit");
 			final double v1 = new Random().nextGaussian();
@@ -166,7 +167,7 @@ public class DistributionCmd implements Command {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
-		input.put("paths", new HashSet<Path>(randomPaths()));
+		input.put("paths", new HashSet<>(randomPaths()));
 		input.put("title", "Bogus test");
 		ij.command().run(DistributionCmd.class, true, input);
 	}

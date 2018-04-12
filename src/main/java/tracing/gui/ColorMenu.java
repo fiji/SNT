@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -66,18 +66,17 @@ public class ColorMenu extends JMenu {
 	public ColorMenu(final String name) {
 		super(name);
 
-		_unselectedBorder = new CompoundBorder(new MatteBorder(2, 2, 2, 2,
-			getBackground()), new MatteBorder(1, 1, 1, 1, getForeground()));
+		_unselectedBorder = new CompoundBorder(new MatteBorder(2, 2, 2, 2, getBackground()),
+				new MatteBorder(1, 1, 1, 1, getForeground()));
 
-		_selectedBorder = new CompoundBorder(new MatteBorder(1, 1, 1, 1,
-			getForeground().brighter()), new MatteBorder(2, 2, 2, 2,
-				getForeground()));
+		_selectedBorder = new CompoundBorder(new MatteBorder(1, 1, 1, 1, getForeground().brighter()),
+				new MatteBorder(2, 2, 2, 2, getForeground()));
 
-		_activeBorder = new CompoundBorder(new MatteBorder(2, 2, 2, 2,
-			getBackground().darker()), new MatteBorder(1, 1, 1, 1, getBackground()));
+		_activeBorder = new CompoundBorder(new MatteBorder(2, 2, 2, 2, getBackground().darker()),
+				new MatteBorder(1, 1, 1, 1, getBackground()));
 
-		final Color[] hues = new Color[] { Color.RED, Color.GREEN, Color.BLUE,
-			Color.MAGENTA, Color.CYAN, Color.YELLOW, Color.ORANGE };
+		final Color[] hues = new Color[] { Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA, Color.CYAN, Color.YELLOW,
+				Color.ORANGE };
 		final float[] colorRamp = new float[] { .75f, .5f, .3f };
 		final float[] grayRamp = new float[] { 1, .86f, .71f, .57f, .43f, .29f, 0 };
 
@@ -87,16 +86,13 @@ public class ColorMenu extends JMenu {
 		final List<Color> colors = new ArrayList<>();
 		for (final Color h : hues) {
 			colors.add(h);
-			final float[] hsbVals = Color.RGBtoHSB(h.getRed(), h.getGreen(), h
-				.getBlue(), null);
+			final float[] hsbVals = Color.RGBtoHSB(h.getRed(), h.getGreen(), h.getBlue(), null);
 			for (final float s : colorRamp) { // lighter colors
-				final Color color = Color.getHSBColor(hsbVals[0], s * hsbVals[1],
-					hsbVals[2]);
+				final Color color = Color.getHSBColor(hsbVals[0], s * hsbVals[1], hsbVals[2]);
 				colors.add(color);
 			}
 			for (final float s : colorRamp) { // darker colors
-				final Color color = Color.getHSBColor(hsbVals[0], hsbVals[1], s *
-					hsbVals[2]);
+				final Color color = Color.getHSBColor(hsbVals[0], hsbVals[1], s * hsbVals[2]);
 				colors.add(color);
 			}
 		}
@@ -115,10 +111,9 @@ public class ColorMenu extends JMenu {
 		addSeparator("Custom... (Righ-click to change):");
 		final JPanel customPanel = getGridPanel(1, 7);
 		for (int i = 0; i < 7; i++) {
-			final Color uniquePlaceHolderColor = new Color(getBackground().getRed(),
-				getBackground().getGreen(), getBackground().getBlue(), 255 - i - 1);
-			final ColorPane customColorPane = new ColorPane(new SWCColor(
-				uniquePlaceHolderColor), true);
+			final Color uniquePlaceHolderColor = new Color(getBackground().getRed(), getBackground().getGreen(),
+					getBackground().getBlue(), 255 - i - 1);
+			final ColorPane customColorPane = new ColorPane(new SWCColor(uniquePlaceHolderColor), true);
 			customPanel.add(customColorPane);
 			_colorPanes.put(new SWCColor(uniquePlaceHolderColor), customColorPane);
 		}
@@ -167,13 +162,15 @@ public class ColorMenu extends JMenu {
 			selectNone();
 			return;
 		}
-		if (_selectedColorPane != null) _selectedColorPane.setSelected(false);
+		if (_selectedColorPane != null)
+			_selectedColorPane.setSelected(false);
 		_selectedColorPane = (ColorPane) obj;
 		_selectedColorPane.setSelected(true);
 	}
 
 	public SWCColor getSelectedSWCColor() {
-		if (_selectedColorPane == null) return null;
+		if (_selectedColorPane == null)
+			return null;
 		return _selectedColorPane.swcColor;
 	}
 
@@ -185,14 +182,14 @@ public class ColorMenu extends JMenu {
 
 	public Color getCurrentColorForSWCType(final int swcType) {
 		for (final Map.Entry<SWCColor, ColorPane> entry : _colorPanes.entrySet()) {
-			if (entry.getKey().type() == swcType) return entry.getKey().color();
+			if (entry.getKey().type() == swcType)
+				return entry.getKey().color();
 		}
 		return null;
 	}
 
 	private void doSelection() {
-		fireActionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED,
-			getActionCommand()));
+		fireActionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, getActionCommand()));
 	}
 
 	private class ColorPane extends JPanel implements MouseListener {
@@ -207,17 +204,16 @@ public class ColorMenu extends JMenu {
 			isCustomizable = customizable;
 			setPanelSWCColor(swcColor);
 			setBorder(_unselectedBorder);
-			setMinimumSize(new Dimension(10,10));
+			setMinimumSize(new Dimension(10, 10));
 			addMouseListener(this);
 		}
 
 		private void setPanelSWCColor(final SWCColor sColor) {
 			swcColor = sColor;
 			setBackground(swcColor.color());
-			final String msg = (!swcColor.isTypeDefined())
-				? "RGB: " + swcColor.color().getRed() + ", " + swcColor.color()
-					.getGreen() + ", " + swcColor.color().getBlue() : Path.getSWCtypeName(
-						swcColor.type());
+			final String msg = (!swcColor.isTypeDefined()) ? "RGB: " + swcColor.color().getRed() + ", "
+					+ swcColor.color().getGreen() + ", " + swcColor.color().getBlue()
+					: Path.getSWCtypeName(swcColor.type());
 			setToolTipText(msg);
 		}
 
@@ -226,8 +222,7 @@ public class ColorMenu extends JMenu {
 			if (isSelectected) {
 				setBorder(_selectedBorder);
 				_selectedColorPane = this;
-			}
-			else {
+			} else {
 				setBorder(_unselectedBorder);
 			}
 		}
@@ -243,7 +238,8 @@ public class ColorMenu extends JMenu {
 		}
 
 		@Override
-		public void mouseClicked(final MouseEvent ev) {}
+		public void mouseClicked(final MouseEvent ev) {
+		}
 
 		@Override
 		public void mouseEntered(final MouseEvent ev) {
@@ -262,13 +258,10 @@ public class ColorMenu extends JMenu {
 			selectNone();
 			setSelected(true);
 
-			if (isCustomizable && (SwingUtilities.isRightMouseButton(ev) || ev
-				.isPopupTrigger()))
-			{
+			if (isCustomizable && (SwingUtilities.isRightMouseButton(ev) || ev.isPopupTrigger())) {
 
 				// Remember menu path so that it can be restored after prompt
-				final MenuElement[] path = MenuSelectionManager.defaultManager()
-					.getSelectedPath();
+				final MenuElement[] path = MenuSelectionManager.defaultManager().getSelectedPath();
 
 				// Prompt user for new color
 				final GuiUtils gUtils = new GuiUtils(getTopLevelAncestor());
@@ -283,8 +276,7 @@ public class ColorMenu extends JMenu {
 				// Restore menu
 				MenuSelectionManager.defaultManager().setSelectedPath(path);
 
-			}
-			else { // Dismiss menu
+			} else { // Dismiss menu
 				MenuSelectionManager.defaultManager().clearSelectedPath();
 			}
 
@@ -293,7 +285,8 @@ public class ColorMenu extends JMenu {
 		}
 
 		@Override
-		public void mouseReleased(final MouseEvent ev) {}
+		public void mouseReleased(final MouseEvent ev) {
+		}
 	}
 
 	/** IDE debug method */
@@ -308,8 +301,7 @@ public class ColorMenu extends JMenu {
 				System.out.println(e);
 				System.out.println(menu.getSelectedSWCColor().color());
 				System.out.println("Type: " + menu.getSelectedSWCColor().type());
-				System.out.println(Path.getSWCtypeName(menu.getSelectedSWCColor()
-					.type()));
+				System.out.println(Path.getSWCtypeName(menu.getSelectedSWCColor().type()));
 			}
 		});
 		menuBar.add(menu);

@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -22,9 +22,16 @@
 
 package tracing.plugin;
 
+import io.scif.services.DatasetIOService;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+
+import net.imagej.Dataset;
+import net.imagej.ImageJ;
+import net.imagej.display.ImageDisplayService;
+import net.imagej.legacy.LegacyService;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.DynamicCommand;
@@ -39,17 +46,11 @@ import org.scijava.widget.FileWidget;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.plugin.CompositeConverter;
-import io.scif.services.DatasetIOService;
-import net.imagej.Dataset;
-import net.imagej.ImageJ;
-import net.imagej.display.ImageDisplayService;
-import net.imagej.legacy.LegacyService;
 import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 
-@Plugin(type = DynamicCommand.class, visible = true, menuPath = "Plugins>Tracing>Simple Neurite Tracer...",
-	initializer = "initialize")
+@Plugin(type = DynamicCommand.class, visible = true, menuPath = "Plugins>Tracing>Simple Neurite Tracer...", initializer = "initialize")
 public class SNTLoader extends DynamicCommand {
 
 	@Parameter
@@ -73,8 +74,7 @@ public class SNTLoader extends DynamicCommand {
 	@Parameter(required = true, label = "Image", callback = "imageChoiceChanged")
 	private String imageChoice;
 
-	@Parameter(required = false, label = "Path", style = FileWidget.OPEN_STYLE,
-		callback = "sourceImageChanged")
+	@Parameter(required = false, label = "Path", style = FileWidget.OPEN_STYLE, callback = "sourceImageChanged")
 	private File imageFile;
 
 	@Parameter(required = false, label = "<HTML>&nbsp;", visibility = ItemVisibility.MESSAGE)
@@ -95,7 +95,6 @@ public class SNTLoader extends DynamicCommand {
 
 	private ImagePlus sourceImp;
 	private File currentImageFile;
-
 
 	@Override
 	public void initialize() {
@@ -140,7 +139,8 @@ public class SNTLoader extends DynamicCommand {
 			clearImageFileChoice();
 			return;
 		case IMAGE_FILE:
-			if (null == imageFile) imageFile = currentImageFile;
+			if (null == imageFile)
+				imageFile = currentImageFile;
 			sourceImageChanged();
 			return;
 		default: // imageChoice is now the title of frontmost image
@@ -170,7 +170,8 @@ public class SNTLoader extends DynamicCommand {
 	private void sourceImageChanged() {
 		if (imageFile == null || !imageFile.exists())
 			return;
-		if (IMAGE_NONE.equals(imageChoice)) imageChoice = IMAGE_FILE;
+		if (IMAGE_NONE.equals(imageChoice))
+			imageChoice = IMAGE_FILE;
 		for (final String ext : new String[] { "traces", "swc" }) {
 			final File candidate = SNT.findClosestPair(imageFile, ext);
 			if (candidate != null && candidate.exists()) {
@@ -273,14 +274,14 @@ public class SNTLoader extends DynamicCommand {
 
 	/*
 	 * IDE debug method
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public static void main(final String[] args) throws IOException {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		Object img = ij.io().open("/home/tferr/Fiji.app/samples/t1-head.zip");
-		ij.ui().show("test", img);
+		final Object img = ij.io().open("/home/tferr/code/OP_1/OP_1.tif");
+		ij.ui().show("OP_1", img);
 		SNT.setDebugMode(true);
 		ij.command().run(SNTLoader.class, true);
 	}

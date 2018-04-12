@@ -8,12 +8,12 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -40,14 +40,14 @@ import tracing.util.PointInImage;
 
 /**
  * Converts SNT paths into (IJ1) ROIs.
+ *
  * @see {@link RoiExporterCmd}
  *
  * @author Tiago Ferreira
  */
 public class RoiConverter extends TreeAnalyzer {
 
-
-	/** SNT's XY view (the default export plane)*/
+	/** SNT's XY view (the default export plane) */
 	public static final int XY_PLANE = MultiDThreePanes.XY_PLANE;
 	/** SNT's ZY view */
 	public static final int ZY_PLANE = MultiDThreePanes.ZY_PLANE;
@@ -58,7 +58,6 @@ public class RoiConverter extends TreeAnalyzer {
 	private int exportPlane = XY_PLANE;
 	private boolean useSWCcolors;
 
-
 	public RoiConverter(final Tree tree) {
 		super(tree);
 	}
@@ -66,10 +65,12 @@ public class RoiConverter extends TreeAnalyzer {
 	/**
 	 * Converts paths into 2D polyline ROIs (segment paths)
 	 *
-	 * @param overlay the target overlay to hold converted paths
+	 * @param overlay
+	 *            the target overlay to hold converted paths
 	 */
 	public void convertPaths(Overlay overlay) {
-		if (overlay == null) overlay = new Overlay();
+		if (overlay == null)
+			overlay = new Overlay();
 		for (final Path p : tree.getPaths()) {
 			if (p.size() > 1) {
 				drawPathSegments(p, overlay);
@@ -83,54 +84,57 @@ public class RoiConverter extends TreeAnalyzer {
 
 	/**
 	 * Converts all the tips associated with the parsed paths into {@link PointROi}s
-	 * 
+	 *
 	 * @see TreeAnalyzer#getTips()
 	 * @param overlay
 	 *            the target overlay to hold converted point
 	 */
 	public void convertTips(Overlay overlay) {
-		if (overlay == null) overlay = new Overlay();
+		if (overlay == null)
+			overlay = new Overlay();
 		convertPoints(getTips(), overlay, Path.getSWCcolor(Path.SWC_END_POINT), Path.SWC_END_POINT_LABEL);
 	}
 
 	/**
 	 * Converts all the branch points associated with the parsed paths into
 	 * {@link PointROi}s
-	 * 
+	 *
 	 * @see TreeAnalyzer#getBranchPoints()
 	 * @param overlay
 	 *            the target overlay to hold converted point
 	 */
 	public void convertBranchPoints(Overlay overlay) {
-		if (overlay == null) overlay = new Overlay();
+		if (overlay == null)
+			overlay = new Overlay();
 		convertPoints(getBranchPoints(), overlay, Path.getSWCcolor(Path.SWC_FORK_POINT), Path.SWC_FORK_POINT_LABEL);
 	}
 
 	/**
 	 * Sets the exporting view for segment paths (XY by default).
 	 *
-	 * @param view either {@link XY_PLANE}, {@link XZ_PLANE} or {@link ZY_PLANE}.
+	 * @param view
+	 *            either {@link XY_PLANE}, {@link XZ_PLANE} or {@link ZY_PLANE}.
 	 */
 	public void setView(final int view) {
 		if (view != XY_PLANE && view != ZY_PLANE && view != XZ_PLANE)
-			throw new IllegalArgumentException(
-					"plane is not a valid MultiDThreePanes flag");
+			throw new IllegalArgumentException("plane is not a valid MultiDThreePanes flag");
 		this.exportPlane = view;
 	}
 
 	/**
 	 * Specifies coloring of ROIs by SWC type.
 	 *
-	 * @param useSWCcolors if true converted ROIs are colored according to their
-	 *          SWC type integer flag
+	 * @param useSWCcolors
+	 *            if true converted ROIs are colored according to their SWC type
+	 *            integer flag
 	 */
 	public void useSWCcolors(final boolean useSWCcolors) {
 		this.useSWCcolors = useSWCcolors;
 	}
 
 	/**
-	 * Sets the line width of converted segment paths. Set it to -1 to have ROIs plotted
-	 * using the average diameter of the path
+	 * Sets the line width of converted segment paths. Set it to -1 to have ROIs
+	 * plotted using the average diameter of the path
 	 *
 	 * @see {@link Path#getMeanRadius()}, {@link Roi#getStrokeWidth()}
 	 */
@@ -141,7 +145,7 @@ public class RoiConverter extends TreeAnalyzer {
 	private void drawPathSegments(final Path path, final Overlay overlay) {
 
 		final String basename = path.getName();
-		final Color color = (useSWCcolors)?path.getSWCcolor():path.getColor();
+		final Color color = (useSWCcolors) ? path.getSWCcolor() : path.getColor();
 		final double stroke = (width == -1) ? path.getMeanRadius() * 2 : width;
 
 		FloatPolygon polygon = new FloatPolygon();
@@ -190,8 +194,8 @@ public class RoiConverter extends TreeAnalyzer {
 
 	}
 
-	private void addPolyLineToOverlay(final FloatPolygon p, final int z_position, final String basename, final int roi_id,
-			final Color color, final double strokeWidth, final Overlay overlay) {
+	private void addPolyLineToOverlay(final FloatPolygon p, final int z_position, final String basename,
+			final int roi_id, final Color color, final double strokeWidth, final Overlay overlay) {
 		final String sPlane = getExportPlaneAsString();
 		if (p.npoints > 0) {
 			if (p.npoints == 1) {
@@ -214,7 +218,8 @@ public class RoiConverter extends TreeAnalyzer {
 	/* this will aggregate all points into a single multipoint ROI */
 	private void convertPoints(final HashSet<PointInImage> points, final Overlay overlay, final Color color,
 			final String id) {
-		if (points.isEmpty()) return;
+		if (points.isEmpty())
+			return;
 		final ImagePlus boundsImp = tree.getImpContainer(exportPlane); // NB: this image is just required to
 																		// assign Z -positions to points. It is
 																		// an overhead and not required for 2D
@@ -237,10 +242,13 @@ public class RoiConverter extends TreeAnalyzer {
 	}
 
 	private String getExportPlaneAsString() {
-		switch(exportPlane) {
-		case XZ_PLANE: return "XZ";
-		case ZY_PLANE: return "ZY";
-		default: return "XY";
+		switch (exportPlane) {
+		case XZ_PLANE:
+			return "XZ";
+		case ZY_PLANE:
+			return "ZY";
+		default:
+			return "XY";
 		}
 	}
 

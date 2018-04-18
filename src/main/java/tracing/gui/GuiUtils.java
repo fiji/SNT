@@ -22,6 +22,8 @@
 
 package tracing.gui;
 
+import com.jidesoft.popup.JidePopup;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dialog.ModalityType;
@@ -93,14 +95,43 @@ public class GuiUtils {
 	}
 
 	public JDialog floatingMsg(final String msg) {
-		return new FloatingDialog(msg);
-	}
-
-	public void tempMsg(final String msg) {
 		final JDialog dialog = new FloatingDialog(msg);
 		GuiUtils.setAutoDismiss(dialog);
 		dialog.toFront();
 		dialog.setVisible(true);
+		return dialog;
+	}
+
+	public void tempMsg(final String msg) {
+		JidePopup popup = getPopup(msg);
+		popup.showPopup();
+	}
+
+	private JidePopup getPopup(final String msg) {
+
+//		final JDialog dialog = new FloatingDialog(msg);
+//		GuiUtils.setAutoDismiss(dialog);
+//		dialog.toFront();
+//		dialog.setVisible(true);
+		final JLabel label = getLabel(msg);
+		label.setHorizontalAlignment(SwingConstants.CENTER);
+		final JidePopup popup = new JidePopup();
+		popup.getContentPane().add(label);
+		label.setBackground(Color.WHITE);
+		label.setForeground(Color.BLACK);
+		popup.getContentPane().setBackground(Color.WHITE);
+		popup.setBackground(Color.WHITE);
+		if (parent != null) {
+			popup.setOwner(parent);
+			popup.setMaximumSize(parent.getSize());
+		}
+		popup.setTransient(true);
+		popup.setMovable(false);
+		popup.setDefaultMoveOperation(JidePopup.HIDE_ON_MOVED);
+		popup.setEnsureInOneScreen(true);
+		popup.setTimeout(2500);
+		return popup;
+
 	}
 
 	public int yesNoDialog(final String msg, final String title) {
@@ -191,7 +222,7 @@ public class GuiUtils {
 		return ok.getColor();
 	}
 
-	public Double getDouble(final String promptMsg, final String promptTitle, final double defaultValue) {
+	public Double getDouble(final String promptMsg, final String promptTitle, final Number defaultValue) {
 		try {
 			return Double.parseDouble((String) getObj(promptMsg, promptTitle, defaultValue));
 		} catch (final NullPointerException ignored) {
@@ -288,7 +319,8 @@ public class GuiUtils {
 		} else {
 			final JLabel label = new JLabel();
 			final int width = Math.round(label.getFontMetrics(label.getFont()).stringWidth(text));
-			label.setText("<html><body><div style='width:" + Math.min(width, 500) + ";'>" + text);
+			final int max = (parent==null) ? 500 : parent.getWidth();
+			label.setText("<html><body><div style='width:" + Math.min(width, max) + ";'>" + text);
 			return label;
 		}
 	}
@@ -467,7 +499,7 @@ public class GuiUtils {
 				if (System.currentTimeMillis() - lastUpdate > DELAY)
 					dialog.dispose();
 				else
-					timer.start();//
+					timer.start();
 			}
 
 			@Override
@@ -522,9 +554,9 @@ public class GuiUtils {
 
 		private void recenter() {
 			assert SwingUtilities.isEventDispatchThread();
-			setVisible(false);
+			//setVisible(false);
 			centerOnParent();
-			setVisible(true);
+			//setVisible(true);
 		}
 
 		@Override

@@ -1993,20 +1993,31 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		new GuiUtils(getActiveWindow()).error(msg);
 	}
 
-	private Window getActiveWindow() {
-		final Window[] images = { xy_window, xz_window, zy_window };
-		for (final Window win : images) {
-			if (win != null && win.isActive())
-				return win;
-		}
-		if (!isUIready())
-			return null;
-		final Window[] frames = { resultsDialog, resultsDialog.getPathWindow(), resultsDialog.getFillWindow() };
-		for (final Window win : frames) {
-			if (win.isActive())
-				return win;
+	private Component getActiveCanvas() {
+		if (!isUIready()) return null;
+		final List<Component> components = new ArrayList<>();
+		components.add(xy_canvas);
+		components.add(xz_canvas);
+		components.add(zy_canvas);
+		if (univ != null) components.add(univ.getCanvas());
+		for (final Component c : components) {
+			if (c != null && c.isFocusOwner()) return c;
 		}
 		return null;
+	}
+
+	private Component getActiveWindow() {
+		if (!isUIready()) return null;
+		final Window[] images = { xy_window, xz_window, zy_window };
+		for (final Window win : images) {
+			if (win != null && win.isActive()) return win;
+		}
+		final Window[] frames = { resultsDialog.getPathWindow(), resultsDialog
+			.getFillWindow() };
+		for (final Window frame : frames) {
+			if (frame.isActive()) return frame;
+		}
+		return resultsDialog;
 	}
 
 	public boolean getSinglePane() {
@@ -2373,7 +2384,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected void discreteMsg(final String msg) { /* HTML format */
-		new GuiUtils(getActiveWindow()).tempMsg(msg);
+		new GuiUtils(getActiveCanvas()).tempMsg(msg);
 	}
 
 	protected boolean getConfirmation(final String msg, final String title) {

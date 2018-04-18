@@ -261,8 +261,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				pafl.setSelectedPaths(selectedPathsSet, this);
 		}
 		if (plugin != null && plugin.getImagePlus() != null) {
-			plugin.repaintAllPanes();
-			plugin.update3DViewerContents();
+			plugin.updateAllViewers();
 		}
 	}
 
@@ -1581,7 +1580,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			setSelected(new HashSet<Path>(), this);
 			resetListeners(null, true);
 			if (plugin != null && plugin.getImagePlus() != null)
-				plugin.repaintAllPanes();
+				plugin.updateAllViewers();
 		}
 
 	}
@@ -2241,8 +2240,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	@Override
 	public void universeClosed() {
-		if (plugin != null)
+		if (plugin != null) {
 			plugin.use3DViewer = false;
+			plugin.univ = null;
+		}
 	}
 	// ... end of methods for UniverseListener
 

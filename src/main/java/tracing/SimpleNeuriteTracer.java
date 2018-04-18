@@ -75,6 +75,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij3d.Content;
+import ij3d.ContentConstants;
+import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 import tracing.gui.GuiUtils;
 import tracing.gui.SWCImportOptionsDialog;
@@ -126,9 +128,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected PathAndFillManager pathAndFillManager;
 	protected SNTPrefs prefs;
 	private GuiUtils guiUtils;
+
+	/* Legacy 3D Viewer. This is all deprecated stuff */
 	protected Image3DUniverse univ;
-	protected Content imageContent;
 	protected boolean use3DViewer;
+	private Content imageContent;
+	protected ImagePlus colorImage;
+	protected static final int DISPLAY_PATHS_SURFACE = 1;
+	protected static final int DISPLAY_PATHS_LINES = 2;
+	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
 
 	/* UI preferences */
 	protected boolean useCompressedXML = true;
@@ -226,11 +234,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected NeuriteTracerResultsDialog resultsDialog;
 	protected boolean nonInteractiveSession = false;
 
-	/* Deprecated */
-	protected static final int DISPLAY_PATHS_SURFACE = 1;
-	protected static final int DISPLAY_PATHS_LINES = 2;
-	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
-
 	// This should only be assigned to when synchronized on this object
 	// (FIXME: check that that is true)
 	FillerThread filler = null;
@@ -238,16 +241,18 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	/* Colors */
 	private static final Color DEFAULT_SELECTED_COLOR = Color.GREEN;
 	protected static final Color DEFAULT_DESELECTED_COLOR = Color.MAGENTA;
-	protected static final Color3f DEFAULT_SELECTED_COLOR3F = new Color3f(Color.GREEN);
-	protected static final Color3f DEFAULT_DESELECTED_COLOR3F = new Color3f(Color.MAGENTA);
+	protected static final Color3f DEFAULT_SELECTED_COLOR3F = new Color3f(
+		Color.GREEN);
+	protected static final Color3f DEFAULT_DESELECTED_COLOR3F = new Color3f(
+		Color.MAGENTA);
 	protected Color3f selectedColor3f = DEFAULT_SELECTED_COLOR3F;
 	protected Color3f deselectedColor3f = DEFAULT_DESELECTED_COLOR3F;
-	protected ImagePlus colorImage;
 
-	//TODO: Refactor: Adopt getters and setters
+	// TODO: Refactor: Adopt getters and setters
 	public Color selectedColor = DEFAULT_SELECTED_COLOR;
 	public Color deselectedColor = DEFAULT_DESELECTED_COLOR;
 	public boolean displayCustomPathColors = true;
+
 
 	protected SimpleNeuriteTracer() {
 		final Context context = (Context) IJ.runPlugIn("org.scijava.Context", "");
@@ -675,7 +680,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 
 		removeThreadToDraw(source);
-		repaintAllPanes();
+		updateAllViewers();
 
 	}
 
@@ -685,7 +690,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	{
 		// Just use this signal to repaint the canvas, in case there's
 		// been no mouse movement.
-		repaintAllPanes();
+		updateAllViewers();
 	}
 
 	public void justDisplayNearSlices(final boolean value, final int eitherSide) {
@@ -702,7 +707,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			zy_tracer_canvas.eitherSide = eitherSide;
 		}
 
-		repaintAllPanes();
+		updateAllViewers();
 
 	}
 
@@ -794,7 +799,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			xz_tracer_canvas.setEditMode(enable);
 			zy_tracer_canvas.setEditMode(enable);
 		}
-		repaintAllPanes();
+		updateAllViewers();
 	}
 
 	protected void pause(final boolean pause) {
@@ -1289,7 +1294,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		}
 
-		repaintAllPanes();
+		updateAllViewers();
 	}
 
 	synchronized public void confirmTemporary() {
@@ -1308,8 +1313,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (currentPath.endJoins == null) {
 			setTemporaryPath(null);
 			resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
-			repaintAllPanes();
-		} else {
+			updateAllViewers();
+		}
+		else {
 			setTemporaryPath(null);
 			// Since joining onto another path for the end must finish the path:
 			finishedPath();
@@ -1349,7 +1355,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		endJoinPoint = null;
 
 		resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
-		repaintAllPanes();
+		updateAllViewers();
 	}
 
 	synchronized public void cancelPath() {
@@ -1377,7 +1383,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 
-		repaintAllPanes();
+		updateAllViewers();
 	}
 
 	synchronized public void finishedPath() {
@@ -1427,7 +1433,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		// ... and change the state of the UI
 		resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
 
-		repaintAllPanes();
+		updateAllViewers();
 	}
 
 	synchronized public void clickForTrace(final Point3d p, final boolean join) {
@@ -1961,8 +1967,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	{
 		this.showOnlySelectedPaths = showOnlySelectedPaths;
 		if (updateGUI) {
-			update3DViewerContents();
-			repaintAllPanes();
+			updateAllViewers();
 		}
 	}
 
@@ -2016,6 +2021,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return showOnlySelectedPaths;
 	}
 
+	public void updateAllViewers() {
+		repaintAllPanes();
+		update3DViewerContents();
+	}
+
 	/*
 	 * Whatever the state of the paths, update the 3D viewer to make sure that
 	 * they're the right colour, the right version (fitted or unfitted) is being
@@ -2024,25 +2034,70 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 */
 
 	public void update3DViewerContents() {
-		pathAndFillManager.update3DViewerContents();
+		if (use3DViewer && univ != null) {
+			new Thread(() -> {
+				pathAndFillManager.update3DViewerContents();
+			}).start();
+		}
 	}
 
 	public Image3DUniverse get3DUniverse() {
 		return univ;
 	}
 
+	public void set3DUniverse(final Image3DUniverse universe) {
+		univ = universe;
+		use3DViewer = universe != null;
+		if (use3DViewer) {
+			// ensure there are no duplicated listeners
+			univ.removeUniverseListener(pathAndFillManager);
+			univ.addUniverseListener(pathAndFillManager);
+			update3DViewerContents();
+		}
+	}
+
+	public void updateImageContent(final int resamplingFactor) {
+		if (univ == null || xy == null) return;
+
+		new Thread(() -> {
+
+			// The legacy 3D viewer works only with 8-bit or RGB images
+			final ImagePlus loadedImp = getLoadedDataAsImp();
+			ContentCreator.convert(loadedImp);
+			final String cTitle = xy.getTitle() + "[C=" + channel + " T=" + frame +
+				"]";
+			final Content c = ContentCreator.createContent( //
+				univ.getSafeContentName(cTitle), // unique descriptor
+				loadedImp, // grayscale image
+				ContentConstants.VOLUME, // rendering option
+				resamplingFactor, // resampling factor
+				0, // time point: loadedImp does not have T dimension
+				null, // new Color3f(Color.WHITE), // Default color
+				Content.getDefaultThreshold(loadedImp, ContentConstants.VOLUME), // threshold
+				new boolean[] { true, true, true } // displayed channels
+			);
+
+			c.setTransparency(0.5f);
+			c.setLocked(true);
+			if (imageContent != null) {
+				univ.removeContent(imageContent.getName());
+			}
+			imageContent = c;
+			univ.addContent(c);
+			univ.setAutoAdjustView(false);
+		}).start();
+	}
+
 	public void setSelectedColor(final Color newColor) {
 		selectedColor = newColor;
 		selectedColor3f = new Color3f(newColor);
-		repaintAllPanes();
-		update3DViewerContents();
+		updateAllViewers();
 	}
 
 	public void setDeselectedColor(final Color newColor) {
 		deselectedColor = newColor;
 		deselectedColor3f = new Color3f(newColor);
-		repaintAllPanes();
-		update3DViewerContents();
+		updateAllViewers();
 	}
 
 	/*

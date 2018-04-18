@@ -77,6 +77,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import net.imagej.Dataset;
 import net.imagej.table.DefaultGenericTable;
 
 import org.scijava.command.CommandService;
@@ -89,6 +90,10 @@ import ij.WindowManager;
 import ij.gui.HTMLDialog;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
+import ij3d.Content;
+import ij3d.ContentConstants;
+import ij3d.Image3DUniverse;
+import ij3d.ImageWindow3D;
 import sholl.Sholl_Analysis;
 import tracing.analysis.TreeAnalyzer;
 import tracing.gui.ColorChangedListener;
@@ -218,79 +223,114 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		});
 
 		final JTabbedPane tabbedPane = new JTabbedPane();
-		final GridBagConstraints c = GuiUtils.defaultGbc();
 
-		if (!plugin.nonInteractiveSession) {
-			final JPanel tab1 = getTab();
-			// c.insets.left = MARGIN * 2;
-			c.anchor = GridBagConstraints.NORTHEAST;
-			GuiUtils.addSeparator(tab1, "Cursor Auto-snapping:", false, c);
-			++c.gridy;
-			tab1.add(snappingPanel(), c);
-			++c.gridy;
-			GuiUtils.addSeparator(tab1, "Auto-tracing:", true, c);
-			++c.gridy;
-			tab1.add(autoTracingPanel(), c);
-			++c.gridy;
-			tab1.add(filteredImagePanel(), c);
-			++c.gridy;
-			GuiUtils.addSeparator(tab1, "Path Rendering:", true, c);
-			++c.gridy;
-			tab1.add(renderingPanel(), c);
-			++c.gridy;
-			GuiUtils.addSeparator(tab1, "Path Labelling:", true, c);
-			++c.gridy;
-			tab1.add(colorOptionsPanel(), c);
-			++c.gridy;
-			GuiUtils.addSeparator(tab1, "", true, c); // empty separator
-			++c.gridy;
-			c.fill = GridBagConstraints.HORIZONTAL;
-			c.insets = new Insets(0, 0, 0, 0);
-			tab1.add(hideWindowsPanel(), c);
-			tabbedPane.addTab(" Main ", tab1);
+		{ // Main tab
+			final GridBagConstraints c1 = GuiUtils.defaultGbc();
+			if (!plugin.nonInteractiveSession) {
+				final JPanel tab1 = getTab();
+				// c.insets.left = MARGIN * 2;
+				c1.anchor = GridBagConstraints.NORTHEAST;
+				GuiUtils.addSeparator(tab1, "Cursor Auto-snapping:", false, c1);
+				++c1.gridy;
+				tab1.add(snappingPanel(), c1);
+				++c1.gridy;
+				GuiUtils.addSeparator(tab1, "Auto-tracing:", true, c1);
+				++c1.gridy;
+				tab1.add(autoTracingPanel(), c1);
+				++c1.gridy;
+				tab1.add(filteredImagePanel(), c1);
+				++c1.gridy;
+				GuiUtils.addSeparator(tab1, "Path Rendering:", true, c1);
+				++c1.gridy;
+				tab1.add(renderingPanel(), c1);
+				++c1.gridy;
+				GuiUtils.addSeparator(tab1, "Path Labelling:", true, c1);
+				++c1.gridy;
+				tab1.add(colorOptionsPanel(), c1);
+				++c1.gridy;
+				GuiUtils.addSeparator(tab1, "", true, c1); // empty separator
+				++c1.gridy;
+				c1.fill = GridBagConstraints.HORIZONTAL;
+				c1.insets = new Insets(0, 0, 0, 0);
+				tab1.add(hideWindowsPanel(), c1);
+				tabbedPane.addTab(" Main ", tab1);
+			}
 		}
 
-		final JPanel tab2 = getTab();
-		tab2.setLayout(new GridBagLayout());
-		final GridBagConstraints c2 = GuiUtils.defaultGbc();
-		c.insets.left = MARGIN * 2;
-		c2.anchor = GridBagConstraints.NORTHEAST;
-		c2.gridwidth = GridBagConstraints.REMAINDER;
-		if (!plugin.nonInteractiveSession) {
-			GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
+		{ // Options Tab
+			final JPanel tab2 = getTab();
+			tab2.setLayout(new GridBagLayout());
+			final GridBagConstraints c2 = GuiUtils.defaultGbc();
+			// c2.insets.left = MARGIN * 2;
+			c2.anchor = GridBagConstraints.NORTHEAST;
+			c2.gridwidth = GridBagConstraints.REMAINDER;
+			if (!plugin.nonInteractiveSession) {
+				GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
+				++c2.gridy;
+				tab2.add(sourcePanel(), c2);
+				++c2.gridy;
+			}
+			else {
+				GuiUtils.addSeparator(tab2, "Path Rendering:", false, c2);
+				++c2.gridy;
+				tab2.add(renderingPanel(), c2);
+				++c2.gridy;
+				GuiUtils.addSeparator(tab2, "Path Labelling:", true, c2);
+				++c2.gridy;
+				tab2.add(colorOptionsPanel(), c2);
+				++c2.gridy;
+			}
+
+			GuiUtils.addSeparator(tab2, "Views:", true, c2);
 			++c2.gridy;
-			tab2.add(sourcePanel(), c2);
+			tab2.add(viewsPanel(), c2);
 			++c2.gridy;
-		} else {
-			GuiUtils.addSeparator(tab2, "Path Rendering:", false, c2);
+			if (!plugin.nonInteractiveSession) {
+				GuiUtils.addSeparator(tab2, "Temporary Paths:", true, c2);
+				++c2.gridy;
+				tab2.add(tracingPanel(), c2);
+				++c2.gridy;
+			}
+			GuiUtils.addSeparator(tab2, "UI Interaction:", true, c2);
 			++c2.gridy;
-			tab2.add(renderingPanel(), c2);
+			tab2.add(interactionPanel(), c2);
 			++c2.gridy;
-			GuiUtils.addSeparator(tab2, "Path Labelling:", true, c2);
+			GuiUtils.addSeparator(tab2, "Misc:", true, c2);
 			++c2.gridy;
-			tab2.add(colorOptionsPanel(), c2);
-			++c2.gridy;
+			c2.weighty = 1;
+			tab2.add(miscPanel(), c2);
+			tabbedPane.addTab(" Options ", tab2);
 		}
 
-		GuiUtils.addSeparator(tab2, "Views:", true, c2);
-		++c2.gridy;
-		tab2.add(viewsPanel(), c2);
-		++c2.gridy;
-		if (!plugin.nonInteractiveSession) {
-			GuiUtils.addSeparator(tab2, "Temporary Paths:", true, c2);
-			++c2.gridy;
-			tab2.add(tracingPanel(), c2);
-			++c2.gridy;
+		{ // 3D tab
+			final JPanel tab3 = getTab();
+			tab3.setLayout(new GridBagLayout());
+			final GridBagConstraints c3 = GuiUtils.defaultGbc();
+			// c3.insets.left = MARGIN * 2;
+			c3.anchor = GridBagConstraints.NORTHEAST;
+			c3.gridwidth = GridBagConstraints.REMAINDER;
+			GuiUtils.addSeparator(tab3, "Legacy 3D Viwer:", false, c3);
+			++c3.gridy;
+			// if (!plugin.nonInteractiveSession) {
+			// GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
+			// ++c2.gridy;
+			// tab2.add(sourcePanel(), c2);
+			// ++c2.gridy;
+			// } else {
+			// GuiUtils.addSeparator(tab2, "Path Rendering:", false, c2);
+			// ++c2.gridy;
+			// tab2.add(renderingPanel(), c2);
+			// ++c2.gridy;
+			// GuiUtils.addSeparator(tab2, "Path Labelling:", true, c2);
+			// ++c2.gridy;
+			// tab2.add(colorOptionsPanel(), c2);
+			// ++c2.gridy;
+			// }
+			tabbedPane.addTab(" 3D ", tab3);
+			tab3.add(legacy3DViewerPanel(), c3);
+
 		}
-		GuiUtils.addSeparator(tab2, "UI Interaction:", true, c2);
-		++c2.gridy;
-		tab2.add(interactionPanel(), c2);
-		++c2.gridy;
-		GuiUtils.addSeparator(tab2, "Misc:", true, c2);
-		++c2.gridy;
-		c2.weighty = 1;
-		tab2.add(miscPanel(), c2);
-		tabbedPane.addTab(" Options ", tab2);
+
 		tabbedPane.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -668,7 +708,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						return;
 				}
 
-				plugin.repaintAllPanes();
+				plugin.updateAllViewers();
 			}
 
 		});
@@ -903,7 +943,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					plugin.xz_tracer_canvas.setNodeDiameter(value);
 					plugin.zy_tracer_canvas.setNodeDiameter(value);
 				}
-				plugin.repaintAllPanes();
+				plugin.updateAllViewers();
 			};
 		});
 		final JButton defaultsButton = new JButton("Default");
@@ -997,7 +1037,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					default:
 						throw new IllegalArgumentException("Unrecognized option");
 				}
-				plugin.repaintAllPanes();
+				plugin.updateAllViewers();
 			}
 		});
 
@@ -1073,6 +1113,256 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		gdb.fill = GridBagConstraints.NONE;
 		miscPanel.add(resetbutton, gdb);
 		return miscPanel;
+	}
+
+	private JPanel legacy3DViewerPanel() {
+
+		final String VIEWER_NONE = "None";
+		final String VIEWER_WITH_IMAGE = "New with image...";
+		final String VIEWER_EMPTY = "New without image";
+
+		// Define UI components
+		final JComboBox<String> univChoice = new JComboBox<>();
+		final JButton applyUnivChoice = new JButton("Apply");
+		final JComboBox<String> displayChoice = new JComboBox<>();
+		final JButton applyDisplayChoice = new JButton("Apply");
+		final JButton refreshList = GuiUtils.smallButton("Refresh Viewers List");
+		final JButton applyLabelsImage = GuiUtils.smallButton(
+			"Apply Color Labels...");
+
+		final LinkedHashMap<String, Image3DUniverse> hm = new LinkedHashMap<>();
+		hm.put(VIEWER_NONE, null);
+		if (!plugin.nonInteractiveSession && !plugin.is2D()) {
+			hm.put(VIEWER_WITH_IMAGE, null);
+		}
+		hm.put(VIEWER_EMPTY, null);
+		for (final Image3DUniverse univ : Image3DUniverse.universes) {
+			hm.put(univ.allContentsString(), univ);
+		}
+
+		// Build choices widget for viewers
+		univChoice.setPrototypeDisplayValue(VIEWER_WITH_IMAGE);
+		for (final Entry<String, Image3DUniverse> entry : hm.entrySet()) {
+			univChoice.addItem(entry.getKey());
+		}
+		univChoice.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+
+				final boolean none = VIEWER_NONE.equals(String.valueOf(univChoice
+					.getSelectedItem()));
+				applyUnivChoice.setEnabled(!none);
+			}
+		});
+		applyUnivChoice.addActionListener(new ActionListener() {
+
+			private void resetChoice() {
+				univChoice.setSelectedItem(VIEWER_NONE);
+				applyUnivChoice.setEnabled(false);
+				final boolean validViewer = plugin.use3DViewer && plugin
+					.get3DUniverse() != null;
+				displayChoice.setEnabled(validViewer);
+				applyDisplayChoice.setEnabled(validViewer);
+				applyLabelsImage.setEnabled(validViewer);
+			}
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+
+				applyUnivChoice.setEnabled(false);
+
+				final String selectedKey = String.valueOf(univChoice.getSelectedItem());
+				if (VIEWER_NONE.equals(selectedKey)) {
+					plugin.set3DUniverse(null);
+					resetChoice();
+					return;
+				}
+
+				Image3DUniverse univ;
+				univ = hm.get(selectedKey);
+				if (univ == null) {
+
+					// Presumably a new viewer was chosen. Let's double-check
+					final boolean newViewer = selectedKey.equals(VIEWER_WITH_IMAGE) ||
+						selectedKey.equals(VIEWER_EMPTY);
+					if (!newViewer && !guiUtils.getConfirmation(
+						"The chosen viewer does not seem to be available. Create a new one?",
+						"Viewer Unavailable"))
+					{
+						resetChoice();
+						return;
+					}
+					univ = new Image3DUniverse(512, 512);
+				}
+
+				plugin.set3DUniverse(univ);
+
+				if (VIEWER_WITH_IMAGE.equals(selectedKey)) {
+
+					final int defResFactor = Content.getDefaultResamplingFactor(plugin
+						.getImagePlus(), ContentConstants.VOLUME);
+					final Double userResFactor = guiUtils.getDouble(
+						"<HTML><body><div style='width:" + Math.min(getWidth(), 500) +
+							";'>" +
+							"Please specify the image resampling factor. The default factor for current image is " +
+							defResFactor + ".", "Image Resampling Factor", defResFactor);
+
+					if (userResFactor == null) { // user pressed cancel
+						plugin.set3DUniverse(null);
+						resetChoice();
+						return;
+					}
+
+					final int resFactor = (Double.isNaN(userResFactor) ||
+						userResFactor < 1) ? defResFactor : userResFactor.intValue();
+					plugin.prefs.set3DViewerResamplingFactor(resFactor);
+					plugin.updateImageContent(resFactor);
+				}
+
+				// Add PointListener/Keylistener
+				new QueueJumpingKeyListener(plugin, univ);
+				ImageWindow3D window = univ.getWindow();
+				if (univ.getWindow() == null) {
+					window = new ImageWindow3D("SNT Legacy 3D Viewer", univ);
+					window.setSize(512, 512);
+					univ.init(window);
+				}
+				else {
+					univ.resetView();
+				}
+				window.addWindowListener(new WindowAdapter() {
+
+					@Override
+					public void windowClosed(final WindowEvent e) {
+						resetChoice();
+					}
+				});
+				window.setVisible(true);
+				resetChoice();
+				showStatus("3D Viewer enabled: " + selectedKey);
+			}
+		});
+
+		// Build widget for rendering choices
+		displayChoice.addItem("Surface reconstructions");
+		displayChoice.addItem("Lines");
+		displayChoice.addItem("Lines and discs");
+		applyDisplayChoice.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+
+				switch (String.valueOf(displayChoice.getSelectedItem())) {
+					case "Lines":
+						plugin.setPaths3DDisplay(SimpleNeuriteTracer.DISPLAY_PATHS_LINES);
+						break;
+					case "Lines and discs":
+						plugin.setPaths3DDisplay(
+							SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS);
+						break;
+					default:
+						plugin.setPaths3DDisplay(SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE);
+						break;
+				}
+			}
+		});
+
+		// Build refresh button
+		refreshList.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				for (final Image3DUniverse univ : Image3DUniverse.universes) {
+					if (hm.containsKey(univ.allContentsString())) continue;
+					hm.put(univ.allContentsString(), univ);
+					univChoice.addItem(univ.allContentsString());
+				}
+				showStatus("Viewers list updated...");
+			}
+		});
+
+		// Build load labels button
+		applyLabelsImage.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				final File imageFile = guiUtils.openFile("Choose labels image",
+					plugin.prefs.getRecentFile(), null);
+				try {
+					plugin.statusService.showStatus(("Loading " + imageFile.getName()));
+					final Dataset ds = plugin.datasetIOService.open(imageFile
+						.getAbsolutePath());
+					final ImagePlus colorImp = plugin.convertService.convert(ds,
+						ImagePlus.class);
+					showStatus("Applying color labels...");
+					plugin.setColorImage(colorImp);
+					showStatus("Labels image loaded...");
+
+				}
+				catch (final IOException exc) {
+					guiUtils.error("Could not open " + imageFile.getAbsolutePath() +
+						". Maybe it is not a valid image?", "IO Error");
+					exc.printStackTrace();
+					return;
+				}
+			}
+		});
+
+		// Set defaults
+		univChoice.setSelectedItem(VIEWER_NONE);
+		applyUnivChoice.setEnabled(false);
+		displayChoice.setEnabled(false);
+		applyDisplayChoice.setEnabled(false);
+		applyLabelsImage.setEnabled(false);
+
+		// Build panel
+		final JPanel p = new JPanel();
+		p.setLayout(new GridBagLayout());
+		final GridBagConstraints c = new GridBagConstraints();
+		c.ipadx = 0;
+		c.insets = new Insets(0, 0, 0, 0);
+		c.anchor = GridBagConstraints.LINE_START;
+		c.fill = GridBagConstraints.HORIZONTAL;
+
+		// row 1
+		c.gridy = 0;
+		c.gridx = 0;
+		p.add(GuiUtils.leftAlignedLabel("Viewer: ", true), c);
+		c.gridx++;
+		c.weightx = 1;
+		p.add(univChoice, c);
+		c.gridx++;
+		c.weightx = 0;
+		p.add(applyUnivChoice, c);
+		c.gridx++;
+
+		// row 2
+		c.gridy++;
+		c.gridx = 0;
+		c.fill = GridBagConstraints.NONE;
+		p.add(GuiUtils.leftAlignedLabel("Mode: ", true), c);
+		c.gridx++;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		p.add(displayChoice, c);
+		c.gridx++;
+		c.gridwidth = GridBagConstraints.NONE;
+		p.add(applyDisplayChoice, c);
+		c.gridx++;
+
+		// row 3
+		c.gridy++;
+		c.gridx = 0;
+		c.fill = GridBagConstraints.NONE;
+		p.add(GuiUtils.leftAlignedLabel("Actions: ", true), c);
+		c.gridx++;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,
+			MARGIN / 2, MARGIN / 2));
+		buttonPanel.add(refreshList);
+		buttonPanel.add(applyLabelsImage);
+		p.add(buttonPanel, c);
+		return p;
 	}
 
 	private JPanel statusButtonPanel() {

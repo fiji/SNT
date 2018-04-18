@@ -360,13 +360,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			else
 				p.setColor(null);
 		}
-		refreshPluginViewers();
+		plugin.updateAllViewers();
 		refreshManager(true);
-	}
-
-	private void refreshPluginViewers() {
-		plugin.repaintAllPanes();
-		plugin.update3DViewerContents();
 	}
 
 	private void deletePaths(final Set<Path> pathsToBeDeleted) {
@@ -599,7 +594,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			updateCmdsManyOrNoneSelected(selectedPaths);
 		}
 		pathAndFillManager.setSelected((HashSet<Path>) selectedPaths, this);
-		refreshPluginViewers();
+		plugin.updateAllViewers();
 	}
 
 	private void displayTmpMsg(final String msg) {
@@ -1203,7 +1198,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	public void refresh() {
 		refreshManager(false);
-		refreshPluginViewers();
+		plugin.updateAllViewers();
 	}
 
 	protected void closeTable() {
@@ -1433,7 +1428,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					setSWCType(selectedPaths, swcColor.type());
 				for (final Path p : selectedPaths)
 					p.setColor(swcColor.color());
-				refreshPluginViewers();
+				plugin.updateAllViewers();
 				refreshManager(true);
 				return;
 			} else if (MEASURE_CMD.equals(cmd)) {
@@ -1546,7 +1541,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					pathAndFillManager.deletePath(p);
 				}
 				// Make sure that the 3D viewer and the stacks are redrawn:
-				refreshPluginViewers();
+				plugin.updateAllViewers();
 				refreshManager(true);
 			} else if (DOWNSAMPLE_CMD.equals(cmd)) {
 				final double minSep = plugin.getMinimumSeparation();
@@ -1572,7 +1567,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					pathToUse.downsample(maxDeviation);
 				}
 				// Make sure that the 3D viewer and the stacks are redrawn:
-				refreshPluginViewers();
+				plugin.updateAllViewers();
 			} else if (RESET_FITS.equals(cmd)) {
 				if (!guiUtils.getConfirmation("Discard fitted diameters?", "Confirm Reset?"))
 					return;

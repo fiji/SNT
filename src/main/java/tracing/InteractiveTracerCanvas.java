@@ -173,7 +173,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 					}
 					p.setEditableNode(-1);
 					pathAndFillManager.resetListeners(null);
-					tracerPlugin.repaintAllPanes();
+					tracerPlugin.updateAllViewers();
 				}
 
 			});
@@ -636,7 +636,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				"Delete Single-Point Path?")) {
 			tracerPlugin.getPathAndFillManager().deletePath(editingPath);
 			tracerPlugin.detectEditingPath();
-			tracerPlugin.repaintAllPanes();
+			tracerPlugin.updateAllViewers();
 		}
 	}
 

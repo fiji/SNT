@@ -26,6 +26,8 @@ import java.awt.Point;
 import java.io.File;
 
 import ij.Prefs;
+import ij3d.Content;
+import ij3d.ContentConstants;
 
 /**
  * Class handling SNT preferences.
@@ -64,12 +66,30 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	private int currentBooleans;
 	private boolean ij1ReverseSliderOrder;
 	private boolean ij1PointerCursor;
+	private int resFactor3Dcontent = -1;
 
 	public SNTPrefs(final SimpleNeuriteTracer snt) {
 		this.snt = snt;
 		getBooleans();
 		storeIJ1Prefs();
 		imposeIJ1Prefs();
+	}
+
+	protected int get3DViewerResamplingFactor() {
+		if (resFactor3Dcontent == -1) {
+			resFactor3Dcontent = Content.getDefaultResamplingFactor(snt.getImagePlus(), ContentConstants.VOLUME);
+		}
+		return resFactor3Dcontent;
+	}
+
+	protected void set3DViewerResamplingFactor(final int factor) {
+		if (factor == -1) {
+			resFactor3Dcontent = Content.getDefaultResamplingFactor(snt
+				.getImagePlus(), ContentConstants.VOLUME);
+		}
+		else {
+			resFactor3Dcontent = factor;
+		}
 	}
 
 	private void storeIJ1Prefs() {

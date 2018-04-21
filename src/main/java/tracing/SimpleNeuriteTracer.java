@@ -83,7 +83,6 @@ import tracing.gui.SWCImportOptionsDialog;
 import tracing.gui.SigmaPalette;
 import tracing.gui.SwingSafeResult;
 import tracing.hyperpanes.MultiDThreePanes;
-import tracing.hyperpanes.MultiDThreePanesCanvas;
 import tracing.util.PointInImage;
 
 /* Note on terminology:
@@ -146,6 +145,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	volatile protected boolean panMode;
 	volatile protected boolean snapCursor;
 	volatile protected boolean unsavedPaths = false;
+	protected volatile boolean showOnlySelectedPaths;
 
 	/*
 	 * Just for convenience, keep casted references to the superclass's
@@ -1112,7 +1112,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			if (oldTemporaryPath != null) {
 				oldTemporaryPath.removeFrom3DViewer(univ);
 			}
-			if (temporaryPath != null) temporaryPath.addTo3DViewer(univ, Color.BLUE,
+			if (temporaryPath != null) temporaryPath.addTo3DViewer(univ, getXYCanvas().getTemporaryPathColor(),
 				null);
 		}
 	}
@@ -1240,7 +1240,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			endJoinPoint = joinPoint;
 		}
 
-		addSphere(targetBallName, real_x_end, real_y_end, real_z_end, Color.BLUE,
+		addSphere(targetBallName, real_x_end, real_y_end, real_z_end,
+			getXYCanvas().getTemporaryPathColor(),
 			x_spacing * ballRadiusMultiplier);
 
 		x_end = (int) Math.round(real_x_end / x_spacing);
@@ -1547,7 +1548,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			real_last_start_x = world_x;
 			real_last_start_y = world_y;
 			real_last_start_z = world_z;
-			ballColor = Color.BLUE;
+			ballColor = getXYCanvas().getTemporaryPathColor();
 		}
 		else {
 			real_last_start_x = joinPoint.x;
@@ -1894,20 +1895,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		statusService.showProgress((int) proportion, 1); // FIXME:
 	}
 
-	/*
-	 * public void getTracings( boolean mineOnly ) { boolean result =
-	 * pathAndFillManager.getTracings( mineOnly, archiveClient ); if( result )
-	 * unsavedPaths = false; }
-	 */
-
-	/*
-	 * public void uploadTracings( ) { boolean result =
-	 * pathAndFillManager.uploadTracings( archiveClient ); if( result ) unsavedPaths
-	 * = false; }
-	 */
-
 	@Deprecated
-	public void showCorrespondencesTo(final File tracesFile, final Color c,
+	protected void showCorrespondencesTo(final File tracesFile, final Color c,
 		final double maxDistance)
 	{
 
@@ -1915,10 +1904,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			depth, (float) x_spacing, (float) y_spacing, (float) z_spacing,
 			spacing_units);
 
-		/*
-		 * FIXME: may well want to odd SWC options here, which isn't done with the
-		 * "loadGuessingType" method:
-		 */
 		if (!pafmTraces.loadGuessingType(tracesFile.getAbsolutePath())) {
 			guiUtils.error("Failed to load traces from: " + tracesFile
 				.getAbsolutePath());
@@ -1949,7 +1934,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			}
 			++done;
 		}
-		univ.addLineMesh(linePoints, new Color3f(Color.red), "correspondences",
+		univ.addLineMesh(linePoints, new Color3f(Color.RED), "correspondences",
 			false);
 
 		for (int pi = 0; pi < pafmTraces.size(); ++pi) {
@@ -1959,8 +1944,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 		// univ.resetView();
 	}
-
-	protected volatile boolean showOnlySelectedPaths;
 
 	protected void setShowOnlySelectedPaths(final boolean showOnlySelectedPaths,
 		final boolean updateGUI)

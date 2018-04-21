@@ -35,6 +35,7 @@ import javax.swing.SwingUtilities;
 import org.scijava.util.PlatformUtils;
 import org.scijava.vecmath.Point3d;
 
+import ij.gui.Toolbar;
 import ij3d.Content;
 import ij3d.DefaultUniverse;
 import ij3d.Image3DUniverse;
@@ -106,10 +107,10 @@ class QueueJumpingKeyListener implements KeyListener {
 
 		if (keyCode == KeyEvent.VK_SPACE) {// IJ's pan tool shortcut
 			tracerPlugin.panMode = true;
-			waiveKeyPress(e);
-			return;
+ 			return;
 		}
-		else if (keyCode == KeyEvent.VK_ESCAPE) {
+		else if (keyCode == KeyEvent.VK_ESCAPE && canvas != null) {
+			// Esc is the documented wand>hand tool toggle for the Legacy 3D viewer
 			if (doublePress) tracerPlugin.getUI().reset();
 			else tracerPlugin.getUI().abortCurrentOperation();
 			e.consume();
@@ -369,8 +370,11 @@ class QueueJumpingKeyListener implements KeyListener {
 
 	private class PointSelectionBehavior extends InteractiveBehavior {
 
+		private final GuiUtils gUtils;
+
 		public PointSelectionBehavior(final DefaultUniverse univ) {
 			super(univ);
+			this.gUtils = new GuiUtils(univ.getCanvas());
 		}
 
 		@Override
@@ -379,7 +383,18 @@ class QueueJumpingKeyListener implements KeyListener {
 
 				@Override
 				public void run() {
-					keyPressed(e);
+					final char keyChar = e.getKeyChar();
+					if (keyChar == 'w' || keyChar == 'W') {
+						Toolbar.getInstance().setTool(Toolbar.WAND);
+						gUtils.tempMsg("Wand Tool selected");
+					}
+					else if (keyChar == 'h' || keyChar == 'H') {
+						Toolbar.getInstance().setTool(Toolbar.HAND);
+						gUtils.tempMsg("Hand Tool selected");
+					}
+					else {
+						keyPressed(e);
+					}
 				}
 			});
 		}
@@ -387,7 +402,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		@Override
 		public void doProcess(final MouseEvent me) {
 
-			if (!tracerPlugin.isUIready() || !me.isControlDown() || me
+			if (!tracerPlugin.isUIready() || Toolbar.getToolId() != Toolbar.WAND || me
 				.getID() != MouseEvent.MOUSE_PRESSED)
 			{
 				super.doProcess(me);
@@ -397,18 +412,25 @@ class QueueJumpingKeyListener implements KeyListener {
 			final Picker picker = univ.getPicker();
 			final Content c = picker.getPickedContent(me.getX(), me.getY());
 			if (null == c) {
-				new GuiUtils(univ.getCanvas()).tempMsg("No content picked!");
+				gUtils.tempMsg("No content picked!");
 				return;
 			}
 
+			gUtils.tempMsg("Retrieving content...");
 			final Point3d point = picker.getPickPointGeometry(c, me.getX(), me
 				.getY());
+			gUtils.tempMsg(SNT.formatDouble(point.x, 3) + ", " + SNT.formatDouble(
+				point.y, 3) + ", " + SNT.formatDouble(point.z, 3));
 			final boolean joiner_modifier_down = mac ? ((me.getModifiersEx() &
 				InputEvent.ALT_DOWN_MASK) != 0) : ((me.getModifiersEx() &
 					InputEvent.CTRL_DOWN_MASK) != 0);
+			SwingUtilities.invokeLater(new Runnable() {
 
-			tracerPlugin.clickForTrace(point, joiner_modifier_down);
-
+				@Override
+				public void run() {
+					tracerPlugin.clickForTrace(point, joiner_modifier_down);
+				}
+			});
 		}
 	}
 }

@@ -367,7 +367,7 @@ public class FillWindow extends JFrame
 				return;
 			}
 			pathAndFillManager.deleteFills(selectedIndices);
-			plugin.repaintAllPanes();
+			plugin.updateAllViewers();
 
 		} else if (source == reloadFill) {
 

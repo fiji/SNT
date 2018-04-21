@@ -309,7 +309,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			// c3.insets.left = MARGIN * 2;
 			c3.anchor = GridBagConstraints.NORTHEAST;
 			c3.gridwidth = GridBagConstraints.REMAINDER;
-			GuiUtils.addSeparator(tab3, "Legacy 3D Viwer:", false, c3);
+			GuiUtils.addSeparator(tab3, "Legacy 3D Viewer:", false, c3);
 			++c3.gridy;
 			// if (!plugin.nonInteractiveSession) {
 			// GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
@@ -1115,6 +1115,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return miscPanel;
 	}
 
+	@SuppressWarnings("deprecation")
 	private JPanel legacy3DViewerPanel() {
 
 		final String VIEWER_NONE = "None";
@@ -1126,9 +1127,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final JButton applyUnivChoice = new JButton("Apply");
 		final JComboBox<String> displayChoice = new JComboBox<>();
 		final JButton applyDisplayChoice = new JButton("Apply");
-		final JButton refreshList = GuiUtils.smallButton("Refresh Viewers List");
-		final JButton applyLabelsImage = GuiUtils.smallButton(
+		final JButton refreshList = GuiUtils.smallButton("Refresh List");
+		final JButton applyLabelsImage = new JButton(
 			"Apply Color Labels...");
+		final JButton getCorrespondences = new JButton(
+				"Compare Tracings...");
 
 		final LinkedHashMap<String, Image3DUniverse> hm = new LinkedHashMap<>();
 		hm.put(VIEWER_NONE, null);
@@ -1165,6 +1168,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				displayChoice.setEnabled(validViewer);
 				applyDisplayChoice.setEnabled(validViewer);
 				applyLabelsImage.setEnabled(validViewer);
+				getCorrespondences.setEnabled(validViewer);
 			}
 
 			@Override
@@ -1289,6 +1293,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			public void actionPerformed(final ActionEvent e) {
 				final File imageFile = guiUtils.openFile("Choose labels image",
 					plugin.prefs.getRecentFile(), null);
+				if (imageFile == null) return; // user pressed cancel
 				try {
 					plugin.statusService.showStatus(("Loading " + imageFile.getName()));
 					final Dataset ds = plugin.datasetIOService.open(imageFile
@@ -1309,12 +1314,30 @@ public class NeuriteTracerResultsDialog extends JDialog {
 			}
 		});
 
+		getCorrespondences.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				final File tracesFile = guiUtils.openFile("Select tracings...", null,
+					Collections.singletonList(".swc"));
+				if (tracesFile == null) return;
+				if (!tracesFile.exists()) {
+					guiUtils.error(tracesFile.getAbsolutePath() + " is not available");
+					return;
+				}
+				plugin.showCorrespondencesTo(tracesFile, guiUtils.getColor(
+					"Rendering Color", Color.RED), 10);
+			}
+		}
+		);
+
 		// Set defaults
 		univChoice.setSelectedItem(VIEWER_NONE);
 		applyUnivChoice.setEnabled(false);
 		displayChoice.setEnabled(false);
 		applyDisplayChoice.setEnabled(false);
 		applyLabelsImage.setEnabled(false);
+		getCorrespondences.setEnabled(false);
 
 		// Build panel
 		final JPanel p = new JPanel();
@@ -1339,7 +1362,16 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 		// row 2
 		c.gridy++;
+		c.gridx = 1;
+		c.gridwidth = 1;
+		c.anchor = GridBagConstraints.EAST;
+		c.fill = GridBagConstraints.NONE;
+		p.add(refreshList, c);
+
+		// row 3
+		c.gridy++;
 		c.gridx = 0;
+		c.anchor = GridBagConstraints.WEST;
 		c.fill = GridBagConstraints.NONE;
 		p.add(GuiUtils.leftAlignedLabel("Mode: ", true), c);
 		c.gridx++;
@@ -1351,6 +1383,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.gridx++;
 
 		// row 3
+		c.ipady = MARGIN;
 		c.gridy++;
 		c.gridx = 0;
 		c.fill = GridBagConstraints.NONE;
@@ -1359,8 +1392,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,
 			MARGIN / 2, MARGIN / 2));
-		buttonPanel.add(refreshList);
 		buttonPanel.add(applyLabelsImage);
+		buttonPanel.add(getCorrespondences);
 		p.add(buttonPanel, c);
 		return p;
 	}
@@ -1739,34 +1772,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		strahlerMenuItem.addActionListener(listener);
 		plotMenuItem = new JMenuItem("Plot Traces...");
 		plotMenuItem.addActionListener(listener);
-		final JMenuItem correspondencesMenuItem = new JMenuItem(
-			"Show correspondences with file..");
-		correspondencesMenuItem.setEnabled(false); // disable command until it is
-																								// re-written
-		correspondencesMenuItem.addActionListener(new ActionListener() {
 
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				final File tracesFile = guiUtils.openFile("Select other traces file...",
-					null, Collections.singletonList(".traces"));
-				if (tracesFile == null) return;
-				if (!tracesFile.exists()) {
-					guiUtils.error(tracesFile.getAbsolutePath() + " is not available");
-					return;
-				}
-				// FIXME: 3D VIEWER exclusive method
-				// Overlay overlay = plugin.showCorrespondencesTo(tracesFile,
-				// Color.YELLOW,
-				// 2.5);
-				// plugin.getXYCanvas().setOverlay(overlay);
-			}
-		});
 		analysisMenu.add(plotMenuItem);
 		analysisMenu.add(measureMenuItem);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
 		analysisMenu.addSeparator();
-		analysisMenu.add(correspondencesMenuItem);
 
 		final JCheckBoxMenuItem xyCanvasMenuItem = new JCheckBoxMenuItem(
 			"Hide XY View");

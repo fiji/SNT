@@ -216,12 +216,28 @@ public class Tree {
 	 */
 	public void translate(final double xOffset, final double yOffset, final double zOffset) {
 		for (final Path p : tree) {
-			for (double x : p.precise_x_positions)
-				x = x + xOffset;
-			for (double y : p.precise_y_positions)
-				y = y + yOffset;
-			for (double z : p.precise_z_positions)
-				z = z + zOffset;
+			for (int node = 0; node < p.size(); node++) {
+				p.precise_x_positions[node] += xOffset;
+				p.precise_y_positions[node] += yOffset;
+				p.precise_z_positions[node] += zOffset;
+			}
+		}
+	}
+
+	/**
+	 * Scales the tree by the specified scaling factors.
+	 *
+	 * @param xScale the scaling factor for x coordinates
+	 * @param yScale the scaling factor for y coordinates
+	 * @param zScale the scaling factor for z coordinates
+	 */
+	public void scale(final double xScale, final double yScale, final double zScale) {
+		for (final Path p : tree) {
+			for (int node = 0; node < p.size(); node++) {
+				p.precise_x_positions[node] *= xScale;
+				p.precise_y_positions[node] *= yScale;
+				p.precise_z_positions[node] *= zScale;
+			}
 		}
 	}
 

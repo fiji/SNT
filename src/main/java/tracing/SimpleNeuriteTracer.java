@@ -163,7 +163,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected double y_spacing = 1;
 	protected double z_spacing = 1;
 	protected String spacing_units = "";
-	protected boolean setupTrace = false;
 	protected int channel;
 	protected int frame;
 
@@ -174,9 +173,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	volatile protected float stackMax = Float.MIN_VALUE;
 	volatile protected float stackMin = Float.MAX_VALUE;
 
-	/* The main auto-tracing thread */
+	/* tracing threads */
 	private TracerThread currentSearchThread = null;
-	/* The thread for manual tracing */
 	private ManualTracerThread manualSearchThread = null;
 
 	/*
@@ -197,14 +195,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 */
 	volatile boolean pathUnfinished = false;
 	private Path editingPath; // Path being edited when in 'Edit Mode'
-
-	/*
-	 * For the original file info - needed for loading the corresponding labels file
-	 * and checking if a "tubes.tif" file already exists:
-	 */
-
-	@Deprecated
-	protected FileInfo file_info;
 
 	/* Labels */
 	protected String[] materialList;
@@ -254,6 +244,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public boolean displayCustomPathColors = true;
 
 
+	@Deprecated
 	protected SimpleNeuriteTracer() {
 		final Context context = (Context) IJ.runPlugIn("org.scijava.Context", "");
 		context.inject(this);
@@ -364,12 +355,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;
 		xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
 		zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
-		setupTrace = true;
-
-		/*
-		 * FIXME: this could be changed to add 'this', and move the small implementation
-		 * out of NeuriteTracerResultsDialog into this class.
-		 */
 		pathAndFillManager.addPathAndFillListener(this);
 
 		loadData();
@@ -389,8 +374,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void reloadImage(final int channel, final int frame) {
-		if (!setupTrace) throw new IllegalArgumentException(
-			"SNT has not yet been initialized");
+		if (slices_data_b == null && slices_data_s == null && slices_data_f == null)
+			throw new IllegalArgumentException("SNT has not yet been initialized");
 		if (frame < 1 || channel < 1 || frame > getImagePlus().getNFrames() ||
 			channel > getImagePlus().getNChannels())
 			throw new IllegalArgumentException("Invalid position: C=" + channel +

@@ -1760,9 +1760,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			double maxX = Double.MIN_VALUE;
 			double maxY = Double.MIN_VALUE;
 			double maxZ = Double.MIN_VALUE;
-			double minX = Double.MAX_VALUE;
-			double minY = Double.MAX_VALUE;
-			double minZ = Double.MAX_VALUE;
+			double minX = 0;
+			double minY = 0;
+			double minZ = 0;
 			double minXsep = Double.MAX_VALUE;
 			double minYsep = Double.MAX_VALUE;
 			double minZsep = Double.MAX_VALUE;
@@ -1798,14 +1798,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			parsed_y_spacing = y_spacing;
 			parsed_z_spacing = z_spacing;
 
-			if (needImageDataFromTracesFile && x_spacing == 0d) {
+			if (needImageDataFromTracesFile) {
 				x_spacing = parsed_x_spacing;
 				y_spacing = parsed_y_spacing;
 				z_spacing = parsed_z_spacing;
 				spacing_units = parsed_units;
 				SNT.log("Importing SWC: Voxel separation inferred from node coordinates");
-			}
-			if (needImageDataFromTracesFile && width == 0) {
+
 				width = (int) (maxX - minX) + 10;
 				height = (int) (maxY - minY) + 10;
 				depth = (int) Math.max(1, (maxZ - minZ));

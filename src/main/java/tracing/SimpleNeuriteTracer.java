@@ -328,7 +328,17 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 		pathAndFillManager.needImageDataFromTracesFile = false;
 		pathAndFillManager.setHeadless(false);
-		xy = NewImage.createByteImage(file.getName(), width, height, depth,
+
+		final long memNeeded = (long) width * height * depth; // 1 byte per pixel
+		final long memMax = IJ.maxMemory(); // - 100*1024*1024;
+		final long memInUse = IJ.currentMemory(); //TODO: remove ij1 dependency
+		final long memAvailable = memMax - memInUse;
+		int canvasDepth = depth;
+		if (memMax > 0 && memNeeded > memAvailable) {
+			canvasDepth = 1;
+			singleSlice = true;
+		}
+		xy = NewImage.createByteImage(file.getName(), width, height, canvasDepth,
 			NewImage.FILL_BLACK);
 		nonInteractiveSession = true;
 
@@ -1268,7 +1278,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 					last_start_point_y), (int) Math.round(last_start_point_z), x_end,
 				y_end, z_end, //
 				true, // reciprocal
-				singleSlice, (hessianEnabled ? hessian : null), resultsDialog
+				is2D(), (hessianEnabled ? hessian : null), resultsDialog
 					.getMultiplier(), doSearchOnFilteredData ? filteredData : null,
 				hessianEnabled);
 

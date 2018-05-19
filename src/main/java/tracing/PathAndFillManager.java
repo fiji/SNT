@@ -104,6 +104,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	private double parsed_y_spacing;
 	private double parsed_z_spacing;
 	private String parsed_units;
+	private PointInImage parsedOrigin;
 	protected int parsed_width;
 	protected int parsed_height;
 	protected int parsed_depth;
@@ -421,7 +422,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 *
 	 * @see getCalibration
 	 *
-	 * @return the spatial calibration details parsed from the imported swc/traces
+	 * @return the spatial calibration details parsed from the last imported swc/traces
 	 *         file or null if no file has been imported
 	 */
 	public Calibration getParsedCalibration() {
@@ -432,6 +433,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		cal.pixelWidth = parsed_x_spacing;
 		cal.pixelHeight = parsed_y_spacing;
 		cal.pixelDepth = parsed_z_spacing;
+		if (parsedOrigin != null) {
+			cal.xOrigin = parsedOrigin.x;
+			cal.yOrigin = parsedOrigin.y;
+			cal.zOrigin = parsedOrigin.z;
+		}
 		return cal;
 	}
 
@@ -1750,67 +1756,43 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		// Infer fields for when an image has not been specified. We'll assume
-		// voxel dimensions to be the separation between the 2 closest SWCpoints
-		// in the SWC. We'll assume the image dimensions to be the bounding box
-		// plus extra padding (10pixels XY, 2 slices in Z, if depth exists).
+		// the image dimensions to be those of the coordinates bounding box.
 		// This allows us to open a SWC file without a source image
 		{
-			double maxX = Double.MIN_VALUE;
-			double maxY = Double.MIN_VALUE;
-			double maxZ = Double.MIN_VALUE;
-			double minX = 0;
-			double minY = 0;
-			double minZ = 0;
-			double minXsep = Double.MAX_VALUE;
-			double minYsep = Double.MAX_VALUE;
-			double minZsep = Double.MAX_VALUE;
-
+			parsedOrigin = new PointInImage(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+			final PointInImage parsedEnd = new PointInImage(Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE);
 			final Iterator<Entry<Integer, SWCPoint>> it = idToSWCPoint.entrySet().iterator();
 			while (it.hasNext()) {
 				final SWCPoint point = it.next().getValue();
-				if (point.x < minX)
-					minX = point.x;
-				if (point.y < minY)
-					minY = point.y;
-				if (point.z < minZ)
-					minZ = point.z;
-				if (point.x > maxX)
-					maxX = point.x;
-				if (point.y > maxY)
-					maxY = point.y;
-				if (point.z > maxZ)
-					maxZ = point.z;
-				final double xsep = point.xSeparationFromPreviousPoint();
-				if (xsep > 0.32 && xsep < minXsep)
-					minXsep = xsep;
-				final double ysep = point.ySeparationFromPreviousPoint();
-				if (ysep > 0.32 && ysep < minYsep)
-					minYsep = ysep;
-				final double zsep = point.zSeparationFromPreviousPoint();
-				if (zsep > 0 && zsep < minZsep)
-					minZsep = zsep;
+				if (point.x < parsedOrigin.x)
+					parsedOrigin.x = point.x;
+				if (point.y < parsedOrigin.y)
+					parsedOrigin.y = point.y;
+				if (point.z < parsedOrigin.z)
+					parsedOrigin.z = point.z;
+				if (point.x > parsedEnd.x)
+					parsedEnd.x = point.x;
+				if (point.y > parsedEnd.y)
+					parsedEnd.y = point.y;
+				if (point.z > parsedEnd.z)
+					parsedEnd.z = point.z;
 			}
-
 			parsed_units = "SWC units";
-			parsed_x_spacing = x_spacing;
-			parsed_y_spacing = y_spacing;
-			parsed_z_spacing = z_spacing;
-
+			parsed_x_spacing = 1;
+			parsed_y_spacing = 1;
+			parsed_z_spacing = 1;
+			parsed_width = (int) Math.round(parsedEnd.x - parsedOrigin.x);
+			parsed_height = (int) Math.round(parsedEnd.y - parsedOrigin.y);
+			parsed_depth = (int) Math.round(parsedEnd.z - parsedOrigin.z);
 			if (needImageDataFromTracesFile) {
+				SNT.log("Importing SWC... Inferring Voxel separation from SWC coordinates");
 				x_spacing = parsed_x_spacing;
 				y_spacing = parsed_y_spacing;
 				z_spacing = parsed_z_spacing;
 				spacing_units = parsed_units;
-				SNT.log("Importing SWC: Voxel separation inferred from node coordinates");
-
-				width = (int) (maxX - minX) + 10;
-				height = (int) (maxY - minY) + 10;
-				depth = (int) Math.max(1, (maxZ - minZ));
-				if (depth > 1)
-					depth += 2;
-				parsed_width = width;
-				parsed_height = height;
-				parsed_depth = depth;
+				width = parsed_width;
+				height = parsed_height;
+				depth = parsed_depth;
 			}
 		}
 

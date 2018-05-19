@@ -68,6 +68,7 @@ public class Path implements Comparable<Path> {
 	PointInImage startJoinsPoint = null;
 	Path endJoins;
 	PointInImage endJoinsPoint = null;
+	PointInImage canvasOffset = new PointInImage(0,0,0);
 
 	// Paths should always be given a name (since the name
 	// identifies them to the 3D viewer)...
@@ -142,6 +143,18 @@ public class Path implements Comparable<Path> {
 
 	void setID(final int id) {
 		this.id = id;
+	}
+
+	/**
+	 * Specifies a translation offset when rendering this Path in a
+	 * {@link TracerCanvas}. Path coordinates remain unaltered.
+	 *
+	 * @param canvasOffset
+	 *            the x,y,z coordinates (pixel-based) specifying the translation
+	 *            offset
+	 */
+	public void setCanvasOffset(final PointInImage canvasOffset) {
+		this.canvasOffset = canvasOffset;
 	}
 
 	public Path getStartJoins() {
@@ -819,34 +832,34 @@ public class Path implements Comparable<Path> {
 			switch (plane) {
 			case MultiDThreePanes.XY_PLANE:
 				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i - 1] / x_spacing);
-					previous_y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i - 1] / y_spacing);
+					previous_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i - 1] / x_spacing);
+					previous_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i - 1] / y_spacing);
 				}
 				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i + 1] / x_spacing);
-					next_y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i + 1] / y_spacing);
+					next_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i + 1] / x_spacing);
+					next_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i + 1] / y_spacing);
 				}
 				slice_of_point = getZUnscaled(i);
 				break;
 			case MultiDThreePanes.XZ_PLANE:
 				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i - 1] / x_spacing);
-					previous_y_on_screen = canvas.myScreenYDprecise(precise_z_positions[i - 1] / z_spacing);
+					previous_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i - 1] / x_spacing);
+					previous_y_on_screen = canvas.myScreenYDprecise(canvasOffset.z + precise_z_positions[i - 1] / z_spacing);
 				}
 				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i + 1] / x_spacing);
-					next_y_on_screen = canvas.myScreenYDprecise(precise_z_positions[i + 1] / z_spacing);
+					next_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i + 1] / x_spacing);
+					next_y_on_screen = canvas.myScreenYDprecise(canvasOffset.z + precise_z_positions[i + 1] / z_spacing);
 				}
 				slice_of_point = getYUnscaled(i);
 				break;
 			case MultiDThreePanes.ZY_PLANE:
 				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXDprecise(precise_z_positions[i - 1] / z_spacing);
-					previous_y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i - 1] / y_spacing);
+					previous_x_on_screen = canvas.myScreenXDprecise(canvasOffset.z + precise_z_positions[i - 1] / z_spacing);
+					previous_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i - 1] / y_spacing);
 				}
 				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXDprecise(precise_z_positions[i + 1] / z_spacing);
-					next_y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i + 1] / y_spacing);
+					next_x_on_screen = canvas.myScreenXDprecise(canvasOffset.z + precise_z_positions[i + 1] / z_spacing);
+					next_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i + 1] / y_spacing);
 				}
 				slice_of_point = getXUnscaled(i);
 				break;
@@ -909,13 +922,13 @@ public class Path implements Comparable<Path> {
 					final double right_x = precise_x_positions[i] - normalized_cross_x * effective_radius;
 					final double right_y = precise_y_positions[i] - normalized_cross_y * effective_radius;
 
-					final double left_x_on_screen = canvas.myScreenXDprecise(left_x / x_spacing);
-					final double left_y_on_screen = canvas.myScreenYDprecise(left_y / y_spacing);
-					final double right_x_on_screen = canvas.myScreenXDprecise(right_x / x_spacing);
-					final double right_y_on_screen = canvas.myScreenYDprecise(right_y / y_spacing);
+					final double left_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + left_x / x_spacing);
+					final double left_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + left_y / y_spacing);
+					final double right_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + right_x / x_spacing);
+					final double right_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + right_y / y_spacing);
 
-					final double x_on_screen = canvas.myScreenXDprecise(precise_x_positions[i] / x_spacing);
-					final double y_on_screen = canvas.myScreenYDprecise(precise_y_positions[i] / y_spacing);
+					final double x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i] / x_spacing);
+					final double y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i] / y_spacing);
 
 					g2.draw(new Line2D.Double(x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen));
 					g2.draw(new Line2D.Double(x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen));

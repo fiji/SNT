@@ -294,17 +294,35 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public SimpleNeuriteTracer(final Context context, final File file) {
 
-		if (context == null) throw new NullContextException();
-		if (file == null) throw new IllegalArgumentException(
-			"Input file cannot be null");
+		if (context == null)
+			throw new NullContextException();
+		if (file == null)
+			throw new IllegalArgumentException("Input file cannot be null");
 
 		pathAndFillManager = new PathAndFillManager(this);
 		pathAndFillManager.needImageDataFromTracesFile = true;
 		pathAndFillManager.setHeadless(true);
 		if (!pathAndFillManager.loadGuessingType(file.getAbsolutePath())) {
-			throw new IllegalArgumentException(String.format("%s is not a valid file",
-				file.getAbsolutePath()));
+			throw new IllegalArgumentException(String.format("%s is not a valid file", file.getAbsolutePath()));
 		}
+
+		// Can we generate a canvas to display import paths?
+		final Calibration calibration = pathAndFillManager.getParsedCalibration();
+		if (calibration == null) {
+			throw new IllegalArgumentException("No spatial calibration details");
+		}
+
+		// Assign parsed values
+		x_spacing = calibration.pixelWidth;
+		y_spacing = calibration.pixelHeight;
+		z_spacing = calibration.pixelDepth;
+		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
+			throw new IllegalArgumentException("One dimension of the calibration information was zero: (" + x_spacing
+					+ "," + y_spacing + "," + z_spacing + ")");
+		}
+		spacing_units = calibration.getUnits();
+		if (spacing_units == null || spacing_units.length() == 0)
+			spacing_units = "" + calibration.getUnit();
 
 		width = pathAndFillManager.parsed_width;
 		height = pathAndFillManager.parsed_height;
@@ -312,34 +330,36 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		imageType = ImagePlus.GRAY8;
 		singleSlice = depth == 1;
 
-		final Calibration calibration = pathAndFillManager.getParsedCalibration();
-		if (calibration != null) {
-			x_spacing = calibration.pixelWidth;
-			y_spacing = calibration.pixelHeight;
-			z_spacing = calibration.pixelDepth;
-			spacing_units = calibration.getUnits();
-			if (spacing_units == null || spacing_units.length() == 0) spacing_units =
-				"" + calibration.getUnit();
+		// Enlarge canvas for easy manipulation of edge nodes. Center
+		// all paths in canvas without translating their coordinates
+		final int XY_PADDING = 50;
+		final int Z_PADDING = (singleSlice) ? 0 : 2;
+		width += XY_PADDING;
+		height += XY_PADDING;
+		depth += Z_PADDING;
+		final PointInImage canvasOffset = new PointInImage(-calibration.xOrigin / x_spacing + XY_PADDING / 2,
+				-calibration.yOrigin / y_spacing + XY_PADDING / 2, -calibration.zOrigin / z_spacing + Z_PADDING / 2);
+		for (final Path p : pathAndFillManager.getPaths()) {
+			p.setCanvasOffset(canvasOffset);
 		}
-		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
-			throw new IllegalArgumentException(
-				"One dimension of the calibration information was zero: (" + x_spacing +
-					"," + y_spacing + "," + z_spacing + ")");
-		}
+
 		pathAndFillManager.needImageDataFromTracesFile = false;
 		pathAndFillManager.setHeadless(false);
 
+		// Make canvas 2D if there is not enough memory
 		final long memNeeded = (long) width * height * depth; // 1 byte per pixel
 		final long memMax = IJ.maxMemory(); // - 100*1024*1024;
-		final long memInUse = IJ.currentMemory(); //TODO: remove ij1 dependency
-		final long memAvailable = memMax - memInUse;
+		final long memInUse = IJ.currentMemory(); // FIXME: remove ij1 dependency
+		final long memAvailable = (long) (0.80 * (memMax - memInUse)); // FIXME: hardwired value
 		int canvasDepth = depth;
 		if (memMax > 0 && memNeeded > memAvailable) {
 			canvasDepth = 1;
 			singleSlice = true;
 		}
-		xy = NewImage.createByteImage(file.getName(), width, height, canvasDepth,
-			NewImage.FILL_BLACK);
+
+		// Create image
+		xy = NewImage.createByteImage(file.getName(), width, height, canvasDepth, NewImage.FILL_BLACK);
+		xy.setCalibration(calibration);
 		nonInteractiveSession = true;
 
 		context.inject(this);

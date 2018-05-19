@@ -1579,8 +1579,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			setSelected(new HashSet<Path>(), this);
 			resetListeners(null, true);
-			if (plugin != null && plugin.getImagePlus() != null)
-				plugin.updateAllViewers();
 		}
 
 	}

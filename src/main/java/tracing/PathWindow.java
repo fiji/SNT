@@ -588,13 +588,13 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	public void valueChanged(final TreeSelectionEvent e) {
 		assert SwingUtilities.isEventDispatchThread();
 		final Set<Path> selectedPaths = getSelectedPaths(true);
-		if (tree.getSelectionCount() == 1) {
+		final int selectionCount = tree.getSelectionCount();
+		if (selectionCount == 1) {
 			updateCmdsOneSelected(selectedPaths.iterator().next());
 		} else {
 			updateCmdsManyOrNoneSelected(selectedPaths);
 		}
-		pathAndFillManager.setSelected((HashSet<Path>) selectedPaths, this);
-		plugin.updateAllViewers();
+		pathAndFillManager.setSelected((selectionCount == 0)?null:(HashSet<Path>) selectedPaths, this);
 	}
 
 	private void displayTmpMsg(final String msg) {

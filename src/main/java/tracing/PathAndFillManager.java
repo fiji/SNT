@@ -246,16 +246,18 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 *
 	 * (b) All the registered PathAndFillListener objects.
 	 */
-	public synchronized void setSelected(final HashSet<Path> selectedPaths, final Object sourceOfMessage) {
+	protected synchronized void setSelected(final HashSet<Path> selectedPaths, final Object sourceOfMessage) {
 		selectedPathsSet.clear();
-		// selectedPathsSet.addAll(selectedPaths);
-		selectedPaths.forEach(p -> {
-			Path pathToSelect = p;
-			if (pathToSelect.getUseFitted())
-				pathToSelect = pathToSelect.fitted;
-			// pathToSelect.setSelected(true);
-			selectedPathsSet.add(pathToSelect);
-		});
+		if (selectedPaths != null) {
+			// selectedPathsSet.addAll(selectedPaths);
+			selectedPaths.forEach(p -> {
+				Path pathToSelect = p;
+				if (pathToSelect.getUseFitted())
+					pathToSelect = pathToSelect.fitted;
+				// pathToSelect.setSelected(true);
+				selectedPathsSet.add(pathToSelect);
+			});
+		}
 		for (final PathAndFillListener pafl : listeners) {
 			if (pafl != sourceOfMessage)
 				// The source of the message already knows the states:
@@ -699,7 +701,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		for (final Path p : allPaths) {
 			if (p == null) {
-				throw new RuntimeException("BUG: A path in allPaths was null!");
+				throw new IllegalArgumentException("BUG: A path in allPaths was null!");
 			}
 			String name = p.getName();
 			if (name == null)
@@ -1761,9 +1763,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		{
 			parsedOrigin = new PointInImage(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
 			final PointInImage parsedEnd = new PointInImage(Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE);
-			final Iterator<Entry<Integer, SWCPoint>> it = idToSWCPoint.entrySet().iterator();
-			while (it.hasNext()) {
-				final SWCPoint point = it.next().getValue();
+			idToSWCPoint.entrySet().stream().forEach(entry -> {
+				final SWCPoint point = entry.getValue();
 				if (point.x < parsedOrigin.x)
 					parsedOrigin.x = point.x;
 				if (point.y < parsedOrigin.y)
@@ -1776,7 +1777,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					parsedEnd.y = point.y;
 				if (point.z > parsedEnd.z)
 					parsedEnd.z = point.z;
-			}
+			});
 			parsed_units = "SWC units";
 			parsed_x_spacing = 1;
 			parsed_y_spacing = 1;
@@ -1850,13 +1851,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			SNT.warn("" + pointsOutsideImageRange
 					+ " points were outside the image volume - you may need to change your SWC import options");
 
+		// FIXME: This is really slow with large SWC files
 		final HashMap<SWCPoint, Path> pointToPath = new HashMap<>();
-
-		final PriorityQueue<SWCPoint> backtrackTo = new PriorityQueue<>();
-
-		for (final SWCPoint start : primaryPoints)
-			backtrackTo.add(start);
-
+		final PriorityQueue<SWCPoint> backtrackTo = new PriorityQueue<>(primaryPoints);
 		final HashMap<Path, SWCPoint> pathStartsOnSWCPoint = new HashMap<>();
 		final HashMap<Path, PointInImage> pathStartsAtPointInImage = new HashMap<>();
 
@@ -1891,10 +1888,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if (currentPoint.nextPoints.size() > 0) {
 					final SWCPoint newCurrentPoint = currentPoint.nextPoints.get(0);
 					currentPoint.nextPoints.remove(0);
-					for (int i = 0; i < currentPoint.nextPoints.size(); ++i) {
-						final SWCPoint pointToQueue = currentPoint.nextPoints.get(i);
+					currentPoint.nextPoints.stream().forEach(pointToQueue -> {
 						backtrackTo.add(pointToQueue);
-					}
+					});
 					currentPoint = newCurrentPoint;
 				} else {
 					currentPath.setSWCType(currentPoint.type); // Assign point

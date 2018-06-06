@@ -29,8 +29,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.stream.IntStream;
 
-import net.imagej.table.DefaultGenericTable;
-
 import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;
 import org.scijava.display.Display;
@@ -38,6 +36,7 @@ import org.scijava.display.DisplayService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
 import tracing.Tree;
 import tracing.util.PointInImage;
@@ -331,11 +330,12 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Updates and displays the Analyzer table.
 	 */
 	public void updateAndDisplayTable() {
-		final Display<?> display = displayService.getDisplay(tableTitle);
+		final String displayName = (tableTitle == null) ? "Path Measurements" : tableTitle;
+		final Display<?> display = displayService.getDisplay(displayName);
 		if (display != null && display.isDisplaying(table)) {
 			display.update();
 		} else {
-			displayService.createDisplay((tableTitle == null) ? "Path Measurements" : tableTitle, table);
+			displayService.createDisplay(displayName, table);
 		}
 	}
 

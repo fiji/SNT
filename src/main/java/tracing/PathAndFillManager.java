@@ -1591,8 +1591,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	}
 
-	public static PathAndFillManager createFromTracesFile(final String filename) {
+	public static PathAndFillManager createFromFile(final String filename) {
 		final PathAndFillManager pafm = new PathAndFillManager();
+		pafm.setHeadless(true);
 		if (pafm.loadGuessingType(filename))
 			return pafm;
 		else

@@ -77,4 +77,11 @@ public class PointInImage {
 		return (this.x == pim.x) && (this.y == pim.y) && (this.z == pim.z);
 	}
 
+	@Override
+	public boolean equals(final Object o) { // NB: onPath is optional: field not evaluated for equality
+		if (o == this) return true;
+		if (o == null) return false;
+		return o instanceof PointInImage && isSameLocation((PointInImage) o);
+	}
+
 }

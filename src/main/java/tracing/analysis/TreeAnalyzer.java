@@ -410,16 +410,8 @@ public class TreeAnalyzer extends ContextCommand {
 		}
 
 		// now remove any joint-associated point
-		if (joints == null)
-			getBranchPoints();
-		final Iterator<PointInImage> tipIt = tips.iterator();
-		while (tipIt.hasNext()) {
-			final PointInImage tip = tipIt.next();
-			joints.forEach(joint -> {
-				if (joints.contains(tip) || tip.isSameLocation(joint))
-					tipIt.remove();
-			});
-		}
+		if (joints == null) getBranchPoints();
+		tips.removeAll(joints);
 		return tips;
 
 	}

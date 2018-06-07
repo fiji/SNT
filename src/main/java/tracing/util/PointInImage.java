@@ -22,6 +22,8 @@
 
 package tracing.util;
 
+import java.util.Objects;
+
 import tracing.Path;
 import tracing.PathTransformer;
 
@@ -81,7 +83,13 @@ public class PointInImage {
 	public boolean equals(final Object o) { // NB: onPath is optional: field not evaluated for equality
 		if (o == this) return true;
 		if (o == null) return false;
-		return o instanceof PointInImage && isSameLocation((PointInImage) o);
+		if (getClass() != o.getClass()) return false;
+		return isSameLocation((PointInImage) o);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(x, y, z);
 	}
 
 }

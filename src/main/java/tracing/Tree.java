@@ -24,6 +24,7 @@ package tracing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -89,7 +90,7 @@ public class Tree {
 	 *            the absolute file path of the imported file
 	 */
 	public Tree(final String filename) {
-		final PathAndFillManager pafm = PathAndFillManager.createFromTracesFile(filename);
+		final PathAndFillManager pafm = PathAndFillManager.createFromFile(filename);
 		if (pafm == null)
 			throw new IllegalArgumentException("No paths extracted from " + filename + " Invalid file?");
 		tree = pafm.getPaths();
@@ -202,6 +203,21 @@ public class Tree {
 				subtree.addPath(p);
 		}
 		return subtree;
+	}
+
+	/**
+	 * Extracts the SWC-type flags present in this Tree.
+	 *
+	 * @return the set of SWC type(s) (e.g., {@link Path#SWC_AXON},
+	 *         {@link Path#SWC_DENDRITE}, etc.) present in the tree
+	 */
+	public HashSet<Integer> getSWCtypes() {
+		final HashSet<Integer> types = new HashSet<>();
+		final Iterator<Path> it = tree.iterator();
+		while (it.hasNext()) {
+			types.add(it.next().getSWCType());
+		}
+		return types;
 	}
 
 	/**

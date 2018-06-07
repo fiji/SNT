@@ -90,6 +90,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public TreeAnalyzer(final Tree tree) {
 		this.tree = new Tree();
+		this.tree.setLabel(tree.getLabel());
 		for (final Path p : tree.getPaths()) {
 			if (p == null)
 				continue;
@@ -127,8 +128,7 @@ public class TreeAnalyzer extends ContextCommand {
 		initializeSnapshotTree();
 		final ArrayList<Integer> allowedTypes = Path.getSWCtypes();
 		for (final int type : types) {
-			if (allowedTypes.contains(type))
-				allowedTypes.remove(Integer.valueOf(type));
+			allowedTypes.remove(Integer.valueOf(type));
 		}
 		tree = tree.subTree(allowedTypes.stream().mapToInt(i -> i).toArray());
 	}
@@ -217,14 +217,16 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	private void initializeSnapshotTree() {
-		if (unfilteredTree == null)
+		if (unfilteredTree == null) {
 			unfilteredTree = new Tree(tree.getPaths());
+			unfilteredTree.setLabel(tree.getLabel());
+		}
 	}
 
 	/**
-	 * Removes any filtering restrictions that may have been set. Once called all
-	 * paths parsed by the constructor will be analyzed. Does nothing if no paths
-	 * are currently being excluded from the analysis.
+	 * Removes any filtering restrictions that may have been set. Once called,
+	 * subsequent analysis will use all paths initially parsed by the constructor.
+	 * Does nothing if no paths are currently being excluded from the analysis.
 	 */
 	public void resetRestrictions() {
 		if (unfilteredTree == null)
@@ -252,17 +254,52 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Outputs a summary of the current analysis to the Analyzer's tables.
+	 * Outputs a summary of the current analysis to the Analyzer table using the
+	 * default Tree label.
+	 *
+	 * @param groupByType
+	 *            if true measurements are grouped by SWC-type flag
+	 *
+	 * @see #getSWCtypes()
+	 * @see #run()
+	 * @see #setTable(DefaultGenericTable)
+	 */
+	public void summarize(final boolean groupByType) {
+		summarize(tree.getLabel(), groupByType);
+	}
+
+	/**
+	 * Outputs a summary of the current analysis to the Analyzer table.
 	 *
 	 * @param rowHeader
-	 *            the String to be used as row header for the summary
+	 *            the String to be used as label for the summary
+	 * @param groupByType
+	 *            if true measurements are grouped by SWC-type flag
+	 *
+	 * @see #getSWCtypes()
+	 * @see #run()
+	 * @see #setTable(DefaultGenericTable)
 	 */
-	public void summarize(final String rowHeader) {
+	public void summarize(final String rowHeader, final boolean groupByType) {
 		if (table == null)
 			table = new DefaultGenericTable();
 		table.appendRow(rowHeader);
 		final int row = Math.max(0, table.getRowCount() - 1);
-		restrictToSize(2, -1); // include only paths with at least 2 points
+		if (groupByType) {
+			final int[] types = tree.getSWCtypes().stream().mapToInt(v -> v).toArray();
+			for (final int type : types) {
+				restrictToSWCType(type);
+				measureTree(row, Path.getSWCtypeName(type));
+				table.set(getCol("SWC Type"), row, Path.getSWCtypeName(type));
+				restrictToSWCType(types);
+			}
+		} else {
+			measureTree(row, "All types");
+		}
+	}
+
+	private void measureTree(final int row, final String type) {
+		table.set(getCol("SWC Type"), row, type);
 		table.set(getCol("# Paths"), row, getNPaths());
 		table.set(getCol("# Branch Points"), row, getBranchPoints().size());
 		table.set(getCol("# Tips"), row, getTips().size());
@@ -273,7 +310,7 @@ public class TreeAnalyzer extends ContextCommand {
 		table.set(getCol("Sum length TP"), row, getTerminalLength());
 		table.set(getCol("Strahler Root No."), row, getStrahlerRootNumber());
 		table.set(getCol("# Fitted Paths"), row, fittedPathsCounter);
-		table.set(getCol("Notes"), row, "Single point-paths ignored");
+		table.set(getCol("# Single-point Paths"), row, getSinglePointPaths());
 	}
 
 	/**
@@ -309,10 +346,11 @@ public class TreeAnalyzer extends ContextCommand {
 		return table;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see java.lang.Runnable#run()
+	/**
+	 * Generates detailed summaries in which measurements are grouped by SWC-type
+	 * flags
+	 * 
+	 * @see #summarize(String, boolean)
 	 */
 	@Override
 	public void run() {
@@ -321,7 +359,8 @@ public class TreeAnalyzer extends ContextCommand {
 			return;
 		}
 		statusService.showStatus("Measuring Paths...");
-		summarize("All Paths");
+		summarize(true);
+		if (tree.getSWCtypes().size() > 1) summarize(false);
 		updateAndDisplayTable();
 		statusService.clearStatus();
 	}
@@ -346,6 +385,10 @@ public class TreeAnalyzer extends ContextCommand {
 			idx = table.getColumnCount() - 1;
 		}
 		return idx;
+	}
+
+	private int getSinglePointPaths() {
+		return (int) tree.getPaths().stream().filter( p -> p.size() == 1).count();
 	}
 
 	/**
@@ -405,7 +448,7 @@ public class TreeAnalyzer extends ContextCommand {
 		tips = new HashSet<>();
 		for (final Path p : tree.getPaths()) {
 			IntStream.of(0, p.size() - 1).forEach(i -> {
-				tips.add(p.getPointInImage(i));
+				tips.add(p.getPointInImage(i)); // duplicated points (as in single-point paths) will not be added
 			});
 		}
 

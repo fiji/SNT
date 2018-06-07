@@ -2809,11 +2809,12 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 			}
 			else if (source == measureMenuItem && !noPathsError()) {
-				final TreeAnalyzer pa = new TreeAnalyzer(new Tree(pathAndFillManager
-					.getPathsFiltered()));
-				pa.setContext(plugin.getContext());
-				pa.setTable(pw.getTable(), PathWindow.TABLE_TITLE);
-				pa.run();
+				final Tree tree = new Tree(pathAndFillManager.getPathsFiltered());
+				tree.setLabel("All Paths");
+				final TreeAnalyzer ta = new TreeAnalyzer(tree);
+				ta.setContext(plugin.getContext());
+				ta.setTable(pw.getTable(), PathWindow.TABLE_TITLE);
+				ta.run();
 				return;
 			}
 			else if (source == strahlerMenuItem && !noPathsError()) {

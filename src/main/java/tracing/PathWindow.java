@@ -1440,7 +1440,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 						return;
 					}
 					ta.setTable(getTable(), TABLE_TITLE);
-					ta.summarize(getDescription(selectedPaths));
+					ta.summarize(getDescription(selectedPaths), true);
 					ta.updateAndDisplayTable();
 					return;
 				} catch (final IllegalArgumentException ignored) {

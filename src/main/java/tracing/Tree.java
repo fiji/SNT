@@ -22,6 +22,7 @@
 
 package tracing;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -51,6 +52,7 @@ public class Tree {
 	public static final int Y_AXIS = 2;
 	public static final int Z_AXIS = 4;
 	private ArrayList<Path> tree;
+	private String label;
 
 	/**
 	 * Instantiates a new empty tree.
@@ -90,10 +92,14 @@ public class Tree {
 	 *            the absolute file path of the imported file
 	 */
 	public Tree(final String filename) {
+		final File f = new File(filename);
+		if (!f.exists())
+			throw new IllegalArgumentException("File does not exist: " + filename);
 		final PathAndFillManager pafm = PathAndFillManager.createFromFile(filename);
 		if (pafm == null)
 			throw new IllegalArgumentException("No paths extracted from " + filename + " Invalid file?");
 		tree = pafm.getPaths();
+		setLabel(f.getName());
 	}
 
 	/**
@@ -366,6 +372,26 @@ public class Tree {
 	 */
 	public int size() {
 		return tree.size();
+	}
+
+	/**
+	 * Sets an identifying label for this Tree.
+	 *
+	 * @param label
+	 *            the identifying string
+	 */
+	public void setLabel(final String label) {
+		this.label = label;
+	}
+
+	/**
+	 * Returns the identifying label of this tree. When importing files, the label
+	 * typically defaults to the imported filename,
+	 *
+	 * @return the Tree label (or null) if none has been set.
+	 */
+	public String getLabel() {
+		return label;
 	}
 
 }

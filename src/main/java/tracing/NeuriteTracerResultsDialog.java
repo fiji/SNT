@@ -171,7 +171,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	private final SimpleNeuriteTracer plugin;
 	private final PathAndFillManager pathAndFillManager;
-	private final GuiUtils guiUtils;
+	protected final GuiUtils guiUtils;
 	private final PathWindow pw;
 	private final FillWindow fw;
 	protected final GuiListener listener;
@@ -1712,6 +1712,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		menuBar.add(analysisMenu);
 		final JMenu viewMenu = new JMenu("View");
 		menuBar.add(viewMenu);
+		final ScriptInstaller installer = new ScriptInstaller(plugin.getContext(), this);
+		menuBar.add(installer.getScriptsMenu());
 		menuBar.add(helpMenu());
 
 		loadTracesMenuItem = new JMenuItem("Load Traces...");

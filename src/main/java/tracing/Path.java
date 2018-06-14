@@ -1810,8 +1810,8 @@ public class Path implements Comparable<Path> {
 	public static final int SWC_AXON = 2;
 	public static final int SWC_DENDRITE = 3;
 	public static final int SWC_APICAL_DENDRITE = 4;
-	public static final int SWC_FORK_POINT = 5;
-	public static final int SWC_END_POINT = 6;
+	public static final int SWC_FORK_POINT = 5; //redundant
+	public static final int SWC_END_POINT = 6; //redundant
 	public static final int SWC_CUSTOM = 7;
 	public static final String SWC_UNDEFINED_LABEL = "undefined";
 	public static final String SWC_SOMA_LABEL = "soma";
@@ -1838,8 +1838,8 @@ public class Path implements Comparable<Path> {
 		swcTypes.add(SWC_AXON_LABEL);
 		swcTypes.add(SWC_DENDRITE_LABEL);
 		swcTypes.add(SWC_APICAL_DENDRITE_LABEL);
-		swcTypes.add(SWC_FORK_POINT_LABEL);
-		swcTypes.add(SWC_END_POINT_LABEL);
+		//swcTypes.add(SWC_FORK_POINT_LABEL);
+		//swcTypes.add(SWC_END_POINT_LABEL);
 		swcTypes.add(SWC_CUSTOM_LABEL);
 		return swcTypes;
 	}
@@ -1851,8 +1851,8 @@ public class Path implements Comparable<Path> {
 		swcTypes.add(SWC_AXON);
 		swcTypes.add(SWC_DENDRITE);
 		swcTypes.add(SWC_APICAL_DENDRITE);
-		swcTypes.add(SWC_FORK_POINT);
-		swcTypes.add(SWC_END_POINT);
+		//swcTypes.add(SWC_FORK_POINT);
+		//swcTypes.add(SWC_END_POINT);
 		swcTypes.add(SWC_CUSTOM);
 		return swcTypes;
 	}

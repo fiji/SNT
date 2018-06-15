@@ -22,6 +22,7 @@
 
 package tracing;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.scijava.util.ColorRGB;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -40,9 +42,10 @@ import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInImage;
 
 /**
- * Utility class to access a Collection of Paths. Note a "Tree" here is
- * literally a collection of {@link Path}s and it does not reflect graph theory
- * terminology.
+ * Utility class to access a Collection of Paths. A Tree is the preferred way to
+ * group, access and manipulate {@link Path}s that share something in common,
+ * specially when scripting SNT. Note that a "Tree" here is literally a
+ * collection of {@link Path}s and it does not reflect graph theory terminology.
  *
  * @author Tiago Ferreira
  */
@@ -55,14 +58,14 @@ public class Tree {
 	private String label;
 
 	/**
-	 * Instantiates a new empty tree.
+	 * Instantiates a new empty Tree.
 	 */
 	public Tree() {
 		tree = new ArrayList<>();
 	}
 
 	/**
-	 * Instantiates a new tree from a set of paths.
+	 * Instantiates a new Tree from a set of paths.
 	 *
 	 * @param paths
 	 *            the Collection of paths forming this tree. Null not allowed.
@@ -86,7 +89,7 @@ public class Tree {
 	}
 
 	/**
-	 * Instantiates a new tree from a SWC or traces file
+	 * Instantiates a new tree from a SWC or TRACES file
 	 *
 	 * @param filename
 	 *            the absolute file path of the imported file
@@ -103,7 +106,7 @@ public class Tree {
 	}
 
 	/**
-	 * Instantiates a new tree from a filtered SWC or traces file.
+	 * Instantiates a new tree from a filtered SWC or TRACES file.
 	 *
 	 * @param filename
 	 *            the absolute file path of the imported file
@@ -118,13 +121,13 @@ public class Tree {
 	}
 
 	/**
-	 * Adds a new Path to this tree.
+	 * Adds a new Path to this Tree.
 	 *
 	 * @param p
 	 *            the Path to be added
 	 */
-	public void addPath(final Path p) {
-		tree.add(p);
+	public boolean addPath(final Path p) {
+		return tree.add(p);
 	}
 
 	// /**
@@ -137,7 +140,7 @@ public class Tree {
 	// }
 
 	/**
-	 * Replaces all Paths in this tree.
+	 * Replaces all Paths in this Tree.
 	 *
 	 * @param paths
 	 *            the replacing Paths
@@ -167,10 +170,7 @@ public class Tree {
 	}
 
 	/**
-	 * Returns true if this tree contains no Paths.
-	 *
-	 * @return true if this tree contains no elements.
-	 *
+	 * @return true if this tree contains no Paths, false otherwise
 	 */
 	public boolean isEmpty() {
 		return tree.isEmpty();
@@ -212,6 +212,47 @@ public class Tree {
 	}
 
 	/**
+	 * Assigns an SWC type label to all the Paths in this Tree.
+	 *
+	 * @param type
+	 *            the SWC type (e.g., {@link Path#SWC_AXON},
+	 *            {@link Path#SWC_DENDRITE}, etc.)
+	 */
+	public void setType(final int type) {
+		tree.stream().forEach(p -> p.setSWCType(type));
+	}
+
+	/**
+	 * Assigns an SWC type label to all the Paths in this Tree.
+	 *
+	 * @param type
+	 *            the SWC type (e.g., "soma", "axon", "(basal) dendrite", "apical
+	 *            dendrite", etc.)
+	 */
+	public void setSWCType(final String type) {
+		String inputType = (type == null) ? Path.SWC_UNDEFINED_LABEL : type.trim().toLowerCase();
+		switch (inputType) {
+		case "dendrite":
+		case "dend":
+			inputType = Path.SWC_DENDRITE_LABEL;
+			break;
+		case "":
+		case "none":
+		case "unknown":
+		case "undef":
+			inputType = Path.SWC_UNDEFINED_LABEL;
+			break;
+		default:
+			break; // keep input
+		}
+		final int labelIdx = Path.getSWCtypeNames().indexOf(type);
+		if (labelIdx == -1)
+			throw new IllegalArgumentException("Unrecognized SWC-type label:" + type);
+		final int intType = Path.getSWCtypes().get(labelIdx);
+		tree.stream().forEach(p -> p.setSWCType(intType));
+	}
+
+	/**
 	 * Extracts the SWC-type flags present in this Tree.
 	 *
 	 * @return the set of SWC type(s) (e.g., {@link Path#SWC_AXON},
@@ -224,6 +265,22 @@ public class Tree {
 			types.add(it.next().getSWCType());
 		}
 		return types;
+	}
+
+	/**
+	 * Specifies the offset to be used when rendering this Path in a
+	 * {@link TracerCanvas}. Path coordinates remain unaltered.
+	 *
+	 * @param xOffset
+	 *            the x offset (in pixels)
+	 * @param yOffset
+	 *            the y offset (in pixels)
+	 * @param zOffset
+	 *            the z offset (in pixels)
+	 */
+	public void applyCanvasOffset(final double xOffset, final double yOffset, final double zOffset) {
+		final PointInImage offset = new PointInImage(xOffset, yOffset, zOffset);
+		tree.stream().forEach(p -> p.setCanvasOffset(offset));
 	}
 
 	/**
@@ -249,9 +306,12 @@ public class Tree {
 	/**
 	 * Scales the tree by the specified scaling factors.
 	 *
-	 * @param xScale the scaling factor for x coordinates
-	 * @param yScale the scaling factor for y coordinates
-	 * @param zScale the scaling factor for z coordinates
+	 * @param xScale
+	 *            the scaling factor for x coordinates
+	 * @param yScale
+	 *            the scaling factor for y coordinates
+	 * @param zScale
+	 *            the scaling factor for z coordinates
 	 */
 	public void scale(final double xScale, final double yScale, final double zScale) {
 		for (final Path p : tree) {
@@ -366,12 +426,36 @@ public class Tree {
 	}
 
 	/**
-	 * Returns the number of Paths in this tree.
-	 *
-	 * @return the number of elements in this collection
+	 * @return Returns the number of paths in this tree.
 	 */
 	public int size() {
 		return tree.size();
+	}
+
+	/**
+	 * Assigns a color to all the paths in this tree
+	 *
+	 * @param color
+	 *            the color to be applied
+	 */
+	public void setColor(final ColorRGB color) {
+		final Color c = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+		tree.stream().forEach(p -> p.setColor(c));
+	}
+
+	/**
+	 * Assigns a fixed radius to all the nodes in this tree
+	 *
+	 * @param r
+	 *            the radius to be assigned. Setting it to 0 or Double.NaN removes
+	 *            the radius attribute from the Tree
+	 */
+	public void setRadii(final double r) {
+		if (Double.isNaN(r) || r == 0d) {
+			tree.stream().forEach(p -> p.radiuses = null);
+		} else {
+			tree.stream().forEach(p -> Arrays.fill(p.radiuses, r));
+		}
 	}
 
 	/**

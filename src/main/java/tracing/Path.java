@@ -2125,9 +2125,9 @@ public class Path implements Comparable<Path> {
 		setSWCType(newSWCType, true);
 	}
 
-	public void setSWCType(final int newSWCType, final boolean alsoSetInFittedVersion) {
-		if (newSWCType < 0 || newSWCType >= swcTypeNames.length)
-			throw new RuntimeException("BUG: Unknown SWC type " + newSWCType);
+	protected void setSWCType(final int newSWCType, final boolean alsoSetInFittedVersion) {
+		if (newSWCType < 0)
+			throw new IllegalArgumentException("BUG: Unknown SWC type " + newSWCType);
 		swcType = newSWCType;
 		if (alsoSetInFittedVersion) {
 			/*
@@ -2136,7 +2136,7 @@ public class Path implements Comparable<Path> {
 			 * called on the fitted version by mistake instead:
 			 */
 			if (isFittedVersionOfAnotherPath() && fittedVersionOf.getSWCType() != newSWCType)
-				throw new RuntimeException("BUG: only call setSWCType on the unfitted path");
+				throw new IllegalArgumentException("BUG: only call setSWCType on the unfitted path");
 			if (fitted != null)
 				fitted.setSWCType(newSWCType);
 		}

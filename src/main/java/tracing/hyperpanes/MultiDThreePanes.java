@@ -28,6 +28,7 @@ import java.awt.image.ColorModel;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.ImageCanvas;
+import ij.gui.Overlay;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
 import ij.plugin.RGBStackConverter;
@@ -46,6 +47,8 @@ public class MultiDThreePanes implements PaneOwner {
 	public static final int XZ_PLANE = 1; // constant y
 	/** SNT's ZY view */
 	public static final int ZY_PLANE = 2; // constant x
+
+	protected static final String MIP_OVERLAY_IDENTIFIER = "SNT-MIP-OVERLAY";
 
 	protected ImagePlus xy;
 	protected ImagePlus xz;
@@ -238,6 +241,17 @@ public class MultiDThreePanes implements PaneOwner {
 		if (!single_pane) {
 			xz_canvas.setCursorText(label);
 			zy_canvas.setCursorText(label);
+		}
+	}
+
+	public void removeMIPOverlayAllPanes() {
+		for (final ImagePlus imp : new ImagePlus[] { xy, xz, zy }) {
+			if (imp == null) continue;
+			final Overlay overlay = imp.getOverlay();
+			if (overlay != null && overlay.size() > 0) {
+				overlay.remove(MIP_OVERLAY_IDENTIFIER);
+				imp.getCanvas().repaint();
+			}
 		}
 	}
 

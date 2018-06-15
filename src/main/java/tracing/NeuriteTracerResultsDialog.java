@@ -776,6 +776,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				}
 				plugin.reloadImage(newC, newT);
 				preprocess.setSelected(false);
+				plugin.showMIPOverlays(0);
 				showStatus(reload ? "Image reloaded into memory..." : null);
 			}
 		});

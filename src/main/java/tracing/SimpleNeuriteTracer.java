@@ -22,8 +22,6 @@
 
 package tracing;
 
-import io.scif.services.DatasetIOService;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Window;
@@ -39,10 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
-import net.imagej.Dataset;
-import net.imagej.axis.Axes;
-import net.imagej.legacy.LegacyService;
 
 import org.scijava.Context;
 import org.scijava.NullContextException;
@@ -72,12 +66,18 @@ import ij.measure.Calibration;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
+import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 import ij.process.ShortProcessor;
 import ij3d.Content;
 import ij3d.ContentConstants;
 import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
+import io.scif.services.DatasetIOService;
+import net.imagej.Dataset;
+import net.imagej.axis.Axes;
+import net.imagej.legacy.LegacyService;
 import tracing.gui.GuiUtils;
 import tracing.gui.SWCImportOptionsDialog;
 import tracing.gui.SigmaPalette;
@@ -122,8 +122,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected static final String targetBallName = "Target point";
 	protected static final int ballRadiusMultiplier = 5;
 
-	private static final String OVERLAY_IDENTIFIER = "SNT-MIP-OVERLAY";
-
 	protected PathAndFillManager pathAndFillManager;
 	protected SNTPrefs prefs;
 	private GuiUtils guiUtils;
@@ -165,6 +163,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected String spacing_units = "";
 	protected int channel;
 	protected int frame;
+	private LUT lut;
 
 	/* loaded pixels (main image) */
 	protected byte[][] slices_data_b;
@@ -478,6 +477,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				statusService.showProgress(0, 0);
 				break;
 		}
+		updateLut();
 	}
 
 	public void startUI() {
@@ -1744,7 +1744,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * with multidimensional images.
 	 *
 	 * @return the loaded data corresponding to the C,T position currently being
-	 *         traced
+	 *         traced. This image is always a single channel image.
 	 */
 	protected ImagePlus getLoadedDataAsImp() {
 		final ImageStack stack = new ImageStack(xy.getWidth(), xy.getHeight());
@@ -1778,7 +1778,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				throw new IllegalArgumentException("Bug: unsupported type somehow");
 		}
 		final ImagePlus imp = new ImagePlus("C" + channel + "F" + frame, stack);
-		imp.setCalibration(xy.getCalibration());
+		updateLut(); // If the LUT meanwhile changed, update it
+		imp.setLut(lut); //ignored if null
+		imp.copyScale(xy);
 		return imp;
 	}
 
@@ -2321,63 +2323,122 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		clickForTrace(p[0] * x_spacing, p[1] * y_spacing, p[2] * z_spacing, false);
 	}
 
-	/**
-	 * Overlays a semi-transparent MIP over the tracing canvas(es).
-	 *
-	 * @param opacity (alpha), in the range 0.0-1.0, where 0.0 is fully
-	 *          transparent and 1.0 is fully opaque. Setting opacity to zero
-	 *          clears previous MIPs.
-	 */
-	public void showMIPOverlays(final double opacity) {
-		final ArrayList<ImagePlus> allImages = new ArrayList<>();
-		allImages.add(xy);
-		if (!single_pane) {
-			allImages.add(xz);
-			allImages.add(zy);
+	private ImagePlus[] getLoadedDataGray8Panes() {
+
+		final ImagePlus xy8 = getLoadedDataAsImp();
+		ImagePlus xz8 = null;
+		ImagePlus zy8 = null;
+		if (xy8.getType() != ImagePlus.GRAY8) {
+			final boolean doScaling = ImageConverter.getDoScaling();
+			ImageConverter.setDoScaling(true);
+			new ImageConverter(xy8).convertToGray8();
+			ImageConverter.setDoScaling(doScaling);
 		}
 
-		// Create a MI Z-projection of the active channel
-		for (final ImagePlus imp : allImages) {
-			if (imp == null || imp.getNSlices() == 1) continue;
-			Overlay existingOverlay = imp.getOverlay();
-			if (opacity > 0) {
-				final ZProjector zp = new ZProjector(new ImagePlus("", imp
-					.getChannelProcessor()));
-				zp.setStartSlice(1);
-				zp.setStopSlice(imp.getNSlices());
-				zp.setMethod(ZProjector.MAX_METHOD);
-				if (imp.getType() == ImagePlus.COLOR_RGB) {
-					zp.doRGBProjection(); // 2017.10: side views of hyperstacks are RGB
-																// images
+		if (!single_pane) {
+
+			final ImageStack xyStack = xy8.getStack();
+			final byte[][] slicesData = new byte[depth][];
+			for (int z = 1; z <= depth; ++z)
+				slicesData[z-1] = (byte[]) xyStack.getPixels(z);
+
+			// Create the ZY slices:
+			final ImageStack zy_stack = new ImageStack(depth, height);
+			for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
+				final byte[] sliceBytes = new byte[depth * height];
+				for (int z_in_original = 0; z_in_original < depth; ++z_in_original) {
+					for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
+						final int x_in_left = z_in_original;
+						final int y_in_left = y_in_original;
+						sliceBytes[y_in_left * depth + x_in_left] = slicesData[z_in_original][y_in_original * width
+								+ x_in_original];
+					}
 				}
-				else {
-					zp.doHyperStackProjection(false);
+
+				final ByteProcessor bp = new ByteProcessor(depth, height);
+				bp.setPixels(sliceBytes);
+				zy_stack.addSlice(null, bp);
+			}
+
+			zy8 = new ImagePlus("ZY 8-bit", zy_stack);
+			zy8.setLut(lut);
+			final Calibration zyCal = xy.getCalibration().copy();
+			zyCal.pixelWidth = xy8.getCalibration().pixelDepth;
+			zyCal.pixelDepth = xy8.getCalibration().pixelWidth;
+			zy8.setCalibration(zyCal);
+
+			// Create the XZ slices:
+			final ImageStack xz_stack = new ImageStack(width, depth);
+			for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
+				final byte[] sliceBytes = new byte[width * depth];
+				for (int z_in_original = 0; z_in_original < depth; ++z_in_original) {
+					final int y_in_top = z_in_original;
+					System.arraycopy(slicesData[z_in_original], y_in_original * width, sliceBytes, y_in_top * width,
+							width);
 				}
-				final ImagePlus overlay = zp.getProjection();
-				// (This logic is taken from OverlayCommands.)
-				final ImageRoi roi = new ImageRoi(0, 0, overlay.getProcessor());
-				roi.setName(OVERLAY_IDENTIFIER);
-				roi.setOpacity(opacity);
-				if (existingOverlay == null) existingOverlay = new Overlay();
-				existingOverlay.add(roi);
+				final ByteProcessor bp = new ByteProcessor(width, depth);
+				bp.setPixels(sliceBytes);
+				xz_stack.addSlice(null, bp);
 			}
-			else {
-				removeMIPfromOverlay(existingOverlay);
-			}
-			imp.setOverlay(existingOverlay);
-			imp.setHideOverlay(false);
+
+			xz8 = new ImagePlus("XZ 8-bit", xz_stack);
+			xz8.setLut(lut);
+			final Calibration xzCal = xy8.getCalibration().copy();
+			xzCal.pixelHeight = xy8.getCalibration().pixelDepth;
+			xzCal.pixelDepth = xy8.getCalibration().pixelHeight;
+			xz8.setCalibration(xzCal);
 		}
+
+		return new ImagePlus[] { xy8, xz8, zy8 };
+
 	}
 
-	private void removeMIPfromOverlay(final Overlay overlay) {
-		if (overlay != null && overlay.size() > 0) {
-			for (int i = overlay.size() - 1; i >= 0; i--) {
-				final String roiName = overlay.get(i).getName();
-				if (roiName != null && roiName.equals(OVERLAY_IDENTIFIER)) {
-					overlay.remove(i);
-					return;
-				}
-			}
+	private void updateLut() {
+		final LUT[] luts = xy.getLuts(); // never null
+		if (luts.length > 0 ) lut = luts[channel-1];
+	}
+
+	/**
+	 * Overlays a semi-transparent MIP (8-bit scaled) of the data being traced over
+	 * the tracing canvas(es). Does nothing if image is 2D. Note that with
+	 * multidimensional images, only the C,T position being traced is projected.
+	 *
+	 * @param opacity
+	 *            (alpha), in the range 0.0-1.0, where 0.0 is none (fully
+	 *            transparent) and 1.0 is fully opaque. Setting opacity to zero
+	 *            clears previous MIPs.
+	 */
+	public void showMIPOverlays(final double opacity) {
+		if (is2D()) return;
+
+		if (opacity == 0d) {
+			removeMIPOverlayAllPanes();
+			this.unzoomAllPanes();
+			return;
+		}
+
+		final ImagePlus[] paneImps = new ImagePlus[] { xy, xz, zy };
+		final ImagePlus[] paneMips = getLoadedDataGray8Panes();
+
+		// Create a MIP Z-projection of the active channel
+		for (int i = 0; i < paneImps.length; i++) {
+			final ImagePlus paneImp = paneImps[i];
+			final ImagePlus mipImp = paneMips[i];
+			if (paneImp == null || mipImp == null || paneImp.getNSlices() == 1)
+				continue;
+
+			Overlay existingOverlay = paneImp.getOverlay();
+			if (existingOverlay == null)
+				existingOverlay = new Overlay();
+			final ImagePlus overlay = ZProjector.run(mipImp, "max");
+
+			// (This logic is taken from OverlayCommands.)
+			final ImageRoi roi = new ImageRoi(0, 0, overlay.getProcessor());
+			roi.setName(MIP_OVERLAY_IDENTIFIER);
+			roi.setOpacity(opacity);
+			existingOverlay.add(roi);
+			paneImp.setOverlay(existingOverlay);
+			paneImp.setHideOverlay(false);
 		}
 	}
 
@@ -2442,18 +2503,17 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		// Dispose xz/zy images unless the user stored some annotations (ROIs)
 		// on the image overlay or modified them somehow. In that case, restore
 		// them to the user
+		removeMIPOverlayAllPanes();
 		if (!single_pane) {
 			final ImagePlus[] impPanes = { xz, zy };
 			final StackWindow[] winPanes = { xz_window, zy_window };
 			for (int i = 0; i < impPanes.length; ++i) {
 				final Overlay overlay = impPanes[i].getOverlay();
-				removeMIPfromOverlay(overlay);
 				if (!impPanes[i].changes && (overlay == null || impPanes[i].getOverlay()
 					.size() == 0)) impPanes[i].close();
 				else {
 					winPanes[i] = new StackWindow(impPanes[i]);
 					winPanes[i].getCanvas().add(ij.Menus.getPopupMenu());
-					removeMIPfromOverlay(overlay);
 					impPanes[i].setOverlay(overlay);
 				}
 			}
@@ -2462,7 +2522,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final Overlay overlay = (xy == null) ? null : xy.getOverlay();
 		if (original_xy_canvas != null && xy != null && xy.getImage() != null) {
 			xy_window = new StackWindow(xy, original_xy_canvas);
-			removeMIPfromOverlay(overlay);
 			xy.setOverlay(overlay);
 			xy_window.getCanvas().add(ij.Menus.getPopupMenu());
 		}

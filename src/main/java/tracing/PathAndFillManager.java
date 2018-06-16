@@ -2491,7 +2491,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public void update3DViewerContents() {
 		if (plugin != null && !plugin.use3DViewer)
 			return;
-		final boolean showOnlySelectedPaths = plugin.getShowOnlySelectedPaths();
+		final boolean showOnlySelectedPaths = plugin.isOnlySelectedPathsVisible();
 		// Now iterate over all the paths:
 		for (Path p : allPaths) {
 

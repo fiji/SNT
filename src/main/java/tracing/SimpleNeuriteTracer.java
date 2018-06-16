@@ -2028,7 +2028,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		this.single_pane = single_pane || is2D();
 	}
 
-	public boolean getShowOnlySelectedPaths() {
+	public boolean isOnlySelectedPathsVisible() {
 		return showOnlySelectedPaths;
 	}
 

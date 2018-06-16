@@ -93,7 +93,7 @@ public class LegacyTracerCanvas extends TracerCanvas {
 
 		final SimpleNeuriteTracer plugin = pathAndFillManager.getPlugin();
 
-		final boolean showOnlySelectedPaths = plugin.getShowOnlySelectedPaths();
+		final boolean showOnlySelectedPaths = plugin.isOnlySelectedPathsVisible();
 
 		final Color selectedColor = plugin.selectedColor;
 		final Color deselectedColor = plugin.deselectedColor;

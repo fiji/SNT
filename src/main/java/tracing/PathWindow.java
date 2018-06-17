@@ -251,7 +251,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		jmi.addActionListener(multiPathListener);
 		fitMenu.add(jmi);
 
-		final JMenu advanced = new JMenu("Plugins");
+		final JMenu advanced = new JMenu("Tools");
 		menuBar.add(advanced);
 		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_PATH_CMD);
 		jmi.addActionListener(multiPathListener);

@@ -10,7 +10,7 @@
 
 
 '''
-file:       Measure_Multiple_Traces.py
+file:       Measure_Multiple_Files.py
 author:     Tiago Ferreira
 version:    20180531
 info:       Bulk measurements of SWC files using SNT
@@ -25,7 +25,7 @@ from net.imagej.table import DefaultGenericTable
 
 def get_swc_files(directory, filtering_string):
     """Returns a list containing the paths of files in the specified
-       directory. The list will only include (e)SWC and TRACES files
+       directory. The list will only include SWC and TRACES files
        whose filename contains the specified string."""
     files = []
     for (dirpath, dirnames, filenames) in os.walk(directory):

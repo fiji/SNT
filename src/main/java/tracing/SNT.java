@@ -50,6 +50,7 @@ public class SNT {
 	public static final String VERSION = getVersion();
 
 	private static boolean initialized;
+	private static SimpleNeuriteTracer plugin;
 
 	private SNT() {}
 
@@ -68,6 +69,15 @@ public class SNT {
 
 	protected static synchronized void error(final String string) {
 		if (SNT.isDebugMode()) nonDebugError(string);
+	}
+
+	protected static void setPlugin(final SimpleNeuriteTracer plugin) {
+		SNT.plugin = plugin;
+		if (context == null && plugin != null) context = plugin.getContext();
+	}
+
+	public static SimpleNeuriteTracer getPluginInstance() {
+		return plugin;
 	}
 
 	protected static synchronized void nonDebugError(final String string) {

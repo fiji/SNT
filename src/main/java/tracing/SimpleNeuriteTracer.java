@@ -247,6 +247,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected SimpleNeuriteTracer() {
 		final Context context = (Context) IJ.runPlugIn("org.scijava.Context", "");
 		context.inject(this);
+		SNT.setPlugin(this);
 		pathAndFillManager = new PathAndFillManager(this);
 		nonInteractiveSession = true;
 		disableAstar(true);
@@ -264,6 +265,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				"RGB images are not supported. Please convert to multichannel and re-run");
 
 		context.inject(this);
+		SNT.setPlugin(this);
 		xy = sourceImage;
 		width = sourceImage.getWidth();
 		height = sourceImage.getHeight();
@@ -362,6 +364,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		nonInteractiveSession = true;
 
 		context.inject(this);
+		SNT.setPlugin(this);
 		prefs = new SNTPrefs(this);
 		prefs.loadPluginPrefs();
 

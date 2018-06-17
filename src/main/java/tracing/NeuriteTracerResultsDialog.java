@@ -530,6 +530,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		fw.dispose();
 		dispose();
 		plugin.closeAndResetAllPanes();
+		SNT.setPlugin(null);
 	}
 
 	private void setEnableAutoTracingComponents(final boolean enable) {

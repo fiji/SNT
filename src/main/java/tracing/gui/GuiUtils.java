@@ -31,6 +31,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -40,22 +41,37 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JSpinner.DefaultEditor;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.LookAndFeel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
@@ -66,6 +82,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.plaf.FontUIResource;
 
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.ui.swing.SwingDialog;
@@ -466,12 +483,63 @@ public class GuiUtils {
 	}
 
 	public static void setSystemLookAndFeel() {
+		if (PlatformUtils.isMac()) return;
 		try {
 			// With Ubuntu and java 1.9.0 we need to ensure we're using
 			// GTK+ L&F otherwise no scaling occurs with hiDPI screens
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			checkGTKLookAndFeel();
 		} catch (final Exception ignored) {
 			// move on
+		}
+	}
+
+	/** HACK Font too big on ubuntu: https://stackoverflow.com/a/31345102 */
+	private static void checkGTKLookAndFeel() throws Exception {
+		final LookAndFeel look = UIManager.getLookAndFeel();
+		if (!look.getID().equals("GTK"))
+			return;
+		final int dpi = Toolkit.getDefaultToolkit().getScreenResolution();
+		if (dpi <= 72)
+			return;
+		final float scaleFont = dpi / 72;
+		new JFrame();
+		new JButton();
+		new JComboBox<>();
+		new JRadioButton();
+		new JCheckBox();
+		new JTextArea();
+		new JTextField();
+		new JTable();
+		new JToggleButton();
+		new JSpinner();
+		new JSlider();
+		new JTabbedPane();
+		new JMenu();
+		new JMenuBar();
+		new JMenuItem();
+
+		Object styleFactory;
+		final Field styleFactoryField = look.getClass().getDeclaredField("styleFactory");
+		styleFactoryField.setAccessible(true);
+		styleFactory = styleFactoryField.get(look);
+
+		final Field defaultFontField = styleFactory.getClass().getDeclaredField("defaultFont");
+		defaultFontField.setAccessible(true);
+		final Font defaultFont = (Font) defaultFontField.get(styleFactory);
+		FontUIResource newFontUI;
+		newFontUI = new FontUIResource(defaultFont.deriveFont(defaultFont.getSize() - scaleFont));
+		defaultFontField.set(styleFactory, newFontUI);
+
+		final Field stylesCacheField = styleFactory.getClass().getDeclaredField("stylesCache");
+		stylesCacheField.setAccessible(true);
+		final Object stylesCache = stylesCacheField.get(styleFactory);
+		final Map<?, ?> stylesMap = (Map<?, ?>) stylesCache;
+		for (final Object mo : stylesMap.values()) {
+			final Field f = mo.getClass().getDeclaredField("font");
+			f.setAccessible(true);
+			final Font fo = (Font) f.get(mo);
+			f.set(mo, fo.deriveFont(fo.getSize() - scaleFont));
 		}
 	}
 

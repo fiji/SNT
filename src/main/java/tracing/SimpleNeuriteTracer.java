@@ -1405,6 +1405,117 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		updateAllViewers();
 	}
 
+	/**
+	 * Automatically traces a path from a point A to a point B. See
+	 * {@link #autoTrace(List, PointInImage)} for details.
+	 *
+	 * @param start
+	 *            the {@link PointInImage} the starting point of the path
+	 * @param end
+	 *            the {@link PointInImage} the terminal point of the path
+	 * @param forkPoint
+	 *            the {@link PointInImage} fork point of the parent {@link Path}
+	 *            from which the searched path should branch off, or null if the the
+	 *            path should not have any parent.
+	 * @return the path a reference to the computed path.
+	 * @see #autoTrace(List, PointInImage)
+	 */
+	public Path autoTrace(final PointInImage start, final PointInImage end, final PointInImage forkPoint) {
+		final ArrayList<PointInImage> list = new ArrayList<PointInImage>();
+		list.add(start);
+		list.add(end);
+		return autoTrace(list, forkPoint);
+	}
+
+	/**
+	 * Automatically traces a path from a list of points and adds it to the active
+	 * {@link PathAndFillManager} instance. Note that this method still requires
+	 * SNT's UI. For headless auto-tracing have a look at {@link TracerThread}.
+	 * <p>
+	 * SNT's UI will remain blocked in "search mode" until the Path computation
+	 * completes. Tracing occurs through the active {@link SearchInterface} selected
+	 * in the UI, i.e., {@link TracerThread} (the default A* search),
+	 * {@link TubularGeodesicsTracer}, etc.
+	 * <p>
+	 * All input {@link PointInImage} must be specified in real world coordinates.
+	 * <p>
+	 *
+	 * @param pointList
+	 *            the list of {@link PointInImage} containing the nodes to be used
+	 *            as target goals during the search. If the search cannot converge
+	 *            into a target point, such point is omitted from path, if
+	 *            Successful, target point will be included in the final path. the
+	 *            final path. The first point in the list is the start of the path,
+	 *            the last its terminus. Null objects not allowed.
+	 * @param forkPoint
+	 *            the {@link PointInImage} fork point of the parent {@link Path}
+	 *            from which the searched path should branch off, or null if the the
+	 *            path should not have any parent.
+	 * @return the path a reference to the computed path. It is added to the Path
+	 *         Manager list.If a path cannot be fully computed from the specified
+	 *         list of points, a single-point path is generated.
+	 */
+	public Path autoTrace(final List<PointInImage> pointList, final PointInImage forkPoint) {
+		if (pointList == null || pointList.size() == 0)
+			throw new IllegalArgumentException("pointList cannot be null or empty");
+
+		// Set UI. Ensure there are no incomplete tracings around
+		final boolean cfTemp = getUI().confirmTemporarySegments;
+		if (getUIState() != NeuriteTracerResultsDialog.WAITING_TO_START_PATH)
+			getUI().abortCurrentOperation();
+		getUI().confirmTemporarySegments = false;
+
+		// Start path from first point in list
+		final PointInImage start = pointList.get(0);
+		startPath(start.x, start.y, start.z, forkPoint);
+
+		final int secondNodeIdx = (pointList.size() == 1) ? 0 : 1;
+		final int nNodes = pointList.size();
+
+		// Now keep appending nodes to temporary path
+		for (int i = secondNodeIdx; i < nNodes; i++) {
+
+			try {
+				// Block and update UI
+				resultsDialog.changeState(NeuriteTracerResultsDialog.SEARCHING);
+				showStatus(i, nNodes, "Finding path to node " + i + "/" + nNodes);
+
+				// Append node and wait for search to be finished
+				final PointInImage node = pointList.get(i);
+				testPathTo(node.x, node.y, node.z, null);
+				((Thread) getActiveSearchingThread()).join();
+
+			} catch (final NullPointerException ex) {
+				// do nothing: search thread has already terminated or node is null
+			} catch (final InterruptedException ex) {
+				showStatus(0, 0, "Search interrupted!");
+				SNT.error("Search interrupted", ex);
+			} catch (final ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
+				// It is likely that search failed for this node. These will be triggered if
+				// e.g., point- is out of image bounds,
+				showStatus(i, nNodes, "ERROR: Search failed!...");
+				SNT.error("Search failed for node " + i);
+				// continue;
+			} finally {
+				showStatus(i, pointList.size(), "Confirming segment...");
+				confirmTemporary();
+			}
+		}
+		finishedPath();
+
+		// restore UI state
+		showStatus(0, 0, "Tracing Complete");
+		getUI().confirmTemporarySegments = cfTemp;
+
+		return pathAndFillManager.getPath(pathAndFillManager.size() - 1);
+	}
+
+	private SearchInterface getActiveSearchingThread() {
+		if (manualSearchThread != null) return manualSearchThread;
+		if (tubularGeodesicsThread != null) return tubularGeodesicsThread;
+		return currentSearchThread;
+	}
+
 	synchronized public void finishedPath() {
 
 		// Is there an unconfirmed path? If so, confirm it first
@@ -1421,10 +1532,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			return;
 		}
 
-		if (justFirstPoint() && !getConfirmation(
-			"Create a single point path? (such path is typically used to mark the cell soma)",
-			"Create Single Point Path?"))
-		{
+		if (justFirstPoint() && resultsDialog.confirmTemporarySegments
+				&& !getConfirmation("Create a single point path? (such path is typically used to mark the cell soma)",
+						"Create Single Point Path?")) {
 			return;
 		}
 

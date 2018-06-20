@@ -39,9 +39,9 @@ import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInImage;
 
 /**
- * Converts SNT paths into (IJ1) ROIs.
+ * Converts SNT {@link Path}s into (IJ1) ROIs.
  *
- * @see {@link RoiExporterCmd}
+ * @see tracing.plugin.ROIExporterCmd
  *
  * @author Tiago Ferreira
  */
@@ -83,7 +83,7 @@ public class RoiConverter extends TreeAnalyzer {
 	}
 
 	/**
-	 * Converts all the tips associated with the parsed paths into {@link PointROi}s
+	 * Converts all the tips associated with the parsed paths into {@link ij.gui.PointRoi}s
 	 *
 	 * @see TreeAnalyzer#getTips()
 	 * @param overlay
@@ -97,7 +97,7 @@ public class RoiConverter extends TreeAnalyzer {
 
 	/**
 	 * Converts all the branch points associated with the parsed paths into
-	 * {@link PointROi}s
+	 * {@link ij.gui.PointRoi}s
 	 *
 	 * @see TreeAnalyzer#getBranchPoints()
 	 * @param overlay
@@ -136,7 +136,10 @@ public class RoiConverter extends TreeAnalyzer {
 	 * Sets the line width of converted segment paths. Set it to -1 to have ROIs
 	 * plotted using the average diameter of the path
 	 *
-	 * @see {@link Path#getMeanRadius()}, {@link Roi#getStrokeWidth()}
+	 * @param width
+	 *            the new stroke width
+	 * @see tracing.Path#getMeanRadius
+	 * @see ij.gui.Roi#getStrokeWidth
 	 */
 	public void setStrokeWidth(final int width) {
 		this.width = width;

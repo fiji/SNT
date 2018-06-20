@@ -190,7 +190,7 @@ public class GuiUtils {
 	 * @param panes
 	 *            the panes a list of strings specifying which tabs should be
 	 *            displayed. In most platforms this includes: "Swatches", "HSB" and
-	 *            "RGB". Note that e.g., the GTK L&F may only include the default
+	 *            "RGB". Note that e.g., the GTK L&amp;F may only include the default
 	 *            GtkColorChooser pane
 	 * @return the color
 	 */

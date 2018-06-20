@@ -2264,9 +2264,9 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	 * Gets the Image associated with a view pane.
 	 *
 	 * @param pane the flag specifying the view either
-	 *          {@link MultiDThreePanes.XY_PLANE},
-	 *          {@link MultiDThreePanes.XZ_PLANE} or
-	 *          {@link MultiDThreePanes.ZY_PLANE}.
+	 *          {@link MultiDThreePanes#XY_PLANE},
+	 *          {@link MultiDThreePanes#XZ_PLANE} or
+	 *          {@link MultiDThreePanes#ZY_PLANE}.
 	 * @return the image associate with the specified view, or null if the view is
 	 *         not being displayed
 	 */

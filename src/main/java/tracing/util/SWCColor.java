@@ -35,12 +35,11 @@ public class SWCColor {
 
 	/**
 	 * Instantiates a new SWC color.
-	 *
+	 * 
 	 * @param color
 	 *            the AWT color
 	 * @param swcType
 	 *            the SWC type integer flag
-	 * @see {@link tracing.Path#getSWCtypeName}
 	 */
 	public SWCColor(final Color color, final int swcType) {
 		this.color = color;

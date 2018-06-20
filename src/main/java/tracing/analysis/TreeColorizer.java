@@ -44,7 +44,7 @@ import tracing.Tree;
 import tracing.plugin.DistributionCmd;
 
 /**
- * Class for color coding trees.
+ * Class for color coding {@link Tree}s.
  *
  * @author Tiago Ferreira
  *

@@ -51,9 +51,9 @@ import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
 /**
- * This class represents a traced path. It has methods to manipulate its points
- * (nodes) with sup-pixel accuracy, including drawing them onto threePanes-style
- * image canvases and export as ROIs.
+ * This class represents a traced segment. It has methods to manipulate its
+ * points (nodes) with sup-pixel accuracy, including drawing them onto
+ * threePane-style canvases, etc.
  **/
 public class Path implements Comparable<Path> {
 

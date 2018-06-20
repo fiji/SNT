@@ -38,10 +38,8 @@ class SimplePoint {
 
 /**
  * This is an implementation of the Ramer-Douglas-Peucker algorithm for
- * simplifying a curve represented by line-segments, as described here:
- *
- * {@link https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm}
- *
+ * simplifying a curve represented by line-segments, as described <a href=
+ * "https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm">here</a>
  */
 public class PathDownsampler {
 

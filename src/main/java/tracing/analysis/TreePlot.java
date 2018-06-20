@@ -57,7 +57,7 @@ import tracing.plugin.DistributionCmd;
 import tracing.util.PointInImage;
 
 /**
- * Class for rendering trees as 2D plots that can be exported as SVG, PNG or
+ * Class for rendering {@link Tree}s as 2D plots that can be exported as SVG, PNG or
  * PDF.
  *
  * @author Tiago Ferreira

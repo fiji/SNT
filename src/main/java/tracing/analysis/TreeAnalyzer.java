@@ -42,7 +42,7 @@ import tracing.Tree;
 import tracing.util.PointInImage;
 
 /**
- * Class for analysis of Trees
+ * Class for analysis of {@link Tree}s
  *
  * @author Tiago Ferreira
  */
@@ -111,7 +111,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Restricts analysis to Paths sharing the specified SWC flag(s).
 	 *
 	 * @param types
-	 *            the allowed SWC flags (e.g., {@link Path.SWC_AXON}, etc.)
+	 *            the allowed SWC flags (e.g., {@link Path#SWC_AXON}, etc.)
 	 */
 	public void restrictToSWCType(final int... types) {
 		initializeSnapshotTree();
@@ -122,7 +122,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Ignores Paths sharing the specified SWC flag(s).
 	 *
 	 * @param types
-	 *            the SWC flags to be ignored (e.g., {@link Path.SWC_AXON}, etc.)
+	 *            the SWC flags to be ignored (e.g., {@link Path#SWC_AXON}, etc.)
 	 */
 	public void ignoreSWCType(final int... types) {
 		initializeSnapshotTree();
@@ -260,7 +260,6 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @param groupByType
 	 *            if true measurements are grouped by SWC-type flag
 	 *
-	 * @see #getSWCtypes()
 	 * @see #run()
 	 * @see #setTable(DefaultGenericTable)
 	 */
@@ -276,7 +275,6 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @param groupByType
 	 *            if true measurements are grouped by SWC-type flag
 	 *
-	 * @see #getSWCtypes()
 	 * @see #run()
 	 * @see #setTable(DefaultGenericTable)
 	 */
@@ -318,7 +316,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 *
 	 * @param table
 	 *            the table to be used by the analyzer
-	 * @see #summarize(String)
+	 * @see #summarize(boolean)
 	 */
 	public void setTable(final DefaultGenericTable table) {
 		this.table = table;

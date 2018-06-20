@@ -178,7 +178,7 @@ public class PathNode {
 	 *
 	 * @param g
 	 *            the Graphics2D drawing instance
-	 * @param color
+	 * @param c
 	 *            the rendering color of this node. Note that this parameter is
 	 *            ignored if a color has already been defined through
 	 *            {@link Path#setNodeColors(Color[])}

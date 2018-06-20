@@ -30,7 +30,7 @@ import tracing.Tree;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of a
- * tree.
+ * {@link Tree}.
  *
  * @author Tiago Ferreira
  */

@@ -43,7 +43,7 @@ import tracing.Tree;
 import tracing.analysis.RoiConverter;
 
 /**
- * Command providing a GUI for {@link RoiExporterCmd} and allowing export of
+ * Command providing a GUI for {@link RoiConverter} and allowing export of
  * {@link Path}s to the IJ1 ROI Manager.
  *
  * @author Tiago Ferreira

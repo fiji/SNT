@@ -21,7 +21,7 @@
  */
 
 /**
- * Classes dealing with analysis of trees.
+ * Classes dealing with analysis of {@link tracing.Tree Tree}s.
  *
  * @author Tiago Ferreira
  */

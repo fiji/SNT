@@ -670,6 +670,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 					case EDITING_MODE:
 						if (noPathsError()) return;
+						plugin.setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
 						updateStatusText("Editing Mode. Tracing functions disabled...");
 						disableEverything();
 						keepSegment.setEnabled(false);

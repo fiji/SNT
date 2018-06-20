@@ -110,7 +110,7 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 					if (null == c)
 						return;
 					final Point3d point = picker.getPickPointGeometry(c, p.x, p.y);
-					final double diagonalLength = tracerPlugin.getStackDiagonalLength();
+					final double diagonalLength = tracerPlugin.getImpDiagonalLength();
 
 					/*
 					 * Find the nearest point on any path - we'll select that

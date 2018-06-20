@@ -295,7 +295,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		final Content c = picker.getPickedContent(p.x, p.y);
 		if (null == c) return null;
 		final Point3d point = picker.getPickPointGeometry(c, p.x, p.y);
-		final double diagonalLength = tracerPlugin.getStackDiagonalLength();
+		final double diagonalLength = tracerPlugin.getImpDiagonalLength();
 		final NearPoint np = tracerPlugin.getPathAndFillManager()
 			.nearestPointOnAnyPath(point.x, point.y, point.z, diagonalLength);
 		if (np == null) {

@@ -292,7 +292,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
 
-		final double diagonalLength = tracerPlugin.getStackDiagonalLength();
+		final double diagonalLength = tracerPlugin.getImpDiagonalLength();
 
 		/*
 		 * Find the nearest point on any path - we'll select that path...

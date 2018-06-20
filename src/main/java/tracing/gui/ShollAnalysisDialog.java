@@ -233,7 +233,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		c.insets = new Insets(margin, margin, 0, margin);
 		final JPanel separationPanel = new JPanel();
 		separationPanel.setBorder(null);
-		final JSpinner spinner = GuiUtils.doubleSpinner(0, 0, plugin.getLargestDimension() / 2,
+		final JSpinner spinner = GuiUtils.doubleSpinner(0, 0, getLargestDimension() / 2,
 				plugin.getMinimumSeparation(), 2);
 		spinner.addChangeListener(new ChangeListener() {
 
@@ -288,6 +288,13 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		setVisible(true);
 		toFront();
+	}
+
+	private double getLargestDimension() {
+		final ImagePlus imp = plugin.getImagePlus();
+		final Calibration cal = imp.getCalibration();
+		return Math.max(cal.pixelWidth * imp.getWidth(),
+				Math.max(cal.pixelHeight * imp.getHeight(), cal.pixelDepth * imp.getZ()));
 	}
 
 	@Override

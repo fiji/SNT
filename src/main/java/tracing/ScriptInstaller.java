@@ -174,8 +174,8 @@ class ScriptInstaller implements MenuKeyListener {
 					+ "My_SNT_script.py</tt>) <br><br>"
 					+ "To edit a listed script hold \"Shift\" while clicking on its menu entry.<br><br>"
 					+ "Several programming examples are available through the Script Editor's "
-					+ "<i>Templates>Neuroanatomy></i> menu.  Please submit a pull request if you would like"
-					+ " to have your scripts to be distributed with SNT.",
+					+ "<i>Templates>Neuroanatomy></i> menu.  Please submit a pull request to SNT source "
+					+ "code repository if you would like to have your scripts distributed with Fiji.",
 					"About SNT Scripts...");
 		});
 		return mItem;

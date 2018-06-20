@@ -537,15 +537,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return xy;
 	}
 
-	public double getLargestDimension() {
-		return Math.max(x_spacing * width, Math.max(y_spacing * height, z_spacing *
-			depth));
-	}
-
-	public double getStackDiagonalLength() {
-		return Math.sqrt((x_spacing * width) * (x_spacing * width) + (y_spacing *
-			height) * (y_spacing * height) + (z_spacing * depth) * (z_spacing *
-				depth));
+	/**
+	 * Returns the diagonal length of the image currently being traced.
+	 *
+	 * @return the diagonal length in spatially calibrated units
+	 */
+	public double getImpDiagonalLength() {
+		return Math.sqrt((x_spacing * width) * (x_spacing * width) + (y_spacing * height) * (y_spacing * height)
+				+ (z_spacing * depth) * (z_spacing * depth));
 	}
 
 	/* This overrides the method in ThreePanes... */
@@ -796,7 +795,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected void enableEditMode(final boolean enable) {
 		if (enable) {
 			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
-			setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
 			if (isUIready() && !getUI().nearbySlices()) getUI().togglePartsChoice();
 		}
 		else {
@@ -1306,7 +1304,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				hessianEnabled);
 
 			addThreadToDraw(currentSearchThread);
-			currentSearchThread.setDrawingColors(Color.CYAN, null);
+			currentSearchThread.setDrawingColors(Color.CYAN, null);//TODO: Make this color a preference
 			currentSearchThread.setDrawingThreshold(-1);
 			currentSearchThread.addProgressListener(this);
 			currentSearchThread.start();
@@ -1401,7 +1399,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setPathUnfinished(false);
 
 		resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
-
 		updateAllViewers();
 	}
 
@@ -1468,6 +1465,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		// Start path from first point in list
 		final PointInImage start = pointList.get(0);
 		startPath(start.x, start.y, start.z, forkPoint);
+		this.getImpDiagonalLength();
 
 		final int secondNodeIdx = (pointList.size() == 1) ? 0 : 1;
 		final int nNodes = pointList.size();
@@ -1518,19 +1516,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	synchronized public void finishedPath() {
 
-		// Is there an unconfirmed path? If so, confirm it first
-		if (temporaryPath != null) {
-			confirmTemporary();
-			finishedPath();
+		if (currentPath == null) {
+			// this can happen through repeated hotkey presses
+			discreteMsg("No temporary path to finish..."); 
 			return;
 		}
 
-		if (currentPath == null) {
-			discreteMsg("No temporary path to finish..."); // this can happen through
-																											// repeated shortcut
-																											// triggers
-			return;
-		}
+		// Is there an unconfirmed path? If so, confirm it first
+		if (temporaryPath != null) confirmTemporary();
 
 		if (justFirstPoint() && resultsDialog.confirmTemporarySegments
 				&& !getConfirmation("Create a single point path? (such path is typically used to mark the cell soma)",
@@ -1538,14 +1531,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			return;
 		}
 
-		final Path savedCurrentPath = currentPath;
-
 		if (justFirstPoint()) {
 			final PointInImage p = new PointInImage(last_start_point_x * x_spacing,
 				last_start_point_y * y_spacing, last_start_point_z * z_spacing);
-			savedCurrentPath.addPointDouble(p.x, p.y, p.z);
-			savedCurrentPath.endJoinsPoint = p;
-			savedCurrentPath.startJoinsPoint = p;
+			currentPath.addPointDouble(p.x, p.y, p.z);
+			currentPath.endJoinsPoint = p;
+			currentPath.startJoinsPoint = p;
 			cancelSearch(false);
 		}
 		else {
@@ -1553,15 +1544,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 
 		removeSphere(targetBallName);
+		pathAndFillManager.addPath(currentPath, true);
+		unsavedPaths = true;
 		lastStartPointSet = false;
 		setPathUnfinished(false);
 		setCurrentPath(null);
-		pathAndFillManager.addPath(savedCurrentPath, true);
-		unsavedPaths = true;
 
 		// ... and change the state of the UI
 		resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
-
 		updateAllViewers();
 	}
 

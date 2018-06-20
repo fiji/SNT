@@ -151,7 +151,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 
 	@SuppressWarnings("unused")
 	private void removeColorCoding() {
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			p.setColor(null);
 			p.setNodeColors(null);
 		}

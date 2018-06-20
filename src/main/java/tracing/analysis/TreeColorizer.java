@@ -107,21 +107,25 @@ public class TreeColorizer {
 	protected void mapToProperty(final String measurement, final ColorTable colorTable) {
 		if (colorTable == null)
 			return;
+		if (measurement == null)
+			throw new IllegalArgumentException("Parameter cannot be null");
+		final String cMeasurement = new StringBuilder().append(measurement.substring(0, 1).toUpperCase())
+				.append(measurement.substring(1)).toString();
 		this.colorTable = colorTable;
-		switch (measurement) {
+		switch (cMeasurement) {
 		case BRANCH_ORDER:
 		case LENGTH:
 		case MEAN_RADIUS:
 		case N_NODES:
 		case N_BRANCH_POINTS:
 		case INTERNAL_COUNTER:
-			mapToPathProperty(measurement, colorTable);
+			mapToPathProperty(cMeasurement, colorTable);
 			break;
 		case X_COORDINATES:
 		case Y_COORDINATES:
 		case Z_COORDINATES:
 		case NODE_RADIUS:
-			mapToNodeProperty(measurement, colorTable);
+			mapToNodeProperty(cMeasurement, colorTable);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown parameter");
@@ -243,7 +247,7 @@ public class TreeColorizer {
 	 *            the color table specifying the color mapping. Null not allowed.
 	 */
 	public void colorize(final Tree tree, final String measurement, final ColorTable colorTable) {
-		this.paths = tree.getPaths();
+		this.paths = tree.list();
 		mapToProperty(measurement, colorTable);
 	}
 

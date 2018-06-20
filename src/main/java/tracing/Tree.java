@@ -117,7 +117,7 @@ public class Tree {
 	 */
 	public Tree(final String filename, final int... swcTypes) {
 		this(filename);
-		tree = subTree(swcTypes).getPaths();
+		tree = subTree(swcTypes).list();
 	}
 
 	/**
@@ -126,7 +126,7 @@ public class Tree {
 	 * @param p
 	 *            the Path to be added
 	 */
-	public boolean addPath(final Path p) {
+	public boolean add(final Path p) {
 		return tree.add(p);
 	}
 
@@ -145,8 +145,20 @@ public class Tree {
 	 * @param paths
 	 *            the replacing Paths
 	 */
-	public void setPaths(final List<Path> paths) {
+	public void replaceAll(final List<Path> paths) {
 		tree = new ArrayList<>(paths);
+	}
+
+	/**
+	 * Returns the Path at the specified position in this Tree.
+	 *
+	 * @param index
+	 *            index of the element to return
+	 * @return the element at the specified position
+	 * @throws IndexOutOfBoundsException
+	 */
+	public Path get(final int index) {
+		return tree.get(index);
 	}
 
 	/**
@@ -156,7 +168,8 @@ public class Tree {
 	 *            the Path to be removed
 	 * @return true if this tree contained p
 	 */
-	public boolean removePath(final Path p) {
+	public boolean remove(final Path p) {
+		tree.get(1);
 		return tree.remove(p);
 	}
 
@@ -165,7 +178,7 @@ public class Tree {
 	 *
 	 * @return the paths forming this tree
 	 */
-	public ArrayList<Path> getPaths() {
+	public ArrayList<Path> list() {
 		return tree;
 	}
 
@@ -206,7 +219,7 @@ public class Tree {
 			final Path p = it.next();
 			final boolean filteredType = Arrays.stream(swcTypes).anyMatch(t -> t == p.getSWCType());
 			if (filteredType)
-				subtree.addPath(p);
+				subtree.add(p);
 		}
 		return subtree;
 	}

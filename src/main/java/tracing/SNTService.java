@@ -197,6 +197,22 @@ public class SNTService extends AbstractService implements ImageJService {
 	}
 
 	/**
+	 * Assesses whether the UI is blocked.
+	 *
+	 * @return true if the UI is currently unblocked, i.e., ready for
+	 *         tracing/editing/analysis
+	 * @throws UnsupportedOperationException
+	 *             if SimpleNeuriteTracer is not running
+	 */
+	public boolean isUIReady() {
+		final NeuriteTracerResultsDialog gui = getUI();
+		final int state = gui.getState();
+		return plugin.isUIready() && (state == NeuriteTracerResultsDialog.WAITING_TO_START_PATH
+				|| state == NeuriteTracerResultsDialog.EDITING_MODE
+				|| state == NeuriteTracerResultsDialog.ANALYSIS_MODE);
+	}
+
+	/**
 	 * Returns a reference to SNT's main table of measurements.
 	 * 
 	 * @throws UnsupportedOperationException

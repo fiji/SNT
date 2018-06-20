@@ -250,7 +250,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		SNT.setPlugin(this);
 		pathAndFillManager = new PathAndFillManager(this);
 		nonInteractiveSession = true;
-		disableAstar(true);
+		enableAstar(false);
 	}
 
 	public SimpleNeuriteTracer(final Context context,
@@ -369,7 +369,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		prefs.loadPluginPrefs();
 
 		// now disable auto-tracing features
-		disableAstar(true);
+		enableAstar(false);
 		enableSnapCursor(false);
 
 	}
@@ -1285,7 +1285,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		}
 
-		else if (isAstarDisabled()) {
+		else if (!isAstarEnabled()) {
 			manualSearchThread = new ManualTracerThread(this, last_start_point_x,
 				last_start_point_y, last_start_point_z, x_end, y_end, z_end);
 			addThreadToDraw(manualSearchThread);
@@ -2583,12 +2583,23 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	// TODO: Use prefsService
 	private boolean manualOverride = false;
 
-	public void disableAstar(final boolean disable) {
-		manualOverride = disable;
+	/**
+	 * Enables (or disables) the A* search algorithm (enabled by default)
+	 *
+	 * @param enable
+	 *            true to enable A* search, false otherwise
+	 */
+	public void enableAstar(final boolean enable) {
+		manualOverride = !enable;
 	}
 
-	public boolean isAstarDisabled() {
-		return manualOverride;
+	/**
+	 * Checks if A* search is enabled
+	 *
+	 * @return true, if A* search is enabled, otherwise false
+	 */
+	public boolean isAstarEnabled() {
+		return !manualOverride;
 	}
 
 	/**

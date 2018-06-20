@@ -71,7 +71,7 @@ public class RoiConverter extends TreeAnalyzer {
 	public void convertPaths(Overlay overlay) {
 		if (overlay == null)
 			overlay = new Overlay();
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			if (p.size() > 1) {
 				drawPathSegments(p, overlay);
 			} else { // Single Point Path

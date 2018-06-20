@@ -73,17 +73,21 @@ public class TreeStatistics extends TreeAnalyzer {
 	}
 
 	private void assembleStats(final StatisticsInstance stat, final String measurement) {
-		switch (measurement) {
+		if (measurement == null)
+			throw new IllegalArgumentException("Parameter cannot be null");
+		final String cMeasurement = new StringBuilder().append(measurement.substring(0, 1).toUpperCase())
+				.append(measurement.substring(1)).toString();
+		switch (cMeasurement) {
 		case TreeAnalyzer.LENGTH:
-			for (final Path p : tree.getPaths())
+			for (final Path p : tree.list())
 				stat.addValue(p.getRealLength());
 			break;
 		case TreeAnalyzer.N_NODES:
-			for (final Path p : tree.getPaths())
+			for (final Path p : tree.list())
 				stat.addValue(p.size());
 			break;
 		case TreeAnalyzer.INTER_NODE_DISTANCE:
-			for (final Path p : tree.getPaths()) {
+			for (final Path p : tree.list()) {
 				if (p.size() < 2)
 					continue;
 				for (int i = 1; i < p.size(); i += 1) {
@@ -92,43 +96,43 @@ public class TreeStatistics extends TreeAnalyzer {
 			}
 			break;
 		case TreeAnalyzer.NODE_RADIUS:
-			for (final Path p : tree.getPaths()) {
+			for (final Path p : tree.list()) {
 				for (int i = 0; i < p.size(); i++) {
 					stat.addValue(p.getNodeRadius(i));
 				}
 			}
 			break;
 		case TreeAnalyzer.MEAN_RADIUS:
-			for (final Path p : tree.getPaths()) {
+			for (final Path p : tree.list()) {
 				stat.addValue(p.getMeanRadius());
 			}
 			break;
 		case TreeAnalyzer.BRANCH_ORDER:
-			for (final Path p : tree.getPaths()) {
+			for (final Path p : tree.list()) {
 				stat.addValue(p.getOrder());
 			}
 			break;
 		case TreeAnalyzer.N_BRANCH_POINTS:
-			for (final Path p : tree.getPaths()) {
+			for (final Path p : tree.list()) {
 				stat.addValue(p.findJoinedPoints().size());
 			}
 			break;
 		case TreeAnalyzer.X_COORDINATES:
-			for (final Path p : tree.getPaths()) {
+			for (final Path p : tree.list()) {
 				for (int i = 0; i < p.size(); i++) {
 					stat.addValue(p.getPointInImage(i).x);
 				}
 			}
 			break;
 		case TreeAnalyzer.Y_COORDINATES:
-			for (final Path p : tree.getPaths()) {
+			for (final Path p : tree.list()) {
 				for (int i = 0; i < p.size(); i++) {
 					stat.addValue(p.getPointInImage(i).y);
 				}
 			}
 			break;
 		case TreeAnalyzer.Z_COORDINATES:
-			for (final Path p : tree.getPaths()) {
+			for (final Path p : tree.list()) {
 				for (int i = 0; i < p.size(); i++) {
 					stat.addValue(p.getPointInImage(i).z);
 				}

@@ -81,13 +81,13 @@ public class StrahlerCmd extends TreeAnalyzer {
 
 	public void compute() {
 		maxBranchOrder = 1;
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			if (p.getOrder() > maxBranchOrder)
 				maxBranchOrder = p.getOrder();
 		}
 		IntStream.rangeClosed(1, maxBranchOrder).forEach(order -> {
 
-			final ArrayList<Path> groupedPaths = tree.getPaths().stream() // convert set of paths to stream
+			final ArrayList<Path> groupedPaths = tree.list().stream() // convert set of paths to stream
 					.filter(path -> path.getOrder() == order) // include only those of this order
 					.collect(Collectors.toCollection(ArrayList::new)); // collect the output in a new list
 

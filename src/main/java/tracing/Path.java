@@ -378,14 +378,14 @@ public class Path implements Comparable<Path> {
 		p[2] = precise_z_positions[i];
 	}
 
-	public PointInImage getPointInImage(final int i) {
+	public PointInImage getPointInImage(final int node) {
 
-		if ((i < 0) || i >= size()) {
-			throw new IllegalArgumentException("getPointInImage() was asked for an out-of-range point: " + i);
+		if ((node < 0) || node >= size()) {
+			throw new IllegalArgumentException("getPointInImage() was asked for an out-of-range point: " + node);
 		}
 
-		final PointInImage result = new PointInImage(precise_x_positions[i], precise_y_positions[i],
-				precise_z_positions[i]);
+		final PointInImage result = new PointInImage(precise_x_positions[node], precise_y_positions[node],
+				precise_z_positions[node]);
 		result.onPath = this;
 		return result;
 	}

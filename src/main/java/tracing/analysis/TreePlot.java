@@ -181,7 +181,7 @@ public class TreePlot extends TreeColorizer {
 	 *            the Collection of paths to be plotted
 	 */
 	public void addTree(final Tree tree) {
-		addPaths(tree.getPaths());
+		addPaths(tree.list());
 	}
 
 	/**
@@ -211,7 +211,7 @@ public class TreePlot extends TreeColorizer {
 	public void addTree(final Tree tree, final ColorRGB color) {
 		final ColorRGB prevDefaultColor = defaultColor;
 		setDefaultColor(color);
-		addPaths(tree.getPaths());
+		addPaths(tree.list());
 		setDefaultColor(prevDefaultColor);
 	}
 
@@ -233,7 +233,7 @@ public class TreePlot extends TreeColorizer {
 	 */
 	public void addTree(final Tree tree, final String measurement, final ColorTable colorTable, final double min,
 			final double max) {
-		this.paths = tree.getPaths();
+		this.paths = tree.list();
 		setMinMax(min, max);
 		mapToProperty(measurement, colorTable);
 		plotPaths();

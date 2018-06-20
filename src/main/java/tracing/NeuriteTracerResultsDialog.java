@@ -580,7 +580,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 						pw.valueChanged(null); // Fake a selection change in the path tree:
 						showPartsNearby.setEnabled(isStackAvailable());
-						setEnableAutoTracingComponents(!plugin.isAstarDisabled());
+						setEnableAutoTracingComponents(plugin.isAstarEnabled());
 						fw.setEnabledWhileNotFilling();
 						loadLabelsMenuItem.setEnabled(true);
 						saveMenuItem.setEnabled(true);
@@ -611,7 +611,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						junkSegment.setEnabled(false);
 						completePath.setEnabled(true);
 						showPartsNearby.setEnabled(isStackAvailable());
-						setEnableAutoTracingComponents(!plugin.isAstarDisabled());
+						setEnableAutoTracingComponents(plugin.isAstarEnabled());
 						quitMenuItem.setEnabled(false);
 						break;
 
@@ -2012,21 +2012,21 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		final JPanel autoTracePanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints atp_c = GuiUtils.defaultGbc();
 		final JCheckBox aStarCheckBox = new JCheckBox("Enable A* search algorithm",
-			!plugin.isAstarDisabled());
+			plugin.isAstarEnabled());
 		aStarCheckBox.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				final boolean disable = !aStarCheckBox.isSelected();
-				if (disable && !guiUtils.getConfirmation(
+				final boolean enable = aStarCheckBox.isSelected();
+				if (!enable && !guiUtils.getConfirmation(
 					"Disable computation of paths? All segmentation tasks will be disabled.",
 					"Enable Manual Tracing?"))
 				{
 					aStarCheckBox.setSelected(true);
 					return;
 				}
-				plugin.disableAstar(disable);
-				setEnableAutoTracingComponents(!disable);
+				plugin.enableAstar(enable);
+				setEnableAutoTracingComponents(enable);
 			}
 		});
 		autoTracePanel.add(aStarCheckBox, atp_c);
@@ -2045,8 +2045,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		// Add sigma ui
 		final JPanel sigmaPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 2,
 			0));
-		sigmaPanel.add(GuiUtils.leftAlignedLabel("Choose Sigma: ", !plugin
-			.isAstarDisabled()));
+		sigmaPanel.add(GuiUtils.leftAlignedLabel("Choose Sigma: ", plugin
+			.isAstarEnabled()));
 		final JButton editSigma = GuiUtils.smallButton(
 			GuiListener.EDIT_SIGMA_MANUALLY);
 		editSigma.addActionListener(listener);

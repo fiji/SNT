@@ -91,7 +91,7 @@ public class TreeAnalyzer extends ContextCommand {
 	public TreeAnalyzer(final Tree tree) {
 		this.tree = new Tree();
 		this.tree.setLabel(tree.getLabel());
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			if (p == null)
 				continue;
 			Path pathToAdd;
@@ -102,7 +102,7 @@ public class TreeAnalyzer extends ContextCommand {
 			} else {
 				pathToAdd = p;
 			}
-			this.tree.addPath(pathToAdd);
+			this.tree.add(pathToAdd);
 		}
 		unfilteredPathsFittedPathsCounter = fittedPathsCounter;
 	}
@@ -141,7 +141,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public void restrictToOrder(final int... orders) {
 		initializeSnapshotTree();
-		final Iterator<Path> it = tree.getPaths().iterator();
+		final Iterator<Path> it = tree.list().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
 			final boolean valid = Arrays.stream(orders).anyMatch(t -> t == p.getOrder());
@@ -164,7 +164,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public void restrictToSize(final int minSize, final int maxSize) {
 		initializeSnapshotTree();
-		final Iterator<Path> it = tree.getPaths().iterator();
+		final Iterator<Path> it = tree.list().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
 			final int size = p.size();
@@ -187,7 +187,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public void restrictToLength(final double lowerBound, final double upperBound) {
 		initializeSnapshotTree();
-		final Iterator<Path> it = tree.getPaths().iterator();
+		final Iterator<Path> it = tree.list().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
 			final double length = p.getRealLength();
@@ -206,7 +206,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public void restrictToNamePattern(final String pattern) {
 		initializeSnapshotTree();
-		final Iterator<Path> it = tree.getPaths().iterator();
+		final Iterator<Path> it = tree.list().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
 			if (!p.getName().contains(pattern)) {
@@ -218,7 +218,7 @@ public class TreeAnalyzer extends ContextCommand {
 
 	private void initializeSnapshotTree() {
 		if (unfilteredTree == null) {
-			unfilteredTree = new Tree(tree.getPaths());
+			unfilteredTree = new Tree(tree.list());
 			unfilteredTree.setLabel(tree.getLabel());
 		}
 	}
@@ -231,7 +231,7 @@ public class TreeAnalyzer extends ContextCommand {
 	public void resetRestrictions() {
 		if (unfilteredTree == null)
 			return; // no filtering has occurred
-		tree.setPaths(unfilteredTree.getPaths());
+		tree.replaceAll(unfilteredTree.list());
 		joints = null;
 		primaries = null;
 		terminals = null;
@@ -354,7 +354,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	@Override
 	public void run() {
-		if (tree.getPaths() == null || tree.getPaths().isEmpty()) {
+		if (tree.list() == null || tree.list().isEmpty()) {
 			cancel("No Paths to Measure");
 			return;
 		}
@@ -388,7 +388,7 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	private int getSinglePointPaths() {
-		return (int) tree.getPaths().stream().filter( p -> p.size() == 1).count();
+		return (int) tree.list().stream().filter( p -> p.size() == 1).count();
 	}
 
 	/**
@@ -397,7 +397,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @return the number of paths
 	 */
 	public int getNPaths() {
-		return tree.getPaths().size();
+		return tree.list().size();
 	}
 
 	/**
@@ -407,7 +407,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public HashSet<Path> getPrimaryPaths() {
 		primaries = new HashSet<>();
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			if (p.isPrimary())
 				primaries.add(p);
 		}
@@ -428,7 +428,7 @@ public class TreeAnalyzer extends ContextCommand {
 			if (tip.onPath != null) {
 				terminals.add(tip.onPath);
 			} else {
-				for (final Path p : tree.getPaths()) {
+				for (final Path p : tree.list()) {
 					if (p.contains(tip))
 						terminals.add(p);
 				}
@@ -446,7 +446,7 @@ public class TreeAnalyzer extends ContextCommand {
 
 		// retrieve all start/end points
 		tips = new HashSet<>();
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			IntStream.of(0, p.size() - 1).forEach(i -> {
 				tips.add(p.getPointInImage(i)); // duplicated points (as in single-point paths) will not be added
 			});
@@ -466,7 +466,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public HashSet<PointInImage> getBranchPoints() {
 		joints = new HashSet<>();
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			joints.addAll(p.findJoinedPoints());
 		}
 		return joints;
@@ -478,7 +478,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @return the cable length of the tree
 	 */
 	public double getCableLength() {
-		return sumLength(tree.getPaths());
+		return sumLength(tree.list());
 	}
 
 	/**
@@ -510,7 +510,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public int getStrahlerRootNumber() {
 		int root = -1;
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			final int order = p.getOrder();
 			if (order > root)
 				root = order;
@@ -520,7 +520,7 @@ public class TreeAnalyzer extends ContextCommand {
 
 	private double sumLength(final Collection<Path> paths) {
 		double sum = 0;
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			sum += p.getRealLength();
 		}
 		return sum;

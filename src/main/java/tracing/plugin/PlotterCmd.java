@@ -96,7 +96,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 		// We'll store input colors to be restored by the 'snapshot' action
 		plottingTree = new Tree();
 		snapshotTree = new Tree();
-		for (final Path p : tree.getPaths()) {
+		for (final Path p : tree.list()) {
 			Path pathToPlot;
 			if (p.getUseFitted())
 				pathToPlot = p.getFitted();
@@ -109,8 +109,8 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 				dup.addPointDouble(pim.x, pim.y, pim.z);
 			}
 			dup.setSWCType(pathToPlot.getSWCType());
-			plottingTree.addPath(dup);
-			snapshotTree.addPath(pathToPlot);
+			plottingTree.add(dup);
+			snapshotTree.add(pathToPlot);
 		}
 		buildPlot();
 		chart = plot.getChart();
@@ -209,8 +209,8 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	private void snapshot() {
 		// apply input tree colors
 		for (int i = 0; i < plottingTree.size(); i++) {
-			final Path plottingPath = plottingTree.getPaths().get(i);
-			final Path inputPath = snapshotTree.getPaths().get(i);
+			final Path plottingPath = plottingTree.list().get(i);
+			final Path inputPath = snapshotTree.list().get(i);
 			plottingPath.setColor(inputPath.getColor());
 			plottingPath.setNodeColors(inputPath.getNodeColors());
 		}
@@ -219,7 +219,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 		plot.setPreferredSize(frame.getWidth(), frame.getHeight());
 		plot.showPlot();
 		// make tree monochrome
-		for (final Path p : plottingTree.getPaths()) {
+		for (final Path p : plottingTree.list()) {
 			p.setColor(null);
 			p.setNodeColors(null);
 		}

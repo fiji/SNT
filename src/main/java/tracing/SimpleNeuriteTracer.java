@@ -1717,16 +1717,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public void viewFillIn3D(final boolean asMask) {
 		if (filler == null) return;
-		final ImagePlus imagePlus = filler.fillAsImagePlus(asMask);
+		final ImagePlus imagePlus = filler.fillAsImagePlus(!asMask);
 		imagePlus.show();
 	}
 
 	public void setPositionAllPanes(final int x, final int y, final int z) {
-
 		xy.setPosition(channel, z + 1, frame);
 		zy.setPosition(channel, x, frame);
 		xz.setPosition(channel, y, frame);
-
 	}
 
 	public int guessResamplingFactor() {

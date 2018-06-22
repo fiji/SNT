@@ -31,11 +31,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
@@ -45,7 +48,9 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -80,7 +85,7 @@ public class FillManagerUI extends JFrame
 	private JButton setThreshold;
 	private JButton setMaxThreshold;
 	private JButton view3D;
-	private JCheckBox maskNotReal;
+	private JPopupMenu viewFillsMenu;
 	private JCheckBox transparent;
 	protected JButton pauseOrRestartFilling;
 	private JButton saveFill;
@@ -193,9 +198,9 @@ public class FillManagerUI extends JFrame
 		++c.gridy;
 
 		{
-			currentThreshold = GuiUtils.leftAlignedLabel("Current threshold distance:  N/A...", true);
-			maxThreshold = GuiUtils.leftAlignedLabel("Max. explored distance: N/A...", true);
-			fillStatus = GuiUtils.leftAlignedLabel("Last cursor position: N/A...", true);
+			currentThreshold = GuiUtils.leftAlignedLabel("No Pahs are currently being filled...", false);
+			maxThreshold = GuiUtils.leftAlignedLabel("This message will be updated once a Fill-out", false);
+			fillStatus = GuiUtils.leftAlignedLabel("command is run from the Path Manager...", false);
 			final int storedPady = c.ipady;
 			final Insets storedInsets = c.insets;
 			c.ipady = 0;
@@ -214,29 +219,11 @@ public class FillManagerUI extends JFrame
 		++c.gridy;
 
 		{
-			transparent = new JCheckBox(" Transparent overlay (may slow down filling!)");
+			transparent = new JCheckBox(" Transparent overlay (may slow down filling)");
 			transparent.addItemListener(this);
 			final JPanel transparencyPanel = leftAlignedPanel();
 			transparencyPanel.add(transparent);
 			add(transparencyPanel, c);
-			c.gridy++;
-		}
-
-		GuiUtils.addSeparator((JComponent) getContentPane(), " Export Fill(s):", true, c);
-		++c.gridy;
-
-		{
-			exportAsCSV = new JButton("CSV Summary");
-			exportAsCSV.addActionListener(this);
-			view3D = new JButton("Image Stack");
-			view3D.addActionListener(this);
-			maskNotReal = new JCheckBox("Binary");
-			maskNotReal.addItemListener(this);
-			final JPanel exportPanel = leftAlignedPanel();
-			exportPanel.add(exportAsCSV);
-			exportPanel.add(view3D);
-			exportPanel.add(maskNotReal);
-			add(exportPanel, c);
 			c.gridy++;
 		}
 
@@ -256,6 +243,26 @@ public class FillManagerUI extends JFrame
 			fillControlPanel.add(saveFill);
 			add(fillControlPanel, c);
 			++c.gridy;
+		}
+
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Export Fill(s):", true, c);
+		++c.gridy;
+
+		{
+			exportAsCSV = new JButton("CSV Summary...");
+			exportAsCSV.addActionListener(this);
+			assembleViewFillsMenu();
+			view3D = new JButton("Image Stack...");
+			view3D.addMouseListener(new MouseAdapter() {
+				public void mousePressed(final MouseEvent e) {
+					viewFillsMenu.show(e.getComponent(), e.getX(), e.getY());
+				}
+			});
+			final JPanel exportPanel = centerAlignedPanel();
+			exportPanel.add(exportAsCSV);
+			exportPanel.add(view3D);
+			add(exportPanel, c);
+			c.gridy++;
 		}
 
 		pack();
@@ -289,7 +296,6 @@ public class FillManagerUI extends JFrame
 		maxRButton.setEnabled(true && maxRButton.isSelected());
 		view3D.setEnabled(true);
 		exportAsCSV.setEnabled(true);
-		maskNotReal.setEnabled(true);
 		transparent.setEnabled(true);
 		pauseOrRestartFilling.setEnabled(true);
 		saveFill.setEnabled(false);
@@ -309,7 +315,6 @@ public class FillManagerUI extends JFrame
 		maxRButton.setEnabled(false);
 		view3D.setEnabled(false);
 		exportAsCSV.setEnabled(false);
-		maskNotReal.setEnabled(false);
 		transparent.setEnabled(false);
 		pauseOrRestartFilling.setEnabled(false);
 		saveFill.setEnabled(false);
@@ -329,7 +334,6 @@ public class FillManagerUI extends JFrame
 		maxRButton.setEnabled(false);
 		view3D.setEnabled(false);
 		exportAsCSV.setEnabled(false);
-		maskNotReal.setEnabled(false);
 		transparent.setEnabled(false);
 		pauseOrRestartFilling.setEnabled(false);
 		saveFill.setEnabled(false);
@@ -424,10 +428,6 @@ public class FillManagerUI extends JFrame
 
 			plugin.pauseOrRestartFilling();
 
-		} else if (source == view3D) {
-
-			plugin.viewFillIn3D(!maskNotReal.isSelected());
-
 		} else if (source == exportAsCSV) {
 
 			final File file = SNT.findClosestPair(plugin.prefs.getRecentFile(), "csv");
@@ -452,6 +452,22 @@ public class FillManagerUI extends JFrame
 			SNT.error("BUG: FillWindow received an event from an unknown source.");
 		}
 
+	}
+
+	private void assembleViewFillsMenu() {
+		viewFillsMenu = new JPopupMenu();
+		viewFillsMenu.add(new JMenuItem(new AbstractAction("As Grayscale Image...") {
+			private static final long serialVersionUID = 1L;
+			public void actionPerformed(final ActionEvent e) {
+				plugin.viewFillIn3D(false);
+			}
+		}));
+		viewFillsMenu.add(new JMenuItem(new AbstractAction("As Binary Mask...") {
+			private static final long serialVersionUID = 1L;
+			public void actionPerformed(final ActionEvent e) {
+				plugin.viewFillIn3D(true);
+			}
+		}));
 	}
 
 	/* (non-Javadoc)
@@ -542,10 +558,10 @@ public class FillManagerUI extends JFrame
 			public void run() {
 				String newStatus = null;
 				if (t < 0) {
-					newStatus = "Last cursor position: Not reached by search yet";
+					newStatus = "Cursor position: Not reached by search yet";
 				}
 				else {
-					newStatus = "Last cursor position: Distance from path is " + SNT
+					newStatus = "Cursor position: Distance from path is " + SNT
 						.formatDouble(t, 3);
 				}
 				fillStatus.setText(newStatus);

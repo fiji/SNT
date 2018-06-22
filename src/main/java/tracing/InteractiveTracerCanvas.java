@@ -108,13 +108,13 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	private void showPopupMenu(final int x, final int y) {
 		final Path activePath = tracerPlugin.getSingleSelectedPath();
-		final boolean be = uiReadyForModeChange(NeuriteTracerResultsDialog.EDITING_MODE);
+		final boolean be = uiReadyForModeChange(SNTUI.EDITING_MODE);
 		toggleEditModeMenuItem.setEnabled(be);
 		toggleEditModeMenuItem.setState(be && editMode);
 		toggleEditModeMenuItem.setText((activePath != null) ? "Edit " + activePath.getName() : AListener.EDIT_TOOGLE);
-		final boolean bp = uiReadyForModeChange(NeuriteTracerResultsDialog.PAUSED);
+		final boolean bp = uiReadyForModeChange(SNTUI.PAUSED);
 		togglePauseModeMenuItem.setEnabled(bp);
-		togglePauseModeMenuItem.setSelected(bp && tracerPlugin.getUIState() == NeuriteTracerResultsDialog.PAUSED);
+		togglePauseModeMenuItem.setSelected(bp && tracerPlugin.getUIState() == SNTUI.PAUSED);
 
 		// Disable editing commands
 		for (final MenuElement me : pMenu.getSubElements()) {
@@ -236,7 +236,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		if (!tracerPlugin.isUIready())
 			return false;
 		return tracerPlugin.nonInteractiveSession
-				|| tracerPlugin.getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH
+				|| tracerPlugin.getUIState() == SNTUI.WAITING_TO_START_PATH
 				|| tracerPlugin.getUIState() == mode;
 	}
 
@@ -403,23 +403,23 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 		final int currentState = tracerPlugin.getUI().getState();
 
-		if (currentState == NeuriteTracerResultsDialog.LOADING || currentState == NeuriteTracerResultsDialog.SAVING
-				|| currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED) {
+		if (currentState == SNTUI.LOADING || currentState == SNTUI.SAVING
+				|| currentState == SNTUI.IMAGE_CLOSED) {
 
 			// Do nothing
 
-		} else if (currentState == NeuriteTracerResultsDialog.EDITING_MODE) {
+		} else if (currentState == SNTUI.EDITING_MODE) {
 
 			if (e.isPopupTrigger() || impossibleEdit(true))
 				return;
 			update(getGraphics());
 
-		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_POINT) {
+		} else if (currentState == SNTUI.WAITING_FOR_SIGMA_POINT) {
 
 			tracerPlugin.launchPaletteAround(myOffScreenX(e.getX()), myOffScreenY(e.getY()), imp.getZ() - 1);
 			restoreDefaultCursor();
 
-		} else if (currentState == NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE) {
+		} else if (currentState == SNTUI.WAITING_FOR_SIGMA_CHOICE) {
 
 			tracerPlugin.discreteMsg("You must close the sigma palette to continue");
 
@@ -576,7 +576,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		public void actionPerformed(final ActionEvent e) {
 			if (e.getActionCommand().equals(FORK_NEAREST)) {
 
-				if (!uiReadyForModeChange(NeuriteTracerResultsDialog.WAITING_TO_START_PATH)) {
+				if (!uiReadyForModeChange(SNTUI.WAITING_TO_START_PATH)) {
 					getGuiUtils().tempMsg("Please finish current operation before creating branch");
 					return;
 				}

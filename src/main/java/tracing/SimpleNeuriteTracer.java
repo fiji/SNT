@@ -220,7 +220,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	Path currentPath = null;
 
 	/* GUI */
-	protected NeuriteTracerResultsDialog resultsDialog;
+	protected SNTUI ui;
 	protected boolean nonInteractiveSession = false;
 
 	// This should only be assigned to when synchronized on this object
@@ -486,29 +486,29 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void startUI() {
 		final SimpleNeuriteTracer thisPlugin = this;
 
-		resultsDialog = SwingSafeResult.getResult(
-			new Callable<NeuriteTracerResultsDialog>()
+		ui = SwingSafeResult.getResult(
+			new Callable<SNTUI>()
 			{
 
 				@Override
-				public NeuriteTracerResultsDialog call() {
-					return new NeuriteTracerResultsDialog(thisPlugin);
+				public SNTUI call() {
+					return new SNTUI(thisPlugin);
 				}
 			});
-		guiUtils = new GuiUtils(resultsDialog);
+		guiUtils = new GuiUtils(ui);
 		if (nonInteractiveSession) {
-			changeUIState(NeuriteTracerResultsDialog.ANALYSIS_MODE);
+			changeUIState(SNTUI.ANALYSIS_MODE);
 		}
-		resultsDialog.displayOnStarting();
+		ui.displayOnStarting();
 	}
 
 	public void loadTracings(final File file) {
 		if (file != null && file.exists()) {
-			if (isUIready()) resultsDialog.changeState(
-				NeuriteTracerResultsDialog.LOADING);
+			if (isUIready()) ui.changeState(
+				SNTUI.LOADING);
 			pathAndFillManager.loadGuessingType(file.getAbsolutePath());
-			if (isUIready()) resultsDialog.changeState(
-				NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			if (isUIready()) ui.changeState(
+				SNTUI.WAITING_TO_START_PATH);
 			prefs.setRecentFile(file);
 		}
 	}
@@ -571,11 +571,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void changeUIState(final int newState) {
-		resultsDialog.changeState(newState);
+		ui.changeState(newState);
 	}
 
 	public int getUIState() {
-		return resultsDialog.getCurrentState();
+		return ui.getCurrentState();
 	}
 
 	synchronized public void saveFill() {
@@ -593,8 +593,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 					pathAndFillManager.addFill(filler.getFill());
 					// ... and then stop filling:
 					filler.requestStop();
-					resultsDialog.changeState(
-						NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+					ui.changeState(
+						SNTUI.WAITING_TO_START_PATH);
 					filler = null;
 				}
 				else {
@@ -614,8 +614,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (filler != null) {
 			synchronized (filler) {
 				filler.requestStop();
-				if (updateState) resultsDialog.changeState(
-					NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+				if (updateState) ui.changeState(
+					SNTUI.WAITING_TO_START_PATH);
 				filler = null;
 			}
 		}
@@ -675,17 +675,17 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				}
 				setTemporaryPath(result);
 
-				if (resultsDialog.confirmTemporarySegments) {
-					resultsDialog.changeState(NeuriteTracerResultsDialog.QUERY_KEEP);
+				if (ui.confirmTemporarySegments) {
+					ui.changeState(SNTUI.QUERY_KEEP);
 				}
 				else {
 					confirmTemporary();
-					resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
+					ui.changeState(SNTUI.PARTIAL_PATH);
 				}
 			}
 			else {
 
-				resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
+				ui.changeState(SNTUI.PARTIAL_PATH);
 			}
 
 			// Indicate in the dialog that we've finished...
@@ -730,8 +730,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	private boolean uiReadyForModeChange() {
 		return isUIready() &&
-			(getUIState() == NeuriteTracerResultsDialog.WAITING_TO_START_PATH ||
-				getUIState() == NeuriteTracerResultsDialog.ANALYSIS_MODE);
+			(getUIState() == SNTUI.WAITING_TO_START_PATH ||
+				getUIState() == SNTUI.ANALYSIS_MODE);
 	}
 
 	// if (uiReadyForModeChange(NeuriteTracerResultsDialog.ANALYSIS_MODE)) {
@@ -794,11 +794,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	protected void enableEditMode(final boolean enable) {
 		if (enable) {
-			changeUIState(NeuriteTracerResultsDialog.EDITING_MODE);
+			changeUIState(SNTUI.EDITING_MODE);
 			if (isUIready() && !getUI().nearbySlices()) getUI().togglePartsChoice();
 		}
 		else {
-			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			changeUIState(SNTUI.WAITING_TO_START_PATH);
 			setCanvasLabelAllPanes(null);
 		}
 		if (enable && pathAndFillManager.getSelectedPaths().size() == 1) {
@@ -824,7 +824,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				guiUtils.error("Please finish/abort current task before pausing SNT.");
 				return;
 			}
-			changeUIState(NeuriteTracerResultsDialog.PAUSED);
+			changeUIState(SNTUI.PAUSED);
 			disableEventsAllPanes(true);
 			setDrawCrosshairsAllPanes(false);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.PAUSE_MODE_LABEL);
@@ -833,7 +833,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			if (xy != null && xy.isLocked() && !getConfirmation(
 				"Image appears to be locked by other process. Activate SNT nevertheless?",
 				"Image Locked")) return;
-			changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+			changeUIState(SNTUI.WAITING_TO_START_PATH);
 			disableEventsAllPanes(false);
 			setDrawCrosshairsAllPanes(true);
 			setCanvasLabelAllPanes(null);
@@ -842,7 +842,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	protected boolean isEditModeEnabled() {
 		return isUIready() &&
-			NeuriteTracerResultsDialog.EDITING_MODE == getUIState();
+			SNTUI.EDITING_MODE == getUIState();
 	}
 
 	@Deprecated
@@ -1103,7 +1103,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (filler != null) {
 			synchronized (filler) {
 				final float distance = filler.getDistanceAtPoint(ix, iy, iz);
-				resultsDialog.showMouseThreshold(distance);
+				ui.showMouseThreshold(distance);
 			}
 		}
 	}
@@ -1299,7 +1299,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 					last_start_point_y), (int) Math.round(last_start_point_z), x_end,
 				y_end, z_end, //
 				true, // reciprocal
-				is2D(), (hessianEnabled ? hessian : null), resultsDialog
+				is2D(), (hessianEnabled ? hessian : null), ui
 					.getMultiplier(), doSearchOnFilteredData ? filteredData : null,
 				hessianEnabled);
 
@@ -1329,7 +1329,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		if (currentPath.endJoins == null) {
 			setTemporaryPath(null);
-			resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
+			ui.changeState(SNTUI.PARTIAL_PATH);
 			updateAllViewers();
 		}
 		else {
@@ -1371,7 +1371,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		endJoin = null;
 		endJoinPoint = null;
 
-		resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
+		ui.changeState(SNTUI.PARTIAL_PATH);
 		updateAllViewers();
 	}
 
@@ -1398,7 +1398,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		lastStartPointSet = false;
 		setPathUnfinished(false);
 
-		resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+		ui.changeState(SNTUI.WAITING_TO_START_PATH);
 		updateAllViewers();
 	}
 
@@ -1458,7 +1458,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		// Set UI. Ensure there are no incomplete tracings around
 		final boolean cfTemp = getUI().confirmTemporarySegments;
-		if (getUIState() != NeuriteTracerResultsDialog.WAITING_TO_START_PATH)
+		if (getUIState() != SNTUI.WAITING_TO_START_PATH)
 			getUI().abortCurrentOperation();
 		getUI().confirmTemporarySegments = false;
 
@@ -1475,7 +1475,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 			try {
 				// Block and update UI
-				resultsDialog.changeState(NeuriteTracerResultsDialog.SEARCHING);
+				ui.changeState(SNTUI.SEARCHING);
 				showStatus(i, nNodes, "Finding path to node " + i + "/" + nNodes);
 
 				// Append node and wait for search to be finished
@@ -1525,7 +1525,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		// Is there an unconfirmed path? If so, confirm it first
 		if (temporaryPath != null) confirmTemporary();
 
-		if (justFirstPoint() && resultsDialog.confirmTemporarySegments
+		if (justFirstPoint() && ui.confirmTemporarySegments
 				&& !getConfirmation("Create a single point path? (such path is typically used to mark the cell soma)",
 						"Create Single Point Path?")) {
 			return;
@@ -1551,7 +1551,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setCurrentPath(null);
 
 		// ... and change the state of the UI
-		resultsDialog.changeState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+		ui.changeState(SNTUI.WAITING_TO_START_PATH);
 		updateAllViewers();
 	}
 
@@ -1574,7 +1574,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				x_spacing, world_y / y_spacing, world_z / z_spacing);
 		}
 
-		if (resultsDialog == null) return;
+		if (ui == null) return;
 
 		// FIXME: in some of the states this doesn't make sense; check for them:
 
@@ -1592,12 +1592,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			 * Then this is a succeeding point, and we should start a search.
 			 */
 			testPathTo(world_x, world_y, world_z, joinPoint);
-			resultsDialog.changeState(NeuriteTracerResultsDialog.SEARCHING);
+			ui.changeState(SNTUI.SEARCHING);
 		}
 		else {
 			/* This is an initial point. */
 			startPath(world_x, world_y, world_z, joinPoint);
-			resultsDialog.changeState(NeuriteTracerResultsDialog.PARTIAL_PATH);
+			ui.changeState(SNTUI.PARTIAL_PATH);
 		}
 
 	}
@@ -1632,7 +1632,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 			SNT.log("Setting new threshold of: " + distance);
 
-			resultsDialog.thresholdChanged(distance);
+			ui.thresholdChanged(distance);
 
 			filler.setThreshold(distance);
 		}
@@ -1716,6 +1716,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void viewFillIn3D(final boolean asMask) {
+		if (filler == null) return;
 		final ImagePlus imagePlus = filler.fillAsImagePlus(asMask);
 		imagePlus.show();
 	}
@@ -1747,8 +1748,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected boolean isUIready() {
-		if (resultsDialog == null) return false;
-		return resultsDialog.isVisible();
+		if (ui == null) return false;
+		return ui.isVisible();
 	}
 
 	public void launchPaletteAround(final int x, final int y, final int z) {
@@ -1778,13 +1779,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			sigmas[i] = ((i + 1) * getMinimumSeparation()) / 2;
 		}
 
-		resultsDialog.changeState(
-			NeuriteTracerResultsDialog.WAITING_FOR_SIGMA_CHOICE);
+		ui.changeState(
+			SNTUI.WAITING_FOR_SIGMA_CHOICE);
 
 		final SigmaPalette sp = new SigmaPalette();
-		sp.setListener(resultsDialog.listener);
+		sp.setListener(ui.listener);
 		sp.makePalette(getLoadedDataAsImp(), x_min, x_max, y_min, y_max, z_min,
-			z_max, new TubenessProcessor(true), sigmas, 256 / resultsDialog
+			z_max, new TubenessProcessor(true), sigmas, 256 / ui
 				.getMultiplier(), 3, 3, z);
 	}
 
@@ -1793,21 +1794,21 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		this.filler = filler;
 
 		filler.addProgressListener(this);
-		filler.addProgressListener(resultsDialog.getFillManager());
+		filler.addProgressListener(ui.getFillManager());
 
 		addThreadToDraw(filler);
 
 		filler.start();
 
-		resultsDialog.changeState(NeuriteTracerResultsDialog.FILLING_PATHS);
+		ui.changeState(SNTUI.FILLING_PATHS);
 
 	}
 
 	synchronized public void startFillingPaths(final Set<Path> fromPaths) {
 
 		// currentlyFilling = true;
-		resultsDialog.getFillManager().pauseOrRestartFilling.setText("Pause");
-		resultsDialog.getFillManager().thresholdChanged(0.03f);
+		ui.getFillManager().pauseOrRestartFilling.setText("Pause");
+		ui.getFillManager().thresholdChanged(0.03f);
 		filler = new FillerThread(xy, stackMin, stackMax, false, // startPaused
 			true, // reciprocal
 			0.03f, // Initial threshold to display
@@ -1816,15 +1817,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		addThreadToDraw(filler);
 
 		filler.addProgressListener(this);
-		filler.addProgressListener(resultsDialog.getFillManager());
+		filler.addProgressListener(ui.getFillManager());
 
 		filler.setSourcePaths(fromPaths);
 
-		resultsDialog.setFillListVisible(true);
+		ui.setFillListVisible(true);
 
 		filler.start();
 
-		resultsDialog.changeState(NeuriteTracerResultsDialog.FILLING_PATHS);
+		ui.changeState(SNTUI.FILLING_PATHS);
 
 	}
 
@@ -1897,18 +1898,18 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public void startHessian() {
 		if (hessian == null) {
-			resultsDialog.changeState(
-				NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
-			hessianSigma = resultsDialog.getSigma();
+			ui.changeState(
+				SNTUI.CALCULATING_GAUSSIAN);
+			hessianSigma = ui.getSigma();
 			hessian = new ComputeCurvatures(getLoadedDataAsImp(), hessianSigma, this,
 				true);
 			new Thread(hessian).start();
 		}
 		else {
-			final double newSigma = resultsDialog.getSigma();
+			final double newSigma = ui.getSigma();
 			if (newSigma != hessianSigma) {
-				resultsDialog.changeState(
-					NeuriteTracerResultsDialog.CALCULATING_GAUSSIAN);
+				ui.changeState(
+					SNTUI.CALCULATING_GAUSSIAN);
 				hessianSigma = newSigma;
 				hessian = new ComputeCurvatures(getLoadedDataAsImp(), hessianSigma,
 					this, true);
@@ -2004,13 +2005,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			hessianEnabled = false;
 			hessian = null;
 			hessianSigma = -1;
-			resultsDialog.gaussianCalculated(false);
+			ui.gaussianCalculated(false);
 			statusService.showProgress(1, 1);
 			return;
 		}
 		else if (proportion >= 1.0) {
 			hessianEnabled = true;
-			resultsDialog.gaussianCalculated(true);
+			ui.gaussianCalculated(true);
 		}
 		statusService.showProgress((int) proportion, 1); // FIXME:
 	}
@@ -2115,12 +2116,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		for (final Window win : images) {
 			if (win != null && win.isActive()) return win;
 		}
-		final Window[] frames = { resultsDialog.getPathManager(), resultsDialog
+		final Window[] frames = { ui.getPathManager(), ui
 			.getFillManager() };
 		for (final Window frame : frames) {
 			if (frame.isActive()) return frame;
 		}
-		return resultsDialog;
+		return ui;
 	}
 
 	public boolean getSinglePane() {
@@ -2238,20 +2239,20 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (p.isFittedVersionOfAnotherPath()) pathsToSelect.add(p.fittedVersionOf);
 		else pathsToSelect.add(p);
 		if (isEditModeEnabled()) { // impose a single editing path
-			resultsDialog.getPathManager().setSelectedPaths(pathsToSelect, this);
+			ui.getPathManager().setSelectedPaths(pathsToSelect, this);
 			setEditingPath(p);
 			return;
 		}
 		if (addToExistingSelection) {
-			pathsToSelect.addAll(resultsDialog.getPathManager().getSelectedPaths(
+			pathsToSelect.addAll(ui.getPathManager().getSelectedPaths(
 				false));
 		}
-		resultsDialog.getPathManager().setSelectedPaths(pathsToSelect, this);
+		ui.getPathManager().setSelectedPaths(pathsToSelect, this);
 	}
 
 	public Set<Path> getSelectedPaths() {
-		if (resultsDialog.getPathManager() != null) {
-			return resultsDialog.getPathManager().getSelectedPaths(false);
+		if (ui.getPathManager() != null) {
+			return ui.getPathManager().getSelectedPaths(false);
 		}
 		throw new IllegalArgumentException(
 			"getSelectedPaths was called when resultsDialog.pw was null");
@@ -2560,9 +2561,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public synchronized void enableSnapCursor(final boolean enable) {
 		snapCursor = enable;
 		if (isUIready()) {
-			resultsDialog.useSnapWindow.setSelected(enable);
-			resultsDialog.snapWindowXYsizeSpinner.setEnabled(enable);
-			resultsDialog.snapWindowZsizeSpinner.setEnabled(enable && !is2D());
+			ui.useSnapWindow.setSelected(enable);
+			ui.snapWindowXYsizeSpinner.setEnabled(enable);
+			ui.snapWindowZsizeSpinner.setEnabled(enable && !is2D());
 		}
 	}
 
@@ -2647,10 +2648,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
+	 * Gets the main UI.
+	 *
 	 * @return the main dialog of SNT's UI
 	 */
-	public NeuriteTracerResultsDialog getUI() {
-		return resultsDialog;
+	public SNTUI getUI() {
+		return ui;
 	}
 
 	@Override

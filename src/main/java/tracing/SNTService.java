@@ -187,11 +187,11 @@ public class SNTService extends AbstractService implements ImageJService {
 	/**
 	 * Returns a reference to SNT's UI.
 	 *
-	 * @return the {@link NeuriteTracerResultsDialog} window
+	 * @return the {@link SNTUI} window
 	 * @throws UnsupportedOperationException
 	 *             if SimpleNeuriteTracer is not running
 	 */
-	public NeuriteTracerResultsDialog getUI() {
+	public SNTUI getUI() {
 		accessActiveInstance();
 		return plugin.getUI();
 	}
@@ -205,11 +205,11 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *             if SimpleNeuriteTracer is not running
 	 */
 	public boolean isUIReady() {
-		final NeuriteTracerResultsDialog gui = getUI();
+		final SNTUI gui = getUI();
 		final int state = gui.getState();
-		return plugin.isUIready() && (state == NeuriteTracerResultsDialog.WAITING_TO_START_PATH
-				|| state == NeuriteTracerResultsDialog.EDITING_MODE
-				|| state == NeuriteTracerResultsDialog.ANALYSIS_MODE);
+		return plugin.isUIready() && (state == SNTUI.WAITING_TO_START_PATH
+				|| state == SNTUI.EDITING_MODE
+				|| state == SNTUI.ANALYSIS_MODE);
 	}
 
 	/**

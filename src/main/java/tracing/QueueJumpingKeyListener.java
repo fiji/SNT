@@ -230,7 +230,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 		else if (keyChar == 'c' || keyChar == 'C') {
 			// IJ1 built-in: Copy
-			if (tracerPlugin.getUIState() == NeuriteTracerResultsDialog.PARTIAL_PATH)
+			if (tracerPlugin.getUIState() == SNTUI.PARTIAL_PATH)
 				tracerPlugin.cancelPath();
 			else if (doublePress) tracerPlugin.getUI().abortCurrentOperation();
 			e.consume();

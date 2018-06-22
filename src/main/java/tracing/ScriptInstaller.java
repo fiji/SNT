@@ -57,11 +57,11 @@ class ScriptInstaller implements MenuKeyListener {
 	@Parameter
 	private AppService appService;
 
-	private final NeuriteTracerResultsDialog dialog;
+	private final SNTUI dialog;
 	private final TreeSet<ScriptInfo> scripts;
 	private boolean openInsteadOfRun;
 
-	protected ScriptInstaller(final Context context, final NeuriteTracerResultsDialog dialog) {
+	protected ScriptInstaller(final Context context, final SNTUI dialog) {
 
 		context.inject(this);
 		this.dialog = dialog;

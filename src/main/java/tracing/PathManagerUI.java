@@ -418,9 +418,9 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		if (pathsToFit.isEmpty())
 			return; // nothing to fit
 
-		final NeuriteTracerResultsDialog ui = plugin.getUI();
+		final SNTUI ui = plugin.getUI();
 		final int preFittingState = ui.getState();
-		ui.changeState(NeuriteTracerResultsDialog.FITTING_PATHS);
+		ui.changeState(SNTUI.FITTING_PATHS);
 		final int numberOfPathsToFit = pathsToFit.size();
 		final int processors = Math.min(numberOfPathsToFit, Runtime.getRuntime().availableProcessors());
 		final String statusMsg = (processors == 1) ? "Fitting 1 path..."
@@ -468,7 +468,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 			synchronized (fitWorker) {
 				fitWorker.cancel(true);
 				if (updateUIState)
-					plugin.changeUIState(NeuriteTracerResultsDialog.WAITING_TO_START_PATH);
+					plugin.changeUIState(SNTUI.WAITING_TO_START_PATH);
 				fitWorker = null;
 			}
 		}
@@ -1155,7 +1155,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		assert SwingUtilities.isEventDispatchThread();
 
 		// Announce computation
-		final NeuriteTracerResultsDialog ui = plugin.getUI();
+		final SNTUI ui = plugin.getUI();
 		final String statusMsg = "Fitting " + p.toString();
 		ui.showStatus(statusMsg);
 		setEnabledCommands(false);
@@ -1669,8 +1669,8 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				}
 
 				final int currentState = plugin.getUI().getState();
-				final boolean imagenotAvailable = currentState == NeuriteTracerResultsDialog.IMAGE_CLOSED
-						|| currentState == NeuriteTracerResultsDialog.ANALYSIS_MODE;
+				final boolean imagenotAvailable = currentState == SNTUI.IMAGE_CLOSED
+						|| currentState == SNTUI.ANALYSIS_MODE;
 				final ArrayList<PathFitter> pathsToFit = new ArrayList<>();
 				int skippedFits = 0;
 

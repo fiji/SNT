@@ -78,7 +78,7 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 
 				} else if (keyCode == KeyEvent.VK_ESCAPE || keyChar == 'c' || keyChar == 'C') {
 
-					tracerPlugin.getUI().abortCurrentOperation(); //FIXME: NPE if resultsDialog closed
+					tracerPlugin.getUI().abortCurrentOperation(); //FIXME: NPE if UI closed
 					e.consume();
 
 				} else if (keyChar == 'n' || keyChar == 'N') {

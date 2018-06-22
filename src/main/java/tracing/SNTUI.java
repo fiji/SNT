@@ -105,7 +105,7 @@ import tracing.plugin.PlotterCmd;
 import tracing.plugin.StrahlerCmd;
 
 @SuppressWarnings("serial")
-public class NeuriteTracerResultsDialog extends JDialog {
+public class SNTUI extends JDialog {
 
 	public static final boolean verbose = SNT.isDebugMode();
 
@@ -201,7 +201,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	protected boolean finishOnDoubleConfimation = true;
 	protected boolean discardOnDoubleCancellation = true;
 
-	public NeuriteTracerResultsDialog(final SimpleNeuriteTracer plugin) {
+	public SNTUI(final SimpleNeuriteTracer plugin) {
 
 		super(plugin.legacyService.getIJ1Helper().getIJ(), "SNT v" + SNT.VERSION,
 			false);
@@ -2639,7 +2639,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		public void imageClosed(final ImagePlus imp) {
 			// updateColorImageChoice(); //FIXME
 			if (plugin.getImagePlus() == imp) changeState(
-				NeuriteTracerResultsDialog.IMAGE_CLOSED);
+				SNTUI.IMAGE_CLOSED);
 		}
 
 		@Override

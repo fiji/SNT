@@ -33,6 +33,7 @@ import java.util.Arrays;
 import org.scijava.Context;
 import org.scijava.log.LogService;
 import org.scijava.ui.UIService;
+import org.scijava.ui.console.ConsolePane;
 import org.scijava.util.VersionUtils;
 
 import fiji.util.Levenshtein;
@@ -181,7 +182,8 @@ public class SNT {
 		SimpleNeuriteTracer.verbose = b;
 		if (isDebugMode()) {
 			log("Entering debug mode..."); // will initialize uiService
-			uiService.getDefaultUI().getConsolePane().show();
+			final ConsolePane<?> console = uiService.getDefaultUI().getConsolePane();
+			if (console != null) console.show();
 		}
 	}
 

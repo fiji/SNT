@@ -2115,7 +2115,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		for (final Window win : images) {
 			if (win != null && win.isActive()) return win;
 		}
-		final Window[] frames = { resultsDialog.getPathWindow(), resultsDialog
+		final Window[] frames = { resultsDialog.getPathManagerUI(), resultsDialog
 			.getFillWindow() };
 		for (final Window frame : frames) {
 			if (frame.isActive()) return frame;
@@ -2238,20 +2238,20 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (p.isFittedVersionOfAnotherPath()) pathsToSelect.add(p.fittedVersionOf);
 		else pathsToSelect.add(p);
 		if (isEditModeEnabled()) { // impose a single editing path
-			resultsDialog.getPathWindow().setSelectedPaths(pathsToSelect, this);
+			resultsDialog.getPathManager().setSelectedPaths(pathsToSelect, this);
 			setEditingPath(p);
 			return;
 		}
 		if (addToExistingSelection) {
-			pathsToSelect.addAll(resultsDialog.getPathWindow().getSelectedPaths(
+			pathsToSelect.addAll(resultsDialog.getPathManager().getSelectedPaths(
 				false));
 		}
-		resultsDialog.getPathWindow().setSelectedPaths(pathsToSelect, this);
+		resultsDialog.getPathManager().setSelectedPaths(pathsToSelect, this);
 	}
 
 	public Set<Path> getSelectedPaths() {
-		if (resultsDialog.getPathWindow() != null) {
-			return resultsDialog.getPathWindow().getSelectedPaths(false);
+		if (resultsDialog.getPathManager() != null) {
+			return resultsDialog.getPathManager().getSelectedPaths(false);
 		}
 		throw new IllegalArgumentException(
 			"getSelectedPaths was called when resultsDialog.pw was null");

@@ -172,7 +172,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private final SimpleNeuriteTracer plugin;
 	private final PathAndFillManager pathAndFillManager;
 	protected final GuiUtils guiUtils;
-	private final PathWindow pw;
+	private final PathManagerUI pmUI;
 	private final FillWindow fw;
 	protected final GuiListener listener;
 
@@ -356,11 +356,11 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		pack();
 		toFront();
 
-		pw = new PathWindow(plugin);
-		pw.setLocation(getX() + getWidth(), getY());
+		pmUI = new PathManagerUI(plugin);
+		pmUI.setLocation(getX() + getWidth(), getY());
 
 		fw = new FillWindow(pathAndFillManager, plugin, getX() + getWidth(),
-			getY() + pw.getHeight());
+			getY() + pmUI.getHeight());
 		pathAndFillManager.addPathAndFillListener(fw);
 
 		changeState(WAITING_TO_START_PATH);
@@ -518,14 +518,14 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		if (plugin.pathsUnsaved() && !guiUtils.getConfirmation(
 			"There are unsaved paths. Do you really want to quit?", "Really quit?"))
 			return;
-		if (pw.measurementsUnsaved() && !guiUtils.getConfirmation(
+		if (pmUI.measurementsUnsaved() && !guiUtils.getConfirmation(
 			"There are unsaved measurements. Do you really want to quit?",
 			"Really quit?")) return;
 		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
 		plugin.prefs.savePluginPrefs(true);
-		pw.dispose();
-		pw.closeTable();
+		pmUI.dispose();
+		pmUI.closeTable();
 		fw.dispose();
 		dispose();
 		plugin.closeAndResetAllPanes();
@@ -577,7 +577,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						completePath.setEnabled(false);
 						abortButton.setEnabled(false);
 
-						pw.valueChanged(null); // Fake a selection change in the path tree:
+						pmUI.valueChanged(null); // Fake a selection change in the path tree:
 						showPartsNearby.setEnabled(isStackAvailable());
 						setEnableAutoTracingComponents(plugin.isAstarEnabled());
 						fw.setEnabledWhileNotFilling();
@@ -1730,7 +1730,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				pw.saveTable();
+				pmUI.saveTable();
 				return;
 			}
 		});
@@ -2191,7 +2191,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 
 	private void arrangeDialogs() {
 		Point loc = plugin.prefs.getPathWindowLocation();
-		if (loc != null) pw.setLocation(loc);
+		if (loc != null) pmUI.setLocation(loc);
 		loc = plugin.prefs.getFillWindowLocation();
 		if (loc != null) fw.setLocation(loc);
 		// final GraphicsDevice activeScreen =
@@ -2287,20 +2287,20 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		if (makeVisible) {
 			if (showOrHidePathList != null) showOrHidePathList.setText(
 				"  Hide Path Manager");
-			pw.setVisible(true);
-			if (toFront) pw.toFront();
+			pmUI.setVisible(true);
+			if (toFront) pmUI.toFront();
 		}
 		else {
 			if (showOrHidePathList != null) showOrHidePathList.setText(
 				"Show Path Manager");
-			pw.setVisible(false);
+			pmUI.setVisible(false);
 		}
 	}
 
 	private void togglePathListVisibility() {
 		assert SwingUtilities.isEventDispatchThread();
-		synchronized (pw) {
-			setPathListVisible(!pw.isVisible(), true);
+		synchronized (pmUI) {
+			setPathListVisible(!pmUI.isVisible(), true);
 		}
 	}
 
@@ -2433,8 +2433,13 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return mi;
 	}
 
-	public PathWindow getPathWindow() {
-		return pw;
+	/**
+	 * Gets the Path Manager UI.
+	 *
+	 * @return the {@link PathManagerUI} associated with this UI
+	 */
+	public PathManagerUI getPathManager() {
+		return pmUI;
 	}
 
 	protected FillWindow getFillWindow() {
@@ -2484,7 +2489,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				break;
 			case (FITTING_PATHS):
 				showStatus("Fitting cancelled...");
-				pw.cancelFit(true);
+				pmUI.cancelFit(true);
 				break;
 			case (PAUSED):
 				showStatus("Tracing mode reinstated...");
@@ -2817,7 +2822,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 				tree.setLabel("All Paths");
 				final TreeAnalyzer ta = new TreeAnalyzer(tree);
 				ta.setContext(plugin.getContext());
-				ta.setTable(pw.getTable(), PathWindow.TABLE_TITLE);
+				ta.setTable(pmUI.getTable(), PathManagerUI.TABLE_TITLE);
 				ta.run();
 				return;
 			}

@@ -186,7 +186,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 			final NeuriteTracerResultsDialog rd = snt.getUI();
 			if (rd == null)
 				return;
-			final PathWindow pw = rd.getPathWindow();
+			final PathManagerUI pw = rd.getPathManager();
 			if (pw != null)
 				Prefs.saveLocation(PATHWIN_LOC, pw.getLocation());
 			final FillWindow fw = rd.getFillWindow();

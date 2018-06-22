@@ -80,7 +80,7 @@ public class SkeletonConverter implements DialogListener {
 		selectedSwcTypes = new ArrayList<>();
 		renderingPaths = new ArrayList<>();
 
-		final GuiUtils gUtils = new GuiUtils(plugin.getUI().getPathWindow());
+		final GuiUtils gUtils = new GuiUtils(plugin.getUI().getPathManager());
 		if (!pafm.anySelected()) {
 			gUtils.error("No paths selected.");
 			return;

@@ -220,7 +220,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @return the table
 	 */
 	public DefaultGenericTable getTable() {
-		return getUI().getPathWindow().getTable();
+		return getUI().getPathManager().getTable();
 	}
 
 	/**

@@ -25,6 +25,8 @@ package tracing;
 import com.jidesoft.swing.SearchableBar;
 import com.jidesoft.swing.TreeSearchable;
 
+import ij.ImagePlus;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -88,6 +90,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import net.imagej.ImageJ;
 import net.imagej.table.DefaultGenericTable;
 
 import org.scijava.command.CommandService;
@@ -105,7 +108,7 @@ import tracing.plugin.TreeColorizerCmd;
 import tracing.util.SWCColor;
 
 @SuppressWarnings("serial")
-public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener {
+public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSelectionListener {
 
 	private HelpfulJTree tree;
 	private DefaultMutableTreeNode root;
@@ -133,7 +136,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	 *            the the {@link SimpleNeuriteTracer} instance to be associated with
 	 *            this Path Manager
 	 */
-	public PathWindow(final SimpleNeuriteTracer plugin) {
+	public PathManagerUI(final SimpleNeuriteTracer plugin) {
 
 		super("Path Manager");
 		this.plugin = plugin;
@@ -776,7 +779,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				final Path primaryPath = primaryPaths[i2];
 				// Add the primary path if it's not just a fitted version of
 				// another:
-				if (primaryPath.fittedVersionOf == null)
+				if (!primaryPath.isFittedVersionOfAnotherPath())
 					addNode(newRoot, primaryPath, model);
 			}
 			root = newRoot;
@@ -1402,7 +1405,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					if (!cf)
 						return;
 					p.setUseFitted(false);
-					p.fitted = null;
+					p.setFitted(null);
 					refreshManager(true, false);
 				}
 				if (!plugin.editModeAllowed(true))
@@ -1590,7 +1593,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					return;
 				}
 				final Path refPath = selectedPaths.iterator().next();
-				if (refPath.endJoins != null) {
+				if (refPath.getEndJoins() != null) {
 					guiUtils.error("The first path in the selection cannot have an end-point junction.",
 							"Invalid Merge Selection");
 					return;
@@ -1651,7 +1654,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					return;
 				for (final Path p : selectedPaths) {
 					p.setUseFitted(false);
-					p.fitted = null;
+					p.setFitted(null);
 				}
 				refreshManager(true, false);
 				return;
@@ -1679,7 +1682,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					}
 
 					// A fitted version does not exist
-					else if (p.fitted == null) {
+					else if (p.getFitted() == null) {
 						if (imagenotAvailable) {
 							// Keep a tally of how many computations we are skipping
 							skippedFits++;
@@ -1740,8 +1743,18 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		}
 	}
 
-	private PathWindow getInstance() {
+	private PathManagerUI getInstance() {
 		return this;
+	}
+
+	/** IDE debug method */
+	public static void main(final String[] args) {
+		GuiUtils.setSystemLookAndFeel();
+		final ImageJ ij = new ImageJ();
+		final ImagePlus imp = new ImagePlus();
+		final SimpleNeuriteTracer snt = new SimpleNeuriteTracer(ij.context(), imp);
+		final PathManagerUI pm = new PathManagerUI(snt);
+		pm.setVisible(true);
 	}
 
 }

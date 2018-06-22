@@ -43,7 +43,7 @@ import org.scijava.prefs.PrefService;
 import org.scijava.widget.Button;
 
 import tracing.Path;
-import tracing.PathWindow;
+import tracing.PathManagerUI;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.analysis.TreeColorizer;
@@ -88,7 +88,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 	private Tree tree;
 
 	@Parameter(required = false)
-	private PathWindow manager;
+	private PathManagerUI manager;
 
 	private Map<String, URL> luts;
 	private TreePlot plot;

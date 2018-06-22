@@ -50,15 +50,12 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 import net.imagej.ImageJ;
-
-import ij.ImagePlus;
 import tracing.gui.GuiUtils;
+import ij.ImagePlus;
 
-public class FillWindow extends JFrame
+public class FillManagerUI extends JFrame
 		implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
 
 	private static final long serialVersionUID = 1L;
@@ -91,16 +88,13 @@ public class FillWindow extends JFrame
 
 	private final int MARGIN = 10;
 
-	public FillWindow(final PathAndFillManager pathAndFillManager, final SimpleNeuriteTracer plugin) {
-		this(pathAndFillManager, plugin, 200, 60);
-	}
 
-	public FillWindow(final PathAndFillManager pathAndFillManager, final SimpleNeuriteTracer plugin, final int x,
-			final int y) {
+	public FillManagerUI(final SimpleNeuriteTracer plugin) {
 		super("Fill Manager");
 
 		this.plugin = plugin;
-		this.pathAndFillManager = pathAndFillManager;
+		pathAndFillManager = plugin.getPathAndFillManager();
+		pathAndFillManager.addPathAndFillListener(this);
 
 		gUtils = new GuiUtils(this);
 		listModel = new DefaultListModel<>();
@@ -110,7 +104,6 @@ public class FillWindow extends JFrame
 
 		fillList.setVisibleRowCount(5);
 		fillList.setPrototypeCellValue("Fill (90) from Path (90)");
-		setBounds(x, y, 300, 400);
 		setLocationRelativeTo(plugin.getUI());
 		setLayout(new GridBagLayout());
 		final GridBagConstraints c = GuiUtils.defaultGbc();
@@ -505,15 +498,13 @@ public class FillWindow extends JFrame
 	}
 
 	/** IDE debug method */
-	public static void main(final String[] args) throws ClassNotFoundException, InstantiationException,
-			IllegalAccessException, UnsupportedLookAndFeelException {
-		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+	public static void main(final String[] args) {
+		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		final ImagePlus imp = new ImagePlus();
-		final PathAndFillManager manager = new PathAndFillManager(imp);
 		final SimpleNeuriteTracer snt = new SimpleNeuriteTracer(ij.context(), imp);
-		final FillWindow fw = new FillWindow(manager, snt);
-		fw.setVisible(true);
+		final FillManagerUI fm = new FillManagerUI(snt);
+		fm.setVisible(true);
 	}
 
 	private class RadioGroupListener implements ActionListener {

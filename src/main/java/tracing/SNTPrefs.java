@@ -189,7 +189,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 			final PathManagerUI pw = rd.getPathManager();
 			if (pw != null)
 				Prefs.saveLocation(PATHWIN_LOC, pw.getLocation());
-			final FillWindow fw = rd.getFillWindow();
+			final FillManagerUI fw = rd.getFillManager();
 			if (fw != null)
 				Prefs.saveLocation(FILLWIN_LOC, fw.getLocation());
 		}

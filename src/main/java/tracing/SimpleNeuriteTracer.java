@@ -1793,7 +1793,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		this.filler = filler;
 
 		filler.addProgressListener(this);
-		filler.addProgressListener(resultsDialog.getFillWindow());
+		filler.addProgressListener(resultsDialog.getFillManager());
 
 		addThreadToDraw(filler);
 
@@ -1806,8 +1806,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	synchronized public void startFillingPaths(final Set<Path> fromPaths) {
 
 		// currentlyFilling = true;
-		resultsDialog.getFillWindow().pauseOrRestartFilling.setText("Pause");
-		resultsDialog.getFillWindow().thresholdChanged(0.03f);
+		resultsDialog.getFillManager().pauseOrRestartFilling.setText("Pause");
+		resultsDialog.getFillManager().thresholdChanged(0.03f);
 		filler = new FillerThread(xy, stackMin, stackMax, false, // startPaused
 			true, // reciprocal
 			0.03f, // Initial threshold to display
@@ -1816,7 +1816,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		addThreadToDraw(filler);
 
 		filler.addProgressListener(this);
-		filler.addProgressListener(resultsDialog.getFillWindow());
+		filler.addProgressListener(resultsDialog.getFillManager());
 
 		filler.setSourcePaths(fromPaths);
 
@@ -2115,8 +2115,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		for (final Window win : images) {
 			if (win != null && win.isActive()) return win;
 		}
-		final Window[] frames = { resultsDialog.getPathManagerUI(), resultsDialog
-			.getFillWindow() };
+		final Window[] frames = { resultsDialog.getPathManager(), resultsDialog
+			.getFillManager() };
 		for (final Window frame : frames) {
 			if (frame.isActive()) return frame;
 		}

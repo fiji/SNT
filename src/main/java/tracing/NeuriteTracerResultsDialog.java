@@ -173,7 +173,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	private final PathAndFillManager pathAndFillManager;
 	protected final GuiUtils guiUtils;
 	private final PathManagerUI pmUI;
-	private final FillWindow fw;
+	private final FillManagerUI fmUI;
 	protected final GuiListener listener;
 
 	/* These are the states that the UI can be in: */
@@ -359,9 +359,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		pmUI = new PathManagerUI(plugin);
 		pmUI.setLocation(getX() + getWidth(), getY());
 
-		fw = new FillWindow(pathAndFillManager, plugin, getX() + getWidth(),
-			getY() + pmUI.getHeight());
-		pathAndFillManager.addPathAndFillListener(fw);
+		fmUI = new FillManagerUI(plugin);
+		fmUI.setLocation(getX() + getWidth(), getY() + pmUI.getHeight());
 
 		changeState(WAITING_TO_START_PATH);
 	}
@@ -526,7 +525,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		plugin.prefs.savePluginPrefs(true);
 		pmUI.dispose();
 		pmUI.closeTable();
-		fw.dispose();
+		fmUI.dispose();
 		dispose();
 		plugin.closeAndResetAllPanes();
 		SNT.setPlugin(null);
@@ -542,7 +541,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 	protected void disableImageDependentComponents() {
 		assert SwingUtilities.isEventDispatchThread();
 		loadLabelsMenuItem.setEnabled(false);
-		fw.setEnabledNone();
+		fmUI.setEnabledNone();
 		setEnableAutoTracingComponents(false);
 		// GuiUtils.enableComponents(colorPanel, false);
 	}
@@ -580,7 +579,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						pmUI.valueChanged(null); // Fake a selection change in the path tree:
 						showPartsNearby.setEnabled(isStackAvailable());
 						setEnableAutoTracingComponents(plugin.isAstarEnabled());
-						fw.setEnabledWhileNotFilling();
+						fmUI.setEnabledWhileNotFilling();
 						loadLabelsMenuItem.setEnabled(true);
 						saveMenuItem.setEnabled(true);
 						loadTracesMenuItem.setEnabled(true);
@@ -629,7 +628,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					case FILLING_PATHS:
 						updateStatusText("Filling out selected paths...");
 						disableEverything();
-						fw.setEnabledWhileFilling();
+						fmUI.setEnabledWhileFilling();
 						break;
 
 					case FITTING_PATHS:
@@ -677,7 +676,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						completePath.setEnabled(false);
 						showPartsNearby.setEnabled(isStackAvailable());
 						setEnableAutoTracingComponents(false);
-						getFillWindow().setVisible(false);
+						getFillManager().setVisible(false);
 						showOrHideFillList.setEnabled(false);
 						break;
 
@@ -690,7 +689,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 						completePath.setEnabled(false);
 						showPartsNearby.setEnabled(isStackAvailable());
 						setEnableAutoTracingComponents(false);
-						getFillWindow().setVisible(false);
+						getFillManager().setVisible(false);
 						showOrHideFillList.setEnabled(false);
 						break;
 					case ANALYSIS_MODE:
@@ -2152,7 +2151,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 					newStatus = "Last cursor position: Distance from path is " + SNT
 						.formatDouble(t, 3);
 				}
-				fw.fillStatus.setText(newStatus);
+				fmUI.fillStatus.setText(newStatus);
 			}
 		});
 	}
@@ -2193,7 +2192,7 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		Point loc = plugin.prefs.getPathWindowLocation();
 		if (loc != null) pmUI.setLocation(loc);
 		loc = plugin.prefs.getFillWindowLocation();
-		if (loc != null) fw.setLocation(loc);
+		if (loc != null) fmUI.setLocation(loc);
 		// final GraphicsDevice activeScreen =
 		// getGraphicsConfiguration().getDevice();
 		// final int screenWidth = activeScreen.getDisplayMode().getWidth();
@@ -2309,26 +2308,26 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		if (makeVisible) {
 			if (showOrHideFillList != null) showOrHideFillList.setText(
 				"  Hide Fill Manager");
-			fw.setVisible(true);
-			fw.toFront();
+			fmUI.setVisible(true);
+			fmUI.toFront();
 		}
 		else {
 			if (showOrHideFillList != null)
 
 				showOrHideFillList.setText("Show Fill Manager");
-			fw.setVisible(false);
+			fmUI.setVisible(false);
 		}
 	}
 
 	protected void toggleFillListVisibility() {
 		assert SwingUtilities.isEventDispatchThread();
-		synchronized (fw) {
-			setFillListVisible(!fw.isVisible());
+		synchronized (fmUI) {
+			setFillListVisible(!fmUI.isVisible());
 		}
 	}
 
 	protected void thresholdChanged(final double f) {
-		fw.thresholdChanged(f);
+		fmUI.thresholdChanged(f);
 	}
 
 	protected boolean nearbySlices() {
@@ -2442,8 +2441,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		return pmUI;
 	}
 
-	protected FillWindow getFillWindow() {
-		return fw;
+	protected FillManagerUI getFillManager() {
+		return fmUI;
 	}
 
 	protected void reset() {

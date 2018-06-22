@@ -201,6 +201,13 @@ public class SNTUI extends JDialog {
 	protected boolean finishOnDoubleConfimation = true;
 	protected boolean discardOnDoubleCancellation = true;
 
+	/**
+	 * Instantiates SNT's main UI and associated {@link PathManagerUI} and
+	 * {@link FillManagerUI} instances.
+	 *
+	 * @param plugin
+	 *            the {@link SimpleNeuriteTracer} instance associated with this UI
+	 */
 	public SNTUI(final SimpleNeuriteTracer plugin) {
 
 		super(plugin.legacyService.getIJ1Helper().getIJ(), "SNT v" + SNT.VERSION,
@@ -365,6 +372,12 @@ public class SNTUI extends JDialog {
 		changeState(WAITING_TO_START_PATH);
 	}
 
+	/**
+	 * Gets the current UI state.
+	 *
+	 * @return the current UI state, e.g., {@link SNTUI#WAITING_FOR_SIGMA_POINT},
+	 *         {@link SNTUI#WAITING_FOR_SIGMA_POINT}, etc.
+	 */
 	public int getCurrentState() {
 		return currentState;
 	}
@@ -450,7 +463,7 @@ public class SNTUI extends JDialog {
 		}
 	}
 
-	public void gaussianCalculated(final boolean succeeded) {
+	protected void gaussianCalculated(final boolean succeeded) {
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
@@ -504,10 +517,20 @@ public class SNTUI extends JDialog {
 		preprocess.setText(label);
 	}
 
+	/**
+	 * Gets the current Sigma value from the Hessian panel
+	 *
+	 * @return the sigma value currently in use
+	 */
 	public double getSigma() {
 		return currentSigma;
 	}
 
+	/**
+	 * Gets the current multiplier value from the Hessian panel
+	 *
+	 * @return the multiplier value currently in use
+	 */
 	public double getMultiplier() {
 		return currentMultiplier;
 	}
@@ -560,6 +583,14 @@ public class SNTUI extends JDialog {
 		quitMenuItem.setEnabled(false);
 	}
 
+	
+	/**
+	 * Changes this UI to a new state.
+	 *
+	 * @param newState
+	 *            the new state, e.g., {@link SNTUI#WAITING_FOR_SIGMA_POINT},
+	 *            {@link SNTUI#WAITING_FOR_SIGMA_POINT}, etc.
+	 */
 	public void changeState(final int newState) {
 
 		SNT.log("changing state to: " + getState(newState));
@@ -2138,24 +2169,6 @@ public class SNTUI extends JDialog {
 		});
 	}
 
-	public void showMouseThreshold(final float t) {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				String newStatus = null;
-				if (t < 0) {
-					newStatus = "Last cursor position: Not reached by search yet";
-				}
-				else {
-					newStatus = "Last cursor position: Distance from path is " + SNT
-						.formatDouble(t, 3);
-				}
-				fmUI.fillStatus.setText(newStatus);
-			}
-		});
-	}
-
 	private void setSigmaFromUser() {
 		final JTextField sigmaField = new JTextField(SNT.formatDouble(getSigma(),
 			5), 5);
@@ -2241,7 +2254,7 @@ public class SNTUI extends JDialog {
 	private void toggleWindowVisibility(final int pane,
 		final JCheckBoxMenuItem mItem)
 	{
-		if (getImagePlus(pane) == null) {
+		if (plugin.getImagePlus(pane) == null) {
 			String msg;
 			if (pane == MultiDThreePanes.XY_PLANE) msg =
 				"Tracing image is no longer available.";
@@ -2256,21 +2269,6 @@ public class SNTUI extends JDialog {
 		}
 		// NB: WindowManager list won't be notified
 		plugin.getWindow(pane).setVisible(!mItem.isSelected());
-	}
-
-	/**
-	 * Gets the Image associated with a view pane.
-	 *
-	 * @param pane the flag specifying the view either
-	 *          {@link MultiDThreePanes#XY_PLANE},
-	 *          {@link MultiDThreePanes#XZ_PLANE} or
-	 *          {@link MultiDThreePanes#ZY_PLANE}.
-	 * @return the image associate with the specified view, or null if the view is
-	 *         not being displayed
-	 */
-	public ImagePlus getImagePlus(final int pane) {
-		final StackWindow win = plugin.getWindow(pane);
-		return (win == null) ? null : win.getImagePlus();
 	}
 
 	private boolean noPathsError() {
@@ -2433,7 +2431,7 @@ public class SNTUI extends JDialog {
 	}
 
 	/**
-	 * Gets the Path Manager UI.
+	 * Gets the Path Manager frame.
 	 *
 	 * @return the {@link PathManagerUI} associated with this UI
 	 */
@@ -2441,7 +2439,12 @@ public class SNTUI extends JDialog {
 		return pmUI;
 	}
 
-	protected FillManagerUI getFillManager() {
+	/**
+	 * Gets the Fill Manager frame.
+	 *
+	 * @return the {@link FillManagerUI} associated with this UI
+	 */
+	public FillManagerUI getFillManager() {
 		return fmUI;
 	}
 

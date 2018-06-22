@@ -107,9 +107,14 @@ import tracing.plugin.SkeletonConverter;
 import tracing.plugin.TreeColorizerCmd;
 import tracing.util.SWCColor;
 
-@SuppressWarnings("serial")
+/**
+ * Creates the "Path Manager" JFrame.
+ * 
+ * @author Tiago Ferreira
+ */
 public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSelectionListener {
 
+	private static final long serialVersionUID = 1L;
 	private HelpfulJTree tree;
 	private DefaultMutableTreeNode root;
 	private SimpleNeuriteTracer plugin;
@@ -816,8 +821,11 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 	/** This class defines the JTree hosting traced paths */
 	private static class HelpfulJTree extends JTree {
 
+		private static final long serialVersionUID = 1L;
+
 		public HelpfulJTree(final TreeNode root) {
 			super(root);
+			@SuppressWarnings("serial")
 			final DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer() {
 
 				@Override

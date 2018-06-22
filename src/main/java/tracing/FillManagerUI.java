@@ -55,6 +55,11 @@ import net.imagej.ImageJ;
 import tracing.gui.GuiUtils;
 import ij.ImagePlus;
 
+/**
+ * Creates the "Fill Manager" JFrame.
+ * 
+ * @author Tiago Ferreira
+ */
 public class FillManagerUI extends JFrame
 		implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
 
@@ -88,7 +93,13 @@ public class FillManagerUI extends JFrame
 
 	private final int MARGIN = 10;
 
-
+	/**
+	 * Instantiates a new Fill Manager {@link JFrame}
+	 *
+	 * @param plugin
+	 *            the the {@link SimpleNeuriteTracer} instance to be associated with
+	 *            this FillManager
+	 */
 	public FillManagerUI(final SimpleNeuriteTracer plugin) {
 		super("Fill Manager");
 
@@ -265,7 +276,7 @@ public class FillManagerUI extends JFrame
 		return panel;
 	}
 
-	public void setEnabledWhileFilling() {
+	protected void setEnabledWhileFilling() {
 		assert SwingUtilities.isEventDispatchThread();
 		fillList.setEnabled(false);
 		deleteFills.setEnabled(false);
@@ -285,7 +296,7 @@ public class FillManagerUI extends JFrame
 		discardFill.setEnabled(true);
 	}
 
-	public void setEnabledWhileNotFilling() {
+	protected void setEnabledWhileNotFilling() {
 		assert SwingUtilities.isEventDispatchThread();
 		fillList.setEnabled(true);
 		deleteFills.setEnabled(true);
@@ -305,7 +316,7 @@ public class FillManagerUI extends JFrame
 		discardFill.setEnabled(false);
 	}
 
-	public void setEnabledNone() {
+	protected void setEnabledNone() {
 		assert SwingUtilities.isEventDispatchThread();
 		fillList.setEnabled(false);
 		deleteFills.setEnabled(false);
@@ -325,10 +336,16 @@ public class FillManagerUI extends JFrame
 		discardFill.setEnabled(false);
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.PathAndFillListener#setPathList(java.lang.String[], tracing.Path, boolean)
+	 */
 	@Override
 	public void setPathList(final String[] pathList, final Path justAdded, final boolean expandAll) {
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.PathAndFillListener#setFillList(java.lang.String[])
+	 */
 	@Override
 	public void setFillList(final String[] newList) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -341,11 +358,17 @@ public class FillManagerUI extends JFrame
 		});
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.PathAndFillListener#setSelectedPaths(java.util.HashSet, java.lang.Object)
+	 */
 	@Override
 	public void setSelectedPaths(final HashSet<Path> selectedPathSet, final Object source) {
 		// This dialog doesn't deal with paths, so ignore this.
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+	 */
 	@Override
 	public void actionPerformed(final ActionEvent ae) {
 		assert SwingUtilities.isEventDispatchThread();
@@ -431,6 +454,9 @@ public class FillManagerUI extends JFrame
 
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+	 */
 	@Override
 	public void itemStateChanged(final ItemEvent ie) {
 		assert SwingUtilities.isEventDispatchThread();
@@ -438,7 +464,7 @@ public class FillManagerUI extends JFrame
 			plugin.setFillTransparent(transparent.isSelected());
 	}
 
-	public void thresholdChanged(final double f) {
+	protected void thresholdChanged(final double f) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -450,6 +476,9 @@ public class FillManagerUI extends JFrame
 		});
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.FillerProgressCallback#maximumDistanceCompletelyExplored(tracing.SearchThread, float)
+	 */
 	@Override
 	public void maximumDistanceCompletelyExplored(final SearchThread source, final float f) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -461,16 +490,25 @@ public class FillManagerUI extends JFrame
 		});
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.SearchProgressCallback#pointsInSearch(tracing.SearchInterface, int, int)
+	 */
 	@Override
 	public void pointsInSearch(final SearchInterface source, final int inOpen, final int inClosed) {
 		// Do nothing...
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.SearchProgressCallback#finished(tracing.SearchInterface, boolean)
+	 */
 	@Override
 	public void finished(final SearchInterface source, final boolean success) {
 		// Do nothing...
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.SearchProgressCallback#threadStatus(tracing.SearchInterface, int)
+	 */
 	@Override
 	public void threadStatus(final SearchInterface source, final int currentStatus) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -493,6 +531,24 @@ public class FillManagerUI extends JFrame
 					break;
 				}
 				fillControlPanel.doLayout();
+			}
+		});
+	}
+
+	protected void showMouseThreshold(final float t) {
+		SwingUtilities.invokeLater(new Runnable() {
+
+			@Override
+			public void run() {
+				String newStatus = null;
+				if (t < 0) {
+					newStatus = "Last cursor position: Not reached by search yet";
+				}
+				else {
+					newStatus = "Last cursor position: Distance from path is " + SNT
+						.formatDouble(t, 3);
+				}
+				fillStatus.setText(newStatus);
 			}
 		});
 	}

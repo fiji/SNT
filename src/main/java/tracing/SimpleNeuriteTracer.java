@@ -734,7 +734,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				getUIState() == SNTUI.ANALYSIS_MODE);
 	}
 
-	// if (uiReadyForModeChange(NeuriteTracerResultsDialog.ANALYSIS_MODE)) {
+	// if (uiReadyForModeChange(SNTUI.ANALYSIS_MODE)) {
 	// getGuiUtils().tempMsg("Tracing image not available");
 	// return;
 	// }
@@ -1103,7 +1103,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (filler != null) {
 			synchronized (filler) {
 				final float distance = filler.getDistanceAtPoint(ix, iy, iz);
-				ui.showMouseThreshold(distance);
+				ui.getFillManager().showMouseThreshold(distance);
 			}
 		}
 	}
@@ -2092,6 +2092,21 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
+	/**
+	 * Gets the Image associated with a view pane.
+	 *
+	 * @param pane the flag specifying the view either
+	 *          {@link MultiDThreePanes#XY_PLANE},
+	 *          {@link MultiDThreePanes#XZ_PLANE} or
+	 *          {@link MultiDThreePanes#ZY_PLANE}.
+	 * @return the image associate with the specified view, or null if the view is
+	 *         not being displayed
+	 */
+	public ImagePlus getImagePlus(final int pane) {
+		final StackWindow win = getWindow(pane);
+		return (win == null) ? null : win.getImagePlus();
+	}
+
 	@Override
 	public void error(final String msg) {
 		new GuiUtils(getActiveWindow()).error(msg);
@@ -2255,7 +2270,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			return ui.getPathManager().getSelectedPaths(false);
 		}
 		throw new IllegalArgumentException(
-			"getSelectedPaths was called when resultsDialog.pw was null");
+			"getSelectedPaths was called when PathManagerUI was null");
 	}
 
 	@Override

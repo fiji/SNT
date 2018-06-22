@@ -44,8 +44,9 @@ import tracing.util.PointInImage;
 /**
  * Utility class to access a Collection of Paths. A Tree is the preferred way to
  * group, access and manipulate {@link Path}s that share something in common,
- * specially when scripting SNT. Note that a "Tree" here is literally a
- * collection of {@link Path}s and it does not reflect graph theory terminology.
+ * specially when scripting SNT. Most methods are multithreaded. Note that a
+ * "Tree" here is literally a collection of {@link Path}s and it does not
+ * reflect graph theory terminology.
  *
  * @author Tiago Ferreira
  */
@@ -169,7 +170,6 @@ public class Tree {
 	 * @return true if this tree contained p
 	 */
 	public boolean remove(final Path p) {
-		tree.get(1);
 		return tree.remove(p);
 	}
 
@@ -198,9 +198,9 @@ public class Tree {
 	 * @see PathDownsampler
 	 */
 	public void downSample(final double maximumAllowedDeviation) {
-		for (final Path p : tree) {
+		tree.parallelStream().forEach(p -> {
 			p.downsample(maximumAllowedDeviation);
-		}
+		});
 	}
 
 	/**
@@ -307,13 +307,13 @@ public class Tree {
 	 *            the z offset
 	 */
 	public void translate(final double xOffset, final double yOffset, final double zOffset) {
-		for (final Path p : tree) {
+		tree.parallelStream().forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] += xOffset;
 				p.precise_y_positions[node] += yOffset;
 				p.precise_z_positions[node] += zOffset;
 			}
-		}
+		});
 	}
 
 	/**
@@ -327,13 +327,13 @@ public class Tree {
 	 *            the scaling factor for z coordinates
 	 */
 	public void scale(final double xScale, final double yScale, final double zScale) {
-		for (final Path p : tree) {
+		tree.parallelStream().forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] *= xScale;
 				p.precise_y_positions[node] *= yScale;
 				p.precise_z_positions[node] *= zScale;
 			}
-		}
+		});
 	}
 
 	/**
@@ -354,34 +354,34 @@ public class Tree {
 		final double cos = Math.cos(radAngle);
 		switch (axis) {
 		case Z_AXIS:
-			for (final Path p : tree) {
+			tree.parallelStream().forEach(p -> {
 				for (int node = 0; node < p.size(); node++) {
 					final PointInImage pim = p.getPointInImage(node);
 					final double x = pim.x * cos - pim.y * sin;
 					final double y = pim.y * cos + pim.x * sin;
 					p.moveNode(node, new PointInImage(x, y, pim.z));
 				}
-			}
+			});
 			break;
 		case Y_AXIS:
-			for (final Path p : tree) {
+			tree.parallelStream().forEach(p -> {
 				for (int node = 0; node < p.size(); node++) {
 					final PointInImage pim = p.getPointInImage(node);
 					final double x = pim.x * cos - pim.z * sin;
 					final double z = pim.z * cos + pim.x * sin;
 					p.moveNode(node, new PointInImage(x, pim.y, z));
 				}
-			}
+			});
 			break;
 		case X_AXIS:
-			for (final Path p : tree) {
+			tree.parallelStream().forEach(p -> {
 				for (int node = 0; node < p.size(); node++) {
 					final PointInImage pim = p.getPointInImage(node);
 					final double y = pim.y * cos - pim.z * sin;
 					final double z = pim.z * cos + pim.y * sin;
 					p.moveNode(node, new PointInImage(pim.x, y, z));
 				}
-			}
+			});
 			break;
 		default:
 			throw new IllegalArgumentException("Unrecognized rotation axis" + axis);
@@ -464,11 +464,7 @@ public class Tree {
 	 *            the radius attribute from the Tree
 	 */
 	public void setRadii(final double r) {
-		if (Double.isNaN(r) || r == 0d) {
-			tree.stream().forEach(p -> p.radiuses = null);
-		} else {
-			tree.stream().forEach(p -> Arrays.fill(p.radiuses, r));
-		}
+		tree.parallelStream().forEach(p -> p.setRadii(r));
 	}
 
 	/**

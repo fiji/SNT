@@ -199,11 +199,11 @@ public class Path implements Comparable<Path> {
 		return s.toString();
 	}
 
-	public String somehowJoinsAsString() {
+	protected String somehowJoinsAsString() {
 		return pathsToIDListString(somehowJoins);
 	}
 
-	public String childrenAsString() {
+	protected String childrenAsString() {
 		return pathsToIDListString(children);
 	}
 
@@ -235,7 +235,7 @@ public class Path implements Comparable<Path> {
 		return String.format("%.4f", getRealLength());
 	}
 
-	public void createCircles() {
+	protected void createCircles() {
 		if (tangents_x != null || tangents_y != null || tangents_z != null || radiuses != null)
 			throw new IllegalArgumentException(
 					"Trying to create circles data arrays when at least one is already there");
@@ -1144,9 +1144,9 @@ public class Path implements Comparable<Path> {
 		return fitted;
 	}
 
-	public void setGuessedTangents(final int pointsEitherSide) {
+	protected void setGuessedTangents(final int pointsEitherSide) {
 		if (tangents_x == null || tangents_y == null || tangents_z == null)
-			throw new RuntimeException("BUG: setGuessedTangents called with one of the tangent arrays null");
+			throw new IllegalArgumentException("BUG: setGuessedTangents called with one of the tangent arrays null");
 		final double[] tangent = new double[3];
 		for (int i = 0; i < points; ++i) {
 			getTangent(i, pointsEitherSide, tangent);
@@ -2347,11 +2347,12 @@ public class Path implements Comparable<Path> {
 
 	protected boolean invalid3DMesh = false;
 
-	public void invalidate3DView() {
+
+	private void invalidate3DView() {
 		invalid3DMesh = true;
 	}
 
-	public boolean is3DViewInvalid() {
+	private boolean is3DViewInvalid() {
 		return invalid3DMesh;
 	}
 

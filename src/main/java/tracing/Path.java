@@ -2802,4 +2802,23 @@ public class Path implements Comparable<Path> {
 		invalidate3DView();
 	}
 
+	/**
+	 * Assigns a fixed radius to all the nodes of this Path
+	 *
+	 * @param r
+	 *            the radius to be assigned. Setting it to 0 or Double.NaN removes
+	 *            the radius attribute from the Path
+	 */
+	public void setRadii(final double r) {
+		if (Double.isNaN(r) || r == 0d) {
+			radiuses = null;
+		} else {
+			if (radiuses == null) {
+				createCircles();
+				setGuessedTangents(2);
+			}
+			Arrays.fill(radiuses, r);
+		}
+	}
+
 }

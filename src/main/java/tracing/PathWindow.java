@@ -243,6 +243,9 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		jmi.addActionListener(singlePathListener);
 		fitMenu.add(jmi);
 		fitMenu.addSeparator();
+		jmi = new JMenuItem(MultiPathActionListener.SPECIFY_FIT_CMD);
+		jmi.addActionListener(multiPathListener);
+		fitMenu.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.RESET_FITS);
 		jmi.addActionListener(multiPathListener);
 		fitMenu.add(jmi);
@@ -1347,6 +1350,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				p.unsetPrimaryForConnected(pathsExplored);
 				refreshManager(false);
 				return;
+
 			} else if (e.getActionCommand().equals(DISCONNECT_CMD)) {
 				if (!guiUtils.getConfirmation("Disconnect \"" + p.toString() + "\" from all it connections?",
 						"Confirm Disconnect"))
@@ -1354,6 +1358,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				p.disconnectFromAll();
 				refreshManager(false);
 				return;
+
 			} else if (e.getActionCommand().equals(EXPLORE_FIT_CMD)) {
 				if (plugin.getImagePlus() == null) {
 					displayTmpMsg("Tracing image is not available. Radii cannot be calculated.");
@@ -1373,6 +1378,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				exploreFit(p);
 				return;
 			}
+
 			SNT.error("Unexpectedly got an event from an unknown source: " + e);
 		}
 	}
@@ -1392,6 +1398,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		private final static String REMOVE_TAG_CMD = "Remove Custom Tag(s)";
 		private static final String FILL_OUT_CMD = "Fill Out...";
 		private static final String RESET_FITS = "Reset Fits...";
+		private final static String SPECIFY_FIT_CMD = "Specify Radius...";
 		private final static String MEASURE_CMD = "Measure";
 		private final static String CONVERT_TO_ROI_CMD = "Send to ROI Manager...";
 		private final static String COLORIZE_PATH_CMD = "Color Coding...";
@@ -1420,8 +1427,10 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			// Case 1: Non-destructive commands that do not require confirmation
 			if (REMOVE_COLOR_CMD.equals(cmd)) {
 				resetPathsColor(selectedPaths, false);
+
 			} else if (APPLY_SWC_COLORS_CMD.equals(cmd)) {
 				resetPathsColor(selectedPaths, true);
+
 			} else if (COLORS_MENU.equals(cmd)) {
 				final SWCColor swcColor = colorMenu.getSelectedSWCColor();
 				if (swcColor.isTypeDefined())
@@ -1431,6 +1440,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				plugin.updateAllViewers();
 				refreshManager(true);
 				return;
+
 			} else if (MEASURE_CMD.equals(cmd)) {
 				try {
 					final TreeAnalyzer ta = new TreeAnalyzer(new Tree(selectedPaths));
@@ -1446,23 +1456,27 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				} catch (final IllegalArgumentException ignored) {
 					guiUtils.error("Selected paths do not fullfill requirements for measurements");
 				}
+
 			} else if (CONVERT_TO_ROI_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(ROIExporterCmd.class, true, input);
+
 			} else if (COLORIZE_PATH_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
 				input.put("manager", getInstance());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(TreeColorizerCmd.class, true, input);
+
 			} else if (HISTOGRAM_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
 				input.put("title", "SNT: Hist. " + getDescription(selectedPaths));
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(DistributionCmd.class, true, input);
+
 			} else if (APPEND_ORDER_CMD.equals(cmd)) {
 				for (final Path p : selectedPaths) {
 					final String name = p.getName();
@@ -1470,11 +1484,13 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 						p.setName(name + "<Order " + p.getOrder() + ">");
 				}
 				refreshManager(false);
+
 			} else if (REMOVE_ORDER_CMD.equals(cmd)) {
 				for (final Path p : selectedPaths) {
 					p.setName(p.getName().replaceAll("\\<Order \\d+\\>", ""));
 				}
 				refreshManager(false);
+
 			} else if (APPEND_TAG_CMD.equals(cmd)) {
 				final String tags = guiUtils.getString("Enter one or more tags (space or comma-separated list):",
 						"Append Tags", "");
@@ -1484,19 +1500,52 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					p.setName(p.getName() + "<Tag " + tags + ">");
 				}
 				refreshManager(false);
+
 			} else if (REMOVE_TAG_CMD.equals(cmd)) {
 				for (final Path p : selectedPaths) {
 					p.setName(p.getName().replaceAll("\\<Tag .+\\>", ""));
 				}
 				refreshManager(false);
+
 			} else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
 				new SkeletonConverter(plugin).runGui();
 				return;
+
 			} else if (CONVERT_TO_SWC_CMD.equals(cmd)) {
 				exportSelectedPaths(selectedPaths);
 				return;
+
 			} else if (FILL_OUT_CMD.equals(cmd)) {
 				plugin.startFillingPaths(selectedPaths);
+				return;
+
+			} else if (SPECIFY_FIT_CMD.equals(e.getActionCommand())) {
+
+				if (allUsingFittedVersion(selectedPaths)) {
+					guiUtils.error("This command only applies to unfitted paths.");
+					return;
+				}
+				final double rad = 2 * plugin.getMinimumSeparation();
+				final Double userRad = guiUtils.getDouble("<HTML><body><div style='width:" + Math.min(getWidth(), 500)
+						+ ";'>" + "Please specify a constant radius for all the nodes "
+						+ "of selected path(s). This setting only applies to unfitted "
+						+ "paths and <b>overrides</b> any existing values.", "Assign Constant Diameter", rad);
+				if (userRad == null) {
+					return; // user pressed cancel
+				}
+				if (Double.isNaN(userRad) || userRad < 0) {
+					guiUtils.error("Invalid diameter value.");
+					return;
+				}
+				if (userRad == 0d && !guiUtils.getConfirmation("Discard thickness information from selected paths?",
+						"Confirm Removal of Diameters")) {
+					return;
+				}
+				selectedPaths.parallelStream().forEach(p -> {
+					if (!p.isFittedVersionOfAnotherPath()) p.setRadii(userRad);
+				});
+				guiUtils.tempMsg("Command finished. Fitted path(s) ignored.");
+				plugin.updateAllViewers();
 				return;
 			}
 
@@ -1540,9 +1589,9 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					refPath.add(p);
 					pathAndFillManager.deletePath(p);
 				}
-				// Make sure that the 3D viewer and the stacks are redrawn:
 				plugin.updateAllViewers();
 				refreshManager(true);
+
 			} else if (DOWNSAMPLE_CMD.equals(cmd)) {
 				final double minSep = plugin.getMinimumSeparation();
 				final Double userMaxDeviation = guiUtils.getDouble("<HTML><body><div style='width:500;'>"

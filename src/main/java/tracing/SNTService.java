@@ -248,7 +248,7 @@ public class SNTService extends AbstractService implements ImageJService {
 		}
 
 		final int viewPlane = getView(view);
-		final ImagePlus imp = plugin.getUI().getImagePlus(viewPlane);
+		final ImagePlus imp = plugin.getImagePlus(viewPlane);
 		if (imp == null)
 			throw new IllegalArgumentException("view is not available");
 

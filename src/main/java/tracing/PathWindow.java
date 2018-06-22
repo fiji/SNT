@@ -219,7 +219,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		jmi.addActionListener(multiPathListener);
 		colorMenu.add(jmi);
 		colorMenu.addSeparator();
-		final JMenu orderTagsMenu = new JMenu("Branching Order Tags");
+		final JMenu orderTagsMenu = new JMenu("Branching Order");
 		jmi = new JMenuItem(MultiPathActionListener.APPEND_ORDER_CMD);
 		jmi.addActionListener(multiPathListener);
 		orderTagsMenu.add(jmi);
@@ -238,7 +238,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 		final JMenu fitMenu = new JMenu("Fit/Fill");
 		menuBar.add(fitMenu);
-		fitVolumeMenuItem = new JMenuItem("Fit Diameters");
+		fitVolumeMenuItem = new JMenuItem("Fit Radii");
 		fitVolumeMenuItem.addActionListener(multiPathListener);
 		fitMenu.add(fitVolumeMenuItem);
 		jmi = new JMenuItem(SinglePathActionListener.EXPLORE_FIT_CMD);
@@ -1300,6 +1300,17 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		}
 	}
 
+	private void removeOrderTags(final HashSet<Path> selectedPaths) {
+		for (final Path p : selectedPaths) {
+			p.setName(p.getName().replaceAll("\\<Order \\d+\\>", ""));
+		}
+	}
+
+	private void removeAllOrderTags() {
+		tree.clearSelection();
+		removeOrderTags(getSelectedPaths(true));
+	}
+
 	/** ActionListener for commands that do not deal with paths */
 	private class NoPathActionListener implements ActionListener {
 
@@ -1367,6 +1378,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				p.setIsPrimary(true);
 				pathsExplored.add(p);
 				p.unsetPrimaryForConnected(pathsExplored);
+				removeAllOrderTags();
 				refreshManager(false, false);
 				return;
 
@@ -1375,6 +1387,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 						"Confirm Disconnect"))
 					return;
 				p.disconnectFromAll();
+				removeAllOrderTags();
 				refreshManager(false, false);
 				return;
 
@@ -1405,7 +1418,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	/** ActionListener for commands that can operate on multiple paths */
 	private class MultiPathActionListener implements ActionListener {
 
-		private final static String COLORS_MENU = "Tag";
+		private final static String COLORS_MENU = "Tags";
 		private final static String DELETE_CMD = "Delete...";
 		private final static String MERGE_CMD = "Merge...";
 		private final static String DOWNSAMPLE_CMD = "Douglas–Peucker Downsampling...";
@@ -1504,9 +1517,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				refreshManager(false, false);
 
 			} else if (REMOVE_ORDER_CMD.equals(cmd)) {
-				for (final Path p : selectedPaths) {
-					p.setName(p.getName().replaceAll("\\<Order \\d+\\>", ""));
-				}
+				removeOrderTags(selectedPaths);
 				refreshManager(false, false);
 
 			} else if (APPEND_TAG_CMD.equals(cmd)) {

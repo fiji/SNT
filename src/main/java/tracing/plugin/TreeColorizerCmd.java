@@ -108,7 +108,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 		}
 		SNT.log("Finished...");
 		if (manager != null)
-			manager.refresh();
+			manager.update();
 		statusService.clearStatus();
 	}
 
@@ -156,7 +156,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 			p.setNodeColors(null);
 		}
 		if (manager != null)
-			manager.refresh();
+			manager.update();
 		statusService.showStatus("Color code removed...");
 	}
 

@@ -126,19 +126,21 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	private final JMenuItem fitVolumeMenuItem;
 	private final TreeSearchable searchable;
 
-	public PathWindow(final PathAndFillManager pathAndFillManager, final SimpleNeuriteTracer plugin) {
-		this(pathAndFillManager, plugin, 200, 60);
-	}
-
-	public PathWindow(final PathAndFillManager pathAndFillManager, final SimpleNeuriteTracer plugin, final int x,
-			final int y) {
+	/**
+	 * Instantiates a new Path Manager {@link JFrame}
+	 *
+	 * @param plugin
+	 *            the the {@link SimpleNeuriteTracer} instance to be associated with
+	 *            this Path Manager
+	 */
+	public PathWindow(final SimpleNeuriteTracer plugin) {
 
 		super("Path Manager");
-		guiUtils = new GuiUtils(this);
-		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;
+		guiUtils = new GuiUtils(this);
+		pathAndFillManager = plugin.getPathAndFillManager();
+		pathAndFillManager.addPathAndFillListener(this);
 
-		setLocation(x, y);
 		root = new DefaultMutableTreeNode("All Paths");
 		tree = new HelpfulJTree(root);
 		tree.setRootVisible(false);
@@ -201,7 +203,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 						return;
 					}
 					setSWCType(selectedPaths, type);
-					refreshManager(true);
+					refreshManager(true, false);
 				}
 			});
 			swcTypeMenu.add(rbmi);
@@ -363,8 +365,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			else
 				p.setColor(null);
 		}
-		plugin.updateAllViewers();
-		refreshManager(true);
+		refreshManager(true, true);
 	}
 
 	private void deletePaths(final Set<Path> pathsToBeDeleted) {
@@ -372,9 +373,18 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			p.disconnectFromAll();
 			pathAndFillManager.deletePath(p);
 		}
+		refreshManager(false, true);
 	}
 
-	// TODO: include children
+	/**
+	 * Gets the paths currently selected in the Manager's {@link JTree} list.
+	 *
+	 * @param ifNoneSelectedGetAll
+	 *            if true and no paths are currently selected, all Paths in the list
+	 *            will be returned
+	 * @return the selected paths. Note that children of a Path are not returned if
+	 *         unselected.
+	 */
 	public HashSet<Path> getSelectedPaths(final boolean ifNoneSelectedGetAll) {
 		return SwingSafeResult.getResult(new Callable<HashSet<Path>>() {
 
@@ -441,7 +451,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 			@Override
 			protected void done() {
-				refreshManager(true);
+				refreshManager(true, false);
 				msg.dispose();
 				plugin.changeUIState(preFittingState);
 				setEnabledCommands(true);
@@ -587,6 +597,9 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see javax.swing.event.TreeSelectionListener#valueChanged(javax.swing.event.TreeSelectionEvent)
+	 */
 	@Override
 	public void valueChanged(final TreeSelectionEvent e) {
 		assert SwingUtilities.isEventDispatchThread();
@@ -693,6 +706,9 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.PathAndFillListener#setSelectedPaths(java.util.HashSet, java.lang.Object)
+	 */
 	@Override
 	public void setSelectedPaths(final HashSet<Path> selectedPaths, final Object source) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -723,62 +739,59 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.PathAndFillListener#setPathList(java.lang.String[], tracing.Path, boolean)
+	 */
 	@Override
 	public void setPathList(final String[] pathList, final Path justAdded, final boolean expandAll) {
 
-		SwingUtilities.invokeLater(new Runnable() {
+		SwingUtilities.invokeLater(() -> {
 
-			@Override
-			public void run() {
+			// Save the selection state:
+			final TreePath[] selectedBefore = tree.getSelectionPaths();
+			final HashSet<Path> selectedPathsBefore = new HashSet<>();
+			final HashSet<Path> expandedPathsBefore = new HashSet<>();
 
-				// Save the selection state:
-
-				final TreePath[] selectedBefore = tree.getSelectionPaths();
-				final HashSet<Path> selectedPathsBefore = new HashSet<>();
-				final HashSet<Path> expandedPathsBefore = new HashSet<>();
-
-				if (selectedBefore != null)
-					for (int i = 0; i < selectedBefore.length; ++i) {
-						final TreePath tp = selectedBefore[i];
-						final DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode) tp.getLastPathComponent();
-						if (dmtn != root) {
-							final Path p = (Path) dmtn.getUserObject();
-							selectedPathsBefore.add(p);
-						}
+			if (selectedBefore != null)
+				for (int i1 = 0; i1 < selectedBefore.length; ++i1) {
+					final TreePath tp = selectedBefore[i1];
+					final DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode) tp.getLastPathComponent();
+					if (dmtn != root) {
+						final Path p = (Path) dmtn.getUserObject();
+						selectedPathsBefore.add(p);
 					}
-
-				// Save the expanded state:
-				getExpandedPaths(tree, tree.getModel(), root, expandedPathsBefore);
-
-				/*
-				 * Ignore the arguments and get the real path list from the PathAndFillManager:
-				 */
-
-				final DefaultMutableTreeNode newRoot = new DefaultMutableTreeNode("All Paths");
-				final DefaultTreeModel model = new DefaultTreeModel(newRoot);
-				// DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
-				final Path[] primaryPaths = pathAndFillManager.getPathsStructured();
-				for (int i = 0; i < primaryPaths.length; ++i) {
-					final Path primaryPath = primaryPaths[i];
-					// Add the primary path if it's not just a fitted version of
-					// another:
-					if (primaryPath.fittedVersionOf == null)
-						addNode(newRoot, primaryPath, model);
 				}
-				root = newRoot;
-				tree.setModel(model);
 
-				model.reload();
+			// Save the expanded state:
+			getExpandedPaths(tree, tree.getModel(), root, expandedPathsBefore);
 
-				// Set back the expanded state:
-				if (expandAll) {
-					for (int i = 0; i < tree.getRowCount(); ++i)
-						tree.expandRow(i);
-				} else
-					setExpandedPaths(tree, model, root, expandedPathsBefore, justAdded);
-
-				setSelectedPaths(tree, model, root, selectedPathsBefore);
+			/*
+			 * Ignore the arguments and get the real path list from the PathAndFillManager:
+			 */
+			final DefaultMutableTreeNode newRoot = new DefaultMutableTreeNode("All Paths");
+			final DefaultTreeModel model = new DefaultTreeModel(newRoot);
+			// DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+			final Path[] primaryPaths = pathAndFillManager.getPathsStructured();
+			for (int i2 = 0; i2 < primaryPaths.length; ++i2) {
+				final Path primaryPath = primaryPaths[i2];
+				// Add the primary path if it's not just a fitted version of
+				// another:
+				if (primaryPath.fittedVersionOf == null)
+					addNode(newRoot, primaryPath, model);
 			}
+			root = newRoot;
+			tree.setModel(model);
+
+			model.reload();
+
+			// Set back the expanded state:
+			if (expandAll) {
+				for (int i3 = 0; i3 < tree.getRowCount(); ++i3)
+					tree.expandRow(i3);
+			} else
+				setExpandedPaths(tree, model, root, expandedPathsBefore, justAdded);
+
+			setSelectedPaths(tree, model, root, selectedPathsBefore);
 		});
 	}
 
@@ -790,9 +803,11 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			addNode(newNode, p, model);
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.PathAndFillListener#setFillList(java.lang.String[])
+	 */
 	@Override
 	public void setFillList(final String[] fillList) {
-
 	}
 
 	/** This class defines the JTree hosting traced paths */
@@ -1167,7 +1182,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 						final Future<Path> future = executor.submit(fitter);
 						final Path result = future.get();
 						pathAndFillManager.addPath(result);
-						refreshManager(true);
+						refreshManager(true, false);
 					} catch (InterruptedException | ExecutionException | RuntimeException e) {
 						msg.dispose();
 						guiUtils.error("Unfortunately an exception occured. See Console for details");
@@ -1188,8 +1203,9 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		}).start();
 	}
 
-	private void refreshManager(final boolean refreshCmds) {
+	private void refreshManager(final boolean refreshCmds, final boolean refreshViewers) {
 		pathAndFillManager.resetListeners(null);
+		if (refreshViewers) plugin.updateAllViewers();
 		if (!refreshCmds)
 			return;
 		final Set<Path> selectedPaths = getSelectedPaths(true);
@@ -1199,9 +1215,12 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			updateCmdsManyOrNoneSelected(selectedPaths);
 	}
 
-	public void refresh() {
-		refreshManager(false);
-		plugin.updateAllViewers();
+	/**
+	 * Refreshes viewers and rebuilds Menus to reflect new contents in the Path
+	 * Manager.
+	 */
+	public void update() {
+		refreshManager(true, true);
 	}
 
 	protected void closeTable() {
@@ -1340,7 +1359,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					} else {// Otherwise this is OK, change the name:
 						p.setName(s);
 					}
-					refreshManager(false);
+					refreshManager(false, false);
 				}
 				return;
 			} else if (e.getActionCommand().equals(MAKE_PRIMARY_CMD)) {
@@ -1348,7 +1367,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				p.setIsPrimary(true);
 				pathsExplored.add(p);
 				p.unsetPrimaryForConnected(pathsExplored);
-				refreshManager(false);
+				refreshManager(false, false);
 				return;
 
 			} else if (e.getActionCommand().equals(DISCONNECT_CMD)) {
@@ -1356,7 +1375,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 						"Confirm Disconnect"))
 					return;
 				p.disconnectFromAll();
-				refreshManager(false);
+				refreshManager(false, false);
 				return;
 
 			} else if (e.getActionCommand().equals(EXPLORE_FIT_CMD)) {
@@ -1371,7 +1390,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 						return;
 					p.setUseFitted(false);
 					p.fitted = null;
-					refreshManager(true);
+					refreshManager(true, false);
 				}
 				if (!plugin.editModeAllowed(true))
 					return;
@@ -1437,8 +1456,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					setSWCType(selectedPaths, swcColor.type());
 				for (final Path p : selectedPaths)
 					p.setColor(swcColor.color());
-				plugin.updateAllViewers();
-				refreshManager(true);
+				refreshManager(true, true);
 				return;
 
 			} else if (MEASURE_CMD.equals(cmd)) {
@@ -1483,13 +1501,13 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					if (!name.contains("<Order "))
 						p.setName(name + "<Order " + p.getOrder() + ">");
 				}
-				refreshManager(false);
+				refreshManager(false, false);
 
 			} else if (REMOVE_ORDER_CMD.equals(cmd)) {
 				for (final Path p : selectedPaths) {
 					p.setName(p.getName().replaceAll("\\<Order \\d+\\>", ""));
 				}
-				refreshManager(false);
+				refreshManager(false, false);
 
 			} else if (APPEND_TAG_CMD.equals(cmd)) {
 				final String tags = guiUtils.getString("Enter one or more tags (space or comma-separated list):",
@@ -1499,13 +1517,13 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				for (final Path p : selectedPaths) {
 					p.setName(p.getName() + "<Tag " + tags + ">");
 				}
-				refreshManager(false);
+				refreshManager(false, false);
 
 			} else if (REMOVE_TAG_CMD.equals(cmd)) {
 				for (final Path p : selectedPaths) {
 					p.setName(p.getName().replaceAll("\\<Tag .+\\>", ""));
 				}
-				refreshManager(false);
+				refreshManager(false, false);
 
 			} else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
 				new SkeletonConverter(plugin).runGui();
@@ -1589,8 +1607,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					refPath.add(p);
 					pathAndFillManager.deletePath(p);
 				}
-				plugin.updateAllViewers();
-				refreshManager(true);
+				removeAllOrderTags();
+				refreshManager(true, true);
 
 			} else if (DOWNSAMPLE_CMD.equals(cmd)) {
 				final double minSep = plugin.getMinimumSeparation();
@@ -1624,7 +1642,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					p.setUseFitted(false);
 					p.fitted = null;
 				}
-				refreshManager(true);
+				refreshManager(true, false);
 				return;
 			} else if (e.getSource().equals(fitVolumeMenuItem)) {
 
@@ -1632,7 +1650,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				if (fitVolumeMenuItem.getText().contains("Un-fit")) {
 					for (final Path p : selectedPaths)
 						p.setUseFitted(false);
-					refreshManager(true);
+					refreshManager(true, false);
 					return;
 				}
 
@@ -1674,7 +1692,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 								+ " fits could not be computed", "Image Not Available");
 					}
 				} else {
-					refreshManager(true);
+					refreshManager(true, false);
 				}
 
 				return;

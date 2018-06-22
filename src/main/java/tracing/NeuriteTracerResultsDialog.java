@@ -356,9 +356,8 @@ public class NeuriteTracerResultsDialog extends JDialog {
 		pack();
 		toFront();
 
-		pw = new PathWindow(pathAndFillManager, plugin, getX() + getWidth(),
-			getY());
-		pathAndFillManager.addPathAndFillListener(pw);
+		pw = new PathWindow(plugin);
+		pw.setLocation(getX() + getWidth(), getY());
 
 		fw = new FillWindow(pathAndFillManager, plugin, getX() + getWidth(),
 			getY() + pw.getHeight());

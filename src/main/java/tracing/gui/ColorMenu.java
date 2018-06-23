@@ -107,18 +107,6 @@ public class ColorMenu extends JMenu {
 		}
 		add(defaultPanel);
 
-		// Build the custom color row
-		addSeparator("Custom... (Righ-click to change):");
-		final JPanel customPanel = getGridPanel(1, 7);
-		for (int i = 0; i < 7; i++) {
-			final Color uniquePlaceHolderColor = new Color(getBackground().getRed(), getBackground().getGreen(),
-					getBackground().getBlue(), 255 - i - 1);
-			final ColorPane customColorPane = new ColorPane(new SWCColor(uniquePlaceHolderColor), true);
-			customPanel.add(customColorPane);
-			_colorPanes.put(new SWCColor(uniquePlaceHolderColor), customColorPane);
-		}
-		add(customPanel);
-
 		// Build the panel for SWC colors
 		addSeparator("SWC Type Colors (Righ-click to change):");
 		final JPanel swcPanel = getGridPanel(1, 7);
@@ -130,6 +118,20 @@ public class ColorMenu extends JMenu {
 		}
 		add(swcPanel);
 		addSeparator();
+
+		// Build the custom color row
+		addSeparator("Custom... (Righ-click to change):");
+		final JPanel customPanel = getGridPanel(1, 7);
+		for (int i = 0; i < 7; i++) {
+			final Color uniquePlaceHolderColor = new Color(getBackground().getRed(), getBackground().getGreen(),
+					getBackground().getBlue(), 255 - i - 1);
+			final ColorPane customColorPane = new ColorPane(new SWCColor(uniquePlaceHolderColor), true);
+			customPanel.add(customColorPane);
+			_colorPanes.put(new SWCColor(uniquePlaceHolderColor), customColorPane);
+		}
+		add(customPanel);
+		//addSeparator(" ");// bottom spacer
+
 	}
 
 	private void addSeparator(final String title) {
@@ -254,9 +256,12 @@ public class ColorMenu extends JMenu {
 		@Override
 		public void mousePressed(final MouseEvent ev) {
 
+			assert SwingUtilities.isEventDispatchThread();
+
 			// Ensure only this pane gets selected
 			selectNone();
 			setSelected(true);
+			
 
 			if (isCustomizable && (SwingUtilities.isRightMouseButton(ev) || ev.isPopupTrigger())) {
 
@@ -267,6 +272,7 @@ public class ColorMenu extends JMenu {
 				final GuiUtils gUtils = new GuiUtils(getTopLevelAncestor());
 				final String promptTitle = (!swcColor.isTypeDefined()) ? "New Color"
 						: "New color for SWC Type: " + Path.getSWCtypeName(swcColor.type());
+				MenuSelectionManager.defaultManager().clearSelectedPath();
 				final Color c = gUtils.getColor(promptTitle, swcColor.color(), "HSB");
 				if (c != null && !c.equals(swcColor.color())) {
 					// New color choice: refresh panel
@@ -291,6 +297,7 @@ public class ColorMenu extends JMenu {
 
 	/** IDE debug method */
 	public static void main(final String[] args) {
+		GuiUtils.setSystemLookAndFeel();
 		final javax.swing.JFrame f = new javax.swing.JFrame();
 		final javax.swing.JMenuBar menuBar = new javax.swing.JMenuBar();
 		final ColorMenu menu = new ColorMenu("Test");

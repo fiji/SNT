@@ -57,14 +57,14 @@ class ScriptInstaller implements MenuKeyListener {
 	@Parameter
 	private AppService appService;
 
-	private final SNTUI dialog;
+	private final SNTUI ui;
 	private final TreeSet<ScriptInfo> scripts;
 	private boolean openInsteadOfRun;
 
-	protected ScriptInstaller(final Context context, final SNTUI dialog) {
+	protected ScriptInstaller(final Context context, final SNTUI ui) {
 
 		context.inject(this);
-		this.dialog = dialog;
+		this.ui = ui;
 
 		scripts = new TreeSet<>(new Comparator<ScriptInfo>() {
 			// ensure files will be listed in alphabetic order
@@ -167,7 +167,7 @@ class ScriptInstaller implements MenuKeyListener {
 	private JMenuItem about() {
 		final JMenuItem mItem = new JMenuItem("About SNT Scripts...");
 		mItem.addActionListener(e -> {
-			dialog.guiUtils.centeredMsg("This menu lists scripting routines that enhance SNT functionality. "
+			ui.guiUtils.centeredMsg("This menu lists scripting routines that enhance SNT functionality. "
 					+ "The list is automatically populated at startup.<br><br>"
 					+ "To have your own scripts listed here, save them in the <tt>scripts</tt> or "
 					+ "<tt>plugins</tt>  directory while including <i>SNT</i> in the filename (e.g., <tt>"

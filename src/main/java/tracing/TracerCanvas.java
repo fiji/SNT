@@ -112,7 +112,7 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 					drawPath = p.fitted;
 				}
 
-				final boolean isSelected = pathAndFillManager.isSelected(p);
+				final boolean isSelected = pathAndFillManager.isSelected(drawPath);
 				if (!isSelected && showOnlySelectedPaths)
 					continue;
 

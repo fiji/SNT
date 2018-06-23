@@ -43,7 +43,7 @@ import tracing.Tree;
 import tracing.analysis.TreeAnalyzer;
 
 /**
- * Command to perform Horton-Strahler analysis on a tree.
+ * Command to perform Horton-Strahler analysis on a {@link Tree}.
  *
  * @author Tiago Ferreira
  */

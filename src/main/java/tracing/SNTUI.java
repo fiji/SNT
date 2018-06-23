@@ -177,7 +177,8 @@ public class SNTUI extends JDialog {
 	protected final GuiListener listener;
 
 	/* These are the states that the UI can be in: */
-	static final int WAITING_TO_START_PATH = 0;
+	/** The flag specifying 'ready' mode */
+	public static final int WAITING_TO_START_PATH = 0;
 	static final int PARTIAL_PATH = 1;
 	static final int SEARCHING = 2;
 	static final int QUERY_KEEP = 3;
@@ -189,11 +190,15 @@ public class SNTUI extends JDialog {
 	static final int WAITING_FOR_SIGMA_CHOICE = 9;
 	static final int SAVING = 10;
 	static final int LOADING = 11;
-	static final int FITTING_PATHS = 12;
+	/** The flag specifying 'fitting' mode */
+	public static final int FITTING_PATHS = 12;
 	static final int LOADING_FILTERED_IMAGE = 13;
-	static final int EDITING_MODE = 14;
-	static final int PAUSED = 15;
-	static final int ANALYSIS_MODE = 16;
+	/** The flag specifying 'editing' mode */
+	public static final int EDITING_MODE = 14;
+	/** The flag specifying 'paused' mode */
+	public static final int PAUSED = 15;
+	/** The flag specifying 'analysis' mode */
+	public static final int ANALYSIS_MODE = 16;
 	static final int IMAGE_CLOSED = -1;
 
 	// TODO: Internal preferences: should be migrated to SNTPrefs
@@ -478,6 +483,13 @@ public class SNTUI extends JDialog {
 		});
 	}
 
+	/**
+	 * Sets the multiplier value for Hessian computation of curvatures updating the
+	 * Hessian panel accordingly
+	 *
+	 * @param multiplier
+	 *            the new multiplier value
+	 */
 	public void setMultiplier(final double multiplier) {
 		SwingUtilities.invokeLater(new Runnable() {
 
@@ -489,6 +501,16 @@ public class SNTUI extends JDialog {
 		});
 	}
 
+	/**
+	 * Sets the sigma value for computation of curvatures, updating the Hessian
+	 * panel accordingly
+	 *
+	 * @param sigma
+	 *            the new sigma value
+	 * @param mayStartGaussian
+	 *            if true and the current UI state allows it, the Gaussian
+	 *            computation will be performed using the the new parameter
+	 */
 	public void setSigma(final double sigma, final boolean mayStartGaussian) {
 		SwingUtilities.invokeLater(new Runnable() {
 
@@ -588,8 +610,8 @@ public class SNTUI extends JDialog {
 	 * Changes this UI to a new state.
 	 *
 	 * @param newState
-	 *            the new state, e.g., {@link SNTUI#WAITING_FOR_SIGMA_POINT},
-	 *            {@link SNTUI#WAITING_FOR_SIGMA_POINT}, etc.
+	 *            the new state, e.g., {@link SNTUI#WAITING_TO_START_PATH},
+	 *            {@link SNTUI#ANALYSIS_MODE}, etc.
 	 */
 	public void changeState(final int newState) {
 
@@ -747,6 +769,12 @@ public class SNTUI extends JDialog {
 		currentState = newState;
 	}
 
+	/**
+	 * Gets current UI state.
+	 *
+	 * @return the current state, e.g., {@link SNTUI#WAITING_TO_START_PATH},
+	 *         {@link SNTUI#ANALYSIS_MODE}, etc.
+	 */
 	public int getState() {
 		return currentState;
 	}
@@ -2663,12 +2691,21 @@ public class SNTUI extends JDialog {
 				SNTUI.IMAGE_CLOSED);
 		}
 
+		/* (non-Javadoc)
+		 * @see ij.ImageListener#imageOpened(ij.ImagePlus)
+		 */
 		@Override
 		public void imageOpened(final ImagePlus imp) {}
 
+		/* (non-Javadoc)
+		 * @see ij.ImageListener#imageUpdated(ij.ImagePlus)
+		 */
 		@Override
 		public void imageUpdated(final ImagePlus imp) {}
 
+		/* (non-Javadoc)
+		 * @see tracing.gui.SigmaPalette.SigmaPaletteListener#sigmaPaletteOKed(double, double)
+		 */
 		/* SigmaPaletteListener */
 		@Override
 		public void sigmaPaletteOKed(final double newSigma,
@@ -2685,6 +2722,9 @@ public class SNTUI extends JDialog {
 			});
 		}
 
+		/* (non-Javadoc)
+		 * @see tracing.gui.SigmaPalette.SigmaPaletteListener#sigmaPaletteCanceled()
+		 */
 		@Override
 		public void sigmaPaletteCanceled() {
 			SwingUtilities.invokeLater(new Runnable() {
@@ -2696,6 +2736,9 @@ public class SNTUI extends JDialog {
 			});
 		}
 
+		/* (non-Javadoc)
+		 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+		 */
 		@Override
 		public void itemStateChanged(final ItemEvent e) {
 			assert SwingUtilities.isEventDispatchThread();
@@ -2721,6 +2764,9 @@ public class SNTUI extends JDialog {
 			}
 		}
 
+		/* (non-Javadoc)
+		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+		 */
 		@Override
 		public void actionPerformed(final ActionEvent e) {
 			assert SwingUtilities.isEventDispatchThread();

@@ -1954,7 +1954,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	/**
 	 * loads the 'filtered image' specified by {@link #setFilteredImage(File) into
-	 * memory as 32-bit data}
+	 * memory as 32-bit data}.
+	 *
+	 * @throws IOException
+	 *             If image could not be loaded
+	 * @throws IllegalArgumentException
+	 *             if path specified through {@link #setFilteredImage(File)} is
+	 *             invalid
 	 */
 	public void loadFilteredImage() throws IOException, IllegalArgumentException {
 		if (xy == null) throw new IllegalArgumentException(
@@ -2669,6 +2675,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return ui;
 	}
 
+	/* (non-Javadoc)
+	 * @see tracing.hyperpanes.MultiDThreePanes#showStatus(int, int, java.lang.String)
+	 */
 	@Override
 	public void showStatus(final int progress, final int maximum,
 		final String status)

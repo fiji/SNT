@@ -50,6 +50,11 @@ import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 
+/**
+ * Command for Launching SNT from ImageJ
+ *
+ * @author Tiago Ferreira
+ */
 @Plugin(type = DynamicCommand.class, visible = true, menuPath = "Plugins>Tracing>Simple Neurite Tracer...", initializer = "initialize")
 public class SNTLoader extends DynamicCommand {
 

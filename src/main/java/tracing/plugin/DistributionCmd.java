@@ -23,6 +23,7 @@
 package tracing.plugin;
 
 import java.awt.Color;
+
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.ArrayList;
@@ -58,6 +59,12 @@ import tracing.analysis.TreeStatistics;
 import tracing.gui.GuiUtils;
 import tracing.util.SWCColor;
 
+/**
+ * Command for plotting Distributions of morphometric properties of
+ * {@link Tree}s
+ *
+ * @author Tiago Ferreira
+ */
 @Plugin(type = Command.class, visible = false, label = "Distribution of Morphometric Traits")
 public class DistributionCmd implements Command {
 
@@ -148,6 +155,11 @@ public class DistributionCmd implements Command {
 		return chart;
 	}
 
+	/**
+	 * Generates a list of random paths. Only useful for debugging purposes
+	 *
+	 * @return the list of random Paths
+	 */
 	public static List<Path> randomPaths() {
 		final List<Path> data = new ArrayList<>();
 		for (int i = 0; i < 100; i++) {

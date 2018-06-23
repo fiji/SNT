@@ -124,8 +124,8 @@ public class Tree {
 	/**
 	 * Adds a new Path to this Tree.
 	 *
-	 * @param p
-	 *            the Path to be added
+	 * @param p            the Path to be added
+	 * @return true, if Path successful added
 	 */
 	public boolean add(final Path p) {
 		return tree.add(p);
@@ -151,12 +151,13 @@ public class Tree {
 	}
 
 	/**
-	 * Returns the Path at the specified position in this Tree.
+	 * Returns the Path at the specified position.
 	 *
 	 * @param index
 	 *            index of the element to return
 	 * @return the element at the specified position
 	 * @throws IndexOutOfBoundsException
+	 *             {@inheritDoc}
 	 */
 	public Path get(final int index) {
 		return tree.get(index);

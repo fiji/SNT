@@ -82,6 +82,9 @@ public class ROIExporterCmd implements Command {
 	private RoiConverter converter;
 	private boolean warningsExist = false;
 
+	/* (non-Javadoc)
+	 * @see java.lang.Runnable#run()
+	 */
 	@Override
 	public void run() {
 

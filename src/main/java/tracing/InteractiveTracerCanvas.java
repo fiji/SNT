@@ -121,11 +121,18 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			if (me instanceof JMenuItem) {
 				final JMenuItem mItem = ((JMenuItem) me);
 				final String cmd = mItem.getActionCommand();
+
+				// case 1: commands only enabled in "Edit Mode"
 				if (cmd.equals(AListener.NODE_RESET) || cmd.equals(AListener.NODE_DELETE)
 						|| cmd.equals(AListener.NODE_INSERT) || cmd.equals(AListener.NODE_MOVE)
 						|| cmd.equals(AListener.NODE_MOVE_Z)) {
 					mItem.setEnabled(be && editMode);
 				}
+				// case 2: commands only enabled in "Tracing Mode"
+				else if (cmd.equals(AListener.SELECT_NEAREST) || cmd.startsWith("Fork")) {
+					mItem.setEnabled(tracerPlugin.getUIState() == SNTUI.WAITING_TO_START_PATH);
+				}
+
 			}
 		}
 

@@ -438,8 +438,7 @@ public class FillManagerUI extends JFrame
 					"The file " + saveFile.getAbsolutePath() + " already exists. Do you want to replace it?")) {
 				return;
 			}
-			plugin.getUI().showStatus("Exporting CSV data to " + saveFile.getAbsolutePath());
-
+			plugin.getUI().showStatus("Exporting CSV data to " + saveFile.getAbsolutePath(), false);
 			try {
 				pathAndFillManager.exportFillsAsCSV(saveFile);
 			} catch (final IOException ioe) {
@@ -447,7 +446,7 @@ public class FillManagerUI extends JFrame
 				SNT.error("IO Error", ioe);
 				return;
 			}
-
+			plugin.getUI().showStatus("Done... ", true);
 		} else {
 			SNT.error("BUG: FillWindow received an event from an unknown source.");
 		}

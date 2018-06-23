@@ -98,17 +98,17 @@ class ScriptInstaller implements MenuKeyListener {
 	}
 
 	private void runScript(final ScriptInfo si) {
-		dialog.showStatus("Running script...");
+		ui.showStatus("Running script...", false);
 		final Future<ScriptModule> fsm = scriptService.run(si, true, (Map<String, Object>) null);
 		if (fsm.isCancelled()) {
-			dialog.showStatus("Script canceled...");
+			ui.showStatus("Script canceled...", true);
 		} else if (fsm.isDone()) {
-			dialog.showStatus("Script completed...");
+			ui.showStatus("Script completed...", true);
 		}
 	}
 
 	private void openScript(final ScriptInfo si) {
-		dialog.showStatus("Opening script...");
+		ui.showStatus("Opening script...", false);
 		final TextEditor editor = new TextEditor(context);
 		final BufferedReader reader = si.getReader();
 		if (reader == null) { // local file
@@ -126,6 +126,7 @@ class ScriptInstaller implements MenuKeyListener {
 			}
 		}
 		editor.setVisible(true);
+		ui.showStatus("", false);
 	}
 
 	/** Returns a UI list with all available scripts scripting SNT **/

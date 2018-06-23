@@ -430,7 +430,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		final int processors = Math.min(numberOfPathsToFit, Runtime.getRuntime().availableProcessors());
 		final String statusMsg = (processors == 1) ? "Fitting 1 path..."
 				: "Fitting " + numberOfPathsToFit + " paths (" + processors + " threads)...";
-		ui.showStatus(statusMsg);
+		ui.showStatus(statusMsg, false);
 		setEnabledCommands(false);
 		final JDialog msg = guiUtils.floatingMsg(statusMsg);
 
@@ -463,6 +463,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				msg.dispose();
 				plugin.changeUIState(preFittingState);
 				setEnabledCommands(true);
+				ui.showStatus(null, false);
 			}
 		};
 		fitWorker.execute();
@@ -516,9 +517,9 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 	private void updateCmdsOneSelected(final Path p) {
 		assert SwingUtilities.isEventDispatchThread();
 		if (p.getUseFitted()) {
-			fitVolumeMenuItem.setText("Un-fit Diameters");
+			fitVolumeMenuItem.setText("Un-fit Radii");
 		} else {
-			fitVolumeMenuItem.setText("Fit Diameters");
+			fitVolumeMenuItem.setText("Fit Radii");
 			fitVolumeMenuItem.setToolTipText(
 					(p.getFitted() == null) ? "Path has never been fitted:\nRadii will be computed for the first time"
 							: "Path has already been fitted:\nCached radii will be used");
@@ -531,10 +532,10 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		assert SwingUtilities.isEventDispatchThread();
 
 		if (allUsingFittedVersion(selectedPaths)) {
-			fitVolumeMenuItem.setText("Un-fit Diameters");
+			fitVolumeMenuItem.setText("Un-fit Radii");
 			fitVolumeMenuItem.setToolTipText(null);
 		} else {
-			fitVolumeMenuItem.setText("Fit Diameters");
+			fitVolumeMenuItem.setText("Fit Radii");
 			fitVolumeMenuItem.setToolTipText("If fitting has run, cached radii will be applied\n"
 					+ " otherwise a new computation will be performed");
 		}
@@ -1165,7 +1166,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		// Announce computation
 		final SNTUI ui = plugin.getUI();
 		final String statusMsg = "Fitting " + p.toString();
-		ui.showStatus(statusMsg);
+		ui.showStatus(statusMsg, false);
 		setEnabledCommands(false);
 
 		// Improve browsability of path, while updating the GUI
@@ -1208,6 +1209,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 					// Normal Views: we will not call msg.dispose();
 					GuiUtils.setAutoDismiss(msg);
 					setEnabledCommands(true);
+					ui.showStatus(null, false);
 				}
 			};
 			worker.execute();
@@ -1302,13 +1304,15 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 						"Override?")) {
 			return;
 		}
-		plugin.getUI().showStatus("Exporting Measurements..");
+		plugin.getUI().showStatus("Exporting Measurements..", false);
 		try {
 			saveTable(saveFile);
 		} catch (final IOException e) {
 			plugin.error("Unfortunately an Exception occured. See Console for details");
+			plugin.getUI().showStatus("Exporting Failed..", true);
 			e.printStackTrace();
 		}
+		plugin.getUI().showStatus(null, false);
 	}
 
 	private void removeOrderTags(final HashSet<Path> selectedPaths) {

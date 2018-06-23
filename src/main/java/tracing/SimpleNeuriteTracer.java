@@ -2674,7 +2674,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final String status)
 	{
 		statusService.showStatus(progress, maximum, status);
-		if (isUIready()) getUI().showStatus(status);
+		if (isUIready()) getUI().showStatus(status, true);
 	}
 
 }

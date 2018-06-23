@@ -386,7 +386,7 @@ public class SNTUI extends JDialog {
 		final boolean includeStatusBar)
 	{
 		updateStatusText(newStatus);
-		showStatus(newStatus);
+		if (includeStatusBar) showStatus(newStatus, true);
 	}
 
 	private void updateStatusText(final String newStatus) {
@@ -808,7 +808,7 @@ public class SNTUI extends JDialog {
 				plugin.reloadImage(newC, newT);
 				preprocess.setSelected(false);
 				plugin.showMIPOverlays(0);
-				showStatus(reload ? "Image reloaded into memory..." : null);
+				showStatus(reload ? "Image reloaded into memory..." : null, true);
 			}
 		});
 		positionPanel.add(applyPositionButton);
@@ -884,7 +884,7 @@ public class SNTUI extends JDialog {
 					return;
 				}
 				plugin.rebuildZYXZpanes();
-				showStatus("ZY/XZ views reloaded...");
+				showStatus("ZY/XZ views reloaded...", true);
 				refreshPanesButton.setText("Rebuild ZY/XZ views");
 				arrangeCanvases();
 			}
@@ -989,7 +989,7 @@ public class SNTUI extends JDialog {
 					plugin.zy_tracer_canvas.setNodeDiameter(-1);
 				}
 				nodeSpinner.setValue(plugin.xy_tracer_canvas.nodeDiameter());
-				showStatus("Node scale reset");
+				showStatus("Node scale reset", true);
 			}
 		});
 
@@ -1276,7 +1276,7 @@ public class SNTUI extends JDialog {
 				});
 				window.setVisible(true);
 				resetChoice();
-				showStatus("3D Viewer enabled: " + selectedKey);
+				showStatus("3D Viewer enabled: " + selectedKey, true);
 			}
 		});
 
@@ -1314,7 +1314,7 @@ public class SNTUI extends JDialog {
 					hm.put(univ.allContentsString(), univ);
 					univChoice.addItem(univ.allContentsString());
 				}
-				showStatus("Viewers list updated...");
+				showStatus("Viewers list updated...", true);
 			}
 		});
 
@@ -1332,9 +1332,9 @@ public class SNTUI extends JDialog {
 						.getAbsolutePath());
 					final ImagePlus colorImp = plugin.convertService.convert(ds,
 						ImagePlus.class);
-					showStatus("Applying color labels...");
+					showStatus("Applying color labels...", false);
 					plugin.setColorImage(colorImp);
-					showStatus("Labels image loaded...");
+					showStatus("Labels image loaded...", true);
 
 				}
 				catch (final IOException exc) {
@@ -2118,10 +2118,26 @@ public class SNTUI extends JDialog {
 	}
 
 	private void refreshStatus() {
-		showStatus(null);
+		showStatus(null, false);
 	}
 
-	public void showStatus(final String msg) {
+	/**
+	 * Updates the status bar.
+	 *
+	 * @param msg
+	 *            the text to displayed. Set it to null (or empty String) to reset
+	 *            the status bar.
+	 * @param temporary
+	 *            if true and {@code msg} is valid, text is displayed transiently
+	 *            for a couple of seconds
+	 */
+	public void showStatus(final String msg, final boolean temporary) {
+		final boolean validMsg = !(msg == null || msg.isEmpty());
+		if (validMsg && !temporary) {
+			statusBarText.setText(msg);
+			return;
+		}
+
 		final String defaultText;
 		if (plugin.nonInteractiveSession) {
 			defaultText = "Analyzing " + plugin.getImagePlus().getTitle();
@@ -2130,10 +2146,12 @@ public class SNTUI extends JDialog {
 			defaultText = "Tracing " + plugin.getImagePlus().getShortTitle() +
 				", C=" + plugin.channel + ", T=" + plugin.frame;
 		}
-		if (msg == null || msg.isEmpty()) {
+
+		if (!validMsg) {
 			statusBarText.setText(defaultText);
 			return;
 		}
+
 		final Timer timer = new Timer(3000, new ActionListener() {
 
 			@Override
@@ -2450,7 +2468,7 @@ public class SNTUI extends JDialog {
 
 	protected void reset() {
 		abortCurrentOperation();
-		showStatus("Resetting");
+		showStatus("Resetting", true);
 		changeState(WAITING_TO_START_PATH);
 	}
 
@@ -2474,35 +2492,35 @@ public class SNTUI extends JDialog {
 				plugin.cancelGaussian();
 				break;
 			case (WAITING_FOR_SIGMA_POINT):
-				showStatus("Sigma adjustment cancelled...");
+				showStatus("Sigma adjustment cancelled...", true);
 				listener.restorePreSigmaState();
 				break;
 			case (PARTIAL_PATH):
-				showStatus("Last temporary path cancelled...");
+				showStatus("Last temporary path cancelled...", true);
 				plugin.cancelPath();
 				break;
 			case (QUERY_KEEP):
-				showStatus("Last segment cancelled...");
+				showStatus("Last segment cancelled...", true);
 				plugin.cancelTemporary();
 				break;
 			case (FILLING_PATHS):
-				showStatus("Filling out cancelled...");
+				showStatus("Filling out cancelled...", true);
 				plugin.discardFill(); // will change status
 				break;
 			case (FITTING_PATHS):
-				showStatus("Fitting cancelled...");
+				showStatus("Fitting cancelled...", true);
 				pmUI.cancelFit(true);
 				break;
 			case (PAUSED):
-				showStatus("Tracing mode reinstated...");
+				showStatus("Tracing mode reinstated...", true);
 				plugin.pause(false);
 				break;
 			case (EDITING_MODE):
-				showStatus("Tracing mode reinstated...");
+				showStatus("Tracing mode reinstated...", true);
 				plugin.enableEditMode(false);
 				break;
 			case (WAITING_FOR_SIGMA_CHOICE):
-				showStatus("Close the sigma palette to abort sigma input...");
+				showStatus("Close the sigma palette to abort sigma input...", true);
 				break; // do nothing: Currently we have no control over the sigma
 								// palette window
 			case (WAITING_TO_START_PATH):
@@ -2510,7 +2528,7 @@ public class SNTUI extends JDialog {
 			case (SAVING):
 			case (IMAGE_CLOSED):
 			case (ANALYSIS_MODE):
-				showStatus("Instruction ignored: No task to be aborted");
+				showStatus("Instruction ignored: No task to be aborted", true);
 				break; // none of this states needs to be aborted
 			default:
 				SNT.error("BUG: Wrong state for aborting operation...");
@@ -2590,7 +2608,7 @@ public class SNTUI extends JDialog {
 		assert SwingUtilities.isEventDispatchThread();
 		// Do nothing if we are not allowed to enable FilteredImgTracing
 		if (!filteredImgActivateCheckbox.isEnabled()) {
-			showStatus("Ignored: Filtered imaged not available");
+			showStatus("Ignored: Filtered imaged not available", true);
 			return;
 		}
 		enableFilteredImgTracing(!filteredImgActivateCheckbox.isSelected());
@@ -2611,7 +2629,7 @@ public class SNTUI extends JDialog {
 		}
 		plugin.enableHessian(enable);
 		preprocess.setSelected(enable); // will not trigger ActionEvent
-		showStatus("Hessisan " + ((enable) ? "enabled" : "disabled"));
+		showStatus("Hessisan " + ((enable) ? "enabled" : "disabled"), true);
 	}
 
 	protected void togglePartsChoice() {
@@ -2726,7 +2744,7 @@ public class SNTUI extends JDialog {
 					return;
 				}
 
-				showStatus("Saving traces to " + saveFile.getAbsolutePath());
+				showStatus("Saving traces to " + saveFile.getAbsolutePath(), false);
 
 				final int preSavingState = currentState;
 				changeState(SAVING);
@@ -2735,7 +2753,7 @@ public class SNTUI extends JDialog {
 						plugin.useCompressedXML);
 				}
 				catch (final IOException ioe) {
-					showStatus("Saving failed.");
+					showStatus("Saving failed.", true);
 					guiUtils.error("Writing traces to '" + saveFile.getAbsolutePath() +
 						"' failed. See Console for details.");
 					changeState(preSavingState);
@@ -2743,7 +2761,7 @@ public class SNTUI extends JDialog {
 					return;
 				}
 				changeState(preSavingState);
-				showStatus("Saving completed.");
+				showStatus("Saving completed.", true);
 
 				plugin.unsavedPaths = false;
 
@@ -2799,7 +2817,7 @@ public class SNTUI extends JDialog {
 						"Do you want to replace it?", "Override CSV file?")) return;
 				}
 				final String savePath = saveFile.getAbsolutePath();
-				showStatus("Exporting as CSV to " + savePath);
+				showStatus("Exporting as CSV to " + savePath, false);
 
 				final int preExportingState = currentState;
 				changeState(SAVING);
@@ -2808,14 +2826,14 @@ public class SNTUI extends JDialog {
 					pathAndFillManager.exportToCSV(saveFile);
 				}
 				catch (final IOException ioe) {
-					showStatus("Exporting failed.");
+					showStatus("Exporting failed.", true);
 					guiUtils.error("Writing traces to '" + savePath +
 						"' failed. See Console for details.");
 					changeState(preExportingState);
 					ioe.printStackTrace();
 					return;
 				}
-				showStatus("Export complete.");
+				showStatus("Export complete.", true);
 				changeState(preExportingState);
 
 			}

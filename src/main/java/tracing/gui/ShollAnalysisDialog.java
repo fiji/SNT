@@ -345,7 +345,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 					return;
 			}
 
-			plugin.getUI().showStatus("Exporting CSV to " + saveFile.getAbsolutePath());
+			plugin.getUI().showStatus("Exporting CSV to " + saveFile.getAbsolutePath(), false);
 
 			try {
 				results.exportDetailToCSV(saveFile);
@@ -353,6 +353,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 				gUtils.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;
 			}
+			plugin.getUI().showStatus("", false);
 
 		} else if (source == drawShollGraphButton) {
 			graphFrame.setVisible(true);
@@ -534,14 +535,14 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 					return;
 			}
 
-			plugin.getUI().showStatus("Exporting graph to " + saveFile.getAbsolutePath());
-
 			try {
+				plugin.getUI().showStatus("Exporting graph to " + saveFile.getAbsolutePath(), false);
 				exportChartAsSVG(chart, chartPanel.getBounds(), saveFile);
 			} catch (final IOException ioe) {
 				gUtils.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 				return;
 			}
+			plugin.getUI().showStatus("", false);
 
 		}
 

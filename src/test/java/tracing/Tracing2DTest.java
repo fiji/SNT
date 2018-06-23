@@ -111,7 +111,7 @@ public class Tracing2DTest {
 			Path result = tracer.getResult();
 			assertNotNull("Not path found",result);
 
-			double foundPathLength = result.getRealLength();
+			double foundPathLength = result.getLength();
 			assertTrue( "Path length must be greater than 100 micrometres",
 				    foundPathLength > 100 );
 
@@ -148,7 +148,7 @@ public class Tracing2DTest {
 			Path result = tracer.getResult();
 			assertNotNull("Not path found",result);
 
-			double foundPathLength = result.getRealLength();
+			double foundPathLength = result.getLength();
 
 			assertTrue( "Path length must be greater than 92 micrometres",
 				    foundPathLength > 92 );

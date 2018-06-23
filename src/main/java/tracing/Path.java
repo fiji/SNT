@@ -109,6 +109,18 @@ public class Path implements Comparable<Path> {
 	private static final int PATH_END = 1;
 	private int maxPoints;
 
+	/**
+	 * Instantiates a new path.
+	 *
+	 * @param x_spacing
+	 *            Pixel width in spacing_units
+	 * @param y_spacing
+	 *            Pixel height in spacing_units
+	 * @param z_spacing
+	 *            Pixel depth in spacing_units
+	 * @param spacing_units
+	 *            the length unit in physical world units (typically "um").
+	 */
 	public Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units) {
 		this(x_spacing, y_spacing, z_spacing, spacing_units, 128);
 	}
@@ -128,6 +140,9 @@ public class Path implements Comparable<Path> {
 		children = new ArrayList<>();
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
 	@Override
 	public int compareTo(final Path o) {
 		if (id == o.id)
@@ -137,6 +152,11 @@ public class Path implements Comparable<Path> {
 		return 1;
 	}
 
+	/**
+	 * Gets the identifier of this Path
+	 *
+	 * @return the identifier
+	 */
 	public int getID() {
 		return id;
 	}
@@ -173,17 +193,28 @@ public class Path implements Comparable<Path> {
 		return endJoinsPoint;
 	}
 
+	/**
+	 * Sets this Path's name. Set it to null or {@code ""}, to reset it to the
+	 * default.
+	 *
+	 * @param newName
+	 *            the new name.
+	 * @see #getName()
+	 */
 	public void setName(final String newName) {
 		this.name = newName;
+		getName();
 	}
 
-	public void setDefaultName() {
-		this.name = "Path " + id;
-	}
-
+	/**
+	 * Gets this Path's name.
+	 *
+	 * @return the name. If no name as been set, the default name is returned.
+	 * @see #setName(String)
+	 */
 	public String getName() {
-		if (name == null)
-			setDefaultName();
+		if (name == null || name.isEmpty())
+			name = "Path " + id;
 		return name;
 	}
 
@@ -207,7 +238,7 @@ public class Path implements Comparable<Path> {
 		return pathsToIDListString(children);
 	}
 
-	public void setChildren(final Set<Path> pathsLeft) {
+	protected void setChildren(final Set<Path> pathsLeft) {
 		// Set the children of this path in a breadth first fashion:
 		children.clear();
 		for (final Path c : somehowJoins) {
@@ -220,7 +251,12 @@ public class Path implements Comparable<Path> {
 			c.setChildren(pathsLeft);
 	}
 
-	public double getRealLength() {
+	/**
+	 * Gets the length of this Path
+	 *
+	 * @return the length of this Path
+	 */
+	public double getLength() {
 		double totalLength = 0;
 		for (int i = 1; i < points; ++i) {
 			final double xdiff = precise_x_positions[i] - precise_x_positions[i - 1];
@@ -231,8 +267,8 @@ public class Path implements Comparable<Path> {
 		return totalLength;
 	}
 
-	public String getRealLengthString() {
-		return String.format("%.4f", getRealLength());
+	protected String getRealLengthString() {
+		return String.format("%.4f", getLength());
 	}
 
 	protected void createCircles() {
@@ -249,6 +285,11 @@ public class Path implements Comparable<Path> {
 		this.primary = primary;
 	}
 
+	/**
+	 * Checks if this Path is root.
+	 *
+	 * @return true, if is primary (root)
+	 */
 	public boolean isPrimary() {
 		return primary;
 	}
@@ -359,10 +400,15 @@ public class Path implements Comparable<Path> {
 		setOrder(-1);
 	}
 
-	public double getMinimumSeparation() {
+	private double getMinimumSeparation() {
 		return Math.min(Math.abs(x_spacing), Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
 	}
 
+	/**
+	 * Returns the number of nodes of this path
+	 *
+	 * @return the size, i.e., number of nodes
+	 */
 	public int size() {
 		return points;
 	}
@@ -390,7 +436,15 @@ public class Path implements Comparable<Path> {
 		return result;
 	}
 
+	/**
+	 * Returns whether this Path contains a point
+	 * 
+	 * @param pim
+	 *            the {@link PointInImage} node
+	 * @return true, if successful
+	 */
 	public boolean contains(final PointInImage pim) {
+		if (pim.onPath != null) return pim.onPath == this;
 		return (DoubleStream.of(precise_x_positions).anyMatch(x -> x == pim.x)
 				&& DoubleStream.of(precise_y_positions).anyMatch(y -> y == pim.y)
 				&& DoubleStream.of(precise_z_positions).anyMatch(z -> z == pim.z));
@@ -597,19 +651,6 @@ public class Path implements Comparable<Path> {
 		if ((i < 0) || i >= size())
 			throw new IllegalArgumentException("getZUnscaled was asked for an out-of-range point: " + i);
 		return precise_z_positions[i] / z_spacing;
-	}
-
-	/**
-	 * Returns an array [3][npoints] of unscaled coordinates (that is, in pixels).
-	 */
-	public double[][] getXYZUnscaled() {
-		final double[][] p = new double[3][size()];
-		for (int i = p[0].length - 1; i > -1; i--) {
-			p[0][i] = precise_x_positions[i] / x_spacing;
-			p[1][i] = precise_y_positions[i] / y_spacing;
-			p[2][i] = precise_z_positions[i] / z_spacing;
-		}
-		return p;
 	}
 
 	/*
@@ -968,10 +1009,24 @@ public class Path implements Comparable<Path> {
 		return nodeColors;
 	}
 
+	/**
+	 * Gets the node color.
+	 *
+	 * @param pos
+	 *            the node position
+	 * @return the node color, or null if 
+	 */
 	public Color getNodeColor(final int pos) {
 		return (nodeColors == null) ? null : nodeColors[pos];
 	}
 
+	/**
+	 * Gets the color of this Path
+	 *
+	 * @return the color, or null if no color has been assigned to this Path
+	 * @see #hasCustomColor
+	 * @see #hasNodeColors()
+	 */
 	public Color getColor() {
 		return color;
 	}
@@ -990,18 +1045,36 @@ public class Path implements Comparable<Path> {
 			fitted.setColor(color);
 	}
 
-	public void setColorBySWCtype() {
-		setColor(getSWCcolor());
-	}
-
+	/**
+	 * Assesses whether a custom color has been assigned to this Path, or its nodes
+	 * have been assigned an array of colors
+	 *
+	 *
+	 * @return true, if successful
+	 * @see #hasNodeColors()
+	 */
 	public boolean hasCustomColor() {
 		return (hasCustomColor && color != null) || hasNodeColors();
 	}
 
+	/**
+	 * Assesses whether the nodes of this path have been assigned an array of colors
+	 *
+	 * @return true, if successful
+	 * @see #getNodeColors()
+	 */
 	public boolean hasNodeColors() {
 		return nodeColors != null;
 	}
 
+	/**
+	 * Gets the default SWC colors used by SNT.
+	 *
+	 * @param swcType
+	 *            the SEC type (e.g., {@link Path#SWC_AXON},
+	 *            {@link Path#SWC_DENDRITE}, etc.)
+	 * @return the SWC color
+	 */
 	public static Color getSWCcolor(final int swcType) {
 		switch (swcType) {
 		case Path.SWC_SOMA:
@@ -1022,10 +1095,6 @@ public class Path implements Comparable<Path> {
 		default:
 			return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
 		}
-	}
-
-	public Color getSWCcolor() {
-		return getSWCcolor(swcType);
 	}
 
 	// ------------------------------------------------------------------------
@@ -1118,6 +1187,11 @@ public class Path implements Comparable<Path> {
 
 	}
 
+	/**
+	 * Checks if is fitted version of another path.
+	 *
+	 * @return true, if is fitted version of another path
+	 */
 	public boolean isFittedVersionOfAnotherPath() {
 		return fittedVersionOf != null;
 	}
@@ -1384,10 +1458,6 @@ public class Path implements Comparable<Path> {
 		y_basis_vector[2] = bz_s;
 
 		return result;
-	}
-
-	public Path fitCircles(final int side, final ImagePlus image) {
-		return fitCircles(side, image, false, null, -1, null);
 	}
 
 	protected Path fitCircles(final int side, final ImagePlus image, final boolean display,
@@ -1805,32 +1875,81 @@ public class Path implements Comparable<Path> {
 	double[] precise_z_positions;
 
 	// http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
+	/**
+	 * Flag specifying the SWC type 'undefined'.
+	 * 
+	 * @see Path#SWC_UNDEFINED_LABEL
+	 */
 	public static final int SWC_UNDEFINED = 0;
+	/**
+	 * Flag specifying the SWC type 'soma'.
+	 * 
+	 * @see Path#SWC_SOMA_LABEL
+	 */
 	public static final int SWC_SOMA = 1;
+	/**
+	 * Flag specifying the SWC type 'axon'.
+	 * 
+	 * @see Path#SWC_AXON_LABEL
+	 */
 	public static final int SWC_AXON = 2;
+	/**
+	 * Flag specifying the SWC type '(basal) dendrite'.
+	 * 
+	 * @see Path#SWC_DENDRITE_LABEL
+	 */
 	public static final int SWC_DENDRITE = 3;
+	/**
+	 * Flag specifying the SWC type 'apical dendrite'.
+	 * 
+	 * @see Path#SWC_APICAL_DENDRITE_LABEL
+	 */
 	public static final int SWC_APICAL_DENDRITE = 4;
-	public static final int SWC_FORK_POINT = 5; //redundant
-	public static final int SWC_END_POINT = 6; //redundant
+	/**
+	 * Flag specifying the SWC type 'fork point'.
+	 * 
+	 * @see Path#SWC_FORK_POINT_LABEL
+	 */
+	public static final int SWC_FORK_POINT = 5; // redundant
+	/**
+	 * Flag specifying the SWC type 'end point'.
+	 * 
+	 * @see Path#SWC_END_POINT_LABEL
+	 */
+	public static final int SWC_END_POINT = 6; // redundant
+	/**
+	 * Flag specifying the SWC type 'custom'.
+	 * 
+	 * @see Path#SWC_CUSTOM_LABEL
+	 */
 	public static final int SWC_CUSTOM = 7;
-	public static final String SWC_UNDEFINED_LABEL = "undefined";
-	public static final String SWC_SOMA_LABEL = "soma";
-	public static final String SWC_AXON_LABEL = "axon";
-	public static final String SWC_DENDRITE_LABEL = "(basal) dendrite";
-	public static final String SWC_APICAL_DENDRITE_LABEL = "apical dendrite";
-	public static final String SWC_FORK_POINT_LABEL = "fork point";
-	public static final String SWC_END_POINT_LABEL = "end point";
-	public static final String SWC_CUSTOM_LABEL = "custom";
 
-	public static final String[] swcTypeNames = getSWCtypeNamesArray();
+	/** String representation of {@link Path#SWC_UNDEFINED} */
+	public static final String SWC_UNDEFINED_LABEL = "undefined";
+	/** String representation of {@link Path#SWC_SOMA} */
+	public static final String SWC_SOMA_LABEL = "soma";
+	/** String representation of {@link Path#SWC_AXON} */
+	public static final String SWC_AXON_LABEL = "axon";
+	/** String representation of {@link Path#SWC_DENDRITE} */
+	public static final String SWC_DENDRITE_LABEL = "(basal) dendrite";
+	/** String representation of {@link Path#SWC_APICAL_DENDRITE} */
+	public static final String SWC_APICAL_DENDRITE_LABEL = "apical dendrite";
+	/** String representation of {@link Path#SWC_FORK_POINT} */
+	public static final String SWC_FORK_POINT_LABEL = "fork point";
+	/** String representation of {@link Path#SWC_END_POINT} */
+	public static final String SWC_END_POINT_LABEL = "end point";
+	/** String representation of {@link Path#SWC_CUSTOM} */
+	public static final String SWC_CUSTOM_LABEL = "custom";
 
 	int swcType = SWC_UNDEFINED;
 
-	private static String[] getSWCtypeNamesArray() {
-		final ArrayList<String> swcTypes = getSWCtypeNames();
-		return swcTypes.toArray(new String[swcTypes.size()]);
-	}
-
+	/**
+	 * Gets the list of string representations of non-redundant SWC types (i.e.,
+	 * excluding {@link Path#SWC_FORK_POINT_LABEL}, and
+	 * {@link Path#SWC_FORK_POINT_LABEL}
+	 * 
+	 * @return the list of SWC type names
+	 */
 	public static ArrayList<String> getSWCtypeNames() {
 		final ArrayList<String> swcTypes = new ArrayList<>();
 		swcTypes.add(SWC_UNDEFINED_LABEL);
@@ -1844,6 +1963,12 @@ public class Path implements Comparable<Path> {
 		return swcTypes;
 	}
 
+	/**
+	 * Gets the list of non-redundant SWC types (i.e., excluding the redundant types
+	 * {@link Path#SWC_FORK_POINT_LABEL}, and {@link Path#SWC_FORK_POINT_LABEL}
+	 * 
+	 * @return the list of SWC type flags
+	 */
 	public static ArrayList<Integer> getSWCtypes() {
 		final ArrayList<Integer> swcTypes = new ArrayList<>();
 		swcTypes.add(SWC_UNDEFINED);
@@ -1857,6 +1982,16 @@ public class Path implements Comparable<Path> {
 		return swcTypes;
 	}
 
+	/**
+	 * Gets the SWC type label associated with the specified type flag. SNT follows
+	 * the specification detailed at <a href=
+	 * "http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html">neuronland</a>
+	 *
+	 * @param type
+	 *            the SWC type flag
+	 * @return the respective label, or {@link Path#SWC_UNDEFINED_LABEL} if flag was
+	 *         not recognized
+	 */
 	public static String getSWCtypeName(final int type) {
 		String typeName;
 		switch (type) {
@@ -2038,16 +2173,17 @@ public class Path implements Comparable<Path> {
 	 *
 	 * @return the average radius of the path, or zero if path has no defined
 	 *         thickness
+	 * @see #hasRadii()
 	 */
 	public double getMeanRadius() {
-		if (radiuses == null)
-			return 0;
-		return StatUtils.mean(radiuses);
+		return (hasRadii()) ? StatUtils.mean(radiuses) : 0;
 	}
 
 	/**
-	 * Gets the radius of the specified node
+	 * Gets the radius of the specified node.
 	 *
+	 * @param pos
+	 *            the node position
 	 * @return the radius at the specified position, or zero if path has no defined
 	 *         thickness
 	 */
@@ -2061,7 +2197,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Checks if path has defined thickness.
+	 * Checks whether the nodes of this path have been assigned defined thickness.
 	 *
 	 * @return true, if the points defining with this path are associated with a
 	 *         list of radii
@@ -2070,13 +2206,7 @@ public class Path implements Comparable<Path> {
 		return radiuses != null;
 	}
 
-	/** @deprecated see {@link #hasRadii()} */
-	@Deprecated
-	public boolean hashCircles() {
-		return hasRadii();
-	}
-
-	public void setFittedCircles(final double[] tangents_x, final double[] tangents_y, final double[] tangents_z,
+	private void setFittedCircles(final double[] tangents_x, final double[] tangents_y, final double[] tangents_z,
 			final double[] radiuses, final double[] optimized_x, final double[] optimized_y,
 			final double[] optimized_z) {
 
@@ -2104,7 +2234,7 @@ public class Path implements Comparable<Path> {
 			name += ", ends on " + endJoins.getName();
 		}
 		if (swcType != SWC_UNDEFINED)
-			name += " [" + swcTypeNames[swcType] + "]";
+			name += " [" + getSWCtypeName(swcType) + "]";
 		return name;
 	}
 
@@ -2112,6 +2242,8 @@ public class Path implements Comparable<Path> {
 	 * This toString() method shows details of the path which is actually being
 	 * displayed, not necessarily this path object. FIXME: this is probably horribly
 	 * confusing.
+	 *
+	 * @return the string
 	 */
 
 	@Override
@@ -2121,6 +2253,12 @@ public class Path implements Comparable<Path> {
 		return realToString();
 	}
 
+	/**
+	 * Sets the SWC type.
+	 *
+	 * @param newSWCType
+	 *            the new SWC type
+	 */
 	public void setSWCType(final int newSWCType) {
 		setSWCType(newSWCType, true);
 	}
@@ -2142,6 +2280,11 @@ public class Path implements Comparable<Path> {
 		}
 	}
 
+	/**
+	 * Gets the SWC type.
+	 *
+	 * @return the SWC type
+	 */
 	public int getSWCType() {
 		return swcType;
 	}
@@ -2155,6 +2298,8 @@ public class Path implements Comparable<Path> {
 	 */
 
 	/**
+	 * Gets the branching order of this Path
+	 *
 	 * @return the branching order (reverse Horton-Strahler order) of this path or
 	 *         -1 if its branching order is unknown. A primary path is always of
 	 *         order 1.
@@ -2315,7 +2460,7 @@ public class Path implements Comparable<Path> {
 	 * FIXME: this should be based on distance between points in the path, not a
 	 * static number:
 	 */
-	public static final int noMoreThanOneEvery = 2;
+	private static final int noMoreThanOneEvery = 2;
 
 	synchronized public void removeFrom3DViewer(final Image3DUniverse univ) {
 		if (content3D != null) {
@@ -2328,7 +2473,7 @@ public class Path implements Comparable<Path> {
 		}
 	}
 
-	protected java.util.List<PointInImage> getPointInImageList() {
+	protected List<PointInImage> getPointInImageList() {
 		final ArrayList<PointInImage> linePoints = new ArrayList<>();
 		for (int i = 0; i < points; ++i) {
 			linePoints.add(new PointInImage(precise_x_positions[i], precise_y_positions[i], precise_z_positions[i]));
@@ -2578,28 +2723,33 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * The volume of each part of the fitted path most accurately would be the
-	 * volume of a convex hull of two arbitrarily oriented and sized circles in
-	 * space. This is tough to work out analytically, and this precision isn't
-	 * really warranted given the errors introduced in the fitting process, the
-	 * tracing in the first place, etc. So, this method produces an approximate
-	 * volume assuming that the volume of each of these parts is that of a truncated
-	 * cone, with circles of the same size (i.e. as if the circles had simply been
-	 * reoriented to be parallel and have a common normal vector)
-	 *
+	 * Returns an estimated volume of this path.
+	 * <p>
+	 * The most accurate volume of each path segment would be the volume of a convex
+	 * hull of two arbitrarily oriented and sized circles in space. This is tough to
+	 * work out analytically, and this precision isn't really warranted given the
+	 * errors introduced in the fitting process, the tracing in the first place,
+	 * etc. So, this method produces an approximate volume assuming that the volume
+	 * of each of these parts is that of a truncated cone (Frustum) , with circles
+	 * of the same size (i.e., as if the circles had simply been reoriented to be
+	 * parallel and have a common normal vector)
+	 * </p>
+	 * <p>
 	 * For more accurate measurements of the volumes of a neuron, you should use the
 	 * filling interface.
+	 * </p>
+	 * 
+	 * @return the approximate fitted volume (in physical units), or -1 if this Path
+	 *         has no radii
+	 * @see #hasRadii()
 	 */
-
-	public double getApproximateFittedVolume() {
+	public double getApproximatedVolume() {
 		if (!hasRadii()) {
 			return -1;
 		}
 
 		double totalVolume = 0;
-
 		for (int i = 0; i < points - 1; ++i) {
-
 			final double xdiff = precise_x_positions[i + 1] - precise_x_positions[i];
 			final double ydiff = precise_y_positions[i + 1] - precise_y_positions[i];
 			final double zdiff = precise_z_positions[i + 1] - precise_z_positions[i];
@@ -2672,6 +2822,9 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Returns the points which are indicated to be a join, either in this Path
 	 * object, or any other that starts or ends on it.
+	 *
+	 * @return the list of nodes as {@link PointInImage} objects
+	 * @see #findJoinedPointIndices()
 	 */
 	public List<PointInImage> findJoinedPoints() {
 		final ArrayList<PointInImage> result = new ArrayList<>();
@@ -2695,6 +2848,9 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Returns the indices of points which are indicated to be a join, either in
 	 * this path object, or any other that starts or ends on it.
+	 *
+	 * @return the indices of points (Path nodes)
+	 * @see #findJoinedPoints()
 	 */
 	public Set<Integer> findJoinedPointIndices() {
 		final HashSet<Integer> result = new HashSet<>();
@@ -2809,7 +2965,7 @@ public class Path implements Comparable<Path> {
 	 *            the radius to be assigned. Setting it to 0 or Double.NaN removes
 	 *            the radius attribute from the Path
 	 */
-	public void setRadii(final double r) {
+	public void setRadius(final double r) {
 		if (Double.isNaN(r) || r == 0d) {
 			radiuses = null;
 		} else {
@@ -2818,6 +2974,28 @@ public class Path implements Comparable<Path> {
 				setGuessedTangents(2);
 			}
 			Arrays.fill(radiuses, r);
+		}
+	}
+
+	/**
+	 * Assigns radii to this Path
+	 *
+	 * @param radii
+	 *            the radii array. Setting it null removes the radius attribute from
+	 *            the Path
+	 * @see #setRadius(double)
+	 */
+	public void setRadii(final double[] radii) {
+		if (radii == null || radii.length == 0) {
+			radiuses = null;
+		} else if (radii != null && radii.length != size()) {
+			throw new IllegalArgumentException("radii array must have as many elements as nodes");
+		} else {
+			if (radiuses == null) {
+				createCircles();
+				setGuessedTangents(2);
+			}
+			System.arraycopy(radii, 0, radiuses, 0, size());
 		}
 	}
 

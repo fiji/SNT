@@ -80,7 +80,7 @@ public class TreeStatistics extends TreeAnalyzer {
 		switch (cMeasurement) {
 		case TreeAnalyzer.LENGTH:
 			for (final Path p : tree.list())
-				stat.addValue(p.getRealLength());
+				stat.addValue(p.getLength());
 			break;
 		case TreeAnalyzer.N_NODES:
 			for (final Path p : tree.list())

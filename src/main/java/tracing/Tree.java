@@ -465,7 +465,7 @@ public class Tree {
 	 *            the radius attribute from the Tree
 	 */
 	public void setRadii(final double r) {
-		tree.parallelStream().forEach(p -> p.setRadii(r));
+		tree.parallelStream().forEach(p -> p.setRadius(r));
 	}
 
 	/**

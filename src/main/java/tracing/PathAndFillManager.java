@@ -1037,7 +1037,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if (p.getName() != null) {
 					pw.print(" name=\"" + XMLFunctions.escapeForXMLAttributeValue(p.getName()) + "\"");
 				}
-				pw.print(" reallength=\"" + p.getRealLength() + "\"");
+				pw.print(" reallength=\"" + p.getLength() + "\"");
 				pw.println(">");
 
 				for (int i = 0; i < p.size(); ++i) {
@@ -1281,10 +1281,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				throw new TracesFileFormatException("There was an invalid attribute in <path/>: " + e);
 			}
 
-			if (nameString == null)
-				current_path.setDefaultName();
-			else
-				current_path.setName(nameString);
+			current_path.setName(nameString); //default name if null
 
 			if (startsOnInteger != null)
 				startJoins.put(id, startsOnInteger);
@@ -2434,7 +2431,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			final boolean primary = h.contains(p);
 			SNT.csvQuoteAndPrint(pw, primary);
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, pForLengthAndName.getRealLength());
+			SNT.csvQuoteAndPrint(pw, pForLengthAndName.getLength());
 			pw.print(",");
 			SNT.csvQuoteAndPrint(pw, p.spacing_units);
 			pw.print(",");
@@ -2468,7 +2465,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.print("" + endPoint[2]);
 
 			pw.print(",");
-			final double fittedVolume = pForLengthAndName.getApproximateFittedVolume();
+			final double fittedVolume = pForLengthAndName.getApproximatedVolume();
 			if (fittedVolume >= 0)
 				pw.print(fittedVolume);
 			else

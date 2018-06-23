@@ -77,7 +77,7 @@ public class RoiConverter extends TreeAnalyzer {
 			} else { // Single Point Path
 				final HashSet<PointInImage> pim = new HashSet<>();
 				pim.add(p.getPointInImage(0));
-				convertPoints(pim, overlay, (useSWCcolors) ? p.getSWCcolor() : p.getColor(), "SPP");
+				convertPoints(pim, overlay, getColor(p), "SPP");
 			}
 		}
 	}
@@ -145,10 +145,14 @@ public class RoiConverter extends TreeAnalyzer {
 		this.width = width;
 	}
 
+	private Color getColor(final Path p) {
+		return (useSWCcolors) ? Path.getSWCcolor(p.getSWCType()) : p.getColor();
+	}
+
 	private void drawPathSegments(final Path path, final Overlay overlay) {
 
 		final String basename = path.getName();
-		final Color color = (useSWCcolors) ? path.getSWCcolor() : path.getColor();
+		final Color color = getColor(path);
 		final double stroke = (width == -1) ? path.getMeanRadius() * 2 : width;
 
 		FloatPolygon polygon = new FloatPolygon();

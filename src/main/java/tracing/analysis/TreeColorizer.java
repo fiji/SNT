@@ -143,7 +143,7 @@ public class TreeColorizer {
 		case LENGTH:
 			integerScale = false;
 			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, p.getRealLength()));
+				mappedPaths.add(new MappedPath(p, p.getLength()));
 			break;
 		case MEAN_RADIUS:
 			integerScale = false;

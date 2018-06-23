@@ -190,7 +190,7 @@ public class TreeAnalyzer extends ContextCommand {
 		final Iterator<Path> it = tree.list().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
-			final double length = p.getRealLength();
+			final double length = p.getLength();
 			if (length < lowerBound || length > upperBound) {
 				updateFittedPathsCounter(p);
 				it.remove();
@@ -517,11 +517,7 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	private double sumLength(final Collection<Path> paths) {
-		double sum = 0;
-		for (final Path p : tree.list()) {
-			sum += p.getRealLength();
-		}
-		return sum;
+		return tree.list().stream().mapToDouble(p -> p.getLength()).sum();
 	}
 
 }

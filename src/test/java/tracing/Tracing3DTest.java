@@ -112,7 +112,7 @@ public class Tracing3DTest {
 			Path result = tracer.getResult();
 			assertNotNull("Not path found",result);
 
-			double foundPathLength = result.getRealLength();
+			double foundPathLength = result.getLength();
 			assertTrue( "Path length must be greater than 95 micrometres",
 				    foundPathLength > 95 );
 
@@ -149,7 +149,7 @@ public class Tracing3DTest {
 			Path result = tracer.getResult();
 			assertNotNull("Not path found",result);
 
-			double foundPathLength = result.getRealLength();
+			double foundPathLength = result.getLength();
 
 			assertTrue( "Path length must be greater than 92 micrometres",
 				    foundPathLength > 92 );

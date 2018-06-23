@@ -60,7 +60,7 @@ import tracing.gui.GuiUtils;
 import tracing.util.SWCColor;
 
 /**
- * Command for plotting Distributions of morphometric properties of
+ * Command for plotting distributions of morphometric properties of
  * {@link Tree}s
  *
  * @author Tiago Ferreira

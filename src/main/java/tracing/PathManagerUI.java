@@ -369,7 +369,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 	private void resetPathsColor(final Set<Path> paths, final boolean restoreSWCTypeColors) {
 		for (final Path p : paths) {
 			if (restoreSWCTypeColors)
-				p.setColorBySWCtype();
+				p.setColor(Path.getSWCcolor(p.getSWCType()));
 			else
 				p.setColor(null);
 		}
@@ -1378,7 +1378,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 					return; // user pressed cancel
 				synchronized (pathAndFillManager) {
 					if (s.trim().isEmpty()) {
-						p.setDefaultName();
+						p.setName("");
 					} else if (pathAndFillManager.getPathFromName(s, false) != null) {
 						displayTmpMsg("There is already a path named:\n('" + s + "')");
 						return;
@@ -1586,7 +1586,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 					return;
 				}
 				selectedPaths.parallelStream().forEach(p -> {
-					if (!p.isFittedVersionOfAnotherPath()) p.setRadii(userRad);
+					if (!p.isFittedVersionOfAnotherPath()) p.setRadius(userRad);
 				});
 				guiUtils.tempMsg("Command finished. Fitted path(s) ignored.");
 				plugin.updateAllViewers();

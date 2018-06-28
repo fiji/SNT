@@ -1460,16 +1460,16 @@ public class Path implements Comparable<Path> {
 		return result;
 	}
 
-	protected Path fitCircles(final int side, final ImagePlus image, final boolean display,
-			final SimpleNeuriteTracer plugin, final int progressIndex, final MultiTaskProgress progress) {
+	protected Path fitCircles(final int side, final ImagePlus image, final int type,
+			final boolean display, final SimpleNeuriteTracer plugin, final int progressIndex,
+			final MultiTaskProgress progress) {
 
 		final Path fitted = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 		final int totalPoints = size();
 		final int pointsEitherSide = 4;
 
-		SNT.log("Started fitting: " + this.getName() + ". Generating normal planes stack....");
-		SNT.log("There are: " + totalPoints + " in the stack.");
-		SNT.log("Spacing: " + x_spacing + "," + y_spacing + "," + z_spacing + " (" + spacing_units + ")");
+		SNT.log("Started fitting: " + this.getName());
+		SNT.log("Generating cross-section stack... (" + totalPoints + "slices)");
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
@@ -1551,7 +1551,7 @@ public class Path implements Comparable<Path> {
 			startValues[1] = side / 2.0;
 			startValues[2] = 3;
 
-			SNT.log("start search at: " + startValues[0] + "," + startValues[1] + " with radius: " + startValues[2]);
+			SNT.log("Start search at: " + startValues[0] + "," + startValues[1] + " with radius: " + startValues[2]);
 
 			float minValueInSquare = Float.MAX_VALUE;
 			float maxValueInSquare = Float.MIN_VALUE;
@@ -1570,7 +1570,7 @@ public class Path implements Comparable<Path> {
 				return null;
 			}
 
-			SNT.log("search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
+			SNT.log("Search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
 					+ startValues[2]);
 
 			centre_x_positionsUnscaled[i] = startValues[0];
@@ -1588,13 +1588,13 @@ public class Path implements Comparable<Path> {
 			moved[i] = scaleInNormalPlane * Math.sqrt(
 					x_from_centre_in_plane * x_from_centre_in_plane + y_from_centre_in_plane * y_from_centre_in_plane);
 
-			SNT.log("vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
+			//SNT.log("Vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
 
 			double centre_real_x = x_world;
 			double centre_real_y = y_world;
 			double centre_real_z = z_world;
 
-			SNT.log("original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+			SNT.log("Original center co-ordinates: " + centre_real_x + "," + centre_real_y + ","
 					+ centre_real_z);
 
 			// FIXME: I really think these should be +=, but it seems clear from
@@ -1607,7 +1607,7 @@ public class Path implements Comparable<Path> {
 			centre_real_z -= x_basis_in_plane[2] * x_from_centre_in_plane
 					+ y_basis_in_plane[2] * y_from_centre_in_plane;
 
-			SNT.log("adjusted original centre in real co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+			SNT.log("Adjusted center co-ordinates: " + centre_real_x + "," + centre_real_y + ","
 					+ centre_real_z);
 
 			optimized_x[i] = centre_real_x;
@@ -1618,7 +1618,7 @@ public class Path implements Comparable<Path> {
 			int y_in_image = (int) Math.round(centre_real_y / y_spacing);
 			int z_in_image = (int) Math.round(centre_real_z / z_spacing);
 
-			SNT.log("gives in image co-ordinates: " + x_in_image + "," + y_in_image + "," + z_in_image);
+			SNT.log("Adjusted center image position: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			if (x_in_image < 0)
 				x_in_image = 0;
@@ -1633,13 +1633,13 @@ public class Path implements Comparable<Path> {
 			if (z_in_image >= depth)
 				z_in_image = depth - 1;
 
-			SNT.log("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
+			//SNT.log("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			xs_in_image[i] = x_in_image;
 			ys_in_image[i] = y_in_image;
 			zs_in_image[i] = z_in_image;
 
-			SNT.log("Adding a real slice.");
+			//SNT.log("Adding a real slice.");
 
 			final FloatProcessor bp = new FloatProcessor(side, side);
 			bp.setPixels(normalPlane);
@@ -1844,8 +1844,14 @@ public class Path implements Comparable<Path> {
 			throw new IllegalArgumentException(
 					"Mismatch of lengths, added=" + added + " and fittedLength=" + fittedLength);
 
-		fitted.setFittedCircles(fitted_ts_x, fitted_ts_y, fitted_ts_z, fitted_rs, fitted_optimized_x,
-				fitted_optimized_y, fitted_optimized_z);
+		final boolean fitRadii = (type == PathFitter.RADII_AND_MIDPOINTS || type == PathFitter.RADII);
+		final boolean fitPoints = (type == PathFitter.RADII_AND_MIDPOINTS || type == PathFitter.MIDPOINTS);
+
+		fitted.setFittedCircles(fitted_ts_x, fitted_ts_y, fitted_ts_z, //
+				(fitRadii) ? fitted_rs : radiuses, //
+				(fitPoints) ? fitted_optimized_x : precise_x_positions,
+				(fitPoints) ? fitted_optimized_y : precise_y_positions,
+				(fitPoints) ? fitted_optimized_z : precise_z_positions);
 		fitted.setName("Fitted Path [" + getID() + "]");
 		fitted.setColor(getColor());
 		fitted.setSWCType(getSWCType());
@@ -1853,8 +1859,8 @@ public class Path implements Comparable<Path> {
 		setFitted(fitted);
 
 		if (display) {
-			SNT.log("displaying normal plane image");
-			final ImagePlus imp = new ImagePlus("Normal Plane " + fitted.name, stack);
+			SNT.log("Done. Displaying cross-section image");
+			final ImagePlus imp = new ImagePlus("Cross-section View " + fitted.name, stack);
 			imp.setCalibration(plugin.getImagePlus().getCalibration());
 			final NormalPlaneCanvas normalCanvas = new NormalPlaneCanvas(imp, plugin, centre_x_positionsUnscaled,
 					centre_y_positionsUnscaled, rsUnscaled, scores, modeRadiusesUnscaled, angles, valid, fitted);

@@ -33,7 +33,27 @@ import ij.ImagePlus;
  */
 public class PathFitter implements Callable<Path> {
 
-	private static int DEFAULT_NEIGHBORHOOD_SEARCH = 40;
+	/** The default max radius constraining the fit. */
+	public static int DEFAULT_MAX_RADIUS = 40;
+
+	/**
+	 * Flag specifying that the computed path should only inherit fitted radii
+	 * attributes
+	 */
+	public static int RADII = 1;
+
+	/**
+	 * Flag specifying that the computed path should only inherit midpoint
+	 * refinement of node coordinates
+	 */
+	public static int MIDPOINTS = 2;
+
+	/**
+	 * Flag specifying that the computed path should inherit both midpoint
+	 * refinement of node coordinates and radii
+	 */
+	public static int RADII_AND_MIDPOINTS = 4;
+
 	private final SimpleNeuriteTracer plugin;
 	private final Path path;
 	private final boolean showDetailedFittingResults;
@@ -41,7 +61,8 @@ public class PathFitter implements Callable<Path> {
 	private int fitterIndex;
 	private MultiTaskProgress progress;
 	private boolean succeeded;
-	private int sideSearch = DEFAULT_NEIGHBORHOOD_SEARCH;
+	private int sideSearch = DEFAULT_MAX_RADIUS;
+	private int fitScope = RADII_AND_MIDPOINTS;
 
 	/**
 	 * Checks whether the fit succeeded.
@@ -77,7 +98,7 @@ public class PathFitter implements Callable<Path> {
 	}
 
 	/**
-	 * Instantiates a new PathFitter
+	 * Instantiates a new PathFitter.
 	 *
 	 * @param plugin
 	 *            the {@link SimpleNeuriteTracer} instance specifying input image.
@@ -109,17 +130,20 @@ public class PathFitter implements Callable<Path> {
 	}
 
 	/**
-	 * Takes the signal from the image specified in the constructor to fit radii
-	 * around the nodes of input path. Computation of radii is confined to the
-	 * neighborhood specified by {@link #setMaxBounds(int)}
-	 * 
-	 * @return the reference to the fitted result.This Path is automatically set as
-	 *         the fitted version of input Path.
+	 * Takes the signal from the image specified in the constructor to fit
+	 * cross-section circles around the nodes of input path. Computation of fit is
+	 * confined to the neighborhood specified by {@link #setMaxRadius(int)}
+	 *
+	 * @return the reference to the computed result.This Path is automatically set
+	 *         as the fitted version of input Path.
+	 * @throws IllegalArgumentException
+	 *             the illegal argument exception
+	 * @see #setScope(int)
 	 */
 	@Override
 	public Path call() throws IllegalArgumentException {
-		final Path fitted = path.fitCircles(getMaxBounds(), imp, showDetailedFittingResults, plugin, fitterIndex,
-				progress);
+		final Path fitted = path.fitCircles(getMaxRadius(), imp, fitScope, showDetailedFittingResults, plugin,
+				fitterIndex, progress);
 		if (fitted == null) {
 			succeeded = false;
 			return null;
@@ -130,23 +154,41 @@ public class PathFitter implements Callable<Path> {
 	}
 
 	/**
-	 * Gets the current fitting boundaries
+	 * Gets the current max radius
 	 *
-	 * @return the boundaries, or {@link #DEFAULT_NEIGHBORHOOD_SEARCH} if no
-	 *         boundaries have been set
+	 * @return the maximum radius currently being considered, or
+	 *         {@link #DEFAULT_MAX_RADIUS} if no {@link #setMaxRadius(int)} has not
+	 *         been called
 	 */
-	public int getMaxBounds() {
+	public int getMaxRadius() {
 		return sideSearch;
 	}
 
 	/**
-	 * Sets the current fitting boundaries
+	 * Sets the max radius for constraining the fit.
 	 *
-	 * @param maxBounds
-	 *            the new fitting boundaries
+	 * @param maxRadius
+	 *            the new maximum radius
 	 */
-	public void setMaxBounds(final int maxBounds) {
-		this.sideSearch = maxBounds;
+	public void setMaxRadius(final int maxRadius) {
+		this.sideSearch = maxRadius;
+	}
+
+	/**
+	 * Sets the fitting scope.
+	 *
+	 * @param scope
+	 *            Either {@link #RADII}, {@link #MIDPOINTS}, or
+	 *            {@link #RADII_AND_MIDPOINTS} Note that the computation is always
+	 *            performed assuming {@link #RADII_AND_MIDPOINTS}, but only the
+	 *            attributes specified by {@code scope} will be applied to fitted
+	 *            Path
+	 */
+	public void setScope(final int scope) {
+		if (scope != PathFitter.RADII_AND_MIDPOINTS && scope != PathFitter.RADII && scope != PathFitter.MIDPOINTS) {
+			throw new IllegalArgumentException(" Invalid flag. Only RADII, RADII, or RADII_AND_MIDPOINTS allowed");
+		}
+		this.fitScope = scope;
 	}
 
 }

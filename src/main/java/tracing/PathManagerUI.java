@@ -62,6 +62,7 @@ import java.util.concurrent.Future;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -93,13 +94,16 @@ import javax.swing.tree.TreeSelectionModel;
 import net.imagej.ImageJ;
 import net.imagej.table.DefaultGenericTable;
 
+import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
+import org.scijava.prefs.PrefService;
 
 import tracing.analysis.TreeAnalyzer;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
+import tracing.gui.SWCTypeOptionsCmd;
 import tracing.gui.SwingSafeResult;
 import tracing.plugin.DistributionCmd;
 import tracing.plugin.ROIExporterCmd;
@@ -129,7 +133,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 	private final JMenuBar menuBar;
 	private final JPopupMenu popup;
 	private final JMenu swcTypeMenu;
-	private final ButtonGroup swcTypeButtonGroup;
+	private ButtonGroup swcTypeButtonGroup;
 	private final ColorMenu colorMenu;
 	private final JMenuItem fitVolumeMenuItem;
 	private final TreeSearchable searchable;
@@ -182,8 +186,11 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		JMenuItem jmi = new JMenuItem(SinglePathActionListener.DISCONNECT_CMD);
 		jmi.addActionListener(singlePathListener);
 		editMenu.add(jmi);
-		editMenu.addSeparator();
 		jmi = new JMenuItem(MultiPathActionListener.MERGE_CMD);
+		jmi.addActionListener(multiPathListener);
+		editMenu.add(jmi);
+		editMenu.addSeparator();
+		jmi = new JMenuItem(MultiPathActionListener.SPECIFY_FIT_CMD);
 		jmi.addActionListener(multiPathListener);
 		editMenu.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.DOWNSAMPLE_CMD);
@@ -192,77 +199,54 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 
 		swcTypeMenu = new JMenu("Type");
 		menuBar.add(swcTypeMenu);
-		swcTypeButtonGroup = new ButtonGroup();
-		for (final int type : Path.getSWCtypes()) {
-			final JRadioButtonMenuItem rbmi = new JRadioButtonMenuItem(Path.getSWCtypeName(type));
-			swcTypeButtonGroup.add(rbmi);
-			rbmi.addActionListener(new ActionListener() {
+		assembleSWCtypeMenu();
 
-				@Override
-				public void actionPerformed(final ActionEvent e) {
-					final HashSet<Path> selectedPaths = getSelectedPaths(true);
-					if (selectedPaths.size() == 0) {
-						guiUtils.error("There are no traced paths.");
-						return;
-					}
-					if (tree.getSelectionCount() == 0
-							&& !guiUtils.getConfirmation("Currently no paths are selected. Change type of all paths?",
-									"Apply to All?")) {
-						return;
-					}
-					setSWCType(selectedPaths, type);
-					refreshManager(true, false);
-				}
-			});
-			swcTypeMenu.add(rbmi);
-		}
-
+		final JMenu tagsMenu = new JMenu("Tags");
+		menuBar.add(tagsMenu);
 		colorMenu = new ColorMenu(MultiPathActionListener.COLORS_MENU);
-		menuBar.add(colorMenu);
+		tagsMenu.add(colorMenu);
 		colorMenu.addActionListener(multiPathListener);
-		jmi = new JMenuItem(MultiPathActionListener.APPLY_SWC_COLORS_CMD);
-		jmi.addActionListener(multiPathListener);
-		colorMenu.add(jmi);
-		jmi = new JMenuItem(MultiPathActionListener.REMOVE_COLOR_CMD);
-		jmi.addActionListener(multiPathListener);
-		colorMenu.add(jmi);
-		colorMenu.addSeparator();
-		final JMenu orderTagsMenu = new JMenu("Branching Order");
-		jmi = new JMenuItem(MultiPathActionListener.APPEND_ORDER_CMD);
-		jmi.addActionListener(multiPathListener);
-		orderTagsMenu.add(jmi);
-		jmi = new JMenuItem(MultiPathActionListener.REMOVE_ORDER_CMD);
-		jmi.addActionListener(multiPathListener);
-		orderTagsMenu.add(jmi);
-		colorMenu.add(orderTagsMenu);
-		final JMenu customTagsMenu = new JMenu("Custom Tags");
-		jmi = new JMenuItem(MultiPathActionListener.APPEND_TAG_CMD);
-		jmi.addActionListener(multiPathListener);
-		customTagsMenu.add(jmi);
-		jmi = new JMenuItem(MultiPathActionListener.REMOVE_TAG_CMD);
-		jmi.addActionListener(multiPathListener);
-		customTagsMenu.add(jmi);
-		colorMenu.add(customTagsMenu);
 
-		final JMenu fitMenu = new JMenu("Fit/Fill");
+		final JMenu orderTagsMenu = new JMenu("Branch Order Tags");
+		jmi = new JMenuItem(MultiPathActionListener.APPEND_ORDER_TAG_CMD);
+		jmi.addActionListener(multiPathListener);
+		orderTagsMenu.add(jmi);
+		jmi = new JMenuItem(MultiPathActionListener.REMOVE_ORDER_TAG_CMD);
+		jmi.addActionListener(multiPathListener);
+		orderTagsMenu.add(jmi);
+		tagsMenu.add(orderTagsMenu);
+		final JMenu customTagsMenu = new JMenu("Custom Tags");
+		jmi = new JMenuItem(MultiPathActionListener.APPEND_CUSTOM_TAG_CMD);
+		jmi.addActionListener(multiPathListener);
+		customTagsMenu.add(jmi);
+		jmi = new JMenuItem(MultiPathActionListener.REMOVE_CUSTOM_TAG_CMD);
+		jmi.addActionListener(multiPathListener);
+		customTagsMenu.add(jmi);
+		tagsMenu.add(customTagsMenu);
+		tagsMenu.add(customTagsMenu);
+		tagsMenu.addSeparator();
+		jmi = new JMenuItem(MultiPathActionListener.REMOVE_ALL_TAGS_CMD);
+		jmi.addActionListener(multiPathListener);
+		tagsMenu.add(jmi);
+
+		final JMenu fitMenu = new JMenu(" Fit ");
 		menuBar.add(fitMenu);
-		fitVolumeMenuItem = new JMenuItem("Fit Radii");
+		fitVolumeMenuItem = new JMenuItem("Fit Path(s)...");
 		fitVolumeMenuItem.addActionListener(multiPathListener);
 		fitMenu.add(fitVolumeMenuItem);
 		jmi = new JMenuItem(SinglePathActionListener.EXPLORE_FIT_CMD);
 		jmi.addActionListener(singlePathListener);
 		fitMenu.add(jmi);
 		fitMenu.addSeparator();
-		jmi = new JMenuItem(MultiPathActionListener.SPECIFY_FIT_CMD);
-		jmi.addActionListener(multiPathListener);
-		fitMenu.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.RESET_FITS);
 		jmi.addActionListener(multiPathListener);
 		fitMenu.add(jmi);
-		fitMenu.addSeparator();
+
+		final JMenu fillMenu = new JMenu("Fill");
+		menuBar.add(fillMenu);
 		jmi = new JMenuItem(MultiPathActionListener.FILL_OUT_CMD);
 		jmi.addActionListener(multiPathListener);
-		fitMenu.add(jmi);
+		fillMenu.add(jmi);
 
 		final JMenu advanced = new JMenu("Tools");
 		menuBar.add(advanced);
@@ -361,17 +345,79 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		pack();
 	}
 
-	private void setSWCType(final Set<Path> paths, final int swcType) {
-		for (final Path p : paths)
-			p.setSWCType(swcType);
+	private void assembleSWCtypeMenu() {
+		swcTypeMenu.removeAll();
+		swcTypeButtonGroup = new ButtonGroup();
+		final int iconSize = GuiUtils.getMenuItemHeight();
+		final SWCTypeOptionsCmd optionsCmd = new SWCTypeOptionsCmd();
+		optionsCmd.setContext(plugin.getContext());
+		Map<Integer, Color> map = optionsCmd.getColorMap();
+		boolean assignColors = optionsCmd.isColorPairingEnabled();
+		map.forEach((key, value) -> {
+
+			final Color color = (assignColors) ? value : null;
+			final ImageIcon icon = GuiUtils.createIcon(color, iconSize, iconSize);
+			final JRadioButtonMenuItem rbmi = new JRadioButtonMenuItem(Path.getSWCtypeName(key, true), icon);
+			swcTypeButtonGroup.add(rbmi);
+			rbmi.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(final ActionEvent e) {
+					final HashSet<Path> selectedPaths = getSelectedPaths(true);
+					if (selectedPaths.size() == 0) {
+						guiUtils.error("There are no traced paths.");
+						return;
+					}
+					if (tree.getSelectionCount() == 0
+							&& !guiUtils.getConfirmation("Currently no paths are selected. Change type of all paths?",
+									"Apply to All?")) {
+						return;
+					}
+					setSWCType(selectedPaths, key, color);
+					refreshManager(true, assignColors);
+				}
+			});
+			swcTypeMenu.add(rbmi);
+		});
+		JMenuItem jmi = new JMenuItem("Options...");
+		jmi.addActionListener(e -> {
+
+			class GetOptions extends SwingWorker<Object, Object> {
+				@Override
+				public Object doInBackground() {
+					try {
+						final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+						CommandModule cm = cmdService.run(SWCTypeOptionsCmd.class, true).get();
+						if (cm.isCanceled()) return null;
+					} catch (InterruptedException | ExecutionException e1) {
+						e1.printStackTrace();
+					}
+					return null;
+				}
+
+				@Override
+				protected void done() {
+					assembleSWCtypeMenu();
+					// resetPathsColor(selectedPaths, true);
+				}
+			}
+			(new GetOptions()).execute();
+
+		});
+		swcTypeMenu.addSeparator();
+		swcTypeMenu.add(jmi);
 	}
 
-	private void resetPathsColor(final Set<Path> paths, final boolean restoreSWCTypeColors) {
+	private void setSWCType(final Set<Path> paths, final int swcType, final Color color) {
 		for (final Path p : paths) {
-			if (restoreSWCTypeColors)
-				p.setColor(Path.getSWCcolor(p.getSWCType()));
-			else
-				p.setColor(null);
+			p.setSWCType(swcType);
+			p.setColor(color);
+		}
+	}
+
+	private void resetPathsColor(final Set<Path> paths) {
+		for (final Path p : paths) {
+			p.setColor(null);
 		}
 		refreshManager(true, true);
 	}
@@ -1321,6 +1367,12 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		}
 	}
 
+	private void removeCustomTags(final HashSet<Path> selectedPaths) {
+		for (final Path p : selectedPaths) {
+			p.setName(p.getName().replaceAll("\\<Tag .+\\>", ""));
+		}
+	}
+
 	private void removeAllOrderTags() {
 		tree.clearSelection();
 		removeOrderTags(getSelectedPaths(true));
@@ -1433,18 +1485,17 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 	/** ActionListener for commands that can operate on multiple paths */
 	private class MultiPathActionListener implements ActionListener {
 
-		private final static String COLORS_MENU = "Tags";
+		private final static String COLORS_MENU = "Color Tags";
 		private final static String DELETE_CMD = "Delete...";
 		private final static String MERGE_CMD = "Merge...";
 		private final static String DOWNSAMPLE_CMD = "Douglas–Peucker Downsampling...";
-		private final static String APPLY_SWC_COLORS_CMD = "Apply SWC-Type Colors";
-		private final static String REMOVE_COLOR_CMD = "Remove Color Tags";
-		private final static String APPEND_ORDER_CMD = "Append Order Tag";
-		private final static String REMOVE_ORDER_CMD = "Remove Order Tag";
-		private final static String APPEND_TAG_CMD = "Append Custom Tag(s)";
-		private final static String REMOVE_TAG_CMD = "Remove Custom Tag(s)";
+		private final static String APPEND_ORDER_TAG_CMD = "Append";
+		private final static String REMOVE_ORDER_TAG_CMD = "Remove";
+		private final static String APPEND_CUSTOM_TAG_CMD = "Append...";
+		private final static String REMOVE_CUSTOM_TAG_CMD = "Remove ";
+		private final static String REMOVE_ALL_TAGS_CMD = "Remove All Tags";
 		private static final String FILL_OUT_CMD = "Fill Out...";
-		private static final String RESET_FITS = "Reset Fits...";
+		private static final String RESET_FITS = "Discard Fit(s)...";
 		private final static String SPECIFY_FIT_CMD = "Specify Radius...";
 		private final static String MEASURE_CMD = "Measure";
 		private final static String CONVERT_TO_ROI_CMD = "Send to ROI Manager...";
@@ -1472,16 +1523,8 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 			// if (noSelection && !assumeAll) return;
 
 			// Case 1: Non-destructive commands that do not require confirmation
-			if (REMOVE_COLOR_CMD.equals(cmd)) {
-				resetPathsColor(selectedPaths, false);
-
-			} else if (APPLY_SWC_COLORS_CMD.equals(cmd)) {
-				resetPathsColor(selectedPaths, true);
-
-			} else if (COLORS_MENU.equals(cmd)) {
+			if (COLORS_MENU.equals(cmd)) {
 				final SWCColor swcColor = colorMenu.getSelectedSWCColor();
-				if (swcColor.isTypeDefined())
-					setSWCType(selectedPaths, swcColor.type());
 				for (final Path p : selectedPaths)
 					p.setColor(swcColor.color());
 				refreshManager(true, true);
@@ -1523,19 +1566,21 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(DistributionCmd.class, true, input);
 
-			} else if (APPEND_ORDER_CMD.equals(cmd)) {
+			} else if (APPEND_ORDER_TAG_CMD.equals(cmd)) {
 				for (final Path p : selectedPaths) {
 					final String name = p.getName();
 					if (!name.contains("<Order "))
 						p.setName(name + "<Order " + p.getOrder() + ">");
 				}
 				refreshManager(false, false);
+				return;
 
-			} else if (REMOVE_ORDER_CMD.equals(cmd)) {
+			} else if (REMOVE_ORDER_TAG_CMD.equals(cmd)) {
 				removeOrderTags(selectedPaths);
 				refreshManager(false, false);
+				return;
 
-			} else if (APPEND_TAG_CMD.equals(cmd)) {
+			} else if (APPEND_CUSTOM_TAG_CMD.equals(cmd)) {
 				final String tags = guiUtils.getString("Enter one or more tags (space or comma-separated list):",
 						"Append Tags", "");
 				if (tags == null || tags.trim().isEmpty())
@@ -1544,12 +1589,12 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 					p.setName(p.getName() + "<Tag " + tags + ">");
 				}
 				refreshManager(false, false);
+				return;
 
-			} else if (REMOVE_TAG_CMD.equals(cmd)) {
-				for (final Path p : selectedPaths) {
-					p.setName(p.getName().replaceAll("\\<Tag .+\\>", ""));
-				}
+			} else if (REMOVE_CUSTOM_TAG_CMD.equals(cmd)) {
+				removeCustomTags(selectedPaths);
 				refreshManager(false, false);
+				return;
 
 			} else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
 				new SkeletonConverter(plugin).runGui();
@@ -1599,6 +1644,14 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 						: "Delete the selected " + n + " paths?", "Confirm Deletion?"))
 					deletePaths(selectedPaths);
 				return;
+			} else if (REMOVE_ALL_TAGS_CMD.equals(cmd)) {
+				if (guiUtils.getConfirmation((assumeAll) ? "Remove all tags from all paths?"
+						: "Remove all tags from the selected " + n + " paths?", "Confirm Deletion?")) {
+					removeOrderTags(selectedPaths);
+					removeCustomTags(selectedPaths);
+					resetPathsColor(selectedPaths); // will call refreshManager
+					return;
+				}
 			} else if (MERGE_CMD.equals(cmd)) {
 				if (n == 1) {
 					displayTmpMsg("You must have at least two paths selected.");

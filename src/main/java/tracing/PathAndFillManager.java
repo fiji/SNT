@@ -2426,7 +2426,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.print(",");
 			SNT.csvQuoteAndPrint(pw, pForLengthAndName.getName());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, Path.getSWCtypeName(p.getSWCType()));
+			SNT.csvQuoteAndPrint(pw, Path.getSWCtypeName(p.getSWCType(), false));
 			pw.print(",");
 			final boolean primary = h.contains(p);
 			SNT.csvQuoteAndPrint(pw, primary);

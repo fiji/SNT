@@ -461,7 +461,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			return "no-filtering";
 		final StringBuilder sb = new StringBuilder();
 		for (final int type : swcTypeCodes)
-			sb.append(Path.getSWCtypeName(type)).append("+");
+			sb.append(Path.getSWCtypeName(type, false)).append("+");
 		sb.replace(sb.length() - 1, sb.length(), "");
 		return sb.toString();
 	}

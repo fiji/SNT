@@ -287,8 +287,9 @@ public class TreeAnalyzer extends ContextCommand {
 			final int[] types = tree.getSWCtypes().stream().mapToInt(v -> v).toArray();
 			for (final int type : types) {
 				restrictToSWCType(type);
-				measureTree(row, Path.getSWCtypeName(type));
-				table.set(getCol("SWC Type"), row, Path.getSWCtypeName(type));
+				final String label = Path.getSWCtypeName(type, true);
+				measureTree(row, label);
+				table.set(getCol("SWC Type"), row, label);
 				restrictToSWCType(types);
 			}
 		} else {

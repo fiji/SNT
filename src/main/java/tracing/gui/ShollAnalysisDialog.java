@@ -1112,7 +1112,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 			} else if (p.isFittedVersionOfAnotherPath())
 				continue;
 
-			if (filteredTypes.contains(Path.getSWCtypeName(p.getSWCType()))) {
+			if (filteredTypes.contains(Path.getSWCtypeName(p.getSWCType(), false))) {
 				addPathPointsToShollList(p, x_start, y_start, z_start, shollPointsAllPaths);
 				++numberOfAllPaths;
 				if (selected) {

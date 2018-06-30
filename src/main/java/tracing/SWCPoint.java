@@ -75,7 +75,7 @@ public class SWCPoint implements Comparable<SWCPoint> {
 
 	@Override
 	public String toString() {
-		return "SWCPoint [" + id + "] " + Path.getSWCtypeName(type) + " " + "(" + x + "," + y + "," + z + ") "
+		return "SWCPoint [" + id + "] " + Path.getSWCtypeName(type, false) + " " + "(" + x + "," + y + "," + z + ") "
 				+ "radius: " + radius + ", " + "[previous: " + previous + "]";
 	}
 

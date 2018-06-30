@@ -1998,7 +1998,7 @@ public class Path implements Comparable<Path> {
 	 * @return the respective label, or {@link Path#SWC_UNDEFINED_LABEL} if flag was
 	 *         not recognized
 	 */
-	public static String getSWCtypeName(final int type) {
+	public static String getSWCtypeName(final int type, final boolean capitalized) {
 		String typeName;
 		switch (type) {
 		case SWC_UNDEFINED:
@@ -2028,6 +2028,13 @@ public class Path implements Comparable<Path> {
 		default:
 			typeName = SWC_UNDEFINED_LABEL;
 			break;
+		}
+		if (capitalized) {
+			String result = "";
+			for (final String w : typeName.split(" ")) {
+				result += w.substring(0, 1).toUpperCase() + w.substring(1) + " ";
+			}
+			return result.trim();
 		}
 		return typeName;
 	}
@@ -2240,7 +2247,7 @@ public class Path implements Comparable<Path> {
 			name += ", ends on " + endJoins.getName();
 		}
 		if (swcType != SWC_UNDEFINED)
-			name += " [" + getSWCtypeName(swcType) + "]";
+			name += " [" + getSWCtypeName(swcType, false) + "]";
 		return name;
 	}
 

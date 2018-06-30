@@ -179,7 +179,7 @@ public class SkeletonConverter implements DialogListener {
 		if (restrictBySWCType) {
 			filter.append(" [ ");
 			for (final int type : selectedSwcTypes)
-				filter.append(Path.getSWCtypeName(type)).append(" ");
+				filter.append(Path.getSWCtypeName(type, false)).append(" ");
 			filter.append("]");
 		}
 		if (filter.length() == 0)

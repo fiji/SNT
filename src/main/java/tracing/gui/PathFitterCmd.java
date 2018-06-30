@@ -39,11 +39,14 @@ import tracing.PathFitter;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "SWC Type Options")
+@Plugin(type = Command.class, visible = false, label = "Fit Paths")
 public class PathFitterCmd extends ContextCommand {
 
 	@Parameter
 	private PrefService prefService;
+
+	public static final String FITCHOICE_KEY= "choice";
+	public static final String MAXRADIUS_KEY= "maxrad";
 
 	private static final String EMPTY_LABEL = "<html>&nbsp;";
 	private static final String HEADER = "<html><body><div style='width:500;'>";
@@ -79,24 +82,23 @@ public class PathFitterCmd extends ContextCommand {
 	public void run() {
 		switch (fitChoice) {
 		case CHOICE_MIDPOINT:
-			prefService.put(PathFitterCmd.class, "fitChoice", PathFitter.MIDPOINTS);
+			prefService.put(PathFitterCmd.class, FITCHOICE_KEY, PathFitter.MIDPOINTS);
 			break;
 		case CHOICE_RADII:
-			prefService.put(PathFitterCmd.class, "fitChoice", PathFitter.RADII);
+			prefService.put(PathFitterCmd.class, FITCHOICE_KEY, PathFitter.RADII);
 			break;
 		default:
-			prefService.put(PathFitterCmd.class, "fitChoice", PathFitter.RADII_AND_MIDPOINTS);
+			prefService.put(PathFitterCmd.class, FITCHOICE_KEY, PathFitter.RADII_AND_MIDPOINTS);
 			break;
 		}
-		prefService.put(PathFitterCmd.class, "maxRadius", maxRadius);
+		prefService.put(PathFitterCmd.class, MAXRADIUS_KEY, maxRadius);
 	}
 
 	@SuppressWarnings("unused")
 	private void reset() {
 		fitChoice = PathFitterCmd.CHOICE_BOTH;
 		maxRadius = PathFitter.DEFAULT_MAX_RADIUS;
-		prefService.clear(PathFitterCmd.class); // only useful if user decides to dismiss the dialog after pressing
-												// "Reset"
+		prefService.clear(PathFitterCmd.class); // useful if user dismisses dialog after pressing "Reset"
 	}
 
 	/** IDE debug method **/

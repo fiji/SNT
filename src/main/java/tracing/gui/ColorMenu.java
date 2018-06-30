@@ -22,10 +22,14 @@
 
 package tracing.gui;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -75,10 +79,10 @@ public class ColorMenu extends JMenu {
 		_activeBorder = new CompoundBorder(new MatteBorder(2, 2, 2, 2, getBackground().darker()),
 				new MatteBorder(1, 1, 1, 1, getBackground()));
 
-		final Color[] hues = new Color[] { Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA, Color.CYAN, Color.YELLOW,
-				Color.ORANGE };
+		final Color[] hues = new Color[] { Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
+				Color.CYAN, Color.YELLOW, Color.ORANGE }; // 7 elements
 		final float[] colorRamp = new float[] { .75f, .5f, .3f };
-		final float[] grayRamp = new float[] { 1, .86f, .71f, .57f, .43f, .29f, 0 };
+		final float[] grayRamp = new float[] { 1, .8f, .6f, .4f, .2f, .0f}; // 6 elements
 
 		final JPanel defaultPanel = getGridPanel(8, 7);
 		_colorPanes = new HashMap<>();
@@ -100,12 +104,17 @@ public class ColorMenu extends JMenu {
 			final Color color = Color.getHSBColor(0, 0, s);
 			colors.add(color);
 		}
+		// add the null color to the end of grayRamp row
+		colors.add(null);
+
 		for (final Color color : colors) {
 			final ColorPane colorPane = new ColorPane(new SWCColor(color), false);
 			defaultPanel.add(colorPane);
 			_colorPanes.put(new SWCColor(color), colorPane);
 		}
 		add(defaultPanel);
+
+/* No longer in use: see {@link SWCTypeOptionsCmd}
 
 		// Build the panel for SWC colors
 		addSeparator("SWC Type Colors (Righ-click to change):");
@@ -117,10 +126,10 @@ public class ColorMenu extends JMenu {
 			_colorPanes.put(swcColor, swcColorPane);
 		}
 		add(swcPanel);
+*/
 		addSeparator();
 
 		// Build the custom color row
-		addSeparator("Custom... (Righ-click to change):");
 		final JPanel customPanel = getGridPanel(1, 7);
 		for (int i = 0; i < 7; i++) {
 			final Color uniquePlaceHolderColor = new Color(getBackground().getRed(), getBackground().getGreen(),
@@ -129,8 +138,8 @@ public class ColorMenu extends JMenu {
 			customPanel.add(customColorPane);
 			_colorPanes.put(new SWCColor(uniquePlaceHolderColor), customColorPane);
 		}
+		addSeparator("Custom... (Righ-click to change):");
 		add(customPanel);
-		//addSeparator(" ");// bottom spacer
 
 	}
 
@@ -206,17 +215,24 @@ public class ColorMenu extends JMenu {
 			isCustomizable = customizable;
 			setPanelSWCColor(swcColor);
 			setBorder(_unselectedBorder);
-			setMinimumSize(new Dimension(10, 10));
 			addMouseListener(this);
+			final int size = GuiUtils.getMenuItemHeight();
+			setPreferredSize(new Dimension(size, size));
 		}
 
 		private void setPanelSWCColor(final SWCColor sColor) {
 			swcColor = sColor;
+			if (sColor.color()== null) {
+				setBackground(getBackground().brighter());
+				setToolTipText("None (Remove Existing Color)");
+			} else {
 			setBackground(swcColor.color());
 			final String msg = (!swcColor.isTypeDefined()) ? "RGB: " + swcColor.color().getRed() + ", "
 					+ swcColor.color().getGreen() + ", " + swcColor.color().getBlue()
-					: Path.getSWCtypeName(swcColor.type());
-			setToolTipText(msg);
+					: Path.getSWCtypeName(swcColor.type(), true);
+					setToolTipText(msg);
+
+			}
 		}
 
 		public void setSelected(final boolean isSelected) {
@@ -230,15 +246,17 @@ public class ColorMenu extends JMenu {
 		}
 
 		@Override
-		public Dimension getMaximumSize() {
-			return getPreferredSize();
+		public void paint(final Graphics g) {
+			super.paint(g);
+			if (swcColor.color() == null) {
+				final Graphics2D g2 = (Graphics2D) g;
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				g2.setColor(Color.RED); //SWCColor.contrastColor(getBackground()));
+				g2.setStroke(new BasicStroke(2));
+				g2.drawLine(3, 3, getWidth() - 3, getHeight() - 3);
+			}
 		}
-
-		@Override
-		public Dimension getMinimumSize() {
-			return getPreferredSize();
-		}
-
+	
 		@Override
 		public void mouseClicked(final MouseEvent ev) {
 		}
@@ -261,7 +279,6 @@ public class ColorMenu extends JMenu {
 			// Ensure only this pane gets selected
 			selectNone();
 			setSelected(true);
-			
 
 			if (isCustomizable && (SwingUtilities.isRightMouseButton(ev) || ev.isPopupTrigger())) {
 
@@ -271,7 +288,7 @@ public class ColorMenu extends JMenu {
 				// Prompt user for new color
 				final GuiUtils gUtils = new GuiUtils(getTopLevelAncestor());
 				final String promptTitle = (!swcColor.isTypeDefined()) ? "New Color"
-						: "New color for SWC Type: " + Path.getSWCtypeName(swcColor.type());
+						: "New color for SWC Type: " + Path.getSWCtypeName(swcColor.type(), true);
 				MenuSelectionManager.defaultManager().clearSelectedPath();
 				final Color c = gUtils.getColor(promptTitle, swcColor.color(), "HSB");
 				if (c != null && !c.equals(swcColor.color())) {
@@ -308,7 +325,7 @@ public class ColorMenu extends JMenu {
 				System.out.println(e);
 				System.out.println(menu.getSelectedSWCColor().color());
 				System.out.println("Type: " + menu.getSelectedSWCColor().type());
-				System.out.println(Path.getSWCtypeName(menu.getSelectedSWCColor().type()));
+				System.out.println(Path.getSWCtypeName(menu.getSelectedSWCColor().type(), false));
 			}
 		});
 		menuBar.add(menu);

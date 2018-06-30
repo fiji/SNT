@@ -23,13 +23,10 @@
 package tracing.gui;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -100,7 +97,7 @@ public class ColorChooserButton extends JButton {
 			return;
 		current = newColor;
 		final int h = getFontMetrics(getFont()).getAscent();
-		setIcon(createIcon(current, h * 2, h));
+		setIcon(GuiUtils.createIcon(current, h * 2, h));
 		repaint();
 		if (notify && listener != null)
 			listener.colorChanged(newColor);
@@ -108,18 +105,6 @@ public class ColorChooserButton extends JButton {
 
 	public void addColorChangedListener(final ColorChangedListener listener) {
 		this.listener = listener;
-	}
-
-	private ImageIcon createIcon(final Color main, final int width, final int height) {
-		final BufferedImage image = new BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_RGB);
-		final Graphics2D graphics = image.createGraphics();
-		graphics.setColor(main);
-		graphics.fillRect(0, 0, width, height);
-		graphics.setXORMode(Color.DARK_GRAY);
-		graphics.drawRect(0, 0, width - 1, height - 1);
-		image.flush();
-		final ImageIcon icon = new ImageIcon(image);
-		return icon;
 	}
 
 	public interface ColorChangedListener2 {

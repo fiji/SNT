@@ -24,10 +24,12 @@ package tracing.gui;
 
 import com.jidesoft.popup.JidePopup;
 
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dialog.ModalityType;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Point;
@@ -40,6 +42,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -47,6 +50,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -395,6 +399,26 @@ public class GuiUtils {
 		return label;
 	}
 
+	public static ImageIcon createIcon(final Color color, final int width, final int height) {
+		final BufferedImage image = new BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+		final Graphics2D graphics = image.createGraphics();
+		graphics.setColor((color == null) ? new Color(0f, 0f, 0f, 0f) : color);
+		graphics.fillRect(0, 0, width, height);
+		graphics.setXORMode(Color.DARK_GRAY);
+		graphics.drawRect(0, 0, width - 1, height - 1);
+		image.flush();
+		final ImageIcon icon = new ImageIcon(image);
+		return icon;
+	}
+
+	public static int getMenuItemHeight() {
+		Font font = UIManager.getDefaults().getFont("CheckBoxMenuItem.font");
+		if (font == null)
+			font = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
+		final Canvas c = new Canvas();
+		return c.getFontMetrics(font).getHeight();
+	}
+
 	public static String ctrlKey() {
 		return (PlatformUtils.isMac()) ? "Cmd" : "Ctrl";
 	}
@@ -417,7 +441,7 @@ public class GuiUtils {
 
 	public static Color getDisabledComponentColor() {
 		try {
-			return UIManager.getColor("CheckBox.disabledText");
+			return UIManager.getColor("MenuItem.disabledBackground");
 		} catch (final Exception ignored) {
 			return Color.GRAY;
 		}

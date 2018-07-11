@@ -115,9 +115,9 @@ public class GuiUtils {
 		centeredDialog(msg, title, JOptionPane.ERROR_MESSAGE);
 	}
 
-	public JDialog floatingMsg(final String msg) {
+	public JDialog floatingMsg(final String msg, final boolean autodismiss) {
 		final JDialog dialog = new FloatingDialog(msg);
-		GuiUtils.setAutoDismiss(dialog);
+		if (autodismiss) GuiUtils.setAutoDismiss(dialog);
 		dialog.toFront();
 		dialog.setVisible(true);
 		return dialog;

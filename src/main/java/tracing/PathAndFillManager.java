@@ -567,7 +567,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			if (!selectedPaths.contains(currentPath))
 				throw new SWCExportException("The path \"" + currentPath
-						+ "\" is connected to other selected paths, but wasn't itself selected");
+						+ "\" is connected to other selected paths, but wasn't itself selected.");
 
 			/*
 			 * The paths we're dealing with specify connectivity, but we might be using the

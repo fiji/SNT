@@ -615,7 +615,7 @@ public class SNTUI extends JDialog {
 	 */
 	public void changeState(final int newState) {
 
-		SNT.log("changing state to: " + getState(newState));
+		SNT.log("Changing state to: " + getState(newState));
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override

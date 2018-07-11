@@ -1627,16 +1627,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void setFillThreshold(final double distance) {
-
-		if (distance > 0) {
-
+		if (!Double.isNaN(distance) && distance > 0) {
 			SNT.log("Setting new threshold of: " + distance);
-
-			ui.thresholdChanged(distance);
-
+			if (ui != null) ui.thresholdChanged(distance);
 			filler.setThreshold(distance);
 		}
-
 	}
 
 	synchronized void startPath(final double world_x, final double world_y,

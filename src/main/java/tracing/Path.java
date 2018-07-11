@@ -2029,14 +2029,20 @@ public class Path implements Comparable<Path> {
 			typeName = SWC_UNDEFINED_LABEL;
 			break;
 		}
-		if (capitalized) {
-			String result = "";
-			for (final String w : typeName.split(" ")) {
-				result += w.substring(0, 1).toUpperCase() + w.substring(1) + " ";
+		if (!capitalized) return typeName;
+
+		final char[] buffer = typeName.toCharArray();
+		boolean capitalizeNext = true;
+		for (int i = 0; i < buffer.length; i++) {
+			final char ch = buffer[i];
+			if (Character.isWhitespace(ch) || !Character.isLetter(ch)) {
+				capitalizeNext = true;
+			} else if (capitalizeNext) {
+				buffer[i] = Character.toTitleCase(ch);
+				capitalizeNext = false;
 			}
-			return result.trim();
 		}
-		return typeName;
+		return new String(buffer);
 	}
 
 	private boolean circlesOverlap(final double n1x, final double n1y, final double n1z, final double c1x,

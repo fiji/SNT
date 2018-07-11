@@ -23,8 +23,10 @@
 package tracing.gui;
 
 import java.awt.Color;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
@@ -63,14 +65,14 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	@Parameter(required = false, label = "   Enable color pairing")
 	private boolean enableColors;
 
+	@Parameter(required = true, persist = false, label = Path.SWC_DENDRITE_LABEL)
+	private ColorRGB basalDendriteColor;
+
 	@Parameter(required = true, persist = false, label = Path.SWC_APICAL_DENDRITE_LABEL)
 	private ColorRGB apicalDendriteColor;
 
 	@Parameter(required = true, persist = false, label = Path.SWC_AXON_LABEL)
 	private ColorRGB axonColor;
-
-	@Parameter(required = true, persist = false, label = Path.SWC_DENDRITE_LABEL)
-	private ColorRGB basalDendriteColor;
 
 	@Parameter(required = true, persist = false, label = Path.SWC_CUSTOM_LABEL)
 	private ColorRGB customColor;
@@ -98,9 +100,9 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	@Override
 	public void run() {
 		final LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
+		map.put(String.valueOf(Path.SWC_DENDRITE), basalDendriteColor.toHTMLColor());
 		map.put(String.valueOf(Path.SWC_APICAL_DENDRITE), apicalDendriteColor.toHTMLColor());
 		map.put(String.valueOf(Path.SWC_AXON), axonColor.toHTMLColor());
-		map.put(String.valueOf(Path.SWC_DENDRITE), basalDendriteColor.toHTMLColor());
 		map.put(String.valueOf(Path.SWC_CUSTOM), customColor.toHTMLColor());
 		map.put(String.valueOf(Path.SWC_SOMA), somaColor.toHTMLColor());
 		map.put(String.valueOf(Path.SWC_UNDEFINED), undefinedColor.toHTMLColor());
@@ -110,9 +112,9 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 
 	private Map<Integer, ColorRGB> getDefaultMap() {
 		final LinkedHashMap<Integer, ColorRGB> map = new LinkedHashMap<Integer, ColorRGB>();
+		map.put(Path.SWC_DENDRITE, getDefaultSWCColorRGB(Path.SWC_DENDRITE));
 		map.put(Path.SWC_APICAL_DENDRITE, getDefaultSWCColorRGB(Path.SWC_APICAL_DENDRITE));
 		map.put(Path.SWC_AXON, getDefaultSWCColorRGB(Path.SWC_AXON));
-		map.put(Path.SWC_DENDRITE, getDefaultSWCColorRGB(Path.SWC_DENDRITE));
 		map.put(Path.SWC_CUSTOM, getDefaultSWCColorRGB(Path.SWC_CUSTOM));
 		map.put(Path.SWC_SOMA, getDefaultSWCColorRGB(Path.SWC_SOMA));
 		map.put(Path.SWC_UNDEFINED, getDefaultSWCColorRGB(Path.SWC_UNDEFINED));
@@ -156,9 +158,18 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 		undefinedColor = map.get(Path.SWC_UNDEFINED);
 	}
 
-	public Map<Integer, Color> getColorMap() {
+	private class SWCTypeComparator implements Comparator<Integer> {
+		@Override
+		public int compare(final Integer i1, final Integer i2) {
+			final String s1 = Path.getSWCtypeName(i1, false);
+			final String s2 = Path.getSWCtypeName(i2, false);
+			return s1.compareTo(s2);
+		}
+	}
+
+	public TreeMap<Integer, Color> getColorMap() {
 		final Map<Integer, ColorRGB> maprgb = getSavedMap();
-		final LinkedHashMap<Integer, Color> map = new LinkedHashMap<Integer, Color>();
+		final TreeMap<Integer, Color> map = new TreeMap<Integer, Color>(new SWCTypeComparator()); //new SWCTypeComparator());
 		for (final Map.Entry<Integer, ColorRGB> entry : maprgb.entrySet()) {
 			final int key = entry.getKey();
 			final ColorRGB color = entry.getValue();
@@ -166,6 +177,7 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 		}
 		return map;
 	}
+
 
 	public boolean isColorPairingEnabled() {
 		return enableColors;

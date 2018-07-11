@@ -478,17 +478,21 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				: "Fitting " + numberOfPathsToFit + " paths (" + processors + " threads)...";
 		ui.showStatus(statusMsg, false);
 		setEnabledCommands(false);
-		final JDialog msg = guiUtils.floatingMsg(statusMsg);
+		final JDialog msg = guiUtils.floatingMsg(statusMsg, false);
 
 		fitWorker = new SwingWorker<Object, Object>() {
 
 			@Override
 			protected Object doInBackground() {
+
 				final ExecutorService es = Executors.newFixedThreadPool(processors);
 				final FittingProgress progress = new FittingProgress(plugin.statusService, numberOfPathsToFit);
 				try {
 					for (int i = 0; i < numberOfPathsToFit; ++i) {
-						pathsToFit.get(i).setProgressCallback(i, progress);
+						final PathFitter pf = pathsToFit.get(i);
+						pf.setScope(fitType);
+						pf.setMaxRadius(maxRadius);
+						pf.setProgressCallback(i, progress);
 					}
 					for (final Future<Path> future : es.invokeAll(pathsToFit)) {
 						pathAndFillManager.addPath(future.get());

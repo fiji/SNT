@@ -46,7 +46,7 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 		this.x_spacing = x_spacing;
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
-		this.spacing_units = spacing_units;
+		this.spacing_units = SNT.getSanitizedUnit(spacing_units);
 	}
 
 	protected double x_spacing;

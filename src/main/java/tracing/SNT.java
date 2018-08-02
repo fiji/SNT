@@ -254,4 +254,14 @@ public class SNT {
 		return true;
 	}
 
+	protected static String getSanitizedUnit(final String unit) {
+		if (unit == null) return " ? units";
+		String sanitizedUnit = unit.trim().toLowerCase();
+		if (sanitizedUnit.isEmpty())
+			return " ? units";
+		if (sanitizedUnit.equals("um") || sanitizedUnit.equals("micron") || sanitizedUnit.equals("microns"))
+			sanitizedUnit = "\u00B5m";
+		return sanitizedUnit;
+	}
+
 }

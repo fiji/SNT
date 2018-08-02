@@ -130,7 +130,7 @@ public class Path implements Comparable<Path> {
 		this.x_spacing = x_spacing;
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
-		this.spacing_units = spacing_units;
+		this.spacing_units = SNT.getSanitizedUnit(spacing_units);
 		points = 0;
 		maxPoints = reserve;
 		precise_x_positions = new double[maxPoints];
@@ -268,7 +268,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected String getRealLengthString() {
-		return String.format("%.4f", getLength());
+		return String.format("%.3f", getLength());
 	}
 
 	protected void createCircles() {
@@ -2800,7 +2800,7 @@ public class Path implements Comparable<Path> {
 			templatePixelWidth = templateCalibration.pixelWidth;
 			templatePixelHeight = templateCalibration.pixelHeight;
 			templatePixelDepth = templateCalibration.pixelDepth;
-			templateUnits = templateCalibration.getUnits();
+			templateUnits = SNT.getSanitizedUnit(templateCalibration.getUnit());
 		}
 
 		final Path result = new Path(templatePixelWidth, templatePixelHeight, templatePixelDepth, templateUnits,

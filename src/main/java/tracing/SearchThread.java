@@ -325,7 +325,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		x_spacing = (float) calibration.pixelWidth;
 		y_spacing = (float) calibration.pixelHeight;
 		z_spacing = (float) calibration.pixelDepth;
-		spacing_units = calibration.getUnit();
+		spacing_units = SNT.getSanitizedUnit(calibration.getUnit());
 
 		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 

@@ -100,14 +100,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	private final ArrayList<PathAndFillListener> listeners;
 	private final HashSet<Path> selectedPathsSet;
 
-	private double parsed_x_spacing;
-	private double parsed_y_spacing;
-	private double parsed_z_spacing;
-	private String parsed_units;
 	private PointInImage parsedOrigin;
 	protected int parsed_width;
 	protected int parsed_height;
 	protected int parsed_depth;
+	private Calibration parsedCalibration;
 
 	private Fill current_fill;
 	private Path current_path;
@@ -136,7 +133,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		this.x_spacing = Double.MIN_VALUE;
 		this.y_spacing = Double.MIN_VALUE;
 		this.z_spacing = Double.MIN_VALUE;
-		this.spacing_units = null;
+		this.spacing_units = SNT.getSanitizedUnit(null);
 		this.width = Integer.MIN_VALUE;
 		this.height = Integer.MIN_VALUE;
 		this.depth = Integer.MIN_VALUE;
@@ -149,9 +146,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		this.x_spacing = c.pixelWidth;
 		this.y_spacing = c.pixelHeight;
 		this.z_spacing = c.pixelDepth;
-		this.spacing_units = c.getUnit();
-		if (this.spacing_units == null || this.spacing_units.length() == 0)
-			this.spacing_units = "" + c.getUnit();
+		this.spacing_units = SNT.getSanitizedUnit(c.getUnit());
 		this.width = imagePlus.getWidth();
 		this.height = imagePlus.getHeight();
 		this.depth = imagePlus.getNSlices();
@@ -180,8 +175,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		this.width = width;
 		this.height = height;
 		this.depth = depth;
-		if (spacing_units == null)
-			this.spacing_units = "unknown";
+		this.spacing_units = SNT.getSanitizedUnit(spacing_units);
 		needImageDataFromTracesFile = false;
 	}
 
@@ -428,19 +422,14 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 *         file or null if no file has been imported
 	 */
 	public Calibration getParsedCalibration() {
-		if (parsed_units == null && parsed_x_spacing == 0.0d && parsed_y_spacing == 0.0d)
+		if (parsedCalibration == null || new Calibration().equals(parsedCalibration)) 
 			return null;
-		final Calibration cal = new Calibration();
-		cal.setUnit(parsed_units);
-		cal.pixelWidth = parsed_x_spacing;
-		cal.pixelHeight = parsed_y_spacing;
-		cal.pixelDepth = parsed_z_spacing;
 		if (parsedOrigin != null) {
-			cal.xOrigin = parsedOrigin.x;
-			cal.yOrigin = parsedOrigin.y;
-			cal.zOrigin = parsedOrigin.z;
+			parsedCalibration.xOrigin = parsedOrigin.x;
+			parsedCalibration.yOrigin = parsedOrigin.y;
+			parsedCalibration.zOrigin = parsedOrigin.z;
 		}
-		return cal;
+		return parsedCalibration;
 	}
 
 	/*
@@ -712,7 +701,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if (p.endJoins != null) {
 				name += ", ends on " + p.endJoins.getName();
 			}
-			name += " [" + p.getRealLengthString() + " " + spacing_units + "]";
+			name += " [" + p.getRealLengthString()  + spacing_units + "]";
 			pathListEntries.add(name);
 		}
 
@@ -1076,6 +1065,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
 			throws TracesFileFormatException {
 
+		if (parsedCalibration == null) parsedCalibration = new Calibration();
 		if (qName.equals("tracings")) {
 
 			startJoins = new HashMap<>();
@@ -1131,21 +1121,20 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		} else if (qName.equals("samplespacing")) {
 
 			try {
-
 				final String xString = attributes.getValue("x");
 				final String yString = attributes.getValue("y");
 				final String zString = attributes.getValue("z");
-				parsed_units = attributes.getValue("units");
+				parsedCalibration.setUnit(attributes.getValue("units"));
 
-				parsed_x_spacing = Double.parseDouble(xString);
-				parsed_y_spacing = Double.parseDouble(yString);
-				parsed_z_spacing = Double.parseDouble(zString);
+				parsedCalibration.pixelWidth = Double.parseDouble(xString);
+				parsedCalibration.pixelHeight = Double.parseDouble(yString);
+				parsedCalibration.pixelDepth = Double.parseDouble(zString);
 
 				if (needImageDataFromTracesFile) {
-					this.x_spacing = parsed_x_spacing;
-					this.y_spacing = parsed_y_spacing;
-					this.z_spacing = parsed_z_spacing;
-					this.spacing_units = parsed_units;
+					this.x_spacing = parsedCalibration.pixelWidth;
+					this.y_spacing = parsedCalibration.pixelHeight;
+					this.z_spacing = parsedCalibration.pixelDepth;
+					this.spacing_units = parsedCalibration.getUnit();
 				}
 
 			} catch (final NumberFormatException e) {
@@ -1338,9 +1327,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					throw new TracesFileFormatException(
 							"If one of the attributes xd, yd or zd to the point element is specified, they all must be.");
 				} else if (xString != null && yString != null && zString != null) {
-					parsed_xd = parsed_x_spacing * Integer.parseInt(xString);
-					parsed_yd = parsed_y_spacing * Integer.parseInt(yString);
-					parsed_zd = parsed_z_spacing * Integer.parseInt(zString);
+					parsed_xd = parsedCalibration.pixelWidth * Integer.parseInt(xString);
+					parsed_yd = parsedCalibration.pixelHeight * Integer.parseInt(yString);
+					parsed_zd = parsedCalibration.pixelDepth * Integer.parseInt(zString);
 				} else if (xString != null || yString != null || zString != null) {
 					throw new TracesFileFormatException(
 							"If one of the attributes x, y or z to the point element is specified, they all must be.");
@@ -1775,20 +1764,21 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					parsedEnd.y = point.y;
 				if (point.z > parsedEnd.z)
 					parsedEnd.z = point.z;
-			});
-			parsed_units = "SWC units";
-			parsed_x_spacing = 1;
-			parsed_y_spacing = 1;
-			parsed_z_spacing = 1;
+			}
+			if (parsedCalibration == null) parsedCalibration = new Calibration();
+			parsedCalibration.setUnit("SWC units");
+			parsedCalibration.pixelWidth = 1;
+			parsedCalibration.pixelHeight = 1;
+			parsedCalibration.pixelDepth = 1;
 			parsed_width = (int) Math.round(parsedEnd.x - parsedOrigin.x);
 			parsed_height = (int) Math.round(parsedEnd.y - parsedOrigin.y);
 			parsed_depth = (int) Math.round(parsedEnd.z - parsedOrigin.z);
 			if (needImageDataFromTracesFile) {
-				SNT.log("Importing SWC... Inferring Voxel separation from SWC coordinates");
-				x_spacing = parsed_x_spacing;
-				y_spacing = parsed_y_spacing;
-				z_spacing = parsed_z_spacing;
-				spacing_units = parsed_units;
+				SNT.log("Inferring Voxel separation from imported coordinates");
+				x_spacing = parsedCalibration.pixelWidth ;
+				y_spacing = parsedCalibration.pixelHeight;
+				z_spacing = parsedCalibration.pixelDepth;
+				spacing_units = SNT.getSanitizedUnit(parsedCalibration.getUnit());
 				width = parsed_width;
 				height = parsed_height;
 				depth = parsed_depth;
@@ -1914,8 +1904,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		// Set the start joins:
-		for (final Path p : allPaths) {
+		final boolean tag = parsedCalibration != null && parsedCalibration.info != null;
+		for (int i = firstImportedPathIdx; i < size(); i++) {
+			final Path p = getPath(i);
 			final SWCPoint swcPoint = pathStartsOnSWCPoint.get(p);
+			if (tag) {
+				p.setName(p.getName() + "{" + parsedCalibration.info + "}");
+			}
 			if (swcPoint == null) {
 				p.setIsPrimary(true);
 				continue;
@@ -2027,20 +2022,30 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	public boolean loadGuessingType(final String filename) {
-
 		final int guessedType = guessTracesFileType(filename);
+		boolean result;
 		switch (guessedType) {
-
 		case TRACES_FILE_TYPE_COMPRESSED_XML:
-			return loadCompressedXML(filename);
+			result = loadCompressedXML(filename);
+			break;
 		case TRACES_FILE_TYPE_UNCOMPRESSED_XML:
-			return loadUncompressedXML(filename);
+			result = loadUncompressedXML(filename);
+			break;
 		case TRACES_FILE_TYPE_SWC:
-			return importSWC(filename, false, 0, 0, 0, 1, 1, 1, true);
+			result = importSWC(filename, false, 0, 0, 0, 1, 1, 1, true);
+			break;
 		default:
 			SNT.warn("guessTracesFileType() return an unknown type" + guessedType);
 			return false;
 		}
+		if (result) {
+			final File file = new File(filename);
+			if (getPlugin() != null)
+				getPlugin().prefs.setRecentFile(file);
+			if (parsedCalibration != null)
+				parsedCalibration.info = file.getName();
+		}
+		return result;
 	}
 
 	synchronized void setPathPointsInVolume(final byte[][] slices, final int width, final int height, final int depth) {

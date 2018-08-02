@@ -160,7 +160,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected double x_spacing = 1;
 	protected double y_spacing = 1;
 	protected double z_spacing = 1;
-	protected String spacing_units = "";
+	protected String spacing_units = SNT.getSanitizedUnit(null);
 	protected int channel;
 	protected int frame;
 	private LUT lut;
@@ -278,9 +278,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			x_spacing = calibration.pixelWidth;
 			y_spacing = calibration.pixelHeight;
 			z_spacing = calibration.pixelDepth;
-			spacing_units = calibration.getUnits();
-			if (spacing_units == null || spacing_units.length() == 0) spacing_units =
-				"" + calibration.getUnit();
+			spacing_units = SNT.getSanitizedUnit(calibration.getUnit());
 		}
 		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 			throw new IllegalArgumentException(

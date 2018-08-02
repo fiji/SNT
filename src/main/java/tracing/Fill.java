@@ -90,7 +90,7 @@ public class Fill {
 		this.x_spacing = x_spacing;
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
-		this.spacing_units = units;
+		this.spacing_units = SNT.getSanitizedUnit(units);
 	}
 
 	public void setThreshold(final double threshold) {

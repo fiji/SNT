@@ -104,6 +104,7 @@ import ij.ImagePlus;
 import net.imagej.ImageJ;
 import net.imagej.table.DefaultGenericTable;
 import tracing.analysis.TreeAnalyzer;
+import tracing.analysis.TreeStatistics;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.SWCTypeOptionsCmd;
@@ -367,11 +368,13 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 					final List<Path> selectedPaths = getSelectedPaths(true);
 					if (selectedPaths.size() == 0) {
 						guiUtils.error("There are no traced paths.");
+						selectSWCTypeMenuEntry(-1);
 						return;
 					}
 					if (tree.getSelectionCount() == 0
 							&& !guiUtils.getConfirmation("Currently no paths are selected. Change type of all paths?",
 									"Apply to All?")) {
+						selectSWCTypeMenuEntry(-1);
 						return;
 					}
 					setSWCType(selectedPaths, key, color);
@@ -715,6 +718,80 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 
 		};
 
+		final JPopupMenu popup = new JPopupMenu();
+		final JMenu optionsMenu = new JMenu("Filtering Options");
+		final JMenuItem jcbmi1 = new JCheckBoxMenuItem("Case Sensitive Matching",
+				sBar.getSearchable().isCaseSensitive());
+		jcbmi1.addItemListener(e -> {
+			sBar.getSearchable().setCaseSensitive(jcbmi1.isSelected());
+			updateSearch.accept(sBar);
+		});
+		optionsMenu.add(jcbmi1);
+		final JMenuItem jcbmi2 = new JCheckBoxMenuItem("Enable Wildcards (?*)",
+				sBar.getSearchable().isWildcardEnabled());
+		jcbmi2.addItemListener(e -> {
+			sBar.getSearchable().setWildcardEnabled(jcbmi2.isSelected());
+			updateSearch.accept(sBar);
+		});
+		optionsMenu.add(jcbmi2);
+		final JMenuItem jcbmi3 = new JCheckBoxMenuItem("Loop After First/Last Hit", sBar.getSearchable().isRepeats());
+		jcbmi3.addItemListener(e -> sBar.getSearchable().setRepeats(jcbmi3.isSelected()));
+		optionsMenu.add(jcbmi3);
+		final JMenuItem mi1 = new JMenuItem("Clear History");
+		mi1.addActionListener(e -> sBar.setSearchHistory(null));
+		optionsMenu.add(mi1);
+		popup.add(optionsMenu);
+		popup.addSeparator();
+
+		final ColorMenu colorFilterMenu = new ColorMenu("Color Tag Filtering");
+		popup.add(colorFilterMenu);
+		colorFilterMenu.addActionListener(e -> {
+			final List<Path> filteredPaths = pathAndFillManager.getPathsFiltered();
+			if (filteredPaths.isEmpty()) {
+				guiUtils.error("There are no traced paths.");
+				return;
+			}
+			final Color filteredColor = colorFilterMenu.getSelectedSWCColor().color();
+			for (final Iterator<Path> iterator = filteredPaths.iterator(); iterator.hasNext();) {
+				final Color color = iterator.next().getColor();
+				if ((filteredColor != null && color != null && !filteredColor.equals(color))
+						|| (filteredColor == null && color != null) || (filteredColor != null && color == null)) {
+					iterator.remove();
+				}
+			}
+			if (filteredPaths.isEmpty()) {
+				guiUtils.error("No Path matches the specified color tag.");
+				return;
+			}
+			setSelectedPaths(new HashSet<>(filteredPaths), this);
+			guiUtils.tempMsg(filteredPaths.size() + " Path(s) selected");
+			//refreshManager(true, true);
+		});
+		popup.add(colorFilterMenu);
+
+		final JMenu morphoFilteringMenu = new JMenu("Morphology Filtering");
+		JMenuItem mi = new JMenuItem("Branch Order...");
+		mi.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.BRANCH_ORDER, ""));
+		morphoFilteringMenu.add(mi);
+		mi = new JMenuItem("Length...");
+		mi.addActionListener(e -> {
+			final String unit = pathAndFillManager.getCalibration().getUnit();
+			doMorphoFiltering(TreeAnalyzer.LENGTH, unit);
+		});
+		morphoFilteringMenu.add(mi);
+		mi = new JMenuItem("Mean Radius...");
+		mi.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.MEAN_RADIUS, ""));
+		morphoFilteringMenu.add(mi);
+		mi = new JMenuItem("No. of Nodes...");
+		mi.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.N_NODES, ""));
+		morphoFilteringMenu.add(mi);
+		popup.add(morphoFilteringMenu);
+
+		popup.addSeparator();
+		final JMenuItem mi3 = new JMenuItem("Useful Shortcuts...");
+		mi3.addActionListener(e -> filterHelpMsg());
+		popup.add(mi3);
+
 		final JPanel bottomPanel = new JPanel(new BorderLayout());
 		bottomPanel.add(sBar, BorderLayout.NORTH);
 
@@ -726,9 +803,81 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 			statusBarPanel.add(statusMsg);
 			bottomPanel.add(statusBarPanel, BorderLayout.SOUTH);
 		}
+		sBar.setComponentPopupMenu(popup);
+		sBar.setToolTipText("Righ-click for Options");
+		bottomPanel.setComponentPopupMenu(popup);
+		bottomPanel.setToolTipText("Righ-click for Options");
 		return bottomPanel;
 	}
 
+	private void doMorphoFiltering(final String property, final String unit) {
+		final List<Path> filteredPaths = pathAndFillManager.getPathsFiltered();
+		if (filteredPaths.isEmpty()) {
+			guiUtils.error("There are no traced paths.");
+			return;
+		}
+		String msg = "Please specify the " + property.toLowerCase() + " range";
+		if (!unit.isEmpty())
+				msg += " (in " + unit + ")";
+		msg += "\n(e.g., 10-50, min-10, 10-max, max-max):";
+		String s = guiUtils.getString(msg, property + " Filtering", "10-100");
+		if (s == null)
+			return; // user pressed cancel
+		s = s.toLowerCase();
+
+		double min = Double.MIN_VALUE;
+		double max = Double.MAX_VALUE;
+		if (s.contains("min") || s.contains("max")) {
+			final TreeStatistics treeStats = new TreeStatistics(new Tree(filteredPaths));
+			final SummaryStatistics summary = treeStats.getSummaryStats(property);
+			min = summary.getMin();
+			max = summary.getMax();
+		}
+		final double[] values = new double[] {min, max};
+		try {
+			final String[] stringValues = s.toLowerCase().split("-");
+			for (int i = 0; i < values.length; i++) {
+				if (stringValues[i].contains("min"))
+					values[i] = min;
+				else if (stringValues[i].contains("max"))
+					values[i] = max;
+				else
+					values[i] = Double.parseDouble(stringValues[i]);
+			}
+		} catch (final Exception ignored) {
+			guiUtils.error("Invalid range. Example of valid inputs: 10-100, min-10, 100-max, max-max");
+			return;
+		}
+
+		for (final Iterator<Path> iterator = filteredPaths.iterator(); iterator.hasNext();) {
+			final Path p = iterator.next();
+			double value;
+			switch (property) {
+			case TreeAnalyzer.LENGTH:
+				value = p.getLength();
+				break;
+			case TreeAnalyzer.N_NODES:
+				value = p.size();
+				break;
+			case TreeAnalyzer.MEAN_RADIUS:
+				value = p.getMeanRadius();
+				break;
+			case TreeAnalyzer.BRANCH_ORDER:
+				value = p.getOrder();
+				break;
+			default:
+				throw new IllegalArgumentException("Unrecognized parameter");
+			}
+			if (value < values[0] || value > values[1])
+				iterator.remove();
+		}
+		if (filteredPaths.isEmpty()) {
+			guiUtils.error("No Path matches the specified range.");
+			return;
+		}
+		setSelectedPaths(new HashSet<>(filteredPaths), this);
+		guiUtils.tempMsg(filteredPaths.size() + " Path(s) selected");
+		// refreshManager(true, true);
 	}
 
 	// private boolean confirmDnD() {
@@ -1878,6 +2027,17 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 
 	private PathManagerUI getInstance() {
 		return this;
+	}
+
+
+	private String extractTagsFromPath(final Path p) {
+		final String name = p.getName();
+		final int openingDlm = name.indexOf("{");
+		final int closingDlm = name.lastIndexOf("}");
+		if (closingDlm > openingDlm) {
+			return name.substring(openingDlm + 1, closingDlm);
+		}
+		return "";
 	}
 
 	/** IDE debug method */

@@ -246,7 +246,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 *
 	 * (b) All the registered PathAndFillListener objects.
 	 */
-	protected synchronized void setSelected(final HashSet<Path> selectedPaths, final Object sourceOfMessage) {
+	protected synchronized void setSelected(final List<Path> selectedPaths, final Object sourceOfMessage) {
 		selectedPathsSet.clear();
 		if (selectedPaths != null) {
 			// selectedPathsSet.addAll(selectedPaths);
@@ -1582,7 +1582,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				f.setSourcePaths(realSourcePaths);
 			}
 
-			setSelected(new HashSet<Path>(), this);
+			setSelected(new ArrayList<Path>(), this);
 			resetListeners(null, true);
 		}
 

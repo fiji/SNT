@@ -787,7 +787,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected Path getSingleSelectedPath() {
-		final Set<Path> sPaths = getSelectedPaths();
+		final List<Path> sPaths = getSelectedPaths();
 		if (sPaths == null || sPaths.size() != 1) return null;
 		return getSelectedPaths().iterator().next();
 	}
@@ -2264,7 +2264,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		ui.getPathManager().setSelectedPaths(pathsToSelect, this);
 	}
 
-	public Set<Path> getSelectedPaths() {
+	public List<Path> getSelectedPaths() {
 		if (ui.getPathManager() != null) {
 			return ui.getPathManager().getSelectedPaths(false);
 		}

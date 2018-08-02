@@ -2245,13 +2245,13 @@ public class Path implements Comparable<Path> {
 		if (name == null)
 			name = "Path " + id;
 		if (size() == 1)
-			name += (size() == 1) ? " [Single Point]" : " [" + getRealLengthString() + " " + spacing_units + "]";
-		if (startJoins != null) {
-			name += ", starts on " + startJoins.getName();
-		}
-		if (endJoins != null) {
-			name += ", ends on " + endJoins.getName();
-		}
+			name += " [Single Point]";
+//		if (startJoins != null) {
+//			name += ", starts on " + startJoins.getName();
+//		}
+//		if (endJoins != null) {
+//			name += ", ends on " + endJoins.getName();
+//		}
 		if (swcType != SWC_UNDEFINED)
 			name += " [" + getSWCtypeName(swcType, false) + "]";
 		return name;

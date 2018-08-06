@@ -55,6 +55,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -719,7 +720,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		};
 
 		final JPopupMenu popup = new JPopupMenu();
-		final JMenu optionsMenu = new JMenu("Filtering Options");
+		final JMenu optionsMenu = new JMenu("Text Filtering");
 		final JMenuItem jcbmi1 = new JCheckBoxMenuItem("Case Sensitive Matching",
 				sBar.getSearchable().isCaseSensitive());
 		jcbmi1.addItemListener(e -> {
@@ -737,9 +738,47 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		final JMenuItem jcbmi3 = new JCheckBoxMenuItem("Loop After First/Last Hit", sBar.getSearchable().isRepeats());
 		jcbmi3.addItemListener(e -> sBar.getSearchable().setRepeats(jcbmi3.isSelected()));
 		optionsMenu.add(jcbmi3);
-		final JMenuItem mi1 = new JMenuItem("Clear History");
-		mi1.addActionListener(e -> sBar.setSearchHistory(null));
-		optionsMenu.add(mi1);
+		optionsMenu.addSeparator();
+
+		JMenuItem mi = new JMenuItem("Replace...");
+		mi.addActionListener(e -> {
+			String findText = sBar.getSearchingText();
+			if (findText == null || findText.isEmpty()) {
+				guiUtils.error("No filtering string exists.", "No Filter String");
+				return;
+			}
+			final List<Path> selectedPath = getSelectedPaths(false);
+			if (selectedPath.isEmpty()) {
+				guiUtils.error("No Paths matching '" + findText + "'.", "No Paths Selected");
+				return;
+			}
+			String replaceText = guiUtils.getString("Please specify the text to replace all ocurrences of\n"
+					+ "\"" + findText + "\" in the " + selectedPath.size() + " Path(s) currently selected:",
+					"Replace Filtering Pattern", null);
+			if (replaceText == null) {
+				return; // user pressed cancel
+			}
+			if (sBar.getSearchable().isWildcardEnabled()) {
+				findText = findText.replaceAll("\\?", ".?");
+				findText = findText.replaceAll("\\*", ".*");
+			}
+			if (!sBar.getSearchable().isCaseSensitive()) {
+				findText = "(?i)"  + findText;
+			}
+			final Pattern pattern = Pattern.compile(findText);
+			for (final Path p : selectedPath) {
+				p.setName(pattern.matcher(p.getName()).replaceAll(replaceText));
+			}
+			refreshManager(false, false);
+		});
+		optionsMenu.add(mi);
+		mi = new JMenuItem("Clear History");
+		mi.addActionListener(e -> sBar.setSearchHistory(null));
+		optionsMenu.add(mi);
+		optionsMenu.addSeparator();
+		final JMenuItem mi2 = new JMenuItem("Tips & Shortcuts...");
+		mi2.addActionListener(e -> filterHelpMsg());
+		optionsMenu.add(mi2);
 		popup.add(optionsMenu);
 		popup.addSeparator();
 
@@ -765,32 +804,27 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 			}
 			setSelectedPaths(new HashSet<>(filteredPaths), this);
 			guiUtils.tempMsg(filteredPaths.size() + " Path(s) selected");
-			//refreshManager(true, true);
+			// refreshManager(true, true);
 		});
 		popup.add(colorFilterMenu);
 
 		final JMenu morphoFilteringMenu = new JMenu("Morphology Filtering");
-		JMenuItem mi = new JMenuItem("Branch Order...");
-		mi.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.BRANCH_ORDER, ""));
-		morphoFilteringMenu.add(mi);
-		mi = new JMenuItem("Length...");
-		mi.addActionListener(e -> {
+		JMenuItem mi1 = new JMenuItem("Branch Order...");
+		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.BRANCH_ORDER, ""));
+		morphoFilteringMenu.add(mi1);
+		mi1 = new JMenuItem("Length...");
+		mi1.addActionListener(e -> {
 			final String unit = pathAndFillManager.getCalibration().getUnit();
 			doMorphoFiltering(TreeAnalyzer.LENGTH, unit);
 		});
-		morphoFilteringMenu.add(mi);
-		mi = new JMenuItem("Mean Radius...");
-		mi.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.MEAN_RADIUS, ""));
-		morphoFilteringMenu.add(mi);
-		mi = new JMenuItem("No. of Nodes...");
-		mi.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.N_NODES, ""));
-		morphoFilteringMenu.add(mi);
+		morphoFilteringMenu.add(mi1);
+		mi1 = new JMenuItem("Mean Radius...");
+		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.MEAN_RADIUS, ""));
+		morphoFilteringMenu.add(mi1);
+		mi1 = new JMenuItem("No. of Nodes...");
+		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.N_NODES, ""));
+		morphoFilteringMenu.add(mi1);
 		popup.add(morphoFilteringMenu);
-
-		popup.addSeparator();
-		final JMenuItem mi3 = new JMenuItem("Useful Shortcuts...");
-		mi3.addActionListener(e -> filterHelpMsg());
-		popup.add(mi3);
 
 		final JPanel bottomPanel = new JPanel(new BorderLayout());
 		bottomPanel.add(sBar, BorderLayout.NORTH);
@@ -895,12 +929,12 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		final String msg = "<HTML><body><div style='width:500;'><ol>"
 				+ "<li>Filtering is case-insensitive by default. Wildcards "
 				+ "<b>?</b> (any character), and <b>*</b> (any string) can also be used</li>"
-				+ "<li>Select the <i>Highlight All</i> button or press " + key
+				+ "<li>Press the <i>Highlight All</i> button or " + key
 				+ "+A to select all the paths filtered by the search string</li>" + "<li>Press and hold " + key
 				+ " while pressing the up/down keys to select multiple filtered paths</li>"
 				+ "<li>Press the up/down keys to find the next/previous occurrence of the filtering string</li>"
 				+ "</ol></div></html>";
-		guiUtils.centeredMsg(msg, "Searching Help");
+		guiUtils.centeredMsg(msg, "Text-based Filtering");
 	}
 
 	private void showPopup(final MouseEvent me) {

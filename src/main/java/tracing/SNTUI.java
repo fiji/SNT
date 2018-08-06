@@ -56,6 +56,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -222,10 +223,9 @@ public class SNTUI extends JDialog {
 		new ClarifyingKeyListener(plugin).addKeyAndContainerListenerRecursively(
 			this);
 		listener = new GuiListener();
-
-		assert SwingUtilities.isEventDispatchThread();
-
 		pathAndFillManager = plugin.getPathAndFillManager();
+
+		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() {
 
 			@Override
@@ -234,6 +234,7 @@ public class SNTUI extends JDialog {
 			}
 		});
 
+		assert SwingUtilities.isEventDispatchThread();
 		final JTabbedPane tabbedPane = new JTabbedPane();
 
 		{ // Main tab
@@ -560,8 +561,9 @@ public class SNTUI extends JDialog {
 	protected void exitRequested() {
 		assert SwingUtilities.isEventDispatchThread();
 		if (plugin.pathsUnsaved() && !guiUtils.getConfirmation(
-			"There are unsaved paths. Do you really want to quit?", "Really quit?"))
+			"There are unsaved paths. Do you really want to quit?", "Really quit?")) {
 			return;
+		}
 		if (pmUI.measurementsUnsaved() && !guiUtils.getConfirmation(
 			"There are unsaved measurements. Do you really want to quit?",
 			"Really quit?")) return;
@@ -2327,11 +2329,13 @@ public class SNTUI extends JDialog {
 		final boolean toFront)
 	{
 		assert SwingUtilities.isEventDispatchThread();
-		if (makeVisible) {
+		if (makeVisible) {	
+			pmUI.setVisible(true);
+			final int state = pmUI.getExtendedState();
+			pmUI.setExtendedState(state & ~JFrame.ICONIFIED);
+			if (toFront) pmUI.toFront();
 			if (showOrHidePathList != null) showOrHidePathList.setText(
 				"  Hide Path Manager");
-			pmUI.setVisible(true);
-			if (toFront) pmUI.toFront();
 		}
 		else {
 			if (showOrHidePathList != null) showOrHidePathList.setText(
@@ -2350,14 +2354,15 @@ public class SNTUI extends JDialog {
 	protected void setFillListVisible(final boolean makeVisible) {
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {
+			final int state = fmUI.getExtendedState();
+			fmUI.setVisible(true);
+			fmUI.setExtendedState(state & ~JFrame.ICONIFIED);
 			if (showOrHideFillList != null) showOrHideFillList.setText(
 				"  Hide Fill Manager");
-			fmUI.setVisible(true);
 			fmUI.toFront();
 		}
 		else {
 			if (showOrHideFillList != null)
-
 				showOrHideFillList.setText("Show Fill Manager");
 			fmUI.setVisible(false);
 		}

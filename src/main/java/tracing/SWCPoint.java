@@ -23,18 +23,23 @@
 package tracing;
 
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import tracing.util.PointInImage;
 
 public class SWCPoint implements Comparable<SWCPoint> {
 
-	protected final int id, type, previous;
+	protected final int id;
+	protected final int type;
+	protected final int previous;
 	protected double x, y, z;
 	protected double radius;
 	protected final ArrayList<SWCPoint> nextPoints;
 	protected Path fromPath = null;
 	protected SWCPoint previousPoint;
+
 
 	public SWCPoint(final int id, final int type, final double x, final double y, final double z, final double radius,
 			final int previous) {
@@ -49,7 +54,13 @@ public class SWCPoint implements Comparable<SWCPoint> {
 	}
 
 	public PointInImage getPointInImage() {
-		return new PointInImage(x, y, z);
+		final PointInImage pim = new PointInImage(x, y, z);
+		pim.onPath = fromPath;
+		return pim;
+	}
+
+	public int getId() {
+		return id;
 	}
 
 	public void addNextPoint(final SWCPoint p) {
@@ -83,9 +94,48 @@ public class SWCPoint implements Comparable<SWCPoint> {
 	public int compareTo(final SWCPoint o) {
 		final int oid = o.id;
 		return (id < oid) ? -1 : ((id > oid) ? 1 : 0);
+		//return id - o.id;
 	}
 
-	public void println(final PrintWriter pw) {
-		pw.println("" + id + " " + type + " " + x + " " + y + " " + z + " " + radius + " " + previous);
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null) return false;
+		if (!(o instanceof SWCPoint)) return false;
+		return this.id == ((SWCPoint) o).id;
 	}
+
+	/**
+	 * Converts a collection of SWC points into a Reader.
+	 *
+	 * @param points the collection of SWC points to be converted into a space/ tab
+	 *               separated String. Points should be sorted by sample number to
+	 *               ensure valid connectivity.
+	 * @return the Reader
+	 */
+	public static StringReader collectionAsReader(final Collection<SWCPoint> points) {
+		final StringBuilder sb = new StringBuilder();
+		for (final SWCPoint p : points) {
+			sb.append(p.id).append("\t") //
+					.append(p.type).append("\t") //
+					.append(String.format("%.6f", p.x)).append(" ") //
+					.append(String.format("%.6f", p.y)).append(" ") //
+					.append(String.format("%.6f", p.z)).append(" ") //
+					.append(String.format("%.6f", p.radius)).append("\t") //
+					.append(p.previous).append(System.lineSeparator());
+		}
+		return new StringReader(sb.toString());
+	}
+
+	/**
+	 * Prints a list of points as space-separated values.
+	 *
+	 * @param points the collections of SWC points to be printed.
+	 * @param pw     the PrintWriter to write to.
+	 * @see #listAsReader(Collection)
+	 */
+	public static void flush(final Collection<SWCPoint> points, final PrintWriter pw) {
+		pw.print(collectionAsReader(points));
+	}
+
 }

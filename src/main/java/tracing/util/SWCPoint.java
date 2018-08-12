@@ -20,29 +20,58 @@
  * #L%
  */
 
-package tracing;
+package tracing.util;
 
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-import tracing.util.PointInImage;
+import tracing.Path;
 
-public class SWCPoint implements Comparable<SWCPoint> {
+/**
+ * Defines a node in an SWC reconstruction. The SWC file format is detailed
+ * <a href=
+ * "http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html">here</a>
+ * 
+ * @author Tiago Ferreira
+ */
+public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 
-	protected final int id;
-	protected final int type;
-	protected final int previous;
-	protected double x, y, z;
-	protected double radius;
-	protected final ArrayList<SWCPoint> nextPoints;
-	protected Path fromPath = null;
-	protected SWCPoint previousPoint;
+	/** The sample number of this node */
+	public final int id;
+
+	/**
+	 * The SWC-type flag of this node ({@link Path#SWC_SOMA},
+	 * {@link Path#SWC_DENDRITE}, etc.)
+	 */
+	public final int type;
+
+	/** The parent id of this node */
+	public final int parent;
+
+	/** The cartesian coordinate of this node */
+	public double x, y, z;
+
+	/** The radius of reconstructed structure at this node */
+	public double radius;
+
+	/**
+	 * The list holding the subsequent nodes in the reconstructed structure after
+	 * this one.
+	 */
+	public final List<SWCPoint> nextPoints;
+
+	/** The preceding node (if any) */
+	public SWCPoint previousPoint;
+
+	/** The Path associated with this node (if any) */
+	public Path onPath = null;
 
 
 	public SWCPoint(final int id, final int type, final double x, final double y, final double z, final double radius,
-			final int previous) {
+			final int parent) {
 		nextPoints = new ArrayList<>();
 		this.id = id;
 		this.type = type;
@@ -50,58 +79,84 @@ public class SWCPoint implements Comparable<SWCPoint> {
 		this.y = y;
 		this.z = z;
 		this.radius = radius;
-		this.previous = previous;
+		this.parent = parent;
 	}
 
+	/**
+	 * Gets this node as a {@link PointInImage} object.
+	 *
+	 * @return the PointInImage node.
+	 */
 	public PointInImage getPointInImage() {
 		final PointInImage pim = new PointInImage(x, y, z);
-		pim.onPath = fromPath;
+		pim.onPath = onPath;
 		return pim;
 	}
 
-	public int getId() {
-		return id;
-	}
-
-	public void addNextPoint(final SWCPoint p) {
-		if (!nextPoints.contains(p))
-			nextPoints.add(p);
-	}
-
-	public void setPreviousPoint(final SWCPoint p) {
-		previousPoint = p;
-	}
-
+	/**
+	 * Returns the X-distance from previous point.
+	 *
+	 * @return the X-distance from previous point or {@link Double.NaN} if no
+	 *         previousPoint exists.
+	 */
 	public double xSeparationFromPreviousPoint() {
 		return (previousPoint == null) ? Double.NaN : Math.abs(this.x - previousPoint.x);
 	}
 
+	/**
+	 * Returns the Y-distance from previous point.
+	 *
+	 * @return the Y-distance from previous point or {@link Double.NaN} if no
+	 *         previousPoint exists.
+	 */
 	public double ySeparationFromPreviousPoint() {
 		return (previousPoint == null) ? Double.NaN : Math.abs(this.y - previousPoint.y);
 	}
 
+	/**
+	 * Returns the Z-distance from previous point.
+	 *
+	 * @return the Z-distance from previous point or {@link Double.NaN} if no
+	 *         previousPoint exists.
+	 */
 	public double zSeparationFromPreviousPoint() {
 		return (previousPoint == null) ? Double.NaN : (this.z - previousPoint.z);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return "SWCPoint [" + id + "] " + Path.getSWCtypeName(type, false) + " " + "(" + x + "," + y + "," + z + ") "
-				+ "radius: " + radius + ", " + "[previous: " + previous + "]";
+				+ "radius: " + radius + ", " + "[previous: " + parent + "]";
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
 	@Override
 	public int compareTo(final SWCPoint o) {
-		final int oid = o.id;
-		return (id < oid) ? -1 : ((id > oid) ? 1 : 0);
-		//return id - o.id;
+		return (id < o.id) ? -1 : ((id > o.id) ? 1 : 0);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null) return false;
-		if (!(o instanceof SWCPoint)) return false;
+	public boolean equals(final Object o) {
+		if (this == o)
+			return true;
+		if (o == null)
+			return false;
+		if (!(o instanceof SWCPoint))
+			return false;
 		return this.id == ((SWCPoint) o).id;
 	}
 
@@ -122,7 +177,7 @@ public class SWCPoint implements Comparable<SWCPoint> {
 					.append(String.format("%.6f", p.y)).append(" ") //
 					.append(String.format("%.6f", p.z)).append(" ") //
 					.append(String.format("%.6f", p.radius)).append("\t") //
-					.append(p.previous).append(System.lineSeparator());
+					.append(p.parent).append(System.lineSeparator());
 		}
 		return new StringReader(sb.toString());
 	}
@@ -136,6 +191,36 @@ public class SWCPoint implements Comparable<SWCPoint> {
 	 */
 	public static void flush(final Collection<SWCPoint> points, final PrintWriter pw) {
 		pw.print(collectionAsReader(points));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see tracing.util.SNTPoint#getX()
+	 */
+	@Override
+	public double getX() {
+		return x;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see tracing.util.SNTPoint#getY()
+	 */
+	@Override
+	public double getY() {
+		return y;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see tracing.util.SNTPoint#getZ()
+	 */
+	@Override
+	public double getZ() {
+		return z;
 	}
 
 }

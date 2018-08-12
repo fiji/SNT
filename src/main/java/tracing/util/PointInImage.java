@@ -27,13 +27,19 @@ import java.util.Objects;
 import tracing.Path;
 import tracing.PathTransformer;
 
-/* The x, y and z here are in world coordinates, i.e. already scaled
-   by the calibration values. */
+/**
+ * Defines a Point in an image, a node of a traced {@link Path}. Coordinates are
+ * always expressed in real-world coordinates.
+ * 
+ * @author Tiago Ferreira
+ */
+public class PointInImage implements SNTPoint {
 
-public class PointInImage {
-
+	/** The cartesian coordinate of this node */
 	public double x, y, z;
-	public Path onPath = null; // You can optionally set this value:
+
+	/** The Path associated with this node, if any (optional field) */
+	public Path onPath = null;
 
 	public PointInImage(final double x, final double y, final double z) {
 		this.x = x;
@@ -53,10 +59,7 @@ public class PointInImage {
 	}
 
 	public double distanceTo(final PointInImage o) {
-		final double xdiff = x - o.x;
-		final double ydiff = y - o.y;
-		final double zdiff = z - o.z;
-		return Math.sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
+		return Math.sqrt(distanceSquaredTo(o));
 	}
 
 	@Override
@@ -92,4 +95,18 @@ public class PointInImage {
 		return Objects.hash(x, y, z);
 	}
 
+	@Override
+	public double getX() {
+		return x;
+	}
+
+	@Override
+	public double getY() {
+		return y;
+	}
+
+	@Override
+	public double getZ() {
+		return z;
+	}
 }

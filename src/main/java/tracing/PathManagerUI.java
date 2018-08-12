@@ -115,6 +115,7 @@ import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.SkeletonConverter;
 import tracing.plugin.TreeColorizerCmd;
 import tracing.util.SWCColor;
+import tracing.util.SWCPoint;
 
 /**
  * Creates the "Path Manager" JFrame.

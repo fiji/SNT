@@ -44,7 +44,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import tracing.Path;
 import tracing.SNT;
-import tracing.SWCPoint;
+import tracing.util.SWCPoint;
 
 /**
  * Importer for retrieving reconstructions from MouseLight's online database at
@@ -283,7 +283,7 @@ public class MLJSONLoader {
 		for (final Entry<String, UUID> entry : nameMap.entrySet()) {
 			final JSONObject c = getCompartment(entry.getKey());
 			this.assignNodes(c, points, idOffset);
-			idOffset += points.last().getId();
+			idOffset += points.last().id;
 		}
 		return points;
 	}

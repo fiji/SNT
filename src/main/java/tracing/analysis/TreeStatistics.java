@@ -95,6 +95,15 @@ public class TreeStatistics extends TreeAnalyzer {
 				}
 			}
 			break;
+		case TreeAnalyzer.INTER_NODE_DISTANCE_SQUARED:
+			for (final Path p : tree.list()) {
+				if (p.size() < 2)
+					continue;
+				for (int i = 1; i < p.size(); i += 1) {
+					stat.addValue(p.getPointInImage(i).distanceSquaredTo(p.getPointInImage(i - 1)));
+				}
+			}
+			break;
 		case TreeAnalyzer.NODE_RADIUS:
 			for (final Path p : tree.list()) {
 				for (int i = 0; i < p.size(); i++) {

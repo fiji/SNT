@@ -57,6 +57,7 @@ public class TreeAnalyzer extends ContextCommand {
 
 	public static final String BRANCH_ORDER = "Branch order";
 	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
+	public static final String INTER_NODE_DISTANCE_SQUARED = "Inter-node distance (squared)";
 	public static final String LENGTH = "Length";
 	public static final String N_BRANCH_POINTS = "No. of branch points";
 	public static final String N_NODES = "No. of nodes";

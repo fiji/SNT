@@ -40,6 +40,7 @@ import fiji.util.Levenshtein;
 import ij.IJ;
 import ij.measure.Calibration;
 import ij.plugin.Colors;
+import tracing.util.BoundingBox;
 
 /** Static utilities for SNT **/
 public class SNT {
@@ -86,7 +87,7 @@ public class SNT {
 		logService.error("[SNT] " + string);
 	}
 
-	protected static synchronized void error(final String string,
+	public static synchronized void error(final String string,
 		final Throwable t)
 	{
 		if (!SNT.isDebugMode()) return;
@@ -255,13 +256,9 @@ public class SNT {
 	}
 
 	protected static String getSanitizedUnit(final String unit) {
-		if (unit == null) return " ? units";
-		String sanitizedUnit = unit.trim().toLowerCase();
-		if (sanitizedUnit.isEmpty())
-			return " ? units";
-		if (sanitizedUnit.equals("um") || sanitizedUnit.equals("micron") || sanitizedUnit.equals("microns"))
-			sanitizedUnit = "\u00B5m";
-		return sanitizedUnit;
+		final BoundingBox bd = new BoundingBox();
+		bd.setUnit(unit);
+		return bd.getUnit();
 	}
 
 }

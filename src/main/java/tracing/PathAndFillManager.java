@@ -42,13 +42,13 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
@@ -73,38 +73,44 @@ import ij.measure.Calibration;
 import ij3d.Content;
 import ij3d.UniverseListener;
 import tracing.gui.GuiUtils;
+import tracing.io.MLJSONLoader;
+import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
+import tracing.util.SNTPoint;
+import tracing.util.SWCPoint;
 import util.Bresenham3D;
 import util.XMLFunctions;
 
+/**
+ * The PathAndFillManager is responsible for importing, handling and managing of
+ * Paths (and Fills). Typically, a PathAndFillManager is accessed from an {@ link
+ * SimpleNeuriteTracer} instance, but accessing a PathAndFillManager directly is
+ * useful for batch/headless operations.
+ */
 public class PathAndFillManager extends DefaultHandler implements UniverseListener {
 
 	public static final int TRACES_FILE_TYPE_COMPRESSED_XML = 1;
 	public static final int TRACES_FILE_TYPE_UNCOMPRESSED_XML = 2;
 	public static final int TRACES_FILE_TYPE_SWC = 3;
+	private static final DecimalFormat fileIndexFormatter = new DecimalFormat("000");
 
-	private SimpleNeuriteTracer plugin;
-	private ImagePlus imagePlus;
-	private int maxUsedID = -1;
-	protected boolean needImageDataFromTracesFile;
+	protected SimpleNeuriteTracer plugin;
 	private static boolean headless = false;
-	private int width;
-	private int height;
-	private int depth;
-	private double x_spacing;
+	public double x_spacing;
 	private double y_spacing;
 	private double z_spacing;
 	private String spacing_units;
+	/** BoundingBox defined by the plugin's image if any */
+	private BoundingBox pluginBoundingBox;
+	/** BoundingBox for existing Paths */
+	private BoundingBox boundingBox;
+	protected boolean spacingIsUnset;
+
 	private final ArrayList<Path> allPaths;
 	private final ArrayList<Fill> allFills;
 	private final ArrayList<PathAndFillListener> listeners;
 	private final HashSet<Path> selectedPathsSet;
-
-	private PointInImage parsedOrigin;
-	protected int parsed_width;
-	protected int parsed_height;
-	protected int parsed_depth;
-	private Calibration parsedCalibration;
+	private int maxUsedID = -1;
 
 	private Fill current_fill;
 	private Path current_path;
@@ -123,62 +129,67 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	private int last_fill_id;
 	private HashSet<Integer> foundIDs;
 
+	/**
+	 * Instantiates a new PathAndFillManager using default values. Voxel dimensions
+	 * are inferred from the first imported set of nodes.
+	 */
 	public PathAndFillManager() {
 		allPaths = new ArrayList<>();
 		allFills = new ArrayList<>();
 		listeners = new ArrayList<>();
 		selectedPathsSet = new HashSet<>();
-		needImageDataFromTracesFile = true;
-		this.imagePlus = null;
-		this.x_spacing = Double.MIN_VALUE;
-		this.y_spacing = Double.MIN_VALUE;
-		this.z_spacing = Double.MIN_VALUE;
-		this.spacing_units = SNT.getSanitizedUnit(null);
-		this.width = Integer.MIN_VALUE;
-		this.height = Integer.MIN_VALUE;
-		this.depth = Integer.MIN_VALUE;
+		boundingBox = new BoundingBox();
+		x_spacing = boundingBox.xSpacing;
+		y_spacing = boundingBox.ySpacing;
+		z_spacing = boundingBox.zSpacing;
+		spacing_units = boundingBox.getUnit();
+		pluginBoundingBox = null;
+		plugin = null;
+		spacingIsUnset = true;
 	}
 
-	public PathAndFillManager(final ImagePlus imagePlus) {
-		this();
-		this.imagePlus = imagePlus;
-		final Calibration c = imagePlus.getCalibration();
-		this.x_spacing = c.pixelWidth;
-		this.y_spacing = c.pixelHeight;
-		this.z_spacing = c.pixelDepth;
-		this.spacing_units = SNT.getSanitizedUnit(c.getUnit());
-		this.width = imagePlus.getWidth();
-		this.height = imagePlus.getHeight();
-		this.depth = imagePlus.getNSlices();
-		needImageDataFromTracesFile = false;
-	}
-
-	public PathAndFillManager(final SimpleNeuriteTracer plugin) {
+	protected PathAndFillManager(final SimpleNeuriteTracer plugin) {
 		this();
 		this.plugin = plugin;
-		this.x_spacing = plugin.x_spacing;
-		this.y_spacing = plugin.y_spacing;
-		this.z_spacing = plugin.z_spacing;
-		this.spacing_units = plugin.spacing_units;
-		this.width = plugin.width;
-		this.height = plugin.height;
-		this.depth = plugin.depth;
-		needImageDataFromTracesFile = false;
+		x_spacing = plugin.x_spacing;
+		y_spacing = plugin.y_spacing;
+		z_spacing = plugin.z_spacing;
+		spacing_units = plugin.spacing_units;
+		pluginBoundingBox = new BoundingBox();
+		pluginBoundingBox.setOrigin(new PointInImage(0, 0, 0));
+		pluginBoundingBox.setSpacing(x_spacing, y_spacing, z_spacing, spacing_units);
+		pluginBoundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
+		boundingBox = pluginBoundingBox;
+		spacingIsUnset = false;
 	}
 
-	public PathAndFillManager(final int width, final int height, final int depth, final float x_spacing,
-			final float y_spacing, final float z_spacing, final String spacing_units) {
+	/**
+	 * Instantiates a new PathAndFillManager, imposing specified pixel dimensions,
+	 * which may be required for pixel operations. New {@link Path}s created under
+	 * this instance, will adopt the specified spacing details.
+	 *
+	 * @param x_spacing     the 'voxel width'
+	 * @param y_spacing     the 'voxel height'
+	 * @param z_spacing     the 'voxel depth'
+	 * @param spacing_units the spacing units (e.g., 'um', 'mm)
+	 */
+	public PathAndFillManager(final double x_spacing, final double y_spacing, 
+			final double z_spacing, final String spacing_units) {
 		this();
+		boundingBox.setSpacing(x_spacing, y_spacing, z_spacing, spacing_units);
+		boundingBox.setOrigin(new PointInImage(0, 0, 0));
 		this.x_spacing = x_spacing;
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
-		this.width = width;
-		this.height = height;
-		this.depth = depth;
-		this.spacing_units = SNT.getSanitizedUnit(spacing_units);
-		needImageDataFromTracesFile = false;
+		this.spacing_units = boundingBox.getUnit();
+		spacingIsUnset = false;
 	}
 
+	/**
+	 * Returns the number of Paths currently managed.
+	 *
+	 * @return the the number of Paths
+	 */
 	public int size() {
 		return allPaths.size();
 	}
@@ -257,7 +268,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				// The source of the message already knows the states:
 				pafl.setSelectedPaths(selectedPathsSet, this);
 		}
-		if (plugin != null && plugin.getImagePlus() != null) {
+		if (plugin != null) {
 			plugin.updateAllViewers();
 		}
 	}
@@ -375,61 +386,34 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	protected boolean usingNonPhysicalUnits() {
 		return (new Calibration().getUnits()).equals(spacing_units)
-				|| ("unknown".equals(spacing_units) && x_spacing * y_spacing * z_spacing == 1d);
+				|| (SNT.getSanitizedUnit(null).equals(spacing_units) && x_spacing * y_spacing * z_spacing == 1d);
+	}
+
+	protected void updateBoundingBox() {
+		boundingBox = getBoundingBox(true);
 	}
 
 	/**
-	 * Returns the voxel dimensions currently set in SNT. When no image is
-	 * available, these typically default to dimensions parsed from the last
-	 * imported file.
+	 * Returns the BoundingBox enclosing existing nodes.
 	 *
-	 * @see getParsedCalibration
-	 * @return the spatial calibration details associated with this
-	 *         PathAndFillManager instance
+	 * @param compute If true, BoundingBox dimensions will be computed for all the
+	 *                existing Paths. If false, the last computed BoundingBox will
+	 *                be returned. Also, if BoundingBox is not scaled, its spacing
+	 *                will be computed from the smallest inter-node distance of an
+	 *                arbitrary ' large' Path. Computations of Path boundaries
+	 *                typically occur during import operations.
+	 * @return the BoundingBox enclosing existing nodes, or an 'empty' BoundingBox
+	 *         if no computation of boundaries has not yet occurred. Output is never
+	 *         null.
 	 */
-	public Calibration getCalibration() {
-		final Calibration cal = new Calibration();
-		cal.setUnit(spacing_units);
-		cal.pixelWidth = x_spacing;
-		cal.pixelHeight = y_spacing;
-		cal.pixelDepth = z_spacing;
-		return cal;
-	}
-
-	/**
-	 * Gets the parsed canvas dimensions from the last imported file.
-	 *
-	 * @return the parsed dimensions (width, height, depth) in pixel units of the
-	 *         traced imaged inferred from the last imported .traces/.swc file. All
-	 *         dimensions revert to zero if no file has been imported.
-	 */
-	public int[] getParsedDimensions() {
-		return new int[] { parsed_width, parsed_height, parsed_depth };
-	}
-
-	/**
-	 *
-	 * Returns the voxel dimensions parsed from the last imported file.
-	 *
-	 * With SWC files, the voxel dimensions are assumed to be the separation between
-	 * the closest pair of points in the file. With .traces files the one specified
-	 * by SNT. This information is useful for troubleshooting the cases when a file
-	 * cannot be imported into the loaded image.
-	 *
-	 * @see getCalibration
-	 *
-	 * @return the spatial calibration details parsed from the last imported swc/traces
-	 *         file or null if no file has been imported
-	 */
-	public Calibration getParsedCalibration() {
-		if (parsedCalibration == null || new Calibration().equals(parsedCalibration)) 
-			return null;
-		if (parsedOrigin != null) {
-			parsedCalibration.xOrigin = parsedOrigin.x;
-			parsedCalibration.yOrigin = parsedOrigin.y;
-			parsedCalibration.zOrigin = parsedOrigin.z;
-		}
-		return parsedCalibration;
+	public BoundingBox getBoundingBox(final boolean compute) {
+		if (boundingBox == null)
+			boundingBox = new BoundingBox();
+		if (!compute || getPaths().size() == 0)
+			return boundingBox;
+		final AllPointsIterator allPointsIt = allPointsIterator();
+		boundingBox.compute(allPointsIt);
+		return boundingBox;
 	}
 
 	/*
@@ -976,7 +960,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.println("  <samplespacing x=\"" + x_spacing + "\" " + "y=\"" + y_spacing + "\" " + "z=\"" + z_spacing
 					+ "\" " + "units=\"" + spacing_units + "\"/>");
 
-			pw.println("  <imagesize width=\"" + width + "\" height=\"" + height + "\" depth=\"" + depth + "\"/>");
+			if (plugin != null)
+				pw.println("  <imagesize width=\"" + plugin.width + "\" height=\"" + plugin.height + "\" depth=\"" + plugin.depth + "\"/>");
 
 			for (final Path p : allPaths) {
 				// This probably should be a String returning
@@ -1065,7 +1050,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
 			throws TracesFileFormatException {
 
-		if (parsedCalibration == null) parsedCalibration = new Calibration();
+		if (boundingBox == null) boundingBox = new BoundingBox();
 		if (qName.equals("tracings")) {
 
 			startJoins = new HashMap<>();
@@ -1086,34 +1071,20 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			/*
 			 * We need to remove the old paths and fills before loading the ones:
 			 */
-
 			SNT.log("Clearing old paths and fills...");
-
 			clearPathsAndFills();
-
-			SNT.log("Now " + allPaths.size() + " paths and " + allFills.size() + " fills");
 
 		} else if (qName.equals("imagesize")) {
 
 			try {
-
-				final String widthString = attributes.getValue("width");
-				final String heightString = attributes.getValue("height");
-				final String depthString = attributes.getValue("depth");
-
-				parsed_width = Integer.parseInt(widthString);
-				parsed_height = Integer.parseInt(heightString);
-				parsed_depth = Integer.parseInt(depthString);
-
-				if (needImageDataFromTracesFile) {
-					this.width = parsed_width;
-					this.height = parsed_height;
-					this.depth = parsed_depth;
-				} else if (!((parsed_width == width) && (parsed_height == height) && (parsed_depth == depth))) {
-					throw new TracesFileFormatException(
-							"The image size in the traces file didn't match - it's probably for another image");
+				final int parsed_width = Integer.parseInt(attributes.getValue("width"));
+				final int parsed_height = Integer.parseInt(attributes.getValue("height"));
+				final int parsed_depth = Integer.parseInt(attributes.getValue("depth"));
+				if (plugin != null && (parsed_width != plugin.width || parsed_height != plugin.height || parsed_depth != plugin.depth)) {
+					SNT.warn("The image size in the traces file didn't match - it's probably for another image");
 				}
-
+				boundingBox.setOrigin(new PointInImage(0, 0, 0));
+				boundingBox.setDimensions(parsed_width, parsed_height, parsed_depth);
 			} catch (final NumberFormatException e) {
 				throw new TracesFileFormatException("There was an invalid attribute to <imagesize/>: " + e);
 			}
@@ -1124,19 +1095,18 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				final String xString = attributes.getValue("x");
 				final String yString = attributes.getValue("y");
 				final String zString = attributes.getValue("z");
-				parsedCalibration.setUnit(attributes.getValue("units"));
-
-				parsedCalibration.pixelWidth = Double.parseDouble(xString);
-				parsedCalibration.pixelHeight = Double.parseDouble(yString);
-				parsedCalibration.pixelDepth = Double.parseDouble(zString);
-
-				if (needImageDataFromTracesFile) {
-					this.x_spacing = parsedCalibration.pixelWidth;
-					this.y_spacing = parsedCalibration.pixelHeight;
-					this.z_spacing = parsedCalibration.pixelDepth;
-					this.spacing_units = parsedCalibration.getUnit();
+				final String spacingUnits = attributes.getValue("units");
+				boundingBox.setUnit(spacingUnits);
+				boundingBox.xSpacing = Double.parseDouble(xString);
+				boundingBox.ySpacing = Double.parseDouble(yString);
+				boundingBox.zSpacing = Double.parseDouble(zString);
+				if (spacingIsUnset) {
+					x_spacing = boundingBox.xSpacing;
+					y_spacing = boundingBox.ySpacing;
+					z_spacing = boundingBox.zSpacing;
+					spacing_units = spacingUnits;
+					spacingIsUnset = false;
 				}
-
 			} catch (final NumberFormatException e) {
 				throw new TracesFileFormatException("There was an invalid attribute to <samplespacing/>: " + e);
 			}
@@ -1327,9 +1297,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					throw new TracesFileFormatException(
 							"If one of the attributes xd, yd or zd to the point element is specified, they all must be.");
 				} else if (xString != null && yString != null && zString != null) {
-					parsed_xd = parsedCalibration.pixelWidth * Integer.parseInt(xString);
-					parsed_yd = parsedCalibration.pixelHeight * Integer.parseInt(yString);
-					parsed_zd = parsedCalibration.pixelDepth * Integer.parseInt(zString);
+					parsed_xd = boundingBox.xSpacing * Integer.parseInt(xString);
+					parsed_yd = boundingBox.ySpacing * Integer.parseInt(yString);
+					parsed_zd = boundingBox.zSpacing * Integer.parseInt(zString);
 				} else if (xString != null || yString != null || zString != null) {
 					throw new TracesFileFormatException(
 							"If one of the attributes x, y or z to the point element is specified, they all must be.");
@@ -1610,9 +1580,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				parser.parse(inputSource, this);
 			}
 
-			// We must have got the image data if we've got to this stage...
-			needImageDataFromTracesFile = false;
-
 		} catch (final javax.xml.parsers.ParserConfigurationException e) {
 
 			clearPathsAndFills();
@@ -1698,10 +1665,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		final Pattern pEmpty = Pattern.compile("^\\s*$");
 		final Pattern pComment = Pattern.compile("^([^#]*)#.*$");
 
-		final Set<Integer> alreadySeen = new HashSet<>();
-		final Map<Integer, SWCPoint> idToSWCPoint = new HashMap<>();
-		final List<SWCPoint> primaryPoints = new ArrayList<>();
-
+		final TreeSet<SWCPoint> nodes = new TreeSet<>();
 		String line;
 		while ((line = br.readLine()) != null) {
 			final Matcher mComment = pComment.matcher(line);
@@ -1722,92 +1686,56 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				final double z = z_scale * Double.parseDouble(fields[4]) + z_offset;
 				final double radius = Double.parseDouble(fields[5]);
 				final int previous = Integer.parseInt(fields[6]);
-				if (alreadySeen.contains(id)) {
-					error("Point with ID " + id + " found more than once");
-					return false;
-				}
-				alreadySeen.add(id);
-				final SWCPoint p = new SWCPoint(id, type, x, y, z, radius, previous);
-				idToSWCPoint.put(id, p);
-				if (previous == -1)
-					primaryPoints.add(p);
-				else {
-					final SWCPoint previousPoint = idToSWCPoint.get(previous);
-					if (previousPoint != null) {
-						p.previousPoint = previousPoint;
-						previousPoint.addNextPoint(p);
-					}
-				}
+				nodes.add(new SWCPoint(id, type, x, y, z, radius, previous));
 			} catch (final NumberFormatException nfe) {
 				error("There was a malformed number in line: " + line);
 				return false;
 			}
 		}
+		return importNodes(null, nodes, true, assumeCoordinatesInVoxels);
+	}
 
-		// Infer fields for when an image has not been specified. We'll assume
-		// the image dimensions to be those of the coordinates bounding box.
-		// This allows us to open a SWC file without a source image
-		{
-			parsedOrigin = new PointInImage(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-			final PointInImage parsedEnd = new PointInImage(Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE);
-			idToSWCPoint.entrySet().stream().forEach(entry -> {
-				final SWCPoint point = entry.getValue();
-				if (point.x < parsedOrigin.x)
-					parsedOrigin.x = point.x;
-				if (point.y < parsedOrigin.y)
-					parsedOrigin.y = point.y;
-				if (point.z < parsedOrigin.z)
-					parsedOrigin.z = point.z;
-				if (point.x > parsedEnd.x)
-					parsedEnd.x = point.x;
-				if (point.y > parsedEnd.y)
-					parsedEnd.y = point.y;
-				if (point.z > parsedEnd.z)
-					parsedEnd.z = point.z;
-			}
-			if (parsedCalibration == null) parsedCalibration = new Calibration();
-			parsedCalibration.setUnit("SWC units");
-			parsedCalibration.pixelWidth = 1;
-			parsedCalibration.pixelHeight = 1;
-			parsedCalibration.pixelDepth = 1;
-			parsed_width = (int) Math.round(parsedEnd.x - parsedOrigin.x);
-			parsed_height = (int) Math.round(parsedEnd.y - parsedOrigin.y);
-			parsed_depth = (int) Math.round(parsedEnd.z - parsedOrigin.z);
-			if (needImageDataFromTracesFile) {
-				SNT.log("Inferring Voxel separation from imported coordinates");
-				x_spacing = parsedCalibration.pixelWidth ;
-				y_spacing = parsedCalibration.pixelHeight;
-				z_spacing = parsedCalibration.pixelDepth;
-				spacing_units = SNT.getSanitizedUnit(parsedCalibration.getUnit());
-				width = parsed_width;
-				height = parsed_height;
-				depth = parsed_depth;
+	private boolean importNodes(final String descriptor, final TreeSet<SWCPoint> points, final boolean computeImgFields, final boolean assumeCoordinatesInVoxels) {
+
+		final Map<Integer, SWCPoint> idToSWCPoint = new HashMap<>();
+		final List<SWCPoint> primaryPoints = new ArrayList<>();
+
+		final int firstImportedPathIdx = size();
+		for (final SWCPoint point : points) {
+			idToSWCPoint.put(point.id, point);
+			if (point.parent == -1) {
+				primaryPoints.add(point);
+			} else {
+				final SWCPoint previousPoint = idToSWCPoint.get(point.parent);
+				if (previousPoint != null) {
+					point.previousPoint = previousPoint;
+					previousPoint.nextPoints.add(point);
+				}
 			}
 		}
 
-		// We'll now iterate (again!) through the points to fix ill-assembled files
+		if (spacingIsUnset) {
+			SNT.log("Inferring pixel spacing from imported points... ");
+			boundingBox.inferSpacing(points);
+			x_spacing = boundingBox.xSpacing;
+			y_spacing = boundingBox.ySpacing;
+			z_spacing = boundingBox.zSpacing;
+			boundingBox.setOrigin(new PointInImage(0, 0, 0));
+			spacingIsUnset = false;
+		}
+
+		// We'll now iterate (again!) through the points to fix some ill-assembled files
 		// that do exist in the wild. We typically encounter two major issues:
 		// a) Files in world coordinates (good) but with reversed signs
 		// b) Files in pixel coordinates
-		// While at it, we'll also perform some field validations
-
-		// Fix a): calculate what should be the minimum and maximum
-		// value in each axis so that we can test for this later
-		final double minX = Math.min(0, width * x_spacing);
-		final double minY = Math.min(0, height * y_spacing);
-		final double minZ = Math.min(0, depth * z_spacing);
-		final double maxX = Math.max(0, width * x_spacing);
-		final double maxY = Math.max(0, height * y_spacing);
-		final double maxZ = Math.max(0, depth * z_spacing);
 		final double minimumVoxelSpacing = Math.min(Math.abs(x_spacing),
 				Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
 
-		int pointsOutsideImageRange = 0;
-		final Iterator<Entry<Integer, SWCPoint>> it = idToSWCPoint.entrySet().iterator();
+		final Iterator<SWCPoint> it = points.iterator();
 		while (it.hasNext()) {
-			final SWCPoint point = it.next().getValue();
+			final SWCPoint point = it.next();
 
-			// Fix b): deal with SWC files that use pixel coordinates
+			// deal with SWC files that use pixel coordinates
 			if (assumeCoordinatesInVoxels) {
 				point.x *= x_spacing;
 				point.y *= y_spacing;
@@ -1820,24 +1748,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			// of the voxel spacing so that something* appears in the 3D Viewer!
 			if (Math.abs(point.radius) < 0.0000001)
 				point.radius = minimumVoxelSpacing / 2;
-
-			// If an image has been specified: Is it appropriate for this file?
-			if (!needImageDataFromTracesFile) {
-				if (point.x < minX || point.x > maxX)
-					++pointsOutsideImageRange;
-				if (point.y < minY || point.y > maxY)
-					++pointsOutsideImageRange;
-				if (point.z < minZ || point.z > maxZ)
-					++pointsOutsideImageRange;
-			}
 		}
-
-		// At this point we already have populated all the required fields
-		needImageDataFromTracesFile = false;
-
-		if (pointsOutsideImageRange > 0)
-			SNT.warn("" + pointsOutsideImageRange
-					+ " points were outside the image volume - you may need to change your SWC import options");
 
 		// FIXME: This is really slow with large SWC files
 		final HashMap<SWCPoint, Path> pointToPath = new HashMap<>();
@@ -1868,11 +1779,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				currentPath.radiuses[added] = currentPoint.radius;
 				++added;
 				pointToPath.put(currentPoint, currentPath);
-				/*
-				 * Remove each one from "alreadySeen" when we add it to a path, just to check
-				 * that nothing's left at the end, which indicates that the file is malformed.
-				 */
-				alreadySeen.remove(currentPoint.id);
+
 				if (currentPoint.nextPoints.size() > 0) {
 					final SWCPoint newCurrentPoint = currentPoint.nextPoints.get(0);
 					currentPoint.nextPoints.remove(0);
@@ -1890,26 +1797,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			addPath(currentPath);
 		}
 
-		if (alreadySeen.size() > 0) {
-			error("Malformed file: there are some misconnected points.\n"
-					+ "(List will now be shown in ImageJ's Console)");
-			final boolean currentDebug = SNT.isDebugMode();
-			SNT.setDebugMode(true);
-			for (final int i : alreadySeen) {
-				final SWCPoint p = idToSWCPoint.get(i);
-				SNT.log("  Misconnected: " + p);
-			}
-			SNT.setDebugMode(currentDebug);
-			return false;
-		}
-
 		// Set the start joins:
-		final boolean tag = parsedCalibration != null && parsedCalibration.info != null;
 		for (int i = firstImportedPathIdx; i < size(); i++) {
 			final Path p = getPath(i);
 			final SWCPoint swcPoint = pathStartsOnSWCPoint.get(p);
-			if (tag) {
-				p.setName(p.getName() + "{" + parsedCalibration.info + "}");
+			if (descriptor != null) {
+				p.setName(p.getName() + "{" + descriptor + "}");
 			}
 			if (swcPoint == null) {
 				p.setIsPrimary(true);
@@ -1921,7 +1814,35 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		resetListeners(null, true);
+
+		// Infer fields for when an image has not been specified. We'll assume
+		// the image dimensions to be those of the coordinates bounding box.
+		// This allows us to open a SWC file without a source image
+		if (computeImgFields) {
+			if (boundingBox == null) boundingBox = new BoundingBox();
+			boundingBox.compute(((TreeSet<? extends SNTPoint>) points).iterator());
+			// If a plugin exists, warn user if its image cannot render the imported nodes
+			if (pluginBoundingBox != null && !pluginBoundingBox.contains(boundingBox)) {
+				SNT.warn("Some points are outside the image volume - you may need to change your SWC import options");
+			}
+		}
 		return true;
+	}
+
+	private Map<String, Boolean> importMap(Map<String, TreeSet<SWCPoint>> map) {
+		final Map<String, Boolean> result = new HashMap<>();
+		map.forEach((k, points) -> {
+			if (points == null) {
+				SNT.error("Importing " + k +"... failed. Invalid structure?");
+				result.put(k, false);
+			} else {
+				SNT.log("Importing " + k +"...");
+				final boolean success = importNodes(k, points, true, true);
+				SNT.log("Successful import: " + success);
+				result.put(k, success);
+			}
+		});
+		return result;
 	}
 
 	public boolean importSWC(final String filename, final boolean ignoreCalibration) {
@@ -1976,17 +1897,18 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		final File f = new File(filename);
 		if (!SNT.fileAvailable(f)) {
-			errorStatic("The traces file '" + filename + "' is not available.");
+			errorStatic("The file '" + filename + "' is not available.");
 			return -1;
 		}
 
 		try {
+			SNT.log("Guessing file type...");
 			InputStream is;
 			final byte[] buf = new byte[8];
 			is = new FileInputStream(filename);
 			is.read(buf, 0, 8);
 			is.close();
-			SNT.log("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
+			//SNT.log("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
 			if (((buf[0] & 0xFF) == 0x1F) && ((buf[1] & 0xFF) == 0x8B))
 				return TRACES_FILE_TYPE_COMPRESSED_XML;
 			else if (((buf[0] == '<') && (buf[1] == '?') && (buf[2] == 'x') && (buf[3] == 'm') && (buf[4] == 'l')
@@ -2042,8 +1964,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			final File file = new File(filename);
 			if (getPlugin() != null)
 				getPlugin().prefs.setRecentFile(file);
-			if (parsedCalibration != null)
-				parsedCalibration.info = file.getName();
+			if (boundingBox != null)
+				boundingBox.info = file.getName();
 		}
 		return result;
 	}
@@ -2531,7 +2453,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	// Note that this will transform fitted Paths but lose the radiuses
 
-	public PathAndFillManager transformPaths(final PathTransformer transformation, final ImagePlus templateImage) {
+	public PathAndFillManager transformPaths(final PathTransformer transformation,
+			final ImagePlus templateImage, final ImagePlus modelImage) {
 
 		double pixelWidth = 1;
 		double pixelHeight = 1;
@@ -2546,9 +2469,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			units = templateCalibration.getUnits();
 		}
 
-		final PathAndFillManager pafmResult = new PathAndFillManager(templateImage.getWidth(),
-				templateImage.getHeight(), templateImage.getNSlices(), (float) pixelWidth, (float) pixelHeight,
-				(float) pixelDepth, units);
+		final PathAndFillManager pafmResult = new PathAndFillManager(pixelWidth, pixelHeight, pixelDepth, units);
 
 		final int[] startJoinsIndices = new int[size()];
 		final int[] endJoinsIndices = new int[size()];
@@ -2583,7 +2504,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					endJoinsPoints[i] = transformedPoint;
 			}
 
-			final Path transformedPath = p.transform(transformation, templateImage, imagePlus);
+			final Path transformedPath = p.transform(transformation, templateImage, modelImage);
 			if (transformedPath.size() >= 2) {
 				addedPaths[i] = transformedPath;
 				pafmResult.addPath(transformedPath);

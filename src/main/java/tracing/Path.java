@@ -1197,8 +1197,8 @@ public class Path implements Comparable<Path> {
 	}
 
 	public void setFitted(final Path p) {
-		if (fitted != null) {
-			throw new RuntimeException("BUG: Trying to set a fitted path when there already is one...");
+		if (fitted != null && p != null) {
+			throw new IllegalArgumentException("BUG: Trying to set a fitted path when there already is one...");
 		}
 		fitted = p;
 		p.fittedVersionOf = this;
@@ -1329,7 +1329,7 @@ public class Path implements Comparable<Path> {
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();
-		final int depth = image.getNSlices(); // FIXME: Check hyperstack support
+		final int depth = image.getNSlices();
 		final float[][] v = new float[depth][];
 		final ImageStack s = image.getStack();
 		final int imageType = image.getType();

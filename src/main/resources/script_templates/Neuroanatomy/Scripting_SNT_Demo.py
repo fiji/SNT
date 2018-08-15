@@ -53,8 +53,8 @@ def run():
 
     # Let's first announce (discretely) our scripting intentions
     msg = "SNT is being scripted!"
-    plugin.getUI().showStatus(msg);
-    plugin.setCanvasLabelAllPanes(msg);
+    plugin.getUI().showStatus(msg)
+    plugin.setCanvasLabelAllPanes(msg)
     snt.updateViewers()
 
     # In a real-world scenario we would have a routine in place to detect seed

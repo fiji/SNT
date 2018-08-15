@@ -2562,7 +2562,7 @@ public class SNTUI extends JDialog {
 			case (IMAGE_CLOSED):
 			case (ANALYSIS_MODE):
 				showStatus("Instruction ignored: No task to be aborted", true);
-				break; // none of this states needs to be aborted
+				break; // none of these states needs to be aborted
 			default:
 				SNT.error("BUG: Wrong state for aborting operation...");
 				break;

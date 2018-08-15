@@ -2018,10 +2018,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final double maxDistance)
 	{
 
-		final PathAndFillManager pafmTraces = new PathAndFillManager(width, height,
-			depth, (float) x_spacing, (float) y_spacing, (float) z_spacing,
-			spacing_units);
-
+		final PathAndFillManager pafmTraces = new PathAndFillManager(this);
 		if (!pafmTraces.loadGuessingType(tracesFile.getAbsolutePath())) {
 			guiUtils.error("Failed to load traces from: " + tracesFile
 				.getAbsolutePath());
@@ -2032,8 +2029,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		// Now find corresponding points from the first one, and draw lines to
 		// them:
-		final ArrayList<NearPoint> cp = pathAndFillManager.getCorrespondences(
-			pafmTraces, 2.5);
+		final List<NearPoint> cp = pathAndFillManager.getCorrespondences(pafmTraces, maxDistance);
 		int done = 0;
 		for (final NearPoint np : cp) {
 			if (np != null) {

@@ -67,7 +67,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij3d.Content;
@@ -89,9 +88,9 @@ import util.XMLFunctions;
  */
 public class PathAndFillManager extends DefaultHandler implements UniverseListener {
 
-	public static final int TRACES_FILE_TYPE_COMPRESSED_XML = 1;
-	public static final int TRACES_FILE_TYPE_UNCOMPRESSED_XML = 2;
-	public static final int TRACES_FILE_TYPE_SWC = 3;
+	protected static final int TRACES_FILE_TYPE_COMPRESSED_XML = 1;
+	protected static final int TRACES_FILE_TYPE_UNCOMPRESSED_XML = 2;
+	protected static final int TRACES_FILE_TYPE_SWC = 3;
 	private static final DecimalFormat fileIndexFormatter = new DecimalFormat("000");
 
 	protected SimpleNeuriteTracer plugin;
@@ -186,7 +185,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/**
-	 * Returns the number of Paths currently managed.
+	 * Returns the number of Paths in the PathAndFillManager list
 	 *
 	 * @return the the number of Paths
 	 */
@@ -202,14 +201,23 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		listeners.add(listener);
 	}
 
+	/**
+	 * Returns the Path at the specified position in the PathAndFillManager list.
+	 *
+	 * @param i the index of the Path
+	 * @return the Path at the specified index
+	 */
 	public synchronized Path getPath(final int i) {
 		return allPaths.get(i);
 	}
 
-	public synchronized Path getPathFromName(final String name) {
-		return getPathFromName(name, true);
-	}
-
+	/**
+	 * Returns the Path with the specified name.
+	 *
+	 * @param name          the name of the Path to be retrieved
+	 * @param caseSensitive If true, case considerations are ignored
+	 * @return the Path with the specified name, or null if name was not found.
+	 */
 	public synchronized Path getPathFromName(final String name, final boolean caseSensitive) {
 		for (final Path p : allPaths) {
 			if (caseSensitive) {
@@ -223,7 +231,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return null;
 	}
 
-	public synchronized Path getPathFrom3DViewerName(final String name) {
+	protected synchronized Path getPathFrom3DViewerName(final String name) {
 		for (final Path p : allPaths) {
 			if (p.nameWhenAddedToViewer == null)
 				continue;
@@ -233,6 +241,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return null;
 	}
 
+	/**
+	 * Returns the Path with the specified id.
+	 *
+	 * @param id the id of the Path to be retrieved
+	 * @return the Path with the specified id, or null if id was not found.
+	 */
 	public synchronized Path getPathFromID(final int id) {
 		for (final Path p : allPaths) {
 			if (id == p.getID()) {
@@ -285,8 +299,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return selectedPathsSet.size() > 0;
 	}
 
-	private static final DecimalFormat fileIndexFormatter = new DecimalFormat("000");
-
 	protected File getSWCFileForIndex(final String prefix, final int index) {
 		return new File(prefix + "-" + fileIndexFormatter.format(index) + ".swc");
 	}
@@ -334,7 +346,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				return false;
 			}
 
-			IJ.showStatus("Exporting SWC data to " + swcFile.getAbsolutePath());
+			if (plugin != null) plugin.showStatus(0, 0, "Exporting SWC data to " + swcFile.getAbsolutePath());
 			try {
 				final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(swcFile), "UTF-8"));
 				flushSWCPoints(swcPoints, pw);
@@ -345,7 +357,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			}
 			++i;
 		}
-		IJ.showStatus("Export finished.");
+		if (plugin != null) plugin.showStatus(0, 0, "Export finished.");
 		return true;
 	}
 
@@ -379,8 +391,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		else
 			pw.println("# Voxel separation (x,y,z): " + x_spacing + ", " + y_spacing + ", " + z_spacing);
 		pw.println("#");
-		for (final SWCPoint p : swcPoints)
-			p.println(pw);
+		SWCPoint.flush(swcPoints, pw);
 		pw.close();
 	}
 
@@ -508,7 +519,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		if (structuredPathSet.size() == 0)
 			throw new SWCExportException(
-					"The paths you select for SWC export must include a primary path\n(i.e. one at the top level in the Path Manager tree)");
+					"The paths you select for SWC export must include a primary path (i.e., one at the top level in the Path Manager tree)");
 		if (structuredPathSet.size() > 1)
 			throw new SWCExportException("You can only select one connected set of paths for SWC export");
 
@@ -676,17 +687,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if (p == null) {
 				throw new IllegalArgumentException("BUG: A path in allPaths was null!");
 			}
-			String name = p.getName();
-			if (name == null)
-				name = "Path [" + p.getID() + "]";
-			if (p.getStartJoins() != null) {
-				name += ", starts on " + p.getStartJoins().getName();
-			}
-			if (p.endJoins != null) {
-				name += ", ends on " + p.endJoins.getName();
-			}
-			name += " [" + p.getRealLengthString()  + spacing_units + "]";
-			pathListEntries.add(name);
+			pathListEntries.add(p.realToString());
 		}
 
 		for (final PathAndFillListener listener : listeners)
@@ -721,7 +722,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		addPath(p, false);
 	}
 
-	public synchronized void addPath(final Path p, final boolean forceNewName) {
+	protected synchronized void addPath(final Path p, final boolean forceNewName) {
 		if (getPathFromID(p.getID()) != null)
 			throw new RuntimeException("Attempted to add a path with an ID that was already added");
 		if (p.getID() < 0) {
@@ -1556,15 +1557,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			return null;
 	}
 
-	public boolean loadFromString(final String tracesFileAsString) {
-
-		final StringReader reader = new StringReader(tracesFileAsString);
-		final boolean result = load(null, reader);
-		reader.close();
-		return result;
-
-	}
-
 	public boolean load(final InputStream is, final Reader reader) {
 
 		try {
@@ -1882,7 +1874,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	}
 
-	public static int guessTracesFileType(final String filename) {
+	protected static int guessTracesFileType(final String filename) {
 
 		/*
 		 * Look at the magic bytes at the start of the file:
@@ -2211,67 +2203,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			currentPathIndex = -1;
 			currentPointIndex = -1;
 		}
-
-		int numberOfPaths;
-		// These should all be set to be appropriate to the
-		// last point that was returned:
-		Path currentPath;
-		int currentPathIndex;
-		int currentPointIndex;
-
-		@Override
-		public boolean hasNext() {
-			if (currentPath == null || currentPointIndex == currentPath.size() - 1) {
-				/*
-				 * Find out if there is a non-empty path after this:
-				 */
-				int tmpPathIndex = currentPathIndex + 1;
-				while (tmpPathIndex < numberOfPaths) {
-					final Path p = allPaths.get(tmpPathIndex);
-					if (p.size() > 0 && p.versionInUse())
-						return true;
-					++tmpPathIndex;
-				}
-				return false;
-			}
-			/*
-			 * So we know that there's a current path and we're not at the end of it, so
-			 * there must be another point:
-			 */
-			return true;
-		}
-
-		@Override
-		public PointInImage next() {
-			if (currentPath == null || currentPointIndex == currentPath.size() - 1) {
-				currentPointIndex = 0;
-				/* Move to the next non-empty path: */
-				while (true) {
-					++currentPathIndex;
-					if (currentPathIndex == numberOfPaths)
-						throw new java.util.NoSuchElementException();
-					currentPath = allPaths.get(currentPathIndex);
-					if (currentPath.size() > 0 && currentPath.versionInUse())
-						break;
-				}
-			} else
-				++currentPointIndex;
-			return currentPath.getPointInImage(currentPointIndex);
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("AllPointsIterator does not allow the removal of points");
-		}
-
-	}
-
-	/*
-	 * For each point in *this* PathAndFillManager, find the corresponding point on
-	 * the other one. If there's no corresponding one, include a null instead.
 	 */
-
-	public ArrayList<NearPoint> getCorrespondences(final PathAndFillManager other, final double maxDistance) {
+	public List<NearPoint> getCorrespondences(final PathAndFillManager other, final double maxDistance) {
 
 		final ArrayList<NearPoint> result = new ArrayList<>();
 
@@ -2541,13 +2474,77 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return plugin;
 	}
 
-	@SuppressWarnings("serial")
-	private class TracesFileFormatException extends SAXException {
-		public TracesFileFormatException(final String message) {
-			super(message);
+
+	public class AllPointsIterator implements Iterator<PointInImage> {
+
+		public AllPointsIterator() {
+			numberOfPaths = allPaths.size();
+			currentPath = null;
+			currentPathIndex = -1;
+			currentPointIndex = -1;
 		}
+
+		int numberOfPaths;
+		// These should all be set to be appropriate to the
+		// last point that was returned:
+		Path currentPath;
+		int currentPathIndex;
+		int currentPointIndex;
+
+		@Override
+		public boolean hasNext() {
+			if (currentPath == null || currentPointIndex == currentPath.size() - 1) {
+				/*
+				 * Find out if there is a non-empty path after this:
+				 */
+				int tmpPathIndex = currentPathIndex + 1;
+				while (tmpPathIndex < numberOfPaths) {
+					final Path p = allPaths.get(tmpPathIndex);
+					if (p.size() > 0 && p.versionInUse())
+						return true;
+					++tmpPathIndex;
+				}
+				return false;
+			}
+			/*
+			 * So we know that there's a current path and we're not at the end of it, so
+			 * there must be another point:
+			 */
+			return true;
+		}
+
+		@Override
+		public PointInImage next() {
+			if (currentPath == null || currentPointIndex == currentPath.size() - 1) {
+				currentPointIndex = 0;
+				/* Move to the next non-empty path: */
+				while (true) {
+					++currentPathIndex;
+					if (currentPathIndex == numberOfPaths)
+						throw new java.util.NoSuchElementException();
+					currentPath = allPaths.get(currentPathIndex);
+					if (currentPath.size() > 0 && currentPath.versionInUse())
+						break;
+				}
+			} else
+				++currentPointIndex;
+			return currentPath.getPointInImage(currentPointIndex);
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("AllPointsIterator does not allow the removal of points");
+		}
+
 	}
 
+}
+
+@SuppressWarnings("serial")
+class TracesFileFormatException extends SAXException {
+	public TracesFileFormatException(final String message) {
+		super(message);
+	}
 }
 
 @SuppressWarnings("serial")

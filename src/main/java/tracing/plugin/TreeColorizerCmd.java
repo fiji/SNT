@@ -69,7 +69,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 
 	@Parameter(required = true, label = "Color by", choices = { TreeColorizer.BRANCH_ORDER, TreeColorizer.LENGTH,
 			TreeColorizer.N_BRANCH_POINTS, TreeColorizer.N_NODES, TreeColorizer.MEAN_RADIUS, TreeColorizer.NODE_RADIUS,
-			TreeColorizer.X_COORDINATES, TreeColorizer.Y_COORDINATES, TreeColorizer.Z_COORDINATES })
+			TreeColorizer.X_COORDINATES, TreeColorizer.Y_COORDINATES, TreeColorizer.Z_COORDINATES, TreeColorizer.FIRST_TAG})
 	private String measurementChoice;
 
 	@Parameter(label = "LUT", callback = "lutChoiceChanged")

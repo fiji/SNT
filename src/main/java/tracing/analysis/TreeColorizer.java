@@ -30,15 +30,17 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-
-import net.imagej.ImageJ;
-import net.imagej.lut.LUTService;
-import net.imglib2.display.ColorTable;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.Context;
 import org.scijava.plugin.Parameter;
 
+import net.imagej.ImageJ;
+import net.imagej.lut.LUTService;
+import net.imglib2.display.ColorTable;
 import tracing.Path;
 import tracing.Tree;
 import tracing.plugin.DistributionCmd;
@@ -62,6 +64,8 @@ public class TreeColorizer {
 	public static final String Y_COORDINATES = TreeAnalyzer.Y_COORDINATES;
 	public static final String Z_COORDINATES = TreeAnalyzer.Z_COORDINATES;
 	private static final String INTERNAL_COUNTER = "";
+	public static final String FIRST_TAG = "Tags";
+
 
 	@Parameter
 	private LUTService lutService;
@@ -119,6 +123,7 @@ public class TreeColorizer {
 		case N_NODES:
 		case N_BRANCH_POINTS:
 		case INTERNAL_COUNTER:
+		case FIRST_TAG:
 			mapToPathProperty(cMeasurement, colorTable);
 			break;
 		case X_COORDINATES:
@@ -164,6 +169,19 @@ public class TreeColorizer {
 			integerScale = true;
 			for (final Path p : paths)
 				mappedPaths.add(new MappedPath(p, (double) internalCounter));
+			break;
+		case FIRST_TAG:
+			final List<MappedTaggedPath> mappedTaggedPaths = new ArrayList<>();
+			final TreeSet<String> tags = new TreeSet<>();
+			for (final Path p : paths) {
+				final MappedTaggedPath mp = new MappedTaggedPath(p);
+				mappedTaggedPaths.add(mp);
+				tags.add(mp.mappedTag);
+			}
+			final int nTags = tags.size();
+			for (final MappedTaggedPath p : mappedTaggedPaths) {
+				mappedPaths.add(new MappedPath(p.path, (double)tags.headSet(p.mappedTag).size()/nTags));
+			}
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown parameter");
@@ -306,6 +324,19 @@ public class TreeColorizer {
 				max = mappedValue;
 			if (mappedValue < min)
 				min = mappedValue;
+		}
+	}
+
+	private class MappedTaggedPath {
+
+		private final Pattern pattern = Pattern.compile("\\{(\\w+)\\b");
+		private final Path path;
+		private final String mappedTag;
+
+		private MappedTaggedPath(final Path path) {
+			this.path = path;
+			final Matcher matcher = pattern.matcher(path.getName());
+			mappedTag = (matcher.find()) ? matcher.group(1).toString() : "";
 		}
 	}
 

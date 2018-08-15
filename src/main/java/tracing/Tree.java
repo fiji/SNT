@@ -26,10 +26,10 @@ import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.util.ColorRGB;
@@ -71,7 +71,7 @@ public class Tree {
 	 * @param paths
 	 *            the Collection of paths forming this tree. Null not allowed.
 	 */
-	public Tree(final Set<Path> paths) {
+	public Tree(final Collection<Path> paths) {
 		if (paths == null)
 			throw new IllegalArgumentException("Cannot instantiate a new tree from a null collection");
 		tree = new ArrayList<>(paths);

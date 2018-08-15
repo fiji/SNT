@@ -735,8 +735,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 		// so that we can write out something that will be
 		// loadable by the manual tracer afterwards:
 
-		final PathAndFillManager manager = new PathAndFillManager(width, height, depth, spacing_x, spacing_y, spacing_z,
-				null);
+		final PathAndFillManager manager = new PathAndFillManager(spacing_x, spacing_y, spacing_z, null);
 
 		final ArrayList<PathWithLength> paths = new ArrayList<>();
 

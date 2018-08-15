@@ -815,7 +815,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		morphoFilteringMenu.add(mi1);
 		mi1 = new JMenuItem("Length...");
 		mi1.addActionListener(e -> {
-			final String unit = pathAndFillManager.getCalibration().getUnit();
+			final String unit = plugin.spacing_units;
 			doMorphoFiltering(TreeAnalyzer.LENGTH, unit);
 		});
 		morphoFilteringMenu.add(mi1);

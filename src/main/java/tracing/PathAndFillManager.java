@@ -581,7 +581,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 				double distanceSquaredToNearestParentPoint = Double.MAX_VALUE;
 				for (final SWCPoint s : result) {
-					if (s.fromPath != parent)
+					if (s.onPath != parent)
 						continue;
 					final double distanceSquared = connectingPoint.distanceSquaredTo(s.x, s.y, s.z);
 					if (distanceSquared < distanceSquaredToNearestParentPoint) {
@@ -607,7 +607,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 						pathToUse.precise_x_positions[i], pathToUse.precise_y_positions[i],
 						pathToUse.precise_z_positions[i], radius,
 						firstSWCPoint == null ? nearestParentSWCPointID : currentPointID - 1);
-				swcPoint.fromPath = currentPath;
+				swcPoint.onPath = currentPath;
 				result.add(swcPoint);
 				++currentPointID;
 				if (firstSWCPoint == null)
@@ -627,7 +627,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				final SWCPoint swcPoint = new SWCPoint(currentPointID, pathToUse.getSWCType(),
 						pathToUse.precise_x_positions[i], pathToUse.precise_y_positions[i],
 						pathToUse.precise_z_positions[i], radius, previousPointID);
-				swcPoint.fromPath = currentPath;
+				swcPoint.onPath = currentPath;
 				result.add(swcPoint);
 				++currentPointID;
 			}
@@ -738,7 +738,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		final String originalName = p.getName();
 		String candidateName = originalName;
 		int numberSuffix = 2;
-		while (getPathFromName(candidateName) != null) {
+		while (getPathFromName(candidateName, false) != null) {
 			candidateName = originalName + " (" + numberSuffix + ")";
 			++numberSuffix;
 		}

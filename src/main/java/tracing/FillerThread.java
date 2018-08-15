@@ -24,6 +24,7 @@ package tracing;
 
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
@@ -204,7 +205,7 @@ public class FillerThread extends SearchThread {
 		setPriority(MIN_PRIORITY);
 	}
 
-	public void setSourcePaths(final Set<Path> newSourcePaths) {
+	public void setSourcePaths(final Collection<Path> newSourcePaths) {
 		sourcePaths = new HashSet<>();
 		sourcePaths.addAll(newSourcePaths);
 		for (final Path p : newSourcePaths) {

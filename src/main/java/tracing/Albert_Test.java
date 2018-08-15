@@ -134,7 +134,8 @@ public class Albert_Test implements PlugIn {
 
 		// We can just use the Path object directly, or write
 		// it out using the PathAndFillManger.
-		final PathAndFillManager manager = new PathAndFillManager(imagePlus);
+		Calibration cal = imagePlus.getCalibration();
+		final PathAndFillManager manager = new PathAndFillManager(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth, cal.getUnit());
 		manager.addPath(result);
 
 		File tmpFile;

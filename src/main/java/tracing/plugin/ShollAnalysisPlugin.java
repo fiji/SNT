@@ -111,12 +111,14 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			return;
 		}
 
-		if (impRequired)
-			pafm = new PathAndFillManager(imp);
+		if (impRequired) {
+			final Calibration cal = imp.getCalibration(); 
+			pafm = new PathAndFillManager(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth, cal.getUnit()); 
+		}
 		if (tracesPath.endsWith(".traces"))
 			pafm = new PathAndFillManager();
 		else
-			pafm = new PathAndFillManager(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, 1f, 1f, 1f, null);
+			pafm = new PathAndFillManager();
 		if (!pafm.loadGuessingType(tracesPath)) {
 			GuiUtils.errorPrompt("File could not be loaded:\n" + tracesPath);
 			return;
@@ -215,7 +217,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			sa.setDescription(
 					analyzedFile.getName() + " " + swcTypeCodesToString() + " (" + pointToString(shollCenter) + ")",
 					false);
-			sa.setUnit(pafm.getCalibration().getUnits());
+			sa.setUnit(pafm.getBoundingBox(false).getUnit());
 			sa.setPrimaryBranches(primaryPaths.length);
 			sa.setStepRadius(radiusStepSize);
 			if (impRequired) {

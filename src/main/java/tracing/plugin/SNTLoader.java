@@ -46,6 +46,7 @@ import org.scijava.widget.FileWidget;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.plugin.CompositeConverter;
+import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
@@ -75,11 +76,13 @@ public class SNTLoader extends DynamicCommand {
 	private static final String IMAGE_FILE = "Image from path specified below";
 	private static final String UI_SIMPLE = "Memory saving: Only XY view";
 	private static final String UI_DEFAULT = "Default: XY, ZY and XZ views";
+	private static final String DEF_DESCRIPTION = "Ignored when \"Analysis Mode\" is chosen";
 
 	@Parameter(required = true, label = "Image", callback = "imageChoiceChanged")
 	private String imageChoice;
 
-	@Parameter(required = false, label = "Path", style = FileWidget.OPEN_STYLE, callback = "sourceImageChanged")
+	@Parameter(required = false, label = "Path", description = DEF_DESCRIPTION,
+			style = FileWidget.OPEN_STYLE, callback = "sourceImageChanged")
 	private File imageFile;
 
 	@Parameter(required = false, label = "<HTML>&nbsp;", visibility = ItemVisibility.MESSAGE)
@@ -95,7 +98,8 @@ public class SNTLoader extends DynamicCommand {
 																								// 3D viewer
 	private String uiChoice;
 
-	@Parameter(required = false, label = "Tracing channel", min = "1", callback = "channelChanged")
+	@Parameter(required = false, label = "Tracing channel", description = DEF_DESCRIPTION,
+			min = "1", callback = "channelChanged")
 	private int channel;
 
 	private ImagePlus sourceImp;
@@ -202,15 +206,17 @@ public class SNTLoader extends DynamicCommand {
 	public void run() {
 
 		if (IMAGE_NONE.equals(imageChoice)) {
-			if (tracesFile == null || !tracesFile.exists()) {
-				cancel("Specified tracings files is not valid");
-				return;
+			final PathAndFillManager pathAndFillManager = new PathAndFillManager();
+			if (tracesFile != null && tracesFile.exists()) {
+				pathAndFillManager.setHeadless(true);
+				if (!pathAndFillManager.loadGuessingType(tracesFile.getAbsolutePath())) {
+					cancel(String.format("%s is not a valid file", tracesFile.getAbsolutePath()));
+				}
 			}
-			final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(getContext(), tracesFile);
-			sntInstance.getImagePlus().show();
-			sntInstance.initialize(uiChoice.equals(UI_SIMPLE), 1, 1);
+
+			final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(getContext(), pathAndFillManager);
+			sntInstance.initialize((uiChoice.equals(UI_SIMPLE) && pathAndFillManager.size() > 0), 1, 1);
 			sntInstance.startUI();
-			sntInstance.getPathAndFillManager().resetListeners(null, true);
 			return;
 		}
 

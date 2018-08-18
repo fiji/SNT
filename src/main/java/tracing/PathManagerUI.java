@@ -204,13 +204,11 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		jmi.addActionListener(multiPathListener);
 		editMenu.add(jmi);
 
-		swcTypeMenu = new JMenu("Type");
-		menuBar.add(swcTypeMenu);
-		assembleSWCtypeMenu();
-
-		final JMenu tagsMenu = new JMenu("Tags");
+		final JMenu tagsMenu = new JMenu(" Tag ");
 		menuBar.add(tagsMenu);
-
+		swcTypeMenu = new JMenu("Type");
+		tagsMenu.add(swcTypeMenu);
+		assembleSWCtypeMenu(false);
 		colorMenu = new ColorMenu(MultiPathActionListener.COLORS_MENU);
 		tagsMenu.add(colorMenu);
 		jmi = new JMenuItem(MultiPathActionListener.CUSTOM_TAG_CMD);
@@ -251,7 +249,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		jmi.addActionListener(multiPathListener);
 		fillMenu.add(jmi);
 
-		final JMenu advanced = new JMenu("Tools");
+		final JMenu advanced = new JMenu("Analyze");
 		menuBar.add(advanced);
 		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_PATH_CMD);
 		jmi.addActionListener(multiPathListener);
@@ -346,9 +344,11 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		searchable.setRepeats(true);
 		add(bottomPanel(), BorderLayout.PAGE_END);
 		pack();
+		if (plugin.analysisMode)
+			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // prevent closing
 	}
 
-	private void assembleSWCtypeMenu() {
+	private void assembleSWCtypeMenu(final boolean applyPromptOptions) {
 		swcTypeMenu.removeAll();
 		swcTypeButtonGroup = new ButtonGroup();
 		final int iconSize = GuiUtils.getMenuItemHeight();
@@ -403,8 +403,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 
 				@Override
 				protected void done() {
-					assembleSWCtypeMenu();
-					// resetPathsColor(selectedPaths, true);
+					assembleSWCtypeMenu(true);
 				}
 			}
 			(new GetOptions()).execute();
@@ -412,6 +411,14 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		});
 		swcTypeMenu.addSeparator();
 		swcTypeMenu.add(jmi);
+		if (applyPromptOptions && guiUtils.getConfirmation("Apply new color options to all paths?", "Apply Colors")) {
+			if (assignColors) {
+				pathAndFillManager.getPathsFiltered().forEach(p -> p.setColor(map.get(p.getSWCType())));
+			} else if (guiUtils.getConfirmation("Remove existing colors from all Paths?", "Remove All Colors?")) {
+				pathAndFillManager.getPathsFiltered().forEach(p -> p.setColor(null));
+			}
+			refreshManager(false, true);
+		}
 	}
 
 	private void setSWCType(final List<Path> paths, final int swcType, final Color color) {
@@ -1711,7 +1718,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		private static final String RESET_FITS = "Discard Fit(s)...";
 		private final static String SPECIFY_FIT_CMD = "Specify Radius...";
 		private final static String MEASURE_CMD = "Measure";
-		private final static String CONVERT_TO_ROI_CMD = "Send to ROI Manager...";
+		private final static String CONVERT_TO_ROI_CMD = "Convert to ROIs...";
 		private final static String COLORIZE_PATH_CMD = "Color Coding...";
 		private final static String HISTOGRAM_CMD = "Distribution Analysis...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
@@ -1768,6 +1775,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				input.put("tree", new Tree(selectedPaths));
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(ROIExporterCmd.class, true, input);
+				return;
 
 			} else if (COLORIZE_PATH_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
@@ -1775,6 +1783,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				input.put("manager", getInstance());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(TreeColorizerCmd.class, true, input);
+				return;
 
 			} else if (HISTOGRAM_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
@@ -1782,6 +1791,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				input.put("title", "SNT: Hist. " + getDescription(selectedPaths));
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(DistributionCmd.class, true, input);
+				return;
 
 			} if (CUSTOM_TAG_CMD.equals(cmd)) {
 
@@ -1825,7 +1835,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				}
 				final double rad = 2 * plugin.getMinimumSeparation();
 				final Double userRad = guiUtils.getDouble("<HTML><body><div style='width:" + Math.min(getWidth(), 500)
-						+ ";'>" + "Please specify a constant radius for all the nodes "
+						+ ";'>" + "Please specify a constant radius to be applied to all the nodes "
 						+ "of selected path(s). This setting only applies to unfitted "
 						+ "paths and <b>overrides</b> any existing values.", "Assign Constant Diameter", rad);
 				if (userRad == null) {
@@ -1902,6 +1912,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				}
 				removeAllOrderTags();
 				refreshManager(true, true);
+				return;
 
 			} else if (DOWNSAMPLE_CMD.equals(cmd)) {
 				final double minSep = plugin.getMinimumSeparation();
@@ -1928,8 +1939,10 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				}
 				// Make sure that the 3D viewer and the stacks are redrawn:
 				plugin.updateAllViewers();
+				return;
+
 			} else if (RESET_FITS.equals(cmd)) {
-				if (!guiUtils.getConfirmation("Discard fitted diameters?", "Confirm Reset?"))
+				if (!guiUtils.getConfirmation("Discard existing fits?", "Confirm Discard?"))
 					return;
 				for (final Path p : selectedPaths) {
 					p.setUseFitted(false);
@@ -1937,6 +1950,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 				}
 				refreshManager(true, false);
 				return;
+
 			} else if (e.getSource().equals(fitVolumeMenuItem)) {
 
 				// this MenuItem is a toggle: check if it is set for 'unfitting'
@@ -2065,7 +2079,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 	}
 
 
-	private String extractTagsFromPath(final Path p) {
+	public static String extractTagsFromPath(final Path p) {
 		final String name = p.getName();
 		final int openingDlm = name.indexOf("{");
 		final int closingDlm = name.lastIndexOf("}");

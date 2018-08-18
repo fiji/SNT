@@ -369,12 +369,44 @@ public class SNTUI extends JDialog {
 		pack();
 		toFront();
 
-		pmUI = new PathManagerUI(plugin);
-		pmUI.setLocation(getX() + getWidth(), getY());
+		this.pmUI = pmUI;
+		this.fmUI = fmUI;
+		if (pmUI == null) {
+			this.pmUI = new PathManagerUI(plugin);
+			this.pmUI.setLocation(getX() + getWidth(), getY());
+			if (showOrHidePathList != null) {
+				this.pmUI.addWindowStateListener(evt -> {
+					if ((evt.getNewState() & JFrame.ICONIFIED) == JFrame.ICONIFIED) {
+						showOrHidePathList.setText("Show Path Manager");
+					}
+				});
+				this.pmUI.addWindowListener(new WindowAdapter() {
 
-		fmUI = new FillManagerUI(plugin);
-		fmUI.setLocation(getX() + getWidth(), getY() + pmUI.getHeight());
+					@Override
+					public void windowClosing(final WindowEvent e) {
+						showOrHidePathList.setText("Show Path Manager");
+					}
+				});
+			}
+		}
+		if (fmUI == null) {
+			this.fmUI = new FillManagerUI(plugin);
+			this.fmUI.setLocation(getX() + getWidth(), getY() + this.pmUI.getHeight());
+			if (showOrHidePathList != null) {
+				this.fmUI.addWindowStateListener(evt -> {
+					if (showOrHideFillList != null && (evt.getNewState() & JFrame.ICONIFIED) == JFrame.ICONIFIED) {
+						showOrHideFillList.setText("Show Fill Manager");
+					}
+				});
+				this.fmUI.addWindowListener(new WindowAdapter() {
 
+					@Override
+					public void windowClosing(final WindowEvent e) {
+						showOrHideFillList.setText("Show Fill Manager");
+					}
+				});
+			}
+		}
 		changeState(WAITING_TO_START_PATH);
 	}
 
@@ -560,13 +592,13 @@ public class SNTUI extends JDialog {
 
 	protected void exitRequested() {
 		assert SwingUtilities.isEventDispatchThread();
-		if (plugin.pathsUnsaved() && !guiUtils.getConfirmation(
-			"There are unsaved paths. Do you really want to quit?", "Really quit?")) {
+		String msg = "Exit SNT?";
+		if (plugin.pathsUnsaved())
+				msg = "There are unsaved paths. Do you really want to quit?";
+		if (pmUI.measurementsUnsaved())
+			msg = "There are unsaved measurements. Do you really want to quit?";
+		if (!guiUtils.getConfirmation(msg, "Really quit?"))
 			return;
-		}
-		if (pmUI.measurementsUnsaved() && !guiUtils.getConfirmation(
-			"There are unsaved measurements. Do you really want to quit?",
-			"Really quit?")) return;
 		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
 		plugin.prefs.savePluginPrefs(true);
@@ -2002,7 +2034,7 @@ public class SNTUI extends JDialog {
 
 		final JComboBox<String> pathsColorChoice = new JComboBox<>();
 		pathsColorChoice.addItem("Default colors");
-		pathsColorChoice.addItem("Path Manager tags (if any)");
+		pathsColorChoice.addItem("Path Manager colors (if any)");
 		pathsColorChoice.setSelectedIndex(plugin.displayCustomPathColors ? 1 : 0);
 		pathsColorChoice.addActionListener(new ActionListener() {
 

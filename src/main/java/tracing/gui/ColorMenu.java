@@ -224,14 +224,13 @@ public class ColorMenu extends JMenu {
 			swcColor = sColor;
 			if (sColor.color()== null) {
 				setBackground(getBackground().brighter());
-				setToolTipText("None (Remove Existing Color)");
+				setToolTipText("None (No Color)");
 			} else {
 			setBackground(swcColor.color());
 			final String msg = (!swcColor.isTypeDefined()) ? "RGB: " + swcColor.color().getRed() + ", "
 					+ swcColor.color().getGreen() + ", " + swcColor.color().getBlue()
 					: Path.getSWCtypeName(swcColor.type(), true);
 					setToolTipText(msg);
-
 			}
 		}
 

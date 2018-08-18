@@ -90,7 +90,7 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	private final String msg = HEADER + "When <i>color pairing</i> is enabled, "
 			+ "assigning a <i>SWC-type</i> tag automaticaly colors the path "
 			+ "with the respective listed color. Note that it is also possible "
-			+ "to assign ad-hoc color tags using the <i>Tags</i> menu.";
+			+ "to assign ad-hoc colors using the <i>Tag>Color></i> menu.";
 
 	/*
 	 * (non-Javadoc)

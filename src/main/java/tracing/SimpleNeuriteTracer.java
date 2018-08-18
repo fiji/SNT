@@ -2306,6 +2306,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 		firstKeyListener.addOtherKeyListeners(oldKeyListeners);
 		c.addKeyListener(firstKeyListener);
+		if (c.getParent() != null)
+			setAsFirstKeyListener(c.getParent(), firstKeyListener);
 	}
 
 	public synchronized void findSnappingPointInXYview(final double x_in_pane,
@@ -2631,6 +2633,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			final ImagePlus[] impPanes = { xz, zy };
 			final StackWindow[] winPanes = { xz_window, zy_window };
 			for (int i = 0; i < impPanes.length; ++i) {
+				if (impPanes[i] == null) continue;
 				final Overlay overlay = impPanes[i].getOverlay();
 				if (!impPanes[i].changes && (overlay == null || impPanes[i].getOverlay()
 					.size() == 0)) impPanes[i].close();
@@ -2643,6 +2646,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 		// Restore main view
 		final Overlay overlay = (xy == null) ? null : xy.getOverlay();
+		if (overlay == null && analysisMode) {
+			if (xy != null) xy.close(); 
+			return;
+		}
 		if (original_xy_canvas != null && xy != null && xy.getImage() != null) {
 			xy_window = new StackWindow(xy, original_xy_canvas);
 			xy.setOverlay(overlay);

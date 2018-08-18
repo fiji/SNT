@@ -24,6 +24,7 @@ package tracing;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -436,8 +437,27 @@ public class Path implements Comparable<Path> {
 		return result;
 	}
 
+	protected PointInImage getPointInImageUnScaled(final int node) {
+		final PointInImage result = new PointInImage(getXUnscaled(node), getYUnscaled(node), getYUnscaled(node));
+		result.onPath = this;
+		return result;
+	}
+
+	protected boolean containsUnscaledNodesInViewPort(final TracerCanvas canvas) {
+		final Rectangle rect = canvas.getSrcRect();
+		final double minX = rect.getMinX();
+		final double minY = rect.getMinY();
+		final double maxX = rect.getMaxX();
+		final double maxY = rect.getMaxY();
+		for (int i = 0; i< size(); i++) {
+			final PointInImage node = getPointInImageUnScaled(i);
+			if (node.x >= minX && node.y >= minY && node.x <= maxX && node.y <= maxY) return true;
+		}
+		return false;
+	}
+
 	/**
-	 * Returns whether this Path contains a point
+	 * Check whether this Path contains the specified point
 	 * 
 	 * @param pim
 	 *            the {@link PointInImage} node

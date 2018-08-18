@@ -24,6 +24,7 @@ package tracing;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -32,12 +33,14 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
+import javax.swing.SwingUtilities;
 
 import org.scijava.util.PlatformUtils;
 
@@ -292,31 +295,34 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	public void selectNearestPathToMousePointer(final boolean addToExistingSelection) {
 
 		if (pathAndFillManager.size() == 0) {
-			tracerPlugin.discreteMsg("There are no finished paths yet, so you can't select one with 'G'");
+			tracerPlugin.discreteMsg("Nothing to select: Path Manager is empty");
 			return;
 		}
 
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
 
-		final double diagonalLength = tracerPlugin.getImpDiagonalLength();
+		final Rectangle rect = super.getSrcRect();
+		final PointInImage rectMin = new PointInImage(rect.getMinX(), rect.getMinY(), p[2]);
+		final PointInImage rectMax = new PointInImage(rect.getMaxX(), rect.getMaxY(), p[2]);
+		final PointInImage cursor = new PointInImage(p[0], p[1], p[2]);
+		final double maxSquaredLength = Math.max(cursor.distanceSquaredTo(rectMin), cursor.distanceSquaredTo(rectMax)); 
 
-		/*
-		 * Find the nearest point on any path - we'll select that path...
-		 */
-
-		final NearPoint np = pathAndFillManager.nearestPointOnAnyPath(p[0] * tracerPlugin.x_spacing,
-				p[1] * tracerPlugin.y_spacing, p[2] * tracerPlugin.z_spacing, diagonalLength);
-
-		if (np == null) {
-			tracerPlugin.discreteMsg("No finished path was found within " + SNT.formatDouble(diagonalLength, 3)
-					+ tracerPlugin.spacing_units + " of the pointer!");
+		// Find the nearest point on unselected Paths currently displayed in viewPort
+		final List<Path> paths = pathAndFillManager.getPathsRenderedInViewPort(this, true);
+		if (paths.isEmpty()) {
+			tracerPlugin.discreteMsg("No unselected paths in view");
 			return;
 		}
-
+		cursor.z = Double.NaN; // ignore Z-positioning of path nodes
+		final NearPoint np = pathAndFillManager.nearestPointOnAnyPath(paths, cursor, maxSquaredLength, true);
+		if (np == null) {
+			tracerPlugin.discreteMsg("No complete path was found in view");
+			return;
+		}
 		final Path path = np.getPath();
 		tracerPlugin.selectPath(path, addToExistingSelection);
-
+		tracerPlugin.discreteMsg(path.getName() + " selected");
 	}
 
 	@Override

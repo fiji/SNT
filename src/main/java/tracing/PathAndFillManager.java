@@ -2139,19 +2139,33 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 	// ... end of methods for UniverseListener
 
+
 	public NearPoint nearestPointOnAnyPath(final double x, final double y, final double z, final double distanceLimit) {
+		return nearestPointOnAnyPath(allPaths, new PointInImage(x, y, z), Math.sqrt(distanceLimit), false);
+	}
 
-		/*
-		 * Order all points in all paths by their euclidean distance to (x,y,z):
-		 */
+	protected List<Path> getPathsRenderedInViewPort(final TracerCanvas canvas, final boolean ignoreSelected) {
+		final List<Path> paths= new ArrayList<>();
+		for (final Path path : allPaths) {
+			if (ignoreSelected && path.isSelected()) continue;
+			if (path.containsUnscaledNodesInViewPort(canvas))
+				paths.add(path);
+		}
+		return paths;
+	}
 
+	protected NearPoint nearestPointOnAnyPath(final List<Path> paths,
+			final PointInImage pim, final double distanceLimitSquared, 
+			final boolean unScaledPositions) {
+
+		// Order all points in all paths by their Euclidean distance to pim:
 		final PriorityQueue<NearPoint> pq = new PriorityQueue<>();
 
-		for (final Path path : allPaths) {
+		for (final Path path : paths) {
 			if (!path.versionInUse())
 				continue;
 			for (int j = 0; j < path.size(); ++j) {
-				pq.add(new NearPoint(x, y, z, path, j));
+				pq.add(new NearPoint(pim, path, j, unScaledPositions));
 			}
 		}
 
@@ -2166,8 +2180,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			 * we get them in the order closest to furthest away, if we exceed this limit
 			 * returned:
 			 */
-
-			if (np.distanceToPathPointSquared() > (distanceLimit * distanceLimit))
+			if (np.distanceToPathPointSquared() > distanceLimitSquared)
 				return null;
 
 			final double distanceToPath = np.distanceToPathNearPoint();

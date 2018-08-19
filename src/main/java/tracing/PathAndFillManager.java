@@ -1822,6 +1822,20 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return true;
 	}
 
+	public Map<String, Boolean> importMLNeurons(final Collection<String> ids, final String compartment) {
+		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
+		for (String id : ids) {
+			final MLJSONLoader loader = new MLJSONLoader(id);
+			map.put(id, (loader.idExists()) ? loader.getNodes(compartment) : null);
+		}
+		final Map<String, Boolean> result = importMap(map);
+		if (result.containsValue(true)) {
+			if (boundingBox == null) boundingBox = new BoundingBox(); // should never happen
+			boundingBox.setUnit("um");
+		}
+		return result;
+	}
+
 	private Map<String, Boolean> importMap(Map<String, TreeSet<SWCPoint>> map) {
 		final Map<String, Boolean> result = new HashMap<>();
 		map.forEach((k, points) -> {

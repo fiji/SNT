@@ -1150,8 +1150,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		else if (editing) {
 			// find the nearest node to this cursor 2D position.
 			// then activate the Z-slice of the retrieved node
-			final int eNode = editingPath.indexNearestTo2D(x * x_spacing, y *
-				y_spacing, getMinimumSeparation());
+			final int eNode = editingPath.indexNearestToCanvasPosition2D(x, y, xy_tracer_canvas.nodeDiameter());
 			if (eNode != -1) {
 				pim = editingPath.getPointInImage(eNode);
 				editingPath.setEditableNode(eNode);

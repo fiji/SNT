@@ -461,9 +461,16 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		return invalid;
 	}
 
-	private void redrawEditingPath() {
+	private void redrawEditingPath(final String msg) {
 		redrawEditingPath(getGraphics2D(getGraphics()));
 		repaint();
+		if (msg != null) tempMsg(msg);
+	}
+
+	private void tempMsg(final String msg) {
+		SwingUtilities.invokeLater(() -> {
+			getGuiUtils().tempMsg(msg);
+		});
 	}
 
 	private void redrawEditingPath(final Graphics2D g) {
@@ -612,11 +619,11 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			if (e.getActionCommand().equals(NODE_DELETE)) {
 				deleteEditingNode(true);
 			} else if (e.getActionCommand().equals(NODE_INSERT)) {
-				apppendLastPositionToEditingNode(true);
+				apppendLastCanvasPositionToEditingNode(true);
 			} else if (e.getActionCommand().equals(NODE_MOVE)) {
-				moveEditingNodeToLastPosition(true);
+				moveEditingNodeToLastCanvasPosition(true);
 			} else if (e.getActionCommand().equals(NODE_MOVE_Z)) {
-				assignLastZPositionToEditNode(true);
+				assignLastCanvasZPositionToEditNode(true);
 			} else {
 				SNT.error("Unexpectedly got an event from an unknown source: ");
 				return;
@@ -642,8 +649,12 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		if (editingPath.size() > 1) {
-			editingPath.removeNode(editingPath.getEditableNodeIndex());
-			redrawEditingPath();
+			try {
+				editingPath.removeNode(editingPath.getEditableNodeIndex());
+				redrawEditingPath("Node deleted");
+			} catch (final IllegalArgumentException exc) {
+				tempMsg("Node deletion failed!");
+			}
 		} else if (new GuiUtils(this.getParent()).getConfirmation("Delete " + editingPath + "?",
 				"Delete Single-Point Path?")) {
 			tracerPlugin.getPathAndFillManager().deletePath(editingPath);
@@ -652,54 +663,71 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		}
 	}
 
-	protected void apppendLastPositionToEditingNode(final boolean warnOnFailure) {
+	protected void apppendLastCanvasPositionToEditingNode(final boolean warnOnFailure) {
 		if (impossibleEdit(warnOnFailure))
 			return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		final int editingNode = editingPath.getEditableNodeIndex();
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
-		editingPath.addNode(editingNode, new PointInImage(p[0] * tracerPlugin.x_spacing, p[1] * tracerPlugin.y_spacing,
-				p[2] * tracerPlugin.z_spacing));
-		editingPath.setEditableNode(editingNode + 1);
-		redrawEditingPath();
+		final PointInImage offset = editingPath.canvasOffset;
+		try {
+			editingPath.addNode(editingNode, new PointInImage((p[0] - offset.x) * tracerPlugin.x_spacing,
+					(p[1] - offset.y) * tracerPlugin.y_spacing, (p[2] - offset.z) * tracerPlugin.z_spacing));
+			editingPath.setEditableNode(editingNode + 1);
+			redrawEditingPath("New node inserted (N=" + editingNode + ")");
+		} catch (final IllegalArgumentException exc) {
+			tempMsg("Node insertion failed!");
+		}
 		return;
 	}
 
-	protected void moveEditingNodeToLastPosition(final boolean warnOnFailure) {
+	protected void moveEditingNodeToLastCanvasPosition(final boolean warnOnFailure) {
 		if (impossibleEdit(warnOnFailure))
 			return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		final int editingNode = editingPath.getEditableNodeIndex();
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
-		editingPath.moveNode(editingNode, new PointInImage(p[0] * tracerPlugin.x_spacing, p[1] * tracerPlugin.y_spacing,
-				p[2] * tracerPlugin.z_spacing));
-		redrawEditingPath();
+		final PointInImage offset = editingPath.canvasOffset;
+		try {
+			editingPath.moveNode(editingNode, new PointInImage((p[0] - offset.x) * tracerPlugin.x_spacing,
+					(p[1] - offset.y) * tracerPlugin.y_spacing, (p[2] - offset.z) * tracerPlugin.z_spacing));
+			redrawEditingPath("Node moved");
+		} catch (final IllegalArgumentException exc) {
+			tempMsg("Node displacement failed!");
+		}
 		return;
 	}
 
-	protected void assignLastZPositionToEditNode(final boolean warnOnFailure) {
+	protected void assignLastCanvasZPositionToEditNode(final boolean warnOnFailure) {
 		if (impossibleEdit(warnOnFailure))
 			return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		final int editingNode = editingPath.getEditableNodeIndex();
-		double newZ = editingPath.precise_z_positions[editingNode];
+		final PointInImage offset = editingPath.canvasOffset;
+		double newZ;
 		switch (plane) {
 		case MultiDThreePanes.XY_PLANE:
-			newZ = (imp.getZ() - 1) * tracerPlugin.z_spacing;
+			newZ = (imp.getZ() - 1 - offset.z) * tracerPlugin.z_spacing;
 			break;
 		case MultiDThreePanes.XZ_PLANE:
-			newZ = last_y_in_pane_precise * tracerPlugin.y_spacing;
+			newZ = (last_y_in_pane_precise - offset.y) * tracerPlugin.y_spacing;
 			break;
 		case MultiDThreePanes.ZY_PLANE:
-			newZ = last_x_in_pane_precise * tracerPlugin.x_spacing;
-			;
+			newZ = (last_x_in_pane_precise - offset.x) * tracerPlugin.x_spacing;
+			break;
+		default:
+			newZ = editingPath.precise_z_positions[editingNode];
 			break;
 		}
-		editingPath.moveNode(editingNode, new PointInImage(editingPath.precise_x_positions[editingNode],
-				editingPath.precise_y_positions[editingNode], newZ));
-		redrawEditingPath();
+		try {
+			editingPath.moveNode(editingNode, new PointInImage(editingPath.precise_x_positions[editingNode],
+					editingPath.precise_y_positions[editingNode], newZ));
+			redrawEditingPath("Node " + editingNode + "moved to Z=" + SNT.formatDouble(newZ, 3));
+		} catch (final IllegalArgumentException exc) {
+			tempMsg("Adjustment of Z-position failed!");
+		}
 	}
 
 }

@@ -595,12 +595,12 @@ public class Path implements Comparable<Path> {
 		return indexOfMinimum;
 	}
 
-	protected int indexNearestTo2D(final double x, final double y, final double within) {
-		double minimumDistanceSquared = within * within;
+	protected int indexNearestToCanvasPosition2D(final double xInCanvas, final double yInCanvas, final double withinPixels) {
+		double minimumDistanceSquared = withinPixels * withinPixels;
 		int indexOfMinimum = -1;
 		for (int i = 0; i < size(); ++i) {
-			final double diff_x = x - precise_x_positions[i];
-			final double diff_y = y - precise_y_positions[i];
+			final double diff_x = xInCanvas - getXUnscaledDouble(i);
+			final double diff_y = yInCanvas - getYUnscaledDouble(i);
 			final double thisDistanceSquared = diff_x * diff_x + diff_y * diff_y;
 			if (thisDistanceSquared < minimumDistanceSquared) {
 				indexOfMinimum = i;
@@ -658,19 +658,19 @@ public class Path implements Comparable<Path> {
 	public double getXUnscaledDouble(final int i) {
 		if ((i < 0) || i >= size())
 			throw new IllegalArgumentException("getXUnscaled was asked for an out-of-range point: " + i);
-		return precise_x_positions[i] / x_spacing;
+		return precise_x_positions[i] / x_spacing + canvasOffset.x;
 	}
 
 	public double getYUnscaledDouble(final int i) {
 		if ((i < 0) || i >= size())
 			throw new IllegalArgumentException("getYUnscaled was asked for an out-of-range point: " + i);
-		return precise_y_positions[i] / y_spacing;
+		return precise_y_positions[i] / y_spacing + canvasOffset.y;
 	}
 
 	public double getZUnscaledDouble(final int i) {
 		if ((i < 0) || i >= size())
 			throw new IllegalArgumentException("getZUnscaled was asked for an out-of-range point: " + i);
-		return precise_z_positions[i] / z_spacing;
+		return precise_z_positions[i] / z_spacing + canvasOffset.z;
 	}
 
 	/*

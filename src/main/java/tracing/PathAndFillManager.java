@@ -304,24 +304,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return new File(prefix + "-" + fileIndexFormatter.format(index) + ".swc");
 	}
 
-	public boolean checkOKToWriteAllAsSWC(final String prefix) {
-		final List<Path> primaryPaths = Arrays.asList(getPathsStructured());
-		final int n = primaryPaths.size();
-		String errorMessage = "";
-		for (int i = 0; i < n; ++i) {
-			final File swcFile = getSWCFileForIndex(prefix, i);
-			if (swcFile.exists())
-				errorMessage += swcFile.getAbsolutePath() + "\n";
-		}
-		if (errorMessage.length() == 0)
-			return true;
-		else {
-			errorMessage = "The following files would be overwritten:\n" + errorMessage;
-			errorMessage += "Continue to save, overwriting these files?";
-			return IJ.showMessageWithCancel("Confirm overwriting SWC files...", errorMessage);
-		}
-	}
-
 	public synchronized boolean exportAllAsSWC(final String prefix) {
 		final List<Path> primaryPaths = Arrays.asList(getPathsStructured());
 		int i = 0;

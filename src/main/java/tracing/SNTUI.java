@@ -2990,7 +2990,7 @@ public class SNTUI extends JDialog {
 				}
 				final String savePath = saveFile.getAbsolutePath();
 				SNT.log("Exporting paths to " + saveFile);
-				if (!pathAndFillManager.checkOKToWriteAllAsSWC(savePath)) return;
+				if (!checkOKToWriteAllAsSWC(savePath)) return;
 				pathAndFillManager.exportAllAsSWC(savePath);
 
 			}
@@ -3130,7 +3130,27 @@ public class SNTUI extends JDialog {
 			changeState(preSigmaPaletteState);
 			plugin.setCanvasLabelAllPanes(null);
 		}
-
+		
+		
+		private boolean checkOKToWriteAllAsSWC(final String prefix) {
+			
+			final List<Path> primaryPaths = Arrays.asList(pathAndFillManager.getPathsStructured());
+			final int n = primaryPaths.size();
+			String errorMessage = "";
+			for (int i = 0; i < n; ++i) {
+				final File swcFile = pathAndFillManager.getSWCFileForIndex(prefix, i);
+				if (swcFile.exists())
+					errorMessage += swcFile.getAbsolutePath() + "\n";
+			}
+			if (errorMessage.length() == 0)
+				return true;
+			else {
+				errorMessage = "The following files would be overwritten:\n" + errorMessage;
+				errorMessage += "Continue to save, overwriting these files?";
+				return guiUtils.getConfirmation(errorMessage, "Confirm overwriting SWC files?");
+			}
+		}
+	}
 
 	/**
 	 * Reloads (rebuilds) the UI of a SimpleNeuriteTracer instance

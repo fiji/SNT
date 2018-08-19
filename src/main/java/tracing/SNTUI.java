@@ -127,7 +127,7 @@ public class SNTUI extends JDialog {
 	protected JCheckBox useSnapWindow;
 	protected JSpinner snapWindowXYsizeSpinner;
 	protected JSpinner snapWindowZsizeSpinner;
-	private JSpinner nearbyFieldSpinner;
+	protected JSpinner nearbyFieldSpinner;
 	private JButton showOrHidePathList;
 	private JButton showOrHideFillList = new JButton(); // must be initialized
 	private JPanel hessianPanel;
@@ -173,8 +173,8 @@ public class SNTUI extends JDialog {
 	private final SimpleNeuriteTracer plugin;
 	private final PathAndFillManager pathAndFillManager;
 	protected final GuiUtils guiUtils;
-	private final PathManagerUI pmUI;
-	private final FillManagerUI fmUI;
+	private PathManagerUI pmUI;
+	private FillManagerUI fmUI;
 	protected final GuiListener listener;
 
 	/* These are the states that the UI can be in: */
@@ -215,6 +215,10 @@ public class SNTUI extends JDialog {
 	 *            the {@link SimpleNeuriteTracer} instance associated with this UI
 	 */
 	public SNTUI(final SimpleNeuriteTracer plugin) {
+		this(plugin, null, null);
+	}
+
+	private SNTUI(final SimpleNeuriteTracer plugin, final PathManagerUI pmUI, final FillManagerUI fmUI) {
 
 		super(plugin.legacyService.getIJ1Helper().getIJ(), "SNT v" + SNT.VERSION,
 			false);
@@ -239,7 +243,7 @@ public class SNTUI extends JDialog {
 
 		{ // Main tab
 			final GridBagConstraints c1 = GuiUtils.defaultGbc();
-			if (!plugin.nonInteractiveSession) {
+			if (!plugin.analysisMode) {
 				final JPanel tab1 = getTab();
 				// c.insets.left = MARGIN * 2;
 				c1.anchor = GridBagConstraints.NORTHEAST;
@@ -277,7 +281,7 @@ public class SNTUI extends JDialog {
 			// c2.insets.left = MARGIN * 2;
 			c2.anchor = GridBagConstraints.NORTHEAST;
 			c2.gridwidth = GridBagConstraints.REMAINDER;
-			if (!plugin.nonInteractiveSession) {
+			if (!plugin.analysisMode) {
 				GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
 				++c2.gridy;
 				tab2.add(sourcePanel(), c2);
@@ -298,7 +302,7 @@ public class SNTUI extends JDialog {
 			++c2.gridy;
 			tab2.add(viewsPanel(), c2);
 			++c2.gridy;
-			if (!plugin.nonInteractiveSession) {
+			if (!plugin.analysisMode) {
 				GuiUtils.addSeparator(tab2, "Temporary Paths:", true, c2);
 				++c2.gridy;
 				tab2.add(tracingPanel(), c2);
@@ -649,158 +653,163 @@ public class SNTUI extends JDialog {
 	 */
 	public void changeState(final int newState) {
 
-		SNT.log("Changing state to: " + getState(newState));
+		currentState = newState;
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
 			public void run() {
 				switch (newState) {
 
-					case WAITING_TO_START_PATH:
+				case WAITING_TO_START_PATH:
+				case ANALYSIS_MODE:
 
-						keepSegment.setEnabled(false);
-						junkSegment.setEnabled(false);
-						completePath.setEnabled(false);
-						abortButton.setEnabled(false);
+					keepSegment.setEnabled(false);
+					junkSegment.setEnabled(false);
+					completePath.setEnabled(false);
+					abortButton.setEnabled(false);
 
-						pmUI.valueChanged(null); // Fake a selection change in the path tree:
-						showPartsNearby.setEnabled(isStackAvailable());
-						setEnableAutoTracingComponents(plugin.isAstarEnabled());
-						fmUI.setEnabledWhileNotFilling();
-						loadLabelsMenuItem.setEnabled(true);
-						saveMenuItem.setEnabled(true);
-						loadTracesMenuItem.setEnabled(true);
-						loadSWCMenuItem.setEnabled(true);
+					pmUI.valueChanged(null); // Fake a selection change in the path tree:
+					showPartsNearby.setEnabled(isStackAvailable());
+					setEnableAutoTracingComponents(plugin.isAstarEnabled());
+					fmUI.setEnabledWhileNotFilling();
+					loadLabelsMenuItem.setEnabled(true);
+					saveMenuItem.setEnabled(true);
+					loadTracesMenuItem.setEnabled(true);
+					loadSWCMenuItem.setEnabled(true);
 
-						exportCSVMenuItem.setEnabled(true);
-						exportAllSWCMenuItem.setEnabled(true);
-						measureMenuItem.setEnabled(true);
-						sendToTrakEM2.setEnabled(plugin.anyListeners());
-						quitMenuItem.setEnabled(true);
-						showPathsSelected.setEnabled(true);
+					exportCSVMenuItem.setEnabled(true);
+					exportAllSWCMenuItem.setEnabled(true);
+					measureMenuItem.setEnabled(true);
+					sendToTrakEM2.setEnabled(plugin.anyListeners());
+					quitMenuItem.setEnabled(true);
+					showPathsSelected.setEnabled(true);
 
-						if (plugin.nonInteractiveSession) {
-							changeState(ANALYSIS_MODE);
-						}
-						else {
-							showOrHideFillList.setEnabled(true); // not initialized in
-																										// "Analysis Mode"
-							updateStatusText("Click somewhere to start a new path...");
-						}
-						break;
-
-					case PARTIAL_PATH:
-						updateStatusText("Select a point further along the structure...");
-						disableEverything();
-						keepSegment.setEnabled(false);
-						junkSegment.setEnabled(false);
-						completePath.setEnabled(true);
-						showPartsNearby.setEnabled(isStackAvailable());
-						setEnableAutoTracingComponents(plugin.isAstarEnabled());
-						quitMenuItem.setEnabled(false);
-						break;
-
-					case SEARCHING:
-						updateStatusText("Searching for path between points...");
-						disableEverything();
-						break;
-
-					case QUERY_KEEP:
-						updateStatusText("Keep this new path segment?");
-						disableEverything();
-						keepSegment.setEnabled(true);
-						junkSegment.setEnabled(true);
-						break;
-
-					case FILLING_PATHS:
-						updateStatusText("Filling out selected paths...");
-						disableEverything();
-						fmUI.setEnabledWhileFilling();
-						break;
-
-					case FITTING_PATHS:
-						updateStatusText("Fitting volumes around selected paths...");
-						abortButton.setEnabled(true);
-						break;
-
-					case CALCULATING_GAUSSIAN:
-						updateStatusText("Calculating Gaussian...");
-						disableEverything();
-						break;
-
-					case LOADING_FILTERED_IMAGE:
-						updateStatusText("Loading Filtered Image...");
-						disableEverything();
-						break;
-
-					case WAITING_FOR_SIGMA_POINT:
-						updateStatusText("Click on a representative structure...");
-						disableEverything();
-						break;
-
-					case WAITING_FOR_SIGMA_CHOICE:
-						updateStatusText("Close the sigma palette window to continue...");
-						disableEverything();
-						break;
-
-					case LOADING:
-						updateStatusText("Loading...");
-						disableEverything();
-						break;
-
-					case SAVING:
-						updateStatusText("Saving...");
-						disableEverything();
-						break;
-
-					case EDITING_MODE:
-						if (noPathsError()) return;
-						plugin.setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
-						updateStatusText("Editing Mode. Tracing functions disabled...");
-						disableEverything();
-						keepSegment.setEnabled(false);
-						junkSegment.setEnabled(false);
-						completePath.setEnabled(false);
-						showPartsNearby.setEnabled(isStackAvailable());
-						setEnableAutoTracingComponents(false);
-						getFillManager().setVisible(false);
-						showOrHideFillList.setEnabled(false);
-						break;
-
-					case PAUSED:
-						updateStatusText("SNT is paused. Tracing functions disabled...");
-						disableEverything();
-						keepSegment.setEnabled(false);
-						junkSegment.setEnabled(false);
-						abortButton.setEnabled(true);
-						completePath.setEnabled(false);
-						showPartsNearby.setEnabled(isStackAvailable());
-						setEnableAutoTracingComponents(false);
-						getFillManager().setVisible(false);
-						showOrHideFillList.setEnabled(false);
-						break;
-					case ANALYSIS_MODE:
+					if (plugin.analysisMode) {
 						updateStatusText("Analysis mode. Tracing disabled...");
-						plugin.setDrawCrosshairsAllPanes(false);
-						plugin.setCanvasLabelAllPanes("Display Canvas");
+						if (plugin.getXYCanvas() != null) {
+							plugin.setDrawCrosshairsAllPanes(false);
+							plugin.setCanvasLabelAllPanes("Display Canvas");
+							plugin.setDrawCrosshairsAllPanes(false);
+						}
+						currentState = ANALYSIS_MODE;
+					} else {
+						updateStatusText("Click somewhere to start a new path...");
+						showOrHideFillList.setEnabled(true); // null in "Analysis Mode"
+					}
+					break;
+
+				case PARTIAL_PATH:
+					updateStatusText("Select a point further along the structure...");
+					disableEverything();
+					keepSegment.setEnabled(false);
+					junkSegment.setEnabled(false);
+					completePath.setEnabled(true);
+					showPartsNearby.setEnabled(isStackAvailable());
+					setEnableAutoTracingComponents(plugin.isAstarEnabled());
+					quitMenuItem.setEnabled(false);
+					break;
+
+				case SEARCHING:
+					updateStatusText("Searching for path between points...");
+					disableEverything();
+					break;
+
+				case QUERY_KEEP:
+					updateStatusText("Keep this new path segment?");
+					disableEverything();
+					keepSegment.setEnabled(true);
+					junkSegment.setEnabled(true);
+					break;
+
+				case FILLING_PATHS:
+					updateStatusText("Filling out selected paths...");
+					disableEverything();
+					fmUI.setEnabledWhileFilling();
+					break;
+
+				case FITTING_PATHS:
+					updateStatusText("Fitting volumes around selected paths...");
+					abortButton.setEnabled(true);
+					break;
+
+				case CALCULATING_GAUSSIAN:
+					updateStatusText("Calculating Gaussian...");
+					disableEverything();
+					break;
+
+				case LOADING_FILTERED_IMAGE:
+					updateStatusText("Loading Filtered Image...");
+					disableEverything();
+					break;
+
+				case WAITING_FOR_SIGMA_POINT:
+					updateStatusText("Click on a representative structure...");
+					disableEverything();
+					break;
+
+				case WAITING_FOR_SIGMA_CHOICE:
+					updateStatusText("Close the sigma palette window to continue...");
+					disableEverything();
+					break;
+
+				case LOADING:
+					updateStatusText("Loading...");
+					disableEverything();
+					break;
+
+				case SAVING:
+					updateStatusText("Saving...");
+					disableEverything();
+					break;
+
+				case EDITING_MODE:
+					if (noPathsError())
 						return;
-					case IMAGE_CLOSED:
-						updateStatusText("Tracing image is no longer available...");
-						disableImageDependentComponents();
-						plugin.discardFill(false);
-						quitMenuItem.setEnabled(true);
+					plugin.setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
+					updateStatusText("Editing Mode. Tracing functions disabled...");
+					disableEverything();
+					keepSegment.setEnabled(false);
+					junkSegment.setEnabled(false);
+					completePath.setEnabled(false);
+					showPartsNearby.setEnabled(isStackAvailable());
+					setEnableAutoTracingComponents(false);
+					getFillManager().setVisible(false);
+					showOrHideFillList.setEnabled(false);
+					break;
+
+				case PAUSED:
+					updateStatusText("SNT is paused. Tracing functions disabled...");
+					disableEverything();
+					keepSegment.setEnabled(false);
+					junkSegment.setEnabled(false);
+					abortButton.setEnabled(true);
+					completePath.setEnabled(false);
+					showPartsNearby.setEnabled(isStackAvailable());
+					setEnableAutoTracingComponents(false);
+					getFillManager().setVisible(false);
+					showOrHideFillList.setEnabled(false);
+					break;
+
+				case IMAGE_CLOSED:
+					if (plugin.analysisMode)
 						return;
-					default:
-						SNT.error("BUG: switching to an unknown state");
-						return;
+					updateStatusText("Tracing image is no longer available...");
+					disableImageDependentComponents();
+					plugin.discardFill(false);
+					quitMenuItem.setEnabled(true);
+					return;
+
+				default:
+					SNT.error("BUG: switching to an unknown state");
+					return;
 				}
 
+				SNT.log("UI state: " + getState(currentState));
 				plugin.updateAllViewers();
 			}
 
 		});
 
-		currentState = newState;
 	}
 
 	/**
@@ -883,7 +892,7 @@ public class SNTUI extends JDialog {
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
 		gdb.gridwidth = 1;
 
-		if (!plugin.nonInteractiveSession) {
+		if (!plugin.analysisMode) {
 			final JPanel mipPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,
 				0));
 			final JCheckBox mipOverlayCheckBox = new JCheckBox("Overlay MIP(s) at");
@@ -941,8 +950,18 @@ public class SNTUI extends JDialog {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				if (getState() == IMAGE_CLOSED) {
-					guiUtils.error("Tracing image is no longer available.");
+				if (!plugin.analysisMode && getState() == IMAGE_CLOSED) {
+					guiUtils.error("Tracing image is not available.");
+					return;
+				}
+				showStatus("Rebuilding ZY/XZ views...", false);
+				if (plugin.analysisMode && (plugin.getImagePlus() == null
+						|| !plugin.getImagePlus().isVisible())) {
+					plugin.rebuildDisplayCanvases();
+				}
+				if (plugin.is2D()) {
+					guiUtils.error(plugin.getImagePlus().getTitle() 
+							+ " has no depth. Cannot generate side views!");
 					return;
 				}
 				plugin.rebuildZYXZpanes();
@@ -1025,8 +1044,9 @@ public class SNTUI extends JDialog {
 	}
 
 	private JPanel nodePanel() {
-		final JSpinner nodeSpinner = GuiUtils.doubleSpinner(plugin.getXYCanvas()
-			.nodeDiameter(), 0, 100, 1, 0);
+		final InteractiveTracerCanvas canvas = plugin.getXYCanvas();
+		final JSpinner nodeSpinner = GuiUtils.doubleSpinner(
+				(canvas == null) ? 1 : canvas.nodeDiameter(), 0, 100, 1, 0);
 		nodeSpinner.addChangeListener(new ChangeListener() {
 
 			@Override
@@ -1075,10 +1095,11 @@ public class SNTUI extends JDialog {
 	private JPanel extraColorsPanel() {
 
 		final LinkedHashMap<String, Color> hm = new LinkedHashMap<>();
-		hm.put("Canvas annotations", plugin.getXYCanvas().getAnnotationsColor());
-		hm.put("Fills", plugin.getXYCanvas().getFillColor());
-		hm.put("Unconfirmed paths", plugin.getXYCanvas().getUnconfirmedPathColor());
-		hm.put("Temporary paths", plugin.getXYCanvas().getTemporaryPathColor());
+		final InteractiveTracerCanvas canvas = plugin.getXYCanvas();
+		hm.put("Canvas annotations", (canvas == null) ? null : canvas.getAnnotationsColor());
+		hm.put("Fills", (canvas == null) ? null : canvas.getFillColor());
+		hm.put("Unconfirmed paths", (canvas == null) ? null : canvas.getUnconfirmedPathColor());
+		hm.put("Temporary paths", (canvas == null) ? null : canvas.getTemporaryPathColor());
 
 		final JComboBox<String> colorChoice = new JComboBox<>();
 		for (final Entry<String, Color> entry : hm.entrySet())
@@ -1229,7 +1250,7 @@ public class SNTUI extends JDialog {
 
 		final LinkedHashMap<String, Image3DUniverse> hm = new LinkedHashMap<>();
 		hm.put(VIEWER_NONE, null);
-		if (!plugin.nonInteractiveSession && !plugin.is2D()) {
+		if (!plugin.analysisMode && !plugin.is2D()) {
 			hm.put(VIEWER_WITH_IMAGE, null);
 		}
 		hm.put(VIEWER_EMPTY, null);
@@ -1419,8 +1440,16 @@ public class SNTUI extends JDialog {
 					guiUtils.error(tracesFile.getAbsolutePath() + " is not available");
 					return;
 				}
+				double defaultDistance = plugin.getMinimumSeparation();
+				final Double maxDistance = guiUtils.getDouble("<HTML><body><div style='width:500;'>"
+						+ "Please specify the confinement distance for node correspondence between "
+						+ "the two traced structures. Currently, the smallest voxel dimension is " 
+						+ SNT.formatDouble(defaultDistance, 3) + plugin.spacing_units, 
+						"Correspondence Distance", 3 * defaultDistance);
+				if (maxDistance == null)
+					return; // user pressed cancel
 				plugin.showCorrespondencesTo(tracesFile, guiUtils.getColor(
-					"Rendering Color", Color.RED), 10);
+					"Rendering Color", Color.RED), maxDistance);
 			}
 		}
 		);
@@ -2194,36 +2223,40 @@ public class SNTUI extends JDialog {
 	 *            for a couple of seconds
 	 */
 	public void showStatus(final String msg, final boolean temporary) {
-		final boolean validMsg = !(msg == null || msg.isEmpty());
-		if (validMsg && !temporary) {
-			statusBarText.setText(msg);
-			return;
-		}
-
-		final String defaultText;
-		if (plugin.nonInteractiveSession) {
-			defaultText = "Analyzing " + plugin.getImagePlus().getTitle();
-		}
-		else {
-			defaultText = "Tracing " + plugin.getImagePlus().getShortTitle() +
-				", C=" + plugin.channel + ", T=" + plugin.frame;
-		}
-
-		if (!validMsg) {
-			statusBarText.setText(defaultText);
-			return;
-		}
-
-		final Timer timer = new Timer(3000, new ActionListener() {
-
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				statusBarText.setText(defaultText);
+		SwingUtilities.invokeLater(() -> {
+			final boolean validMsg = !(msg == null || msg.isEmpty());
+			if (validMsg && !temporary) {
+				statusBarText.setText(msg);
+				return;
 			}
+
+			final String defaultText;
+			if (plugin.analysisMode) {
+				defaultText = "Analysis Mode... " ;//+ plugin.getImagePlus().getTitle();
+			}
+			else {
+				defaultText = "Tracing " + plugin.getImagePlus().getShortTitle() +
+					", C=" + plugin.channel + ", T=" + plugin.frame;
+			}
+
+			if (!validMsg) {
+				statusBarText.setText(defaultText);
+				return;
+			}
+
+			final Timer timer = new Timer(3000, new ActionListener() {
+
+				@Override
+				public void actionPerformed(final ActionEvent e) {
+					statusBarText.setText(defaultText);
+				}
+			});
+			timer.setRepeats(false);
+			timer.start();
+			statusBarText.setText(msg);
+			
+			
 		});
-		timer.setRepeats(false);
-		timer.start();
-		statusBarText.setText(msg);
 	}
 
 	private JPanel getTab() {
@@ -2240,11 +2273,13 @@ public class SNTUI extends JDialog {
 			@Override
 			public void run() {
 				if (plugin.prefs.isSaveWinLocations()) arrangeDialogs();
-				arrangeCanvases();
+				final StackWindow impWindow = plugin.getWindow(MultiDThreePanes.XY_PLANE);
+				if (impWindow != null) arrangeCanvases();
 				setVisible(true);
+				pathAndFillManager.resetListeners(null, true); // update Path lists
 				setPathListVisible(true, false);
 				setFillListVisible(false);
-				plugin.getWindow(MultiDThreePanes.XY_PLANE).toFront();
+				if (impWindow != null) impWindow.toFront();
 			}
 		});
 	}
@@ -2550,7 +2585,6 @@ public class SNTUI extends JDialog {
 				plugin.doSearchOnFilteredData = false;
 				plugin.tubularGeodesicsTracingEnabled = false;
 				plugin.filteredData = null;
-				changeState(WAITING_TO_START_PATH);
 				break;
 			case (CALCULATING_GAUSSIAN):
 				updateStatusText("Cancelling Gaussian generation...", true);
@@ -2577,16 +2611,16 @@ public class SNTUI extends JDialog {
 				pmUI.cancelFit(true);
 				break;
 			case (PAUSED):
-				showStatus("Tracing mode reinstated...", true);
+				showStatus("Exited from 'Pause Mode'...", true);
 				plugin.pause(false);
 				break;
 			case (EDITING_MODE):
-				showStatus("Tracing mode reinstated...", true);
+				showStatus("Exited from 'Edit Mode'...", true);
 				plugin.enableEditMode(false);
 				break;
 			case (WAITING_FOR_SIGMA_CHOICE):
 				showStatus("Close the sigma palette to abort sigma input...", true);
-				break; // do nothing: Currently we have no control over the sigma
+				return; // do nothing: Currently we have no control over the sigma
 								// palette window
 			case (WAITING_TO_START_PATH):
 			case (LOADING):
@@ -2599,6 +2633,7 @@ public class SNTUI extends JDialog {
 				SNT.error("BUG: Wrong state for aborting operation...");
 				break;
 		}
+		changeState(WAITING_TO_START_PATH);
 	}
 
 	private String getState(final int state) {
@@ -2724,8 +2759,8 @@ public class SNTUI extends JDialog {
 		@Override
 		public void imageClosed(final ImagePlus imp) {
 			// updateColorImageChoice(); //FIXME
-			if (plugin.getImagePlus() == imp) changeState(
-				SNTUI.IMAGE_CLOSED);
+			if (plugin.getImagePlus() == imp && getState() != SNTUI.ANALYSIS_MODE)
+				changeState(SNTUI.IMAGE_CLOSED);
 		}
 
 		/* (non-Javadoc)
@@ -3023,6 +3058,35 @@ public class SNTUI extends JDialog {
 			changeState(preSigmaPaletteState);
 			plugin.setCanvasLabelAllPanes(null);
 		}
+
+
+	/**
+	 * Reloads (rebuilds) the UI of a SimpleNeuriteTracer instance
+	 *
+	 * @param plugin       the plugin instance associated with the UI to be reloaded
+	 * @param analysisMode if true, UI is reloaded in "Analysis Mode", otherwise in
+	 *                     "Tracing Mode"
+	 */
+	public static void reloadUI(final SimpleNeuriteTracer plugin, final boolean analysisMode) {
+		SNTUI ui = plugin.getUI();
+		plugin.analysisMode = analysisMode;
+		if (analysisMode) {
+			plugin.enableAstar(false);
+			plugin.enableSnapCursor(false);
+			if (ui.getFillManager() != null && ui.getFillManager().isVisible())
+				ui.getFillManager().dispose();
+		} else {
+			plugin.prefs.loadPluginPrefs();
+		}
+		final Point locMain = ui.getLocation(null);
+		final Point locManager = ui.getPathManager().getLocation(null);
+		final boolean managerVisible = ui.getPathManager().isVisible();
+		ui.dispose();
+		ui = new SNTUI(plugin, ui.getPathManager(), ui.getFillManager());
+		ui.setLocation(locMain);
+		ui.getPathManager().setLocation(locManager);
+		ui.setVisible(true);
+		ui.getPathManager().setVisible(managerVisible);
 	}
 
 }

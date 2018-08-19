@@ -83,6 +83,7 @@ import tracing.gui.SWCImportOptionsDialog;
 import tracing.gui.SigmaPalette;
 import tracing.gui.SwingSafeResult;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
 
 /* Note on terminology:
@@ -221,7 +222,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	/* GUI */
 	protected SNTUI ui;
-	protected boolean nonInteractiveSession = false;
+	protected boolean analysisMode = false; //Analysis mode?
 
 	// This should only be assigned to when synchronized on this object
 	// (FIXME: check that that is true)
@@ -249,30 +250,83 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		context.inject(this);
 		SNT.setPlugin(this);
 		pathAndFillManager = new PathAndFillManager(this);
-		nonInteractiveSession = true;
+		analysisMode = true;
 		enableAstar(false);
 	}
 
-	public SimpleNeuriteTracer(final Context context,
-		final ImagePlus sourceImage)
-	{
 
-		if (context == null) throw new NullContextException();
-		if (sourceImage.getStackSize() == 0) throw new IllegalArgumentException(
-			"Uninitialized image object");
+	/**
+	 * Instantiates SimpleNeuriteTracer in 'Tracing Mode'.
+	 *
+	 * @param context            the SciJava application context providing the
+	 *                           services required by the class
+	 * @param sourceImage the source image
+	 * @throws IllegalArgumentException If sourceImage is of type 'RGB'
+	 */
+	public SimpleNeuriteTracer(final Context context, final ImagePlus sourceImage) throws IllegalArgumentException {
+
+		if (context == null)
+			throw new NullContextException();
+		if (sourceImage.getStackSize() == 0)
+			throw new IllegalArgumentException("Uninitialized image object");
 		if (sourceImage.getType() == ImagePlus.COLOR_RGB)
 			throw new IllegalArgumentException(
-				"RGB images are not supported. Please convert to multichannel and re-run");
+					"RGB images are not supported. Please convert to multichannel and re-run");
 
 		context.inject(this);
 		SNT.setPlugin(this);
+		setFieldsFromImage(sourceImage);
+		pathAndFillManager = new PathAndFillManager(this);
+		prefs = new SNTPrefs(this);
+		prefs.loadPluginPrefs();
+	}
+
+	/**
+	 * Instantiates SimpleNeuriteTracer in 'Analysis Mode'
+	 *
+	 * @param context            the SciJava application context providing the
+	 *                           services required by the class
+	 * @param pathAndFillManager The PathAndFillManager instance to be associated
+	 *                           with the plugin
+	 */
+	public SimpleNeuriteTracer(final Context context, final PathAndFillManager pathAndFillManager) {
+
+		if (context == null)
+			throw new NullContextException();
+		if (pathAndFillManager == null)
+			throw new IllegalArgumentException("pathAndFillManager cannot be null");
+		this.pathAndFillManager = pathAndFillManager;
+
+		context.inject(this);
+		SNT.setPlugin(this);
+		prefs = new SNTPrefs(this);
+		pathAndFillManager.plugin = this;
+		pathAndFillManager.addPathAndFillListener(this);
+		pathAndFillManager.setHeadless(true);
+
+		// Inherit spacing from PathAndFillManager{
+		final BoundingBox box = pathAndFillManager.getBoundingBox(false);
+		x_spacing = box.xSpacing;
+		y_spacing = box.xSpacing;
+		z_spacing = box.xSpacing;
+		spacing_units = box.getUnit();
+
+		// now load preferences and disable auto-tracing features
+		prefs.loadPluginPrefs();
+		analysisMode = true;
+		enableAstar(false);
+		enableSnapCursor(false);
+		pathAndFillManager.setHeadless(false);
+	}
+
+	private void setFieldsFromImage(final ImagePlus sourceImage) {
 		xy = sourceImage;
 		width = sourceImage.getWidth();
 		height = sourceImage.getHeight();
 		depth = sourceImage.getNSlices();
 		imageType = sourceImage.getType();
 		singleSlice = depth == 1;
-
+		setSinglePane(single_pane);
 		final Calibration calibration = sourceImage.getCalibration();
 		if (calibration != null) {
 			x_spacing = calibration.pixelWidth;
@@ -286,115 +340,160 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 					"," + y_spacing + "," + z_spacing + ")");
 		}
 
-		pathAndFillManager = new PathAndFillManager(this);
-		prefs = new SNTPrefs(this);
-		prefs.loadPluginPrefs();
 	}
 
-	public SimpleNeuriteTracer(final Context context, final File file) {
+	/**
+	 * Rebuilds display canvases. Useful when multiple files are imported and
+	 * imported paths 'fall off' the dimensions of current canvases.
+	 *
+	 * @throws IllegalArgumentException when not running in 'Analysis Mode'
+	 */
+	public void rebuildDisplayCanvases() throws IllegalArgumentException{
+		assembleDisplayCanvases();
+		initialize(getSinglePane(), 1, 1);
+		showInitializedCanvases();
+	}
 
-		if (context == null)
-			throw new NullContextException();
-		if (file == null)
-			throw new IllegalArgumentException("Input file cannot be null");
-
-		pathAndFillManager = new PathAndFillManager(this);
-		pathAndFillManager.needImageDataFromTracesFile = true;
-		pathAndFillManager.setHeadless(true);
-		if (!pathAndFillManager.loadGuessingType(file.getAbsolutePath())) {
-			throw new IllegalArgumentException(String.format("%s is not a valid file", file.getAbsolutePath()));
+	private void showInitializedCanvases() {
+		if (getUI() != null) {
+			getUI().showPartsAll.setEnabled(!is2D());
+			getUI().showPartsNearby.setEnabled(!is2D());
+			getUI().nearbyFieldSpinner.setEnabled(!is2D());
 		}
+		xy.show();
+		if (zy != null) zy.show();
+		if (xz != null) xz.show();
+	}
 
-		// Can we generate a canvas to display import paths?
-		final Calibration calibration = pathAndFillManager.getParsedCalibration();
-		if (calibration == null) {
-			throw new IllegalArgumentException("No spatial calibration details");
+	private void nullifyCanvases() {
+		if (xy != null) {xy.close(); xy = null;}
+		if (zy != null) {zy.close(); zy = null;}
+		if (xz != null) {xz.close(); xz = null;}
+		xy_canvas = null;
+		xz_canvas = null;
+		zy_canvas = null;
+		xy_window = null;
+		xz_window = null;
+		zy_window = null;
+		xy_tracer_canvas = null;
+		xz_tracer_canvas = null;
+		zy_tracer_canvas = null;
+	}
+
+	private void assembleDisplayCanvases() {
+		if (!analysisMode) {
+			throw new IllegalArgumentException("Display Canvases are only available in 'Analysis Mode'");
 		}
-
-		// Assign parsed values
-		x_spacing = calibration.pixelWidth;
-		y_spacing = calibration.pixelHeight;
-		z_spacing = calibration.pixelDepth;
-		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
-			throw new IllegalArgumentException("One dimension of the calibration information was zero: (" + x_spacing
-					+ "," + y_spacing + "," + z_spacing + ")");
+		nullifyCanvases();
+		if (pathAndFillManager.size() == 0) {
+			// not enough information to proceed. Assemble a dummy canvas instead
+			xy = NewImage.createByteImage("Display Canvas", 1, 1, 1, NewImage.FILL_BLACK);
+			setFieldsFromImage(xy);
+			return;
 		}
-		spacing_units = calibration.getUnits();
-		if (spacing_units == null || spacing_units.length() == 0)
-			spacing_units = "" + calibration.getUnit();
+		BoundingBox box = pathAndFillManager.getBoundingBox(false);
+		if (Double.isNaN(box.getDiagonal()))
+			box = pathAndFillManager.getBoundingBox(true);
 
-		width = pathAndFillManager.parsed_width;
-		height = pathAndFillManager.parsed_height;
-		depth = pathAndFillManager.parsed_depth;
-		imageType = ImagePlus.GRAY8;
+		final double[] dims = box.getDimensions(false);
+		width = (int) Math.round(dims[0]);
+		height = (int) Math.round(dims[1]);
+		depth = (int) Math.round(dims[2]);
+		spacing_units = box.getUnit();
 		singleSlice = depth == 1;
+		setSinglePane(single_pane);
 
-		// Enlarge canvas for easy manipulation of edge nodes. Center
-		// all paths in canvas without translating their coordinates
+		// Make canvas 2D if there is not enough memory (>80%) for a 3D stack
+		// TODO: Remove ij.IJ dependency
+		final double MEM_FRACTION = 0.8d;
+		final long memNeeded = (long) width * height * depth; // 1 byte per pixel
+		final long memMax = IJ.maxMemory(); // - 100*1024*1024;
+		final long memInUse = IJ.currentMemory();
+		final long memAvailable = (long) (MEM_FRACTION * (memMax - memInUse));
+		if (memMax > 0 && memNeeded > memAvailable) {
+			singleSlice = true;
+			depth = 1;
+			SNT.log("Not enough memory for displaying 3D stack. Defaulting to 2D canvas");
+		}
+
+		// Enlarge canvas for easier access to edge nodes. Center all paths in canvas
+		// without translating their coordinates. This is more relevant for files with
+		// negative coordinates
 		final int XY_PADDING = 50;
 		final int Z_PADDING = (singleSlice) ? 0 : 2;
 		width += XY_PADDING;
 		height += XY_PADDING;
 		depth += Z_PADDING;
-		final PointInImage canvasOffset = new PointInImage(-calibration.xOrigin / x_spacing + XY_PADDING / 2,
-				-calibration.yOrigin / y_spacing + XY_PADDING / 2, -calibration.zOrigin / z_spacing + Z_PADDING / 2);
+		final PointInImage unscaledOrigin = box.unscaledOrigin();
+		final PointInImage canvasOffset = new PointInImage(-unscaledOrigin.x + XY_PADDING / 2,
+				-unscaledOrigin.y + XY_PADDING / 2, -unscaledOrigin.z + Z_PADDING / 2);
 		for (final Path p : pathAndFillManager.getPaths()) {
 			p.setCanvasOffset(canvasOffset);
 		}
 
-		pathAndFillManager.needImageDataFromTracesFile = false;
-		pathAndFillManager.setHeadless(false);
-
-		// Make canvas 2D if there is not enough memory
-		final long memNeeded = (long) width * height * depth; // 1 byte per pixel
-		final long memMax = IJ.maxMemory(); // - 100*1024*1024;
-		final long memInUse = IJ.currentMemory(); // FIXME: remove ij1 dependency
-		final long memAvailable = (long) (0.80 * (memMax - memInUse)); // FIXME: hardwired value
-		int canvasDepth = depth;
-		if (memMax > 0 && memNeeded > memAvailable) {
-			canvasDepth = 1;
-			singleSlice = true;
-		}
-
 		// Create image
-		xy = NewImage.createByteImage(file.getName(), width, height, canvasDepth, NewImage.FILL_BLACK);
-		xy.setCalibration(calibration);
-		nonInteractiveSession = true;
-
-		context.inject(this);
-		SNT.setPlugin(this);
-		prefs = new SNTPrefs(this);
-		prefs.loadPluginPrefs();
-
-		// now disable auto-tracing features
-		enableAstar(false);
-		enableSnapCursor(false);
-
+		imageType = ImagePlus.GRAY8;
+		xy = NewImage.createByteImage("Display Canvas", width, height, depth, NewImage.FILL_BLACK);
+		xy.setCalibration(box.getCalibration());
+		x_spacing = box.xSpacing;
+		y_spacing = box.ySpacing;
+		z_spacing = box.zSpacing;
+		spacing_units = box.getUnit();
 	}
 
+	@Override
+	public void initialize(ImagePlus imp, final int frame) {
+		nullifyCanvases();
+		xy = imp;
+		setFieldsFromImage(imp);
+		initialize(getSinglePane(), channel, frame);
+		if (imp.isVisible()) showInitializedCanvases();
+	}
+
+	/**
+	 * Initializes the plugin by assembling all the required tracing views
+	 *
+	 * @param singlePane if true only the XY view will be generated, if false XY,
+	 *                   ZY, XZ views are created
+	 * @param channel    the channel to be traced. Ignored when running in 'Analysis
+	 *                   mode'
+	 * @param frame      the frame to be traced. Ignored when running in 'Analysis
+	 *                   mode'
+	 */
 	public void initialize(final boolean singlePane, final int channel,
 		final int frame)
 	{
-		this.channel = channel;
-		this.frame = frame;
+		if (analysisMode) {
+			this.channel = 1;
+			this.frame = 1;
+			assembleDisplayCanvases();
+		} else {
+			this.channel = channel;
+			this.frame = frame;
+		}
+
 		setSinglePane(singlePane);
 		final Overlay sourceImageOverlay = xy.getOverlay();
-		initialize(xy);
+		super.initialize(xy, frame);
 		xy.setOverlay(sourceImageOverlay);
 
 		xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;
 		xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
 		zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
-		pathAndFillManager.addPathAndFillListener(this);
-
-		loadData();
 		addListener(xy_tracer_canvas);
+
+		if (!analysisMode) 
+			loadData();
+	
 		if (!single_pane) {
-			xz.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
-			zy.setDisplayRange(xy.getDisplayRangeMin(), xy.getDisplayRangeMax());
+			final double min = xy.getDisplayRangeMin();
+			final double max = xy.getDisplayRangeMax();
+			xz.setDisplayRange(min,max);
+			zy.setDisplayRange(min, max);
 			addListener(xz_tracer_canvas);
 			addListener(zy_tracer_canvas);
 		}
+
 	}
 
 	private void addListener(final InteractiveTracerCanvas canvas) {
@@ -423,10 +522,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void rebuildZYXZpanes() {
 		single_pane = false;
 		reloadZYXZpanes(frame);
+		xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;
+		addListener(xy_tracer_canvas);
 		zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
 		addListener(zy_tracer_canvas);
 		xz_tracer_canvas = (InteractiveTracerCanvas) xz_canvas;
 		addListener(xz_tracer_canvas);
+		if (!xy.isVisible()) xy.show();
 		if (!zy.isVisible()) zy.show();
 		if (!xz.isVisible()) xz.show();
 	}
@@ -483,20 +585,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public void startUI() {
 		final SimpleNeuriteTracer thisPlugin = this;
+		ui = SwingSafeResult.getResult(new Callable<SNTUI>() {
 
-		ui = SwingSafeResult.getResult(
-			new Callable<SNTUI>()
-			{
-
-				@Override
-				public SNTUI call() {
-					return new SNTUI(thisPlugin);
-				}
-			});
+			@Override
+			public SNTUI call() {
+				return new SNTUI(thisPlugin);
+			}
+		});
 		guiUtils = new GuiUtils(ui);
-		if (nonInteractiveSession) {
-			changeUIState(SNTUI.ANALYSIS_MODE);
-		}
 		ui.displayOnStarting();
 	}
 
@@ -1369,7 +1465,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		endJoin = null;
 		endJoinPoint = null;
 
-		ui.changeState(SNTUI.PARTIAL_PATH);
 		updateAllViewers();
 	}
 
@@ -1396,7 +1491,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		lastStartPointSet = false;
 		setPathUnfinished(false);
 
-		ui.changeState(SNTUI.WAITING_TO_START_PATH);
 		updateAllViewers();
 	}
 

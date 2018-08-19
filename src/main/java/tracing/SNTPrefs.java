@@ -122,8 +122,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		getBooleans();
 		snt.useCompressedXML = getPref(COMPRESSED_XML);
 		snt.autoCanvasActivation = getPref(AUTO_CANVAS_ACTIVATION);
-		if (!snt.nonInteractiveSession)
-			snt.snapCursor = getPref(SNAP_CURSOR);
+		snt.snapCursor = !snt.analysisMode && getPref(SNAP_CURSOR);
 		snt.drawDiametersXY = getPref(DRAW_DIAMETERS_XY);
 		snt.displayCustomPathColors = !getPref(ENFORCE_DEFAULT_PATH_COLORS);
 		snt.setShowOnlySelectedPaths(getPref(SHOW_ONLY_SELECTED), false);
@@ -172,7 +171,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	protected void savePluginPrefs(final boolean restoreIJ1prefs) {
 		setPref(COMPRESSED_XML, snt.useCompressedXML);
 		setPref(AUTO_CANVAS_ACTIVATION, snt.autoCanvasActivation);
-		if (!snt.nonInteractiveSession)
+		if (!snt.analysisMode)
 			setPref(SNAP_CURSOR, snt.snapCursor);
 		Prefs.set(SNAP_XY, snt.cursorSnapWindowXY);
 		Prefs.set(SNAP_Z, snt.cursorSnapWindowZ);

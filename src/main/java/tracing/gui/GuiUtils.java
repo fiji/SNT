@@ -45,6 +45,7 @@ import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -87,6 +88,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.text.NumberFormatter;
 
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.ui.swing.SwingDialog;
@@ -476,7 +478,26 @@ public class GuiUtils {
 		final JSpinner spinner = new JSpinner(model);
 		final JFormattedTextField textfield = ((DefaultEditor) spinner.getEditor()).getTextField();
 		textfield.setColumns(maxDigits);
-		textfield.setEditable(false);
+		final NumberFormatter formatter = (NumberFormatter) textfield.getFormatter();
+		String decString = "";
+		while (decString.length() <= nDecimals)
+			decString += "0";
+		final DecimalFormat decimalFormat = new DecimalFormat("0." + decString);
+		formatter.setFormat(decimalFormat);
+		formatter.setAllowsInvalid(false);
+//		textfield.addPropertyChangeListener(new PropertyChangeListener() {
+//
+//			@Override
+//			public void propertyChange(final PropertyChangeEvent evt) {
+//				if ("editValid".equals(evt.getPropertyName()) && Boolean.FALSE.equals(evt.getNewValue())) {
+//
+//					new GuiUtils(spinner).getPopup("Number must be between " + SNT.formatDouble(min, nDecimals)
+//							+ " and " + SNT.formatDouble(max, nDecimals), spinner).showPopup();
+//
+//				}
+//
+//			}
+//		});
 		return spinner;
 	}
 

@@ -47,6 +47,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.IntStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -421,6 +423,8 @@ public class SNTUI extends JDialog {
 	 *         {@link SNTUI#WAITING_FOR_SIGMA_POINT}, etc.
 	 */
 	public int getCurrentState() {
+		if (plugin.analysisMode && currentState == WAITING_TO_START_PATH)
+			currentState = ANALYSIS_MODE;
 		return currentState;
 	}
 
@@ -685,13 +689,13 @@ public class SNTUI extends JDialog {
 					showPathsSelected.setEnabled(true);
 
 					if (plugin.analysisMode) {
+						currentState = ANALYSIS_MODE;
 						updateStatusText("Analysis mode. Tracing disabled...");
 						if (plugin.getXYCanvas() != null) {
 							plugin.setDrawCrosshairsAllPanes(false);
 							plugin.setCanvasLabelAllPanes("Display Canvas");
 							plugin.setDrawCrosshairsAllPanes(false);
 						}
-						currentState = ANALYSIS_MODE;
 					} else {
 						updateStatusText("Click somewhere to start a new path...");
 						showOrHideFillList.setEnabled(true); // null in "Analysis Mode"

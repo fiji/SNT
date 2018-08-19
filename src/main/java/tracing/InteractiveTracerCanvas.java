@@ -88,7 +88,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 													// components?
 		final AListener listener = new AListener();
 		pMenu.add(menuItem(AListener.SELECT_NEAREST, listener));
-		if (!tracerPlugin.nonInteractiveSession)
+		if (!tracerPlugin.analysisMode)
 			pMenu.add(menuItem(listener.FORK_NEAREST, listener));
 		pMenu.addSeparator();
 		togglePauseModeMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_TOOGLE);
@@ -245,7 +245,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	private boolean uiReadyForModeChange(final int mode) {
 		if (!tracerPlugin.isUIready())
 			return false;
-		return tracerPlugin.nonInteractiveSession
+		return tracerPlugin.analysisMode
 				|| tracerPlugin.getUIState() == SNTUI.WAITING_TO_START_PATH
 				|| tracerPlugin.getUIState() == mode;
 	}
@@ -277,8 +277,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			final PointInImage pointInImage = pathAndFillManager.nearestJoinPointOnSelectedPaths(p[0], p[1], p[2]);
 			final boolean autoCanvasActivationState = tracerPlugin.autoCanvasActivation;
 			tracerPlugin.autoCanvasActivation = false;
-			final ShollAnalysisDialog sd = new ShollAnalysisDialog(
-					"Sholl analysis for tracing of " + tracerPlugin.getImagePlus().getTitle(), pointInImage.x,
+			final ShollAnalysisDialog sd = new ShollAnalysisDialog(pointInImage.x,
 					pointInImage.y, pointInImage.z, tracerPlugin);
 			sd.toFront();
 			sd.addWindowListener(new WindowAdapter() {
@@ -346,8 +345,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0)
 				: ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 
-		if (!editMode && tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down
-				&& !shift_key_down) {
+		if (!editMode && !tracerPlugin.analysisMode && !tracerPlugin.snapCursor && plane == MultiDThreePanes.XY_PLANE
+				&& !joiner_modifier_down && !shift_key_down) {
 			final double[] p = new double[3];
 			tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise, last_y_in_pane_precise, p);
 			last_x_in_pane_precise = p[0];
@@ -414,37 +413,37 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			return;
 		}
 
-		final int currentState = tracerPlugin.getUI().getState();
+		switch (tracerPlugin.getUI().getState()) {
 
-		if (currentState == SNTUI.LOADING || currentState == SNTUI.SAVING
-				|| currentState == SNTUI.IMAGE_CLOSED) {
-
-			// Do nothing
-
-		} else if (currentState == SNTUI.EDITING_MODE) {
+		case SNTUI.LOADING:
+		case SNTUI.SAVING:
+		case SNTUI.IMAGE_CLOSED:
+			return; // Do nothing
+		case SNTUI.EDITING_MODE:
 
 			if (e.isPopupTrigger() || impossibleEdit(true))
 				return;
 			update(getGraphics());
+			break;
 
-		} else if (currentState == SNTUI.WAITING_FOR_SIGMA_POINT) {
+		case SNTUI.WAITING_FOR_SIGMA_POINT:
 
 			tracerPlugin.launchPaletteAround(myOffScreenX(e.getX()), myOffScreenY(e.getY()), imp.getZ() - 1);
 			restoreDefaultCursor();
-
-		} else if (currentState == SNTUI.WAITING_FOR_SIGMA_CHOICE) {
-
+			break;
+		case SNTUI.WAITING_FOR_SIGMA_CHOICE:
 			tracerPlugin.discreteMsg("You must close the sigma palette to continue");
+			break;
 
-		} else {
-
+		default:
+			if (tracerPlugin.analysisMode) return;
 			final boolean join = PlatformUtils.isMac() ? e.isAltDown() : e.isControlDown();
 			if (tracerPlugin.snapCursor && !join && !e.isShiftDown()) {
 				tracerPlugin.clickForTrace(last_x_in_pane_precise, last_y_in_pane_precise, plane, join);
 			} else {
 				tracerPlugin.clickForTrace(myOffScreenXD(e.getX()), myOffScreenYD(e.getY()), plane, join);
 			}
-
+			break;
 		}
 
 	}

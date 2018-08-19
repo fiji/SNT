@@ -97,6 +97,7 @@ import tracing.Path;
 import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
+import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
 import util.FindConnectedRegions;
 
@@ -143,10 +144,10 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	private final GuiUtils gUtils;
 	private final SimpleNeuriteTracer plugin;
 
-	public ShollAnalysisDialog(final String title, final double x_start, final double y_start, final double z_start,
+	public ShollAnalysisDialog(final double x_start, final double y_start, final double z_start,
 			final SimpleNeuriteTracer plugin) {
 
-		super(plugin.getUI(), title, false);
+		super(plugin.getUI(), "Sholl Analysis Dialog", false);
 
 		this.x_start = x_start;
 		this.y_start = y_start;
@@ -291,10 +292,9 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	}
 
 	private double getLargestDimension() {
-		final ImagePlus imp = plugin.getImagePlus();
-		final Calibration cal = imp.getCalibration();
-		return Math.max(cal.pixelWidth * imp.getWidth(),
-				Math.max(cal.pixelHeight * imp.getHeight(), cal.pixelDepth * imp.getZ()));
+		final BoundingBox box = plugin.getPathAndFillManager().getBoundingBox(false);
+		final double[] dims = box.getDimensions(true);
+		return Math.max(dims[0], Math.max(dims[1], dims[2]));
 	}
 
 	@Override
@@ -1169,6 +1169,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		private final JLabel headingLabel = new JLabel("Results Preview:");
 		private final String defaultText = "[Not calculated yet]";
 		private final JLabel criticalValuesLabel = new JLabel(defaultText, SwingConstants.RIGHT);
+		private final JLabel centerLabel = new JLabel(defaultText, SwingConstants.RIGHT);
 		private final JLabel dendriteMaximumLabel = new JLabel(defaultText, SwingConstants.RIGHT);
 		private final JLabel shollsRegressionCoefficientLabel = new JLabel(defaultText, SwingConstants.RIGHT);
 		private final JLabel shollsRegressionInterceptLabel = new JLabel(defaultText, SwingConstants.RIGHT);
@@ -1185,9 +1186,15 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 			c.gridwidth = 2;
 			add(headingLabel, c);
 			c.anchor = GridBagConstraints.LINE_END;
-			c.gridx = 0;
 			++c.gridy;
 			c.gridwidth = 1;
+			c.gridx = 0;
+			add(new JLabel("Center (X,Y,Z): "), c);
+			c.gridx = 1;
+			add(centerLabel, c);
+			++c.gridy;
+			c.gridx = 0;
+
 			add(new JLabel("Max inters. radius: "), c);
 			c.gridx = 1;
 			add(criticalValuesLabel, c);
@@ -1221,6 +1228,8 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		private void updateFromResults(final ShollResults results) {
 			dendriteMaximumLabel.setText("" + results.getDendriteMaximum());
 			criticalValuesLabel.setText(SNT.formatDouble(results.getCriticalValue(), 3));
+			centerLabel.setText(SNT.formatDouble(x_start, 1) + ", " + SNT.formatDouble(y_start, 1) + ", "
+					+ SNT.formatDouble(z_start, 1));
 			shollsRegressionCoefficientLabel.setText(SNT.formatDouble(results.getShollRegressionCoefficient(), -3));
 			shollsRegressionInterceptLabel.setText(SNT.formatDouble(results.getRegressionIntercept(), 3));
 			shollsRegressionRSquaredLabel.setText(SNT.formatDouble(results.getRegressionRSquare(), 3));

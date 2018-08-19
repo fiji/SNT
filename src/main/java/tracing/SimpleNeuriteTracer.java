@@ -157,7 +157,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	/* Image properties */
 	protected int width, height, depth;
 	protected int imageType = -1;
-	private boolean singleSlice;
 	protected double x_spacing = 1;
 	protected double y_spacing = 1;
 	protected double z_spacing = 1;
@@ -603,7 +602,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			pathAndFillManager.loadGuessingType(file.getAbsolutePath());
 			if (isUIready()) ui.changeState(
 				SNTUI.WAITING_TO_START_PATH);
-			prefs.setRecentFile(file);
 		}
 	}
 
@@ -631,14 +629,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return xy;
 	}
 
-	/**
-	 * Returns the diagonal length of the image currently being traced.
-	 *
-	 * @return the diagonal length in spatially calibrated units
-	 */
-	public double getImpDiagonalLength() {
-		return Math.sqrt((x_spacing * width) * (x_spacing * width) + (y_spacing * height) * (y_spacing * height)
-				+ (z_spacing * depth) * (z_spacing * depth));
+	protected double getImpDiagonalLength(final boolean scaled, final boolean xyOnly) {
+		final BoundingBox  box = getPathAndFillManager().getBoundingBox(false);
+			double[] dims = box.getDimensions(scaled);
+			PointInImage pim1 = new PointInImage(0,0,0);
+			PointInImage pim2 = new PointInImage(dims[0],dims[1],(xyOnly)?0:dims[2]);
+			return pim1.distanceTo(pim2);
 	}
 
 	/* This overrides the method in ThreePanes... */
@@ -1556,7 +1552,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		// Start path from first point in list
 		final PointInImage start = pointList.get(0);
 		startPath(start.x, start.y, start.z, forkPoint);
-		this.getImpDiagonalLength();
 
 		final int secondNodeIdx = (pointList.size() == 1) ? 0 : 1;
 		final int nNodes = pointList.size();
@@ -2129,14 +2124,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				// SNT.log("Drawing:");
 				// SNT.log(np.toString());
 
-				linePoints.add(new Point3f((float) np.nearX, (float) np.nearY,
-					(float) np.nearZ));
+				linePoints.add(new Point3f((float) np.near.x, (float) np.near.y,
+					(float) np.near.z));
 				linePoints.add(new Point3f((float) np.closestIntersection.x,
 					(float) np.closestIntersection.y, (float) np.closestIntersection.z));
 
 				final String ballName = univ.getSafeContentName("ball " + done);
-				final List<Point3f> sphere = customnode.MeshMaker.createSphere(np.nearX,
-					np.nearY, np.nearZ, Math.abs(x_spacing / 2));
+				final List<Point3f> sphere = customnode.MeshMaker.createSphere(np.near.x,
+					np.near.y, np.near.z, Math.abs(x_spacing / 2));
 				univ.addTriangleMesh(sphere, new Color3f(c), ballName);
 			}
 			++done;
@@ -2223,14 +2218,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			if (frame.isActive()) return frame;
 		}
 		return ui;
-	}
-
-	public boolean getSinglePane() {
-		return single_pane;
-	}
-
-	public void setSinglePane(final boolean single_pane) {
-		this.single_pane = single_pane || is2D();
 	}
 
 	public boolean isOnlySelectedPathsVisible() {
@@ -2739,8 +2726,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 		// Restore main view
 		final Overlay overlay = (xy == null) ? null : xy.getOverlay();
-		if (overlay == null && analysisMode) {
-			if (xy != null) xy.close(); 
+		if (overlay == null && analysisMode && xy != null) {
+			xy.close(); 
 			return;
 		}
 		if (original_xy_canvas != null && xy != null && xy.getImage() != null) {

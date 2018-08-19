@@ -589,7 +589,7 @@ public class Auto_Tracer extends MultiDThreePanes implements PlugIn, PaneOwner, 
 		single_pane = true;
 
 		if (liveDisplay) {
-			initialize(image);
+			initialize(image, 1);
 			canvas = (AutoTracerCanvas) xy_canvas;
 		}
 

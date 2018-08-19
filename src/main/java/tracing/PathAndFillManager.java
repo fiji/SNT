@@ -160,6 +160,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		pluginBoundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
 		boundingBox = pluginBoundingBox;
 		spacingIsUnset = false;
+		addPathAndFillListener(plugin);
 	}
 
 	/**
@@ -2208,14 +2209,14 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return points;
 	}
 
-	public class AllPointsIterator implements Iterator<PointInImage> {
-
-		public AllPointsIterator() {
-			numberOfPaths = allPaths.size();
-			currentPath = null;
-			currentPathIndex = -1;
-			currentPointIndex = -1;
-		}
+	/**
+	 * For each point in this PathAndFillManager, find the corresponding point on
+	 * the other one. If there's no corresponding one, include a null instead. *
+	 * 
+	 * @param other       the other PathAndFillManager holding the corresponding
+	 *                    Paths
+	 * @param maxDistance the distance limit below which the NearPoint is considered
+	 * @return the cloud of {@link NearPoint} correspondences
 	 */
 	public List<NearPoint> getCorrespondences(final PathAndFillManager other, final double maxDistance) {
 

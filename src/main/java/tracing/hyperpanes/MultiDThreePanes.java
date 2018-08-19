@@ -61,6 +61,8 @@ public class MultiDThreePanes implements PaneOwner {
 	protected StackWindow xz_window;
 	protected StackWindow zy_window;
 	protected boolean single_pane;
+	protected boolean singleSlice;
+
 	private boolean disable_zoom;
 
 	public MultiDThreePanes() {
@@ -159,6 +161,7 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	public void repaintAllPanes() {
+		if (xy_canvas == null) return;
 		xy_canvas.repaint();
 		if (!single_pane) {
 			xz_canvas.repaint();
@@ -291,33 +294,37 @@ public class MultiDThreePanes implements PaneOwner {
 		return result;
 	}
 
-	public void reloadZYXZpanes(final int frame) {
-		if (single_pane)
-			return; // nothing to reload
+	public synchronized void reloadZYXZpanes(final int frame) {
 		if (xy == null)
 			throw new IllegalArgumentException("reload() called withou initialization");
-		initialize(xy, frame);
+		if (xy.getNSlices() == 1) return;
+		initialize(single_pane = false, frame);
 		repaintAllPanes();
 	}
 
-	public void initialize(final ImagePlus imagePlus) {
-		initialize(imagePlus, 1);
+	public synchronized boolean getSinglePane() {
+		return single_pane;
 	}
 
-	// public void initialize(final ImagePlus imagePlus, final int frame) {
-	// initialize(imagePlus, frame, true);
-	// }
+	public synchronized void setSinglePane(final boolean single_pane) {
+		this.single_pane = single_pane || singleSlice;
+	}
 
 	public void initialize(final ImagePlus imagePlus, final int frame) {
-		if (frame > imagePlus.getNFrames())
-			throw new IllegalArgumentException("Invalid frame: " + frame);
 		xy = imagePlus;
+		initialize(single_pane, frame);
+	}
+
+	private void initialize(final boolean singlePane, final int frame) {
+		if (frame > xy.getNFrames())
+			throw new IllegalArgumentException("Invalid frame: " + frame);
+
 		final boolean rgb_panes = xy.getNChannels() > 1 || xy.isComposite();
 		final int width = xy.getWidth();
 		final int height = xy.getHeight();
 		final int stackSize = xy.getNSlices();
 		int type;
-		original_xy_canvas = (imagePlus.getWindow() == null) ? null : imagePlus.getWindow().getCanvas();
+		original_xy_canvas = (xy.getWindow() == null) ? null : xy.getWindow().getCanvas();
 
 		ImagePlus xyMonoChannel;
 
@@ -338,8 +345,7 @@ public class MultiDThreePanes implements PaneOwner {
 		if (type == ImagePlus.COLOR_256)
 			cm = xy_stack.getColorModel();
 
-		if (!single_pane) {
-
+		if (!singlePane) {
 			final String title = (xy.getNFrames() > 0) ? "[T" + frame + "] " + xy.getShortTitle() : xy.getShortTitle();
 			final int zy_width = stackSize;
 			final int zy_height = height;
@@ -623,32 +629,24 @@ public class MultiDThreePanes implements PaneOwner {
 
 		}
 
-		System.gc();
-
-		if (xy_canvas == null)
-			xy_canvas = createCanvas(xy, XY_PLANE);
-		if (!single_pane && xz_canvas == null)
-			xz_canvas = createCanvas(xz, XZ_PLANE);
-		if (!single_pane && zy_canvas == null)
-			zy_canvas = createCanvas(zy, ZY_PLANE);
-
-		if (xy_window == null)
-			xy_window = new StackWindow(xy, xy_canvas);
-		if (!single_pane && xz_window == null)
-			xz_window = new StackWindow(xz, xz_canvas);
-		if (!single_pane && zy_window == null)
-			zy_window = new StackWindow(zy, zy_canvas);
-
+		xy_canvas = createCanvas(xy, XY_PLANE);
+		xy_window = new StackWindow(xy, xy_canvas);
 		// Ensure keylisteners have focus
 		xy_canvas.requestFocusInWindow();
-		if (!single_pane) {
+
+		if (!singlePane) {
+			xz_canvas = createCanvas(xz, XZ_PLANE);
+			xz_window = new StackWindow(xz, xz_canvas);
 			xz_canvas.requestFocusInWindow();
+			zy_canvas = createCanvas(zy, ZY_PLANE);
+			zy_window = new StackWindow(zy, zy_canvas);
 			zy_canvas.requestFocusInWindow();
 		}
 
 	}
 
 	/*
+	 *
 	 * If a user clicks on a point in one of the panes, it's sometimes useful to
 	 * consider all points in the column that point is in perpendicular to the
 	 * plane. This method returns the x, y and z coordinates of all the points in
@@ -697,7 +695,7 @@ public class MultiDThreePanes implements PaneOwner {
 	public static void main(final String[] args) {
 		if (ij.IJ.getInstance() == null)
 			new ij.ImageJ();
-		final String path = "/Applications/IJ/samples/Spindly-GFP.zip";
+		final String path = "https://imagej.net/images/Spindly-GFP.zip";
 		final ImagePlus imp = ij.IJ.openImage(path);
 		// imp.setActiveChannels("01");
 		final MultiDThreePanes mdp = new MultiDThreePanes();

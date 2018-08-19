@@ -98,18 +98,20 @@ class QueueJumpingKeyListener implements KeyListener {
 			return;
 		}
 
+		final int keyCode = e.getKeyCode();
+		if (keyCode == KeyEvent.VK_SPACE) {// IJ's pan tool shortcut
+			if (canvas != null) tracerPlugin.panMode = true;
+			waiveKeyPress(e);
+ 			return;
+		}
+
 		// NB: we don't want accidental keystrokes to interfere with SNT tasks
 		// so we'll block any keys from reaching other listeners, unless: 1)
 		// the keystroke is white-listed, 2) the user pressed a modifier key,
 		// 3) it is a numeric keypad or 'action' (eg, fn) key
-		final int keyCode = e.getKeyCode();
 		final boolean doublePress = isDoublePress(e);
 
-		if (keyCode == KeyEvent.VK_SPACE) {// IJ's pan tool shortcut
-			tracerPlugin.panMode = true;
- 			return;
-		}
-		else if (keyCode == KeyEvent.VK_ESCAPE && canvas != null) {
+		if (keyCode == KeyEvent.VK_ESCAPE && canvas != null) {
 			// Esc is the documented wand>hand tool toggle for the Legacy 3D viewer
 			if (doublePress) tracerPlugin.getUI().reset();
 			else tracerPlugin.getUI().abortCurrentOperation();
@@ -176,7 +178,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			return;
 		}
 
-		// Hotkeys common to both tracing and edit mode
+		// Hotkeys common to all modes
 		else if (keyChar == 'a' || keyChar == 'A') {
 			// IJ1 built-in: Select All
 			tracerPlugin.getUI().togglePathsChoice();
@@ -192,7 +194,11 @@ class QueueJumpingKeyListener implements KeyListener {
 		// Keystrokes exclusive to edit mode (NB: Currently these only work
 		// with InteractiveCanvas). We'll skip hasty keystrokes to avoid
 		// mis-editing
-		else if (canvas != null && canvas.isEditMode() && !doublePress) {
+		else if (canvas != null && canvas.isEditMode()) {
+			if (doublePress) {
+				e.consume();
+				return;
+			}
 			if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE ||
 				keyChar == 'd' || keyChar == 'D')
 			{
@@ -201,66 +207,68 @@ class QueueJumpingKeyListener implements KeyListener {
 			else if (keyCode == KeyEvent.VK_INSERT || keyChar == 'i' ||
 				keyChar == 'I')
 			{
-				canvas.apppendLastPositionToEditingNode(false);
+				canvas.apppendLastCanvasPositionToEditingNode(false);
 			}
 			else if (keyChar == 'm' || keyChar == 'M') {
-				canvas.moveEditingNodeToLastPosition(false);
+				canvas.moveEditingNodeToLastCanvasPosition(false);
 			}
 			else if (keyChar == 'b' || keyChar == 'B') {
-				canvas.assignLastZPositionToEditNode(false);
+				canvas.assignLastCanvasZPositionToEditNode(false);
 			}
 			e.consume();
 			return;
 		}
 
 		// Keystrokes exclusive to tracing mode
-		else if (keyChar == 'y' || keyChar == 'Y') {
-			// IJ1 built-in: ROI Properties...
-			if (tracerPlugin.getUI().finishOnDoubleConfimation && doublePress)
-				tracerPlugin.finishedPath();
-			else tracerPlugin.confirmTemporary();
-			e.consume();
-		}
-		else if (keyChar == 'n' || keyChar == 'N') {
-			// IJ1 built-in: New Image
-			if (tracerPlugin.getUI().discardOnDoubleCancellation && doublePress)
-				tracerPlugin.cancelPath();
-			else tracerPlugin.cancelTemporary();
-			e.consume();
-		}
-		else if (keyChar == 'c' || keyChar == 'C') {
-			// IJ1 built-in: Copy
-			if (tracerPlugin.getUIState() == SNTUI.PARTIAL_PATH)
-				tracerPlugin.cancelPath();
-			else if (doublePress) tracerPlugin.getUI().abortCurrentOperation();
-			e.consume();
-		}
-		else if (keyChar == 'f' || keyChar == 'F') {
-			// IJ1 built-in: Fill
-			tracerPlugin.finishedPath();
-			e.consume();
-		}
-		else if (keyChar == 'h' || keyChar == 'H') {
-			// IJ1 built-in: Histogram
-			tracerPlugin.getUI().toggleHessian();
-			e.consume();
-		}
-		else if (keyChar == 'i' || keyChar == 'I') {
-			// IJ1 built-in: Get Info
-			tracerPlugin.getUI().toggleFilteredImgTracing();
-			e.consume();
-		}
-		else if ((keyChar == 'm' || keyChar == 'M') && canvas != null) {
-			// IJ1 built-in: Measure
-			canvas.clickAtMaxPoint();
-			e.consume();
-		}
-		else if (keyChar == 's' || keyChar == 's') {
-			// IJ1 built-in: Save
-			tracerPlugin.toogleSnapCursor();
-			e.consume();
-		}
+		else if (canvas != null && !canvas.isEditMode() && !tracerPlugin.analysisMode) {
 
+			if (keyChar == 'y' || keyChar == 'Y') {
+				// IJ1 built-in: ROI Properties...
+				if (tracerPlugin.getUI().finishOnDoubleConfimation && doublePress)
+					tracerPlugin.finishedPath();
+				else tracerPlugin.confirmTemporary();
+				e.consume();
+			}
+			else if (keyChar == 'n' || keyChar == 'N') {
+				// IJ1 built-in: New Image
+				if (tracerPlugin.getUI().discardOnDoubleCancellation && doublePress)
+					tracerPlugin.cancelPath();
+				else tracerPlugin.cancelTemporary();
+				e.consume();
+			}
+			else if (keyChar == 'c' || keyChar == 'C') {
+				// IJ1 built-in: Copy
+				if (tracerPlugin.getUIState() == SNTUI.PARTIAL_PATH)
+					tracerPlugin.cancelPath();
+				else if (doublePress) tracerPlugin.getUI().abortCurrentOperation();
+				e.consume();
+			}
+			else if (keyChar == 'f' || keyChar == 'F') {
+				// IJ1 built-in: Fill
+				tracerPlugin.finishedPath();
+				e.consume();
+			}
+			else if (keyChar == 'h' || keyChar == 'H') {
+				// IJ1 built-in: Histogram
+				tracerPlugin.getUI().toggleHessian();
+				e.consume();
+			}
+			else if (keyChar == 'i' || keyChar == 'I') {
+				// IJ1 built-in: Get Info
+				tracerPlugin.getUI().toggleFilteredImgTracing();
+				e.consume();
+			}
+			else if ((keyChar == 'm' || keyChar == 'M') && canvas != null) {
+				// IJ1 built-in: Measure
+				canvas.clickAtMaxPoint();
+				e.consume();
+			}
+			else if (keyChar == 's' || keyChar == 's') {
+				// IJ1 built-in: Save
+				tracerPlugin.toogleSnapCursor();
+				e.consume();
+			}
+		}
 		else if (e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD || e
 			.isActionKey())
 		{
@@ -280,9 +288,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		new Thread(() -> {
 			final NearPoint np = getNearestPickedPoint();
 			if (np == null) return;
-			final ShollAnalysisDialog sd = new ShollAnalysisDialog(
-				"Sholl analysis for tracing of " + tracerPlugin.getImagePlus()
-					.getTitle(), np.pathPointX, np.pathPointY, np.pathPointZ,
+			final ShollAnalysisDialog sd = new ShollAnalysisDialog(np.pathPoint.x, np.pathPoint.y, np.pathPoint.z,
 				tracerPlugin);
 			sd.toFront();
 		}).start();
@@ -295,7 +301,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		final Content c = picker.getPickedContent(p.x, p.y);
 		if (null == c) return null;
 		final Point3d point = picker.getPickPointGeometry(c, p.x, p.y);
-		final double diagonalLength = tracerPlugin.getImpDiagonalLength();
+		final double diagonalLength = tracerPlugin.getImpDiagonalLength(true, false);
 		final NearPoint np = tracerPlugin.getPathAndFillManager()
 			.nearestPointOnAnyPath(point.x, point.y, point.z, diagonalLength);
 		if (np == null) {
@@ -329,10 +335,7 @@ class QueueJumpingKeyListener implements KeyListener {
 
 	@Override
 	public void keyReleased(final KeyEvent e) {
-		if (e.getKeyCode() == KeyEvent.VK_SPACE && canvas != null && !canvas.isEventsDisabled()) { // IJ's
-																																							// pan
-																																							// tool
-																																							// shortcut
+		if (e.getKeyCode() == KeyEvent.VK_SPACE && canvas != null) { // IJ's pan tool shortcut
 			tracerPlugin.panMode = false;
 		}
 		for (final KeyListener kl : listeners) {

@@ -386,10 +386,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		nullifyCanvases();
 		if (pathAndFillManager.size() == 0) {
 			// not enough information to proceed. Assemble a dummy canvas instead
+			hideXYcanvas = true;
 			xy = NewImage.createByteImage("Display Canvas", 1, 1, 1, NewImage.FILL_BLACK);
 			setFieldsFromImage(xy);
 			return;
 		}
+		hideXYcanvas = false;
 		BoundingBox box = pathAndFillManager.getBoundingBox(false);
 		if (Double.isNaN(box.getDiagonal()))
 			box = pathAndFillManager.getBoundingBox(true);

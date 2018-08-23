@@ -64,7 +64,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -118,16 +117,16 @@ import tracing.util.SWCColor;
 import tracing.util.SWCPoint;
 
 /**
- * Creates the "Path Manager" JFrame.
+ * Creates the "Path Manager" Dialog.
  * 
  * @author Tiago Ferreira
  */
-public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSelectionListener {
+public class PathManagerUI extends JDialog implements PathAndFillListener, TreeSelectionListener {
 
 	private static final long serialVersionUID = 1L;
 	private HelpfulJTree tree;
 	private DefaultMutableTreeNode root;
-	private SimpleNeuriteTracer plugin;
+	private final SimpleNeuriteTracer plugin;
 	private PathAndFillManager pathAndFillManager;
 	private DefaultGenericTable table;
 	private boolean tableSaved;
@@ -154,7 +153,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 	 */
 	public PathManagerUI(final SimpleNeuriteTracer plugin) {
 
-		super("Path Manager");
+		super(plugin.getUI(), "Path Manager");
 		this.plugin = plugin;
 		guiUtils = new GuiUtils(this);
 		pathAndFillManager = plugin.getPathAndFillManager();
@@ -344,8 +343,7 @@ public class PathManagerUI extends JFrame implements PathAndFillListener, TreeSe
 		searchable.setRepeats(true);
 		add(bottomPanel(), BorderLayout.PAGE_END);
 		pack();
-		if (plugin.analysisMode)
-			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // prevent closing
+		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE); // prevent closing
 	}
 
 	private void assembleSWCtypeMenu(final boolean applyPromptOptions) {

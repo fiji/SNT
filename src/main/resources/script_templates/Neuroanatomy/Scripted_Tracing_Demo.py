@@ -9,16 +9,16 @@
 
 
 '''
-file:       Scripting_SNT_Demo.ey
+file:       Scripted_Tracing_Demo.py
 author:     Tiago Ferreira
-version:    20180620
+version:    20180820
 info:       Exemplifies how to programatically interact with a running instance
             of SimpleNeuriteTracer to perform auto-tracing tasks.
 '''
 
 import math
 
-from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, Tree)
+from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
 from tracing.util import PointInImage
 from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorizer, 
     TreePlot, TreeStatistics)
@@ -32,6 +32,9 @@ def run():
         return
     if not snt.isUIReady():
         ui.showDialog("Demo cannot run in current state: UI not ready", "Error")
+        return
+    if snt.getUI().getCurrentState() == SNTUI.ANALYSIS_MODE:
+        ui.showDialog("Demo cannot run in 'Analysis Mode'.", "Error")
         return
 
     # For basic functionality we can call SNTService directly: E.g.:
@@ -53,7 +56,7 @@ def run():
 
     # Let's first announce (discretely) our scripting intentions
     msg = "SNT is being scripted!"
-    plugin.getUI().showStatus(msg)
+    plugin.getUI().showStatus(msg, True)
     plugin.setCanvasLabelAllPanes(msg)
     snt.updateViewers()
 

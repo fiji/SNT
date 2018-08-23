@@ -45,7 +45,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
@@ -61,11 +61,11 @@ import tracing.gui.GuiUtils;
 import ij.ImagePlus;
 
 /**
- * Creates the "Fill Manager" JFrame.
+ * Creates the "Fill Manager" Dialog.
  * 
  * @author Tiago Ferreira
  */
-public class FillManagerUI extends JFrame
+public class FillManagerUI extends JDialog
 		implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
 
 	private static final long serialVersionUID = 1L;
@@ -106,7 +106,7 @@ public class FillManagerUI extends JFrame
 	 *            this FillManager
 	 */
 	public FillManagerUI(final SimpleNeuriteTracer plugin) {
-		super("Fill Manager");
+		super(plugin.getUI(), "Fill Manager");
 
 		this.plugin = plugin;
 		pathAndFillManager = plugin.getPathAndFillManager();
@@ -266,6 +266,7 @@ public class FillManagerUI extends JFrame
 		}
 
 		pack();
+		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE); // prevent closing
 
 	}
 

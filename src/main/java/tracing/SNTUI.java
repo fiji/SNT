@@ -50,6 +50,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -1248,10 +1249,8 @@ public class SNTUI extends JDialog {
 		final JComboBox<String> displayChoice = new JComboBox<>();
 		final JButton applyDisplayChoice = new JButton("Apply");
 		final JButton refreshList = GuiUtils.smallButton("Refresh List");
-		final JButton applyLabelsImage = new JButton(
-			"Apply Color Labels...");
-		final JButton getCorrespondences = new JButton(
-				"Compare Tracings...");
+		final JComboBox<String> actionChoice = new JComboBox<>();
+		final JButton applyActionChoice = new JButton("Apply");
 
 		final LinkedHashMap<String, Image3DUniverse> hm = new LinkedHashMap<>();
 		hm.put(VIEWER_NONE, null);
@@ -1287,8 +1286,8 @@ public class SNTUI extends JDialog {
 					.get3DUniverse() != null;
 				displayChoice.setEnabled(validViewer);
 				applyDisplayChoice.setEnabled(validViewer);
-				applyLabelsImage.setEnabled(validViewer);
-				getCorrespondences.setEnabled(validViewer);
+				actionChoice.setEnabled(validViewer);
+				applyActionChoice.setEnabled(validViewer);
 			}
 
 			@Override
@@ -1369,9 +1368,9 @@ public class SNTUI extends JDialog {
 		});
 
 		// Build widget for rendering choices
-		displayChoice.addItem("Surface reconstructions");
-		displayChoice.addItem("Lines");
 		displayChoice.addItem("Lines and discs");
+		displayChoice.addItem("Lines");
+		displayChoice.addItem("Surface reconstructions");
 		applyDisplayChoice.addActionListener(new ActionListener() {
 
 			@Override
@@ -1406,66 +1405,88 @@ public class SNTUI extends JDialog {
 			}
 		});
 
-		// Build load labels button
-		applyLabelsImage.addActionListener(new ActionListener() {
+		// Build actions
+		class ApplyLabelsAction extends AbstractAction {
+
+			final static String LABEL = "Apply Color Labels...";
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				final File imageFile = guiUtils.openFile("Choose labels image",
-					plugin.prefs.getRecentFile(), null);
-				if (imageFile == null) return; // user pressed cancel
+				final File imageFile = guiUtils.openFile("Choose labels image", plugin.prefs.getRecentFile(), null);
+				if (imageFile == null)
+					return; // user pressed cancel
 				try {
 					plugin.statusService.showStatus(("Loading " + imageFile.getName()));
-					final Dataset ds = plugin.datasetIOService.open(imageFile
-						.getAbsolutePath());
-					final ImagePlus colorImp = plugin.convertService.convert(ds,
-						ImagePlus.class);
+					final Dataset ds = plugin.datasetIOService.open(imageFile.getAbsolutePath());
+					final ImagePlus colorImp = plugin.convertService.convert(ds, ImagePlus.class);
 					showStatus("Applying color labels...", false);
 					plugin.setColorImage(colorImp);
 					showStatus("Labels image loaded...", true);
 
-				}
-				catch (final IOException exc) {
-					guiUtils.error("Could not open " + imageFile.getAbsolutePath() +
-						". Maybe it is not a valid image?", "IO Error");
+				} catch (final IOException exc) {
+					guiUtils.error("Could not open " + imageFile.getAbsolutePath() + ". Maybe it is not a valid image?",
+							"IO Error");
 					exc.printStackTrace();
 					return;
 				}
 			}
-		});
+		}
+		class CompareTracingsAction extends AbstractAction {
 
-		getCorrespondences.addActionListener(new ActionListener() {
+			final static String LABEL = "Compare Tracings...";
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				final File tracesFile = guiUtils.openFile("Select tracings...", null,
-					Collections.singletonList(".swc"));
-				if (tracesFile == null) return;
+						Collections.singletonList(".swc"));
+				if (tracesFile == null)
+					return;
 				if (!tracesFile.exists()) {
 					guiUtils.error(tracesFile.getAbsolutePath() + " is not available");
 					return;
 				}
-				double defaultDistance = plugin.getMinimumSeparation();
-				final Double maxDistance = guiUtils.getDouble("<HTML><body><div style='width:500;'>"
-						+ "Please specify the confinement distance for node correspondence between "
-						+ "the two traced structures. Currently, the smallest voxel dimension is " 
-						+ SNT.formatDouble(defaultDistance, 3) + plugin.spacing_units, 
+				final double defaultDistance = plugin.getMinimumSeparation();
+				final Double maxDistance = guiUtils.getDouble(
+						"<HTML><body><div style='width:500;'>"
+								+ "Please specify the confinement distance for node correspondence between "
+								+ "the two traced structures. Currently, the smallest voxel dimension is "
+								+ SNT.formatDouble(defaultDistance, 3) + plugin.spacing_units,
 						"Correspondence Distance", 3 * defaultDistance);
 				if (maxDistance == null)
 					return; // user pressed cancel
-				plugin.showCorrespondencesTo(tracesFile, guiUtils.getColor(
-					"Rendering Color", Color.RED), maxDistance);
+				plugin.showCorrespondencesTo(tracesFile, guiUtils.getColor("Rendering Color", Color.RED), maxDistance);
 			}
 		}
-		);
+
+		// Assemble widget for actions
+		actionChoice.addItem(ApplyLabelsAction.LABEL);
+		actionChoice.addItem(CompareTracingsAction.LABEL);
+		applyActionChoice.addActionListener(new ActionListener() {
+
+			final ActionEvent ev = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null);
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+
+				switch (String.valueOf(actionChoice.getSelectedItem())) {
+					case ApplyLabelsAction.LABEL:
+						new ApplyLabelsAction().actionPerformed(ev);
+						break;
+					case CompareTracingsAction.LABEL:
+						new CompareTracingsAction().actionPerformed(ev);
+						break;
+					default:
+						break;
+				}
+			}
+		});
 
 		// Set defaults
 		univChoice.setSelectedItem(VIEWER_NONE);
 		applyUnivChoice.setEnabled(false);
 		displayChoice.setEnabled(false);
 		applyDisplayChoice.setEnabled(false);
-		applyLabelsImage.setEnabled(false);
-		getCorrespondences.setEnabled(false);
+		actionChoice.setEnabled(false);
+		applyActionChoice.setEnabled(false);
 
 		// Build panel
 		final JPanel p = new JPanel();
@@ -1506,23 +1527,21 @@ public class SNTUI extends JDialog {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		p.add(displayChoice, c);
 		c.gridx++;
-		c.gridwidth = GridBagConstraints.NONE;
+		c.fill = GridBagConstraints.NONE;
 		p.add(applyDisplayChoice, c);
 		c.gridx++;
 
-		// row 3
-		c.ipady = MARGIN;
+		// row 4
 		c.gridy++;
 		c.gridx = 0;
 		c.fill = GridBagConstraints.NONE;
 		p.add(GuiUtils.leftAlignedLabel("Actions: ", true), c);
 		c.gridx++;
 		c.fill = GridBagConstraints.HORIZONTAL;
-		final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,
-			MARGIN / 2, MARGIN / 2));
-		buttonPanel.add(applyLabelsImage);
-		buttonPanel.add(getCorrespondences);
-		p.add(buttonPanel, c);
+		p.add(actionChoice, c);
+		c.gridx++;
+		c.fill = GridBagConstraints.NONE;
+		p.add(applyActionChoice, c);
 		return p;
 	}
 
@@ -1881,7 +1900,7 @@ public class SNTUI extends JDialog {
 		loadLabelsMenuItem.addActionListener(listener);
 		importSubmenu.add(loadLabelsMenuItem);
 		importSubmenu.addSeparator();
-		JMenuItem importMouselight = new JMenuItem("MouseLight Reconstructions...");
+		final JMenuItem importMouselight = new JMenuItem("MouseLight Reconstructions...");
 		importSubmenu.add(importMouselight);
 		importSubmenu.addSeparator();
 		importMouselight.addActionListener(e -> {
@@ -2470,8 +2489,6 @@ public class SNTUI extends JDialog {
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {	
 			pmUI.setVisible(true);
-			final int state = pmUI.getExtendedState();
-			pmUI.setExtendedState(state & ~JFrame.ICONIFIED);
 			if (toFront) pmUI.toFront();
 			if (showOrHidePathList != null) showOrHidePathList.setText(
 				"  Hide Path Manager");
@@ -2493,9 +2510,7 @@ public class SNTUI extends JDialog {
 	protected void setFillListVisible(final boolean makeVisible) {
 		assert SwingUtilities.isEventDispatchThread();
 		if (makeVisible) {
-			final int state = fmUI.getExtendedState();
 			fmUI.setVisible(true);
-			fmUI.setExtendedState(state & ~JFrame.ICONIFIED);
 			if (showOrHideFillList != null) showOrHideFillList.setText(
 				"  Hide Fill Manager");
 			fmUI.toFront();

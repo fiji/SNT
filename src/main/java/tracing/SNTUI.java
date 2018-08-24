@@ -100,6 +100,7 @@ import net.imagej.Dataset;
 import net.imagej.table.DefaultGenericTable;
 import sholl.Sholl_Analysis;
 import tracing.analysis.TreeAnalyzer;
+import tracing.event.SNTEvent;
 import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;

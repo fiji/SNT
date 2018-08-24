@@ -32,6 +32,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +79,8 @@ import io.scif.services.DatasetIOService;
 import net.imagej.Dataset;
 import net.imagej.axis.Axes;
 import net.imagej.legacy.LegacyService;
+import tracing.event.SNTEvent;
+import tracing.event.SNTListener;
 import tracing.gui.GuiUtils;
 import tracing.gui.SWCImportOptionsDialog;
 import tracing.gui.SigmaPalette;
@@ -1282,7 +1285,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * values set to either 255 (if there's a point on a path there) or 0
 	 */
 
-	synchronized public ImagePlus makePathVolume(final ArrayList<Path> paths) {
+	synchronized public ImagePlus makePathVolume(final Collection<Path> paths) {
 
 		final byte[][] snapshot_data = new byte[depth][];
 

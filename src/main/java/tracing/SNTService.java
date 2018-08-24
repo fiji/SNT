@@ -24,7 +24,6 @@ package tracing;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
 import org.scijava.Priority;
 import org.scijava.log.LogService;
@@ -115,7 +114,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @throws UnsupportedOperationException
 	 *             if SimpleNeuriteTracer is not running
 	 */
-	public ArrayList<Path> getPaths() {
+	public List<Path> getPaths() {
 		accessActiveInstance();
 		return plugin.getPathAndFillManager().getPathsFiltered();
 	}

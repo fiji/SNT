@@ -20,22 +20,10 @@
  * #L%
  */
 
-package tracing;
+package tracing.event;
 
-public class SNTEvent {
+public interface SNTListener {
 
-	public final static int NO_EVENT = 0;
-	public final static int QUIT = 1;
-	public final static int SEND_TO_TRAKEM2 = 2;
-
-	protected int type;
-
-	public SNTEvent(final int type) {
-		this.type = type;
-	}
-
-	public int getType() {
-		return type;
-	}
+	public void onEvent(SNTEvent event);
 
 }

@@ -111,7 +111,7 @@ import tracing.gui.SWCTypeOptionsCmd;
 import tracing.gui.SwingSafeResult;
 import tracing.plugin.DistributionCmd;
 import tracing.plugin.ROIExporterCmd;
-import tracing.plugin.SkeletonConverter;
+import tracing.plugin.SkeletonizerCmd;
 import tracing.plugin.TreeColorizerCmd;
 import tracing.util.SWCColor;
 import tracing.util.SWCPoint;
@@ -1814,7 +1814,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				return;
 
 			} else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
-				new SkeletonConverter(plugin).runGui();
+				final Map<String, Object> input = new HashMap<>();
+				input.put("tree", new Tree(selectedPaths));
+				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				cmdService.run(SkeletonizerCmd.class, true, input);
 				return;
 
 			} else if (CONVERT_TO_SWC_CMD.equals(cmd)) {

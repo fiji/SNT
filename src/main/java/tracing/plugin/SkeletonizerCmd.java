@@ -1,0 +1,148 @@
+/*-
+ * #%L
+ * Fiji distribution of ImageJ for the life sciences.
+ * %%
+ * Copyright (C) 2010 - 2018 Fiji developers.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
+
+package tracing.plugin;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
+import org.scijava.ui.DialogPrompt;
+import org.scijava.ui.DialogPrompt.Result;
+import org.scijava.ui.UIService;
+import org.scijava.widget.ChoiceWidget;
+
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.Roi;
+import ij.process.ImageProcessor;
+import net.imagej.ImageJ;
+import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
+import sc.fiji.skeletonize3D.Skeletonize3D_;
+import tracing.SNTService;
+import tracing.SimpleNeuriteTracer;
+import tracing.Tree;
+
+/**
+ * Convenience command for converting Paths into skeleton images
+ *
+ * @author Tiago Ferreira
+ */
+@Plugin(type = Command.class, visible = false, label = "Convert Paths to Topographic Skeletons")
+public class SkeletonizerCmd implements Command {
+
+	@Parameter
+	private UIService uiService;
+
+	@Parameter
+	private SNTService sntService;
+
+	@Parameter(required = false, label = "Roi filtering", style = ChoiceWidget.RADIO_BUTTON_VERTICAL_STYLE, choices = {
+			"None", "Convert only segments contained by ROI" })
+	private String roiChoice;
+
+	@Parameter(required = false, label = "Run \"Analyze Skeleton\" after conversion")
+	private boolean callAnalyzeSkeleton;
+
+	@Parameter(required = true)
+	private Tree tree;
+
+	private SimpleNeuriteTracer plugin;
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Runnable#run()
+	 */
+	@Override
+	public void run() {
+
+		if (tree == null || tree.isEmpty()) {
+			error("No Paths to convert.");
+			return;
+		}
+		plugin = sntService.getPlugin();
+		if (plugin == null) {
+			error("No active instance of SimpleNeuriteTracer was found.");
+			return;
+		}
+
+		final Roi roi = (plugin.getImagePlus() == null) ? null : plugin.getImagePlus().getRoi();
+		boolean restrictByRoi = !roiChoice.equals("None");
+		final boolean validAreaRoi = (roi == null || !roi.isArea());
+		if (restrictByRoi && validAreaRoi) {
+			if (!getConfirmation(
+					"ROI filtering requested but no area ROI was found.\n" + "Proceed without ROI filtering?",
+					"Proceed Without ROI Filtering?"))
+				return;
+			restrictByRoi = false;
+		}
+
+		plugin.showStatus(0, 0, "Converting paths to skeletons...");
+
+		final ImagePlus imagePlus = plugin.makePathVolume(tree.list());
+		if (restrictByRoi && roi != null && roi.isArea()) {
+			final ImageStack stack = imagePlus.getStack();
+			for (int i = 1; i <= stack.getSize(); i++) {
+				final ImageProcessor ip = stack.getProcessor(i);
+				ip.setValue(0);
+				ip.fillOutside(roi);
+			}
+			imagePlus.setRoi(roi);
+		}
+
+		if (callAnalyzeSkeleton) {
+			final Skeletonize3D_ skeletonizer = new Skeletonize3D_();
+			skeletonizer.setup("", imagePlus);
+			skeletonizer.run(imagePlus.getProcessor());
+			final AnalyzeSkeleton_ analyzer = new AnalyzeSkeleton_();
+			analyzer.setup("", imagePlus);
+			analyzer.run(imagePlus.getProcessor());
+		}
+
+		imagePlus.show();
+
+	}
+
+	private boolean getConfirmation(final String msg, final String title) {
+		final Result res = uiService.getDefaultUI().dialogPrompt(msg, title, DialogPrompt.MessageType.QUESTION_MESSAGE,
+				DialogPrompt.OptionType.YES_NO_OPTION).prompt();
+		return Result.YES_OPTION.equals(res);
+	}
+
+	private void error(final String msg) {
+		uiService.getDefaultUI().dialogPrompt(msg, "Error", DialogPrompt.MessageType.ERROR_MESSAGE,
+				DialogPrompt.OptionType.DEFAULT_OPTION).prompt();
+	}
+
+	/** IDE debug method **/
+	public static void main(final String[] args) {
+		final ImageJ ij = new ImageJ();
+		ij.ui().showUI();
+		final Map<String, Object> input = new HashMap<>();
+		input.put("tree", new Tree());
+		ij.command().run(SkeletonizerCmd.class, true, input);
+	}
+
+}

@@ -25,7 +25,6 @@ package tracing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -88,25 +87,24 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.prefs.PrefService;
 
+import com.jidesoft.swing.Searchable;
 import com.jidesoft.swing.SearchableBar;
 import com.jidesoft.swing.TreeSearchable;
-import com.jidesoft.swing.event.SearchableEvent;
-import com.jidesoft.swing.event.SearchableListener;
 
 import ij.ImagePlus;
 import net.imagej.ImageJ;
 import net.imagej.table.DefaultGenericTable;
 import tracing.analysis.TreeAnalyzer;
-import tracing.analysis.TreeStatistics;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
+import tracing.gui.PathFitterCmd;
+import tracing.gui.SNTSearchableBar;
 import tracing.gui.SWCTypeOptionsCmd;
 import tracing.gui.SwingSafeResult;
 import tracing.plugin.DistributionCmd;
@@ -142,7 +140,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	private ButtonGroup swcTypeButtonGroup;
 	private final ColorMenu colorMenu;
 	private final JMenuItem fitVolumeMenuItem;
-	private final TreeSearchable searchable;
 
 	/**
 	 * Instantiates a new Path Manager {@link JFrame}
@@ -336,12 +333,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		});
 
 		// Search Bar TreeSearchable
-		searchable = new TreeSearchable(tree);
-		searchable.setCaseSensitive(false);
-		searchable.setFromStart(false);
-		searchable.setWildcardEnabled(true);
-		searchable.setRepeats(true);
-		add(bottomPanel(), BorderLayout.PAGE_END);
+		final SearchableBar sBar = new SNTSearchableBar(this);
+		add(sBar, BorderLayout.PAGE_END);
 		pack();
 		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE); // prevent closing
 	}
@@ -690,236 +683,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		guiUtils.tempMsg(msg);
 	}
 
-	private JPanel bottomPanel() {
-		final SearchableBar sBar = new SearchableBar(searchable, true);
-		sBar.setFloatable(true);
-		sBar.setBorderPainted(false);
-		sBar.setBorder(BorderFactory.createEmptyBorder());
-		sBar.setMismatchForeground(Color.RED);
-		sBar.setVisibleButtons(
-				SearchableBar.SHOW_NAVIGATION | SearchableBar.SHOW_HIGHLIGHTS | SearchableBar.SHOW_STATUS);
-
-		sBar.setMaxHistoryLength(10);
-		sBar.setShowMatchCount(true);
-		sBar.setHighlightAll(false); // TODO: update to 3.6.19 see bugfix
-										// https://github.com/jidesoft/jide-oss/commit/149bd6a53846a973dfbb589fffcc82abbc49610b
-
-		// Tweak the bar
-		JLabel statusMsg = null;
-		for (final Component c : sBar.getComponents()) {
-			if (!(c instanceof JLabel))
-				continue;
-			final JLabel label = ((JLabel) c);
-			if (label.getText().contains("Find")) {
-				label.setText("Filter:");
-				continue;
-			}
-			statusMsg = label; // status Message is the last JLabel in the bar
-		}
-
-		final Consumer<SearchableBar> updateSearch = bar -> {
-			final SearchableListener[] listeners = bar.getSearchable().getSearchableListeners();
-			for (final SearchableListener l : listeners)
-				l.searchableEventFired(
-						new SearchableEvent(bar.getSearchable(), SearchableEvent.SEARCHABLE_MODEL_CHANGE));
-
-		};
-
-		final JPopupMenu popup = new JPopupMenu();
-		final JMenu optionsMenu = new JMenu("Text Filtering");
-		final JMenuItem jcbmi1 = new JCheckBoxMenuItem("Case Sensitive Matching",
-				sBar.getSearchable().isCaseSensitive());
-		jcbmi1.addItemListener(e -> {
-			sBar.getSearchable().setCaseSensitive(jcbmi1.isSelected());
-			updateSearch.accept(sBar);
-		});
-		optionsMenu.add(jcbmi1);
-		final JMenuItem jcbmi2 = new JCheckBoxMenuItem("Enable Wildcards (?*)",
-				sBar.getSearchable().isWildcardEnabled());
-		jcbmi2.addItemListener(e -> {
-			sBar.getSearchable().setWildcardEnabled(jcbmi2.isSelected());
-			updateSearch.accept(sBar);
-		});
-		optionsMenu.add(jcbmi2);
-		final JMenuItem jcbmi3 = new JCheckBoxMenuItem("Loop After First/Last Hit", sBar.getSearchable().isRepeats());
-		jcbmi3.addItemListener(e -> sBar.getSearchable().setRepeats(jcbmi3.isSelected()));
-		optionsMenu.add(jcbmi3);
-		optionsMenu.addSeparator();
-
-		JMenuItem mi = new JMenuItem("Replace...");
-		mi.addActionListener(e -> {
-			String findText = sBar.getSearchingText();
-			if (findText == null || findText.isEmpty()) {
-				guiUtils.error("No filtering string exists.", "No Filter String");
-				return;
-			}
-			final List<Path> selectedPath = getSelectedPaths(false);
-			if (selectedPath.isEmpty()) {
-				guiUtils.error("No Paths matching '" + findText + "'.", "No Paths Selected");
-				return;
-			}
-			String replaceText = guiUtils.getString("Please specify the text to replace all ocurrences of\n"
-					+ "\"" + findText + "\" in the " + selectedPath.size() + " Path(s) currently selected:",
-					"Replace Filtering Pattern", null);
-			if (replaceText == null) {
-				return; // user pressed cancel
-			}
-			if (sBar.getSearchable().isWildcardEnabled()) {
-				findText = findText.replaceAll("\\?", ".?");
-				findText = findText.replaceAll("\\*", ".*");
-			}
-			if (!sBar.getSearchable().isCaseSensitive()) {
-				findText = "(?i)"  + findText;
-			}
-			final Pattern pattern = Pattern.compile(findText);
-			for (final Path p : selectedPath) {
-				p.setName(pattern.matcher(p.getName()).replaceAll(replaceText));
-			}
-			refreshManager(false, false);
-		});
-		optionsMenu.add(mi);
-		mi = new JMenuItem("Clear History");
-		mi.addActionListener(e -> sBar.setSearchHistory(null));
-		optionsMenu.add(mi);
-		optionsMenu.addSeparator();
-		final JMenuItem mi2 = new JMenuItem("Tips & Shortcuts...");
-		mi2.addActionListener(e -> filterHelpMsg());
-		optionsMenu.add(mi2);
-		popup.add(optionsMenu);
-		popup.addSeparator();
-
-		final ColorMenu colorFilterMenu = new ColorMenu("Color Tag Filtering");
-		popup.add(colorFilterMenu);
-		colorFilterMenu.addActionListener(e -> {
-			final List<Path> filteredPaths = pathAndFillManager.getPathsFiltered();
-			if (filteredPaths.isEmpty()) {
-				guiUtils.error("There are no traced paths.");
-				return;
-			}
-			final Color filteredColor = colorFilterMenu.getSelectedSWCColor().color();
-			for (final Iterator<Path> iterator = filteredPaths.iterator(); iterator.hasNext();) {
-				final Color color = iterator.next().getColor();
-				if ((filteredColor != null && color != null && !filteredColor.equals(color))
-						|| (filteredColor == null && color != null) || (filteredColor != null && color == null)) {
-					iterator.remove();
-				}
-			}
-			if (filteredPaths.isEmpty()) {
-				guiUtils.error("No Path matches the specified color tag.");
-				return;
-			}
-			setSelectedPaths(new HashSet<>(filteredPaths), this);
-			guiUtils.tempMsg(filteredPaths.size() + " Path(s) selected");
-			// refreshManager(true, true);
-		});
-		popup.add(colorFilterMenu);
-
-		final JMenu morphoFilteringMenu = new JMenu("Morphology Filtering");
-		JMenuItem mi1 = new JMenuItem("Branch Order...");
-		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.BRANCH_ORDER, ""));
-		morphoFilteringMenu.add(mi1);
-		mi1 = new JMenuItem("Length...");
-		mi1.addActionListener(e -> {
-			final String unit = plugin.spacing_units;
-			doMorphoFiltering(TreeAnalyzer.LENGTH, unit);
-		});
-		morphoFilteringMenu.add(mi1);
-		mi1 = new JMenuItem("Mean Radius...");
-		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.MEAN_RADIUS, ""));
-		morphoFilteringMenu.add(mi1);
-		mi1 = new JMenuItem("No. of Nodes...");
-		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.N_NODES, ""));
-		morphoFilteringMenu.add(mi1);
-		popup.add(morphoFilteringMenu);
-
-		final JPanel bottomPanel = new JPanel(new BorderLayout());
-		bottomPanel.add(sBar, BorderLayout.NORTH);
-
-		// Now move the status message to the bottom of the panel
-		if (statusMsg != null) {
-			sBar.remove(statusMsg);
-			final JPanel statusBarPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
-			statusBarPanel.add(new JLabel(" "));
-			statusBarPanel.add(statusMsg);
-			bottomPanel.add(statusBarPanel, BorderLayout.SOUTH);
-		}
-		sBar.setComponentPopupMenu(popup);
-		sBar.setToolTipText("Righ-click for Options");
-		bottomPanel.setComponentPopupMenu(popup);
-		bottomPanel.setToolTipText("Righ-click for Options");
-		return bottomPanel;
-	}
-
-	private void doMorphoFiltering(final String property, final String unit) {
-		final List<Path> filteredPaths = pathAndFillManager.getPathsFiltered();
-		if (filteredPaths.isEmpty()) {
-			guiUtils.error("There are no traced paths.");
-			return;
-		}
-		String msg = "Please specify the " + property.toLowerCase() + " range";
-		if (!unit.isEmpty())
-				msg += " (in " + unit + ")";
-		msg += "\n(e.g., 10-50, min-10, 10-max, max-max):";
-		String s = guiUtils.getString(msg, property + " Filtering", "10-100");
-		if (s == null)
-			return; // user pressed cancel
-		s = s.toLowerCase();
-
-		double min = Double.MIN_VALUE;
-		double max = Double.MAX_VALUE;
-		if (s.contains("min") || s.contains("max")) {
-			final TreeStatistics treeStats = new TreeStatistics(new Tree(filteredPaths));
-			final SummaryStatistics summary = treeStats.getSummaryStats(property);
-			min = summary.getMin();
-			max = summary.getMax();
-		}
-		final double[] values = new double[] {min, max};
-		try {
-			final String[] stringValues = s.toLowerCase().split("-");
-			for (int i = 0; i < values.length; i++) {
-				if (stringValues[i].contains("min"))
-					values[i] = min;
-				else if (stringValues[i].contains("max"))
-					values[i] = max;
-				else
-					values[i] = Double.parseDouble(stringValues[i]);
-			}
-		} catch (final Exception ignored) {
-			guiUtils.error("Invalid range. Example of valid inputs: 10-100, min-10, 100-max, max-max");
-			return;
-		}
-
-		for (final Iterator<Path> iterator = filteredPaths.iterator(); iterator.hasNext();) {
-			final Path p = iterator.next();
-			double value;
-			switch (property) {
-			case TreeAnalyzer.LENGTH:
-				value = p.getLength();
-				break;
-			case TreeAnalyzer.N_NODES:
-				value = p.size();
-				break;
-			case TreeAnalyzer.MEAN_RADIUS:
-				value = p.getMeanRadius();
-				break;
-			case TreeAnalyzer.BRANCH_ORDER:
-				value = p.getOrder();
-				break;
-			default:
-				throw new IllegalArgumentException("Unrecognized parameter");
-			}
-			if (value < values[0] || value > values[1])
-				iterator.remove();
-		}
-		if (filteredPaths.isEmpty()) {
-			guiUtils.error("No Path matches the specified range.");
-			return;
-		}
-		setSelectedPaths(new HashSet<>(filteredPaths), this);
-		guiUtils.tempMsg(filteredPaths.size() + " Path(s) selected");
-		// refreshManager(true, true);
-	}
-
 	// private boolean confirmDnD() {
 	// return guiUtils.getConfirmation(
 	// "Enabling this option will allow you to re-link paths through drag-and drop "
@@ -929,19 +692,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	// "of paths meaningless. Please save your work before enabling this option. " +
 	// "Enable it now?", "Confirm Hierarchy Edits?");
 	// }
-
-	private void filterHelpMsg() {
-		final String key = GuiUtils.ctrlKey();
-		final String msg = "<HTML><body><div style='width:500;'><ol>"
-				+ "<li>Filtering is case-insensitive by default. Wildcards "
-				+ "<b>?</b> (any character), and <b>*</b> (any string) can also be used</li>"
-				+ "<li>Press the <i>Highlight All</i> button or " + key
-				+ "+A to select all the paths filtered by the search string</li>" + "<li>Press and hold " + key
-				+ " while pressing the up/down keys to select multiple filtered paths</li>"
-				+ "<li>Press the up/down keys to find the next/previous occurrence of the filtering string</li>"
-				+ "</ol></div></html>";
-		guiUtils.centeredMsg(msg, "Text-based Filtering");
-	}
 
 	private void showPopup(final MouseEvent me) {
 		assert SwingUtilities.isEventDispatchThread();
@@ -1084,9 +834,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	}
 
 	/** This class defines the JTree hosting traced paths */
-	private static class HelpfulJTree extends JTree {
+	private class HelpfulJTree extends JTree {
 
 		private static final long serialVersionUID = 1L;
+		private final TreeSearchable searchable;
 
 		public HelpfulJTree(final TreeNode root) {
 			super(root);
@@ -1127,6 +878,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			// setDropMode(DropMode.ON_OR_INSERT);
 			// setTransferHandler(new TreeTransferHandler());
 			setRowHeight(getPreferredRowSize());
+
+			searchable = new TreeSearchable(this);
+			searchable.setCaseSensitive(false);
+			searchable.setFromStart(false);
+			searchable.setWildcardEnabled(true);
+			searchable.setRepeats(true);
 		}
 
 		public boolean isExpanded(final Object[] path) {
@@ -1513,6 +1270,22 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		// the table will contain unsaved data. //FIXME: sloppy
 		tableSaved = false;
 		return table;
+	}
+
+	public SimpleNeuriteTracer getSimpleNeuriteTracer() {
+		return plugin;
+	}
+
+	public PathAndFillManager getPathAndFillManager() {
+		return pathAndFillManager;
+	}
+
+	public JTree getJTree() {
+		return tree;
+	}
+
+	public Searchable getSearchable() {
+		return tree.searchable;
 	}
 
 	protected boolean measurementsUnsaved() {

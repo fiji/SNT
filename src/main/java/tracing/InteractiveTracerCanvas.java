@@ -377,13 +377,14 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	@Override
 	public void mousePressed(final MouseEvent me) {// Mac/Linux
-		final boolean ready = tracerPlugin.isUIready();
-		if (ready && me.isPopupTrigger()) {
+
+		if (me.isPopupTrigger()) {
 			showPopupMenu(me.getX(), me.getY());
 			me.consume();
 			return;
 		}
 
+		final boolean ready = tracerPlugin.isUIready();
 		if (tracerPlugin.panMode || isEventsDisabled() || !ready) {
 			super.mousePressed(me);
 			return;

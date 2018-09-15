@@ -3195,6 +3195,7 @@ public class SNTUI extends JDialog {
 		ui.getPathManager().setLocation(locManager);
 		ui.setVisible(true);
 		ui.getPathManager().setVisible(managerVisible);
+		plugin.ui = ui;
 	}
 
 }

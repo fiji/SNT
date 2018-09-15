@@ -345,13 +345,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Rebuilds display canvases. Useful when multiple files are imported and
-	 * imported paths 'fall off' the dimensions of current canvases.
+	 * Rebuilds display canvas(es). Useful when multiple files are imported and
+	 * imported paths 'fall off' the dimensions of current canvas.
 	 *
 	 * @throws IllegalArgumentException when not running in 'Analysis Mode'
 	 */
 	public void rebuildDisplayCanvases() throws IllegalArgumentException{
-		assembleDisplayCanvases();
 		initialize(getSinglePane(), 1, 1);
 		showInitializedCanvases();
 	}

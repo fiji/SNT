@@ -693,7 +693,7 @@ public class MultiDThreePanes implements PaneOwner {
 		return result;
 	}
 
-	/** IDE debug method **/
+	/* IDE debug method **/
 	public static void main(final String[] args) {
 		if (ij.IJ.getInstance() == null)
 			new ij.ImageJ();

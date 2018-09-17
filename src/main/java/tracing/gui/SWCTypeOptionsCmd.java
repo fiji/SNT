@@ -200,7 +200,7 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	}
 
 
-	/** IDE debug method **/
+	/* IDE debug method **/
 	public static void main(final String[] args) {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();

@@ -82,9 +82,9 @@ import util.XMLFunctions;
 
 /**
  * The PathAndFillManager is responsible for importing, handling and managing of
- * Paths (and Fills). Typically, a PathAndFillManager is accessed from an {@ link
- * SimpleNeuriteTracer} instance, but accessing a PathAndFillManager directly is
- * useful for batch/headless operations.
+ * Paths (and Fills). Typically, a PathAndFillManager is accessed from an
+ * {@link SimpleNeuriteTracer} instance, but accessing a PathAndFillManager
+ * directly is useful for batch/headless operations.
  */
 public class PathAndFillManager extends DefaultHandler implements UniverseListener {
 

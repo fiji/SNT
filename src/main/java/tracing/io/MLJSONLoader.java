@@ -233,12 +233,10 @@ public class MLJSONLoader {
 	/**
 	 * Gets a traced compartment of the loaded cell.
 	 *
-	 * @param either {@link AXON} or {@link DENDRITE})
+	 * @param structure either {@link #AXON} or {@link #DENDRITE}
 	 * @return the specified compartment as a JSON object
 	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
 	 *                                  possible
-	 * @see {@link#getNodes()}, {@link#getSoma()}, {@link #getAxonNodes()},
-	 *      {@link #getDendriteNodes()}
 	 */
 	public JSONObject getCompartment(final String structure) throws IllegalArgumentException {
 		if (!initialized)
@@ -271,7 +269,6 @@ public class MLJSONLoader {
 	 *         first point in the set (the soma) has an SWC sample number of 0.
 	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
 	 *                                  possible
-	 * @see {@link#getSoma()}, {@link #getAxonNodes()}, {@link #getDendriteNodes()}
 	 */
 	public TreeSet<SWCPoint> getNodes() throws IllegalArgumentException {
 		if (!initialized)
@@ -294,7 +291,6 @@ public class MLJSONLoader {
 	 * @return the list of nodes of the axonal arbor as {@link SWCPoint}s
 	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
 	 *                                  possible
-	 * @see {@link#getNodes()}, {@link#getSoma()}, {@link #getDendriteNodes()}
 	 */
 	public TreeSet<SWCPoint> getAxonNodes() throws IllegalArgumentException {
 		return getNodesInternal(MLJSONLoader.AXON);
@@ -306,7 +302,6 @@ public class MLJSONLoader {
 	 * @return the list of nodes of the dendritic arbor as {@link SWCPoint}s
 	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
 	 *                                  possible
-	 * @see {@link#getNodes()}, {@link#getSoma()}, {@link #getAxonNodes()}
 	 */
 	public TreeSet<SWCPoint> getDendriteNodes() throws IllegalArgumentException {
 		return getNodesInternal(MLJSONLoader.DENDRITE);
@@ -321,9 +316,6 @@ public class MLJSONLoader {
 	 * @throws IllegalArgumentException if compartment is not recognized or
 	 *                                  retrieval of data for this neuron is not
 	 *                                  possible
-	 * 
-	 * @see {@link#getNodes()}, {@link#getSoma()}, {@link #getAxonNodes()},
-	 *      {@link #getDendriteNodes()}
 	 */
 	public TreeSet<SWCPoint> getNodes(final String compartment) throws IllegalArgumentException {
 		if (compartment == null || compartment.trim().isEmpty())
@@ -355,8 +347,6 @@ public class MLJSONLoader {
 	 *         number of 0.
 	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
 	 *                                  possible
-	 * @see {@link#getNodes()}, {@link #getAxonNodes()}, {@link #getDendriteNodes()}
-	 * 
 	 */
 	public SWCPoint getSoma() throws IllegalArgumentException {
 		if (!initialized)

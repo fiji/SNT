@@ -223,7 +223,7 @@ public class NearPoint implements Comparable<NearPoint> {
 		return distanceSquared;
 	}
 
-	/**
+	/*
 	 * This tests whether a given point (x, y, z) is on the side of a plane in the
 	 * direction of its normal vector (nx,ny,nz). (cx,cy,cz) is any point in the
 	 * plane. If (x,y,z) is in the plane, it returns 0; if (x,y,z) is on the side of

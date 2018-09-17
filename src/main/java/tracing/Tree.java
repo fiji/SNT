@@ -39,6 +39,7 @@ import ij.ImagePlus;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeStatistics;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 
 /**
@@ -293,7 +294,7 @@ public class Tree {
 	 *            the z offset (in pixels)
 	 */
 	public void applyCanvasOffset(final double xOffset, final double yOffset, final double zOffset) {
-		final PointInImage offset = new PointInImage(xOffset, yOffset, zOffset);
+		final PointInCanvas offset = new PointInCanvas(xOffset, yOffset, zOffset);
 		tree.stream().forEach(p -> p.setCanvasOffset(offset));
 	}
 

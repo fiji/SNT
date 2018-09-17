@@ -48,6 +48,7 @@ import ij3d.Pipe;
 import pal.math.ConjugateDirectionSearch;
 import pal.math.MultivariateFunction;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
@@ -69,7 +70,7 @@ public class Path implements Comparable<Path> {
 	PointInImage startJoinsPoint = null;
 	Path endJoins;
 	PointInImage endJoinsPoint = null;
-	PointInImage canvasOffset = new PointInImage(0,0,0);
+	PointInCanvas canvasOffset = new PointInCanvas(0,0,0);
 
 	// Paths should always be given a name (since the name
 	// identifies them to the 3D viewer)...
@@ -174,8 +175,19 @@ public class Path implements Comparable<Path> {
 	 *            the x,y,z coordinates (pixel-based) specifying the translation
 	 *            offset
 	 */
-	public void setCanvasOffset(final PointInImage canvasOffset) {
+	public void setCanvasOffset(final PointInCanvas canvasOffset) {
 		this.canvasOffset = canvasOffset;
+	}
+
+	/**
+	 * Returns the translation offset when rendering this Path in a
+	 * {@link TracerCanvas}. Path coordinates remain unaltered.
+	 *
+	 * @return the rendering offset (in pixel coordinates)
+	 */
+	public PointInCanvas getCanvasOffset() {
+		canvasOffset.onPath = this;
+		return canvasOffset;
 	}
 
 	public Path getStartJoins() {
@@ -437,8 +449,9 @@ public class Path implements Comparable<Path> {
 		return result;
 	}
 
-	protected PointInImage getPointInImageUnScaled(final int node) {
-		final PointInImage result = new PointInImage(getXUnscaled(node), getYUnscaled(node), getYUnscaled(node));
+	protected PointInCanvas getPointInCanvas(final int node) {
+		final PointInCanvas result = new PointInCanvas(getXUnscaledDouble(node), getYUnscaledDouble(node),
+				getZUnscaledDouble(node));
 		result.onPath = this;
 		return result;
 	}
@@ -450,7 +463,7 @@ public class Path implements Comparable<Path> {
 		final double maxX = rect.getMaxX();
 		final double maxY = rect.getMaxY();
 		for (int i = 0; i< size(); i++) {
-			final PointInImage node = getPointInImageUnScaled(i);
+			final PointInCanvas node = getPointInCanvas(i);
 			if (node.x >= minX && node.y >= minY && node.x <= maxX && node.y <= maxY) return true;
 		}
 		return false;
@@ -656,20 +669,20 @@ public class Path implements Comparable<Path> {
 	}
 
 	public double getXUnscaledDouble(final int i) {
-		if ((i < 0) || i >= size())
-			throw new IllegalArgumentException("getXUnscaled was asked for an out-of-range point: " + i);
+//		if ((i < 0) || i >= size())
+//			throw new IllegalArgumentException("getXUnscaled was asked for an out-of-range point: " + i);
 		return precise_x_positions[i] / x_spacing + canvasOffset.x;
 	}
 
 	public double getYUnscaledDouble(final int i) {
-		if ((i < 0) || i >= size())
-			throw new IllegalArgumentException("getYUnscaled was asked for an out-of-range point: " + i);
+//		if ((i < 0) || i >= size())
+//			throw new IllegalArgumentException("getYUnscaled was asked for an out-of-range point: " + i);
 		return precise_y_positions[i] / y_spacing + canvasOffset.y;
 	}
 
 	public double getZUnscaledDouble(final int i) {
-		if ((i < 0) || i >= size())
-			throw new IllegalArgumentException("getZUnscaled was asked for an out-of-range point: " + i);
+//		if ((i < 0) || i >= size())
+//			throw new IllegalArgumentException("getZUnscaled was asked for an out-of-range point: " + i);
 		return precise_z_positions[i] / z_spacing + canvasOffset.z;
 	}
 
@@ -893,34 +906,34 @@ public class Path implements Comparable<Path> {
 			switch (plane) {
 			case MultiDThreePanes.XY_PLANE:
 				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i - 1] / x_spacing);
-					previous_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i - 1] / y_spacing);
+					previous_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i - 1));
+					previous_y_on_screen = canvas.myScreenYDprecise(getXUnscaledDouble(i - 1));
 				}
 				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i + 1] / x_spacing);
-					next_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i + 1] / y_spacing);
+					next_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i + 1));
+					next_y_on_screen = canvas.myScreenYDprecise(getYUnscaledDouble(i + 1));
 				}
 				slice_of_point = getZUnscaled(i);
 				break;
 			case MultiDThreePanes.XZ_PLANE:
 				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i - 1] / x_spacing);
-					previous_y_on_screen = canvas.myScreenYDprecise(canvasOffset.z + precise_z_positions[i - 1] / z_spacing);
+					previous_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i - 1));
+					previous_y_on_screen = canvas.myScreenYDprecise(getZUnscaledDouble(i - 1));
 				}
 				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i + 1] / x_spacing);
-					next_y_on_screen = canvas.myScreenYDprecise(canvasOffset.z + precise_z_positions[i + 1] / z_spacing);
+					next_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i + 1));
+					next_y_on_screen = canvas.myScreenYDprecise(getZUnscaledDouble(i + 1));
 				}
 				slice_of_point = getYUnscaled(i);
 				break;
 			case MultiDThreePanes.ZY_PLANE:
 				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXDprecise(canvasOffset.z + precise_z_positions[i - 1] / z_spacing);
-					previous_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i - 1] / y_spacing);
+					previous_x_on_screen = canvas.myScreenXDprecise(getZUnscaledDouble(i - 1));
+					previous_y_on_screen = canvas.myScreenYDprecise(getYUnscaledDouble(i - 1));
 				}
 				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXDprecise(canvasOffset.z + precise_z_positions[i + 1] / z_spacing);
-					next_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i + 1] / y_spacing);
+					next_x_on_screen = canvas.myScreenXDprecise(getZUnscaledDouble(i + 1));
+					next_y_on_screen = canvas.myScreenYDprecise(getYUnscaledDouble(i + 1));
 				}
 				slice_of_point = getXUnscaled(i);
 				break;

@@ -22,8 +22,13 @@
 
 package tracing.util;
 
+import java.util.List;
 import java.util.Objects;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+
+import ij.measure.Calibration;
+import sholl.UPoint;
 import tracing.Path;
 import tracing.PathTransformer;
 
@@ -45,6 +50,13 @@ public class PointInImage implements SNTPoint {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+	}
+
+	protected PointInImage(final double x, final double y, final double z, final Path onPath) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.onPath = onPath;
 	}
 
 	public double distanceSquaredTo(final double ox, final double oy, final double oz) {
@@ -80,6 +92,40 @@ public class PointInImage implements SNTPoint {
 
 	public boolean isSameLocation(final PointInImage pim) {
 		return (this.x == pim.x) && (this.y == pim.y) && (this.z == pim.z);
+	}
+
+	/**
+	 * Converts the coordinates of this point into pixel units if this
+	 * point is associated with a Path.
+	 *
+	 * @return this point in pixel coordinates
+	 * @throws IllegalArgumentException if this point is not associated with a Path
+	 */
+	public PointInCanvas getUnscaledPoint() throws IllegalArgumentException {
+		if (onPath == null)
+			throw new IllegalArgumentException("Point not associated with a Path");
+		final Calibration cal = onPath.getCalibration();
+		final PointInCanvas offset = onPath.getCanvasOffset();
+		final double x = this.x / cal.pixelWidth + offset.x;
+		final double y = this.y / cal.pixelHeight + offset.y;
+		final double z = this.z / cal.pixelDepth + offset.z;
+		return new PointInCanvas(x, y, z, onPath);
+	}
+
+	public UPoint toUPoint() {
+		return new UPoint(x, y, z);
+	}
+
+	public static PointInImage average(final List<PointInImage> points) {
+		final SummaryStatistics xStats = new SummaryStatistics();
+		final SummaryStatistics yStats = new SummaryStatistics();
+		final SummaryStatistics zStats = new SummaryStatistics();
+		for (final PointInImage p : points) {
+			xStats.addValue(p.x);
+			yStats.addValue(p.y);
+			zStats.addValue(p.z);
+		}
+		return new PointInImage(xStats.getMean(), yStats.getMean(), zStats.getMean());
 	}
 
 	@Override

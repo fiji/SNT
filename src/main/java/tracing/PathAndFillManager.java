@@ -2141,11 +2141,25 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return nearestPointOnAnyPath(allPaths, new PointInImage(x, y, z), Math.sqrt(distanceLimit), false);
 	}
 
-	protected List<Path> getPathsRenderedInViewPort(final TracerCanvas canvas, final boolean ignoreSelected) {
-		final List<Path> paths= new ArrayList<>();
+	protected List<Path> getAllPathsRenderedInViewPort(final TracerCanvas canvas) {
+		final List<Path> paths = getUnSelectedPathsRenderedInViewPort(canvas);
+		paths.addAll(getSelectedPathsRenderedInViewPort(canvas));
+		return paths;
+	}
+
+	protected List<Path> getSelectedPathsRenderedInViewPort(final TracerCanvas canvas) {
+		final List<Path> paths = new ArrayList<>();
 		for (final Path path : allPaths) {
-			if (ignoreSelected && path.isSelected()) continue;
-			if (path.containsUnscaledNodesInViewPort(canvas))
+			if (path.isSelected() && path.containsUnscaledNodesInViewPort(canvas))
+				paths.add(path);
+		}
+		return paths;
+	}
+
+	protected List<Path> getUnSelectedPathsRenderedInViewPort(final TracerCanvas canvas) {
+		final List<Path> paths = new ArrayList<>();
+		for (final Path path : allPaths) {
+			if (!path.isSelected() && path.containsUnscaledNodesInViewPort(canvas))
 				paths.add(path);
 		}
 		return paths;

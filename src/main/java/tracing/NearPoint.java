@@ -22,6 +22,7 @@
 
 package tracing;
 
+import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 
 /**
@@ -42,10 +43,10 @@ public class NearPoint implements Comparable<NearPoint> {
 
 
 	private final Path path;
-	private final int indexInPath;
+	public final int indexInPath;
 	private final double distanceSquared;
 	private Double cachedDistanceToPathNearPoint;
-	protected PointInImage pathPoint;
+	private PointInImage pathPoint;
 	protected PointInImage near;
 	protected IntersectionOnLine closestIntersection;
 
@@ -65,15 +66,23 @@ public class NearPoint implements Comparable<NearPoint> {
 		this.path = path;
 		this.indexInPath = indexInPath;
 		ignoreZ = Double.isNaN(nearPoint.z);
-		pathPoint = getNode(indexInPath);
+		pathPoint = getPathPoint(indexInPath);
 		near = new PointInImage(nearPoint.x, nearPoint.y, (ignoreZ) ? 0 : nearPoint.z);
 		this.distanceSquared = near.distanceSquaredTo(pathPoint);
 		closestIntersection = null;
 	}
 
-	private PointInImage getNode(final int index) {
+	public PointInImage getNode() {
+		return path.getPointInImage(indexInPath);
+	}
+
+	public PointInCanvas getNodeUnscaled() {
+		return path.getPointInCanvas(indexInPath);
+	}
+
+	private PointInImage getPathPoint(final int index) {
 		PointInImage node;
-		node = (unScaledPositions) ? path.getPointInImageUnScaled(index) : path.getPointInImage(index);
+		node = (unScaledPositions) ? path.getPointInCanvas(index) : path.getPointInImage(index);
 		if (ignoreZ) node.z = 0;
 		return node;
 	}
@@ -121,14 +130,14 @@ public class NearPoint implements Comparable<NearPoint> {
 			PointInImage end;
 			if (indexInPath == 0) {
 				start = pathPoint;
-				end = getNode(0);
+				end = getPathPoint(0);
 			} else {
-				start = getNode(pathSize - 2);
+				start = getPathPoint(pathSize - 2);
 				end = pathPoint;
 			}
 			final IntersectionOnLine intersection;
 			if (path.size() == 1) {
-				final PointInImage point = getNode(0);
+				final PointInImage point = getPathPoint(0);
 				intersection = distanceFromSinglePointPath(point.x, point.y, point.z, near.x, near.y, near.z);
 			} else {
 				intersection = distanceToLineSegment(near.x, near.y, near.z, start.x, start.y, start.z, end.x, end.y, end.z);
@@ -144,8 +153,8 @@ public class NearPoint implements Comparable<NearPoint> {
 			}
 		} else {
 			// There's a point on either size:
-			final PointInImage previous = getNode(indexInPath - 1);
-			final PointInImage next = getNode(indexInPath + 1);
+			final PointInImage previous = getPathPoint(indexInPath - 1);
+			final PointInImage next = getPathPoint(indexInPath + 1);
 			final IntersectionOnLine intersectionA = distanceToLineSegment(near.x, near.y, near.z, previous.x, previous.y,
 					previous.z, pathPoint.x, pathPoint.y, pathPoint.z);
 			final IntersectionOnLine intersectionB = distanceToLineSegment(near.x, near.y, near.z, pathPoint.x, pathPoint.y,
@@ -195,7 +204,7 @@ public class NearPoint implements Comparable<NearPoint> {
 		}
 	}
 
-	/**
+	/*
 	 * This returns null if the perpendicular dropped to the line doesn't lie within
 	 * the segment. Otherwise it returns the shortest distance to this line segment
 	 * and the point of intersection in an IntersectionOnLine object

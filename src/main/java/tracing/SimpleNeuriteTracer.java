@@ -87,6 +87,7 @@ import tracing.gui.SigmaPalette;
 import tracing.gui.SwingSafeResult;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.BoundingBox;
+import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 
 /* Note on terminology:
@@ -1176,23 +1177,23 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final int iy = (int) Math.round(y);
 		final int iz = (int) Math.round(z);
 
-		if (shift_key_down || editing) setSlicesAllPanes(ix, iy, iz);
+		if (shift_key_down || editing) setZPositionAllPanes(ix, iy, iz);
 
 		String statusMessage = "";
-		if (editing) {
-			statusMessage = editingPath.getName() + ", Node " + editingPath
-				.getEditableNodeIndex();
+		if (editing && editingPath.getEditableNodeIndex() > -1) {
+			statusMessage = "Node " + editingPath.getEditableNodeIndex() + ", ";
+//			System.out.println("unscaled "+ editingPath.getPointInCanvas(editingPath
+//					.getEditableNodeIndex()));
+//			System.out.println("scaled "+ editingPath.getPointInImage(editingPath
+//					.getEditableNodeIndex()));
 		}
-		else { // tracing
-			statusMessage = "World: (" + SNT.formatDouble(ix * x_spacing, 2) + ", " +
-				SNT.formatDouble(iy * y_spacing, 2) + ", " + SNT.formatDouble(iz *
-					z_spacing, 2) + ");";
-			if (labelData != null) {
-				final byte b = labelData[iz][iy * width + ix];
-				final int m = b & 0xFF;
-				final String material = materialList[m];
-				statusMessage += ", " + material;
-			}
+		statusMessage += "World: (" + SNT.formatDouble(ix * x_spacing, 2) + ", " + SNT.formatDouble(iy * y_spacing, 2)
+				+ ", " + SNT.formatDouble(iz * z_spacing, 2) + ");";
+		if (labelData != null) {
+			final byte b = labelData[iz][iy * width + ix];
+			final int m = b & 0xFF;
+			final String material = materialList[m];
+			statusMessage += ", " + material;
 		}
 		statusMessage += " | Image: (" + ix + ", " + iy + ", " + (iz + 1) + ")";
 		updateCursor(x, y, z);
@@ -1655,7 +1656,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final double x_unscaled = p.x / x_spacing;
 		final double y_unscaled = p.y / y_spacing;
 		final double z_unscaled = p.z / z_spacing;
-		setSlicesAllPanes((int) x_unscaled, (int) y_unscaled, (int) z_unscaled);
+		setZPositionAllPanes((int) x_unscaled, (int) y_unscaled, (int) z_unscaled);
 		clickForTrace(p.x, p.y, p.z, join);
 	}
 
@@ -1810,12 +1811,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (filler == null) return;
 		final ImagePlus imagePlus = filler.fillAsImagePlus(!asMask);
 		imagePlus.show();
-	}
-
-	public void setPositionAllPanes(final int x, final int y, final int z) {
-		xy.setPosition(channel, z + 1, frame);
-		zy.setPosition(channel, x, frame);
-		xz.setPosition(channel, y, frame);
 	}
 
 	public int guessResamplingFactor() {

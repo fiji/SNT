@@ -131,7 +131,7 @@ public class MultiDThreePanes implements PaneOwner {
 			zy_canvas.updatePosition(point[0], point[1], point[2]);
 		}
 		if (shift_down) {
-			setSlicesAllPanes((int) point[0], (int) point[1], (int) point[2]);
+			setZPositionAllPanes((int) point[0], (int) point[1], (int) point[2]);
 		}
 	}
 
@@ -152,8 +152,7 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 	}
 
-	public void setSlicesAllPanes(final int new_x, final int new_y, final int new_z) {
-
+	public void setZPositionAllPanes(final int new_x, final int new_y, final int new_z) {
 		xy.setZ(new_z + 1);
 		if (!single_pane) {
 			xz.setZ(new_y + 1);

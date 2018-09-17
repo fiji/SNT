@@ -149,7 +149,7 @@ class NormalPlaneCanvas extends TracerCanvas {
 			final int px = fittedPath.getXUnscaled(fittedIndex.intValue());
 			final int py = fittedPath.getYUnscaled(fittedIndex.intValue());
 			final int pz = fittedPath.getZUnscaled(fittedIndex.intValue());
-			tracerPlugin.setSlicesAllPanes(px, py, pz);
+			tracerPlugin.setZPositionAllPanes(px, py, pz);
 			last_slice = z;
 			last_editable_node = fittedIndex.intValue();
 			fittedPath.setEditableNode(last_editable_node);

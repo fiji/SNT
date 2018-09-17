@@ -42,7 +42,6 @@ import ij3d.Image3DUniverse;
 import ij3d.behaviors.InteractiveBehavior;
 import ij3d.behaviors.Picker;
 import tracing.gui.GuiUtils;
-import tracing.gui.ShollAnalysisDialog;
 
 class QueueJumpingKeyListener implements KeyListener {
 
@@ -287,10 +286,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 		new Thread(() -> {
 			final NearPoint np = getNearestPickedPoint();
-			if (np == null) return;
-			final ShollAnalysisDialog sd = new ShollAnalysisDialog(np.pathPoint.x, np.pathPoint.y, np.pathPoint.z,
-				tracerPlugin);
-			sd.toFront();
+			if (np != null) tracerPlugin.startSholl(np.getNode());
 		}).start();
 	}
 

@@ -65,6 +65,11 @@ public class SNT {
 		initialized = true;
 	}
 
+	public static String getReadableVersion() {
+		if (VERSION.length()< 21) return "SNT "+ VERSION;
+		return "SNT "+ VERSION.substring(0, 21) + "...";
+	}
+
 	private static String getVersion() {
 		return VersionUtils.getVersion(tracing.SimpleNeuriteTracer.class);
 	}

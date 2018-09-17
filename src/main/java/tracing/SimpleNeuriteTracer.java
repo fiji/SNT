@@ -34,14 +34,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.scijava.Context;
 import org.scijava.NullContextException;
 import org.scijava.app.StatusService;
+import org.scijava.command.CommandService;
 import org.scijava.convert.ConvertService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -86,6 +89,7 @@ import tracing.gui.SWCImportOptionsDialog;
 import tracing.gui.SigmaPalette;
 import tracing.gui.SwingSafeResult;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.plugin.ShollTracingsCmd;
 import tracing.util.BoundingBox;
 import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
@@ -1805,6 +1809,20 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		new Exception("Dummy Exception for Stack Trace").printStackTrace(
 			new PrintWriter(sw));
 		return sw.toString();
+	}
+
+	protected void startSholl(final PointInImage centerScaled) {
+		setZPositionAllPanes((int) Math.round(centerScaled.x), (int) Math.round(centerScaled.y),
+				(int) Math.round(centerScaled.z));
+		setShowOnlySelectedPaths(false);
+		SNT.log("Starting Sholl Analysis centered at " + centerScaled);
+		final Map<String, Object> input = new HashMap<>();
+		input.put("snt", this);
+		input.put("center", centerScaled);
+		final Tree tree = new Tree(getPathAndFillManager().getPathsFiltered());
+		input.put("tree", tree);
+		final CommandService cmdService = getContext().getService(CommandService.class);
+		cmdService.run(ShollTracingsCmd.class, true, input);
 	}
 
 	public void viewFillIn3D(final boolean asMask) {

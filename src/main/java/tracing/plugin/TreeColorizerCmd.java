@@ -160,7 +160,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 		statusService.showStatus("Color code removed...");
 	}
 
-	/** IDE debug method **/
+	/* IDE debug method **/
 	public static void main(final String[] args) throws IOException {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();

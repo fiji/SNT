@@ -225,7 +225,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 		}
 	}
 
-	/** IDE debug method **/
+	/* IDE debug method **/
 	public static void main(final String[] args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();

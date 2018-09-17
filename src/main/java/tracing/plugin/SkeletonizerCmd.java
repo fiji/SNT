@@ -136,7 +136,7 @@ public class SkeletonizerCmd implements Command {
 				DialogPrompt.OptionType.DEFAULT_OPTION).prompt();
 	}
 
-	/** IDE debug method **/
+	/* IDE debug method **/
 	public static void main(final String[] args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();

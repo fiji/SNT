@@ -173,7 +173,7 @@ public class DistributionCmd implements Command {
 		return data;
 	}
 
-	/** IDE debug method **/
+	/* IDE debug method **/
 	public static void main(final String[] args) {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();

@@ -126,10 +126,11 @@ public class Fill {
 	}
 
 	/**
-	 * Assume that the volume is just the number of sub-threshold nodes multiplied
-	 * by x_spacing * y_spacing * z_spacing
+	 * Returns the Fill volume. It assumes that the volume is just the number of
+	 * sub-threshold nodes multiplied by x_spacing * y_spacing * z_spacing.
+	 *
+	 * @return the volume
 	 */
-
 	public double getVolume() {
 		int subThresholdNodes = 0;
 		for (final Node n : nodeList) {

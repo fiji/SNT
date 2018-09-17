@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -358,7 +359,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 				@Override
 				public void actionPerformed(final ActionEvent e) {
-					final List<Path> selectedPaths = getSelectedPaths(true);
+					final Collection<Path> selectedPaths = getSelectedPaths(true);
 					if (selectedPaths.size() == 0) {
 						guiUtils.error("There are no traced paths.");
 						selectSWCTypeMenuEntry(-1);
@@ -412,21 +413,21 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		}
 	}
 
-	private void setSWCType(final List<Path> paths, final int swcType, final Color color) {
+	private void setSWCType(final Collection<Path> paths, final int swcType, final Color color) {
 		for (final Path p : paths) {
 			p.setSWCType(swcType);
 			p.setColor(color);
 		}
 	}
 
-	private void resetPathsColor(final List<Path> paths) {
+	private void resetPathsColor(final Collection<Path> paths) {
 		for (final Path p : paths) {
 			p.setColor(null);
 		}
 		refreshManager(true, true);
 	}
 
-	private void deletePaths(final List<Path> pathsToBeDeleted) {
+	private void deletePaths(final Collection<Path> pathsToBeDeleted) {
 		for (final Path p : pathsToBeDeleted) {
 			p.disconnectFromAll();
 			pathAndFillManager.deletePath(p);
@@ -443,14 +444,14 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	 * @return the selected paths. Note that children of a Path are not returned if
 	 *         unselected.
 	 */
-	public List<Path> getSelectedPaths(final boolean ifNoneSelectedGetAll) {
-		return SwingSafeResult.getResult(new Callable<List<Path>>() {
+	public Collection<Path> getSelectedPaths(final boolean ifNoneSelectedGetAll) {
+		return SwingSafeResult.getResult(new Callable<Collection<Path>>() {
 
 			@Override
-			public List<Path> call() {
+			public Collection<Path> call() {
 				if (ifNoneSelectedGetAll && tree.getSelectionCount() == 0)
 					return pathAndFillManager.getPathsFiltered();
-				final List<Path> result = new ArrayList<>();
+				final Collection<Path> result = new ArrayList<>();
 				final TreePath[] selectedPaths = tree.getSelectionPaths();
 				if (selectedPaths == null || selectedPaths.length == 0) {
 					return result;

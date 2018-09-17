@@ -21,9 +21,9 @@
  */
 
 /**
- * Classes for importing of specialized reconstructions into SNT. Note that
- * (for historic reasons) basic I/O functionality is handled by
- * {@link PathAndFillManager}.
+ * Classes for importing of specialized reconstructions into SNT. Note that (for
+ * historic reasons) basic I/O functionality is handled by
+ * {@link tracing.PathAndFillManager}.
  *
  * @author Tiago Ferreira
  */

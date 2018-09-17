@@ -1054,6 +1054,17 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
+	 * Sets the node color.
+	 *
+	 * @param color the node color
+	 * @param pos   the node position
+	 */
+	public void setNodeColor(final Color color, final int pos) {
+		if(nodeColors == null) nodeColors = new Color[size()];
+		nodeColors[pos] = color;
+	}
+
+	/**
 	 * Gets the color of this Path
 	 *
 	 * @return the color, or null if no color has been assigned to this Path
@@ -1129,10 +1140,6 @@ public class Path implements Comparable<Path> {
 			return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
 		}
 	}
-
-	// ------------------------------------------------------------------------
-	// FIXME: adapt these for Path rather than SegmentedConnection, down to
-	// EOFIT
 
 	private class CircleAttempt implements MultivariateFunction, Comparable<CircleAttempt> {
 
@@ -1263,7 +1270,7 @@ public class Path implements Comparable<Path> {
 		}
 	}
 
-	public void getTangent(final int i, final int pointsEitherSide, final double[] result) {
+	private void getTangent(final int i, final int pointsEitherSide, final double[] result) {
 		int min_index = i - pointsEitherSide;
 		if (min_index < 0)
 			min_index = 0;
@@ -2026,8 +2033,8 @@ public class Path implements Comparable<Path> {
 	 * the specification detailed at <a href=
 	 * "http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html">neuronland</a>
 	 *
-	 * @param type
-	 *            the SWC type flag
+	 * @param type            the SWC type flag
+	 * @param capitalized whether output String should be capitalized
 	 * @return the respective label, or {@link Path#SWC_UNDEFINED_LABEL} if flag was
 	 *         not recognized
 	 */

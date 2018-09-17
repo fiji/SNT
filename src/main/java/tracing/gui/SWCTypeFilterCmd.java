@@ -96,7 +96,7 @@ public class SWCTypeFilterCmd extends ContextCommand {
 		return set;
 	}
 
-	/** IDE debug method **/
+	/* IDE debug method **/
 	public static void main(final String[] args) throws InterruptedException, ExecutionException {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();

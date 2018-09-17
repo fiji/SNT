@@ -252,7 +252,7 @@ public class BoundingBox {
 	 * @param uncalibratedHeight the uncalibrated height
 	 * @param uncalibratedDepth  the uncalibrated depth
 	 * @throws IllegalArgumentException If origin has not been set or
-	 *                                  {@link #compute(Iterator) has not been
+	 *                                  {@link #compute(Iterator)} has not been
 	 *                                  called
 	 */
 	public void setDimensions(final int uncalibratedWidth, final int uncalibratedHeight, final int uncalibratedDepth)

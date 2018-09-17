@@ -183,7 +183,7 @@ public class SNTUI extends JDialog {
 	protected final GuiListener listener;
 
 	/* These are the states that the UI can be in: */
-	/** The flag specifying 'ready' mode */
+	/** The flag specifying 'ready-to-trace' mode */
 	public static final int WAITING_TO_START_PATH = 0;
 	static final int PARTIAL_PATH = 1;
 	static final int SEARCHING = 2;
@@ -529,7 +529,7 @@ public class SNTUI extends JDialog {
 
 	/**
 	 * Sets the multiplier value for Hessian computation of curvatures updating the
-	 * Hessian panel accordingly
+	 * Hessian panel accordingly.
 	 *
 	 * @param multiplier
 	 *            the new multiplier value
@@ -820,7 +820,7 @@ public class SNTUI extends JDialog {
 	}
 
 	/**
-	 * Gets current UI state.
+	 * Gets the current UI state.
 	 *
 	 * @return the current state, e.g., {@link SNTUI#WAITING_TO_START_PATH},
 	 *         {@link SNTUI#ANALYSIS_MODE}, etc.
@@ -1915,7 +1915,7 @@ public class SNTUI extends JDialog {
 					if (getCurrentState() != SNTUI.ANALYSIS_MODE) {
 						if (guiUtils.getConfirmation("Activate Analysis Mode and import external reconstructions?",
 								"Confirm Import")) {
-							SNTUI.reloadUI(plugin, true);
+							SNTUI.reloadUI(plugin.getUI(), true);
 						} else {
 							return null;
 						}
@@ -2637,7 +2637,7 @@ public class SNTUI extends JDialog {
 	}
 
 	/**
-	 * Gets the Path Manager frame.
+	 * Gets the Path Manager dialog.
 	 *
 	 * @return the {@link PathManagerUI} associated with this UI
 	 */
@@ -2646,7 +2646,7 @@ public class SNTUI extends JDialog {
 	}
 
 	/**
-	 * Gets the Fill Manager frame.
+	 * Gets the Fill Manager dialog.
 	 *
 	 * @return the {@link FillManagerUI} associated with this UI
 	 */
@@ -3169,14 +3169,14 @@ public class SNTUI extends JDialog {
 	}
 
 	/**
-	 * Reloads (rebuilds) the UI of a SimpleNeuriteTracer instance
+	 * Reloads (rebuilds) an existing UI.
 	 *
-	 * @param plugin       the plugin instance associated with the UI to be reloaded
+	 * @param ui       the SNTUI instance to be reloaded
 	 * @param analysisMode if true, UI is reloaded in "Analysis Mode", otherwise in
 	 *                     "Tracing Mode"
 	 */
-	public static void reloadUI(final SimpleNeuriteTracer plugin, final boolean analysisMode) {
-		SNTUI ui = plugin.getUI();
+	public static void reloadUI(SNTUI ui, final boolean analysisMode) {
+		final SimpleNeuriteTracer plugin = ui.plugin;
 		plugin.analysisMode = analysisMode;
 		if (analysisMode) {
 			plugin.enableAstar(false);
@@ -3191,11 +3191,11 @@ public class SNTUI extends JDialog {
 		final boolean managerVisible = ui.getPathManager().isVisible();
 		ui.dispose();
 		ui = new SNTUI(plugin, ui.getPathManager(), ui.getFillManager());
+		plugin.ui = ui; // re-assign ui
 		ui.setLocation(locMain);
 		ui.getPathManager().setLocation(locManager);
 		ui.setVisible(true);
 		ui.getPathManager().setVisible(managerVisible);
-		plugin.ui = ui;
 	}
 
 }

@@ -96,7 +96,7 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	/**
 	 * Returns the X-distance from previous point.
 	 *
-	 * @return the X-distance from previous point or {@link Double.NaN} if no
+	 * @return the X-distance from previous point or {@code Double.NaN} if no
 	 *         previousPoint exists.
 	 */
 	public double xSeparationFromPreviousPoint() {
@@ -106,7 +106,7 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	/**
 	 * Returns the Y-distance from previous point.
 	 *
-	 * @return the Y-distance from previous point or {@link Double.NaN} if no
+	 * @return the Y-distance from previous point or {@code Double.NaN} if no
 	 *         previousPoint exists.
 	 */
 	public double ySeparationFromPreviousPoint() {
@@ -116,7 +116,7 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	/**
 	 * Returns the Z-distance from previous point.
 	 *
-	 * @return the Z-distance from previous point or {@link Double.NaN} if no
+	 * @return the Z-distance from previous point or {@code Double.NaN} if no
 	 *         previousPoint exists.
 	 */
 	public double zSeparationFromPreviousPoint() {
@@ -187,7 +187,7 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	 *
 	 * @param points the collections of SWC points to be printed.
 	 * @param pw     the PrintWriter to write to.
-	 * @see #listAsReader(Collection)
+	 * @see SWCPoint#collectionAsReader(Collection)
 	 */
 	public static void flush(final Collection<SWCPoint> points, final PrintWriter pw) {
 		pw.print(collectionAsReader(points));

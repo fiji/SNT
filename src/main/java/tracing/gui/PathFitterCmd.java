@@ -34,8 +34,8 @@ import net.imagej.ImageJ;
 import tracing.PathFitter;
 
 /**
- * Command with the sole purpose of providing (within SNT) a scijava-based GUI
- * for {@link #PathFitter}
+ * Command with the sole purpose of providing a scijava-based GUI for
+ * {@link tracing.PathFitter}
  *
  * @author Tiago Ferreira
  */
@@ -101,7 +101,7 @@ public class PathFitterCmd extends ContextCommand {
 		prefService.clear(PathFitterCmd.class); // useful if user dismisses dialog after pressing "Reset"
 	}
 
-	/** IDE debug method **/
+	/* IDE debug method **/
 	public static void main(final String[] args) {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();

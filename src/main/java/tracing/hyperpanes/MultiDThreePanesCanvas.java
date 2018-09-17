@@ -183,12 +183,22 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	 * (It's not so easy to do anything about the box filter reconstruction.)
 	 */
 
-	/** Converts a screen x-coordinate to an offscreen (image) x-coordinate. */
+	/**
+	 *  Converts a screen x-coordinate to an offscreen (image) x-coordinate.
+	 *
+	 * @param sx the screen x coordinate
+	 * @return the image x coordinate
+	 */
 	public int myOffScreenX(final int sx) {
 		return srcRect.x + (int) ((sx - magnification / 2) / magnification);
 	}
 
-	/** Converts a screen y-coordinate to an offscreen (image) y-coordinate. */
+	/**
+	 *  Converts a screen y-coordinate to an offscreen (image) y-coordinate.
+	 *
+	 * @param sy the screen y coordinate
+	 * @return the image y coordinate
+	 */
 	public int myOffScreenY(final int sy) {
 		return srcRect.y + (int) ((sy - magnification / 2) / magnification);
 	}
@@ -196,6 +206,9 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	/**
 	 * Converts a screen x-coordinate to a floating-point offscreen (image)
 	 * x-coordinate.
+	 *
+	 * @param sx the screen x coordinate
+	 * @return the image x coordinate
 	 */
 	public double myOffScreenXD(final int sx) {
 		return srcRect.x + (sx - magnification / 2) / magnification;
@@ -204,46 +217,71 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	/**
 	 * Converts a screen y-coordinate to a floating-point offscreen (image)
 	 * y-coordinate.
+	 *
+	 * @param sy the screen y coordinate
+	 * @return the image y coordinate
 	 */
 	public double myOffScreenYD(final int sy) {
 		return srcRect.y + (sy - magnification / 2) / magnification;
 	}
 
-	/** Converts an offscreen (image) x-coordinate to a screen x-coordinate. */
+	/**
+	 *  Converts an offscreen (image) x-coordinate to a screen x-coordinate.
+	 *
+	 * @param ox the image x coordinate
+	 * @return the screen x coordinate
+	 */
 	public int myScreenX(final int ox) {
 		return (int) Math.round((ox - srcRect.x) * magnification + magnification / 2);
 	}
 
-	/** Converts an offscreen (image) y-coordinate to a screen y-coordinate. */
+	/**
+	 *  Converts an offscreen (image) y-coordinate to a screen y-coordinate.
+	 *
+	 * @param oy the image y coordinate
+	 * @return the screen y coordinate
+	 */
 	public int myScreenY(final int oy) {
 		return (int) Math.round((oy - srcRect.y) * magnification + magnification / 2);
 	}
 
 	/**
-	 * Converts a floating-point offscreen x-coordinate to a screen x-coordinate.
+	 * Converts a floating-point offscreen (image) x-coordinate to a screen x-coordinate.
+	 *
+	 * @param ox the image x coordinate
+	 * @return the screen x coordinate
 	 */
 	public int myScreenXD(final double ox) {
 		return (int) Math.round(myScreenXDprecise(ox));
 	}
 
 	/**
-	 * Converts an offscreen x-coordinate to a screen x-coordinate with
+	 * Converts an offscreen (image) x-coordinate to a screen x-coordinate with
 	 * floating-point precision.
+	 *
+	 * @param ox the image x coordinate
+	 * @return the screen x coordinate
 	 */
 	public double myScreenXDprecise(final double ox) {
 		return (ox - srcRect.x) * magnification + magnification / 2;
 	}
 
 	/**
-	 * Converts a floating-point offscreen x-coordinate to a screen x-coordinate.
+	 * Converts a floating-point offscreen (image) x-coordinate to a screen x-coordinate.
+	 *
+	 * @param oy the image x coordinate
+	 * @return the screen x coordinate
 	 */
 	public int myScreenYD(final double oy) {
 		return (int) Math.round(myScreenYDprecise(oy));
 	}
 
 	/**
-	 * Converts an offscreen y-coordinate to a screen y-coordinate with
+	 * Converts an offscreen (image) y-coordinate to a screen y-coordinate with
 	 * floating-point precision.
+	 *
+	 * @param oy the image y coordinate
+	 * @return the screen y coordinate
 	 */
 	public double myScreenYDprecise(final double oy) {
 		return (oy - srcRect.y) * magnification + magnification / 2;

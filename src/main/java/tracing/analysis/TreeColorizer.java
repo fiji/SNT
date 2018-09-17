@@ -340,7 +340,7 @@ public class TreeColorizer {
 		}
 	}
 
-	/** IDE debug method */
+	/* IDE debug method */
 	public static void main(final String... args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();

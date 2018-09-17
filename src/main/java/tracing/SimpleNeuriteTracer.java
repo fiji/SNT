@@ -345,10 +345,16 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Rebuilds display canvas(es). Useful when multiple files are imported and
-	 * imported paths 'fall off' the dimensions of current canvas.
-	 *
-	 * @throws IllegalArgumentException when not running in 'Analysis Mode'
+	 * Rebuilds display canvases, i.e., the placeholder canvases used in 'Analysis
+	 * Mode' (a single-canvas is rebuilt if only the XY view is active).
+	 * <p>
+	 * Useful when multiple files are imported and imported paths 'fall off' the
+	 * dimensions of current canvas(es). If there is not enough memory to
+	 * accommodate enlarged dimensions, the resulting canvas will be a 2D image.
+	 * </p>
+	 * 
+	 * @throws IllegalArgumentException if SimpleNeuriteTracer is not running in
+	 *                                  'Analysis Mode'
 	 */
 	public void rebuildDisplayCanvases() throws IllegalArgumentException{
 		initialize(getSinglePane(), 1, 1);
@@ -428,7 +434,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		height += XY_PADDING;
 		depth += Z_PADDING;
 		final PointInImage unscaledOrigin = box.unscaledOrigin();
-		final PointInImage canvasOffset = new PointInImage(-unscaledOrigin.x + XY_PADDING / 2,
+		final PointInCanvas canvasOffset = new PointInCanvas(-unscaledOrigin.x + XY_PADDING / 2,
 				-unscaledOrigin.y + XY_PADDING / 2, -unscaledOrigin.z + Z_PADDING / 2);
 		for (final Path p : pathAndFillManager.getPaths()) {
 			p.setCanvasOffset(canvasOffset);
@@ -881,7 +887,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected Path getSingleSelectedPath() {
-		final List<Path> sPaths = getSelectedPaths();
+		final Collection<Path> sPaths = getSelectedPaths();
 		if (sPaths == null || sPaths.size() != 1) return null;
 		return getSelectedPaths().iterator().next();
 	}
@@ -2342,7 +2348,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		ui.getPathManager().setSelectedPaths(pathsToSelect, this);
 	}
 
-	public List<Path> getSelectedPaths() {
+	public Collection<Path> getSelectedPaths() {
 		if (ui.getPathManager() != null) {
 			return ui.getPathManager().getSelectedPaths(false);
 		}
@@ -2377,9 +2383,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * This method will remove the existing keylisteners from the component 'c',
-	 * tells 'firstKeyListener' to call those key listeners if it has not dealt
-	 * with the key, and then sets 'firstKeyListener' as the key listener for 'c'
+	 * This method will: 1) remove the existing {@link KeyListener}s from the
+	 * component 'c'; 2) instruct 'firstKeyListener' to call those KeyListener if it
+	 * has not dealt with the key; and 3) set 'firstKeyListener' as the KeyListener
+	 * for 'c'.
+	 *
+	 * @param c                the Component to which the Listener should be
+	 *                         attached
+	 * @param firstKeyListener the first key listener
 	 */
 	public static void setAsFirstKeyListener(final Component c,
 		final QueueJumpingKeyListener firstKeyListener)

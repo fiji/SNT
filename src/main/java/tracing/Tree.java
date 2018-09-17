@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.util.ColorRGB;
@@ -39,6 +40,7 @@ import ij.ImagePlus;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeStatistics;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.BoundingBox;
 import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 
@@ -56,8 +58,10 @@ public class Tree {
 	public static final int X_AXIS = 1;
 	public static final int Y_AXIS = 2;
 	public static final int Z_AXIS = 4;
+	
 	private ArrayList<Path> tree;
 	private String label;
+	private BoundingBox box;
 
 	/**
 	 * Instantiates a new empty Tree.
@@ -79,22 +83,9 @@ public class Tree {
 	}
 
 	/**
-	 * Instantiates a new tree from a list of paths.
+	 * Instantiates a new tree from a SWC or TRACES file.
 	 *
-	 * @param paths
-	 *            the Collection of paths forming this tree. Null not allowed.
-	 */
-	public Tree(final List<Path> paths) {
-		if (paths == null)
-			throw new IllegalArgumentException("Cannot instantiate a new tree from a null collection");
-		tree = new ArrayList<>(paths);
-	}
-
-	/**
-	 * Instantiates a new tree from a SWC or TRACES file
-	 *
-	 * @param filename
-	 *            the absolute file path of the imported file
+	 * @param filename            the absolute file path of the imported file
 	 */
 	public Tree(final String filename) {
 		final File f = new File(filename);
@@ -176,7 +167,7 @@ public class Tree {
 	}
 
 	/**
-	 * Gets all the paths from this tree
+	 * Gets all the paths from this tree.
 	 *
 	 * @return the paths forming this tree
 	 */
@@ -185,6 +176,8 @@ public class Tree {
 	}
 
 	/**
+	 * Checks if is empty.
+	 *
 	 * @return true if this tree contains no Paths, false otherwise
 	 */
 	public boolean isEmpty() {
@@ -273,7 +266,7 @@ public class Tree {
 	 * @return the set of SWC type(s) (e.g., {@link Path#SWC_AXON},
 	 *         {@link Path#SWC_DENDRITE}, etc.) present in the tree
 	 */
-	public HashSet<Integer> getSWCtypes() {
+	public Set<Integer> getSWCtypes() {
 		final HashSet<Integer> types = new HashSet<>();
 		final Iterator<Path> it = tree.iterator();
 		while (it.hasNext()) {
@@ -395,12 +388,52 @@ public class Tree {
 	 *
 	 * @return the points
 	 */
-	public ArrayList<PointInImage> getPoints() {
-		final ArrayList<PointInImage> list = new ArrayList<>();
+	public List<PointInImage> getPoints() {
+		final List<PointInImage> list = new ArrayList<>();
 		for (final Path p : tree) {
 			list.addAll(p.getPointInImageList());
 		}
 		return list;
+	}
+
+	/**
+	 * Assesses whether this Tree has depth.
+	 *
+	 * @return true, if is 3D
+	 */
+	public boolean is3D() {
+		final List<PointInImage> points = getPoints();
+		final double zRef = points.get(0).z;
+		for (int i = 1; i < points.size(); i++) {
+			if (points.get(i).z != zRef) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Associates a bounding box to this tree.
+	 *
+	 * @param box the BoundingBox, typically referring to the image associated with
+	 *            this tree
+	 */
+	public void setBoundingBox(final BoundingBox box) {
+		this.box = box;
+	}
+
+	/**
+	 * Gets the bounding box associated with this tree.
+	 *
+	 * @param computeIfUnset if {@code true} no BoundingBox has been explicitly set,
+	 *                       and, a BoundingBox will be compute from all the nodes
+	 *                       of this Tree
+	 * @return the BoundingBox
+	 */
+	public BoundingBox getBoundingBox(final boolean computeIfUnset) {
+		if (box == null && computeIfUnset) {
+			box = new BoundingBox();
+			box.compute(getPoints().iterator());
+		}
+		return box;
 	}
 
 	/**
@@ -414,6 +447,7 @@ public class Tree {
 	public ImagePlus getImpContainer(final int multiDThreePaneView) {
 		if (tree.isEmpty())
 			throw new IllegalArgumentException("tree contains no paths");
+		//TODO: this should be handled by BoundingBox
 		final TreeStatistics tStats = new TreeStatistics(this);
 		final SummaryStatistics xCoordStats = tStats.getSummaryStats(TreeAnalyzer.X_COORDINATES);
 		final SummaryStatistics yCoordStats = tStats.getSummaryStats(TreeAnalyzer.Y_COORDINATES);
@@ -441,6 +475,8 @@ public class Tree {
 	}
 
 	/**
+	 * Size.
+	 *
 	 * @return Returns the number of paths in this tree.
 	 */
 	public int size() {
@@ -448,10 +484,9 @@ public class Tree {
 	}
 
 	/**
-	 * Assigns a color to all the paths in this tree
+	 * Assigns a color to all the paths in this tree.
 	 *
-	 * @param color
-	 *            the color to be applied
+	 * @param color            the color to be applied
 	 */
 	public void setColor(final ColorRGB color) {
 		final Color c = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
@@ -459,10 +494,9 @@ public class Tree {
 	}
 
 	/**
-	 * Assigns a fixed radius to all the nodes in this tree
+	 * Assigns a fixed radius to all the nodes in this tree.
 	 *
-	 * @param r
-	 *            the radius to be assigned. Setting it to 0 or Double.NaN removes
+	 * @param r            the radius to be assigned. Setting it to 0 or Double.NaN removes
 	 *            the radius attribute from the Tree
 	 */
 	public void setRadii(final double r) {

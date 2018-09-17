@@ -99,7 +99,7 @@ public class FillManagerUI extends JDialog
 	private final int MARGIN = 10;
 
 	/**
-	 * Instantiates a new Fill Manager {@link JFrame}
+	 * Instantiates a new Fill Manager {@link JDialog}
 	 *
 	 * @param plugin
 	 *            the the {@link SimpleNeuriteTracer} instance to be associated with
@@ -569,7 +569,7 @@ public class FillManagerUI extends JDialog
 		});
 	}
 
-	/** IDE debug method */
+	/* IDE debug method */
 	public static void main(final String[] args) {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();

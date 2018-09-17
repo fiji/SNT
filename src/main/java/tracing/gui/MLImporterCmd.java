@@ -39,8 +39,8 @@ import net.imagej.ImageJ;
 import tracing.io.MLJSONLoader;
 
 /**
- * Command with the sole purpose of providing (within SNT) a scijava-based GUI
- * for retrieving options for importing MouseLight reconstructions
+ * Command with the sole purpose of providing a scijava-based GUI for retrieving
+ * options for importing MouseLight reconstructions
  *
  * @author Tiago Ferreira
  */
@@ -170,7 +170,7 @@ public class MLImporterCmd extends ContextCommand {
 				: "MouseLight server not reached. It is either down or you have no internet access.";
 	}
 
-	/** IDE debug method **/
+	/* IDE debug method **/
 	public static void main(final String[] args) {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();

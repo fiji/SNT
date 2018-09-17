@@ -59,6 +59,7 @@ import tracing.gui.ShollAnalysisDialog.ShollPoint;
 import tracing.gui.ShollAnalysisDialog.ShollResults;
 import tracing.util.PointInImage;
 
+@Deprecated
 public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 
 	private static final int START_FIRST_PRIMARY = 0;

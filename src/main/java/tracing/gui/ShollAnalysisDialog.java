@@ -101,6 +101,7 @@ import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
 import util.FindConnectedRegions;
 
+@Deprecated
 public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
@@ -660,7 +661,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 			return parametersSuffix;
 		}
 
-		/**
+		/*
 		 * Instructs the Sholl Analysis plugin to analyze the profile sampled by .
 		 */
 		public void analyzeWithShollAnalysisPlugin(final String exportDir, final double primaryBranches) {

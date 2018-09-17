@@ -7,9 +7,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,10 +16,10 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
+import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
@@ -30,11 +28,11 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingWorker;
+import javax.swing.UIManager;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.command.CommandService;
 
-import com.jidesoft.icons.JideIconsFactory;
 import com.jidesoft.swing.SearchableBar;
 import com.jidesoft.swing.event.SearchableEvent;
 import com.jidesoft.swing.event.SearchableListener;
@@ -45,24 +43,34 @@ import tracing.SNT;
 import tracing.Tree;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeStatistics;
+import tracing.util.SWCColor;
 
 /**
  * Implements the customized SearchableBar used by {@link PathManagerUI},
- * including GUI commands for morphological filtering of Paths.
+ * including GUI commands for selection and morphological filtering of Paths.
  *
  * @author Tiago Ferreira
  */
 public class SNTSearchableBar extends SearchableBar {
 	private static final long serialVersionUID = 1L;
-	private final PathManagerUI pmui;
+	private static final Color ALMOST_BLACK = new Color(60, 60, 60);
+	private static final int BUTTON_SIZE = UIManager.getFont("Label.font").getSize();
+
+	private final PathManagerUI pmui; 
 	private final GuiUtils guiUtils;
 	private JButton _menuButton;
 
+	/**
+	 * Creates PathManagerUI's SearchableBar
+	 *
+	 * @param pmui the PathManagerUI instance
+	 */
 	public SNTSearchableBar(final PathManagerUI pmui) {
 		super(pmui.getSearchable(), true);
 		this.pmui = pmui;
 		this.createComboBox();
 		guiUtils = new GuiUtils(pmui);
+		setName("Filtering Toolbar");
 		setFloatable(true);
 		setBorderPainted(false);
 		setBorder(BorderFactory.createEmptyBorder());
@@ -74,6 +82,11 @@ public class SNTSearchableBar extends SearchableBar {
 								// https://github.com/jidesoft/jide-oss/commit/149bd6a53846a973dfbb589fffcc82abbc49610b
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.jidesoft.swing.SearchableBar#setVisibleButtons(int)
+	 */
 	@Override
 	public void setVisibleButtons(final int ignored) {
 		super.setVisibleButtons(SHOW_NAVIGATION | SHOW_HIGHLIGHTS | SHOW_STATUS);
@@ -83,7 +96,7 @@ public class SNTSearchableBar extends SearchableBar {
 	protected void installComponents() {
 
 		{ // This code is called in the constructor: These
-			// initializations are required to avoid NPE
+			// initializations are required to avoid NPEs
 			_leadingLabel = new JLabel();
 			if (getMaxHistoryLength() == 0) {
 				_leadingLabel.setLabelFor(_textField);
@@ -96,19 +109,18 @@ public class SNTSearchableBar extends SearchableBar {
 			}
 		}
 		final JPanel buttonPanel = new JPanel(new GridLayout(1, 4));
-		_menuButton = createMenuButton();
-		adjustButtonHeight(_menuButton);
-		buttonPanel.add(_menuButton);
 		adjustButtonHeight(_findNextButton);
 		buttonPanel.add(_findNextButton);
 		adjustButtonHeight(_findPrevButton);
 		buttonPanel.add(_findPrevButton);
 		adjustButtonHeight(_highlightsButton);
 		buttonPanel.add(_highlightsButton);
-
+		_menuButton = createMenuButton();
+		adjustButtonHeight(_menuButton);
+		buttonPanel.add(_menuButton);
 		final JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		topPanel.add(_comboBox);
-		_comboBox.setToolTipText("Filter & Select Paths by Text Search");
+		_comboBox.setToolTipText("Select Paths by Text Search");
 		topPanel.add(buttonPanel);
 		final JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		_statusLabel = new JLabel(SNT.getReadableVersion());
@@ -125,10 +137,10 @@ public class SNTSearchableBar extends SearchableBar {
 		add(bottomPanel);
 	}
 
-
 	private JPopupMenu getPopupMenu() {
 		final JPopupMenu popup = new JPopupMenu();
 		final JMenu optionsMenu = new JMenu("Text Filtering");
+		optionsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.TEXT));
 		final JMenuItem jcbmi1 = new JCheckBoxMenuItem("Case Sensitive Matching", getSearchable().isCaseSensitive());
 		jcbmi1.addItemListener(e -> {
 			getSearchable().setCaseSensitive(jcbmi1.isSelected());
@@ -153,7 +165,12 @@ public class SNTSearchableBar extends SearchableBar {
 				guiUtils.error("No filtering string exists.", "No Filter String");
 				return;
 			}
+			final boolean clickOnHighlightAllNeeded = !isHighlightAll();
+			if (clickOnHighlightAllNeeded)
+				_highlightsButton.doClick();
 			final Collection<Path> selectedPath = pmui.getSelectedPaths(false);
+			if (clickOnHighlightAllNeeded)
+				_highlightsButton.doClick(); // restore status
 			if (selectedPath.isEmpty()) {
 				guiUtils.error("No Paths matching '" + findText + "'.", "No Paths Selected");
 				return;
@@ -173,9 +190,14 @@ public class SNTSearchableBar extends SearchableBar {
 			if (!getSearchable().isCaseSensitive()) {
 				findText = "(?i)" + findText;
 			}
-			final Pattern pattern = Pattern.compile(findText);
-			for (final Path p : selectedPath) {
-				p.setName(pattern.matcher(p.getName()).replaceAll(replaceText));
+			try {
+				final Pattern pattern = Pattern.compile(findText);
+				for (final Path p : selectedPath) {
+					p.setName(pattern.matcher(p.getName()).replaceAll(replaceText));
+				}
+			} catch (final IllegalArgumentException ex) {
+				guiUtils.error("Replacement pattern not valid: " + ex.getMessage());
+				return;
 			}
 			pmui.refreshManager(false, false);
 		});
@@ -190,7 +212,8 @@ public class SNTSearchableBar extends SearchableBar {
 		popup.add(optionsMenu);
 		popup.addSeparator();
 
-		final ColorMenu colorFilterMenu = new ColorMenu("Color Tag Filtering");
+		final ColorMenu colorFilterMenu = new ColorMenu("Color Filters");
+		colorFilterMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.COLOR));
 		popup.add(colorFilterMenu);
 		colorFilterMenu.addActionListener(e -> {
 			final List<Path> filteredPaths = pmui.getPathAndFillManager().getPathsFiltered();
@@ -216,7 +239,8 @@ public class SNTSearchableBar extends SearchableBar {
 		});
 		popup.add(colorFilterMenu);
 
-		final JMenu morphoFilteringMenu = new JMenu("Morphology Filtering");
+		final JMenu morphoFilteringMenu = new JMenu("Morphology Filters");
+		morphoFilteringMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.RULER));
 		JMenuItem mi1 = new JMenuItem("Branch Order...");
 		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.BRANCH_ORDER, ""));
 		morphoFilteringMenu.add(mi1);
@@ -358,14 +382,51 @@ public class SNTSearchableBar extends SearchableBar {
 		// refreshManager(true, true);
 	}
 
+	@Override
+	protected AbstractButton createFindPrevButton(final AbstractAction findPrevAction) {
+		final AbstractButton button = super.createFindPrevButton(findPrevAction);
+		setReplacementIcon(button, '\uf358');
+		return button;
+	}
+
+	@Override
+	protected AbstractButton createFindNextButton(final AbstractAction findNextAction) {
+		final AbstractButton button = super.createFindNextButton(findNextAction);
+		setReplacementIcon(button, '\uf35b');
+		return button;
+	}
+
+	@Override
+	protected AbstractButton createHighlightButton() {
+		final AbstractButton button = super.createHighlightButton();
+		setReplacementIcon(button, '\uf0eb');
+		Color selectionColor = UIManager.getColor("Tree.selectionBackground");
+		if (selectionColor == null)
+			selectionColor = Color.RED;
+		final FADerivedIcon selectIcon = new FADerivedIcon('\uf0eb', BUTTON_SIZE, selectionColor, true);
+		button.setSelectedIcon(selectIcon);
+		button.setRolloverSelectedIcon(selectIcon);
+		return button;
+	}
+
+	private void setReplacementIcon(final AbstractButton button, final char iconID) {
+		final FADerivedIcon defIcon = new FADerivedIcon(iconID, BUTTON_SIZE, ALMOST_BLACK, false);
+		final FADerivedIcon disIcon = new FADerivedIcon(iconID, BUTTON_SIZE, UIManager.getColor("Button.disabledText"), false);
+		final FADerivedIcon prssdIcon = new FADerivedIcon(iconID, BUTTON_SIZE, ALMOST_BLACK, true);
+		button.setIcon(defIcon);
+		button.setRolloverIcon(defIcon);
+		button.setDisabledIcon(disIcon);
+		button.setPressedIcon(prssdIcon);
+	}
+
 	protected JButton createMenuButton() {
-		final ImageIcon icon =JideIconsFactory.getImageIcon(JideIconsFactory.Arrow.DOWN);
+		final FADerivedIcon icon = new FADerivedIcon('\uf0b0', BUTTON_SIZE, ALMOST_BLACK, true);
+		final FADerivedIcon pIcon = new FADerivedIcon('\uf0b0', BUTTON_SIZE, SWCColor.contrastColor(ALMOST_BLACK), true);
 		final JButton button = new JButton(icon);
-		button.setToolTipText("Advanced Filters & Options");
-		button.setRequestFocusEnabled(false);
-		button.setFocusable(false);
+		button.setPressedIcon(pIcon);
+		button.setToolTipText("Advanced Filtering Menu");
 		final JPopupMenu pMenu = getPopupMenu();
-		button.addActionListener(e -> pMenu.show(button, 0, 0));
+		button.addActionListener(e -> pMenu.show(button, button.getWidth()/2, button.getHeight()/2));
 		return button;
 	}
 
@@ -373,9 +434,7 @@ public class SNTSearchableBar extends SearchableBar {
 		final int height = (int) createComboBox().getPreferredSize().getHeight();
 		button.setPreferredSize(new Dimension(button.getPreferredSize().width, height));
 //		button.setBorder(null);
-//		button.setMargin(new Insets(2,2,2,2));
 //		button.setContentAreaFilled(false);
-
 	}
 
 	private void filterHelpMsg() {
@@ -391,17 +450,7 @@ public class SNTSearchableBar extends SearchableBar {
 		guiUtils.centeredMsg(msg, "Text-based Filtering");
 	}
 
-	@SuppressWarnings("unused")
-	private void resizeButton(final AbstractButton button) {
-		final double SCALE = .80;
-		final Font font = button.getFont();
-		button.setFont(font.deriveFont((float) (font.getSize() * SCALE)));
-		final Insets insets = button.getMargin();
-		button.setMargin(new Insets((int) (insets.top * SCALE), (int) (insets.left * SCALE),
-				(int) (insets.bottom * SCALE), (int) (insets.right * SCALE)));
-	}
-
-	/** IDE Debug method */
+	/* IDE Debug method */
 	public static void main(final String[] args) {
 		PathManagerUI.main(args);
 	}

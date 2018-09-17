@@ -252,7 +252,7 @@ public class ColorMenu extends JMenu {
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				g2.setColor(Color.RED); //SWCColor.contrastColor(getBackground()));
 				g2.setStroke(new BasicStroke(2));
-				g2.drawLine(3, 3, getWidth() - 3, getHeight() - 3);
+				g2.drawLine(3, 3, getWidth() - 4, getHeight() - 4);
 			}
 		}
 	

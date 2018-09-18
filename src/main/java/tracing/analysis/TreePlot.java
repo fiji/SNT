@@ -135,8 +135,8 @@ public class TreePlot extends TreeColorizer {
 			series.setValues(xc, yc);
 			series.setLegendVisible(false);
 			final Color c = p.getNodeColor(node);
-			series.setStyle(plot.newSeriesStyle(new ColorRGB(c.getRed(), c.getGreen(), c.getBlue()), LineStyle.NONE,
-					MarkerStyle.FILLEDCIRCLE));
+			final ColorRGB cc = (c==null) ? defaultColor : new ColorRGB(c.getRed(), c.getGreen(), c.getBlue());
+			series.setStyle(plot.newSeriesStyle(cc, LineStyle.NONE, MarkerStyle.FILLEDCIRCLE));
 		}
 	}
 

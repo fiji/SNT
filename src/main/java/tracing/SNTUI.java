@@ -2581,43 +2581,36 @@ public class SNTUI extends JDialog {
 	private JMenuItem shollAnalysisHelpMenuItem() {
 		JMenuItem mi;
 		mi = new JMenuItem("Sholl Analysis...");
-		mi.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				final Thread newThread = new Thread(new Runnable() {
-
-					@Override
-					public void run() {
-						if (noPathsError()) return;
-						final String modKey = GuiUtils.modKey() + "+Shift";
-						final String url1 = Sholl_Analysis.URL +
-							"#Analysis_of_Traced_Cells";
-						final String url2 =
-							"http://imagej.net/Simple_Neurite_Tracer:_Sholl_analysis";
-						final StringBuilder sb = new StringBuilder();
-						sb.append("<html>");
-						sb.append("<div WIDTH=390>");
-						sb.append("To initiate <a href='").append(Sholl_Analysis.URL)
-							.append("'>Sholl Analysis</a>, ");
-						sb.append("you must first select a focal point:");
-						sb.append("<ol>");
-						sb.append(
-							"<li>Mouse over the path of interest. Press \"G\" to activate it</li>");
-						sb.append("<li>Press \"").append(modKey).append(
-							"\" to select a point along the path</li>");
-						sb.append("<li>Press \"").append(modKey).append(
-							"+A\" to start analysis</li>");
-						sb.append("</ol>");
-						sb.append("A detailed walkthrough of this procedure is <a href='")
-							.append(url2).append("'>available online</a>. ");
-						sb.append("For batch processing, run <a href='").append(url1)
-							.append("'>Analyze>Sholl>Sholl Analysis (Tracings)...</a>. ");
-						new HTMLDialog("Sholl Analysis How-to", sb.toString(), false);
-					}
-				});
-				newThread.start();
-			}
+		mi.addActionListener(e -> {
+			final Thread newThread = new Thread(() -> {
+				if (noPathsError()) return;
+				final String modKey = GuiUtils.modKey() + "+Shift";
+				final String url1 = Sholl_Analysis.URL + "#Analysis_of_Traced_Cells";
+				final String url2 = "https://imagej.net/Simple_Neurite_Tracer:_Sholl_analysis";
+				final StringBuilder sb = new StringBuilder();
+				sb.append("<html>");
+				sb.append("<div WIDTH=500>");
+				sb.append("To initiate <a href='").append(Sholl_Analysis.URL)
+				.append("'>Sholl Analysis</a>, ");
+				sb.append("you must select a focal point. You can do it coarsely by ");
+				sb.append("righ-clicking near a node and choosing <i>Sholl Analysis at Nearest ");
+				sb.append("Node</i> from the contextual menu (Shortcut: \"").append(modKey).append("+A\").");
+				sb.append("<p>Alternatively, for precise positioning of the center of analysis:</p>");
+				sb.append("<ol>");
+				sb.append(
+						"<li>Mouse over the path of interest. Press \"G\" to activate it</li>");
+				sb.append("<li>Press \"").append(modKey).append(
+						"\" to select a node along the path</li>");
+				sb.append("<li>Press \"").append(modKey).append(
+						"+A\" to start analysis</li>");
+				sb.append("</ol>");
+				sb.append("A walkthrough of this procedure is <a href='")
+				.append(url2).append("'>available online</a>. ");
+				sb.append("For batch processing, run <a href='").append(url1)
+				.append("'>Analyze>Sholl>Sholl Analysis (From Tracings)...</a>. ");
+				new HTMLDialog("Sholl Analysis How-to", sb.toString(), false);
+			});
+			newThread.start();
 		});
 		return mi;
 	}

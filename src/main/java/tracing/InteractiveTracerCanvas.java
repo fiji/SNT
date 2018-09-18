@@ -31,8 +31,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.List;
 
 import javax.swing.JCheckBoxMenuItem;
@@ -46,8 +44,8 @@ import org.scijava.util.PlatformUtils;
 
 import ij.ImagePlus;
 import tracing.gui.GuiUtils;
-import tracing.gui.ShollAnalysisDialog;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
@@ -107,6 +105,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		pMenu.addSeparator();
 		deselectedEditingPathsMenu = new JMenu("Connect To");
 		pMenu.add(deselectedEditingPathsMenu);
+		pMenu.addSeparator();
+		pMenu.add(menuItem(listener.START_SHOLL, listener));
 	}
 
 	private void showPopupMenu(final int x, final int y) {
@@ -125,15 +125,11 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				final JMenuItem mItem = ((JMenuItem) me);
 				final String cmd = mItem.getActionCommand();
 
-				// case 1: commands only enabled in "Edit Mode"
+				// commands only enabled in "Edit Mode"
 				if (cmd.equals(AListener.NODE_RESET) || cmd.equals(AListener.NODE_DELETE)
 						|| cmd.equals(AListener.NODE_INSERT) || cmd.equals(AListener.NODE_MOVE)
 						|| cmd.equals(AListener.NODE_MOVE_Z)) {
 					mItem.setEnabled(be && editMode);
-				}
-				// case 2: commands only enabled in "Tracing Mode"
-				else if (cmd.equals(AListener.SELECT_NEAREST) || cmd.startsWith("Fork")) {
-					mItem.setEnabled(tracerPlugin.getUIState() == SNTUI.WAITING_TO_START_PATH);
 				}
 
 			}
@@ -267,35 +263,46 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		SNT.log("Clicking on x=" + x + " y= " + y + "on pane " + plane + " which corresponds to image position x="
 				+ p[0] + ", y=" + p[1] + " z=" + p[2]);
 		tracerPlugin.clickAtMaxPoint(x, y, plane);
-		tracerPlugin.setSlicesAllPanes(p[0], p[1], p[2]);
+		tracerPlugin.setZPositionAllPanes(p[0], p[1], p[2]);
 	}
 
-	public void startShollAnalysis() {
+	protected void startShollAnalysis() {
+		PointInImage centerScaled = null;
 		if (pathAndFillManager.anySelected()) {
 			final double[] p = new double[3];
 			tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
-			final PointInImage pointInImage = pathAndFillManager.nearestJoinPointOnSelectedPaths(p[0], p[1], p[2]);
-			final boolean autoCanvasActivationState = tracerPlugin.autoCanvasActivation;
-			tracerPlugin.autoCanvasActivation = false;
-			final ShollAnalysisDialog sd = new ShollAnalysisDialog(pointInImage.x,
-					pointInImage.y, pointInImage.z, tracerPlugin);
-			sd.toFront();
-			sd.addWindowListener(new WindowAdapter() {
-				@Override
-				public void windowClosed(final WindowEvent e) {
-					tracerPlugin.autoCanvasActivation = autoCanvasActivationState;
-				}
-			});
+			centerScaled = pathAndFillManager.nearestJoinPointOnSelectedPaths(p[0], p[1], p[2]);
 		} else {
-			tracerPlugin.discreteMsg("You must have a path selected in order to start Sholl analysis");
+			final NearPoint np = getNearPointToMousePointer();
+			if (np != null) {
+				centerScaled = np.getNode();
+			}
 		}
+		if (centerScaled == null) {
+			tracerPlugin.discreteMsg("No selectable nodes in view");
+			return;
+		}
+		tracerPlugin.startSholl(centerScaled);
 	}
 
 	public void selectNearestPathToMousePointer(final boolean addToExistingSelection) {
+		if (pathAndFillManager.size() == 0) {
+			tracerPlugin.discreteMsg("Nothing to select: There are no traced paths");
+			return;
+		}
+		final NearPoint nearPoint = getNearPointToMousePointer();
+		if (nearPoint == null) {
+			tracerPlugin.discreteMsg("No selectable paths in view");
+		} else {
+			tracerPlugin.selectPath(nearPoint.getPath(), addToExistingSelection);
+			tracerPlugin.discreteMsg(nearPoint.getPath().getName() + " selected");
+		}
+	}
+
+	protected NearPoint getNearPointToMousePointer() {
 
 		if (pathAndFillManager.size() == 0) {
-			tracerPlugin.discreteMsg("Nothing to select: Path Manager is empty");
-			return;
+			return null;
 		}
 
 		final double[] p = new double[3];
@@ -308,20 +315,16 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final double maxSquaredLength = Math.max(cursor.distanceSquaredTo(rectMin), cursor.distanceSquaredTo(rectMax)); 
 
 		// Find the nearest point on unselected Paths currently displayed in viewPort
-		final List<Path> paths = pathAndFillManager.getPathsRenderedInViewPort(this, true);
+		final List<Path> paths = pathAndFillManager.getUnSelectedPathsRenderedInViewPort(this);
 		if (paths.isEmpty()) {
-			tracerPlugin.discreteMsg("No unselected paths in view");
-			return;
+			return null;
 		}
 		cursor.z = Double.NaN; // ignore Z-positioning of path nodes
 		final NearPoint np = pathAndFillManager.nearestPointOnAnyPath(paths, cursor, maxSquaredLength, true);
 		if (np == null) {
-			tracerPlugin.discreteMsg("No complete path was found in view");
-			return;
+			return null;
 		}
-		final Path path = np.getPath();
-		tracerPlugin.selectPath(path, addToExistingSelection);
-		tracerPlugin.discreteMsg(path.getName() + " selected");
+		return np;
 	}
 
 	@Override
@@ -582,7 +585,8 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		private final static String NODE_DELETE = "Delete Active Node  [D, Backspace]";
 		private final static String NODE_INSERT = "Insert New Node at Cursor Position  [I, Ins]";
 		private final static String NODE_MOVE = "Move Active Node to Cursor Position  [M]";
-		private final static String NODE_MOVE_Z = "Bring Active Node to current Z-plane  [B]";
+		private final static String NODE_MOVE_Z = "Bring Active Node to Current Z-plane  [B]";
+		private final String START_SHOLL = "Sholl Analysis at Nearest Node  [" + GuiUtils.modKey() + "+Shift+A]";
 
 		@Override
 		public void itemStateChanged(final ItemEvent e) {
@@ -607,16 +611,26 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 				selectNearestPathToMousePointer(false);
 				tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_x_in_pane_precise, plane, true, true);
 				tracerPlugin.clickForTrace(last_x_in_pane_precise, last_y_in_pane_precise, plane, true);
+				return;
+
 			} else if (e.getActionCommand().equals(SELECT_NEAREST)) {
 				final boolean add = ((e.getModifiers() & ActionEvent.SHIFT_MASK) > 0);
 				selectNearestPathToMousePointer(add);
+				return;
+			} else if (e.getActionCommand().equals(START_SHOLL)) {
+				if (pathAndFillManager.size() == 0) {
+					getGuiUtils().error("There are no traced paths.");
+					return;
+				}
+				startShollAnalysis();
+				return;
 			} else if (impossibleEdit(true))
 				return;
 
+			// EDIT Commands below
 			if (e.getActionCommand().equals(NODE_RESET)) {
 				tracerPlugin.getEditingPath().setEditableNode(-1);
-			}
-			if (e.getActionCommand().equals(NODE_DELETE)) {
+			} else if (e.getActionCommand().equals(NODE_DELETE)) {
 				deleteEditingNode(true);
 			} else if (e.getActionCommand().equals(NODE_INSERT)) {
 				apppendLastCanvasPositionToEditingNode(true);
@@ -625,7 +639,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			} else if (e.getActionCommand().equals(NODE_MOVE_Z)) {
 				assignLastCanvasZPositionToEditNode(true);
 			} else {
-				SNT.error("Unexpectedly got an event from an unknown source: ");
+				SNT.error("Unexpectedly got an event from an unknown source: "+ e);
 				return;
 			}
 
@@ -670,7 +684,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final int editingNode = editingPath.getEditableNodeIndex();
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
-		final PointInImage offset = editingPath.canvasOffset;
+		final PointInCanvas offset = editingPath.getCanvasOffset();
 		try {
 			editingPath.addNode(editingNode, new PointInImage((p[0] - offset.x) * tracerPlugin.x_spacing,
 					(p[1] - offset.y) * tracerPlugin.y_spacing, (p[2] - offset.z) * tracerPlugin.z_spacing));
@@ -689,10 +703,10 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		final int editingNode = editingPath.getEditableNodeIndex();
 		final double[] p = new double[3];
 		tracerPlugin.findPointInStackPrecise(last_x_in_pane_precise, last_y_in_pane_precise, plane, p);
-		final PointInImage offset = editingPath.canvasOffset;
+		final PointInCanvas offset = editingPath.getCanvasOffset();
 		try {
-			editingPath.moveNode(editingNode, new PointInImage((p[0] - offset.x) * tracerPlugin.x_spacing,
-					(p[1] - offset.y) * tracerPlugin.y_spacing, (p[2] - offset.z) * tracerPlugin.z_spacing));
+			editingPath.moveNode(editingNode, new PointInImage((p[0] - offset.x) * editingPath.x_spacing,
+					(p[1] - offset.y) * editingPath.y_spacing, (p[2] - offset.z) * editingPath.z_spacing));
 			redrawEditingPath("Node moved");
 		} catch (final IllegalArgumentException exc) {
 			tempMsg("Node displacement failed!");
@@ -705,7 +719,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			return;
 		final Path editingPath = tracerPlugin.getEditingPath();
 		final int editingNode = editingPath.getEditableNodeIndex();
-		final PointInImage offset = editingPath.canvasOffset;
+		final PointInCanvas offset = editingPath.getCanvasOffset();
 		double newZ;
 		switch (plane) {
 		case MultiDThreePanes.XY_PLANE:

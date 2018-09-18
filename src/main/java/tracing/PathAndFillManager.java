@@ -35,7 +35,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.StringReader;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -266,7 +265,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 *
 	 * (b) All the registered PathAndFillListener objects.
 	 */
-	protected synchronized void setSelected(final List<Path> selectedPaths, final Object sourceOfMessage) {
+	protected synchronized void setSelected(final Collection<Path> selectedPaths, final Object sourceOfMessage) {
 		selectedPathsSet.clear();
 		if (selectedPaths != null) {
 			// selectedPathsSet.addAll(selectedPaths);
@@ -292,7 +291,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return selectedPathsSet.contains(path);
 	}
 
-	public HashSet<Path> getSelectedPaths() {
+	public Set<Path> getSelectedPaths() {
 		return selectedPathsSet;
 	}
 
@@ -323,13 +322,14 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			ArrayList<SWCPoint> swcPoints = null;
 			try {
-				swcPoints = getSWCFor(connectedPaths);
+				swcPoints = getSWCFor(new ArrayList<Path>(connectedPaths));
 			} catch (final SWCExportException see) {
 				error("" + see.getMessage());
 				return false;
 			}
 
 			if (plugin != null) plugin.showStatus(0, 0, "Exporting SWC data to " + swcFile.getAbsolutePath());
+
 			try {
 				final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(swcFile), "UTF-8"));
 				flushSWCPoints(swcPoints, pw);
@@ -485,7 +485,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return primaryPaths.toArray(new Path[] {});
 	}
 
-	public synchronized ArrayList<SWCPoint> getSWCFor(final Set<Path> selectedPaths) throws SWCExportException {
+	public synchronized ArrayList<SWCPoint> getSWCFor(final Collection<Path> selectedPaths) throws SWCExportException {
 
 		/*
 		 * Turn the primary paths into a Set. This call also ensures that the
@@ -497,8 +497,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		 * Check that there's only one primary path in selectedPaths by taking the
 		 * intersection and checking there's exactly one element in it:
 		 */
-
-		structuredPathSet.retainAll(selectedPaths);
+		structuredPathSet.retainAll(new HashSet<>(selectedPaths));
 
 		if (structuredPathSet.size() == 0)
 			throw new SWCExportException(
@@ -1249,9 +1248,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					useFittedFields.put(id, true);
 				else if (useFittedString.equals("false"))
 					useFittedFields.put(id, false);
-				else
+				else {
 					throw new TracesFileFormatException(
 							"Unknown value for 'fitted' attribute: '" + useFittedString + "'");
+				}
 			}
 
 			if (fittedIDInteger != null)
@@ -1969,7 +1969,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * creating stacks that can be used in skeleton analysis plugins that expect a
 	 * stack of this kind.
 	 */
-	synchronized void setPathPointsInVolume(final ArrayList<Path> paths, final byte[][] slices, final int width,
+	synchronized void setPathPointsInVolume(final Collection<Path> paths, final byte[][] slices, final int width,
 			final int height, final int depth) {
 		for (final Path topologyPath : paths) {
 			Path p = topologyPath;
@@ -2369,15 +2369,17 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * paths" option is set.)
 	 */
 
-	public void update3DViewerContents() {
+	protected void update3DViewerContents() {
 		if (plugin != null && !plugin.use3DViewer)
 			return;
 		final boolean showOnlySelectedPaths = plugin.isOnlySelectedPathsVisible();
 		// Now iterate over all the paths:
-		for (Path p : allPaths) {
+
+		allPaths.stream().forEach( p ->
+		 {
 
 			if (p.fittedVersionOf != null)
-				continue;
+				return; // here interpreted as 'continue'
 
 			final boolean selected = p.isSelected();
 			final boolean customColor = (p.hasCustomColor && plugin.displayCustomPathColors);
@@ -2401,10 +2403,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if (p.content3D != null)
 				p.content3D.setShaded(!(customColor && selected));
 
-		}
+		});
 	}
 
-	/**
+	/*
 	 * A base class for all the methods we might want to use to transform paths.
 	 */
 

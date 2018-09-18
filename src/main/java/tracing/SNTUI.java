@@ -1858,10 +1858,10 @@ public class SNTUI extends JDialog {
 		final JMenu exportSubmenu = new JMenu("Export (All Paths)");
 		final JMenu analysisMenu = new JMenu("Utilities");
 		menuBar.add(analysisMenu);
-		final JMenu viewMenu = new JMenu("View");
-		menuBar.add(viewMenu);
 		final ScriptInstaller installer = new ScriptInstaller(plugin.getContext(), this);
 		menuBar.add(installer.getScriptsMenu());
+		final JMenu viewMenu = new JMenu("View");
+		menuBar.add(viewMenu);
 		menuBar.add(helpMenu());
 
 		loadTracesMenuItem = new JMenuItem("Load Traces...");
@@ -1982,7 +1982,6 @@ public class SNTUI extends JDialog {
 		quitMenuItem.addActionListener(listener);
 		fileMenu.add(quitMenuItem);
 
-		analysisMenu.addSeparator();
 		measureMenuItem = new JMenuItem("Quick Statistics");
 		measureMenuItem.addActionListener(listener);
 		strahlerMenuItem = new JMenuItem("Strahler Analysis");
@@ -1994,7 +1993,6 @@ public class SNTUI extends JDialog {
 		analysisMenu.add(measureMenuItem);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
-		analysisMenu.addSeparator();
 
 		final JCheckBoxMenuItem xyCanvasMenuItem = new JCheckBoxMenuItem(
 			"Hide XY View");
@@ -2346,8 +2344,6 @@ public class SNTUI extends JDialog {
 			timer.setRepeats(false);
 			timer.start();
 			statusBarText.setText(msg);
-			
-			
 		});
 	}
 
@@ -2463,13 +2459,15 @@ public class SNTUI extends JDialog {
 	{
 		if (plugin.getImagePlus(pane) == null) {
 			String msg;
-			if (pane == MultiDThreePanes.XY_PLANE) msg =
-				"Tracing image is no longer available.";
-			else if (plugin.getSinglePane()) msg =
-				"You are tracing in single-pane mode. To generate ZY/XZ " +
-					"panes run \"Display ZY/XZ views\".";
-			else msg = "Pane was closed and is no longer accessible. " +
+			if (pane == MultiDThreePanes.XY_PLANE) {
+				msg = "XY view is not available.";
+			} else if (plugin.getSinglePane()) {
+				msg = "View does not exist. To generate ZY/XZ "
+						+ "views run \"Display ZY/XZ views\".";
+			} else {
+				msg = "View is no longer accessible. " +
 				"You can (re)build it using \"Rebuild ZY/XZ views\".";
+			}
 			guiUtils.error(msg);
 			mItem.setSelected(false);
 			return;
@@ -3139,10 +3137,8 @@ public class SNTUI extends JDialog {
 			changeState(preSigmaPaletteState);
 			plugin.setCanvasLabelAllPanes(null);
 		}
-		
-		
+
 		private boolean checkOKToWriteAllAsSWC(final String prefix) {
-			
 			final List<Path> primaryPaths = Arrays.asList(pathAndFillManager.getPathsStructured());
 			final int n = primaryPaths.size();
 			String errorMessage = "";

@@ -81,7 +81,7 @@ import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 
 /**
- * Implements both the "Analyze>Sholl>Sholl Analysis (From Tracings)..." and
+ * Implements both the "Analyze:Sholl:Sholl Analysis (From Tracings)..." and
  * SNT's "Start Sholl Analysis..." commands
  * 
  * @author Tiago Ferreira
@@ -544,12 +544,9 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive, Can
 			lStats.setPrimaryBranches(new TreeAnalyzer(tree).getPrimaryPaths().size());
 
 			if (polynomialChoice.contains("Best")) {
-				showStatus("Determining 'Best fit' polynomial...");
-				final double rSq = prefService.getDouble(Prefs.class, "rSquared", Prefs.DEF_RSQUARED);
-				final double pValue = prefService.getDouble(Prefs.class, "pValue", Prefs.DEF_PVALUE);
-				final int deg = lStats.findBestFit(minDegree, maxDegree, rSq, pValue);
-				if (deg < 2) {
-					showStatus("'Best fit' determination failed!");
+				final int deg = lStats.findBestFit(minDegree, maxDegree, prefService);
+				if (deg == -1) {
+					helper.error("Polynomial regression failed. You may need to adjust Options for 'Best Fit' Polynomial", null);
 				}
 			} else if (polynomialChoice.contains("degree") && polynomialDegree > 1) {
 				showStatus("Fitting polynomial...");
@@ -578,10 +575,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive, Can
 				}
 				detailedTableDisplay = displayService.createDisplay("Detailed", dTable);
 			}
-			System.out.println(tableOutputDescription);
 			if (tableOutputDescription.contains("Summary")) {
-				System.out.println("done I contain Summary");
-
 				final ShollTable sTable = new ShollTable(lStats, nStats);
 				if (commonSummaryTable == null)
 					commonSummaryTable = new DefaultGenericTable();

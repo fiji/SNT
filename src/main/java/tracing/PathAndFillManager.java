@@ -1804,6 +1804,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return true;
 	}
 
+	/**
+	 * Import neurons from the MouseLight database
+	 *
+	 * @param ids the list of IDs
+	 * @param compartment the compartment. Either 'axon', 'dendrite', 'soma' or 'all'
+	 * @return the map mapping imported ids to a boolean flag, 
+	 */
 	public Map<String, Boolean> importMLNeurons(final Collection<String> ids, final String compartment) {
 		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
 		for (String id : ids) {
@@ -2078,7 +2085,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return allPaths;
 	}
 
-	protected ArrayList<Path> getPathsFiltered() {
+	public ArrayList<Path> getPathsFiltered() {
 		final ArrayList<Path> paths = new ArrayList<>();
 		for (final Path p : getPaths()) {
 			if (p == null || p.isFittedVersionOfAnotherPath())

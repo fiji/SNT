@@ -22,6 +22,7 @@
 
 package tracing;
 
+import java.awt.event.InputEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -139,10 +140,11 @@ class ScriptInstaller implements MenuKeyListener {
 			sMenu.add(mItem);
 			mItem.addMenuKeyListener(this);
 			mItem.addActionListener(e -> {
-				if (openInsteadOfRun)
+				if (openInsteadOfRun || (e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
 					openScript(si);
-				else
+				} else {
 					runScript(si);
+				}
 				openInsteadOfRun = false;
 			});
 		}
@@ -169,8 +171,8 @@ class ScriptInstaller implements MenuKeyListener {
 		mItem.addActionListener(e -> {
 			ui.guiUtils.centeredMsg("This menu lists scripting routines that enhance SNT functionality. "
 					+ "The list is automatically populated at startup.<br><br>"
-					+ "To have your own scripts listed here, save them in the <tt>scripts</tt> or "
-					+ "<tt>plugins</tt>  directory while including <i>SNT</i> in the filename (e.g., <tt>"
+					+ "To have your own scripts listed here, save them in the <tt>scripts</tt> "
+					+ "directory while including <i>SNT</i> in the filename (e.g., <tt>"
 					+ appService.getApp().getBaseDirectory() + File.separator + " scripts" + File.separator
 					+ "My_SNT_script.py</tt>) <br><br>"
 					+ "To edit a listed script hold \"Shift\" while clicking on its menu entry.<br><br>"
@@ -194,7 +196,7 @@ class ScriptInstaller implements MenuKeyListener {
 
 	@Override
 	public void menuKeyReleased(final MenuKeyEvent e) {
-		openInsteadOfRun = e.isShiftDown();
+		openInsteadOfRun = false;
 
 	}
 

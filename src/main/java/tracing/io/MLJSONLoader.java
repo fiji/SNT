@@ -230,18 +230,33 @@ public class MLJSONLoader {
 		return success;
 	}
 
+	private String normalizedStructure(final String structure) {
+		switch(structure.toLowerCase()) {
+		case "dendrite":
+		case "dendrites":
+			return DENDRITE;
+		case "axon":
+		case "axons":
+			return AXON;
+		default:
+			throw new IllegalArgumentException("Unrecognized compartment");
+		}
+		
+	}
+
 	/**
 	 * Gets a traced compartment of the loaded cell.
 	 *
 	 * @param structure either {@link #AXON} or {@link #DENDRITE}
 	 * @return the specified compartment as a JSON object
 	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
-	 *                                  possible
+	 *                                  possible or {@code structure} was not
+	 *                                  recognized
 	 */
 	public JSONObject getCompartment(final String structure) throws IllegalArgumentException {
 		if (!initialized)
 			initialize();
-		final UUID structureID = nameMap.get(structure.toLowerCase());
+		final UUID structureID = nameMap.get(normalizedStructure(structure));
 		if (structureID == null)
 			throw new IllegalArgumentException("Structure name not recognized: " + structure);
 

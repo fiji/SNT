@@ -2267,6 +2267,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
+	/**
+	 * Gets the instance of the legacy 3D viewer universe.
+	 * 
+	 * @return the a reference to the 3DUniverse or null if no universe has been set
+	 */
 	public Image3DUniverse get3DUniverse() {
 		return univ;
 	}

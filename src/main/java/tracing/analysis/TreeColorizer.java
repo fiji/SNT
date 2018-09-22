@@ -41,9 +41,14 @@ import org.scijava.plugin.Parameter;
 import net.imagej.ImageJ;
 import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable;
+import sholl.ProfileEntry;
+import sholl.UPoint;
+import sholl.math.LinearProfileStats;
 import tracing.Path;
+import tracing.SNT;
 import tracing.Tree;
 import tracing.plugin.DistributionCmd;
+import tracing.util.PointInImage;
 
 /**
  * Class for color coding {@link Tree}s.
@@ -220,6 +225,43 @@ public class TreeColorizer {
 				colors[node] = getColor(value);
 			}
 			p.setNodeColors(colors);
+		}
+	}
+
+	/**
+	 * Colorizes a tree using Sholl data.
+	 *
+	 * @param tree       the tree to be colorized
+	 * @param stats      the LinearProfileStats instance containing the mapping
+	 *                   profile. if a polynomial fit has been successfully
+	 *                   performed, mapping is done against the fitted data,
+	 *                   otherwise sampled intersections are used.
+	 * @param colorTable the color table specifying the color mapping. Null not
+	 *                   allowed.
+	 */
+	public void colorize(final Tree tree, final LinearProfileStats stats, final ColorTable colorTable) {
+		final UPoint ucenter = stats.getProfile().center();
+		if (ucenter == null) {
+			throw new IllegalArgumentException("Center unknown");
+		}
+		paths = tree.list();
+		this.colorTable = colorTable;
+		final boolean useFitted = stats.validFit();
+		SNT.log("Mapping to fitted values: " + useFitted);
+		setMinMax(stats.getMin(useFitted), stats.getMax(useFitted));
+		final PointInImage center = new PointInImage(ucenter.x, ucenter.y, ucenter.z);
+		final double stepSize = stats.getProfile().stepSize();
+		final double stepSizeSq = stepSize * stepSize;
+		for (final ProfileEntry entry : stats.getProfile().entries()) {
+			final double entryRadiusSqed = entry.radiusSquared();
+			for (final Path p : paths) {
+				for (int node = 0; node < p.size(); node++) {
+					final double dx = center.distanceSquaredTo(p.getPointInImage(node));
+					if (dx >= entryRadiusSqed && dx < entryRadiusSqed + stepSizeSq) {
+						p.setNodeColor(getColor(entry.count), node);
+					}
+				}
+			}
 		}
 	}
 

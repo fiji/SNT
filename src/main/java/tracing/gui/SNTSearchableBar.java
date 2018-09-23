@@ -31,6 +31,7 @@ import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 
 import com.jidesoft.swing.SearchableBar;
@@ -266,12 +267,13 @@ public class SNTSearchableBar extends SearchableBar {
 			}
 			class GetFilteredTypes extends SwingWorker<Object, Object> {
 
+				CommandModule cmdModule;
 				@Override
 				public Object doInBackground() {
 					final CommandService cmdService = pmui.getSimpleNeuriteTracer().getContext()
 							.getService(CommandService.class);
 					try {
-						cmdService.run(SWCTypeFilterCmd.class, true).get();
+						cmdModule = cmdService.run(SWCTypeFilterCmd.class, true).get();
 					} catch (InterruptedException | ExecutionException ignored) {
 						return null;
 					}
@@ -282,7 +284,7 @@ public class SNTSearchableBar extends SearchableBar {
 				protected void done() {
 					final Set<Integer> types = SWCTypeFilterCmd
 							.getChosenTypes(pmui.getSimpleNeuriteTracer().getContext());
-					if (types == null || types.isEmpty()) {
+					if ((cmdModule != null && cmdModule.isCanceled()) || types == null || types.isEmpty()) {
 						return; // user pressed cancel or chose nothing
 					}
 					for (final Iterator<Path> iterator = paths.iterator(); iterator.hasNext();) {

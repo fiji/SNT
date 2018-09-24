@@ -546,11 +546,15 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive, Can
 			if (polynomialChoice.contains("Best")) {
 				final int deg = lStats.findBestFit(minDegree, maxDegree, prefService);
 				if (deg == -1) {
-					helper.error("Polynomial regression failed. You may need to adjust Options for 'Best Fit' Polynomial", null);
+					//helper.error("Polynomial regression failed. You may need to adjust Options for 'Best Fit' Polynomial", null);
 				}
 			} else if (polynomialChoice.contains("degree") && polynomialDegree > 1) {
 				showStatus("Fitting polynomial...");
-				lStats.fitPolynomial(polynomialDegree);
+				try {
+					lStats.fitPolynomial(polynomialDegree);
+				} catch (final Exception ignored){
+					helper.error("Polynomial regression failed. Unsuitable degree?", null);
+				}
 			}
 
 			/// Normalized profile stats
@@ -573,7 +577,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive, Can
 				if (detailedTableDisplay != null) {
 					detailedTableDisplay.close();
 				}
-				detailedTableDisplay = displayService.createDisplay("Detailed", dTable);
+				detailedTableDisplay = displayService.createDisplay("Sholl-Profiles", dTable);
 			}
 			if (tableOutputDescription.contains("Summary")) {
 				final ShollTable sTable = new ShollTable(lStats, nStats);

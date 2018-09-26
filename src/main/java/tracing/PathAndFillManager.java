@@ -81,7 +81,7 @@ import util.XMLFunctions;
 
 /**
  * The PathAndFillManager is responsible for importing, handling and managing of
- * Paths (and Fills). Typically, a PathAndFillManager is accessed from an
+ * Paths and Fills. Typically, a PathAndFillManager is accessed from an
  * {@link SimpleNeuriteTracer} instance, but accessing a PathAndFillManager
  * directly is useful for batch/headless operations.
  */
@@ -94,7 +94,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	protected SimpleNeuriteTracer plugin;
 	private static boolean headless = false;
-	public double x_spacing;
+	private double x_spacing;
 	private double y_spacing;
 	private double z_spacing;
 	private String spacing_units;
@@ -163,7 +163,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/**
-	 * Instantiates a new PathAndFillManager, imposing specified pixel dimensions,
+	 * Instantiates a new PathAndFillManager imposing specified pixel dimensions,
 	 * which may be required for pixel operations. New {@link Path}s created under
 	 * this instance, will adopt the specified spacing details.
 	 *
@@ -185,7 +185,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/**
-	 * Returns the number of Paths in the PathAndFillManager list
+	 * Returns the number of Paths in the PathAndFillManager list.
 	 *
 	 * @return the the number of Paths
 	 */
@@ -193,9 +193,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return allPaths.size();
 	}
 
-	/*
-	 * This is used by the interface to have changes in the path manager reported so
-	 * that they can be reflected in the UI.
+	/**
+	 * Adds a PathAndFillListener. This is used by the interface to have changes in
+	 * the path manager reported so that they can be reflected in the UI.
+	 *
+	 * @param listener the listener
 	 */
 	public synchronized void addPathAndFillListener(final PathAndFillListener listener) {
 		listeners.add(listener);
@@ -287,14 +289,30 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 	}
 
+	/**
+	 * Checks if a Path is currently selected in the GUI.
+	 *
+	 * @param path the path to be checked
+	 * @return true, if is selected
+	 */
 	public synchronized boolean isSelected(final Path path) {
 		return selectedPathsSet.contains(path);
 	}
 
+	/**
+	 * Gets all paths selected in the GUI
+	 *
+	 * @return the collection of selected paths
+	 */
 	public Set<Path> getSelectedPaths() {
 		return selectedPathsSet;
 	}
 
+	/**
+	 * Checks whether at least one Path is currently selected in the UI.
+	 *
+	 * @return true, if successful
+	 */
 	public boolean anySelected() {
 		return selectedPathsSet.size() > 0;
 	}
@@ -303,7 +321,14 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return new File(prefix + "-" + fileIndexFormatter.format(index) + ".swc");
 	}
 
-	public synchronized boolean exportAllAsSWC(final String prefix) {
+	/**
+	 * Exports all as Paths as SWC file(s). Multiple files are created if multiple
+	 * Trees exist.
+	 *
+	 * @param prefix the common prefix to all exported files
+	 * @return true, if successful
+	 */
+	public synchronized boolean exportAllPathsAsSWC(final String prefix) {
 		final List<Path> primaryPaths = Arrays.asList(getPathsStructured());
 		int i = 0;
 		for (final Path primaryPath : primaryPaths) {
@@ -320,7 +345,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				}
 			}
 
-			ArrayList<SWCPoint> swcPoints = null;
+			List<SWCPoint> swcPoints = null;
 			try {
 				swcPoints = getSWCFor(new ArrayList<Path>(connectedPaths));
 			} catch (final SWCExportException see) {
@@ -344,6 +369,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return true;
 	}
 
+	/**
+	 * Sets whether this PathAndFillManager instance should run 'headless'.
+	 *
+	 * @param headless true to activate 'headless' calls, otherwise false
+	 */
 	public void setHeadless(final boolean headless) {
 		PathAndFillManager.headless = headless;
 	}
@@ -363,7 +393,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			errorStatic(msg);
 	}
 
-	protected void flushSWCPoints(final ArrayList<SWCPoint> swcPoints, final PrintWriter pw) {
+	protected void flushSWCPoints(final List<SWCPoint> swcPoints, final PrintWriter pw) {
 		pw.println("# Exported from \"Simple Neurite Tracer\" version " + SNT.VERSION + " on "
 				+ LocalDateTime.of(LocalDate.now(), LocalTime.now()));
 		pw.println("# https://imagej.net/Simple_Neurite_Tracer");
@@ -388,7 +418,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/**
-	 * Returns the BoundingBox enclosing existing nodes.
+	 * Returns the BoundingBox enclosing all nodes of all existing Paths.
 	 *
 	 * @param compute If true, BoundingBox dimensions will be computed for all the
 	 *                existing Paths. If false, the last computed BoundingBox will
@@ -485,7 +515,15 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return primaryPaths.toArray(new Path[] {});
 	}
 
-	public synchronized ArrayList<SWCPoint> getSWCFor(final Collection<Path> selectedPaths) throws SWCExportException {
+	/**
+	 * Gets the list of SWCPoints associated with a collection of Paths.
+	 *
+	 * @param paths the paths from which to retrieve the list
+	 * @return the list of SWCPoints, corresponding to all the nodes of
+	 *         {@code paths}
+	 * @throws SWCExportException if list could not be retrieved
+	 */
+	public synchronized List<SWCPoint> getSWCFor(final Collection<Path> paths) throws SWCExportException {
 
 		/*
 		 * Turn the primary paths into a Set. This call also ensures that the
@@ -497,7 +535,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		 * Check that there's only one primary path in selectedPaths by taking the
 		 * intersection and checking there's exactly one element in it:
 		 */
-		structuredPathSet.retainAll(new HashSet<>(selectedPaths));
+		structuredPathSet.retainAll(new HashSet<>(paths));
 
 		if (structuredPathSet.size() == 0)
 			throw new SWCExportException(
@@ -531,7 +569,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			final Path currentPath = nextPathsToAdd.removeFirst();
 
-			if (!selectedPaths.contains(currentPath))
+			if (!paths.contains(currentPath))
 				throw new SWCExportException("The path \"" + currentPath
 						+ "\" is connected to other selected paths, but wasn't itself selected.");
 
@@ -643,7 +681,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		Path disconnectedExample = null;
 		int selectedAndNotConnected = 0;
-		for (final Path selectedPath : selectedPaths) {
+		for (final Path selectedPath : paths) {
 			if (!pathsAlreadyDone.contains(selectedPath)) {
 				++selectedAndNotConnected;
 				if (disconnectedExample == null)
@@ -1029,6 +1067,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
+	 */
 	@Override
 	public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
 			throws TracesFileFormatException {
@@ -1427,6 +1468,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.xml.sax.helpers.DefaultHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
+	 */
 	@Override
 	public void endElement(final String uri, final String localName, final String qName)
 			throws TracesFileFormatException {
@@ -1805,11 +1849,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/**
-	 * Import neurons from the MouseLight database
+	 * Import neurons from the MouseLight database.
 	 *
-	 * @param ids the list of IDs
-	 * @param compartment the compartment. Either 'axon', 'dendrite', 'soma' or 'all'
-	 * @return the map mapping imported ids to a boolean flag, 
+	 * @param ids         the list of cell IDs
+	 * @param compartment the compartment. Either 'axon', 'dendrite', 'soma' or
+	 *                    'all'
+	 * @return the map mapping imported ids to a boolean flag,
 	 */
 	public Map<String, Boolean> importMLNeurons(final Collection<String> ids, final String compartment) {
 		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
@@ -2095,31 +2140,52 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return paths;
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.UniverseListener#transformationStarted(org.scijava.java3d.View)
+	 */
 	// Methods we need to implement for UniverseListener:
 	@Override
 	public void transformationStarted(final View view) {
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.UniverseListener#transformationUpdated(org.scijava.java3d.View)
+	 */
 	@Override
 	public void transformationUpdated(final View view) {
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.UniverseListener#transformationFinished(org.scijava.java3d.View)
+	 */
 	@Override
 	public void transformationFinished(final View view) {
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.UniverseListener#contentAdded(ij3d.Content)
+	 */
 	@Override
 	public void contentAdded(final Content c) {
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.UniverseListener#contentRemoved(ij3d.Content)
+	 */
 	@Override
 	public void contentRemoved(final Content c) {
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.UniverseListener#contentChanged(ij3d.Content)
+	 */
 	@Override
 	public void contentChanged(final Content c) {
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.UniverseListener#contentSelected(ij3d.Content)
+	 */
 	@Override
 	public void contentSelected(final Content c) {
 		if (c == null)
@@ -2130,10 +2196,16 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			plugin.selectPath(selectedPath, false);
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.UniverseListener#canvasResized()
+	 */
 	@Override
 	public void canvasResized() {
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.UniverseListener#universeClosed()
+	 */
 	@Override
 	public void universeClosed() {
 		if (plugin != null) {
@@ -2500,8 +2572,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/**
+	 * Gets the SimpleNeuriteTracer instance.
 	 *
-	 * @return the SNT instance associated with this PathManager (if any)
+	 * @return the {@link SimpleNeuriteTracer} instance associated with this PathManager (if any)
 	 */
 	public SimpleNeuriteTracer getPlugin() {
 		return plugin;
@@ -2524,6 +2597,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		int currentPathIndex;
 		int currentPointIndex;
 
+		/* (non-Javadoc)
+		 * @see java.util.Iterator#hasNext()
+		 */
 		@Override
 		public boolean hasNext() {
 			if (currentPath == null || currentPointIndex == currentPath.size() - 1) {
@@ -2546,6 +2622,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			return true;
 		}
 
+		/* (non-Javadoc)
+		 * @see java.util.Iterator#next()
+		 */
 		@Override
 		public PointInImage next() {
 			if (currentPath == null || currentPointIndex == currentPath.size() - 1) {
@@ -2564,12 +2643,16 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			return currentPath.getPointInImage(currentPointIndex);
 		}
 
+		/* (non-Javadoc)
+		 * @see java.util.Iterator#remove()
+		 */
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException("AllPointsIterator does not allow the removal of points");
 		}
 
 	}
+
 
 }
 

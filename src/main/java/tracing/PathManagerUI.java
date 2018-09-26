@@ -552,7 +552,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 	private void exportSelectedPaths(final Collection<Path> selectedPaths) {
 
-		ArrayList<SWCPoint> swcPoints = null;
+		List<SWCPoint> swcPoints = null;
 		try {
 			swcPoints = pathAndFillManager.getSWCFor(selectedPaths);
 		} catch (final SWCExportException see) {

@@ -2998,7 +2998,7 @@ public class SNTUI extends JDialog {
 				final String savePath = saveFile.getAbsolutePath();
 				SNT.log("Exporting paths to " + saveFile);
 				if (!checkOKToWriteAllAsSWC(savePath)) return;
-				pathAndFillManager.exportAllAsSWC(savePath);
+				pathAndFillManager.exportAllPathsAsSWC(savePath);
 
 			}
 			else if (source == exportCSVMenuItem && !noPathsError()) {

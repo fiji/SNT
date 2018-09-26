@@ -5,5 +5,9 @@
 
 # Maven #
 /target/
+/doc/
+/natives/
 
+# Misc #
+.checksums
 *.jar

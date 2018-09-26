@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -154,6 +155,16 @@ public class SNT {
 			return file != null && file.exists();
 		}
 		catch (final SecurityException ignored) {
+			return false;
+		}
+	}
+
+	protected static boolean isValidURL(final String url) {
+		try {
+			new URL(url).toURI();
+			return true;
+		}
+		catch (final Exception e) {
 			return false;
 		}
 	}

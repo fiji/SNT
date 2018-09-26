@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,7 +44,9 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import tracing.Path;
+import tracing.PathAndFillManager;
 import tracing.SNT;
+import tracing.Tree;
 import tracing.util.SWCPoint;
 
 /**
@@ -341,6 +344,31 @@ public class MLJSONLoader {
 		if (SOMA.equals(comp) || nameMap.containsKey(comp))
 			return getNodesInternal(comp);
 		return getNodes();
+	}
+
+	/**
+	 * Script-friendly method to extract a compartment as a collection of Paths
+	 *
+	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
+	 * @return the compartment as a {@link Tree}, or null if data could not be
+	 *         retrieved
+	 * @throws IllegalArgumentException if compartment is not recognized or
+	 *                                  retrieval of data for this neuron is not
+	 *                                  possible
+	 */
+	public Tree getTree(final String compartment) throws IllegalArgumentException {
+		if (compartment == null || compartment.trim().isEmpty())
+			throw new IllegalArgumentException("Invalid compartment" + compartment);
+		if (!initialized)
+			initialize();
+		final String comp = compartment.toLowerCase();
+		final PathAndFillManager pafm = new PathAndFillManager();
+		pafm.setHeadless(true);
+		final Map<String, Boolean> map = pafm.importMLNeurons(Collections.singletonList(publicID), comp);
+		if (map.get(publicID)) {
+			return new Tree(pafm.getPaths());
+		}
+		return null;
 	}
 
 	private TreeSet<SWCPoint> getNodesInternal(final String compartment) {

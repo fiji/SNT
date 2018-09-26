@@ -37,9 +37,10 @@ import okhttp3.Response;
 import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
+import tracing.Tree;
 
 /**
- * Importer for retrieving SWC data from neuromorpho.org;
+ * Importer for retrieving SWC data from neuromorpho.org.
  * 
  * @author Tiago Ferreira
  */
@@ -86,10 +87,11 @@ public class NeuroMorphoLoader {
 
 	/**
 	 * Gets the URL of the SWC file ('CNG version') associated with the specified
-	 * cell ID
+	 * cell ID.
 	 *
-	 * @param cellId the cell to be retrieved
-	 * @return the reconstruction URL, or null if cell Id was not found
+	 * @param cellId the ID of the cell to be retrieved
+	 * @return the reconstruction URL, or null if cell ID was not found or could not
+	 *         be retrieved
 	 */
 	public String getReconstructionURL(final String cellId) {
 		final JSONObject json = getJSon(NEURON_BASE_URL, cellId);
@@ -103,6 +105,42 @@ public class NeuroMorphoLoader {
 		sb.append(cellId.replaceAll(" ", "%20"));
 		sb.append(".CNG.swc");
 		return sb.toString();
+	}
+
+	/**
+	 * Gets the SWC data ('CNG version') associated with the specified cell ID as a
+	 * reader
+	 *
+	 * @param cellId the ID of the cell to be retrieved
+	 * @return the the character stream containing the data, or null if cell ID was
+	 *         not found or could not be retrieved
+	 */
+	public BufferedReader getReader(final String cellId) {
+		try {
+			final URL url = new URL(getReconstructionURL(cellId));
+			final InputStream is = url.openStream();
+			return new BufferedReader(new InputStreamReader(is));
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Gets the collection of Paths for the specified cell ID
+	 *
+	 * @param cellId the ID of the cell to be retrieved
+	 * @return the data ('CNG version') for the specified cell as a {@link Tree}, or
+	 *         null if data could not be retrieved
+	 */
+	public Tree getTree(final String cellId) {
+		final String url = getReconstructionURL(cellId);
+		if (url == null) return null;
+		final PathAndFillManager pafm = new PathAndFillManager();
+		pafm.setHeadless(true);
+		if (pafm.importSWC(url)) {
+			return new Tree(pafm.getPaths());
+		}
+		return null;
 	}
 
 	/*
@@ -120,11 +158,7 @@ public class NeuroMorphoLoader {
 		System.out.println("# Getting neuron " + cellId);
 		final String urlPath = loader.getReconstructionURL(cellId);
 		System.out.println("URL :" + urlPath);
-
-		final URL url = new URL(urlPath);
-		final InputStream is = url.openStream();
-		final BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		pafm.importSWC(br, false);
+		pafm.importSWC(urlPath);
 		final SimpleNeuriteTracer snt = new SimpleNeuriteTracer(ij.context(), pafm);
 		snt.initialize(false, 1, 1);
 		snt.startUI();

@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1575,16 +1576,24 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	}
 
-	public static PathAndFillManager createFromFile(final String filename) {
+	/**
+	 * Creates a PathAndFillManager instance from a imported data
+	 *
+	 * @param filePath the absolute path of the file to be imported as per
+	 *                 {@link #loadGuessingType(String)}
+	 * @return the PathAndFillManager instance, or null if file could not be
+	 *         imported
+	 */
+	public static PathAndFillManager createFromFile(final String filePath) {
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);
-		if (pafm.loadGuessingType(filename))
+		if (pafm.loadGuessingType(filePath))
 			return pafm;
 		else
 			return null;
 	}
 
-	public boolean load(final InputStream is, final Reader reader) {
+	private boolean load(final InputStream is, final Reader reader) {
 
 		try {
 
@@ -1642,41 +1651,87 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		resetListeners(null);
 	}
 
-	/*
-	 * The two useful documents about the SWC file formats are:
+	/**
+	 * Imports an SWC file using default settings.
 	 *
-	 * doi:10.1016/S0165-0270(98)00091-0
-	 * http://linkinghub.elsevier.com/retrieve/pii/S0165027098000910 J Neurosci
-	 * Methods. 1998 Oct 1;84(1-2):49-54.Links
-	 * "An on-line archive of reconstructed hippocampal neurons." Cannon RC, Turner
-	 * DA, Pyapali GK, Wheal HV.
-	 *
-	 * http://www.personal.soton.ac.uk/dales/morpho/morpho_doc/index.html
-	 *
-	 * Annoyingly, some published SWC files use world coordinates in microns
-	 * (correct as I understand the specification) while some others use image
-	 * coordinates (incorrect and less useful). An example of the latter seems to
-	 * part of the DIADEM Challenge data set.
-	 *
-	 * There aren't any really good workarounds for this, since if we try to guess
-	 * whether the files are broken or not, there are always going to be odd cases
-	 * where the heuristics fail. In addition, it's not at all clear what the
-	 * "radius" column is meant to mean in these files.
-	 *
-	 * So, the extent to which I'm going to work around these broken files is that
-	 * there's a flag to this method which says
-	 * "assume that the coordinates are image coordinates". The broken files also
-	 * seem to require that you scale the radius by the minimum voxel separation (!)
-	 * so that flag also turns on that workaround.
+	 * @param urlOrFilePath the URL pointing to the SWC file or the absolute file
+	 *                      path of a local file. Note that with URLs, https may not
+	 *                      be supported.
+	 * @return true, if import was successful
+	 * @see tracing.io.NeuroMorphoLoader
+	 * @see #importSWC(String, boolean)
+	 * @see #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)
 	 */
-
-	public boolean importSWC(final BufferedReader br, final boolean assumeCoordinatesIndexVoxels) throws IOException {
-		return importSWC(br, assumeCoordinatesIndexVoxels, 0, 0, 0, 1, 1, 1, true);
+	public boolean importSWC(final String urlOrFilePath) {
+		if (SNT.isValidURL(urlOrFilePath)) {
+			try {
+				final URL url = new URL(urlOrFilePath);
+				final InputStream is = url.openStream();
+				return importSWC(new BufferedReader(new InputStreamReader(is)), false);
+			} catch (final IOException e) {
+				return false;
+			}
+		} else {
+			return importSWC(urlOrFilePath, false);
+		}
 	}
 
-	public boolean importSWC(final BufferedReader br, final boolean assumeCoordinatesInVoxels, final double x_offset,
-			final double y_offset, final double z_offset, final double x_scale, final double y_scale,
-			final double z_scale, final boolean replaceAllPaths) throws IOException {
+	private boolean importSWC(final BufferedReader br, final boolean assumeCoordinatesIndexVoxels) throws IOException {
+		return importSWC(br, assumeCoordinatesIndexVoxels, 0, 0, 0, 1, 1, 1, false);
+	}
+
+	/**
+	 * Imports SWC data with advanced settings. The SWC format is described in
+	 * <a href="https://www.ncbi.nlm.nih.gov/pubmed/9821633">PMID 9821633</a> and
+	 * e.g., <a href="http://www.neuromorpho.org/myfaq.jsp#qr3">neuromorpho.org</a>
+	 * It is named after the initials of Stockley, Wheal, and Cole, who earlier
+	 * developed a pioneer system for morphometric reconstructions
+	 * (<a href="https://www.ncbi.nlm.nih.gov/pubmed/8321013">PMID 8321013</a>).
+	 * 
+	 * <p>
+	 * Annoyingly, While the SWC specification details the usage of of world
+	 * coordinates in microns, some published SWC files have adopted image (pixel)
+	 * coordinates, which is inappropriate and less useful (an example of the latter
+	 * seems to part of the DIADEM Challenge data set). In addition, it's not clear
+	 * what the "radius" column is meant to mean in such files.
+	 * </p>
+	 *
+	 * @param br                        the character stream containing the data
+	 * @param assumeCoordinatesInVoxels If true, the SWC coordinates are assumed to
+	 *                                  be in image coordinates ("pixels"). Note
+	 *                                  that in this case, radii will be scaled by
+	 *                                  the minimum voxel separation. This
+	 *                                  workaround seems to be required to properly
+	 *                                  import unscaled files
+	 * @param xOffset                  the offset to be applied to all X
+	 *                                  coordinates. May be useful to import data
+	 *                                  obtained from multiple "un-stitched" fields
+	 *                                  of view. Default is 0.
+	 * @param yOffset                  the offset to be applied to all Y
+	 *                                  coordinates. May be useful to import data
+	 *                                  obtained from multiple "un-stitched" fields
+	 *                                  of view. Default is 0.
+	 * @param zOffset                  the offset to be applied to all Z
+	 *                                  coordinates. May be useful to import data
+	 *                                  obtained from multiple "un-stitched" fields
+	 *                                  of view. Default is 0.
+	 * @param xScale                   the scaling factor for all X coordinates.
+	 *                                  Useful to import data onto downsampled
+	 *                                  images. Default is 1.
+	 * @param yScale                   the scaling factor for all Y coordinates.
+	 *                                  Useful to import data onto downsampled
+	 *                                  images. Default is 1.
+	 * @param zScale                   the scaling factor for all Z coordinates.
+	 *                                  Useful to import data onto downsampled
+	 *                                  images. Default is 1.
+	 * @param replaceAllPaths           If true, all existing Paths will be deleted
+	 *                                  before the import. Default is false.
+	 * 
+	 * @return true, if import was successful
+	 */
+	public boolean importSWC(final BufferedReader br, final boolean assumeCoordinatesInVoxels, final double xOffset,
+			final double yOffset, final double zOffset, final double xScale, final double yScale,
+			final double zScale, final boolean replaceAllPaths) {
 
 		if (replaceAllPaths)
 			clearPathsAndFills();
@@ -1686,30 +1741,35 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		final TreeSet<SWCPoint> nodes = new TreeSet<>();
 		String line;
-		while ((line = br.readLine()) != null) {
-			final Matcher mComment = pComment.matcher(line);
-			line = mComment.replaceAll("$1").trim();
-			final Matcher mEmpty = pEmpty.matcher(line);
-			if (mEmpty.matches())
-				continue;
-			final String[] fields = line.split("\\s+");
-			if (fields.length < 7) {
-				error("Wrong number of fields (" + fields.length + ") in line: " + line);
-				return false;
+		try {
+			while ((line = br.readLine()) != null) {
+				final Matcher mComment = pComment.matcher(line);
+				line = mComment.replaceAll("$1").trim();
+				final Matcher mEmpty = pEmpty.matcher(line);
+				if (mEmpty.matches())
+					continue;
+				final String[] fields = line.split("\\s+");
+				if (fields.length < 7) {
+					error("Wrong number of fields (" + fields.length + ") in line: " + line);
+					return false;
+				}
+				try {
+					final int id = Integer.parseInt(fields[0]);
+					final int type = Integer.parseInt(fields[1]);
+					final double x = xScale * Double.parseDouble(fields[2]) + xOffset;
+					final double y = yScale * Double.parseDouble(fields[3]) + yOffset;
+					final double z = zScale * Double.parseDouble(fields[4]) + zOffset;
+					final double radius = Double.parseDouble(fields[5]);
+					final int previous = Integer.parseInt(fields[6]);
+					nodes.add(new SWCPoint(id, type, x, y, z, radius, previous));
+				} catch (final NumberFormatException nfe) {
+					error("There was a malformed number in line: " + line);
+					return false;
+				}
 			}
-			try {
-				final int id = Integer.parseInt(fields[0]);
-				final int type = Integer.parseInt(fields[1]);
-				final double x = x_scale * Double.parseDouble(fields[2]) + x_offset;
-				final double y = y_scale * Double.parseDouble(fields[3]) + y_offset;
-				final double z = z_scale * Double.parseDouble(fields[4]) + z_offset;
-				final double radius = Double.parseDouble(fields[5]);
-				final int previous = Integer.parseInt(fields[6]);
-				nodes.add(new SWCPoint(id, type, x, y, z, radius, previous));
-			} catch (final NumberFormatException nfe) {
-				error("There was a malformed number in line: " + line);
-				return false;
-			}
+		} catch (final IOException exc) {
+			SNT.error("IO ERROR", exc);
+			return false;
 		}
 		return importNodes(null, nodes, true, assumeCoordinatesInVoxels);
 	}
@@ -1886,17 +1946,46 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return result;
 	}
 
-	public boolean importSWC(final String filename, final boolean ignoreCalibration) {
-		return importSWC(filename, ignoreCalibration, 0, 0, 0, 1, 1, 1, true);
+	/**
+	 * Imports an SWC file.
+	 *
+	 * @param filePath          the absolute path of the file to be imported
+	 * @param ignoreCalibration the ignore calibration
+	 * @return true, if import was successful
+	 */
+	public boolean importSWC(final String filePath, final boolean ignoreCalibration) {
+		return importSWC(filePath, ignoreCalibration, 0, 0, 0, 1, 1, 1, false);
 	}
 
-	public boolean importSWC(final String filename, final boolean ignoreCalibration, final double x_offset,
-			final double y_offset, final double z_offset, final double x_scale, final double y_scale,
-			final double z_scale, final boolean replaceAllPaths) {
+	/**
+	 * Imports an SWC file using advanced options.
+	 *
+	 * @param filePath                  the absolute file path to the imported file
+	 * @param assumeCoordinatesInVoxels see
+	 *                                  {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
+	 * @param xOffset                   see
+	 *                                  {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
+	 * @param yOffset                   see
+	 *                                  {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
+	 * @param zOffset                   see
+	 *                                  {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
+	 * @param xScale                    see
+	 *                                  {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
+	 * @param yScale                    see
+	 *                                  {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
+	 * @param zScale                    see
+	 *                                  {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
+	 * @param replaceAllPaths           see
+	 *                                  {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
+	 * @return true, if import was successful
+	 */
+	public boolean importSWC(final String filePath, final boolean assumeCoordinatesInVoxels, final double xOffset,
+			final double yOffset, final double zOffset, final double xScale, final double yScale,
+			final double zScale, final boolean replaceAllPaths) {
 
-		final File f = new File(filename);
+		final File f = new File(filePath);
 		if (!SNT.fileAvailable(f)) {
-			error("The traces file '" + filename + "' is not available.");
+			error("The traces file '" + filePath + "' is not available.");
 			return false;
 		}
 
@@ -1905,17 +1994,17 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		try {
 
-			is = new BufferedInputStream(new FileInputStream(filename));
+			is = new BufferedInputStream(new FileInputStream(filePath));
 			final BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 
-			result = importSWC(br, ignoreCalibration, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale,
+			result = importSWC(br, assumeCoordinatesInVoxels, xOffset, yOffset, zOffset, xScale, yScale, zScale,
 					replaceAllPaths);
 
 			if (is != null)
 				is.close();
 
 		} catch (final IOException ioe) {
-			error("Could not read " + filename);
+			error("Could not read " + filePath);
 			return false;
 		}
 

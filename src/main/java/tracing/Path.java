@@ -35,6 +35,7 @@ import java.util.stream.DoubleStream;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.stat.StatUtils;
+import org.scijava.util.ColorRGB;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3f;
 
@@ -1087,6 +1088,17 @@ public class Path implements Comparable<Path> {
 		hasCustomColor = color != null;
 		if (fitted != null)
 			fitted.setColor(color);
+	}
+
+	/**
+	 * Sets this path color.
+	 *
+	 * @param colorRGB
+	 *            the path color. Set it to null, to have SNT rendered using default
+	 *            settings.
+	 */
+	public void setColorRGB(final ColorRGB colorRGB) {
+		setColor((colorRGB == null) ? null : new Color(colorRGB.getARGB()));
 	}
 
 	/**

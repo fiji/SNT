@@ -23,6 +23,9 @@
 package tracing.util;
 
 import java.awt.Color;
+import java.util.Arrays;
+
+import org.scijava.util.ColorRGB;
 
 /**
  * A simple class that associates an AWT Color to a SWC type integer tag.
@@ -202,5 +205,46 @@ public class SWCColor {
 		final int intensity = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
 		return intensity < 128 ? Color.WHITE : Color.BLACK;
 	}
+
+	/**
+	 * Returns distinct colors based on Kenneth Kelly's 22 colors of maximum
+	 * contrast (black and white excluded)
+	 * 
+	 * @param nColors the number of colors to be retrieved.
+	 * @return the maximum contrast colors
+	 */
+	public static ColorRGB[] getDistinctColors(final int nColors) {
+		if (nColors < KELLY_COLORS.length) {
+			return Arrays.copyOfRange(KELLY_COLORS, 0, nColors);
+		}
+		final ColorRGB[] colors = Arrays.copyOf(KELLY_COLORS, nColors);
+		for (int last = KELLY_COLORS.length; last != 0 && last < nColors; last <<= 1) {
+			System.arraycopy(colors, 0, colors, last, Math.min(last << 1, nColors) - last);
+		}
+		return colors;
+	}
+
+	private static ColorRGB[] KELLY_COLORS = { // See https://stackoverflow.com/a/4382138 
+			ColorRGB.fromHTMLColor("#FFB300"), // Vivid Yellow
+			ColorRGB.fromHTMLColor("#803E75"), // Strong Purple
+			ColorRGB.fromHTMLColor("#FF6800"), // Vivid Orange
+			ColorRGB.fromHTMLColor("#A6BDD7"), // Very Light Blue
+			ColorRGB.fromHTMLColor("#C10020"), // Vivid Red
+			ColorRGB.fromHTMLColor("#CEA262"), // Grayish Yellow
+			ColorRGB.fromHTMLColor("#817066"), // Medium Gray
+			ColorRGB.fromHTMLColor("#007D34"), // Vivid Green
+			ColorRGB.fromHTMLColor("#F6768E"), // Strong Purplish Pink
+			ColorRGB.fromHTMLColor("#00538A"), // Strong Blue
+			ColorRGB.fromHTMLColor("#FF7A5C"), // Strong Yellowish Pink
+			ColorRGB.fromHTMLColor("#53377A"), // Strong Violet
+			ColorRGB.fromHTMLColor("#FF8E00"), // Vivid Orange Yellow
+			ColorRGB.fromHTMLColor("#B32851"), // Strong Purplish Red
+			ColorRGB.fromHTMLColor("#F4C800"), // Vivid Greenish Yellow
+			ColorRGB.fromHTMLColor("#7F180D"), // Strong Reddish Brown
+			ColorRGB.fromHTMLColor("#93AA00"), // Vivid Yellowish Green
+			ColorRGB.fromHTMLColor("#593315"), // Deep Yellowish Brown
+			ColorRGB.fromHTMLColor("#F13A13"), // Vivid Reddish Orange
+			ColorRGB.fromHTMLColor("#232C16")  // Dark Olive Green
+	};
 
 }

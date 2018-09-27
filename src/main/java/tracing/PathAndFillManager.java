@@ -61,6 +61,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.scijava.java3d.View;
+import org.scijava.util.ColorRGB;
 import org.scijava.vecmath.Color3f;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -76,6 +77,7 @@ import tracing.io.MLJSONLoader;
 import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
 import tracing.util.SNTPoint;
+import tracing.util.SWCColor;
 import tracing.util.SWCPoint;
 import util.Bresenham3D;
 import util.XMLFunctions;
@@ -1676,6 +1678,37 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 	}
 
+	/**
+	 * Imports a group of SWC files (Remote URLs supported).
+	 *
+	 * @param swcs the HashMap containing the absolute file paths (or URLs) of files
+	 *             to be imported as values and a file descriptor as keys.
+	 * @return the HashMap mapping the descriptor of the imported file to a boolean
+	 *         flag ({@code true}, if file successfully imported, {@code false}
+	 *         otherwise)
+	 */
+	public Map<String, Boolean> importSWCs(final Map<String, String> swcs) {
+		final Map<String, Boolean> result = new HashMap<>();
+		final ColorRGB[] colors = SWCColor.getDistinctColors(swcs.size());
+		final boolean headlessState = PathAndFillManager.headless;
+		setHeadless(true);
+		final int[] colorIdx = {0};
+		swcs.forEach((id, path) -> {
+			SNT.log("Loading " + id + ": " + path);
+			final int firstImportedPathIdx = size();
+			result.put(id, (path == null) ? false : importSWC(path));
+			if (id == null) return; // here means 'continue;'
+			for (int i = firstImportedPathIdx; i < size(); i++) {
+				final Path p = getPath(i);
+				p.setName(p.getName() + "{" + id + "}");
+				p.setColorRGB(colors[colorIdx[0]]);
+			}
+			colorIdx[0]++;
+		});
+		setHeadless(headlessState);
+		return result;
+	}
+
 	private boolean importSWC(final BufferedReader br, final boolean assumeCoordinatesIndexVoxels) throws IOException {
 		return importSWC(br, assumeCoordinatesIndexVoxels, 0, 0, 0, 1, 1, 1, false);
 	}
@@ -1771,10 +1804,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			SNT.error("IO ERROR", exc);
 			return false;
 		}
-		return importNodes(null, nodes, true, assumeCoordinatesInVoxels);
+		return importNodes(null, nodes, null, true, assumeCoordinatesInVoxels);
 	}
 
-	private boolean importNodes(final String descriptor, final TreeSet<SWCPoint> points, final boolean computeImgFields, final boolean assumeCoordinatesInVoxels) {
+	private boolean importNodes(final String descriptor, final TreeSet<SWCPoint> points, final ColorRGB color, final boolean computeImgFields, final boolean assumeCoordinatesInVoxels) {
 
 		final Map<Integer, SWCPoint> idToSWCPoint = new HashMap<>();
 		final List<SWCPoint> primaryPoints = new ArrayList<>();
@@ -1882,6 +1915,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			final SWCPoint swcPoint = pathStartsOnSWCPoint.get(p);
 			if (descriptor != null) {
 				p.setName(p.getName() + "{" + descriptor + "}");
+				p.setColorRGB(color);
 			}
 			if (swcPoint == null) {
 				p.setIsPrimary(true);
@@ -1914,7 +1948,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * @param ids         the list of cell IDs
 	 * @param compartment the compartment. Either 'axon', 'dendrite', 'soma' or
 	 *                    'all'
-	 * @return the map mapping imported ids to a boolean flag,
+	 * @return the map mapping imported ids to a boolean flag ({@code true}, if cell
+	 *         successfully imported, {@code false} otherwise)
 	 */
 	public Map<String, Boolean> importMLNeurons(final Collection<String> ids, final String compartment) {
 		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
@@ -1932,16 +1967,19 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	private Map<String, Boolean> importMap(Map<String, TreeSet<SWCPoint>> map) {
 		final Map<String, Boolean> result = new HashMap<>();
+		final ColorRGB[] colors = SWCColor.getDistinctColors(map.size());
+		final int[] colorIdx = {0};
 		map.forEach((k, points) -> {
 			if (points == null) {
 				SNT.error("Importing " + k +"... failed. Invalid structure?");
 				result.put(k, false);
 			} else {
 				SNT.log("Importing " + k +"...");
-				final boolean success = importNodes(k, points, true, true);
+				final boolean success = importNodes(k, points, colors[colorIdx[0]], true, true);
 				SNT.log("Successful import: " + success);
 				result.put(k, success);
 			}
+			colorIdx[0]++;
 		});
 		return result;
 	}

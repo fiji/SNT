@@ -24,7 +24,7 @@ package tracing.gui;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -35,51 +35,35 @@ import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
 import net.imagej.ImageJ;
+import tracing.Path;
 import tracing.PathAndFillManager;
+import tracing.SNT;
 import tracing.SNTService;
 import tracing.SNTUI;
 import tracing.SimpleNeuriteTracer;
-import tracing.io.MLJSONLoader;
+import tracing.io.NeuroMorphoLoader;
+import tracing.util.SWCColor;
 
 /**
- * Scijava-based GUI for {@link MLJSONLoader}, retrieving options for importing
- * MouseLight reconstructions
+ * Scijava-based GUI for {@link NeuroMorphoLoader}
  *
- * 
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Import MouseLight Reconstructions", initializer = "init")
-public class MLImporterCmd extends ContextCommand {
-
-	private static final String EMPTY_LABEL = "<html>&nbsp;";
-	private static final String CHOICE_AXONS = "Axons";
-	private static final String CHOICE_DENDRITES = "Dendrites";
-	private static final String CHOICE_SOMA = "Soma";
-	private static final String CHOICE_BOTH = "All compartments";
-	private final static String DOI_MATCHER = ".*\\d+/janelia\\.\\d+.*";
-	private final static String ID_MATCHER = "[A-Z]{2}\\d{4}";
+@Plugin(type = Command.class, visible = false, label = "Import NeuroMorpho.org Reconstructions", initializer = "init")
+public class NMImporterCmd extends ContextCommand {
 
 	@Parameter
 	private SNTService sntService;
 
-	@Parameter(required = true, persist = true, label = "IDs / DOIs (comma- or space- separated list)", description = "e.g., AA0001 or 10.25378/janelia.5527672")
+	@Parameter(required = true, persist = true, label = "IDs (comma- or space- separated list)", description = "e.g., AA0001 or 10.25378/janelia.5527672")
 	private String query;
-
-	@Parameter(required = false, persist = true, label = "Structures to import", choices = { CHOICE_BOTH, CHOICE_AXONS,
-			CHOICE_DENDRITES, CHOICE_SOMA})
-	private String arborChoice;
 
 	@Parameter(required = false, persist = true, label = "Replace existing paths")
 	private boolean clearExisting;
-
-	@Parameter(label = "Validate IDs", callback = "validateIDs")
-	private Button validate;
-
-	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
-	private String validationMsg = EMPTY_LABEL;
 
 	@Parameter(label = "Check Database Access", callback = "pingServer")
 	private Button ping;
@@ -87,6 +71,7 @@ public class MLImporterCmd extends ContextCommand {
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
 	private String pingMsg;
 
+	private NeuroMorphoLoader loader;
 
 	/*
 	 * (non-Javadoc)
@@ -95,17 +80,16 @@ public class MLImporterCmd extends ContextCommand {
 	 */
 	@Override
 	public void run() {
-
 		if (!sntService.isActive()) {
 			cancel("No active instance of SimpleNeuriteTracer was found.");
 			return;
 		}
-		final List<String> ids = getIdsFromQuery(query);
-		if (ids==null) {
+		final Map<String, String> urlsMap = getURLmapFromQuery(query);
+		if (urlsMap == null || urlsMap.isEmpty()) {
 			cancel("Invalid query. No reconstructions retrieved.");
 			return;
 		}
-		if (!MLJSONLoader.isDatabaseAvailable()) {
+		if (!loader.isDatabaseAvailable()) {
 			cancel(getPingMsg(false));
 			return;
 		}
@@ -113,12 +97,29 @@ public class MLImporterCmd extends ContextCommand {
 		final SimpleNeuriteTracer snt = sntService.getPlugin();
 		final SNTUI ui = sntService.getUI();
 		final PathAndFillManager pafm = sntService.getPathAndFillManager();
-	
-		ui.showStatus("Retrieving ids.... Please wait", false);
+
+		ui.showStatus("Retrieving cells.... Please wait", false);
+		SNT.log("NeuroMorpho.org import: Downloading from URL(s)...");
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final Map<String, Boolean> result = pafm.importMLNeurons(ids, getCompartment(arborChoice));
+		final Map<String, Boolean> result = new HashMap<>();
+		final ColorRGB[] colors = SWCColor.getDistinctColors(urlsMap.size());
+		pafm.setHeadless(true);
+		final int[] colorIdx = {0};
+		urlsMap.forEach((id, url) -> {
+			SNT.log("Queried id " + id + ": " + url);
+			final int firstImportedPathIdx = pafm.size();
+			result.put(id, (url == null) ? false : pafm.importSWC(url));
+			if (id == null) return; // here means 'continue;'
+			for (int i = firstImportedPathIdx; i < pafm.size(); i++) {
+				final Path p = pafm.getPath(i);
+				p.setName(p.getName() + "{" + id + "}");
+				p.setColorRGB(colors[colorIdx[0]]);
+			}
+			colorIdx[0]++;
+		});
+		pafm.setHeadless(false);
 		if (!result.containsValue(true)) {
-			snt.error("No reconstructions could be retrieved: Invalid Query?");
+			snt.error("No reconstructions could be retrieved. Invalid Query?");
 			ui.showStatus("Error... No reconstructions imported", true);
 			return;
 		}
@@ -126,79 +127,47 @@ public class MLImporterCmd extends ContextCommand {
 			final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
 			pafm.deletePaths(indices);
 		}
+		SNT.log("Rebuilding canvases...");
 		snt.rebuildDisplayCanvases();
 		final long failures = result.values().stream().filter(p -> p == false).count();
 		if (failures > 0) {
 			snt.error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
 			ui.showStatus("Partially successful import...", true);
+			SNT.log("Import failed for the following queried morphologies:");
+			result.forEach((key, value) -> { if (!value) SNT.log(key); });
 		} else {
 			ui.showStatus("Successful imported " + result.size() + " reconstruction(s)...", true);
 		}
 	}
 
-	/**
-	 * Parses input query to retrieve the list of cell ids.
-	 *
-	 * @param query the input query (comma- or space- separated list)
-	 * @return the list of cell ids, or null if input query is not valid
-	 */
-	private List<String> getIdsFromQuery(final String query) {
-		final List<String> ids;
-		if (query == null) return null;
-		ids = new LinkedList<String>(Arrays.asList(query.split("\\s*(,|\\s)\\s*")));
-		final Iterator<String> it = ids.iterator();
-		while (it.hasNext()) {
-			final String id = it.next();
-			if ( !(id.matches(ID_MATCHER) || id.matches(DOI_MATCHER)) ) {
-				it.remove();
-			}
-		}
-		if (ids.isEmpty()) return null;
+	private Map<String, String> getURLmapFromQuery(final String query) {
+		if (query == null)
+			return null;
+		final List<String> ids = new LinkedList<String>(Arrays.asList(query.split("\\s*(,|\\s)\\s*")));
+		if (ids.isEmpty())
+			return null;
 		Collections.sort(ids);
-		return ids;
-	}
-
-	/**
-	 * Extracts a valid {@link MLJSONLoader} compartment flag from input choice
-	 *
-	 * @param choice the input choice
-	 * @return a valid {@link MLJSONLoader} flag
-	 */
-	private String getCompartment(final String choice) {
-		if (choice == null) return null;
-		switch(choice) {
-		case CHOICE_AXONS: return MLJSONLoader.AXON;
-		case CHOICE_DENDRITES: return MLJSONLoader.DENDRITE;
-		case CHOICE_SOMA: return MLJSONLoader.SOMA;
-		default: return "all";
-		}
+		final Map<String, String> map = new HashMap<String, String>();
+		ids.forEach(id -> map.put(id, loader.getReconstructionURL(id)));
+		return map;
 	}
 
 	@SuppressWarnings("unused")
 	private void init() {
+		loader = new NeuroMorphoLoader();
 		if (query == null || query.isEmpty())
-			query = "AA0001";
+			query = "cnic_001";
 		pingMsg = "Internet connection required. Retrieval of long lists may be rather slow...           ";
 	}
 
 	@SuppressWarnings("unused")
-	private void validateIDs() {
-		validationMsg = "Validating....";
-		final List<String> list = getIdsFromQuery(query);
-		if (list == null)
-			validationMsg = "Query does not seem to contain valid IDs!";
-		else
-			validationMsg = "Query seems to contain "+ list.size() + " valid ID(s).";
-	}
-
-	@SuppressWarnings("unused")
 	private void pingServer() {
-		pingMsg = getPingMsg(MLJSONLoader.isDatabaseAvailable());
+		pingMsg = getPingMsg(loader.isDatabaseAvailable());
 	}
 
 	private String getPingMsg(final boolean pingResponse) {
-		return (pingResponse) ? "Successfully connected to the MouseLight database."
-				: "MouseLight server not reached. It is either down or you have no internet access.";
+		return (pingResponse) ? "Successfully connected to the NeuroMorpho database."
+				: "NeuroMorpho.org not reached. It is either down or you have no internet access.";
 	}
 
 	/* IDE debug method **/
@@ -206,7 +175,7 @@ public class MLImporterCmd extends ContextCommand {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		ij.command().run(MLImporterCmd.class, true);
+		ij.command().run(NMImporterCmd.class, true);
 	}
 
 }

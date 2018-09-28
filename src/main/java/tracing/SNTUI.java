@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.IntStream;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -81,7 +80,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import org.scijava.command.CommandModule;
+import org.scijava.command.Command;
 import org.scijava.command.CommandService;
 import org.scijava.util.ClassUtils;
 
@@ -105,6 +104,8 @@ import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 import tracing.gui.MLImporterCmd;
+import tracing.gui.MultiSWCImporterCmd;
+import tracing.gui.NMImporterCmd;
 import tracing.gui.SigmaPalette;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.plugin.PlotterCmd;
@@ -1893,81 +1894,31 @@ public class SNTUI extends JDialog {
 		fileMenu.addSeparator();
 		fileMenu.add(sendToTrakEM2);
 		fileMenu.addSeparator();
+		fileMenu.add(importSubmenu);
 
 		loadSWCMenuItem = new JMenuItem("(e)SWC...");
 		loadSWCMenuItem.addActionListener(listener);
 		importSubmenu.add(loadSWCMenuItem);
+		final JMenuItem importDirectory = new JMenuItem("Directory of SWCs...");
+		importSubmenu.add(importDirectory);
+		importDirectory.addActionListener(e -> {
+			(new CmdRunner(MultiSWCImporterCmd.class, true)).execute();
+		});
+		importSubmenu.addSeparator();
 		loadLabelsMenuItem = new JMenuItem("Labels (AmiraMesh)...");
 		loadLabelsMenuItem.addActionListener(listener);
 		importSubmenu.add(loadLabelsMenuItem);
 		importSubmenu.addSeparator();
 		final JMenuItem importMouselight = new JMenuItem("MouseLight Reconstructions...");
 		importSubmenu.add(importMouselight);
-		importSubmenu.addSeparator();
 		importMouselight.addActionListener(e -> {
-			class Importer extends SwingWorker<Object, Object> {
-				private List<String> ids = null;
-				private String scope = null;
-				private boolean clearExisting = false;
-
-				@Override
-				public Object doInBackground() {
-					if (getCurrentState() != SNTUI.ANALYSIS_MODE) {
-						if (guiUtils.getConfirmation("Activate Analysis Mode and import external reconstructions?",
-								"Confirm Import")) {
-							SNTUI.reloadUI(plugin.getUI(), true);
-						} else {
-							return null;
-						}
-					}
-					try {
-						final CommandService cmdService = plugin.getContext().getService(CommandService.class);
-						final CommandModule cm = cmdService.run(MLImporterCmd.class, true).get();
-						if (cm.isCanceled()) return null;
-						ids = MLImporterCmd.getIdsFromQuery((String) cm.getInput("query"));
-						if (ids == null) return null;
-						scope = MLImporterCmd.getCompartment((String) cm.getInput("arborChoice"));
-						clearExisting = (boolean) cm.getInput("clearExisting");
-					} catch (final InterruptedException | ExecutionException e1) {
-						e1.printStackTrace();
-						guiUtils.error("Unfortunately an exception occured. See console for details.");
-						ids = null;
-					}
-					return null;
-				}
-
-				@Override
-				protected void done() {
-					if (ids == null)
-						return;
-					showStatus("Retrieving ids.... Please wait", false);
-					final int lastExistingPathIdx = plugin.getPathAndFillManager().size() - 1;
-					final Map<String, Boolean> result = plugin.getPathAndFillManager().importMLNeurons(ids, scope);
-					if (!result.containsValue(true)) {
-						guiUtils.error("No reconstructions could be retrieved.", "Invalid Query?");
-						showStatus("Error... No reconstructions imported", true);
-						return;
-					}
-					if (clearExisting) {
-						final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
-						plugin.getPathAndFillManager().deletePaths(indices);
-					}
-					plugin.rebuildDisplayCanvases();
-					final long failures = result.values().stream().filter(p -> p == false).count();
-					if (failures > 0) {
-						guiUtils.error(
-								String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()),
-								"Partially Invalid Query");
-						showStatus("Partially successful import...", true);
-					} else {
-						showStatus("Successful imported " + result.size() + " reconstruction(s)...", true);
-					}
-				}
-			}
-			(new Importer()).execute();
-
+			(new CmdRunner(MLImporterCmd.class, true)).execute();
 		});
-		fileMenu.add(importSubmenu);
+		final JMenuItem importNeuroMorpho = new JMenuItem("NeuroMorpho Reconstructions...");
+		importSubmenu.add(importNeuroMorpho);
+		importNeuroMorpho.addActionListener(e -> {
+			(new CmdRunner(NMImporterCmd.class, true)).execute();
+		});
 
 		exportAllSWCMenuItem = new JMenuItem("SWC...");
 		exportAllSWCMenuItem.addActionListener(listener);
@@ -3185,6 +3136,42 @@ public class SNTUI extends JDialog {
 		ui.getPathManager().setLocation(locManager);
 		ui.setVisible(true);
 		ui.getPathManager().setVisible(managerVisible);
+	}
+
+	private class CmdRunner extends SwingWorker<Object, Object> {
+
+		private final Class<? extends Command> cmd;
+		private boolean analysisModeCmd;
+
+		public CmdRunner(final Class<? extends Command> cmd, final boolean analysisModeCmd) {
+			this.cmd = cmd;
+			this.analysisModeCmd = analysisModeCmd;
+		}
+
+		@Override
+		public Object doInBackground() {
+			if (analysisModeCmd && getCurrentState() != SNTUI.ANALYSIS_MODE) {
+				if (guiUtils.getConfirmation("Activate Analysis Mode and import external reconstructions?",
+						"Confirm Import")) {
+					SNTUI.reloadUI(plugin.getUI(), true);
+				} else {
+					return null;
+				}
+			}
+			try {
+				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				cmdService.run(cmd, true).get();
+			} catch (final InterruptedException | ExecutionException e1) {
+				guiUtils.error("Unfortunately an exception occured. See console for details.");
+				e1.printStackTrace();
+			}
+			return null;
+		}
+
+		@Override
+		protected void done() {
+			showStatus("Command completed...", true);
+		};
 	}
 
 }

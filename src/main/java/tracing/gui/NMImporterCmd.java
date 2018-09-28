@@ -24,7 +24,7 @@ package tracing.gui;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -35,18 +35,15 @@ import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
 import net.imagej.ImageJ;
-import tracing.Path;
 import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.SNTService;
 import tracing.SNTUI;
 import tracing.SimpleNeuriteTracer;
 import tracing.io.NeuroMorphoLoader;
-import tracing.util.SWCColor;
 
 /**
  * Scijava-based GUI for {@link NeuroMorphoLoader}
@@ -84,7 +81,7 @@ public class NMImporterCmd extends ContextCommand {
 			cancel("No active instance of SimpleNeuriteTracer was found.");
 			return;
 		}
-		final Map<String, String> urlsMap = getURLmapFromQuery(query);
+		final LinkedHashMap<String, String> urlsMap = getURLmapFromQuery(query);
 		if (urlsMap == null || urlsMap.isEmpty()) {
 			cancel("Invalid query. No reconstructions retrieved.");
 			return;
@@ -98,26 +95,10 @@ public class NMImporterCmd extends ContextCommand {
 		final SNTUI ui = sntService.getUI();
 		final PathAndFillManager pafm = sntService.getPathAndFillManager();
 
-		ui.showStatus("Retrieving cells.... Please wait", false);
+		ui.showStatus("Retrieving cells. Please wait...", false);
 		SNT.log("NeuroMorpho.org import: Downloading from URL(s)...");
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final Map<String, Boolean> result = new HashMap<>();
-		final ColorRGB[] colors = SWCColor.getDistinctColors(urlsMap.size());
-		pafm.setHeadless(true);
-		final int[] colorIdx = {0};
-		urlsMap.forEach((id, url) -> {
-			SNT.log("Queried id " + id + ": " + url);
-			final int firstImportedPathIdx = pafm.size();
-			result.put(id, (url == null) ? false : pafm.importSWC(url));
-			if (id == null) return; // here means 'continue;'
-			for (int i = firstImportedPathIdx; i < pafm.size(); i++) {
-				final Path p = pafm.getPath(i);
-				p.setName(p.getName() + "{" + id + "}");
-				p.setColorRGB(colors[colorIdx[0]]);
-			}
-			colorIdx[0]++;
-		});
-		pafm.setHeadless(false);
+		final Map<String, Boolean> result = pafm.importSWCs(urlsMap);
 		if (!result.containsValue(true)) {
 			snt.error("No reconstructions could be retrieved. Invalid Query?");
 			ui.showStatus("Error... No reconstructions imported", true);
@@ -140,14 +121,14 @@ public class NMImporterCmd extends ContextCommand {
 		}
 	}
 
-	private Map<String, String> getURLmapFromQuery(final String query) {
+	private LinkedHashMap<String, String> getURLmapFromQuery(final String query) {
 		if (query == null)
 			return null;
 		final List<String> ids = new LinkedList<String>(Arrays.asList(query.split("\\s*(,|\\s)\\s*")));
 		if (ids.isEmpty())
 			return null;
 		Collections.sort(ids);
-		final Map<String, String> map = new HashMap<String, String>();
+		final LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
 		ids.forEach(id -> map.put(id, loader.getReconstructionURL(id)));
 		return map;
 	}

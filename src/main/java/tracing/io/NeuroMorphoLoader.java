@@ -138,7 +138,9 @@ public class NeuroMorphoLoader {
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);
 		if (pafm.importSWC(url)) {
-			return new Tree(pafm.getPaths());
+			final Tree tree = new Tree(pafm.getPaths());
+			tree.setLabel(cellId);
+			return tree;
 		}
 		return null;
 	}

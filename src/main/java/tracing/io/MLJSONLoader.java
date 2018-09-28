@@ -366,7 +366,9 @@ public class MLJSONLoader {
 		pafm.setHeadless(true);
 		final Map<String, Boolean> map = pafm.importMLNeurons(Collections.singletonList(publicID), comp);
 		if (map.get(publicID)) {
-			return new Tree(pafm.getPaths());
+			final Tree tree = new Tree(pafm.getPaths());
+			tree.setLabel(publicID + "-" + comp);
+			return tree;
 		}
 		return null;
 	}

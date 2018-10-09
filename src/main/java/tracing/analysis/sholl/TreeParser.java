@@ -160,6 +160,7 @@ public class TreeParser implements Parser {
 	private PointInImage getCenter(final int swcType) {
 		final List<PointInImage> points = new ArrayList<>();
 		for (final Path p : tree.list()) {
+			if (!p.isPrimary()) continue;
 			if (swcType < 0 || p.getSWCType() == swcType) {
 				points.add(p.getPointInImage(0));
 				continue;

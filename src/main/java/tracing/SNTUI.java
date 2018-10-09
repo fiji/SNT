@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.IntStream;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -65,9 +66,11 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -104,10 +107,12 @@ import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 import tracing.gui.MLImporterCmd;
-import tracing.gui.MultiSWCImporterCmd;
-import tracing.gui.NMImporterCmd;
 import tracing.gui.SigmaPalette;
+import tracing.gui.cmds.MLImporterCmd;
+import tracing.gui.cmds.MultiSWCImporterCmd;
+import tracing.gui.cmds.NMImporterCmd;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.plot.TreePlot3D;
 import tracing.plugin.PlotterCmd;
 import tracing.plugin.StrahlerCmd;
 
@@ -181,6 +186,8 @@ public class SNTUI extends JDialog {
 	protected final GuiUtils guiUtils;
 	private PathManagerUI pmUI;
 	private FillManagerUI fmUI;
+	private TreePlot3D recViewer;
+
 	protected final GuiListener listener;
 
 	/* These are the states that the UI can be in: */
@@ -332,8 +339,7 @@ public class SNTUI extends JDialog {
 			// c3.insets.left = MARGIN * 2;
 			c3.anchor = GridBagConstraints.NORTHEAST;
 			c3.gridwidth = GridBagConstraints.REMAINDER;
-			GuiUtils.addSeparator(tab3, "Legacy 3D Viewer:", false, c3);
-			++c3.gridy;
+
 			// if (!plugin.nonInteractiveSession) {
 			// GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
 			// ++c2.gridy;
@@ -350,7 +356,32 @@ public class SNTUI extends JDialog {
 			// ++c2.gridy;
 			// }
 			tabbedPane.addTab(" 3D ", tab3);
+			GuiUtils.addSeparator(tab3, "Reconstruction Viewer:", true, c3);
+			c3.gridy++;
+			
+			final String msg = "The Reconstruction Viewer is an advanced OpenGL "
+					+ "visualization tool. For performance reasons Path Manager "
+					+ "changes are synchronized manually.";
+			tab3.add(largeMsg(msg), c3);
+			c3.gridy++;
+			tab3.add(reconstructionViewerPanel(), c3);
+			c3.gridy++;
+			addSpacer(tab3, c3);
+			GuiUtils.addSeparator(tab3, "Legacy 3D Viewer:", true, c3);
+			++c3.gridy;
+			final String msg2 = "The Legacy 3D Viewer is a functional tracing canvas "
+					+ "but it depends on outdated services that are now deprecated. "
+					+ "It may not function reliably on recent operating systems.";
+			tab3.add(largeMsg(msg2), c3);
+			c3.gridy++;
 			tab3.add(legacy3DViewerPanel(), c3);
+			addSpacer(tab3, c3);
+			GuiUtils.addSeparator(tab3, "SciView", true, c3);
+			++c3.gridy;
+			final String msg3 = "SciView is IJ2's modern replacement for the Legacy 3D "
+					+ "Viewer providing 3D visualization and virtual reality capabilities "
+					+ "for both images and meshes. It is not yet available in SNT.";
+			tab3.add(largeMsg(msg3), c3);
 
 		}
 
@@ -1544,6 +1575,108 @@ public class SNTUI extends JDialog {
 		c.gridx++;
 		c.fill = GridBagConstraints.NONE;
 		p.add(applyActionChoice, c);
+		return p;
+	}
+
+
+	private void addSpacer(final JPanel panel, final GridBagConstraints c) {
+		// extremely lazy implementation of a vertical spacer
+		IntStream.rangeClosed(1, 4).forEach(i -> {
+			panel.add(new JPanel(), c);
+			c.gridy++;
+		});
+	}
+
+	private JPanel largeMsg(final String msg) {
+		final JTextArea ta = new JTextArea();
+		ta.setBackground(getBackground());
+		ta.setEditable(false);
+		ta.setMargin(null);
+		ta.setColumns(getWidth());
+		ta.setBorder(null);
+		ta.setAutoscrolls(true);
+		ta.setLineWrap(true);
+		ta.setWrapStyleWord(true);
+		ta.setFocusable(false);
+		ta.setText(msg);
+		ta.setEnabled(false);
+		final Font defFont = new JLabel().getFont();
+		ta.setFont(defFont.deriveFont(defFont.getSize() * .8f));
+		final JPanel p = new JPanel(new BorderLayout());
+		p.setBackground(getBackground());
+		p.add(ta, BorderLayout.NORTH);
+		return p;
+	}
+
+	private JPanel reconstructionViewerPanel() {
+		final JButton openRefreshButton = new JButton("Open");
+		final JButton mButton = new JButton("Actions...");
+		openRefreshButton.addActionListener(e -> {
+			if (recViewer == null) {
+				recViewer = new TreePlot3D();
+				final Tree tree1 = new Tree(pathAndFillManager.getPathsFiltered());
+				tree1.setLabel("Path Manager Tree");
+				recViewer.add(tree1);
+				openRefreshButton.setText("Reload Contents");
+				recViewer.show().addWindowListener(new WindowAdapter() {
+					 @Override
+					 public void windowClosed(final WindowEvent e) {
+						openRefreshButton.setText("Open");
+						mButton.setEnabled(false);
+					 }
+				});
+				mButton.setEnabled(true);
+			} else {
+				final Tree tree2 = new Tree(pathAndFillManager.getPathsFiltered());
+				tree2.setLabel("PathManager Paths");
+				recViewer.remove("Path Manager Tree");
+				recViewer.add(tree2);
+				showStatus("Reconstruction Viewer updated", true);
+			}
+		});
+
+		final JPopupMenu pMenu = new JPopupMenu();
+		JMenuItem mi = new JMenuItem("Add Color Ramp...");
+		mi.addItemListener(e -> {
+			guiUtils.error("Not yet implemented");
+		});
+		pMenu.add(mi);
+		mi = new JMenuItem("Load OBJ file (experimental)...");
+		mi.addActionListener(e -> {
+			guiUtils.error("Not yet implemented");
+		});
+		pMenu.add(mi);
+		mi = new JMenuItem("Specify Line Thickness...");
+		mi.addActionListener(e -> {
+			final Double thickness = guiUtils.getDouble(
+					"<HTML><body><div style='width:" + Math.min(getWidth(), 500) + ";'>"
+							+ "Please specify the default Path thickness. Note that "
+							+ "this value only applies to Paths with no specified "
+							+ "radius.", "Default Thickness", recViewer.getLineThickness());
+			if (thickness == null) {
+				return; // user pressed cancel
+			}
+			if (Double.isNaN(thickness) || thickness < 0) {
+				guiUtils.error("Invalid thickness value.");
+				return;
+			}
+			recViewer.setLineThickness(thickness.floatValue());
+		});
+		pMenu.add(mi);
+		mi = new JMenuItem("Specify Snapshots Directory...");
+		mi.addActionListener(e -> {
+			final File oldDir = new File(recViewer.getScreenshotDirectory());
+			final File newDir = guiUtils.chooseDirectory("Choose Directory for saving Rec. Viewer's screenshots", oldDir);
+			if (newDir != null) recViewer.setScreenshotDirectory(newDir.getAbsolutePath());
+		});
+		pMenu.add(mi);
+		mButton.addActionListener(e -> pMenu.show(mButton, mButton.getWidth()/2, mButton.getHeight()/2));
+		mButton.setEnabled(recViewer != null);
+
+		// Build panel
+		final JPanel p = new JPanel(new GridLayout(1,2));
+		p.add(openRefreshButton);
+		p.add(mButton);
 		return p;
 	}
 

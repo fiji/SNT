@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.gui;
+package tracing.gui.cmds;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -39,6 +39,7 @@ import tracing.SNT;
 import tracing.SNTService;
 import tracing.SNTUI;
 import tracing.SimpleNeuriteTracer;
+import tracing.gui.GuiUtils;
 
 /**
  * Command for importing a folder of SWC files.

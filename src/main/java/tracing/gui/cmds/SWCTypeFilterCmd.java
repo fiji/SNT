@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.gui;
+package tracing.gui.cmds;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,10 +36,10 @@ import org.scijava.prefs.PrefService;
 
 import net.imagej.ImageJ;
 import tracing.Path;
+import tracing.gui.GuiUtils;
 
 /**
- * Command with the sole purpose of providing (within SNT) a scijava-based GUI
- * for SWC-type filtering.
+ * Implements {@link PathManagerUI}'s SWC-type filtering Command.
  *
  * @author Tiago Ferreira
  */

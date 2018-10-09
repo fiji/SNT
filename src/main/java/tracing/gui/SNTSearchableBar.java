@@ -44,6 +44,7 @@ import tracing.SNT;
 import tracing.Tree;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeStatistics;
+import tracing.gui.cmds.SWCTypeFilterCmd;
 import tracing.util.SWCColor;
 
 /**

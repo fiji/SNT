@@ -21,7 +21,7 @@
  */
 
 /**
- * This package provides customizations for SNT's GUI.
+ * This package provides customizations and commands for SNT's GUI.
  *
  * @author Tiago Ferreira
  */

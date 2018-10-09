@@ -297,6 +297,15 @@ public class TreeColorizer {
 	}
 
 	/**
+	 * Returns the mapping bounds
+	 *
+	 * @return a two-element array with current {minimum, maximum} mapping bounds
+	 */
+	public double[] getMinMax() {
+		return new double[] {min, max};
+	}
+
+	/**
 	 * Colorizes a tree after the specified measurement.
 	 *
 	 * @param tree

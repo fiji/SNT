@@ -42,6 +42,7 @@ import net.imagej.table.DefaultGenericTable;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeStatistics;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.plot.TreePlot3D;
 
 /**
  * Service for accessing and scripting the active instance of
@@ -193,6 +194,20 @@ public class SNTService extends AbstractService implements ImageJService {
 	public SNTUI getUI() {
 		accessActiveInstance();
 		return plugin.getUI();
+	}
+
+	/**
+	 * Returns a reference to SNT's Reconstruction Viewer
+	 *
+	 * @return SNT's {@link TreePlot3D} instance. 
+	 * @throws UnsupportedOperationException
+	 *             if SimpleNeuriteTracer is not running
+	 */
+	public TreePlot3D getReconstructionViewer() {
+		accessActiveInstance();
+		if (plugin.getUI().recViewer == null)
+			plugin.getUI().recViewer = new TreePlot3D();
+		return plugin.getUI().recViewer;
 	}
 
 	/**

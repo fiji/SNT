@@ -110,6 +110,7 @@ import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.SigmaPalette;
+import tracing.gui.cmds.ColorRampCmd;
 import tracing.gui.cmds.CompareAgainstCmd;
 import tracing.gui.cmds.CompareFilesCmd;
 import tracing.gui.cmds.MLImporterCmd;
@@ -190,7 +191,7 @@ public class SNTUI extends JDialog {
 	protected final GuiUtils guiUtils;
 	private PathManagerUI pmUI;
 	private FillManagerUI fmUI;
-	private TreePlot3D recViewer;
+	protected TreePlot3D recViewer;
 
 	protected final GuiListener listener;
 
@@ -1614,9 +1615,9 @@ public class SNTUI extends JDialog {
 		});
 
 		final JPopupMenu pMenu = new JPopupMenu();
-		JMenuItem mi = new JMenuItem("Add Color Ramp...");
-		mi.addItemListener(e -> {
-			guiUtils.error("Not yet implemented");
+		JMenuItem mi = new JMenuItem("Add Color Legend...");
+		mi.addActionListener(e -> {
+			(new CmdRunner(ColorRampCmd.class, false)).execute();
 		});
 		pMenu.add(mi);
 		mi = new JMenuItem("Load OBJ file (experimental)...");

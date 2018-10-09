@@ -117,6 +117,10 @@
 			<id>imagej.public</id>
 			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
+		<repository>
+			<id>Jzy3D.releases</id>
+			<url>http://maven.jzy3d.org/releases/</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -230,6 +234,18 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij1-patcher</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jzy3d</groupId>
+			<artifactId>jzy3d-api</artifactId>
+			<version>1.0.2</version>
+			<exclusions>
+				<exclusion>
+					<!-- NB: Exclude problematic uber-JAR that bundles miglayout -->
+					<groupId>com.miglayout</groupId>
+					<artifactId>miglayout</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 </project>

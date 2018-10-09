@@ -34,6 +34,7 @@ import javax.swing.UIManager;
 public class IconFactory {
 
 	public enum GLYPH {
+		BINOCULARS('\uf1e5', true), //
 		CHART('\uf080', false), //
 		CIRCLE('\uf192', false), //
 		CODE('\uf120', true), //

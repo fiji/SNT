@@ -25,10 +25,12 @@ package tracing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -106,8 +108,9 @@ import tracing.event.SNTEvent;
 import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
-import tracing.gui.MLImporterCmd;
+import tracing.gui.IconFactory;
 import tracing.gui.SigmaPalette;
+import tracing.gui.cmds.CompareFilesCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
 import tracing.gui.cmds.NMImporterCmd;
@@ -2077,6 +2080,13 @@ public class SNTUI extends JDialog {
 		analysisMenu.add(measureMenuItem);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
+		analysisMenu.addSeparator();
+		final JMenuItem compareFiles = new JMenuItem("Compare Reconstructions...");
+		compareFiles.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BINOCULARS));
+		analysisMenu.add(compareFiles);
+		compareFiles.addActionListener(e -> {
+			(new CmdRunner(CompareFilesCmd.class, false)).execute();
+		});
 
 		final JCheckBoxMenuItem xyCanvasMenuItem = new JCheckBoxMenuItem(
 			"Hide XY View");

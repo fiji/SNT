@@ -100,6 +100,8 @@ import tracing.SNT;
 public class GuiUtils {
 
 	final private Component parent;
+	private JidePopup popup;
+	protected static int timeOut = 2500;
 
 	public GuiUtils(final Component parent) {
 		this.parent = parent;
@@ -126,8 +128,12 @@ public class GuiUtils {
 	}
 
 	public void tempMsg(final String msg) {
-		JidePopup popup = getPopup(msg);
-		popup.showPopup();
+		SwingUtilities.invokeLater(() -> {
+			if (popup != null && popup.isVisible())
+				popup.hidePopupImmediately();
+			popup = getPopup(msg);
+			popup.showPopup();
+		});
 	}
 
 	private JidePopup getPopup(final String msg) {
@@ -148,13 +154,18 @@ public class GuiUtils {
 			popup.setOwner(parent);
 			popup.setMaximumSize(parent.getSize());
 		}
+		popup.setFocusable(false);
 		popup.setTransient(true);
 		popup.setMovable(false);
 		popup.setDefaultMoveOperation(JidePopup.HIDE_ON_MOVED);
 		popup.setEnsureInOneScreen(true);
-		popup.setTimeout(2500);
+		popup.setTimeout(timeOut);
 		return popup;
 
+	}
+
+	public void setTmpMsgTimeOut(final int mseconds) {
+		timeOut = mseconds;
 	}
 
 	public int yesNoDialog(final String msg, final String title) {
@@ -590,7 +601,7 @@ public class GuiUtils {
 	}
 
 	public static void setAutoDismiss(final JDialog dialog) {
-		final int DELAY = 2500;
+		final int DELAY = timeOut;
 		final Timer timer = new Timer(DELAY, new ActionListener() {
 
 			@Override

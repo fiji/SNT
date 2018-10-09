@@ -110,6 +110,7 @@ import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.SigmaPalette;
+import tracing.gui.cmds.CompareAgainstCmd;
 import tracing.gui.cmds.CompareFilesCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
@@ -1272,7 +1273,6 @@ public class SNTUI extends JDialog {
 		return miscPanel;
 	}
 
-	@SuppressWarnings("deprecation")
 	private JPanel legacy3DViewerPanel() {
 
 		final String VIEWER_NONE = "None";
@@ -1467,36 +1467,11 @@ public class SNTUI extends JDialog {
 				}
 			}
 		}
-		class CompareTracingsAction extends AbstractAction {
-
-			final static String LABEL = "Compare Tracings...";
-
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				final File tracesFile = guiUtils.openFile("Select tracings...", null,
-						Collections.singletonList(".swc"));
-				if (tracesFile == null)
-					return;
-				if (!tracesFile.exists()) {
-					guiUtils.error(tracesFile.getAbsolutePath() + " is not available");
-					return;
-				}
-				final double defaultDistance = plugin.getMinimumSeparation();
-				final Double maxDistance = guiUtils.getDouble(
-						"<HTML><body><div style='width:500;'>"
-								+ "Please specify the confinement distance for node correspondence between "
-								+ "the two traced structures. Currently, the smallest voxel dimension is "
-								+ SNT.formatDouble(defaultDistance, 3) + plugin.spacing_units,
-						"Correspondence Distance", 3 * defaultDistance);
-				if (maxDistance == null)
-					return; // user pressed cancel
-				plugin.showCorrespondencesTo(tracesFile, guiUtils.getColor("Rendering Color", Color.RED), maxDistance);
-			}
-		}
 
 		// Assemble widget for actions
+		final String COMPARE_AGAINST = "Compare Reconstruction Against...";
 		actionChoice.addItem(ApplyLabelsAction.LABEL);
-		actionChoice.addItem(CompareTracingsAction.LABEL);
+		actionChoice.addItem(COMPARE_AGAINST);
 		applyActionChoice.addActionListener(new ActionListener() {
 
 			final ActionEvent ev = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null);
@@ -1507,8 +1482,8 @@ public class SNTUI extends JDialog {
 					case ApplyLabelsAction.LABEL:
 						new ApplyLabelsAction().actionPerformed(ev);
 						break;
-					case CompareTracingsAction.LABEL:
-						new CompareTracingsAction().actionPerformed(ev);
+					case COMPARE_AGAINST:
+						(new CmdRunner(CompareAgainstCmd.class, false)).execute();
 						break;
 					default:
 						break;

@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.gui;
+package tracing.gui.cmds;
 
 import java.awt.Color;
 import java.util.Comparator;
@@ -39,10 +39,10 @@ import org.scijava.widget.Button;
 
 import net.imagej.ImageJ;
 import tracing.Path;
+import tracing.gui.GuiUtils;
 
 /**
- * Command with the sole purpose of providing (within SNT) a scijava-based GUI
- * for SWC-type tagging Options.
+ * Implements {@link PathManagerUI}'s SWC-SWC-type tagging Options Command.
  *
  * @author Tiago Ferreira
  */

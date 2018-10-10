@@ -47,11 +47,11 @@ import tracing.PathManagerUI;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.analysis.TreeColorizer;
-import tracing.analysis.TreePlot;
+import tracing.plot.TreePlot2D;
 
 /**
  * Command for color coding trees according to their properties using
- * {@link TreeColorizer} and {@link TreePlot}
+ * {@link TreeColorizer} and {@link TreePlot2D}
  *
  * @author Tiago Ferreira
  */
@@ -91,7 +91,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 	private PathManagerUI manager;
 
 	private Map<String, URL> luts;
-	private TreePlot plot;
+	private TreePlot2D plot;
 
 	@Override
 	public void run() {
@@ -99,7 +99,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 			cancel("Invalid input tree");
 		statusService.showStatus("Applying Color Code...");
 		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
-		plot = new TreePlot(context());
+		plot = new TreePlot2D(context());
 		plot.addTree(tree, measurementChoice, lutChoice);
 		if (showPlot) {
 			SNT.log("Plotting...");

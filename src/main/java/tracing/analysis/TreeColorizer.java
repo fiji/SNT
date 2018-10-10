@@ -47,6 +47,7 @@ import sholl.math.LinearProfileStats;
 import tracing.Path;
 import tracing.SNT;
 import tracing.Tree;
+import tracing.plot.TreePlot2D;
 import tracing.plugin.DistributionCmd;
 import tracing.util.PointInImage;
 
@@ -401,7 +402,7 @@ public class TreeColorizer {
 			tree.rotate(Tree.Z_AXIS, i * 20);
 			trees.add(tree);
 		}
-		final TreePlot plot = new TreePlot(ij.context());
+		final TreePlot2D plot = new TreePlot2D(ij.context());
 		plot.addTrees(trees, "Ice.lut");
 		plot.addLookupLegend();
 		plot.showPlot();

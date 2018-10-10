@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.analysis;
+package tracing.plot;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -53,6 +53,7 @@ import org.scijava.util.ColorRGB;
 
 import tracing.Path;
 import tracing.Tree;
+import tracing.analysis.TreeColorizer;
 import tracing.plugin.DistributionCmd;
 import tracing.util.PointInImage;
 
@@ -63,7 +64,7 @@ import tracing.util.PointInImage;
  * @author Tiago Ferreira
  *
  */
-public class TreePlot extends TreeColorizer {
+public class TreePlot2D extends TreeColorizer {
 
 	@Parameter
 	private PlotService plotService;
@@ -83,7 +84,7 @@ public class TreePlot extends TreeColorizer {
 	 *            the SciJava application context providing the services required by
 	 *            the class
 	 */
-	public TreePlot(final Context context) {
+	public TreePlot2D(final Context context) {
 		super(context);
 	}
 
@@ -365,7 +366,7 @@ public class TreePlot extends TreeColorizer {
 	public static void main(final String... args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		final TreePlot pplot = new TreePlot(ij.context());
+		final TreePlot2D pplot = new TreePlot2D(ij.context());
 		final List<Tree> trees = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			final Tree tree = new Tree(DistributionCmd.randomPaths());

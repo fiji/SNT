@@ -40,11 +40,11 @@ import org.scijava.widget.NumberWidget;
 import ij.measure.Calibration;
 import tracing.Path;
 import tracing.Tree;
-import tracing.analysis.TreePlot;
+import tracing.plot.TreePlot2D;
 import tracing.util.PointInImage;
 
 /**
- * Command for interactively plotting trees using {@link TreePlot}
+ * Command for interactively plotting trees using {@link TreePlot2D}
  *
  * @author Tiago Ferreira
  */
@@ -76,7 +76,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	private static final String ACTION_FLIP_V = "Flip vertically";
 	private static final String ACTION_SNAPSHOT = "Take snapshot";
 	private static final ColorRGB DEF_COLOR = new ColorRGB("black");
-	private TreePlot plot;
+	private TreePlot2D plot;
 	private JFreeChart chart;
 	private ChartFrame frame;
 	private Tree plottingTree;
@@ -121,7 +121,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	}
 
 	private void buildPlot() {
-		plot = new TreePlot(context());
+		plot = new TreePlot2D(context());
 		plot.setDefaultColor(DEF_COLOR);
 		plot.addTree(plottingTree);
 	}

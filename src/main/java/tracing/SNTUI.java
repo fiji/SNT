@@ -111,8 +111,9 @@ import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.SigmaPalette;
 import tracing.gui.cmds.ColorRampCmd;
-import tracing.gui.cmds.CompareAgainstCmd;
+import tracing.gui.cmds.ShowCorrespondencesCmd;
 import tracing.gui.cmds.CompareFilesCmd;
+import tracing.gui.cmds.LoadObjCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
 import tracing.gui.cmds.NMImporterCmd;
@@ -1484,7 +1485,7 @@ public class SNTUI extends JDialog {
 						new ApplyLabelsAction().actionPerformed(ev);
 						break;
 					case COMPARE_AGAINST:
-						(new CmdRunner(CompareAgainstCmd.class, false)).execute();
+						(new CmdRunner(ShowCorrespondencesCmd.class, false)).execute();
 						break;
 					default:
 						break;
@@ -1622,7 +1623,7 @@ public class SNTUI extends JDialog {
 		pMenu.add(mi);
 		mi = new JMenuItem("Load OBJ file (experimental)...");
 		mi.addActionListener(e -> {
-			guiUtils.error("Not yet implemented");
+			(new CmdRunner(LoadObjCmd.class, false)).execute();
 		});
 		pMenu.add(mi);
 		mi = new JMenuItem("Specify Line Thickness...");

@@ -36,12 +36,12 @@ import tracing.SNTService;
 import tracing.gui.GuiUtils;
 
 /**
- * Command for comparing two reconstructions in the Legacy 3D Viewer
+ * Command for highlighting the correspondences between two reconstructions in the Legacy 3D Viewer
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Compare Against")
-public class CompareAgainstCmd extends ContextCommand {
+@Plugin(type = Command.class, visible = false, label = "Show Correspondences...")
+public class ShowCorrespondencesCmd extends ContextCommand {
 
 	@Parameter
 	private SNTService sntService;
@@ -49,10 +49,10 @@ public class CompareAgainstCmd extends ContextCommand {
 	@Parameter(label = "SWC file", style="extensions:swc/eswc")
 	private File file;
 
-	@Parameter(label = "Distance for node correspondence", description = "<HTML>Please specify the confinement distance for node<br>correspondence between the two traced structures.")
+	@Parameter(label = "Distance for node correspondence", description = "The confinement distance for node correspondence between the two traced structures.")
 	private double distance;
 
-	@Parameter(label = "Color")
+	@Parameter(label = "Color", description = "Color for rendering imported file")
 	private ColorRGB color;
 
 
@@ -76,7 +76,7 @@ public class CompareAgainstCmd extends ContextCommand {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		ij.command().run(CompareAgainstCmd.class, true);
+		ij.command().run(ShowCorrespondencesCmd.class, true);
 	}
 
 }

@@ -2125,7 +2125,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	@Deprecated
-	protected void showCorrespondencesTo(final File tracesFile, final Color c,
+	public void showCorrespondencesTo(final File tracesFile, final Color c,
 		final double maxDistance)
 	{
 

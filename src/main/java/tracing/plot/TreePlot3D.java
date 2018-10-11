@@ -70,9 +70,11 @@ import org.jzy3d.plot3d.rendering.view.ViewportMode;
 import org.jzy3d.plot3d.rendering.view.modes.CameraMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewBoundMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewPositionMode;
+import org.scijava.util.FileUtils;
 
 import com.jidesoft.swing.CheckBoxList;
 
+import ij.gui.HTMLDialog;
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
@@ -233,7 +235,7 @@ public class TreePlot3D {
 		chart.getCanvas().addMouseController(mouseControler);
 		frame = (Frame) chart.open("SNT Reconstruction Viewer", 800, 600);
 		gUtils = new GuiUtils((Component) chart.getCanvas());
-		displayMsg("Press 'H' for help", 3000);
+		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
 	}
 
@@ -527,14 +529,17 @@ public class TreePlot3D {
 			case 'A':
 				chart.setAxeDisplayed(!view.isAxeBoxDisplayed());
 				break;
+			case 'c':
+			case 'C':
+				changeCameraMode();
+				break;
 			case 'd':
 			case 'D':
 				toggleDarkMode();
 				break;
 			case 'h':
 			case 'H':
-			case '?':
-				showHelp();
+				showHelp(false);
 				break;
 			// This only works at initialization, so skip for now
 //			case 'q':
@@ -543,7 +548,7 @@ public class TreePlot3D {
 //				break;
 			case 'm':
 			case 'M':
-				changeCameraMode();
+				showObjectManager();
 				break;
 			case 'r':
 			case 'R':
@@ -555,11 +560,7 @@ public class TreePlot3D {
 			case 's':
 			case 'S':
 				saveScreenshot();
-				displayMsg("Screenshot taken");
-				break;
-			case 'v':
-			case 'V':
-				showVisibilityList();
+				displayMsg("Screenshot saved to "+ FileUtils.limitPath(getScreenshotDirectory(), 50));
 				break;
 			case '+':
 			case '=':
@@ -571,6 +572,9 @@ public class TreePlot3D {
 				break;
 			default:
 				switch (e.getKeyCode()) {
+				case KeyEvent.VK_F1:
+					showHelp(true);
+					break;
 				case KeyEvent.VK_DOWN:
 					mouseControler.rotateLive(new Coord2d(0f, -STEP));
 					break;
@@ -589,7 +593,7 @@ public class TreePlot3D {
 			}
 		}
 
-		private void showVisibilityList() {
+		private void showObjectManager() {
 			final Object[] keys = new Object[plottedTrees.size() + plottedObjs.size() + 1];
 			int idx = 0;
 			for (String key : plottedTrees.keySet()) keys[idx++] = key;
@@ -616,20 +620,20 @@ public class TreePlot3D {
 			final JScrollPane choicesScrollPane = new JScrollPane(list);
 			choicesScrollPane.setBorder(null);
 			choicesScrollPane.setViewportView(list);
-			final JDialog dialog = new JDialog(frame, "Object Visibility");
-			dialog.add(choicesScrollPane);
+			final JDialog manager = new JDialog(frame, "Object Visibility");
+			manager.add(choicesScrollPane);
 			list.repaint();
 			choicesScrollPane.revalidate();
-			dialog.pack();
-			dialog.addWindowListener(new WindowAdapter() {
+			manager.pack();
+			manager.addWindowListener(new WindowAdapter() {
 				@Override
 				public void windowClosing(final WindowEvent e) {
 					list.setCheckBoxListSelectedValue(CheckBoxList.ALL_ENTRY, false);
 					displayMsg("Visibility List closed. All objects now visible...");
 				}
 			});
-			dialog.setLocationRelativeTo(frame);
-			dialog.setVisible(true);
+			manager.setLocationRelativeTo(frame);
+			manager.setVisible(true);
 		}
 
 		/*
@@ -714,7 +718,7 @@ public class TreePlot3D {
 			}
 		}
 
-		private void showHelp() {
+		private void showHelp(final boolean showInDialog) {
 			final StringBuffer sb = new StringBuffer("<HTML>");
 			sb.append("<table>");
 			sb.append("  <tr>");
@@ -727,26 +731,30 @@ public class TreePlot3D {
 			sb.append("  </tr>");
 			sb.append("  <tr>");
 			sb.append("    <td>Scale</td>");
-			sb.append("    <td>Scroll (or '+'/'-')</td>");
+			sb.append("    <td>Scroll (or + / - keys)</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
 			sb.append("    <td>Animate</td>");
 			sb.append("    <td>Double left-click</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Snap to Position</td>");
+			sb.append("    <td>Snap to View</td>");
 			sb.append("    <td>Ctrl + left-click</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Toggle Axes</td>");
+			sb.append("    <td>Toggle <u>A</u>xes</td>");
 			sb.append("    <td>Press 'A'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Toggle Dark Mode</td>");
+			sb.append("    <td>Toggle <u>C</u>amera Mode &nbsp;</td>");
+			sb.append("    <td>Press 'C'</td>");
+			sb.append("  </tr>");
+			sb.append("  <tr>");
+			sb.append("    <td>Toggle <u>D</u>ark Mode</td>");
 			sb.append("    <td>Press 'D'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Toggle Camera Mode </td>");
+			sb.append("    <td>Object <u>M</u>anager</td>");
 			sb.append("    <td>Press 'M'</td>");
 			sb.append("  </tr>");
 //			sb.append("  <tr>");
@@ -754,19 +762,26 @@ public class TreePlot3D {
 //			sb.append("    <td>Press 'Q'</td>");
 //			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Reset</td>");
+			sb.append("    <td><u>R</u>eset</td>");
 			sb.append("    <td>Press 'R'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Screenshot</td>");
+			sb.append("    <td><u>S</u>creenshot</td>");
 			sb.append("    <td>Press 'S'</td>");
 			sb.append("  </tr>");
-			sb.append("  <tr>");
-			sb.append("    <td>Objects Visibility</td>");
-			sb.append("    <td>Press 'V'</td>");
-			sb.append("  </tr>");
+			if (showInDialog) {
+				sb.append("  <tr>");
+				sb.append("    <td><u>H</u>elp</td>");
+				sb.append("    <td>Press 'H' (notification) or F1 (list)</td>");
+				sb.append("  </tr>");
+			}
 			sb.append("</table>");
-			displayMsg(sb.toString(), 9000);
+			if (showInDialog) {
+				new HTMLDialog("Reconstruction Viewer Shortcuts", sb.toString(), false);
+			} else {
+				displayMsg(sb.toString(), 9000);
+			}
+			
 		}
 	}
 

@@ -94,6 +94,7 @@ public class TreePlot3D {
 
 	private final static float DEF_NODE_RADIUS = 3f;
 	private final Map<String, Shape> plottedTrees;
+	private final Map<String, DrawableVBO> plottedObjs;
 	private Chart chart;
 	private View view;
 	private Frame frame;
@@ -110,6 +111,7 @@ public class TreePlot3D {
 	 */
 	public TreePlot3D() {
 		plottedTrees = new LinkedHashMap<>();
+		plottedObjs = new LinkedHashMap<>();
 		initView();
 		chart.black();
 		setScreenshotDirectory("");
@@ -277,15 +279,20 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Toggles the visibility of a plotted Tree.
+	 * Toggles the visibility of a plotted Tree or a loaded OBJ
 	 *
-	 * @param treeLabel the identifier of the tree as per {@link #add(Tree)}
-	 * @param visible   whether the Tree should be displayed
+	 * @param treeOrObjLabel the unique identifier of the Tree (as per
+	 *                       {@link #add(Tree)}), or the filename of the loaded OBJ
+	 *                       {@link #loadOBJ(String, java.awt.Color)}
+	 * @param visible        whether the Object should be displayed
 	 */
-	public void setVisible(final String treeLabel, final boolean visible) {
-		final Shape tree = plottedTrees.get(treeLabel);
+	public void setVisible(final String treeOrObjLabel, final boolean visible) {
+		final Shape tree = plottedTrees.get(treeOrObjLabel);
 		if (tree != null)
 			tree.setDisplayed(visible);
+		final DrawableVBO obj = plottedObjs.get(treeOrObjLabel);
+		if (obj != null)
+			obj.setDisplayed(visible);
 	}
 
 	/**
@@ -342,8 +349,10 @@ public class TreePlot3D {
 	 * Loads an OBJ file (Experimental). Note that some meshes may not be supported
 	 * or rendered properly.
 	 *
-	 * @param filePath the absolute file path (or URL) of the file to be imported
-	 * @param color    the color to render imported file
+	 * @param filePath the absolute file path (or URL) of the file to be imported.
+	 *                 The filename is used as unique identifier of the object (see
+	 *                 {@link #setVisible(String, boolean)})
+	 * @param color    the color to render the imported file
 	 * @return true, if file was successfully loaded
 	 * @throws IllegalArgumentException if {@link #getView()} is null
 	 */
@@ -357,7 +366,9 @@ public class TreePlot3D {
 		drawable.setQuality(chart.getQuality());
 		final int nElemens = getSceneElements().size();
 		chart.getScene().add(drawable);
-		return getSceneElements().size() > nElemens;
+		boolean success = getSceneElements().size() > nElemens;
+		if (success) plottedObjs.put(new File(filePath).getName(), drawable);
+		return success;
 	}
 
 	private List<AbstractDrawable> getSceneElements() {
@@ -579,8 +590,11 @@ public class TreePlot3D {
 		}
 
 		private void showVisibilityList() {
-			final Object[] keys = plottedTrees.keySet().toArray(new Object[plottedTrees.size() + 1]);
-			keys[plottedTrees.size()] = CheckBoxList.ALL_ENTRY;
+			final Object[] keys = new Object[plottedTrees.size() + plottedObjs.size() + 1];
+			int idx = 0;
+			for (String key : plottedTrees.keySet()) keys[idx++] = key;
+			for (String key : plottedObjs.keySet()) keys[idx++] = key;
+			keys[keys.length-1] = CheckBoxList.ALL_ENTRY;
 			final CheckBoxList list = new CheckBoxList(keys);
 			list.setCheckBoxListSelectedValue(CheckBoxList.ALL_ENTRY, false);
 			list.getCheckBoxListSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -591,6 +605,9 @@ public class TreePlot3D {
 								.asList(list.getCheckBoxListSelectedValues());
 						plottedTrees.forEach((k, surface) -> {
 							surface.setDisplayed(selectedKeys.contains(k));
+						});
+						plottedObjs.forEach((k, drawableVBO) -> {
+							drawableVBO.setDisplayed(selectedKeys.contains(k));
 						});
 						view.shoot();
 					}

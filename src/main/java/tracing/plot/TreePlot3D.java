@@ -70,6 +70,8 @@ import org.jzy3d.plot3d.rendering.view.ViewportMode;
 import org.jzy3d.plot3d.rendering.view.modes.CameraMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewBoundMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewPositionMode;
+import org.scijava.util.ColorRGB;
+import org.scijava.util.Colors;
 import org.scijava.util.FileUtils;
 
 import com.jidesoft.swing.CheckBoxList;
@@ -88,7 +90,7 @@ import tracing.util.PointInImage;
 
 /**
  * Implements the SNT Reconstruction Viewer. Relies heavily on the
- * {@code org.jzy3d}.
+ * {@code org.jzy3d} package.
  * 
  * @author Tiago Ferreira
  */
@@ -127,8 +129,9 @@ public class TreePlot3D {
 	private boolean initView() {
 		if (chartExists())
 			return false;
-		chart = new AWTChart(Chart.DEFAULT_QUALITY);
+		chart = new AWTChart(Quality.Nicest);
 		view = chart.getView();
+		view.setBoundMode(ViewBoundMode.AUTO_FIT);
 		return true;
 	}
 
@@ -147,7 +150,8 @@ public class TreePlot3D {
 
 	/**
 	 * Adds a tree to this plot. It is displayed immediately if {@link #show()} has
-	 * been called.
+	 * been called. Note that you may need to call {@link #updateView()} to ensure
+	 * that the current View's bounding box includes added Tree.
 	 *
 	 * @param tree the {@link Tree)} to be added. The Tree's label will be used as
 	 *             identifier. It is expected to be unique when plotting multiple
@@ -156,6 +160,7 @@ public class TreePlot3D {
 	 * 
 	 * @see {@link Tree#getLabel()}
 	 * @see #remove(String)
+	 * @see #updateView()
 	 */
 	public void add(final Tree tree) {
 
@@ -182,6 +187,17 @@ public class TreePlot3D {
 		plottedTrees.put(getUniqueLabel(tree), surface);
 		initView();
 		chart.add(surface);
+	}
+
+	/**
+	 * Updates current plot, ensuring all objects are rendered within axes
+	 * dimensions.
+	 */
+	public void updateView() {
+		if (view != null) {
+			view.shoot(); // !? without forceRepaint() dimensions are not updated
+			view.lookToBox(view.getScene().getGraph().getBounds());
+		}
 	}
 
 	/**
@@ -220,7 +236,7 @@ public class TreePlot3D {
 	 */
 	public Frame show() {
 		if (!initView() && frame != null) {
-			chart.render();
+			updateView();
 			frame.setVisible(true);
 			return frame;
 		}
@@ -234,6 +250,7 @@ public class TreePlot3D {
 		chart.getCanvas().addKeyController(keyControler);
 		chart.getCanvas().addMouseController(mouseControler);
 		frame = (Frame) chart.open("SNT Reconstruction Viewer", 800, 600);
+		updateView();
 		gUtils = new GuiUtils((Component) chart.getCanvas());
 		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
@@ -260,6 +277,16 @@ public class TreePlot3D {
 	 */
 	public Map<String, Shape> getTrees() {
 		return plottedTrees;
+	}
+
+	/**
+	 * Returns the Collection of OBJ meshes imported into this plot.
+	 *
+	 * @return the plotted Meshes (keys being the filename of the imported OBJ file
+	 *         as per {@link #loadOBJ(String, ColorRGB, double)}
+	 */
+	public Map<String, DrawableVBO> getOBJs() {
+		return plottedObjs;
 	}
 
 	/**
@@ -351,25 +378,38 @@ public class TreePlot3D {
 	 * Loads an OBJ file (Experimental). Note that some meshes may not be supported
 	 * or rendered properly.
 	 *
-	 * @param filePath the absolute file path (or URL) of the file to be imported.
-	 *                 The filename is used as unique identifier of the object (see
-	 *                 {@link #setVisible(String, boolean)})
-	 * @param color    the color to render the imported file
+	 * @param filePath            the absolute file path (or URL) of the file to be
+	 *                            imported. The filename is used as unique
+	 *                            identifier of the object (see
+	 *                            {@link #setVisible(String, boolean)})
+	 * @param color               the color to render the imported file
+	 * @param transparencyPercent the color transparency (in percentage)
 	 * @return true, if file was successfully loaded
 	 * @throws IllegalArgumentException if {@link #getView()} is null
 	 */
-	public boolean loadOBJ(final String filePath, final java.awt.Color color) throws IllegalArgumentException {
+	public boolean loadOBJ(final String filePath, final ColorRGB color, final double transparencyPercent)
+			throws IllegalArgumentException {
+		final ColorRGB inputColor = (color == null) ? Colors.WHITE : color;
+		final Color c = new Color(inputColor.getRed(), inputColor.getGreen(), inputColor.getBlue(),
+				(int) Math.round((100 - transparencyPercent) * 255 / 100));
+		return loadOBJ(filePath, c);
+	}
+
+	private boolean loadOBJ(final String filePath, final Color color) throws IllegalArgumentException {
 		if (getView() == null) {
 			throw new IllegalArgumentException("Viewer is not available");
 		}
 		final OBJFileLoader loader = new OBJFileLoader((filePath.startsWith("http")) ? filePath : "file://" + filePath);
 		final DrawableVBO drawable = new DrawableVBO(loader);
-		drawable.setColor(fromAWTColor(color));
-		drawable.setQuality(chart.getQuality());
+		drawable.setColor(color);
+		//drawable.setQuality(chart.getQuality());
 		final int nElemens = getSceneElements().size();
 		chart.getScene().add(drawable);
-		boolean success = getSceneElements().size() > nElemens;
-		if (success) plottedObjs.put(new File(filePath).getName(), drawable);
+		final boolean success = getSceneElements().size() > nElemens;
+		if (success) {
+			plottedObjs.put(new File(filePath).getName(), drawable);
+			updateView();
+		}
 		return success;
 	}
 
@@ -596,8 +636,8 @@ public class TreePlot3D {
 		private void showObjectManager() {
 			final Object[] keys = new Object[plottedTrees.size() + plottedObjs.size() + 1];
 			int idx = 0;
-			for (String key : plottedTrees.keySet()) keys[idx++] = key;
-			for (String key : plottedObjs.keySet()) keys[idx++] = key;
+			for (final String key : plottedTrees.keySet()) keys[idx++] = key;
+			for (final String key : plottedObjs.keySet()) keys[idx++] = key;
 			keys[keys.length-1] = CheckBoxList.ALL_ENTRY;
 			final CheckBoxList list = new CheckBoxList(keys);
 			list.setCheckBoxListSelectedValue(CheckBoxList.ALL_ENTRY, false);
@@ -810,15 +850,14 @@ public class TreePlot3D {
 	public static void main(final String[] args) throws InterruptedException {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
-		//ij.ui().showUI();
-		SNT.setDebugMode(true);
-		final Tree tree = new Tree("/home/tferr/code/OP_1/OP_1.swc");
+		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeColorizer colorizer = new TreeColorizer(ij.getContext());
 		colorizer.colorize(tree, TreeColorizer.BRANCH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();
 		final TreePlot3D jzy3D = new TreePlot3D();
-		jzy3D.add(tree);
 		jzy3D.addColorBarLegend(ColorTables.ICE, (float) bounds[0], (float) bounds[1]);
+		jzy3D.add(tree);
+		jzy3D.loadOBJ("/home/tferr/code/test-files/MouseBrainAllen.obj", Colors.WHITE, 95);
 		jzy3D.show();
 	}
 

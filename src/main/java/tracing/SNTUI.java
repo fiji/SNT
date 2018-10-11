@@ -110,6 +110,7 @@ import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.SigmaPalette;
+import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.cmds.ColorRampCmd;
 import tracing.gui.cmds.ShowCorrespondencesCmd;
 import tracing.gui.cmds.CompareFilesCmd;
@@ -389,6 +390,14 @@ public class SNTUI extends JDialog {
 					+ "for both images and meshes. It is not yet available in SNT.";
 			tab3.add(largeMsg(msg3), c3);
 
+			if (plugin.analysisMode) {
+				tabbedPane.setIconAt(0, IconFactory.getMenuIcon(GLYPH.TOOL));
+				tabbedPane.setIconAt(1, IconFactory.getMenuIcon(GLYPH.CUBE));
+			} else {
+				tabbedPane.setIconAt(0, IconFactory.getMenuIcon(GLYPH.HOME));
+				tabbedPane.setIconAt(1, IconFactory.getMenuIcon(GLYPH.TOOL));
+				tabbedPane.setIconAt(2, IconFactory.getMenuIcon(GLYPH.CUBE));
+			}
 		}
 
 		tabbedPane.addChangeListener(new ChangeListener() {
@@ -1603,6 +1612,7 @@ public class SNTUI extends JDialog {
 					 public void windowClosed(final WindowEvent e) {
 						openRefreshButton.setText("Open");
 						mButton.setEnabled(false);
+						recViewer = null;
 					 }
 				});
 				mButton.setEnabled(true);
@@ -1970,6 +1980,7 @@ public class SNTUI extends JDialog {
 		menuBar.add(fileMenu);
 		final JMenu importSubmenu = new JMenu("Import");
 		final JMenu exportSubmenu = new JMenu("Export (All Paths)");
+		exportSubmenu.setIcon(IconFactory.getMenuIcon(GLYPH.EXPORT));
 		final JMenu analysisMenu = new JMenu("Utilities");
 		menuBar.add(analysisMenu);
 		final ScriptInstaller installer = new ScriptInstaller(plugin.getContext(), this);
@@ -1979,10 +1990,12 @@ public class SNTUI extends JDialog {
 		menuBar.add(helpMenu());
 
 		loadTracesMenuItem = new JMenuItem("Load Traces...");
+		loadTracesMenuItem.setIcon(IconFactory.getMenuIcon(GLYPH.IMPORT));
 		loadTracesMenuItem.addActionListener(listener);
 		fileMenu.add(loadTracesMenuItem);
 
 		saveMenuItem = new JMenuItem("Save Traces...");
+		saveMenuItem.setIcon(IconFactory.getMenuIcon(GLYPH.SAVE));
 		saveMenuItem.addActionListener(listener);
 		fileMenu.add(saveMenuItem);
 		final JMenuItem saveTable = new JMenuItem("Save Measurements...");
@@ -2013,12 +2026,14 @@ public class SNTUI extends JDialog {
 		loadSWCMenuItem.addActionListener(listener);
 		importSubmenu.add(loadSWCMenuItem);
 		final JMenuItem importDirectory = new JMenuItem("Directory of SWCs...");
+		importDirectory.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.FOLDER));
 		importSubmenu.add(importDirectory);
 		importDirectory.addActionListener(e -> {
 			(new CmdRunner(MultiSWCImporterCmd.class, true)).execute();
 		});
 		importSubmenu.addSeparator();
 		loadLabelsMenuItem = new JMenuItem("Labels (AmiraMesh)...");
+		loadLabelsMenuItem.setIcon(IconFactory.getMenuIcon(GLYPH.TAG));
 		loadLabelsMenuItem.addActionListener(listener);
 		importSubmenu.add(loadLabelsMenuItem);
 		importSubmenu.addSeparator();
@@ -2047,6 +2062,7 @@ public class SNTUI extends JDialog {
 		fileMenu.add(quitMenuItem);
 
 		measureMenuItem = new JMenuItem("Quick Statistics");
+		measureMenuItem.setIcon(IconFactory.getMenuIcon(GLYPH.JET));
 		measureMenuItem.addActionListener(listener);
 		strahlerMenuItem = new JMenuItem("Strahler Analysis");
 		strahlerMenuItem.addActionListener(listener);
@@ -2119,6 +2135,7 @@ public class SNTUI extends JDialog {
 		// viewMenu.add(resetZoomMenuItem);
 		viewMenu.addSeparator();
 		final JMenuItem arrangeWindowsMenuItem = new JMenuItem("Arrange Views");
+		arrangeWindowsMenuItem.setIcon(IconFactory.getMenuIcon(GLYPH.WINDOWS));
 		arrangeWindowsMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -2632,6 +2649,7 @@ public class SNTUI extends JDialog {
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 		mi = menuItemTrigerringURL("List of shortcuts", URL + ":_Key_Shortcuts");
+		mi.setIcon(IconFactory.getMenuIcon(GLYPH.KEYBOARD));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 		// mi = menuItemTrigerringURL("Sholl analysis walkthrough", URL +
@@ -2648,8 +2666,8 @@ public class SNTUI extends JDialog {
 	}
 
 	private JMenuItem shollAnalysisHelpMenuItem() {
-		JMenuItem mi;
-		mi = new JMenuItem("Sholl Analysis...");
+		JMenuItem mi = new JMenuItem("Sholl Analysis...");
+		mi.setIcon(IconFactory.getMenuIcon(GLYPH.BULLSEYE));
 		mi.addActionListener(e -> {
 			final Thread newThread = new Thread(() -> {
 				if (noPathsError()) return;

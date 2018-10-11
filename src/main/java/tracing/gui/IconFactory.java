@@ -35,19 +35,26 @@ public class IconFactory {
 
 	public enum GLYPH {
 		BINOCULARS('\uf1e5', true), //
+		BULLSEYE('\uf140', true), //
 		CHART('\uf080', false), //
 		CIRCLE('\uf192', false), //
 		CODE('\uf120', true), //
 		COLOR('\uf53f', true), //
 		COLOR2('\uf5c3', true), //
 		CROSSHAIR('\uf05b', true), //
+		CUBE('\uf1b2', true), //
 		DELETE('\uf55a', true), //
 		EXPLORE('\uf610', true), //
-		EXPORT('\uf56f', true), //
+		EXPORT('\uf56e', true), //
 		FILL('\uf575', true), //
+		FOLDER('\uf07b', false), //
+		HOME('\uf015', true),
 		ID('\uf2c1', false), //
 		IMPORT('\uf56f', true), //
+		JET('\uf0fb', true), //
+		KEYBOARD('\uf11c', false), //
 		LINK('\uf0c1', true), //
+		OPTIONS('\uf3fd', true), //
 		PEN('\uf303', true), //
 		RULER('\uf546', true), //
 		SAVE('\uf0c7', false), //

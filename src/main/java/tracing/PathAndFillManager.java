@@ -1975,7 +1975,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				result.put(k, false);
 			} else {
 				SNT.log("Importing " + k +"...");
-				final boolean success = importNodes(k, points, colors[colorIdx[0]], true, true);
+				final boolean success = importNodes(k, points, colors[colorIdx[0]], true, false);
 				SNT.log("Successful import: " + success);
 				result.put(k, success);
 			}

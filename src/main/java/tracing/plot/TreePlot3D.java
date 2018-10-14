@@ -737,25 +737,44 @@ public class TreePlot3D {
 			view.setBackgroundColor(newBackground);
 			view.getAxe().getLayout().setGridColor(newForeground);
 			view.getAxe().getLayout().setMainColor(newForeground);
-			for (final AbstractDrawable element : getSceneElements()) {
-				if (element instanceof Shape) {
-					final Shape shape = (Shape) element;
-					if (shape.getColor() == newBackground) {
-						shape.setColor(newForeground);
-						continue;
-					}
-					for (int i = 0; i < shape.size(); i++) {
-						if (shape.get(i) instanceof LineStrip) {
-							final List<Point> points = ((LineStrip) shape.get(i)).getPoints();
-							points.stream().forEach(p -> {
-								if (p.getColor() == newBackground) {
-									p.setColor(newForeground);
-								}
-							});
-						}
+
+			// Apply foreground color to trees with background color
+			plottedTrees.values().forEach(shape -> {
+				if (isSameRGB(shape.getColor(), newBackground)) {
+					shape.setColor(newForeground);
+					return; // replaces continue in lambda expression;
+				}
+				for (int i = 0; i < shape.size(); i++) {
+					if (shape.get(i) instanceof LineStrip) {
+						final List<Point> points = ((LineStrip) shape.get(i)).getPoints();
+						points.stream().forEach(p -> {
+							final Color pColor = p.getColor();
+							if (isSameRGB(pColor, newBackground)) {
+								changeRGB(pColor, newForeground);
+							}
+						});
 					}
 				}
-			}
+			});
+
+			// Apply foreground color to meshes with background color
+			plottedObjs.values().forEach(obj -> {
+				final Color objColor = obj.getColor();
+				if (isSameRGB(objColor, newBackground)) {
+					changeRGB(objColor, newForeground);
+				}
+			});
+
+		}
+
+		private boolean isSameRGB(final Color c1, final Color c2) {
+			return c1 != null && c1.r == c2.r && c1.g == c2.g && c1.b == c2.b;
+		}
+	
+		private void changeRGB(final Color from, final Color to) {
+			from.r = to.r;
+			from.g = to.g;
+			from.b = to.b;
 		}
 
 		private void showHelp(final boolean showInDialog) {

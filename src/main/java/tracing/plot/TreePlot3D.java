@@ -31,6 +31,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -395,11 +396,19 @@ public class TreePlot3D {
 		return loadOBJ(filePath, c);
 	}
 
+	public boolean loadMouseRefBrain() throws IllegalArgumentException {
+		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
+		final URL url = loader.getResource("meshes/MouseBrainAllen.obj");
+		if (url == null) throw new IllegalArgumentException("MouseBrainAllen.obj not found");
+		return loadOBJ(url.getPath(), new Color(1f, 1f, 1f, 0.05f));
+	}
+
 	private boolean loadOBJ(final String filePath, final Color color) throws IllegalArgumentException {
 		if (getView() == null) {
 			throw new IllegalArgumentException("Viewer is not available");
 		}
-		final OBJFileLoader loader = new OBJFileLoader((filePath.startsWith("http")) ? filePath : "file://" + filePath);
+		final OBJFileLoader loader = new OBJFileLoader(
+				(filePath.startsWith("http") || filePath.startsWith("file:/")) ? filePath : "file://" + filePath);
 		final DrawableVBO drawable = new DrawableVBO(loader);
 		drawable.setColor(color);
 		//drawable.setQuality(chart.getQuality());

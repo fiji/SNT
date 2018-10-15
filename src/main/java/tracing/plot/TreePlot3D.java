@@ -22,7 +22,9 @@
 package tracing.plot;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -36,26 +38,39 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.jzy3d.bridge.awt.FrameAWT;
 import org.jzy3d.chart.AWTChart;
 import org.jzy3d.chart.Chart;
 import org.jzy3d.chart.controllers.ControllerType;
 import org.jzy3d.chart.controllers.camera.AbstractCameraController;
 import org.jzy3d.chart.controllers.mouse.AWTMouseUtilities;
 import org.jzy3d.chart.controllers.mouse.camera.AWTCameraMouseController;
+import org.jzy3d.chart.factories.IFrame;
 import org.jzy3d.colors.Color;
+import org.jzy3d.io.IGLLoader;
 import org.jzy3d.io.obj.OBJFileLoader;
 import org.jzy3d.maths.BoundingBox3d;
 import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
+import org.jzy3d.maths.Rectangle;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
 import org.jzy3d.plot3d.primitives.LineStrip;
 import org.jzy3d.plot3d.primitives.Point;
@@ -71,11 +86,13 @@ import org.jzy3d.plot3d.rendering.view.ViewportMode;
 import org.jzy3d.plot3d.rendering.view.modes.CameraMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewBoundMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewPositionMode;
+import org.scijava.command.Command;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 import org.scijava.util.FileUtils;
 
 import com.jidesoft.swing.CheckBoxList;
+import com.jogamp.opengl.GLException;
 
 import ij.gui.HTMLDialog;
 import net.imagej.ImageJ;
@@ -86,6 +103,10 @@ import tracing.SNT;
 import tracing.Tree;
 import tracing.analysis.TreeColorizer;
 import tracing.gui.GuiUtils;
+import tracing.gui.IconFactory;
+import tracing.gui.IconFactory.GLYPH;
+import tracing.gui.cmds.ColorRampCmd;
+import tracing.gui.cmds.LoadObjCmd;
 import tracing.util.PointInImage;
 
 
@@ -97,19 +118,35 @@ import tracing.util.PointInImage;
  */
 public class TreePlot3D {
 
+	private final static String ALLEN_MESH_LABEL = "MouseBrainAllen.obj";
+	private final static String PATH_MANAGER_TREE_LABEL = "Path Manager Contents";
 	private final static float DEF_NODE_RADIUS = 3f;
+	private static final Color DEF_COLOR = Color.WHITE;
+
+	/* Maps for plotted objects */
 	private final Map<String, Shape> plottedTrees;
-	private final Map<String, DrawableVBO> plottedObjs;
+	private final Map<String, RemountableDrawableVBO> plottedObjs;
+	private String lastImportKey;
+
+	/* Settings */
+	private Color defColor = DEF_COLOR;
+	private float defThickness = DEF_NODE_RADIUS;
+	private String screenshotDir;
+
+	/* Color Bar */
+	private AWTColorbarLegend cbar;
+	private Shape cBarShape;
+
+	/* Manager */
+	private CheckBoxList managerList;
+	private DefaultListModel<Object> managerModel;
+
 	private Chart chart;
 	private View view;
-	private Frame frame;
-	private AWTColorbarLegend cbar;
+	private ViewerFrame frame;
 	private GuiUtils gUtils;
 	private KeyController keyControler;
 	private MouseController mouseControler;
-	private float thickness = DEF_NODE_RADIUS;
-	private String screenshotDir;
-
 
 	/**
 	 * Instantiates a new TreePlot3D.
@@ -118,8 +155,8 @@ public class TreePlot3D {
 		plottedTrees = new LinkedHashMap<>();
 		plottedObjs = new LinkedHashMap<>();
 		initView();
-		chart.black();
 		setScreenshotDirectory("");
+		initManagerList();
 	}
 
 	private boolean chartExists() {
@@ -130,14 +167,80 @@ public class TreePlot3D {
 	private boolean initView() {
 		if (chartExists())
 			return false;
-		chart = new AWTChart(Quality.Nicest);
+		chart = new AWTChart(Quality.Nicest); // There does not seem to be a swing implementation of
+												// ICameraMouseController so we are stuck with AWT
+		chart.black();
 		view = chart.getView();
 		view.setBoundMode(ViewBoundMode.AUTO_FIT);
+		keyControler = new KeyController(chart);
+		mouseControler = new MouseController(chart);
+		chart.getCanvas().addKeyController(keyControler);
+		chart.getCanvas().addMouseController(mouseControler);
+		chart.setAxeDisplayed(false);
+		view.getCamera().setViewportMode(ViewportMode.STRETCH_TO_FILL);
+		gUtils = new GuiUtils((Component) chart.getCanvas());
 		return true;
 	}
 
+	/**
+	 * Rebuilds entire scene. Useful to hard-reset this plot, e.g., to ensure all
+	 * meshes are redraw.
+	 * @see #updateView()
+	 */
+	public void rebuild() {
+		chart = null;
+		initView();
+		addAllObjects();
+		if (frame != null) frame.replaceCurrentChart(chart);
+		updateView();
+	}
+
+	private void addAllObjects() {
+		if (cBarShape != null && cbar != null) {
+			chart.add(cBarShape);
+			setColorbarColors(view.getBackgroundColor() == Color.BLACK);
+		}
+		plottedObjs.forEach((k, drawableVBO) -> {
+			drawableVBO.unmount();
+			chart.add(drawableVBO);
+		});
+		plottedTrees.forEach((k, surface) -> {
+			chart.add(surface);
+		});
+		updateView();
+		managerList.selectAll();
+	}
+
+	@SuppressWarnings("unchecked")
+	private void initManagerList() {
+		managerModel = new DefaultListModel<Object>();
+		managerList = new CheckBoxList(managerModel);
+		managerModel.addElement(CheckBoxList.ALL_ENTRY);
+		managerList.getCheckBoxListSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(final ListSelectionEvent e) {
+				if (!e.getValueIsAdjusting()) {
+					final Object[] values = managerList.getCheckBoxListSelectedValues();
+					final List<String> selectedKeys = (List<String>) (List<?>) Arrays.asList(values);
+					plottedTrees.forEach((k, surface) -> {
+						surface.setDisplayed(selectedKeys.contains(k));
+					});
+					plottedObjs.forEach((k, drawableVBO) -> {
+						drawableVBO.setDisplayed(selectedKeys.contains(k));
+					});
+					view.shoot();
+				}
+			}
+		});
+	}
+
 	private Color fromAWTColor(final java.awt.Color color) {
-		return (color == null) ? Color.WHITE
+		return (color == null) ? defColor
+				: new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+	}
+
+	private Color fromColorRGB(final ColorRGB color) {
+		return (color == null) ? defColor
 				: new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
 	}
 
@@ -151,8 +254,8 @@ public class TreePlot3D {
 
 	/**
 	 * Adds a tree to this plot. It is displayed immediately if {@link #show()} has
-	 * been called. Note that you may need to call {@link #updateView()} to ensure
-	 * that the current View's bounding box includes added Tree.
+	 * been called. Note that calling {@link #updateView()} may be required to
+	 * ensure that the current View's bounding box includes the added Tree.
 	 *
 	 * @param tree the {@link Tree)} to be added. The Tree's label will be used as
 	 *             identifier. It is expected to be unique when plotting multiple
@@ -164,7 +267,15 @@ public class TreePlot3D {
 	 * @see #updateView()
 	 */
 	public void add(final Tree tree) {
+		final Shape surface = getShape(tree);
+		final String label = getUniqueLabel(tree);
+		plottedTrees.put(label, surface);
+		addItemToManager(label);
+		initView();
+		chart.add(surface);
+	}
 
+	private Shape getShape(final Tree tree) {
 		final List<LineStrip> lines = new ArrayList<>();
 		for (final Path p : tree.list()) {
 			final LineStrip line = new LineStrip(p.size());
@@ -176,7 +287,7 @@ public class TreePlot3D {
 				line.add(new Point(coord, color, width));
 			}
 			line.setShowPoints(true);
-			line.setWireframeWidth(thickness);
+			line.setWireframeWidth(defThickness);
 			lines.add(line);
 		}
 
@@ -185,14 +296,24 @@ public class TreePlot3D {
 		surface.add(lines);
 		surface.setFaceDisplayed(true);
 		surface.setWireframeDisplayed(true);
-		plottedTrees.put(getUniqueLabel(tree), surface);
-		initView();
-		chart.add(surface);
+		return surface;
+	}
+
+	private void addItemToManager(final String label) {
+		final int index = managerModel.size() - 1;
+		managerModel.insertElementAt(label, index);
+		managerList.ensureIndexIsVisible(index);
+		lastImportKey = label;
+	}
+
+	private boolean deleteItemFromManager(final String label) {
+		return managerModel.removeElement(label);
 	}
 
 	/**
-	 * Updates current plot, ensuring all objects are rendered within axes
+	 * Updates the plot's view, ensuring all objects are rendered within axes
 	 * dimensions.
+	 * @see #rebuild()
 	 */
 	public void updateView() {
 		if (view != null) {
@@ -209,13 +330,13 @@ public class TreePlot3D {
 	 * @param max        the maximum value in the color table
 	 */
 	public void addColorBarLegend(final ColorTable colorTable, final float min, final float max) {
-		final Shape surface = new Shape();
-		surface.setColorMapper(new ColorTableMapper(colorTable, min, max));
-		cbar = new AWTColorbarLegend(surface, view.getAxe().getLayout());
+		cBarShape = new Shape();
+		cBarShape.setColorMapper(new ColorTableMapper(colorTable, min, max));
+		cbar = new AWTColorbarLegend(cBarShape, view.getAxe().getLayout());
 		setColorbarColors(view.getBackgroundColor() == Color.BLACK);
 		// cbar.setMinimumSize(new Dimension(100, 600));
-		surface.setLegend(cbar);
-		chart.add(surface);
+		cBarShape.setLegend(cbar);
+		chart.add(cBarShape);
 	}
 
 	private void setColorbarColors(final boolean darkMode) {
@@ -231,28 +352,30 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Shows this TreePlot and returns a reference to its frame.
+	 * Shows this TreePlot and returns a reference to its frame. If the frame has
+	 * been made displayable, this will simply make the frame visible. Should only
+	 * be called once all objects have been added to the Plot.
 	 *
+	 * @param showManager whether the 'Reconstruction Manager' dialog should be
+	 *                    displayed. It is only respect the first time the method is
+	 *                    called, i.e., when the frame is first made displayable.
 	 * @return the frame containing the plot.
 	 */
-	public Frame show() {
-		if (!initView() && frame != null) {
+	public Frame show(final boolean showManager) {
+		final boolean viewInitialized = initView();
+		if (!viewInitialized && frame != null) {
 			updateView();
 			frame.setVisible(true);
 			return frame;
+		} else if (viewInitialized) {
+			plottedTrees.forEach((k, surface) -> {
+				chart.add(surface);
+			});
+			plottedObjs.forEach((k, drawableVBO) -> {
+				chart.add(drawableVBO);
+			});
 		}
-		plottedTrees.forEach((k, surface) -> {
-			chart.add(surface, false);
-		});
-		chart.setAxeDisplayed(false);
-		view.getCamera().setViewportMode(ViewportMode.STRETCH_TO_FILL);
-		keyControler = new KeyController(chart);
-		mouseControler = new MouseController(chart);
-		chart.getCanvas().addKeyController(keyControler);
-		chart.getCanvas().addMouseController(mouseControler);
-		frame = (Frame) chart.open("SNT Reconstruction Viewer", 800, 600);
-		updateView();
-		gUtils = new GuiUtils((Component) chart.getCanvas());
+		frame = new ViewerFrame(chart, showManager);
 		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
 	}
@@ -271,7 +394,7 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Returns the Collection of trees in this plot.
+	 * Returns the Collection of Trees in this plot.
 	 *
 	 * @return the plotted Trees (keys being the Tree identifier as per
 	 *         {@link #add(Tree)})
@@ -287,7 +410,11 @@ public class TreePlot3D {
 	 *         as per {@link #loadOBJ(String, ColorRGB, double)}
 	 */
 	public Map<String, DrawableVBO> getOBJs() {
-		return plottedObjs;
+		final Map<String,DrawableVBO> newMap =new LinkedHashMap<String,DrawableVBO>();
+		plottedObjs.forEach((k, drawable) -> {
+			newMap.put(k, (DrawableVBO) drawable);
+		});
+		return newMap;
 	}
 
 	/**
@@ -304,12 +431,58 @@ public class TreePlot3D {
 		boolean removed = plottedTrees.remove(treeLabel) != null;
 		if (chart != null) {
 			removed = removed && chart.getScene().getGraph().remove(tree);
+			deleteItemFromManager(treeLabel);
 		}
 		return removed;
 	}
 
 	/**
-	 * Toggles the visibility of a plotted Tree or a loaded OBJ
+	 * (Re)loads the current list of Paths in the Path Manager list.
+	 *
+	 * @return true, if synchronization was apparently successful, false otherwise
+	 * @throws UnsupportedOperationException if SNT is not running
+	 */
+	public boolean syncPathManagerList() throws UnsupportedOperationException{
+		if (SNT.getPluginInstance() == null)
+			throw new IllegalArgumentException("SNT is not running.");
+		final Tree tree = new Tree(SNT.getPluginInstance().getPathAndFillManager().getPathsFiltered());
+		if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {
+			chart.getScene().getGraph().remove(plottedTrees.get(PATH_MANAGER_TREE_LABEL));
+			final Shape newShape = getShape(tree);
+			plottedTrees.put(PATH_MANAGER_TREE_LABEL, newShape);
+			chart.add(newShape);
+		} else {
+			tree.setLabel(PATH_MANAGER_TREE_LABEL);
+			add(tree);
+		}
+		updateView();
+		managerList.addCheckBoxListSelectedValue(PATH_MANAGER_TREE_LABEL, false);
+		return plottedTrees.get(PATH_MANAGER_TREE_LABEL).isDisplayed();
+	}
+
+	private boolean lastImportedIsDisplayed() {
+		boolean isDisplayed = false;
+		if (plottedTrees.keySet().contains(lastImportKey)) {
+			isDisplayed = plottedTrees.get(lastImportKey).isDisplayed();
+		} else if (plottedObjs.keySet().contains(lastImportKey)) {
+			isDisplayed = plottedObjs.get(lastImportKey).isDisplayed();
+		}
+		return isDisplayed;
+	}
+
+	private void lastImportedObjectNotRendered() {
+		if (lastImportedIsDisplayed()) return;
+		final GuiUtils guiUtils = (frame.manager != null && frame.manager.isActive()) ? new GuiUtils(frame.manager) : gUtils;
+		if (guiUtils.getConfirmation(lastImportKey //
+				+ " was imported but it does not seem to be " //
+				+ " visible in current view. A scene rebuild may be "//
+				+ "required. Rebuild now?", lastImportKey + " Not Visible")) {
+			rebuild();
+		}
+	}
+
+	/**
+	 * Toggles the visibility of a plotted Tree or a loaded OBJ mesh.
 	 *
 	 * @param treeOrObjLabel the unique identifier of the Tree (as per
 	 *                       {@link #add(Tree)}), or the filename of the loaded OBJ
@@ -357,7 +530,8 @@ public class TreePlot3D {
 	 * 
 	 *
 	 * @return true, if successful
-	 * @throws IllegalArgumentException if {@link #getView()} is null
+	 * @throws IllegalArgumentException if Viewer is not available, i.e.,
+	 *                                  {@link #getView()} is null
 	 */
 	public boolean saveScreenshot() throws IllegalArgumentException {
 		if (!chartExists()) {
@@ -376,8 +550,8 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Loads an OBJ file (Experimental). Note that some meshes may not be supported
-	 * or rendered properly.
+	 * Loads a Wavefront .OBJ file file (Experimental). Note that some meshes may
+	 * not be supported or rendered properly.
 	 *
 	 * @param filePath            the absolute file path (or URL) of the file to be
 	 *                            imported. The filename is used as unique
@@ -386,7 +560,9 @@ public class TreePlot3D {
 	 * @param color               the color to render the imported file
 	 * @param transparencyPercent the color transparency (in percentage)
 	 * @return true, if file was successfully loaded
-	 * @throws IllegalArgumentException if {@link #getView()} is null
+	 * @throws IllegalArgumentException if Viewer is not available, i.e.,
+	 *                                  {@link #getView()} is null
+	 * @see #updateView()
 	 */
 	public boolean loadOBJ(final String filePath, final ColorRGB color, final double transparencyPercent)
 			throws IllegalArgumentException {
@@ -396,10 +572,22 @@ public class TreePlot3D {
 		return loadOBJ(filePath, c);
 	}
 
+	/**
+	 * Loads the contour mesh for Allen Mouse Brain Atlas reference. It will simply
+	 * make the mesh visible if has already been loaded.
+	 *
+	 * @return true, if import was successful
+	 * @throws IllegalArgumentException if Viewer is not available, i.e.,
+	 *                                  {@link #getView()} is null
+	 */
 	public boolean loadMouseRefBrain() throws IllegalArgumentException {
+		if (getOBJs().keySet().contains(ALLEN_MESH_LABEL)) {
+			setVisible(ALLEN_MESH_LABEL, true);
+			return false;
+		}
 		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		final URL url = loader.getResource("meshes/MouseBrainAllen.obj");
-		if (url == null) throw new IllegalArgumentException("MouseBrainAllen.obj not found");
+		final URL url = loader.getResource("meshes/" + ALLEN_MESH_LABEL);
+		if (url == null) throw new IllegalArgumentException(ALLEN_MESH_LABEL + " not found");
 		return loadOBJ(url.getPath(), new Color(1f, 1f, 1f, 0.05f));
 	}
 
@@ -409,15 +597,25 @@ public class TreePlot3D {
 		}
 		final OBJFileLoader loader = new OBJFileLoader(
 				(filePath.startsWith("http") || filePath.startsWith("file:/")) ? filePath : "file://" + filePath);
-		final DrawableVBO drawable = new DrawableVBO(loader);
+		final RemountableDrawableVBO drawable = new RemountableDrawableVBO(loader);
 		drawable.setColor(color);
 		//drawable.setQuality(chart.getQuality());
 		final int nElemens = getSceneElements().size();
-		chart.getScene().add(drawable);
+		chart.add(drawable, true);
 		final boolean success = getSceneElements().size() > nElemens;
 		if (success) {
-			plottedObjs.put(new File(filePath).getName(), drawable);
-			updateView();
+			final String label = new File(filePath).getName();
+			plottedObjs.put(label, drawable);
+			addItemToManager(label);
+			SNT.log("Successfully loaded "+ filePath);
+			if (frame != null && frame.isVisible()) {
+				updateView();
+				if (!drawable.isDisplayed()) {
+					SNT.log("Error: Loaded mesh is not being displayed. Attempting to reload...");
+				}
+			}
+		} else {
+			SNT.log("Failed to load "+ filePath);
 		}
 		return success;
 	}
@@ -437,6 +635,316 @@ public class TreePlot3D {
 		return (chart == null) ? null : view;
 	}
 
+	//NB: MouseContoller does not seem to work with FrameSWing so we are stuck with AWT
+	private class ViewerFrame extends FrameAWT implements IFrame {
+
+		private static final long serialVersionUID = 1L;
+		private Chart chart;
+		private Component canvas;
+		private JDialog manager;
+
+		/**
+		 * Instantiates a new viewer frame.
+		 *
+		 * @param chart          the chart to be rendered in the frame
+		 * @param includeManager whether the "Reconstruction Viewer Manager" dialog
+		 *                       should be made visible
+		 */
+		public ViewerFrame(final Chart chart, final boolean includeManager) {
+			initialize(chart, new Rectangle(800, 600), "Reconstruction Viewer");
+			if (includeManager) {
+				manager = getManager();
+				managerList.selectAll();
+				manager.setVisible(true);
+			}
+		}
+
+		public void replaceCurrentChart(final Chart chart) {
+			this.chart = chart;
+			canvas = (Component) chart.getCanvas();
+			removeAll();
+			add(canvas);
+			doLayout();
+			revalidate();
+			update(getGraphics());
+		}
+
+		public JDialog getManager() {
+			final JDialog dialog = new JDialog(this, "RV Controls");
+			dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+			dialog.setLocationRelativeTo(this);
+			final JPanel panel = new ManagerPanel(new GuiUtils(dialog));
+			dialog.setContentPane(panel);
+			dialog.pack();
+			return dialog;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.jzy3d.bridge.awt.FrameAWT#initialize(org.jzy3d.chart.Chart, org.jzy3d.maths.Rectangle, java.lang.String)
+		 */
+		@Override
+		public void initialize(final Chart chart, final Rectangle bounds, final String title) {
+			this.chart = chart;
+			canvas = (Component) chart.getCanvas();
+			setTitle(title);
+			add(canvas);
+			pack();
+			setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
+			addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(final WindowEvent e) {
+					ViewerFrame.this.remove(canvas);
+					ViewerFrame.this.chart.dispose();
+					ViewerFrame.this.chart = null;
+					if (ViewerFrame.this.manager != null)
+						ViewerFrame.this.manager.dispose();
+					ViewerFrame.this.dispose();
+				}
+			});
+			setVisible(true);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.jzy3d.bridge.awt.FrameAWT#initialize(org.jzy3d.chart.Chart, org.jzy3d.maths.Rectangle, java.lang.String, java.lang.String)
+		 */
+		@Override
+		public void initialize(final Chart chart, final Rectangle bounds, final String title, final String message) {
+			initialize(chart, bounds, title + message);
+		}
+	}
+
+	private class ManagerPanel extends JPanel {
+
+		private static final long serialVersionUID = 1L;
+		private final GuiUtils guiUtils;
+
+		public ManagerPanel(final GuiUtils guiUtils) {
+			super();
+			this.guiUtils = guiUtils;
+			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+			final JScrollPane scrollPane = new JScrollPane(managerList);
+			scrollPane.setBorder(null);
+			scrollPane.setViewportView(managerList);
+			add(scrollPane);
+			scrollPane.revalidate();
+			add(buttonPanel());
+		}
+
+		private JPanel buttonPanel() {
+			final JPanel buttonPanel = new JPanel(new GridLayout(1, 3));
+			buttonPanel.setBorder(null);
+			// do not allow panel to resize vertically
+			buttonPanel.setMaximumSize(new Dimension(buttonPanel.getMaximumSize().width,
+					(int) buttonPanel.getPreferredSize().getHeight()));
+			buttonPanel.add(menuButton(GLYPH.SYNC, reloadMenu()));
+			buttonPanel.add(menuButton(GLYPH.PLUS, addMenu()));
+			buttonPanel.add(menuButton(GLYPH.OPTIONS, optionsMenu()));
+			return buttonPanel;
+		}
+
+		private JButton menuButton(GLYPH glyph, JPopupMenu menu) {
+			final JButton button = new JButton(IconFactory.getButtonIcon(glyph));
+			button.addActionListener(e -> menu.show(button, button.getWidth() / 2, button.getHeight() / 2));
+			return button;
+		}
+
+		private JPopupMenu reloadMenu() {
+			final JPopupMenu reloadMenu = new JPopupMenu();
+			JMenuItem mi = new JMenuItem("Sync Path Manager Changes");
+			mi.addActionListener(e -> {
+				try {
+					if (!syncPathManagerList()) rebuild();
+					displayMsg("Path Manager contents updated");
+				} catch (UnsupportedOperationException ex) {
+					guiUtils.error(ex.getMessage());
+				}
+			});
+			reloadMenu.add(mi);
+			mi = new JMenuItem("Refresh View/Update Bounds");
+			mi.addActionListener(e -> {
+				updateView();
+				if (!allCheckedtemsVisible() && guiUtils.getConfirmation(
+						"View was refreshed but some objects may not be visible. "//
+						+ "Rebuild 3D Scene Completely?", "Rebuild Required")) {
+					rebuild();
+				} else {
+					displayMsg("View refreshed");
+				}
+			});
+			reloadMenu.add(mi);
+			reloadMenu.addSeparator();
+			mi = new JMenuItem("Rebuild Scene...");
+			mi.addActionListener(e -> {
+				if (guiUtils.getConfirmation("Rebuild 3D Scene Completely?", "Force Rebuild")) {
+					rebuild();
+				}
+			});
+			reloadMenu.add(mi);
+			return reloadMenu;
+		}
+
+		@SuppressWarnings("unchecked")
+		private boolean allCheckedtemsVisible() {
+			final Object[] values = managerList.getCheckBoxListSelectedValues();
+			final List<String> selectedKeys = (List<String>) (List<?>) Arrays.asList(values);
+			if (selectedKeys.isEmpty()) {
+				for (final Shape s: plottedTrees.values()) {
+					if (s.isDisplayed()) return false;
+				}
+				for (final RemountableDrawableVBO d: plottedObjs.values()) {
+					if (d.isDisplayed()) return false;
+				}
+			}
+			for (final Map.Entry<String, Shape> item : plottedTrees.entrySet()) {
+				if (selectedKeys.contains(item.getKey()) && !item.getValue().isDisplayed())
+					return false;
+			}
+			for (final Entry<String, RemountableDrawableVBO> item : plottedObjs.entrySet()) {
+				if (selectedKeys.contains(item.getKey()) && !item.getValue().isDisplayed())
+					return false;
+			}
+			return true;
+		}
+	
+		private JPopupMenu optionsMenu() {
+			final JPopupMenu optionsMenu = new JPopupMenu();
+			JMenuItem mi = new JMenuItem("Path Thickness...");
+			mi.addActionListener(e -> {
+				if (plottedTrees.isEmpty()) {
+					guiUtils.error("There are no loaded meshes");
+					return;
+				}
+				final Double thickness = guiUtils.getDouble(
+						"<HTML><body><div style='width:500;'>"
+								+ "Please specify a constant thickness to be applied "
+								+ "to all reconstructions. This value only affects how "
+								+ "Paths are displayed in the Reconstruction Viewer.",
+								"Path Thickness", getDefaultThickness());
+				if (thickness == null) {
+					return; // user pressed cancel
+				}
+				if (Double.isNaN(thickness) || thickness <= 0) {
+					guiUtils.error("Invalid thickness value.");
+					return;
+				}
+				applyThicknessToPlottedTrees(thickness.floatValue());
+			});
+			optionsMenu.add(mi);
+			mi = new JMenuItem("Recolor Mesh(es)...");
+			mi.addActionListener(e -> {
+				if (plottedObjs.isEmpty()) {
+					guiUtils.error("There are no loaded meshes");
+					return;
+				}
+				final java.awt.Color c = guiUtils.getColor("Mesh(es) Color", java.awt.Color.WHITE, "HSB");
+				if (c == null) {
+					return; // user pressed cancel
+				}
+				applyColorToPlottedObjs(fromAWTColor(c));
+			});
+			optionsMenu.add(mi);
+			optionsMenu.addSeparator();
+			mi = new JMenuItem("Screenshot Directory...");
+			mi.addActionListener(e -> {
+				final File oldDir = new File(getScreenshotDirectory());
+				final File newDir = guiUtils
+						.chooseDirectory("Choose Directory for saving Rec. Viewer's screenshots", oldDir);
+				if (newDir != null) {
+					final String newPath = newDir.getAbsolutePath();
+					setScreenshotDirectory(newPath);
+					displayMsg("Screenshot directory is now "+ FileUtils.limitPath(newPath, 50));
+				}
+			});
+			optionsMenu.add(mi);
+			optionsMenu.addSeparator();
+			mi = new JMenuItem("Keyboard Operations...");
+			mi.addActionListener(e -> keyControler.showHelp(true));
+			optionsMenu.add(mi);
+			return optionsMenu;
+		}
+
+		private JPopupMenu addMenu() {
+			final JPopupMenu addMenu = new JPopupMenu();
+			final JMenu legendMenu = new JMenu("Color Legend");
+			final JMenu meshMenu = new JMenu("Meshes");
+			addMenu.add(legendMenu);
+			addMenu.add(meshMenu);
+
+			JMenuItem mi = new JMenuItem("Add...");
+			mi.addActionListener(e -> runSNTCmd(ColorRampCmd.class));
+			legendMenu.add(mi);
+			mi = new JMenuItem("Remove All...");
+			mi.addActionListener(e -> {
+				if (!guiUtils.getConfirmation("Remove all color legends from scene?", "Remove All Legends?")) {
+					return;
+				}
+				final List<AbstractDrawable> allDrawables = chart.getScene().getGraph().getAll();
+				for (final Iterator<AbstractDrawable> iterator = allDrawables.iterator(); iterator.hasNext();) {
+					final AbstractDrawable drawable = iterator.next();
+					if (drawable != null && drawable.hasLegend() && drawable.isLegendDisplayed())
+						chart.getScene().getGraph().remove(drawable);
+				}
+				cbar = null;
+				cBarShape = null;
+			});
+			legendMenu.add(mi);
+
+			mi = new JMenuItem("Load OBJ...");
+			mi.addActionListener(e -> runSNTCmd(LoadObjCmd.class));
+			meshMenu.add(mi);
+			mi = new JMenuItem("Load Allen Mouse Brain Atlas Contour");
+			mi.addActionListener(e -> {
+				if (getOBJs().keySet().contains(ALLEN_MESH_LABEL)) {
+					guiUtils.error(ALLEN_MESH_LABEL + " is already loaded.");
+					managerList.addCheckBoxListSelectedValue(ALLEN_MESH_LABEL, true);
+					return;
+				}
+				try {
+					if (!loadMouseRefBrain()) {
+						guiUtils.error("Reference brain could not be loaded");
+						return;
+					}
+					lastImportedObjectNotRendered();
+				} catch (final GLException ex) {
+					SNT.error("Scene rebuilt upon exception", ex);
+					rebuild();
+					displayMsg("Scene rebuilt upon exception...");
+				}
+			});
+			meshMenu.add(mi);
+			meshMenu.addSeparator();
+			mi = new JMenuItem("Remove All...");
+			mi.addActionListener(e -> {
+				if (!guiUtils.getConfirmation("Remove all meshes from scene?", "Remove All Meshes?")) {
+					return;
+				}
+				final Iterator<Entry<String, RemountableDrawableVBO>> it = plottedObjs.entrySet().iterator();
+				while (it.hasNext()) {
+					final Map.Entry<String, RemountableDrawableVBO> entry = it.next();
+					chart.getScene().getGraph().remove(entry.getValue());
+					managerModel.removeElement(entry.getKey());
+					it.remove();
+				}
+			});
+			meshMenu.add(mi);
+			return addMenu;
+		}
+
+
+		private boolean sntRunning() {
+			if (SNT.getPluginInstance() != null) {
+				return true;
+			}
+			guiUtils.error("This command requires SNT to be running.");
+			return false;
+		}
+
+		private void runSNTCmd(final Class<? extends Command> cmdClass) {
+			if (sntRunning()) {
+				SNT.getPluginInstance().getUI().runCmd(cmdClass);
+			}
+		}
+	}
 
 	private class MouseController extends AWTCameraMouseController {
 
@@ -444,11 +952,9 @@ public class TreePlot3D {
 		private boolean panDone;
 		private Coord3d prevMouse3d;
 
-
 		public MouseController(final Chart chart) {
 			super(chart);
 		}
-
 
 		private int getY(final MouseEvent e) {
 			return -e.getY() + chart.getCanvas().getRendererHeight();
@@ -556,11 +1062,25 @@ public class TreePlot3D {
 		}
 	}
 
+	/**
+	 * This is just to make {@link DrawableVBO#hasMountedOnce()} accessible, which
+	 * seems to allow meshes to be loaded during an interactive session
+	 */
+	private class RemountableDrawableVBO extends DrawableVBO {
+
+		public RemountableDrawableVBO(final IGLLoader<DrawableVBO> loader) {
+			super(loader);
+		}
+
+		public void unmount() {
+			super.hasMountedOnce = false;
+		}
+	}
+
 
 	private class KeyController extends AbstractCameraController implements KeyListener {
 
 		private static final float STEP = 0.1f;
-
 
 		public KeyController(final Chart chart) {
 			register(chart);
@@ -589,15 +1109,6 @@ public class TreePlot3D {
 			case 'h':
 			case 'H':
 				showHelp(false);
-				break;
-			// This only works at initialization, so skip for now
-//			case 'q':
-//			case 'Q':
-//				changeQuality();
-//				break;
-			case 'm':
-			case 'M':
-				showObjectManager();
 				break;
 			case 'r':
 			case 'R':
@@ -642,49 +1153,6 @@ public class TreePlot3D {
 			}
 		}
 
-		private void showObjectManager() {
-			final Object[] keys = new Object[plottedTrees.size() + plottedObjs.size() + 1];
-			int idx = 0;
-			for (final String key : plottedTrees.keySet()) keys[idx++] = key;
-			for (final String key : plottedObjs.keySet()) keys[idx++] = key;
-			keys[keys.length-1] = CheckBoxList.ALL_ENTRY;
-			final CheckBoxList list = new CheckBoxList(keys);
-			list.setCheckBoxListSelectedValue(CheckBoxList.ALL_ENTRY, false);
-			list.getCheckBoxListSelectionModel().addListSelectionListener(new ListSelectionListener() {
-				public void valueChanged(final ListSelectionEvent e) {
-					if (!e.getValueIsAdjusting()) {
-						@SuppressWarnings("unchecked")
-						final List<String> selectedKeys = (List<String>) (List<?>) Arrays
-								.asList(list.getCheckBoxListSelectedValues());
-						plottedTrees.forEach((k, surface) -> {
-							surface.setDisplayed(selectedKeys.contains(k));
-						});
-						plottedObjs.forEach((k, drawableVBO) -> {
-							drawableVBO.setDisplayed(selectedKeys.contains(k));
-						});
-						view.shoot();
-					}
-				}
-			});
-			final JScrollPane choicesScrollPane = new JScrollPane(list);
-			choicesScrollPane.setBorder(null);
-			choicesScrollPane.setViewportView(list);
-			final JDialog manager = new JDialog(frame, "Object Visibility");
-			manager.add(choicesScrollPane);
-			list.repaint();
-			choicesScrollPane.revalidate();
-			manager.pack();
-			manager.addWindowListener(new WindowAdapter() {
-				@Override
-				public void windowClosing(final WindowEvent e) {
-					list.setCheckBoxListSelectedValue(CheckBoxList.ALL_ENTRY, false);
-					displayMsg("Visibility List closed. All objects now visible...");
-				}
-			});
-			manager.setLocationRelativeTo(frame);
-			manager.setVisible(true);
-		}
-
 		/*
 		 * (non-Javadoc)
 		 * 
@@ -711,6 +1179,7 @@ public class TreePlot3D {
 			displayMsg("Camera mode changed to \"" + mode + "\"");
 		}
 
+		/* This seems to work only at initialization */
 		@SuppressWarnings("unused")
 		private void changeQuality() {
 			final Quality[] levels = { Quality.Fastest, Quality.Intermediate, Quality.Advanced, Quality.Nicest };
@@ -779,7 +1248,7 @@ public class TreePlot3D {
 		private boolean isSameRGB(final Color c1, final Color c2) {
 			return c1 != null && c1.r == c2.r && c1.g == c2.g && c1.b == c2.b;
 		}
-	
+
 		private void changeRGB(final Color from, final Color to) {
 			from.r = to.r;
 			from.g = to.g;
@@ -822,15 +1291,7 @@ public class TreePlot3D {
 			sb.append("    <td>Press 'D'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Object <u>M</u>anager</td>");
-			sb.append("    <td>Press 'M'</td>");
-			sb.append("  </tr>");
-//			sb.append("  <tr>");
-//			sb.append("    <td>Quality Levels Loop</td>");
-//			sb.append("    <td>Press 'Q'</td>");
-//			sb.append("  </tr>");
-			sb.append("  <tr>");
-			sb.append("    <td><u>R</u>eset</td>");
+			sb.append("    <td><u>R</u>eset View</td>");
 			sb.append("    <td>Press 'R'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
@@ -860,8 +1321,12 @@ public class TreePlot3D {
 	 * @param thickness the new line thickness. Note that this value only applies to
 	 *                  Paths that have no specified radius
 	 */
-	public void setLineThickness(final float thickness) {
-		this.thickness = thickness;
+	public void setDefaultThickness(final float thickness) {
+		this.defThickness = thickness;
+	}
+
+	public void setDefaultColor(final ColorRGB color) {
+		this.defColor = fromColorRGB(color);
 	}
 
 	/**
@@ -869,10 +1334,35 @@ public class TreePlot3D {
 	 *
 	 * @return the default line thickness used to render Paths without radius
 	 */
-	public float getLineThickness() {
-		return thickness;
+	private float getDefaultThickness() {
+		return defThickness;
 	}
 
+	/**
+	 * Applies a constant thickness (line width) to plotted trees.
+	 *
+	 * @param thickness the thickness
+	 */
+	protected void applyThicknessToPlottedTrees(final float thickness) {
+		plottedTrees.values().forEach(shape -> {
+			for (int i = 0; i < shape.size(); i++) {
+				if (shape.get(i) instanceof LineStrip) {
+					((LineStrip) shape.get(i)).setWireframeWidth(thickness);
+				}
+			}
+		});
+	}
+
+	/**
+	 * Applies a constant color to plotted meshes.
+	 *
+	 * @param color the color
+	 */
+	protected void applyColorToPlottedObjs(final Color color) {
+		plottedObjs.values().forEach(drawable -> {
+			drawable.setColor(color);
+		});
+	}
 
 	/* IDE debug method */
 	public static void main(final String[] args) throws InterruptedException {
@@ -882,11 +1372,12 @@ public class TreePlot3D {
 		final TreeColorizer colorizer = new TreeColorizer(ij.getContext());
 		colorizer.colorize(tree, TreeColorizer.BRANCH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();
+		SNT.setDebugMode(true);
 		final TreePlot3D jzy3D = new TreePlot3D();
 		jzy3D.addColorBarLegend(ColorTables.ICE, (float) bounds[0], (float) bounds[1]);
 		jzy3D.add(tree);
-		jzy3D.loadOBJ("/home/tferr/code/test-files/MouseBrainAllen.obj", Colors.WHITE, 95);
-		jzy3D.show();
+		//jzy3D.loadMouseRefBrain();
+		jzy3D.show(true);
 	}
 
 }

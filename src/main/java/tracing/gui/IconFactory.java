@@ -54,10 +54,12 @@ public class IconFactory {
 		JET('\uf0fb', true), //
 		KEYBOARD('\uf11c', false), //
 		LINK('\uf0c1', true), //
-		OPTIONS('\uf3fd', true), //
+		OPTIONS('\uf013', true), //
 		PEN('\uf303', true), //
+		PLUS('\uf0fe', false), //
 		RULER('\uf546', true), //
 		SAVE('\uf0c7', false), //
+		SYNC('\uf2f1', true), //
 		TABLE('\uf0ce', true), //
 		TAG('\uf02b', true), //
 		TEXT('\uf031', true), //

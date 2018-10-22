@@ -142,13 +142,33 @@ public class TreePlot2D extends TreeColorizer {
 	}
 
 	/**
-	 * Adds a lookup legend to the plot. Does nothing if no measurement mapping
-	 * occurred successfully.
+	 * Adds a color bar legend (LUT ramp).
+	 *
+	 * @param colorTable the color table
+	 * @param min        the minimum value in the color table
+	 * @param max        the maximum value in the color table
+	 */
+	public void addColorBarLegend(final ColorTable colorTable, final double min, final double max) {
+		final double previousMin = this.min;
+		final double previousMax = this.max;
+		final ColorTable previousColorTable = this.colorTable;
+		this.min = min;
+		this.max = max;
+		this.colorTable = colorTable;
+		addColorBarLegend();
+		this.min = previousMin;
+		this.max = previousMax;
+		this.colorTable = previousColorTable;
+	}
+
+	/**
+	 * Adds a color bar legend (LUT ramp) to the plot. Does nothing if no
+	 * measurement mapping occurred successfully.
 	 *
 	 * Note that when performing mapping to different measurements, the legend
 	 * reflects only the last mapped measurement.
 	 */
-	public void addLookupLegend() {
+	public void addColorBarLegend() {
 
 		if (min >= max || colorTable == null)
 			return;
@@ -374,7 +394,7 @@ public class TreePlot2D extends TreeColorizer {
 			trees.add(tree);
 		}
 		pplot.addTrees(trees, "Ice.lut");
-		pplot.addLookupLegend();
+		pplot.addColorBarLegend();
 		pplot.showPlot();
 	}
 

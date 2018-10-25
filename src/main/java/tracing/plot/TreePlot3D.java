@@ -147,6 +147,7 @@ public class TreePlot3D {
 	private GuiUtils gUtils;
 	private KeyController keyControler;
 	private MouseController mouseControler;
+	private boolean viewUpdatesEnabled = true;
 
 	/**
 	 * Instantiates a new TreePlot3D.
@@ -220,15 +221,14 @@ public class TreePlot3D {
 			@Override
 			public void valueChanged(final ListSelectionEvent e) {
 				if (!e.getValueIsAdjusting()) {
-					final Object[] values = managerList.getCheckBoxListSelectedValues();
-					final List<String> selectedKeys = (List<String>) (List<?>) Arrays.asList(values);
+					final List<String> selectedKeys = getLabelsCheckedInManager();
 					plottedTrees.forEach((k, surface) -> {
 						surface.setDisplayed(selectedKeys.contains(k));
 					});
 					plottedObjs.forEach((k, drawableVBO) -> {
 						drawableVBO.setDisplayed(selectedKeys.contains(k));
 					});
-					view.shoot();
+					//view.shoot();
 				}
 			}
 		});
@@ -244,14 +244,18 @@ public class TreePlot3D {
 				: new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
 	}
 
-	private String getUniqueLabel(final Tree tree) {
-		String key = tree.getLabel();
-		if (key == null || key.isEmpty() || plottedTrees.containsKey(key)) {
-			key = "Tree " + plottedTrees.size();
+	private String makeUniqueKey(final Map<String, ?> map, final String key) {
+		for (int i = 2; i <= 100; i++) {
+			final String candidate = key + " (" + i + ")";
+			if (!map.containsKey(candidate)) return candidate;
 		}
-		return key;
+		return key + " (" + UUID.randomUUID() + ")";
 	}
 
+	private String getUniqueLabel(final Map<String, ?> map, final String fallbackPrefix, final String candidate) {
+		final String label = (candidate == null || candidate.trim().isEmpty()) ? fallbackPrefix : candidate;
+		return (map.containsKey(label)) ? makeUniqueKey(map, label) : label;
+	}
 	/**
 	 * Adds a tree to this plot. It is displayed immediately if {@link #show()} has
 	 * been called. Note that calling {@link #updateView()} may be required to
@@ -268,11 +272,10 @@ public class TreePlot3D {
 	 */
 	public void add(final Tree tree) {
 		final Shape surface = getShape(tree);
-		final String label = getUniqueLabel(tree);
+		final String label = getUniqueLabel(plottedTrees, "Tree ", tree.getLabel());
 		plottedTrees.put(label, surface);
 		addItemToManager(label);
-		initView();
-		chart.add(surface);
+		chart.add(surface, viewUpdatesEnabled);
 	}
 
 	private Shape getShape(final Tree tree) {
@@ -300,10 +303,12 @@ public class TreePlot3D {
 	}
 
 	private void addItemToManager(final String label) {
+		final int[] indices = managerList.getCheckBoxListSelectedIndices();
 		final int index = managerModel.size() - 1;
 		managerModel.insertElementAt(label, index);
-		managerList.ensureIndexIsVisible(index);
-		lastImportKey = label;
+		//managerList.ensureIndexIsVisible(index);
+		managerList.addCheckBoxListSelectedIndex(index);
+		for (final int i : indices) managerList.addCheckBoxListSelectedIndex(i);
 	}
 
 	private boolean deleteItemFromManager(final String label) {
@@ -336,7 +341,7 @@ public class TreePlot3D {
 		setColorbarColors(view.getBackgroundColor() == Color.BLACK);
 		// cbar.setMinimumSize(new Dimension(100, 600));
 		cBarShape.setLegend(cbar);
-		chart.add(cBarShape);
+		chart.add(cBarShape, viewUpdatesEnabled);
 	}
 
 	private void setColorbarColors(final boolean darkMode) {
@@ -369,10 +374,10 @@ public class TreePlot3D {
 			return frame;
 		} else if (viewInitialized) {
 			plottedTrees.forEach((k, surface) -> {
-				chart.add(surface);
+				chart.add(surface, viewUpdatesEnabled);
 			});
 			plottedObjs.forEach((k, drawableVBO) -> {
-				chart.add(drawableVBO);
+				chart.add(drawableVBO, viewUpdatesEnabled);
 			});
 		}
 		frame = new ViewerFrame(chart, showManager);
@@ -425,13 +430,59 @@ public class TreePlot3D {
 	 * @see #add(Tree)
 	 */
 	public boolean remove(final String treeLabel) {
-		final Shape tree = plottedTrees.get(treeLabel);
-		if (tree == null)
+		return removeDrawable(plottedTrees, treeLabel);
+	}
+
+	/**
+	 * Removes the specified OBJ mesh.
+	 *
+	 * @param meshLabel the key defining the OBJ mesh to be removed.
+	 * @return true, if mesh was successfully removed.
+	 * @see #loadOBJ(String, ColorRGB, double)
+	 */
+	public boolean removeOBJ(final String meshLabel) {
+		return removeDrawable(plottedObjs, meshLabel);
+	}
+
+	/**
+	 * Removes all loaded OBJ meshes from current plot
+	 */
+	public void removeAllOBJs() {
+		removeAll(plottedObjs);
+	}
+
+	/**
+	 * Removes all the Trees from current plot
+	 */
+	public void removeAll() {
+		removeAll(plottedTrees);
+	}
+
+	private <T extends AbstractDrawable>void removeAll(final Map<String, T> map) {
+		final Iterator<Entry<String, T>> it = map.entrySet().iterator();
+		while (it.hasNext()) {
+			final Map.Entry<String, T> entry = it.next();
+			chart.getScene().getGraph().remove(entry.getValue(), false);
+			managerModel.removeElement(entry.getKey());
+			it.remove();
+		}
+		if (viewUpdatesEnabled) chart.render();
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<String> getLabelsCheckedInManager() {
+		final Object[] values = managerList.getCheckBoxListSelectedValues();
+		final List<String> list = (List<String>) (List<?>) Arrays.asList(values);
+		return list;
+	}
+	private synchronized <T extends AbstractDrawable> boolean removeDrawable(final Map<String, T> map, final String label) {
+		final T drawable = map.get(label);
+		if (drawable == null)
 			return false;
-		boolean removed = plottedTrees.remove(treeLabel) != null;
+		boolean removed = map.remove(label) != null;
 		if (chart != null) {
-			removed = removed && chart.getScene().getGraph().remove(tree);
-			deleteItemFromManager(treeLabel);
+			removed = removed && chart.getScene().getGraph().remove(drawable, viewUpdatesEnabled);
+			if (removed) deleteItemFromManager(label);
 		}
 		return removed;
 	}
@@ -450,7 +501,7 @@ public class TreePlot3D {
 			chart.getScene().getGraph().remove(plottedTrees.get(PATH_MANAGER_TREE_LABEL));
 			final Shape newShape = getShape(tree);
 			plottedTrees.put(PATH_MANAGER_TREE_LABEL, newShape);
-			chart.add(newShape);
+			chart.add(newShape, viewUpdatesEnabled);
 		} else {
 			tree.setLabel(PATH_MANAGER_TREE_LABEL);
 			add(tree);
@@ -918,32 +969,79 @@ public class TreePlot3D {
 				if (!guiUtils.getConfirmation("Remove all meshes from scene?", "Remove All Meshes?")) {
 					return;
 				}
-				final Iterator<Entry<String, RemountableDrawableVBO>> it = plottedObjs.entrySet().iterator();
-				while (it.hasNext()) {
-					final Map.Entry<String, RemountableDrawableVBO> entry = it.next();
-					chart.getScene().getGraph().remove(entry.getValue());
-					managerModel.removeElement(entry.getKey());
-					it.remove();
-				}
+				removeAllOBJs();
 			});
 			meshMenu.add(mi);
 			return addMenu;
 		}
 
+		private void runCmd(final Class<? extends Command> cmdClass, final Map<String, Object> inputs,
+				final int cmdType) {
+			if (!isStandAlone()) {
+				guiUtils.error("This command requires Reconstruction Viewer to be aware of a Scijava Context");
+				return;
+			}
+			SwingUtilities.invokeLater(() -> {
+			(new CmdWorker(cmdClass, inputs, cmdType)).execute();});
+		}
+	}
 
-		private boolean sntRunning() {
-			if (SNT.getPluginInstance() != null) {
+	private TreePlot3D getOuter() {
+		return this;
+	}
+
+	private class CmdWorker extends SwingWorker<Boolean, Object> {
+
+		private static final int DO_NOTHING = 0;
+		private static final int VALIDATE_SCENE = 1;
+
+		private final Class<? extends Command> cmd;
+		private final Map<String, Object> inputs;
+		private final int type;
+
+		public CmdWorker(final Class<? extends Command> cmd, 
+				final Map<String, Object> inputs, final int type) {
+			this.cmd = cmd;
+			this.inputs = inputs;
+			this.type = type;
+		}
+
+		@Override
+		public Boolean doInBackground() {
+			try {
+				final Map<String, Object> input = new HashMap<>();
+				input.put("recViewer", getOuter());
+				if (inputs != null) input.putAll(input);
+				cmdService.run(cmd, true, input).get();
 				return true;
+			} catch (final NullPointerException e1) {
+				return false;
+			} catch (InterruptedException | ExecutionException e2) {
+				gUtils.error("Unfortunately an exception occured. See console for details.");
+				SNT.error("Error", e2);
+				return false;
 			}
-			guiUtils.error("This command requires SNT to be running.");
-			return false;
 		}
 
-		private void runSNTCmd(final Class<? extends Command> cmdClass) {
-			if (sntRunning()) {
-				SNT.getPluginInstance().getUI().runCmd(cmdClass);
+		@Override
+		protected void done() {
+			boolean status = false;
+			try {
+				status = get();
+				if (status) {
+					switch (type) {
+					case VALIDATE_SCENE:
+						validate();
+						break;
+					case DO_NOTHING:
+					default:
+						break;
+					}
+				}
+			} catch (final Exception ignored) {
+				// do nothing
 			}
-		}
+		};
 	}
 
 	private class MouseController extends AWTCameraMouseController {
@@ -1061,22 +1159,6 @@ public class TreePlot3D {
 			prevMouse = mouse;
 		}
 	}
-
-	/**
-	 * This is just to make {@link DrawableVBO#hasMountedOnce()} accessible, which
-	 * seems to allow meshes to be loaded during an interactive session
-	 */
-	private class RemountableDrawableVBO extends DrawableVBO {
-
-		public RemountableDrawableVBO(final IGLLoader<DrawableVBO> loader) {
-			super(loader);
-		}
-
-		public void unmount() {
-			super.hasMountedOnce = false;
-		}
-	}
-
 
 	private class KeyController extends AbstractCameraController implements KeyListener {
 

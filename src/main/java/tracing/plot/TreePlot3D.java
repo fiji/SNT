@@ -1314,6 +1314,77 @@ public class TreePlot3D {
 		}
 	}
 
+
+
+	
+	/**
+	 * This is just to make {@link DrawableVBO#hasMountedOnce()} accessible,
+	 * allowing to force the re-loading of meshes during an interactive session
+	 */
+	private class RemountableDrawableVBO extends DrawableVBO {
+
+		public RemountableDrawableVBO(final IGLLoader<DrawableVBO> loader) {
+			super(loader);
+		}
+
+		public void unmount() {
+			super.hasMountedOnce = false;
+		}
+
+	}
+
+	/**
+	 * This is a shameless version of {@link #OBJFileLoader} with extra methods that
+	 * allow to check if OBJFile is valid before converting it into a Drawable #
+	 */
+	private class OBJFileLoaderPlus implements IGLLoader<DrawableVBO>{
+
+		protected URL url;
+		protected OBJFile obj;
+
+		public OBJFileLoaderPlus(final URL url) {
+			this.url = url;
+			if (url == null) throw new IllegalArgumentException("Null URL");
+		}
+
+		public String getLabel() {
+			String label = url.toString();
+			label = label.substring(label.lastIndexOf("/") + 1);
+			return getUniqueLabel(plottedObjs, "Mesh", label);
+		}
+
+		public boolean compileModel() {
+			obj = new OBJFile();
+			SNT.log("Loading OBJ file '" + url + "'");
+			if (!obj.loadModelFromURL(url)) {
+				SNT.log("Loading failed. Invalid file?");
+				return false;
+			}
+			obj.compileModel();
+			SNT.log(String.format("Meshed compiled: %d vertices and %d triangles", obj.getPositionCount(),
+					(obj.getIndexCount() / 3)));
+			return obj.getPositionCount() > 0;
+		}
+
+		@Override
+		public void load(final GL gl, final DrawableVBO drawable) {
+			final int size = obj.getIndexCount();
+			final int indexSize = size * Buffers.SIZEOF_INT;
+			final int vertexSize = obj.getCompiledVertexCount() * Buffers.SIZEOF_FLOAT;
+			final int byteOffset = obj.getCompiledVertexSize() * Buffers.SIZEOF_FLOAT;
+			final int normalOffset = obj.getCompiledNormalOffset() * Buffers.SIZEOF_FLOAT;
+			final int dimensions = obj.getPositionSize();
+			final int pointer = 0;
+			final FloatBuffer vertices = obj.getCompiledVertices();
+			final IntBuffer indices = obj.getCompiledIndices();
+			final BoundingBox3d bounds = obj.computeBoundingBox();
+			drawable.doConfigure(pointer, size, byteOffset, normalOffset, dimensions);
+			drawable.doLoadArrayFloatBuffer(gl, vertexSize, vertices);
+			drawable.doLoadElementIntBuffer(gl, indexSize, indices);
+			drawable.doSetBoundingBox(bounds);
+		}
+	}
+
 	/**
 	 * Sets the line thickness for rendering {@link Tree}s that have no specified
 	 * radius.

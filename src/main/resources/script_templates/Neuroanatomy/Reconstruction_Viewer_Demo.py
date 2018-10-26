@@ -1,12 +1,7 @@
 # @Context context
-# @LegacyService ls
-# @DatasetService ds
-# @DisplayService display
-# @LogService log
-# @SNTService snt
-# @StatusService status
 # @UIService ui
 # @LUTService lut
+# @SNTService snt
 
 '''
 file:       Reconstruction_Viewer_Demo.py
@@ -21,7 +16,7 @@ from tracing.plot import TreePlot3D
 
 def run():
 
-    # Import some data from the MouseLight database in 'headless' mode
+    # Import some data from the MouseLight database
     print("    Retriving ML neuron...")
     loader = MLJSONLoader("AA0100") # one of the largest cells in the database
     if not loader.isDatabaseAvailable():
@@ -34,19 +29,20 @@ def run():
     print("... Done. Assembling Tree...")
     tree = loader.getTree('all')
 
-    # Define and assign ColorTable
+    # Define and assign color table
     print("... Done. Assigning LUT to Tree...")
     colorizer = TreeColorizer(context)
     color_table = lut.loadLUT(lut.findLUTs().get("Ice.lut"))
     colorizer.colorize(tree, "branch order", color_table)
 
-    # Visualize tree
+    # Visualize tree in Reconstruction Viewer
     print("... Done. Preparing Reconstruction Viewer...")
-    plot = TreePlot3D()
-    plot.add(tree)
+    viewer = snt.getReconstructionViewer() if snt.isActive() else TreePlot3D()
+    viewer.add(tree)
     bounds = colorizer.getMinMax()
-    plot.addColorBarLegend(color_table, bounds[0], bounds[1])
-    plot.show() 
+    viewer.addColorBarLegend(color_table, bounds[0], bounds[1])
+    viewer.loadMouseRefBrain()
+    viewer.show(True)  # Display viewer with Manager?
     print("... Done. With Viewer active, Press 'H' or 'F1' for help")
 
 

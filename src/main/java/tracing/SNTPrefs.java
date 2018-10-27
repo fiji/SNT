@@ -229,7 +229,16 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		currentBooleans = UNSET_PREFS;
 	}
 
-	private void clearLegacyPrefs() {
+	public static void clearAll() {
+		clearLegacyPrefs();
+		Prefs.set(BOOLEANS, null);
+		Prefs.set(SNAP_XY, null);
+		Prefs.set(SNAP_Z, null);
+		Prefs.set(FILLWIN_LOC, null);
+		Prefs.set(PATHWIN_LOC, null);
+	}
+
+	private static void clearLegacyPrefs() {
 		Prefs.set("tracing.Simple_Neurite_Tracer.drawDiametersXY", null);
 	}
 

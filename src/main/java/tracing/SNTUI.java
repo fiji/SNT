@@ -1265,19 +1265,8 @@ public class SNTUI extends JDialog {
 		miscPanel.add(debugCheckBox, gdb);
 		++gdb.gridy;
 		final JButton resetbutton = GuiUtils.smallButton("Reset Preferences...");
-		resetbutton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				if (guiUtils.getConfirmation(
-					"Reset preferences to defaults? (Restart required)", "Reset?"))
-				{
-					plugin.prefs.resetOptions();
-					guiUtils.centeredMsg(
-						"You should now restart SNT for changes to take effect",
-						"Restart required");
-				}
-			}
+		resetbutton.addActionListener(e -> {
+			(new CmdRunner(ResetPrefsCmd.class, false)).execute();
 		});
 		gdb.fill = GridBagConstraints.NONE;
 		miscPanel.add(resetbutton, gdb);

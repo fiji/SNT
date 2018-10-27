@@ -123,6 +123,16 @@ public class Tree {
 		return tree.add(p);
 	}
 
+	/**
+	 * Appends all paths of a specified {@link Tree} to this one.
+	 *
+	 * @param tree the Tree to be merged
+	 * @return true if this Tree changed as a result of the merge
+	 */
+	public boolean merge(final Tree tree) {
+		return this.tree.addAll(tree.list());
+	}
+
 	// /**
 	// * Returns a copy of this Tree.
 	// *

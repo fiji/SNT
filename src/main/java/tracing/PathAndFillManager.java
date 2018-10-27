@@ -1951,33 +1951,37 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * @return the map mapping imported ids to a boolean flag ({@code true}, if cell
 	 *         successfully imported, {@code false} otherwise)
 	 */
-	public Map<String, Boolean> importMLNeurons(final Collection<String> ids, final String compartment) {
+	public Map<String, Tree> importMLNeurons(final Collection<String> ids, final String compartment) {
 		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
 		for (String id : ids) {
 			final MLJSONLoader loader = new MLJSONLoader(id);
 			map.put(id, (loader.idExists()) ? loader.getNodes(compartment) : null);
 		}
-		final Map<String, Boolean> result = importMap(map);
-		if (result.containsValue(true)) {
+		final Map<String, Tree> result = importMap(map);
+		if (result.values().stream().anyMatch(tree -> tree != null && tree.isEmpty())) {
 			if (boundingBox == null) boundingBox = new BoundingBox(); // should never happen
 			boundingBox.setUnit("um");
 		}
 		return result;
 	}
 
-	private Map<String, Boolean> importMap(Map<String, TreeSet<SWCPoint>> map) {
-		final Map<String, Boolean> result = new HashMap<>();
+	private Map<String, Tree> importMap(Map<String, TreeSet<SWCPoint>> map) {
+		final Map<String, Tree> result = new HashMap<>();
 		final ColorRGB[] colors = SWCColor.getDistinctColors(map.size());
 		final int[] colorIdx = {0};
 		map.forEach((k, points) -> {
 			if (points == null) {
 				SNT.error("Importing " + k +"... failed. Invalid structure?");
-				result.put(k, false);
+				result.put(k, null);
 			} else {
+				final int firstImportedPathIdx = size();
 				SNT.log("Importing " + k +"...");
 				final boolean success = importNodes(k, points, colors[colorIdx[0]], true, false);
 				SNT.log("Successful import: " + success);
-				result.put(k, success);
+				final Tree tree = new Tree();
+				tree.setLabel(k);
+				for (int i = firstImportedPathIdx; i < size(); i++) tree.add(getPath(i));
+				result.put(k, tree);
 			}
 			colorIdx[0]++;
 		});

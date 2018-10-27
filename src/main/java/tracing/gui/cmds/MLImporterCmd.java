@@ -42,6 +42,7 @@ import tracing.PathAndFillManager;
 import tracing.SNTService;
 import tracing.SNTUI;
 import tracing.SimpleNeuriteTracer;
+import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.MLJSONLoader;
 
@@ -110,29 +111,80 @@ public class MLImporterCmd extends ContextCommand {
 			return;
 		}
 
-		final SimpleNeuriteTracer snt = sntService.getPlugin();
-		final SNTUI ui = sntService.getUI();
-		final PathAndFillManager pafm = sntService.getPathAndFillManager();
-	
-		ui.showStatus("Retrieving ids.... Please wait", false);
+		if (sntService.isActive()) {
+			snt = sntService.getPlugin();
+			ui = sntService.getUI();
+			pafm = sntService.getPathAndFillManager();
+		} else {
+			pafm = new PathAndFillManager();
+		}
+
+		status("Retrieving ids.... Please wait");
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final Map<String, Boolean> result = pafm.importMLNeurons(ids, getCompartment(arborChoice));
-		if (!result.containsValue(true)) {
-			snt.error("No reconstructions could be retrieved: Invalid Query?");
-			ui.showStatus("Error... No reconstructions imported", true);
+		final Map<String, Tree> result = pafm.importMLNeurons(ids, getCompartment(arborChoice));
+		final long failures = result.values().stream().filter(tree -> (tree == null || tree.isEmpty()) ).count();
+		if (failures == ids.size()) {
+			error("No reconstructions could be retrieved: Invalid Query?");
+			status("Error... No reconstructions imported");
 			return;
 		}
 		if (clearExisting) {
-			final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
-			pafm.deletePaths(indices);
+			if (recViewer == null) {
+				// We are importing into a functional SNTUI with Path Manager
+				final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
+				pafm.deletePaths(indices);
+			} else {
+				// We are importing into a stand-alone Reconstruction Viewer
+				recViewer.removeAll();
+			}
 		}
-		snt.rebuildDisplayCanvases();
-		final long failures = result.values().stream().filter(p -> p == false).count();
+		if (snt != null) snt.rebuildDisplayCanvases();
+
+		if (recViewer != null) {
+			// A 'stand-alone' Reconstruction Viewer was specified
+			recViewer.setViewUpdatesEnabled(false);
+			result.forEach((id, tree) -> {
+				if (tree != null) recViewer.add(tree);
+			});
+			if (meshViewer) recViewer.loadMouseRefBrain();
+			recViewer.setViewUpdatesEnabled(true);
+			recViewer.validate();
+		}
+		else if (meshViewer) {
+			// Load the cells on SNT UI's Viewer. The consequence here is
+			// that all Trees will be grouped together under the common
+			// "Path Manager Contents" checkbox. Not sure if this is a
+			// feature or a logical flaw in the way Path Manager and
+			// Reconstruction Viewer synchronize
+			recViewer = sntService.getReconstructionViewer();
+			recViewer.setViewUpdatesEnabled(false);
+			recViewer.loadMouseRefBrain();
+			recViewer.syncPathManagerList();
+			recViewer.show(true);
+			recViewer.setViewUpdatesEnabled(true);
+		}
+
 		if (failures > 0) {
-			snt.error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
-			ui.showStatus("Partially successful import...", true);
+			error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
+			status("Partially successful import...");
 		} else {
-			ui.showStatus("Successful imported " + result.size() + " reconstruction(s)...", true);
+			status("Successful imported " + result.size() + " reconstruction(s)...");
+		}
+	}
+
+	private void status(final String statusMsg) {
+		if (ui == null) {
+			statusService.showStatus(statusMsg);
+		} else {
+			ui.showStatus(statusMsg, false);
+		}
+	}
+
+	private void error(final String msg) {
+		if (snt != null) {
+			snt.error(msg);
+		} else {
+			cancel(msg);
 		}
 	}
 

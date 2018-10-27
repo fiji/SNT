@@ -364,13 +364,8 @@ public class MLJSONLoader {
 		final String comp = compartment.toLowerCase();
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);
-		final Map<String, Boolean> map = pafm.importMLNeurons(Collections.singletonList(publicID), comp);
-		if (map.get(publicID)) {
-			final Tree tree = new Tree(pafm.getPaths());
-			tree.setLabel(publicID + "-" + comp);
-			return tree;
-		}
-		return null;
+		final Map<String, Tree> map = pafm.importMLNeurons(Collections.singletonList(publicID), comp);
+		return map.get(publicID);
 	}
 
 	private TreeSet<SWCPoint> getNodesInternal(final String compartment) {

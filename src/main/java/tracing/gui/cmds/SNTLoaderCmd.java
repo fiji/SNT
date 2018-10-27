@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.plugin;
+package tracing.gui.cmds;
 
 import io.scif.services.DatasetIOService;
 
@@ -52,12 +52,12 @@ import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 
 /**
- * Command for Launching SNT from ImageJ
+ * Command for Launching SNT
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = DynamicCommand.class, visible = true, menuPath = "Plugins>Tracing>Simple Neurite Tracer...", initializer = "initialize")
-public class SNTLoader extends DynamicCommand {
+@Plugin(type = DynamicCommand.class, visible = true, menuPath = "Plugins>NeuroAnatomy>Simple Neurite Tracer...", initializer = "initialize")
+public class SNTLoaderCmd extends DynamicCommand {
 
 	@Parameter
 	private DatasetIOService datasetIOService;
@@ -294,7 +294,7 @@ public class SNTLoader extends DynamicCommand {
 		final Object img = ij.io().open("/home/tferr/code/OP_1/OP_1.tif");
 		ij.ui().show("OP_1", img);
 		SNT.setDebugMode(true);
-		ij.command().run(SNTLoader.class, true);
+		ij.command().run(SNTLoaderCmd.class, true);
 	}
 
 }

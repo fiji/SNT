@@ -34,6 +34,7 @@ import javax.swing.UIManager;
 public class IconFactory {
 
 	public enum GLYPH {
+		ATOM('\uf5d2', true), //
 		BINOCULARS('\uf1e5', true), //
 		BULLSEYE('\uf140', true), //
 		CHART('\uf080', false), //
@@ -57,8 +58,10 @@ public class IconFactory {
 		OPTIONS('\uf013', true), //
 		PEN('\uf303', true), //
 		PLUS('\uf0fe', false), //
+		ROCKET('\uf135', true), //
 		RULER('\uf546', true), //
 		SAVE('\uf0c7', false), //
+		SLIDERS('\uf1de', true), //
 		SYNC('\uf2f1', true), //
 		TABLE('\uf0ce', true), //
 		TAG('\uf02b', true), //

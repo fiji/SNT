@@ -486,10 +486,10 @@ public class Tree {
 	/**
 	 * Assigns a color to all the paths in this tree.
 	 *
-	 * @param color            the color to be applied
+	 * @param color            the color to be applied.
 	 */
 	public void setColor(final ColorRGB color) {
-		final Color c = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+		final Color c = (color==null) ? null : new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
 		tree.stream().forEach(p -> p.setColor(c));
 	}
 

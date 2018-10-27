@@ -48,6 +48,7 @@ import org.scijava.command.CommandService;
 import org.scijava.convert.ConvertService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
+import org.scijava.util.ColorRGB;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Point3f;
@@ -2250,6 +2251,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void updateAllViewers() {
 		repaintAllPanes();
 		update3DViewerContents();
+		if (getUI() != null && getUI().recViewer != null) {
+			new Thread(() -> {
+				getUI().recViewer.syncPathManagerList();
+			}).start();
+		}
 	}
 
 	/*
@@ -2328,6 +2334,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void setDeselectedColor(final Color newColor) {
 		deselectedColor = newColor;
 		deselectedColor3f = new Color3f(newColor);
+		if (getUI() != null && getUI().recViewer != null) {
+			getUI().recViewer.setDefaultColor(new ColorRGB(newColor.getRed(), 
+					newColor.getGreen(), newColor.getBlue()));
+		}
 		updateAllViewers();
 	}
 

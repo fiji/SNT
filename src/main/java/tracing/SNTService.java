@@ -81,8 +81,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *             if SimpleNeuriteTracer is not running
 	 */
 	public boolean isActive() {
-		plugin = SNT.getPluginInstance();
-		return plugin != null;
+		return SNT.getPluginInstance() != null;
 	}
 
 	/**
@@ -205,9 +204,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 */
 	public TreePlot3D getReconstructionViewer() {
 		accessActiveInstance();
-		if (plugin.getUI().recViewer == null)
-			plugin.getUI().recViewer = new TreePlot3D();
-		return plugin.getUI().recViewer;
+		return plugin.getUI().getReconstructionViewer(true);
 	}
 
 	/**

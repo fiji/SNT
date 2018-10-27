@@ -417,8 +417,7 @@ public class MLJSONLoader {
 					final double z = node.getDouble("z");
 					final double radius = node.getDouble("radius");
 					int parent = node.getInt("parentNumber");
-					if (parent > -1)
-						parent += idOffset;
+					if (parent > -1) parent += idOffset;
 					points.add(new SWCPoint(sn, type, x, y, z, radius, parent));
 				}
 			}
@@ -440,7 +439,7 @@ public class MLJSONLoader {
 	/* IDE debug method */
 	public static void main(final String... args) {
 		System.out.println("# Retrieving neuron");
-		final String id = "ZZ0001"; // 10.25378/janelia.5527672";
+		final String id = "10.25378/janelia.5527672"; // 10.25378/janelia.5527672";
 		final MLJSONLoader loader = new MLJSONLoader(id);
 		try (PrintWriter out = new PrintWriter("/home/tferr/Desktop/" + id.replaceAll("/", "-") + ".swc")) {
 			final StringReader reader = SWCPoint.collectionAsReader(loader.getNodes());

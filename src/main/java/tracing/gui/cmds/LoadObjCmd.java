@@ -22,36 +22,47 @@
 
 package tracing.gui.cmds;
 
-import java.awt.Color;
 import java.io.File;
+import java.io.FilenameFilter;
 
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
+import org.scijava.widget.NumberWidget;
 
 import net.imagej.ImageJ;
 import tracing.SNTService;
 import tracing.gui.GuiUtils;
+import tracing.plot.TreePlot3D;
 
 /**
- * Command for loading an OBJ in Reconstruction Viewer
+ * Command for loading an OBJ file in Reconstruction Viewer
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Load OBJ...")
+@Plugin(type = Command.class, visible = false, label = "Load OBJ File(s)...")
 public class LoadObjCmd extends ContextCommand {
 
 	@Parameter
 	private SNTService sntService;
 
-	@Parameter(label = "OBJ file", style="extensions:obj")
+	@Parameter
+	private UIService uiService;
+
+	@Parameter(label = "File/Directory Path", required = true, description="Path to OBJ file, or Directory containing multiple OBJ files")
 	private File file;
 
-	@Parameter(label = "Color", description = "Color for rendering imported file")
+	@Parameter(label = "Transparency (%)", required = false, min ="0", max ="100", style = NumberWidget.SCROLL_BAR_STYLE, description = "Transparency of imported mesh")
+	private int transparency;
+
+	@Parameter(label = "Color", required = false, description = "Rendering color of imported mesh(es)")
 	private ColorRGB color;
 
+	@Parameter(required = false)
+	private TreePlot3D recViewer;
 
 	/*
 	 * (non-Javadoc)
@@ -61,9 +72,44 @@ public class LoadObjCmd extends ContextCommand {
 	@Override
 	public void run() {
 		try {
-			sntService.getReconstructionViewer().loadOBJ(file.getAbsolutePath(), new Color(color.getARGB()));
-		} catch (final UnsupportedOperationException | NullPointerException exc) {
-			cancel("SNT's Legacy Viewer is not open");
+			if (recViewer == null)
+				recViewer = sntService.getReconstructionViewer();
+		} catch (final UnsupportedOperationException exc) {
+			cancel("SNT's Reconstruction Viewer is not open");
+		}
+
+		if (!file.exists())
+			cancel(file.getAbsolutePath() + " is no longer available");
+
+		if (transparency <= 0d) transparency = 5;
+		if (file.isFile()) {
+			try {
+				recViewer.loadOBJ(file.getAbsolutePath(), color, transparency);
+			} catch (final IllegalArgumentException exc) {
+				cancel(exc.getMessage());
+			}
+			recViewer.validate();
+			return;
+		}
+
+		if (file.isDirectory()) {
+			final File[] files = file.listFiles((FilenameFilter) (dir, name) -> name.toLowerCase().endsWith("obj"));
+			recViewer.setViewUpdatesEnabled(false);
+			int failures = 0;
+			for (final File file : files) {
+				try {
+					recViewer.loadOBJ(file.getAbsolutePath(), color, transparency);
+				} catch (final IllegalArgumentException exc) {
+					failures++;
+				}
+			}
+			if (failures == files.length) {
+				cancel("No files imported. Invalid Directory?");
+			}
+			recViewer.setViewUpdatesEnabled(true);
+			recViewer.validate();
+			final String msg = "" + (files.length - failures) + "/" + files.length + " files successfully imported.";
+			uiService.showDialog(msg, (failures == 0) ? "All Meshes Imported" : "Partially Successful Import");
 		}
 	}
 

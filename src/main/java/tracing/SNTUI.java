@@ -2734,6 +2734,24 @@ public class SNTUI extends JDialog {
 		return fmUI;
 	}
 
+
+
+	/**
+	 * Gets the Reconstruction Viewer.
+	 *
+	 * @param initializeIfNull it true, initializes the Viewer if it has not yet
+	 *                         been initialized
+	 * @return the reconstruction viewer
+	 */
+	public TreePlot3D getReconstructionViewer(final boolean initializeIfNull) {
+		if (initializeIfNull && recViewer == null) {
+			recViewer = new TreePlot3D(plugin.getContext());
+			if (openRefreshRecViewerButton != null)
+				openRefreshRecViewerButton.setEnabled(false);
+		}
+		return recViewer;
+	}
+
 	protected void reset() {
 		abortCurrentOperation();
 		showStatus("Resetting", true);

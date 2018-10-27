@@ -39,6 +39,7 @@ import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable;
 import tracing.SNTService;
 import tracing.gui.GuiUtils;
+import tracing.plot.TreePlot3D;
 
 /**
  * Implements Reconstruction Viewer's 'Add Color Legend' command
@@ -65,6 +66,9 @@ public class ColorRampCmd extends DynamicCommand {
 
 	@Parameter(required = false, label = "<HTML>&nbsp;", persist = false)
 	private ColorTable colorTable;
+
+	@Parameter(required = false)
+	private TreePlot3D recViewer;
 
 	private Map<String, URL> luts;
 
@@ -102,9 +106,12 @@ public class ColorRampCmd extends DynamicCommand {
 			cancel("Invalid Limits " + min + "-" + max);
 		} else {
 			try {
-				sntService.getReconstructionViewer().addColorBarLegend(colorTable, min, max);
+				if (recViewer == null) {
+					recViewer = sntService.getReconstructionViewer();
+				}
+				recViewer.addColorBarLegend(colorTable, min, max);
 			} catch (final UnsupportedOperationException | NullPointerException exc) {
-				cancel("SNT's Legacy Viewer is not open");
+				cancel("SNT's Reconstruction Viewer is not available");
 			}
 		}
 	}

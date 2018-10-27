@@ -35,7 +35,7 @@ import tracing.plot.TreePlot3D;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, menuPath = "Plugins>NeuroAnatomy>Reconstructions Viewer...")
+@Plugin(type = Command.class, menuPath = "Plugins>NeuroAnatomy>Reconstruction Viewer...")
 public class ReconstructionViewerCmd extends ContextCommand {
 
 	/*

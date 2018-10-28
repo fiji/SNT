@@ -47,6 +47,7 @@ import sholl.math.LinearProfileStats;
 import tracing.Path;
 import tracing.SNT;
 import tracing.Tree;
+import tracing.analysis.sholl.TreeParser;
 import tracing.plot.TreePlot2D;
 import tracing.plugin.DistributionCmd;
 import tracing.util.PointInImage;
@@ -69,8 +70,9 @@ public class TreeColorizer {
 	public static final String X_COORDINATES = TreeAnalyzer.X_COORDINATES;
 	public static final String Y_COORDINATES = TreeAnalyzer.Y_COORDINATES;
 	public static final String Z_COORDINATES = TreeAnalyzer.Z_COORDINATES;
-	private static final String INTERNAL_COUNTER = "";
-	public static final String FIRST_TAG = "Tags";
+	public static final String PATH_DISTANCE = "Path distance to soma";
+	public static final String FIRST_TAG = "Tags/Filename";
+	private static final String INTERNAL_COUNTER = "Id";
 
 
 	@Parameter
@@ -122,7 +124,20 @@ public class TreeColorizer {
 		final String cMeasurement = new StringBuilder().append(measurement.substring(0, 1).toUpperCase())
 				.append(measurement.substring(1)).toString();
 		this.colorTable = colorTable;
+
 		switch (cMeasurement) {
+		case PATH_DISTANCE:
+			final TreeParser parser = new TreeParser(new Tree(paths));
+			try {
+			parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
+			} catch (final IllegalArgumentException ignored) {
+				SNT.log("No soma attribute found... Defaulting to average of all root nodes");
+				parser.setCenter(TreeParser.PRIMARY_NODES_ANY);
+			}
+			final UPoint center = parser.getCenter();
+			final PointInImage root = new PointInImage(center.x, center.y, center.z);
+			mapPathDistances(root);
+			break;
 		case BRANCH_ORDER:
 		case LENGTH:
 		case MEAN_RADIUS:
@@ -227,6 +242,68 @@ public class TreeColorizer {
 			}
 			p.setNodeColors(colors);
 		}
+	}
+
+	private void mapPathDistances(final PointInImage root) {
+		if (root == null) {
+			throw new IllegalArgumentException("source point cannot be null");
+		}
+
+		final boolean setLimits = (Double.isNaN(min) || Double.isNaN(max) || min > max);
+		if (setLimits) {
+			min = Float.MAX_VALUE;
+			max = 0f;
+		}
+
+		// 1st pass: Calculate distances for primary paths.
+		for (Path p : paths) {
+			if (p.isPrimary()) {
+				float dx = (float) p.getPointInImage(0).distanceTo(root);
+				p.setValue(dx, 0);
+				for (int i = 1; i < p.size(); ++i) {
+					float dxPrev = p.getValue(i-1);
+					PointInImage prev = p.getPointInImage(i-1);
+					PointInImage curr = p.getPointInImage(i);
+					dx = (float) curr.distanceTo(prev) + dxPrev;
+					p.setValue(dx, i);
+					if (setLimits) {
+						if (dx > max) max = dx;
+						if (dx < min) min = dx;
+					}
+				}
+			}
+		}
+
+		// 2nd pass: Calculate distances for remaining paths
+		for (Path p : paths) {
+			if (p.isPrimary()) continue;
+			PointInImage pim = p.getPointInImage(0);
+			float dx = p.getStartJoins().getValue(p.getStartJoins().getNodeIndex(pim)); // very inneficient
+			p.setValue(dx, 0);
+			for (int i = 1; i < p.size(); ++i) {
+				float dxPrev = p.getValue(i-1);
+				PointInImage prev = p.getPointInImage(i-1);
+				PointInImage curr = p.getPointInImage(i);
+				dx = (float) curr.distanceTo(prev) + dxPrev;
+				p.setValue(dx, i);
+				if (setLimits) {
+					if (dx > max) max = dx;
+					if (dx < min) min = dx;
+				}
+			}
+		}
+
+		// now color nodes
+		if (setLimits) setMinMax(min, max);
+		SNT.log("Coloring nodes by path distance to " + root);
+		SNT.log("Range of mapped distances: "+ min + "-"+ max);
+		for (final Path p : paths) {
+			for (int node = 0; node < p.size(); node++) {
+				//if (p.isPrimary()) System.out.println(p.getValue(node));
+				p.setNodeColor(getColor(p.getValue(node)), node);
+			}
+		}
+	
 	}
 
 	/**
@@ -404,7 +481,7 @@ public class TreeColorizer {
 		}
 		final TreePlot2D plot = new TreePlot2D(ij.context());
 		plot.addTrees(trees, "Ice.lut");
-		plot.addLookupLegend();
+		plot.addColorBarLegend();
 		plot.showPlot();
 	}
 

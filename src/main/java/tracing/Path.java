@@ -1065,6 +1065,15 @@ public class Path implements Comparable<Path> {
 		nodeColors[pos] = color;
 	}
 
+	public void setValue(final float value, final int pos) {
+		if(values == null) values = new float[size()];
+		values[pos] = value;
+	}
+
+	public float getValue(final int pos) {
+		return (values == null) ? null : values[pos];
+	}
+
 	/**
 	 * Gets the color of this Path
 	 *

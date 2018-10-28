@@ -45,18 +45,24 @@ import org.scijava.widget.Button;
 import tracing.Path;
 import tracing.PathManagerUI;
 import tracing.SNT;
+import tracing.SNTService;
 import tracing.Tree;
 import tracing.analysis.TreeColorizer;
 import tracing.plot.TreePlot2D;
+import tracing.plot.TreePlot3D;
 
 /**
  * Command for color coding trees according to their properties using
- * {@link TreeColorizer} and {@link TreePlot2D}
+ * {@link TreeColorizer} with options to display result in
+ *  {@link TreePlot2D} and {@link TreePlot3D}
  *
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, label = "Tree Color Coder", initializer = "init")
 public class TreeColorizerCmd extends DynamicCommand {
+
+	@Parameter
+	private SNTService sntService;
 
 	@Parameter
 	private PrefService prefService;
@@ -67,9 +73,11 @@ public class TreeColorizerCmd extends DynamicCommand {
 	@Parameter
 	private StatusService statusService;
 
-	@Parameter(required = true, label = "Color by", choices = { TreeColorizer.BRANCH_ORDER, TreeColorizer.LENGTH,
-			TreeColorizer.N_BRANCH_POINTS, TreeColorizer.N_NODES, TreeColorizer.MEAN_RADIUS, TreeColorizer.NODE_RADIUS,
-			TreeColorizer.X_COORDINATES, TreeColorizer.Y_COORDINATES, TreeColorizer.Z_COORDINATES, TreeColorizer.FIRST_TAG})
+	@Parameter(required = true, label = "Color by", choices = { //
+			TreeColorizer.BRANCH_ORDER, TreeColorizer.LENGTH, TreeColorizer.N_BRANCH_POINTS, //
+			TreeColorizer.N_NODES, TreeColorizer.PATH_DISTANCE, TreeColorizer.MEAN_RADIUS, //
+			TreeColorizer.NODE_RADIUS, TreeColorizer.X_COORDINATES, TreeColorizer.Y_COORDINATES, //
+			TreeColorizer.Z_COORDINATES, TreeColorizer.FIRST_TAG})
 	private String measurementChoice;
 
 	@Parameter(label = "LUT", callback = "lutChoiceChanged")
@@ -78,8 +86,11 @@ public class TreeColorizerCmd extends DynamicCommand {
 	@Parameter(required = false, label = "<HTML>&nbsp;")
 	private ColorTable colorTable;
 
-	@Parameter(required = false, label = "Show SVG plot")
-	private boolean showPlot;
+	@Parameter(required = false, label = "Show in Reconstruction Viewer")
+	private boolean showInRecViewer = true;
+
+	@Parameter(required = false, label = "Create 2D plot")
+	private boolean showPlot = false;
 
 	@Parameter(required = false, label = "Remove Existing Color Coding", callback = "removeColorCoding")
 	private Button removeColorCoding;
@@ -87,11 +98,12 @@ public class TreeColorizerCmd extends DynamicCommand {
 	@Parameter(required = true)
 	private Tree tree;
 
-	@Parameter(required = false)
-	private PathManagerUI manager;
-
 	private Map<String, URL> luts;
 	private TreePlot2D plot;
+
+	private PathManagerUI manager;
+	private TreePlot3D recViewer;
+
 
 	@Override
 	public void run() {
@@ -99,12 +111,29 @@ public class TreeColorizerCmd extends DynamicCommand {
 			cancel("Invalid input tree");
 		statusService.showStatus("Applying Color Code...");
 		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
-		plot = new TreePlot2D(context());
-		plot.addTree(tree, measurementChoice, lutChoice);
+		final TreeColorizer colorizer = new TreeColorizer(context());
+		colorizer.setMinMax(Double.NaN, Double.NaN);
+		colorizer.colorize(tree, measurementChoice, colorTable);
+		final double[] minMax = colorizer.getMinMax();
 		if (showPlot) {
-			SNT.log("Plotting...");
-			plot.addLookupLegend();
+			SNT.log("Creating 2D plot...");
+			plot = new TreePlot2D(context());
+			plot.addTree(tree);
+			plot.addColorBarLegend(colorTable, minMax[0], minMax[1]);
 			plot.showPlot();
+		}
+		if (showInRecViewer) {
+			SNT.log("Displaying in Reconstruction Viewer...");
+			final boolean newInstance = recViewer == null;
+			final boolean sntActive = sntService.isActive();
+			recViewer = (sntActive) ? sntService.getReconstructionViewer() : new TreePlot3D();
+			recViewer.addColorBarLegend(colorTable, (float) minMax[0], (float) minMax[1]);
+			if (sntActive) {
+				recViewer.syncPathManagerList();
+			} else if (newInstance) {
+				recViewer.add(tree);
+			}
+			recViewer.show(true);
 		}
 		SNT.log("Finished...");
 		if (manager != null)
@@ -117,6 +146,9 @@ public class TreeColorizerCmd extends DynamicCommand {
 		if (lutChoice == null)
 			lutChoice = prefService.get(getClass(), "lutChoice", "mpl-viridis.lut");
 		setLUTs();
+		if (!sntService.isActive()) return;
+		manager = sntService.getUI().getPathManager();
+		recViewer = sntService.getUI().getReconstructionViewer(false);
 	}
 
 	private void setLUTs() {

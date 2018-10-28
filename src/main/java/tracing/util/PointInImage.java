@@ -43,6 +43,12 @@ public class PointInImage implements SNTPoint {
 	/** The cartesian coordinate of this node */
 	public double x, y, z;
 
+	/**
+	 * A property associated with this point (e.g., voxel intensity) (optional
+	 * field)
+	 */
+	public float v;
+
 	/** The Path associated with this node, if any (optional field) */
 	public Path onPath = null;
 

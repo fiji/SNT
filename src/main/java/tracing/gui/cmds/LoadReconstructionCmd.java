@@ -23,6 +23,7 @@
 package tracing.gui.cmds;
 
 import java.io.File;
+import java.io.FilenameFilter;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
@@ -30,9 +31,11 @@ import org.scijava.command.DynamicCommand;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
 
 import net.imagej.ImageJ;
+import tracing.SNT;
 import tracing.SNTService;
 import tracing.Tree;
 import tracing.plot.TreePlot3D;
@@ -43,13 +46,18 @@ import tracing.plot.TreePlot3D;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, initializer = "init", label = "Load Reconstruction...")
+@Plugin(type = Command.class, visible = false, initializer = "init", label = "Load Reconstruction(s)...")
 public class LoadReconstructionCmd extends DynamicCommand {
 
-	@Parameter(label = "File", required = true, style = "extensions:swc/eswc/traces", description = "Supported extensions: .traces or .(e)SWC")
+	@Parameter SNTService sntService;
+
+	@Parameter UIService uiService;
+
+	@Parameter(label = "File/Directory Path", required = true, description = "<HTML>Path to single file, or directory containing multiple files."
+			+ "<br>Supported extensions: traces, (e)SWC, json")
 	private File file;
 
-	@Parameter(label = "Color", required = false, description = "Rendering Color of imported file")
+	@Parameter(label = "Color", required = false, description = "Rendering color of imported file(s)")
 	private ColorRGB color;
 
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
@@ -58,14 +66,11 @@ public class LoadReconstructionCmd extends DynamicCommand {
 	@Parameter(required = false)
 	private TreePlot3D recViewer;
 
-	@Parameter(required = false)
-	private SNTService snt;
-
 	@SuppressWarnings("unused")
 	private void init() {
 		final MutableModuleItem<String> mItem = getInfo().getMutableInput("msg", String.class);
 		if (recViewer != null && recViewer.isSNTInstance()) {
-			msg = "NB: Loaded file will not be listed in Path Manager";
+			msg = "NB: Loaded file(s) will not be listed in Path Manager";
 		} else {
 			msg = " ";
 		}
@@ -79,18 +84,51 @@ public class LoadReconstructionCmd extends DynamicCommand {
 	 */
 	@Override
 	public void run() {
-		if (recViewer == null) {
-			cancel("Reconstruction Viewer not specified");
-		}
+
 		try {
+			if (recViewer == null)
+				recViewer = sntService.getReconstructionViewer();
+		} catch (final UnsupportedOperationException exc) {
+			cancel("SNT's Reconstruction Viewer is not open");
+		}
+
+		if (!file.exists())
+			cancel(file.getAbsolutePath() + " is no longer available");
+
+		if (file.isFile()) {
 			final Tree tree = new Tree(file.getAbsolutePath());
 			tree.setColor(color);
 			if (tree.isEmpty())
-				cancel("No Paths could be extracted. Invalid file?");
+				cancel("No Paths could be extracted from file. Invalid path?");
 			recViewer.add(tree);
 			recViewer.validate();
-		} catch (final IllegalArgumentException ex) {
-			cancel("An error occured: " + ex.getMessage());
+			return;
+		}
+
+		if (file.isDirectory()) {
+			final File[] files = file.listFiles((FilenameFilter) (dir, name) -> {
+				final String lcName = name.toLowerCase();
+				return (lcName.endsWith("swc") || lcName.endsWith("traces") || lcName.endsWith("json"));
+			});
+			recViewer.setViewUpdatesEnabled(false);
+			int failures = 0;
+			for (final File file : files) {
+				final Tree tree = new Tree(file.getAbsolutePath());
+				if (tree.isEmpty()) {
+					SNT.log("Skipping file... No Paths extracted from " + file.getAbsolutePath());
+					failures++;
+					continue;
+				}
+				tree.setColor(color);
+				recViewer.add(tree);
+			}
+			if (failures == files.length) {
+				cancel("No files imported. Invalid Directory?");
+			}
+			recViewer.setViewUpdatesEnabled(true);
+			recViewer.validate();
+			final String msg = "" + (files.length - failures) + "/" + files.length + " files successfully imported.";
+			uiService.showDialog(msg, (failures == 0) ? "All Reconstructions Imported" : "Partially Successful Import");
 		}
 	}
 

@@ -208,7 +208,8 @@ public class SWCColor {
 
 	/**
 	 * Returns distinct colors based on Kenneth Kelly's 22 colors of maximum
-	 * contrast (black and white excluded)
+	 * contrast (black and white excluded). More details on this
+	 * <a href= "https://stackoverflow.com/a/4382138 ">SO discussion</a>
 	 * 
 	 * @param nColors the number of colors to be retrieved.
 	 * @return the maximum contrast colors

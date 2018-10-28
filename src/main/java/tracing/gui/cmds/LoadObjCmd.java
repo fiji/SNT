@@ -52,7 +52,7 @@ public class LoadObjCmd extends ContextCommand {
 	@Parameter
 	private UIService uiService;
 
-	@Parameter(label = "File/Directory Path", required = true, description="Path to OBJ file, or Directory containing multiple OBJ files")
+	@Parameter(label = "File/Directory Path", required = true, description="Path to OBJ file, or directory containing multiple OBJ files")
 	private File file;
 
 	@Parameter(label = "Transparency (%)", required = false, min ="0", max ="100", style = NumberWidget.SCROLL_BAR_STYLE, description = "Transparency of imported mesh")

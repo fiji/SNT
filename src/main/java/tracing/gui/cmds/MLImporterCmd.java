@@ -97,7 +97,7 @@ public class MLImporterCmd extends DynamicCommand {
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
 	private String pingMsg;
 
-	@Parameter(persist = false, visibility = ItemVisibility.INVISIBLE)
+	@Parameter(persist = false, required = false, visibility = ItemVisibility.INVISIBLE)
 	private TreePlot3D recViewer;
 
 	private SimpleNeuriteTracer snt;

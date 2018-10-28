@@ -21,8 +21,7 @@
  */
 
 /**
- * Miscellaneous SNT utilities, including classes for handling nodes of
- * reconstructed structures.
+ * Miscellaneous SNT utilities, including classes defining reconstruction nodes.
  *
  * @author Tiago Ferreira
  */

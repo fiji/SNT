@@ -108,16 +108,14 @@ import tracing.gui.ColorChangedListener;
 import tracing.gui.ColorChooserButton;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
-import tracing.gui.SigmaPalette;
 import tracing.gui.IconFactory.GLYPH;
-import tracing.gui.cmds.ColorRampCmd;
-import tracing.gui.cmds.ShowCorrespondencesCmd;
+import tracing.gui.SigmaPalette;
 import tracing.gui.cmds.CompareFilesCmd;
-import tracing.gui.cmds.LoadObjCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
 import tracing.gui.cmds.NMImporterCmd;
 import tracing.gui.cmds.ResetPrefsCmd;
+import tracing.gui.cmds.ShowCorrespondencesCmd;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.plot.TreePlot3D;
 import tracing.plugin.PlotterCmd;
@@ -989,32 +987,40 @@ public class SNTUI extends JDialog {
 
 		final String bLabel = (plugin.getSinglePane()) ? "Display" : "Rebuild";
 		final JButton refreshPanesButton = new JButton(bLabel + " ZY/XZ Views");
-		refreshPanesButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				if (!plugin.analysisMode && getState() == IMAGE_CLOSED) {
-					guiUtils.error("Tracing image is not available.");
-					return;
-				}
-				showStatus("Rebuilding ZY/XZ views...", false);
-				if (plugin.analysisMode && (plugin.getImagePlus() == null
-						|| !plugin.getImagePlus().isVisible())) {
-					plugin.rebuildDisplayCanvases();
-				}
-				if (plugin.is2D()) {
-					guiUtils.error(plugin.getImagePlus().getTitle() 
-							+ " has no depth. Cannot generate side views!");
-					return;
-				}
-				plugin.rebuildZYXZpanes();
-				showStatus("ZY/XZ views reloaded...", true);
-				refreshPanesButton.setText("Rebuild ZY/XZ views");
-				arrangeCanvases();
+		refreshPanesButton.addActionListener(e -> {
+			if (!plugin.analysisMode && getState() == IMAGE_CLOSED) {
+				guiUtils.error("Tracing image is not available.");
+				return;
 			}
+			showStatus("Rebuilding ZY/XZ views...", false);
+			if (plugin.analysisMode && (plugin.getImagePlus() == null
+					|| !plugin.getImagePlus().isVisible())) {
+				plugin.rebuildDisplayCanvases();
+			}
+			if (plugin.is2D()) {
+				guiUtils.error(plugin.getImagePlus().getTitle() 
+						+ " has no depth. Cannot generate side views!");
+				return;
+			}
+			plugin.rebuildZYXZpanes();
+			showStatus("ZY/XZ views reloaded...", true);
+			refreshPanesButton.setText("Rebuild ZY/XZ views");
+			arrangeCanvases();
 		});
+		final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 0));
+		buttonPanel.add(refreshPanesButton);
+		if (plugin.analysisMode) {
+			final JButton rebuildCanvasButton = new JButton("Resize Canvas");
+			buttonPanel.add(rebuildCanvasButton);
+			rebuildCanvasButton.addActionListener(e -> {
+				showStatus("Resizing Canvas...", false);
+				plugin.rebuildDisplayCanvases();
+				showStatus("Canvas rebuilt...", true);
+			});
+
+		}
 		gdb.fill = GridBagConstraints.NONE;
-		viewsPanel.add(refreshPanesButton, gdb);
+		viewsPanel.add(buttonPanel, gdb);
 		return viewsPanel;
 	}
 

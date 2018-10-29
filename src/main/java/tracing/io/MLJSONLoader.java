@@ -37,6 +37,7 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.scijava.util.ColorRGB;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -350,13 +351,14 @@ public class MLJSONLoader {
 	 * Script-friendly method to extract a compartment as a collection of Paths
 	 *
 	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
+	 * @param color       the color to be applied to the Tree. Null not expected.
 	 * @return the compartment as a {@link Tree}, or null if data could not be
 	 *         retrieved
 	 * @throws IllegalArgumentException if compartment is not recognized or
 	 *                                  retrieval of data for this neuron is not
 	 *                                  possible
 	 */
-	public Tree getTree(final String compartment) throws IllegalArgumentException {
+	public Tree getTree(final String compartment, final ColorRGB color) throws IllegalArgumentException {
 		if (compartment == null || compartment.trim().isEmpty())
 			throw new IllegalArgumentException("Invalid compartment" + compartment);
 		if (!initialized)
@@ -364,7 +366,7 @@ public class MLJSONLoader {
 		final String comp = compartment.toLowerCase();
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);
-		final Map<String, Tree> map = pafm.importMLNeurons(Collections.singletonList(publicID), comp);
+		final Map<String, Tree> map = pafm.importMLNeurons(Collections.singletonList(publicID), comp, color);
 		return map.get(publicID);
 	}
 

@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.IntStream;
 
 import org.scijava.ItemVisibility;
@@ -43,6 +42,7 @@ import tracing.SNT;
 import tracing.SNTService;
 import tracing.SNTUI;
 import tracing.SimpleNeuriteTracer;
+import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.NeuroMorphoLoader;
 
@@ -100,8 +100,9 @@ public class NMImporterCmd extends ContextCommand {
 		ui.showStatus("Retrieving cells. Please wait...", false);
 		SNT.log("NeuroMorpho.org import: Downloading from URL(s)...");
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final Map<String, Boolean> result = pafm.importSWCs(urlsMap);
-		if (!result.containsValue(true)) {
+		final List<Tree> result = pafm.importSWCs(urlsMap, null);
+		final long failures = result.stream().filter(tree -> tree.isEmpty()).count();
+		if (failures == result.size()) {
 			snt.error("No reconstructions could be retrieved. Invalid Query?");
 			ui.showStatus("Error... No reconstructions imported", true);
 			return;
@@ -112,12 +113,11 @@ public class NMImporterCmd extends ContextCommand {
 		}
 		SNT.log("Rebuilding canvases...");
 		snt.rebuildDisplayCanvases();
-		final long failures = result.values().stream().filter(p -> p == false).count();
 		if (failures > 0) {
 			snt.error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
 			ui.showStatus("Partially successful import...", true);
 			SNT.log("Import failed for the following queried morphologies:");
-			result.forEach((key, value) -> { if (!value) SNT.log(key); });
+			result.forEach(tree -> { if (tree.isEmpty() ) SNT.log(tree.getLabel()); });
 		} else {
 			ui.showStatus("Successful imported " + result.size() + " reconstruction(s)...", true);
 		}

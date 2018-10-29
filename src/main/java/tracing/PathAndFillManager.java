@@ -1681,27 +1681,43 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	/**
 	 * Imports a group of SWC files (Remote URLs supported).
 	 *
-	 * @param swcs the HashMap containing the absolute file paths (or URLs) of files
-	 *             to be imported as values and a file descriptor as keys.
-	 * @return the HashMap mapping the descriptor of the imported file to a boolean
-	 *         flag ({@code true}, if file successfully imported, {@code false}
-	 *         otherwise)
+	 * @param swcs  the HashMap containing the absolute file paths (or URLs) of
+	 *              files to be imported as values and a file descriptor as keys.
+	 * @param color the color to be applied to imported Paths. If null, paths from
+	 *              each file will assigned unique colors
+	 * @return the List of imported {@link Tree}s labeled after the file descriptor.
+	 *         The returned list will not contain null elements: If a file was not
+	 *         successfully imported an empty Tree will be generated
+	 * @see {@link Tree#isEmpty()}
+	 * @see {@link Tree#getLabel()}
+	 * @see {@link SWCColor#getDistinctColors(int)}
 	 */
-	public Map<String, Boolean> importSWCs(final Map<String, String> swcs) {
-		final Map<String, Boolean> result = new HashMap<>();
-		final ColorRGB[] colors = SWCColor.getDistinctColors(swcs.size());
+	public List<Tree> importSWCs(final Map<String, String> swcs, final ColorRGB color) {
+		final List<Tree> result = new ArrayList<>();
+		final ColorRGB[] colors;
+		if (color == null) {
+			colors = SWCColor.getDistinctColors(swcs.size());
+		} else {
+			colors = new ColorRGB[swcs.size()];
+			Arrays.fill(colors, color);
+		}
 		final boolean headlessState = PathAndFillManager.headless;
 		setHeadless(true);
-		final int[] colorIdx = {0};
+		final int[] colorIdx = { 0 };
 		swcs.forEach((id, path) -> {
 			SNT.log("Loading " + id + ": " + path);
+			final Tree tree = new Tree();
+			tree.setLabel(id);
+			result.add(tree);
 			final int firstImportedPathIdx = size();
-			result.put(id, (path == null) ? false : importSWC(path));
-			if (id == null) return; // here means 'continue;'
+			if (!importSWC(path)) {
+				return; // here means 'continue;'
+			}
 			for (int i = firstImportedPathIdx; i < size(); i++) {
 				final Path p = getPath(i);
-				p.setName(p.getName() + "{" + id + "}");
+				p.setName(p.getName() + "{" + id + "}"); // This is just for PathManager inability to deal with Trees
 				p.setColorRGB(colors[colorIdx[0]]);
+				tree.add(p);
 			}
 			colorIdx[0]++;
 		});
@@ -1948,16 +1964,20 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * @param ids         the list of cell IDs
 	 * @param compartment the compartment. Either 'axon', 'dendrite', 'soma' or
 	 *                    'all'
-	 * @return the map mapping imported ids to a boolean flag ({@code true}, if cell
-	 *         successfully imported, {@code false} otherwise)
+	 * @param color       the color to be applied to imported Paths. If null, paths
+	 *                    from each ID will assigned unique colors
+	 * @return the map mapping imported ids to imported Trees. A null Tree will be
+	 *         assigned if a morphology could not be imported
+	 * @see {@link SWCColor#getDistinctColors(int)}
 	 */
-	public Map<String, Tree> importMLNeurons(final Collection<String> ids, final String compartment) {
+	public Map<String, Tree> importMLNeurons(final Collection<String> ids, 
+			final String compartment, final ColorRGB color) {
 		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
 		for (String id : ids) {
 			final MLJSONLoader loader = new MLJSONLoader(id);
 			map.put(id, (loader.idExists()) ? loader.getNodes(compartment) : null);
 		}
-		final Map<String, Tree> result = importMap(map);
+		final Map<String, Tree> result = importMap(map, color);
 		if (result.values().stream().anyMatch(tree -> tree != null && tree.isEmpty())) {
 			if (boundingBox == null) boundingBox = new BoundingBox(); // should never happen
 			boundingBox.setUnit("um");
@@ -1965,9 +1985,15 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return result;
 	}
 
-	private Map<String, Tree> importMap(Map<String, TreeSet<SWCPoint>> map) {
+	private Map<String, Tree> importMap(Map<String, TreeSet<SWCPoint>> map, final ColorRGB color) {
 		final Map<String, Tree> result = new HashMap<>();
-		final ColorRGB[] colors = SWCColor.getDistinctColors(map.size());
+		final ColorRGB[] colors;
+		if (color == null) {
+			colors = SWCColor.getDistinctColors(map.size());
+		} else {
+			colors = new ColorRGB[map.size()];
+			Arrays.fill(colors, color);
+		}
 		final int[] colorIdx = {0};
 		map.forEach((k, points) -> {
 			if (points == null) {

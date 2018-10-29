@@ -136,7 +136,7 @@ public class MLImporterCmd extends DynamicCommand {
 
 		status("Retrieving ids.... Please wait");
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final Map<String, Tree> result = pafm.importMLNeurons(ids, getCompartment(arborChoice));
+		final Map<String, Tree> result = pafm.importMLNeurons(ids, getCompartment(arborChoice), null);
 		final long failures = result.values().stream().filter(tree -> (tree == null || tree.isEmpty()) ).count();
 		if (failures == ids.size()) {
 			error("No reconstructions could be retrieved: Invalid Query?");

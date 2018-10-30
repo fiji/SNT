@@ -755,12 +755,15 @@ public class TreePlot3D {
 		final URL url = loader.getResource("meshes/" + ALLEN_MESH_LABEL);
 		if (url == null)
 			throw new IllegalArgumentException(ALLEN_MESH_LABEL + " not found");
-		loadOBJ(url, getDefColor());
+		loadOBJ(url, getNonUserDefColor());
+	}
+
+	private Color getNonUserDefColor() {
+		return (isDarkModeOn()) ? DEF_COLOR : INVERTED_DEF_COLOR;
 	}
 
 	private Color getDefColor() {
-		if (defColor != null) return defColor; // user has specified a default color
-		return (isDarkModeOn()) ? DEF_COLOR : INVERTED_DEF_COLOR;
+		return (defColor == null) ? getNonUserDefColor() : defColor; 
 	}
 
 	private void loadOBJ(final URL url, final Color color) throws IllegalArgumentException {
@@ -946,7 +949,7 @@ public class TreePlot3D {
 			JMenuItem mi = new JMenuItem("Path Thickness...");
 			mi.addActionListener(e -> {
 				if (plottedTrees.isEmpty()) {
-					guiUtils.error("There are no loaded meshes");
+					guiUtils.error("There are no loaded reconstructions");
 					return;
 				}
 				String msg = "<HTML><body><div style='width:500;'>"
@@ -1011,7 +1014,7 @@ public class TreePlot3D {
 			addMenu.add(tracesMenu);
 
 			// Traces Menu
-			JMenuItem mi = new JMenuItem("Import Local File...");
+			JMenuItem mi = new JMenuItem("Import File(s)...");
 			mi.addActionListener(e -> runCmd(LoadReconstructionCmd.class, null, CmdWorker.DO_NOTHING));
 			tracesMenu.add(mi);
 			mi = new JMenuItem("Import from MouseLight...");

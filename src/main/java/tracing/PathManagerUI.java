@@ -685,6 +685,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	@Override
 	public void valueChanged(final TreeSelectionEvent e) {
 		assert SwingUtilities.isEventDispatchThread();
+		if (!pathAndFillManager.enableUIupdates) return;
 		final Collection<Path> selectedPaths = getSelectedPaths(true);
 		final int selectionCount = tree.getSelectionCount();
 		if (selectionCount == 1) {
@@ -755,7 +756,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 			@Override
 			public void run() {
-				if (source == this)
+				if (source == this || !pathAndFillManager.enableUIupdates)
 					return;
 				final TreePath[] noTreePaths = {};
 				tree.setSelectionPaths(noTreePaths);
@@ -785,6 +786,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	@Override
 	public void setPathList(final String[] pathList, final Path justAdded, final boolean expandAll) {
 
+		if (!pathAndFillManager.enableUIupdates) return;
 		SwingUtilities.invokeLater(() -> {
 
 			// Save the selection state:
@@ -1271,7 +1273,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	 * Manager.
 	 */
 	public void update() {
-		refreshManager(true, true);
+		if (!pathAndFillManager.enableUIupdates) refreshManager(true, true);
 	}
 
 	protected void closeTable() {

@@ -129,6 +129,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	private int last_fill_node_id;
 	private int last_fill_id;
 	private HashSet<Integer> foundIDs;
+	protected boolean enableUIupdates = true;
 
 	/**
 	 * Instantiates a new PathAndFillManager using default values. Voxel dimensions
@@ -857,14 +858,18 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			resetListeners(null);
 	}
 
+	/**
+	 * Delete paths by position.
+	 *
+	 * @param indices the indices to be deleted
+	 */
 	public void deletePaths(final int[] indices) {
-
 		Arrays.sort(indices);
-
+		enableUIupdates = false;
 		for (int i = indices.length - 1; i >= 0; --i) {
 			deletePath(indices[i], false);
 		}
-
+		enableUIupdates = true;
 		resetListeners(null);
 	}
 

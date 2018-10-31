@@ -164,7 +164,7 @@ public class Path implements Comparable<Path> {
 		return id;
 	}
 
-	void setID(final int id) {
+	protected void setID(final int id) {
 		this.id = id;
 	}
 
@@ -181,8 +181,8 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Returns the translation offset when rendering this Path in a
-	 * {@link TracerCanvas}. Path coordinates remain unaltered.
+	 * Returns the translation offset used to render this Path in a
+	 * {@link TracerCanvas}.
 	 *
 	 * @return the rendering offset (in pixel coordinates)
 	 */
@@ -217,7 +217,7 @@ public class Path implements Comparable<Path> {
 	 */
 	public void setName(final String newName) {
 		this.name = newName;
-		getName();
+		getName(); //assign default if newName is null
 	}
 
 	/**
@@ -1257,12 +1257,16 @@ public class Path implements Comparable<Path> {
 		return fittedVersionOf != null;
 	}
 
-	public void setFitted(final Path p) {
+	protected void setFitted(final Path p) {
 		if (fitted != null && p != null) {
 			throw new IllegalArgumentException("BUG: Trying to set a fitted path when there already is one...");
 		}
 		fitted = p;
-		p.fittedVersionOf = this;
+		if (p == null) {
+			setUseFitted(false);
+		} else {
+			p.fittedVersionOf = this;
+		}
 	}
 
 	public void setUseFitted(final boolean useFitted) {
@@ -1940,6 +1944,7 @@ public class Path implements Comparable<Path> {
 	double[] precise_x_positions;
 	double[] precise_y_positions;
 	double[] precise_z_positions;
+	float[] values;
 
 	// http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
 	/**
@@ -2619,13 +2624,13 @@ public class Path implements Comparable<Path> {
 
 	synchronized public void addTo3DViewer(final Image3DUniverse univ, final Color c, final ImagePlus colorImage) {
 		if (c == null)
-			throw new RuntimeException("In addTo3DViewer, Color can no longer be null");
+			throw new IllegalArgumentException("In addTo3DViewer, Color can no longer be null");
 		addTo3DViewer(univ, new Color3f(c), colorImage);
 	}
 
 	synchronized public void addTo3DViewer(final Image3DUniverse univ, final Color3f c, final ImagePlus colorImage) {
 		if (c == null)
-			throw new RuntimeException("In addTo3DViewer, Color3f can no longer be null");
+			throw new IllegalArgumentException("In addTo3DViewer, Color3f can no longer be null");
 
 		realColor = (c == null) ? new Color3f(Color.magenta) : c;
 

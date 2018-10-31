@@ -66,7 +66,6 @@ public class Path implements Comparable<Path> {
 	private int editableNodeIndex = -1;
 	private int order = 1;
 	private boolean selected;
-	private boolean primary = false;
 	protected Path startJoins;
 	PointInImage startJoinsPoint = null;
 	Path endJoins;
@@ -296,7 +295,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected void setIsPrimary(final boolean primary) {
-		this.primary = primary;
+		if (primary) setOrder(1);
 	}
 
 	/**
@@ -305,7 +304,7 @@ public class Path implements Comparable<Path> {
 	 * @return true, if is primary (root)
 	 */
 	public boolean isPrimary() {
-		return primary;
+		return order == 1;
 	}
 
 	/*

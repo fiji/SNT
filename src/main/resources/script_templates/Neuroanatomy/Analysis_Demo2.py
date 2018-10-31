@@ -35,8 +35,8 @@ def run():
         ui.showDialog("Somewhow the specified id was not found", "Error")
         return
 
-    d_tree = loader.getTree('dendrites')
-    a_tree = loader.getTree('axon')
+    d_tree = loader.getTree('dendrites', None)  # compartment, color
+    a_tree = loader.getTree('axon', None)
     for tree in [d_tree, a_tree]:
 
         print("Parsing %s" % tree.getLabel())

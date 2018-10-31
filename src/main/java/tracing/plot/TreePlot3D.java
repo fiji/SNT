@@ -1655,7 +1655,7 @@ public class TreePlot3D {
 	}
 
 	public boolean isSNTInstance() {
-		return sntService.isActive() && sntService.getUI() != null
+		return sntService !=null && sntService.isActive() && sntService.getUI() != null
 				&& this.equals(sntService.getUI().getReconstructionViewer(false));
 	}
 

@@ -60,6 +60,9 @@ def run():
     # SNT's work horse for management of Paths and ints importMLNeurons
     # method that accepts two parameters: a list of cell ids, and the
     # compartment to be imported ('all', 'axon', or 'dendrites')
+    # NB: Because of all the GUI changes, this approach is significantly
+    # slower than retrieving the Tree directly from the loader, as in
+    # Analysis_Demo2.py 
     # http://javadoc.scijava.org/Fiji/tracing/PathAndFillManager.html
     pafm = snt.getPathAndFillManager()
     pafm.importMLNeurons(['AA0100'], 'dendrites')

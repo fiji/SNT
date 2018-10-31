@@ -7,7 +7,8 @@
 file:       Reconstruction_Viewer_Demo.py
 author:     Tiago Ferreira
 version:    20181010
-info:       Exemplifies how to render a file in Reconstruction Viewer
+info:       Exemplifies how to render a file in a stand-alone
+            Reconstruction Viewer
 '''
 from tracing import Tree
 from tracing.io import MLJSONLoader
@@ -27,7 +28,7 @@ def run():
         return
 
     print("... Done. Assembling Tree...")
-    tree = loader.getTree('all')
+    tree = loader.getTree('all', None)  # compartment, color
 
     # Define and assign color table
     print("... Done. Assigning LUT to Tree...")
@@ -37,7 +38,7 @@ def run():
 
     # Visualize tree in Reconstruction Viewer
     print("... Done. Preparing Reconstruction Viewer...")
-    viewer = snt.getReconstructionViewer() if snt.isActive() else TreePlot3D()
+    viewer = TreePlot3D(context)
     viewer.add(tree)
     bounds = colorizer.getMinMax()
     viewer.addColorBarLegend(color_table, bounds[0], bounds[1])

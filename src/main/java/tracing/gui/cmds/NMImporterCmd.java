@@ -30,10 +30,13 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.scijava.ItemVisibility;
+import org.scijava.app.StatusService;
 import org.scijava.command.Command;
-import org.scijava.command.ContextCommand;
+import org.scijava.command.DynamicCommand;
+import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
 import net.imagej.ImageJ;
@@ -45,6 +48,7 @@ import tracing.SimpleNeuriteTracer;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.NeuroMorphoLoader;
+import tracing.plot.TreePlot3D;
 
 /**
  * Command for importing NeuroMorpho.org reconstructions
@@ -53,13 +57,22 @@ import tracing.io.NeuroMorphoLoader;
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, label = "Import NeuroMorpho.org Reconstructions", initializer = "init")
-public class NMImporterCmd extends ContextCommand {
+public class NMImporterCmd extends DynamicCommand {
+
+	@Parameter
+	private StatusService statusService;
 
 	@Parameter
 	private SNTService sntService;
 
 	@Parameter(required = true, persist = true, label = "IDs (comma- or space- separated list)", description = "e.g., AA0001 or 10.25378/janelia.5527672")
 	private String query;
+
+	@Parameter(required = false, label = "Colors", choices = {"Distinct (each cell labelled uniquely)", "Common color specified below"})
+	private String colorChoice;
+
+	@Parameter(required = false, label = "<HTML>&nbsp;")
+	private ColorRGB commonColor;
 
 	@Parameter(required = false, persist = true, label = "Replace existing paths")
 	private boolean clearExisting;
@@ -70,7 +83,13 @@ public class NMImporterCmd extends ContextCommand {
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
 	private String pingMsg;
 
+	@Parameter(persist = false, required = false, visibility = ItemVisibility.INVISIBLE)
+	private TreePlot3D recViewer;
+
 	private NeuroMorphoLoader loader;
+	private SimpleNeuriteTracer snt;
+	private SNTUI ui;
+	private PathAndFillManager pafm;
 
 	/*
 	 * (non-Javadoc)
@@ -79,48 +98,99 @@ public class NMImporterCmd extends ContextCommand {
 	 */
 	@Override
 	public void run() {
-		if (!sntService.isActive()) {
-			cancel("No active instance of SimpleNeuriteTracer was found.");
+
+		final boolean standAloneViewer = recViewer != null;
+		if (!standAloneViewer && !sntService.isActive()) {
+			error("No Reconstruction Viewer specified and no active instance of SimpleNeuriteTracer was found.");
 			return;
 		}
+
 		final LinkedHashMap<String, String> urlsMap = getURLmapFromQuery(query);
 		if (urlsMap == null || urlsMap.isEmpty()) {
-			cancel("Invalid query. No reconstructions retrieved.");
+			error("Invalid query. No reconstructions retrieved.");
 			return;
 		}
 		if (!loader.isDatabaseAvailable()) {
-			cancel(getPingMsg(false));
+			error(getPingMsg(false));
 			return;
 		}
 
-		final SimpleNeuriteTracer snt = sntService.getPlugin();
-		final SNTUI ui = sntService.getUI();
-		final PathAndFillManager pafm = sntService.getPathAndFillManager();
+		if (standAloneViewer) {
+			pafm = new PathAndFillManager();
+		}
+		else if (sntService.isActive()) {
+			snt = sntService.getPlugin();
+			ui = sntService.getUI();
+			pafm = sntService.getPathAndFillManager();
+			recViewer = (ui == null) ? null : ui.getReconstructionViewer(false);
+		} else {
+			throw new IllegalArgumentException("Somehow neither a Viewer nor a SNT instance are available");
+		}
 
-		ui.showStatus("Retrieving cells. Please wait...", false);
+		status("Retrieving cells. Please wait...");
 		SNT.log("NeuroMorpho.org import: Downloading from URL(s)...");
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final List<Tree> result = pafm.importSWCs(urlsMap, null);
-		final long failures = result.stream().filter(tree -> tree.isEmpty()).count();
+		final List<Tree> result = pafm.importSWCs(urlsMap, getColor());
+		final long failures = result.stream().filter(tree -> tree == null || tree.isEmpty()).count();
 		if (failures == result.size()) {
-			snt.error("No reconstructions could be retrieved. Invalid Query?");
-			ui.showStatus("Error... No reconstructions imported", true);
+			error("No reconstructions could be retrieved. Invalid Query?");
+			status("Error... No reconstructions imported");
 			return;
 		}
+
 		if (clearExisting) {
-			final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
-			pafm.deletePaths(indices);
+			if (standAloneViewer) {
+				recViewer.removeAll();
+			}
+			else {
+				// We are importing into a functional SNTUI with Path Manager
+				final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
+				pafm.deletePaths(indices);
+			}
 		}
-		SNT.log("Rebuilding canvases...");
-		snt.rebuildDisplayCanvases();
+
+		if (standAloneViewer) {
+			recViewer.setViewUpdatesEnabled(false);
+			result.forEach(tree -> {
+				if (tree != null && !tree.isEmpty()) recViewer.add(tree);
+			});
+			recViewer.setViewUpdatesEnabled(true);
+			recViewer.validate();
+		}
+		else if (snt != null) {
+			SNT.log("Rebuilding canvases...");
+			snt.rebuildDisplayCanvases();
+			if (recViewer != null) recViewer.syncPathManagerList();
+		}
+
 		if (failures > 0) {
-			snt.error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
-			ui.showStatus("Partially successful import...", true);
+			error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
+			status("Partially successful import...");
 			SNT.log("Import failed for the following queried morphologies:");
-			result.forEach(tree -> { if (tree.isEmpty() ) SNT.log(tree.getLabel()); });
+			result.forEach(tree -> { if (tree.isEmpty()) SNT.log(tree.getLabel()); });
 		} else {
-			ui.showStatus("Successful imported " + result.size() + " reconstruction(s)...", true);
+			status("Successful imported " + result.size() + " reconstruction(s)...");
 		}
+	}
+
+	private void status(final String statusMsg) {
+		if (ui == null) {
+			statusService.showStatus(statusMsg);
+		} else {
+			ui.showStatus(statusMsg, false);
+		}
+	}
+
+	private void error(final String msg) {
+		if (snt != null) {
+			snt.error(msg);
+		} else {
+			cancel(msg);
+		}
+	}
+
+	private ColorRGB getColor() {
+		return (colorChoice.contains("unique")) ? null : commonColor;
 	}
 
 	private LinkedHashMap<String, String> getURLmapFromQuery(final String query) {
@@ -141,6 +211,12 @@ public class NMImporterCmd extends ContextCommand {
 		if (query == null || query.isEmpty())
 			query = "cnic_001";
 		pingMsg = "Internet connection required. Retrieval of long lists may be rather slow...           ";
+		if (recViewer != null) {
+			// If a stand-alone viewer was specified, customize options specific
+			// to the SNT UI
+			final MutableModuleItem<Boolean> clearExistingInput = getInfo().getMutableInput("clearExisting", Boolean.class);
+			clearExistingInput.setLabel("Clear existing reconstructions");
+		}
 	}
 
 	@SuppressWarnings("unused")

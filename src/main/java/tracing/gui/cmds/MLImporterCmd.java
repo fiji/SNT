@@ -37,6 +37,7 @@ import org.scijava.command.DynamicCommand;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
 import net.imagej.ImageJ;
@@ -78,6 +79,12 @@ public class MLImporterCmd extends DynamicCommand {
 	@Parameter(required = false, persist = true, label = "Structures to import", choices = { CHOICE_BOTH, CHOICE_AXONS,
 			CHOICE_DENDRITES, CHOICE_SOMA})
 	private String arborChoice;
+
+	@Parameter(required = false, label = "Colors", choices = {"Distinct (each id labelled uniquely)", "Common color specified below"})
+	private String colorChoice;
+
+	@Parameter(required = false, label = "<HTML>&nbsp;")
+	private ColorRGB commonColor;
 
 	@Parameter(required = false, persist = true, label = "Load brain mesh")
 	private boolean meshViewer = false;
@@ -136,7 +143,7 @@ public class MLImporterCmd extends DynamicCommand {
 
 		status("Retrieving ids.... Please wait");
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final Map<String, Tree> result = pafm.importMLNeurons(ids, getCompartment(arborChoice), null);
+		final Map<String, Tree> result = pafm.importMLNeurons(ids, getCompartment(arborChoice), getColor());
 		final long failures = result.values().stream().filter(tree -> (tree == null || tree.isEmpty()) ).count();
 		if (failures == ids.size()) {
 			error("No reconstructions could be retrieved: Invalid Query?");
@@ -264,6 +271,10 @@ public class MLImporterCmd extends DynamicCommand {
 			validationMsg = "Query does not seem to contain valid IDs!";
 		else
 			validationMsg = "Query seems to contain "+ list.size() + " valid ID(s).";
+	}
+
+	private ColorRGB getColor() {
+		return (colorChoice.contains("unique")) ? null : commonColor;
 	}
 
 	@SuppressWarnings("unused")

@@ -24,6 +24,10 @@ package tracing.gui.cmds;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
@@ -33,12 +37,15 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
+import org.scijava.util.Colors;
+import org.scijava.widget.FileWidget;
 
 import net.imagej.ImageJ;
 import tracing.SNT;
 import tracing.SNTService;
 import tracing.Tree;
 import tracing.plot.TreePlot3D;
+import tracing.util.SWCColor;
 
 /**
  * Command for loading Reconstruction files in Reconstruction Viewer. Loaded
@@ -49,15 +56,22 @@ import tracing.plot.TreePlot3D;
 @Plugin(type = Command.class, visible = false, initializer = "init", label = "Load Reconstruction(s)...")
 public class LoadReconstructionCmd extends DynamicCommand {
 
-	@Parameter SNTService sntService;
+	private static final String COLOR_CHOICE_MONO = "Common color specified below";
+	private static final String COLOR_CHOICE_POLY = "Distinct (each file labelled uniquely)";
 
-	@Parameter UIService uiService;
+	@Parameter
+	SNTService sntService;
 
-	@Parameter(label = "File/Directory Path", required = true, description = "<HTML>Path to single file, or directory containing multiple files."
-			+ "<br>Supported extensions: traces, (e)SWC, json")
+	@Parameter
+	UIService uiService;
+
+	@Parameter(label = "File", required = true, description = "Supported extensions: traces, (e)SWC, json")
 	private File file;
 
-	@Parameter(label = "Color", required = false, description = "Rendering color of imported file(s)")
+	@Parameter(required = false, label = "Color", choices = { COLOR_CHOICE_MONO, COLOR_CHOICE_POLY })
+	private String colorChoice;
+
+	@Parameter(label = "<HTML>&nbsp;", required = false, description = "Rendering color of imported file(s)")
 	private ColorRGB color;
 
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
@@ -66,14 +80,46 @@ public class LoadReconstructionCmd extends DynamicCommand {
 	@Parameter(required = false)
 	private TreePlot3D recViewer;
 
+	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
+	private boolean importDir = false;
+
 	@SuppressWarnings("unused")
 	private void init() {
-		final MutableModuleItem<String> mItem = getInfo().getMutableInput("msg", String.class);
+		if (importDir) {
+			final MutableModuleItem<File> fileMitem = getInfo().getMutableInput("file", File.class);
+			fileMitem.setWidgetStyle(FileWidget.DIRECTORY_STYLE);
+			fileMitem.setLabel("Directory");
+			fileMitem.setDescription("<HTML>Path to directory containing multiple files."
+					+ "<br>Supported extensions: traces, (e)SWC, json");
+		} else {
+			final MutableModuleItem<String> colorChoiceMitem = getInfo().getMutableInput("colorChoice", String.class);
+			colorChoiceMitem.setRequired(false);
+			final List<String> options = new ArrayList<>();
+			options.add("Color specified below");
+			options.add("Black");
+			options.add("Blue");
+			options.add("Cyan");
+			options.add("Green");
+			options.add("Magenta");
+			options.add("Orange");
+			options.add("Red");
+			options.add("Yellow");
+			options.add("White");
+			colorChoiceMitem.setChoices(options);
+			colorChoiceMitem.setCallback("colorChoiceChanged");
+		}
 		if (recViewer != null && recViewer.isSNTInstance()) {
 			msg = "NB: Loaded file(s) will not be listed in Path Manager";
 		} else {
 			msg = " ";
 		}
+	}
+
+	@SuppressWarnings("unused")
+	private void colorChoiceChanged() {
+		final ColorRGB colorTemp = Colors.getColor(colorChoice.toLowerCase());
+		if (colorTemp != null)
+			color = colorTemp;
 	}
 
 	/*
@@ -89,7 +135,7 @@ public class LoadReconstructionCmd extends DynamicCommand {
 			if (recViewer == null)
 				recViewer = sntService.getReconstructionViewer();
 		} catch (final UnsupportedOperationException exc) {
-			cancel("SNT's Reconstruction Viewer is not open");
+			cancel("SNT's Reconstruction Viewer is not open and no other Viewer was specified.");
 		}
 
 		if (!file.exists())
@@ -112,6 +158,9 @@ public class LoadReconstructionCmd extends DynamicCommand {
 			});
 			recViewer.setViewUpdatesEnabled(false);
 			int failures = 0;
+			final ColorRGB[] colors = (colorChoice.contains("unique")) ? SWCColor.getDistinctColors(files.length)
+					: null;
+			int idx = 0;
 			for (final File file : files) {
 				final Tree tree = new Tree(file.getAbsolutePath());
 				if (tree.isEmpty()) {
@@ -119,7 +168,7 @@ public class LoadReconstructionCmd extends DynamicCommand {
 					failures++;
 					continue;
 				}
-				tree.setColor(color);
+				tree.setColor((colors == null) ? color : colors[idx++]);
 				recViewer.add(tree);
 			}
 			if (failures == files.length) {
@@ -136,6 +185,8 @@ public class LoadReconstructionCmd extends DynamicCommand {
 	public static void main(final String[] args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		ij.command().run(LoadReconstructionCmd.class, true);
+		final Map<String, Object> input = new HashMap<>();
+		input.put("importDir", true);
+		ij.command().run(LoadReconstructionCmd.class, true, input);
 	}
 }

@@ -33,6 +33,7 @@ import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.util.ColorRGB;
 
 import net.imagej.ImageJ;
 import tracing.PathAndFillManager;
@@ -57,10 +58,17 @@ public class MultiSWCImporterCmd extends ContextCommand {
 	@Parameter(style = "directory", label = "Directory")
 	private File dir;
 
-	@Parameter(label = "Filenames containing", //
+	@Parameter(label = "Filenames containing", required = false,//
 			description = "<html>Only files containing this string will be considered."
 					+ "<br>Leave blank to consider all SWC files in the directory.")
 	private String pattern;
+
+	@Parameter(required = false, label = "Colors", 
+			choices = {"Distinct (each file labelled uniquely)", "Common color specified below"})
+	private String colorChoice;
+
+	@Parameter(required = false, label = "<HTML>&nbsp;")
+	private ColorRGB color;
 
 	@Parameter(required = false, label = "Replace existing paths")
 	private boolean clearExisting;
@@ -87,7 +95,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 		SNT.log("Importing directory " + dir);
 
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final List<Tree> result = pafm.importSWCs(importMap, null);
+		final List<Tree> result = pafm.importSWCs(importMap, getColor());
 		final long failures = result.stream().filter(tree -> tree.isEmpty()).count();
 		if (failures == result.size()) {
 			snt.error("No reconstructions could be retrieved. Invalid Query?");
@@ -108,6 +116,10 @@ public class MultiSWCImporterCmd extends ContextCommand {
 		} else {
 			ui.showStatus("Successful imported " + result.size() + " reconstruction(s)...", true);
 		}
+	}
+
+	private ColorRGB getColor() {
+		return (colorChoice.contains("unique")) ? null : color;
 	}
 
 	private Map<String, String> getImportMap() {

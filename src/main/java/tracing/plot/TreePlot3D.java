@@ -1014,9 +1014,20 @@ public class TreePlot3D {
 			addMenu.add(tracesMenu);
 
 			// Traces Menu
-			JMenuItem mi = new JMenuItem("Import File(s)...");
-			mi.addActionListener(e -> runCmd(LoadReconstructionCmd.class, null, CmdWorker.DO_NOTHING));
+			JMenuItem mi = new JMenuItem("Import File...");
+			mi.addActionListener(e -> {
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("importDir", false);
+				runCmd(LoadReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});			tracesMenu.add(mi);
+			mi = new JMenuItem("Import Directory...");
+			mi.addActionListener(e -> {
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("importDir", true);
+				runCmd(LoadReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
 			tracesMenu.add(mi);
+			tracesMenu.addSeparator();
 			mi = new JMenuItem("Import from MouseLight...");
 			mi.addActionListener(e -> runCmd(MLImporterCmd.class, null, CmdWorker.DO_NOTHING));
 			tracesMenu.add(mi);
@@ -1119,7 +1130,7 @@ public class TreePlot3D {
 			try {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("recViewer", getOuter());
-				if (inputs != null) input.putAll(input);
+				if (inputs != null) input.putAll(inputs);
 				cmdService.run(cmd, true, input).get();
 				return true;
 			} catch (final NullPointerException e1) {

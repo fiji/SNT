@@ -47,6 +47,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -104,6 +105,7 @@ import org.scijava.util.Colors;
 import org.scijava.util.FileUtils;
 
 import com.jidesoft.swing.CheckBoxList;
+import com.jidesoft.swing.ListSearchable;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GLException;
@@ -884,6 +886,7 @@ public class TreePlot3D {
 			this.guiUtils = guiUtils;
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 			final JScrollPane scrollPane = new JScrollPane(managerList);
+			new ListSearchable(managerList);
 			scrollPane.setBorder(null);
 			scrollPane.setViewportView(managerList);
 			add(scrollPane);
@@ -971,17 +974,26 @@ public class TreePlot3D {
 				applyThicknessToPlottedTrees(thickness.floatValue());
 			});
 			optionsMenu.add(mi);
-			mi = new JMenuItem("Recolor Mesh(es)...");
+			mi = new JMenuItem("Recolor Visible Meshes...");
 			mi.addActionListener(e -> {
 				if (plottedObjs.isEmpty()) {
-					guiUtils.error("There are no loaded meshes");
+					guiUtils.error("There are no loaded meshes.");
+					return;
+				}
+				final Set<String> labels = plottedObjs.keySet();
+				labels.retainAll(getLabelsCheckedInManager());
+				if (labels.isEmpty()) {
+					guiUtils.error("There are no visbile meshes.");
 					return;
 				}
 				final java.awt.Color c = guiUtils.getColor("Mesh(es) Color", java.awt.Color.WHITE, "HSB");
 				if (c == null) {
 					return; // user pressed cancel
 				}
-				applyColorToPlottedObjs(fromAWTColor(c));
+				final Color color = fromAWTColor(c);
+				for (final String label : labels) {
+					plottedObjs.get(label).setColor(color);
+				}
 			});
 			optionsMenu.add(mi);
 			optionsMenu.addSeparator();

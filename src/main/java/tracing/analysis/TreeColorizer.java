@@ -129,7 +129,7 @@ public class TreeColorizer {
 		case PATH_DISTANCE:
 			final TreeParser parser = new TreeParser(new Tree(paths));
 			try {
-			parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
+				parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
 			} catch (final IllegalArgumentException ignored) {
 				SNT.log("No soma attribute found... Defaulting to average of all root nodes");
 				parser.setCenter(TreeParser.PRIMARY_NODES_ANY);

@@ -2384,12 +2384,11 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Gets the branching order of this Path
 	 *
-	 * @return the branching order (reverse Horton-Strahler order) of this path or
-	 *         -1 if its branching order is unknown. A primary path is always of
-	 *         order 1.
+	 * @return the branching order (reverse Horton-Strahler order) of this path or A
+	 *         primary path is always of order 1.
 	 */
 	public int getOrder() {
-		return (isPrimary()) ? 1 : order;
+		return order;
 	}
 
 	protected void setOrder(final int order) {
@@ -2888,7 +2887,6 @@ public class Path implements Comparable<Path> {
 			result.addPointDouble(new_x, new_y, new_z);
 		}
 
-		result.primary = primary;
 		result.id = id;
 		result.selected = selected;
 		result.name = name;

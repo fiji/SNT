@@ -113,7 +113,12 @@ public class TreeColorizerCmd extends DynamicCommand {
 		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
 		final TreeColorizer colorizer = new TreeColorizer(context());
 		colorizer.setMinMax(Double.NaN, Double.NaN);
-		colorizer.colorize(tree, measurementChoice, colorTable);
+		try {
+			colorizer.colorize(tree, measurementChoice, colorTable);
+		} catch (IllegalArgumentException exc) {
+			cancel(exc.getMessage());
+			return;
+		}
 		final double[] minMax = colorizer.getMinMax();
 		if (showPlot) {
 			SNT.log("Creating 2D plot...");

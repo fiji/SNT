@@ -30,9 +30,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.scijava.ItemVisibility;
-import org.scijava.app.StatusService;
 import org.scijava.command.Command;
-import org.scijava.command.DynamicCommand;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -42,9 +40,6 @@ import org.scijava.widget.Button;
 import net.imagej.ImageJ;
 import tracing.PathAndFillManager;
 import tracing.SNT;
-import tracing.SNTService;
-import tracing.SNTUI;
-import tracing.SimpleNeuriteTracer;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.NeuroMorphoLoader;
@@ -57,13 +52,8 @@ import tracing.plot.TreePlot3D;
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, label = "Import NeuroMorpho.org Reconstructions", initializer = "init")
-public class NMImporterCmd extends DynamicCommand {
+public class NMImporterCmd extends CommonDynamicCmd {
 
-	@Parameter
-	private StatusService statusService;
-
-	@Parameter
-	private SNTService sntService;
 
 	@Parameter(required = true, persist = true, label = "IDs (comma- or space- separated list)", description = "e.g., AA0001 or 10.25378/janelia.5527672")
 	private String query;
@@ -87,8 +77,6 @@ public class NMImporterCmd extends DynamicCommand {
 	private TreePlot3D recViewer;
 
 	private NeuroMorphoLoader loader;
-	private SimpleNeuriteTracer snt;
-	private SNTUI ui;
 	private PathAndFillManager pafm;
 
 	/*
@@ -127,14 +115,14 @@ public class NMImporterCmd extends DynamicCommand {
 			throw new IllegalArgumentException("Somehow neither a Viewer nor a SNT instance are available");
 		}
 
-		status("Retrieving cells. Please wait...");
+		status("Retrieving cells. Please wait...", false);
 		SNT.log("NeuroMorpho.org import: Downloading from URL(s)...");
 		final int lastExistingPathIdx = pafm.size() - 1;
 		final List<Tree> result = pafm.importSWCs(urlsMap, getColor());
 		final long failures = result.stream().filter(tree -> tree == null || tree.isEmpty()).count();
 		if (failures == result.size()) {
 			error("No reconstructions could be retrieved. Invalid Query?");
-			status("Error... No reconstructions imported");
+			status("Error... No reconstructions imported", true);
 			return;
 		}
 
@@ -165,27 +153,11 @@ public class NMImporterCmd extends DynamicCommand {
 
 		if (failures > 0) {
 			error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
-			status("Partially successful import...");
+			status("Partially successful import...", true);
 			SNT.log("Import failed for the following queried morphologies:");
 			result.forEach(tree -> { if (tree.isEmpty()) SNT.log(tree.getLabel()); });
 		} else {
-			status("Successful imported " + result.size() + " reconstruction(s)...");
-		}
-	}
-
-	private void status(final String statusMsg) {
-		if (ui == null) {
-			statusService.showStatus(statusMsg);
-		} else {
-			ui.showStatus(statusMsg, false);
-		}
-	}
-
-	private void error(final String msg) {
-		if (snt != null) {
-			snt.error(msg);
-		} else {
-			cancel(msg);
+			status("Successful imported " + result.size() + " reconstruction(s)...", true);
 		}
 	}
 
@@ -205,8 +177,7 @@ public class NMImporterCmd extends DynamicCommand {
 		return map;
 	}
 
-	@SuppressWarnings("unused")
-	private void init() {
+	protected void init() {
 		loader = new NeuroMorphoLoader();
 		if (query == null || query.isEmpty())
 			query = "cnic_001";

@@ -31,18 +31,15 @@ import java.util.Map;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
-import org.scijava.command.DynamicCommand;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 import org.scijava.widget.FileWidget;
 
 import net.imagej.ImageJ;
 import tracing.SNT;
-import tracing.SNTService;
 import tracing.Tree;
 import tracing.plot.TreePlot3D;
 import tracing.util.SWCColor;
@@ -54,16 +51,10 @@ import tracing.util.SWCColor;
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, initializer = "init", label = "Load Reconstruction(s)...")
-public class LoadReconstructionCmd extends DynamicCommand {
+public class LoadReconstructionCmd extends CommonDynamicCmd {
 
 	private static final String COLOR_CHOICE_MONO = "Common color specified below";
 	private static final String COLOR_CHOICE_POLY = "Distinct (each file labelled uniquely)";
-
-	@Parameter
-	SNTService sntService;
-
-	@Parameter
-	UIService uiService;
 
 	@Parameter(label = "File", required = true, description = "Supported extensions: traces, (e)SWC, json")
 	private File file;
@@ -135,11 +126,11 @@ public class LoadReconstructionCmd extends DynamicCommand {
 			if (recViewer == null)
 				recViewer = sntService.getReconstructionViewer();
 		} catch (final UnsupportedOperationException exc) {
-			cancel("SNT's Reconstruction Viewer is not open and no other Viewer was specified.");
+			error("SNT's Reconstruction Viewer is not open and no other Viewer was specified.");
 		}
 
 		if (!file.exists())
-			cancel(file.getAbsolutePath() + " is no longer available");
+			error(file.getAbsolutePath() + " is no longer available");
 
 		if (file.isFile()) {
 			final Tree tree = new Tree(file.getAbsolutePath());
@@ -172,12 +163,12 @@ public class LoadReconstructionCmd extends DynamicCommand {
 				recViewer.add(tree);
 			}
 			if (failures == files.length) {
-				cancel("No files imported. Invalid Directory?");
+				error("No files imported. Invalid Directory?");
 			}
 			recViewer.setViewUpdatesEnabled(true);
 			recViewer.validate();
 			final String msg = "" + (files.length - failures) + "/" + files.length + " files successfully imported.";
-			uiService.showDialog(msg, (failures == 0) ? "All Reconstructions Imported" : "Partially Successful Import");
+			msg(msg, (failures == 0) ? "All Reconstructions Imported" : "Partially Successful Import");
 		}
 	}
 

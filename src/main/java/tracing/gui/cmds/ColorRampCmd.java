@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.scijava.command.Command;
-import org.scijava.command.DynamicCommand;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -37,7 +36,6 @@ import org.scijava.plugin.Plugin;
 import net.imagej.ImageJ;
 import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable;
-import tracing.SNTService;
 import tracing.gui.GuiUtils;
 import tracing.plot.TreePlot3D;
 
@@ -47,10 +45,7 @@ import tracing.plot.TreePlot3D;
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, label = "Add Color Legend", initializer = "init")
-public class ColorRampCmd extends DynamicCommand {
-
-	@Parameter
-	private SNTService sntService;
+public class ColorRampCmd extends CommonDynamicCmd {
 
 	@Parameter
 	private LUTService lutService;
@@ -80,8 +75,7 @@ public class ColorRampCmd extends DynamicCommand {
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void init() {
+	protected void init() {
 		// see net.imagej.lut.LUTSelector
 		luts = lutService.findLUTs();
 		final ArrayList<String> choices = new ArrayList<>();
@@ -103,7 +97,7 @@ public class ColorRampCmd extends DynamicCommand {
 	@Override
 	public void run() {
 		if (Double.isNaN(min) || Double.isNaN(max) || min > max) {
-			cancel("Invalid Limits " + min + "-" + max);
+			error("Invalid Limits " + min + "-" + max);
 		} else {
 			try {
 				if (recViewer == null) {
@@ -111,7 +105,7 @@ public class ColorRampCmd extends DynamicCommand {
 				}
 				recViewer.addColorBarLegend(colorTable, min, max);
 			} catch (final UnsupportedOperationException | NullPointerException exc) {
-				cancel("SNT's Reconstruction Viewer is not available");
+				error("SNT's Reconstruction Viewer is not available");
 			}
 		}
 	}

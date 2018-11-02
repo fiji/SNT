@@ -34,7 +34,6 @@ import org.scijava.util.Colors;
 
 import net.imagej.ImageJ;
 import net.imagej.table.DefaultGenericTable;
-import tracing.SNTService;
 import tracing.Tree;
 import tracing.analysis.TreeStatistics;
 import tracing.gui.GuiUtils;
@@ -47,9 +46,6 @@ import tracing.plot.TreePlot3D;
  */
 @Plugin(type = Command.class, visible = false, label = "Compare Two Reconstructions")
 public class CompareFilesCmd extends ContextCommand {
-
-	@Parameter
-	private SNTService sntService;
 
 	@Parameter(label = "File 1", required = true)
 	private File file1;

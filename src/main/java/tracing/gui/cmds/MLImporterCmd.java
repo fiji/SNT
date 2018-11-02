@@ -31,9 +31,7 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 import org.scijava.ItemVisibility;
-import org.scijava.app.StatusService;
 import org.scijava.command.Command;
-import org.scijava.command.DynamicCommand;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -42,9 +40,6 @@ import org.scijava.widget.Button;
 
 import net.imagej.ImageJ;
 import tracing.PathAndFillManager;
-import tracing.SNTService;
-import tracing.SNTUI;
-import tracing.SimpleNeuriteTracer;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.MLJSONLoader;
@@ -57,7 +52,7 @@ import tracing.plot.TreePlot3D;
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, label = "Import MouseLight Reconstructions", initializer = "init")
-public class MLImporterCmd extends DynamicCommand {
+public class MLImporterCmd extends CommonDynamicCmd {
 
 	private static final String EMPTY_LABEL = "<html>&nbsp;";
 	private static final String CHOICE_AXONS = "Axons";
@@ -67,11 +62,6 @@ public class MLImporterCmd extends DynamicCommand {
 	private final static String DOI_MATCHER = ".*\\d+/janelia\\.\\d+.*";
 	private final static String ID_MATCHER = "[A-Z]{2}\\d{4}";
 
-	@Parameter
-	private StatusService statusService;
-
-	@Parameter
-	private SNTService sntService;
 
 	@Parameter(required = true, persist = true, label = "IDs / DOIs (comma- or space- separated list)", description = "e.g., AA0001 or 10.25378/janelia.5527672")
 	private String query;
@@ -107,8 +97,6 @@ public class MLImporterCmd extends DynamicCommand {
 	@Parameter(persist = false, required = false, visibility = ItemVisibility.INVISIBLE)
 	private TreePlot3D recViewer;
 
-	private SimpleNeuriteTracer snt;
-	private SNTUI ui;
 	private PathAndFillManager pafm;
 
 	/*
@@ -120,16 +108,16 @@ public class MLImporterCmd extends DynamicCommand {
 	public void run() {
 
 		if (recViewer == null && !sntService.isActive()) {
-			cancel("No active instance of SimpleNeuriteTracer was found.");
+			error("No active instance of SimpleNeuriteTracer was found.");
 			return;
 		}
 		final List<String> ids = getIdsFromQuery(query);
 		if (ids==null) {
-			cancel("Invalid query. No reconstructions retrieved.");
+			error("Invalid query. No reconstructions retrieved.");
 			return;
 		}
 		if (!MLJSONLoader.isDatabaseAvailable()) {
-			cancel(getPingMsg(false));
+			error(getPingMsg(false));
 			return;
 		}
 
@@ -141,13 +129,13 @@ public class MLImporterCmd extends DynamicCommand {
 			pafm = new PathAndFillManager();
 		}
 
-		status("Retrieving ids.... Please wait");
+		status("Retrieving ids... Please wait...", false);
 		final int lastExistingPathIdx = pafm.size() - 1;
 		final Map<String, Tree> result = pafm.importMLNeurons(ids, getCompartment(arborChoice), getColor());
 		final long failures = result.values().stream().filter(tree -> (tree == null || tree.isEmpty()) ).count();
 		if (failures == ids.size()) {
 			error("No reconstructions could be retrieved: Invalid Query?");
-			status("Error... No reconstructions imported");
+			status("Error... No reconstructions imported", true);
 			return;
 		}
 		if (clearExisting) {
@@ -160,7 +148,10 @@ public class MLImporterCmd extends DynamicCommand {
 				recViewer.removeAll();
 			}
 		}
-		if (snt != null) snt.rebuildDisplayCanvases();
+		if (snt != null) {
+			status("Assembling Canvas(es)...", false);
+			snt.rebuildDisplayCanvases();
+		}
 
 		if (recViewer != null) {
 			// A 'stand-alone' Reconstruction Viewer was specified
@@ -188,25 +179,9 @@ public class MLImporterCmd extends DynamicCommand {
 
 		if (failures > 0) {
 			error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
-			status("Partially successful import...");
+			status("Partially successful import...", true);
 		} else {
-			status("Successful imported " + result.size() + " reconstruction(s)...");
-		}
-	}
-
-	private void status(final String statusMsg) {
-		if (ui == null) {
-			statusService.showStatus(statusMsg);
-		} else {
-			ui.showStatus(statusMsg, false);
-		}
-	}
-
-	private void error(final String msg) {
-		if (snt != null) {
-			snt.error(msg);
-		} else {
-			cancel(msg);
+			status("Successful imported " + result.size() + " reconstruction(s)...", true);
 		}
 	}
 

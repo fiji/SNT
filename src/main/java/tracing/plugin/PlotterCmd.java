@@ -26,10 +26,9 @@ import java.awt.Dimension;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.imagej.ImageJ;
-
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
+import org.scijava.ItemVisibility;
 import org.scijava.command.DynamicCommand;
 import org.scijava.command.Interactive;
 import org.scijava.plugin.Parameter;
@@ -38,8 +37,10 @@ import org.scijava.util.ColorRGB;
 import org.scijava.widget.NumberWidget;
 
 import ij.measure.Calibration;
+import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.Tree;
+import tracing.gui.cmds.CommonDynamicCmd;
 import tracing.plot.TreePlot2D;
 import tracing.util.PointInImage;
 
@@ -49,7 +50,7 @@ import tracing.util.PointInImage;
  * @author Tiago Ferreira
  */
 @Plugin(type = DynamicCommand.class, visible = false, label = "Interactive Traces Plot")
-public class PlotterCmd extends DynamicCommand implements Interactive {
+public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 
 	@Parameter(required = false, label = "X rotation", description = "Rotation angle in degrees", min = "0", max = "360", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "currentXangleChanged")
 	private int angleX = 0;
@@ -60,22 +61,28 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	@Parameter(required = false, label = "Z rotation", description = "Rotation angle in degrees", min = "0", max = "360", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "currentZangleChanged")
 	private int angleZ = 0;
 
-	@Parameter(required = false, label = "Actions", choices = { ACTION_NONE, ACTION_FLIP_H, ACTION_FLIP_V, ACTION_RESET,
-			ACTION_SNAPSHOT }, callback = "runAction")
-	private String actionChoice;
+	@Parameter(required = false, persist = false, label = "Actions", choices = { ACTION_NONE, ACTION_FLIP_H, ACTION_FLIP_V,
+			ACTION_RESET, ACTION_SNAPSHOT }, callback = "runAction")
+	private String actionChoice = ACTION_NONE;
+
+	@Parameter(required = false, persist = false, label = "Preview", callback = "updatePlot",
+			description="NB: UI may become sluggish while previewing large reconstructions...")
+	private boolean preview = true;
+
+	@Parameter(required = false, persist = false, visibility = ItemVisibility.MESSAGE)
+	private String msg = "";
 
 	@Parameter(required = true)
 	private Tree tree;
-
-	@Parameter(required = false)
-	private String title;
 
 	private static final String ACTION_NONE = "Choose...";
 	private static final String ACTION_RESET = "Reset rotation";
 	private static final String ACTION_FLIP_H = "Flip horizontally";
 	private static final String ACTION_FLIP_V = "Flip vertically";
-	private static final String ACTION_SNAPSHOT = "Take snapshot";
+	private static final String ACTION_SNAPSHOT = "Render final (colorized) plot";
 	private static final ColorRGB DEF_COLOR = new ColorRGB("black");
+	private static final String BUSY_MSG = "Rendering. Please wait...";
+
 	private TreePlot2D plot;
 	private JFreeChart chart;
 	private ChartFrame frame;
@@ -85,12 +92,13 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	private int previousYangle = 0;
 	private int previousZangle = 0;
 
+
 	@Override
 	public void run() {
 
 		if (tree == null || tree.isEmpty())
-			cancel("No paths to plot");
-
+			error("No paths to plot");
+		status("Building Plot...", false);
 		// Tree rotation occurs in place so we'll copy plotting coordinates
 		// to a new Tree. To avoid rotation lags we'll keep it monochrome,
 		// We'll store input colors to be restored by the 'snapshot' action
@@ -114,10 +122,12 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 		}
 		buildPlot();
 		chart = plot.getChart();
-		frame = new ChartFrame(title, chart);
+		frame = new ChartFrame(tree.getLabel(), chart);
 		frame.setPreferredSize(new Dimension(500, 500));
 		frame.pack();
 		frame.setVisible(true);
+		status(null, false);
+
 	}
 
 	private void buildPlot() {
@@ -127,10 +137,14 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 	}
 
 	private void updatePlot() {
-		buildPlot();
-		chart.getXYPlot().setDataset(plot.getChart().getXYPlot().getDataset());
-		frame.setVisible(true); // re-open frame if it has been closed
+		if (preview && msg.isEmpty()) {
+			msg = BUSY_MSG;
+			buildPlot();
+			chart.getXYPlot().setDataset(plot.getChart().getXYPlot().getDataset());
+			frame.setVisible(true); // re-open frame if it has been closed
+			msg = "";
 		// frame.toFront();
+		}
 	}
 
 	private void resetRotation() {
@@ -208,6 +222,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 
 	private void snapshot() {
 		// apply input tree colors
+		msg = BUSY_MSG;
 		for (int i = 0; i < plottingTree.size(); i++) {
 			final Path plottingPath = plottingTree.list().get(i);
 			final Path inputPath = snapshotTree.list().get(i);
@@ -223,6 +238,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 			p.setColor(null);
 			p.setNodeColors(null);
 		}
+		msg = "";
 	}
 
 	/* IDE debug method **/
@@ -230,7 +246,7 @@ public class PlotterCmd extends DynamicCommand implements Interactive {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
-		final Tree tree = new Tree("/home/tferr/Desktop/OP_1/OP_1.traces");
+		final Tree tree = new Tree("/home/tferr/code/OP_1/OP_1.swc");
 		input.put("tree", tree);
 		ij.command().run(PlotterCmd.class, true, input);
 	}

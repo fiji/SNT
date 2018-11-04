@@ -168,7 +168,7 @@ public class TreePlot3D {
 	private KeyController keyController;
 	private MouseController mouseController;
 	private boolean viewUpdatesEnabled = true;
-	final UUID uuid;
+	private final UUID uuid;
 
 	@Parameter
 	private CommandService cmdService;
@@ -178,25 +178,28 @@ public class TreePlot3D {
 
 
 	/**
-	 * Instantiates a non-interactive TreePlot3D
+	 * Instantiates TreePlot3D without the 'Controls' dialog ('kiosk mode'). Such a
+	 * plot is more suitable for large datasets and allows for Trees to be added
+	 * concurrently,
 	 */
 	public TreePlot3D() {
 		plottedTrees = new LinkedHashMap<>();
 		plottedObjs = new LinkedHashMap<>();
 		initView();
 		setScreenshotDirectory("");
-		initManagerList();
 		uuid = UUID.randomUUID();
 	}
 
 	/**
-	 * Instantiates an interactive TreePlot3D
+	 * Instantiates an interactive TreePlot3D with GUI Controls to import, manage
+	 * and customize the plot scene.
 	 * 
 	 * @param context the SciJava application context providing the services
 	 *                required by the class
 	 */
 	public TreePlot3D(final Context context) {
 		this();
+		initManagerList();
 		context.inject(this);
 	}
 
@@ -245,7 +248,7 @@ public class TreePlot3D {
 			addAllObjects();
 			updateView();
 			if (lighModeOn) keyController.toggleDarkMode();
-			managerList.selectAll();
+			if (managerList != null) managerList.selectAll();
 		} catch (final GLException exc) {
 			SNT.error("Rebuild Error", exc);
 		}
@@ -373,6 +376,7 @@ public class TreePlot3D {
 	}
 
 	private void addItemToManager(final String label) {
+		if (managerList == null) return;
 		final int[] indices = managerList.getCheckBoxListSelectedIndices();
 		final int index = managerModel.size() - 1;
 		managerModel.insertElementAt(label, index);
@@ -430,13 +434,11 @@ public class TreePlot3D {
 	 * Shows this TreePlot and returns a reference to its frame. If the frame has
 	 * been made displayable, this will simply make the frame visible. Should only
 	 * be called once all objects have been added to the Plot.
+	 * If this is an interactive Viewer, the  'Controls' dialog is also displayed.
 	 *
-	 * @param showManager whether the 'Reconstruction Manager' dialog should be
-	 *                    displayed. It is only respect the first time the method is
-	 *                    called, i.e., when the frame is first made displayable.
 	 * @return the frame containing the plot.
 	 */
-	public Frame show(final boolean showManager) {
+	public Frame show() {
 		final boolean viewInitialized = initView();
 		if (!viewInitialized && frame != null) {
 			updateView();
@@ -450,11 +452,15 @@ public class TreePlot3D {
 				chart.add(drawableVBO, viewUpdatesEnabled);
 			});
 		}
-		frame = new ViewerFrame(chart, showManager);
+		frame = new ViewerFrame(chart, managerList != null);
 		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
 	}
 
+	@Deprecated
+	public Frame show(final boolean showManager) {
+		return show();
+	}
 	private void displayMsg(final String msg) {
 		displayMsg(msg, 2500);
 	}
@@ -610,6 +616,7 @@ public class TreePlot3D {
 			return false;
 		}
 		// now check that everything  is visible
+		if (managerList == null) return true;
 		final List<String> selectedKeys = getLabelsCheckedInManager();
 		final BoundingBox3d viewBounds = chart.view().getBounds();
 		return allDrawablesRendered(viewBounds, plottedTrees, selectedKeys)
@@ -1681,7 +1688,7 @@ public class TreePlot3D {
 		jzy3D.addColorBarLegend(ColorTables.ICE, (float) bounds[0], (float) bounds[1]);
 		jzy3D.add(tree);
 		jzy3D.loadMouseRefBrain();
-		jzy3D.show(true);
+		jzy3D.show();
 	}
 
 }

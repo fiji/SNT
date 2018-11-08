@@ -47,7 +47,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -106,6 +106,7 @@ import org.scijava.util.FileUtils;
 
 import com.jidesoft.swing.CheckBoxList;
 import com.jidesoft.swing.ListSearchable;
+import com.jidesoft.swing.Searchable;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GLException;
@@ -128,6 +129,7 @@ import tracing.gui.cmds.LoadReconstructionCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.NMImporterCmd;
 import tracing.util.PointInImage;
+import tracing.util.SWCColor;
 
 
 /**
@@ -183,8 +185,8 @@ public class TreePlot3D {
 	 * concurrently,
 	 */
 	public TreePlot3D() {
-		plottedTrees = new LinkedHashMap<>();
-		plottedObjs = new LinkedHashMap<>();
+		plottedTrees = new TreeMap<>();
+		plottedObjs = new TreeMap<>();
 		initView();
 		setScreenshotDirectory("");
 		uuid = UUID.randomUUID();
@@ -887,13 +889,19 @@ public class TreePlot3D {
 
 		private static final long serialVersionUID = 1L;
 		private final GuiUtils guiUtils;
-
+		private final Searchable searchable;
+		
 		public ManagerPanel(final GuiUtils guiUtils) {
 			super();
 			this.guiUtils = guiUtils;
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 			final JScrollPane scrollPane = new JScrollPane(managerList);
-			new ListSearchable(managerList);
+			searchable = new ListSearchable(managerList);
+			searchable.setCaseSensitive(false);
+			searchable.setFromStart(false);
+			searchable.setSearchLabel("Find");
+			managerList.setComponentPopupMenu(popupMenu());
+			scrollPane.setWheelScrollingEnabled(true);
 			scrollPane.setBorder(null);
 			scrollPane.setViewportView(managerList);
 			add(scrollPane);
@@ -909,7 +917,7 @@ public class TreePlot3D {
 					(int) buttonPanel.getPreferredSize().getHeight()));
 			buttonPanel.add(menuButton(GLYPH.SYNC, reloadMenu(), "Reload/Synchronize"));
 			buttonPanel.add(menuButton(GLYPH.ATOM, addMenu(), "Scene Elements"));
-			buttonPanel.add(menuButton(GLYPH.SLIDERS, optionsMenu(), "Options & Customizations"));
+			buttonPanel.add(menuButton(GLYPH.SLIDERS, optionsMenu(), "Customize"));
 			return buttonPanel;
 		}
 
@@ -932,7 +940,7 @@ public class TreePlot3D {
 				}
 			});
 			reloadMenu.add(mi);
-			mi = new JMenuItem("Reload Scene/Update Bounds");
+			mi = new JMenuItem("Reload Scene/Reset Bounds");
 			mi.addActionListener(e -> {
 				if (!sceneIsOK() && guiUtils.getConfirmation(
 						"Scene was reloaded but some objects have invalid attributes. "//
@@ -954,17 +962,190 @@ public class TreePlot3D {
 			return reloadMenu;
 		}
 
+		private JPopupMenu popupMenu() {
+			final JMenuItem sort = new JMenuItem("Sort List", IconFactory.getMenuIcon(GLYPH.SORT));
+			sort.addActionListener(e -> {
+				final List<String> checkedLabels = getLabelsCheckedInManager();
+				try {
+					managerList.setValueIsAdjusting(true);
+					managerModel.removeAllElements();
+					plottedTrees.keySet().forEach(k -> {
+						managerModel.addElement(k);
+					});
+					plottedObjs.keySet().forEach(k -> {
+						managerModel.addElement(k);
+					});
+					managerModel.addElement(CheckBoxList.ALL_ENTRY);
+				} finally {
+					managerList.setValueIsAdjusting(false);
+				}
+				managerList.addCheckBoxListSelectedValues(checkedLabels.toArray());
+			});
+
+			// Select menu
+			final JMenu selectMenu = new JMenu("Select");
+			selectMenu.setIcon(IconFactory.getMenuIcon(GLYPH.POINTER));
+			final JMenuItem selectMeshes = new JMenuItem("Meshes");
+			selectMeshes.addActionListener(e -> selectRows(plottedObjs));
+			selectMenu.add(selectMeshes);
+			final JMenuItem selectTrees = new JMenuItem("Trees");
+			selectTrees.addActionListener(e -> selectRows(plottedTrees));
+			selectMenu.add(selectTrees);
+			selectMenu.addSeparator();
+			final JMenuItem selectNone = new JMenuItem("None");
+			selectNone.addActionListener(e -> managerList.clearSelection());
+			selectMenu.add(selectNone);
+
+			// Hide menu
+			final JMenu hideMenu = new JMenu("Hide");
+			hideMenu.setIcon(IconFactory.getMenuIcon(GLYPH.EYE_SLASH));
+			final JMenuItem hideMeshes = new JMenuItem("Meshes");
+			hideMeshes.addActionListener(e -> retainVisibility(plottedTrees));
+			hideMenu.add(hideMeshes);
+			final JMenuItem hideTrees = new JMenuItem("Trees");
+			hideTrees.addActionListener(e -> retainVisibility(plottedObjs));
+			hideMenu.add(hideTrees);
+			final JMenuItem hideAll = new JMenuItem("All");
+			hideAll.addActionListener(e -> managerList.selectNone());
+			hideMenu.addSeparator();
+			hideMenu.add(hideAll);
+			
+			// Show Menu
+			final JMenu showMenu = new JMenu("Show");
+			showMenu.setIcon(IconFactory.getMenuIcon(GLYPH.EYE));
+			final JMenuItem showMeshes = new JMenuItem("Meshes");
+			showMeshes.addActionListener(e -> managerList.addCheckBoxListSelectedValues(plottedObjs.keySet().toArray()));
+			showMenu.add(showMeshes);
+			final JMenuItem showTrees = new JMenuItem("Trees");
+			showTrees.addActionListener(e -> managerList.addCheckBoxListSelectedValues(plottedTrees.keySet().toArray()));
+			showMenu.add(showTrees);
+			final JMenuItem showAll = new JMenuItem("All");
+			showAll.addActionListener(e -> managerList.selectAll());
+			showMenu.add(showAll);
+
+			final JMenuItem find = new JMenuItem("Find...", IconFactory.getMenuIcon(GLYPH.BINOCULARS));
+			find.addActionListener(e -> {
+				managerList.clearSelection();
+				managerList.requestFocusInWindow();
+				searchable.showPopup("");
+			});
+
+			final JPopupMenu pMenu = new JPopupMenu();
+			pMenu.add(selectMenu);
+			pMenu.add(showMenu);
+			pMenu.add(hideMenu);
+			pMenu.addSeparator();
+			pMenu.add(find);
+			pMenu.addSeparator();
+			pMenu.add(sort);
+			return pMenu;
+		}
+
+		private void selectRows(final Map<String, ?> map) {
+			final int[] indices = new int[map.keySet().size()];
+			int i = 0;
+			for (final String k : map.keySet()) {
+				indices[i++] = managerModel.indexOf(k);
+			}
+			managerList.setSelectedIndices(indices);
+		}
+
+		private void retainVisibility(final Map<String, ?> map) {
+			final List<String> selectedKeys = new ArrayList<>(getLabelsCheckedInManager());
+			selectedKeys.retainAll(map.keySet());
+			managerList.setSelectedObjects(selectedKeys.toArray());
+		}
+
+		protected List<String> getSelectedTrees() {
+			return getSelectedKeys(plottedTrees, "reconstructions");
+		}
+
+		protected List<String> getSelectedMeshes() {
+			return getSelectedKeys(plottedObjs, "meshes");
+		}
+
+		private List<String> getSelectedKeys(final Map<String, ?> map, final String mapDescriptor) {
+			if (map.isEmpty()) {
+				guiUtils.error("There are no loaded " + mapDescriptor + ".");
+				return null;
+			}
+			final List<?> selectedKeys = managerList.getSelectedValuesList();
+			final List<String> allKeys = new ArrayList<>(map.keySet());
+			if (selectedKeys.isEmpty() || (selectedKeys.size() == 1 && selectedKeys.get(0) == CheckBoxList.ALL_ENTRY)) {
+				if (!guiUtils.getConfirmation(
+						"There are no " + mapDescriptor + " selected. " + "Apply changes to all " + mapDescriptor + "?",
+						"Apply to All?")) {
+					return null;
+				}
+				return allKeys;
+			}
+			allKeys.retainAll(selectedKeys);
+			return allKeys;
+		}
+
 		private JPopupMenu optionsMenu() {
 			final JPopupMenu optionsMenu = new JPopupMenu();
-			JMenuItem mi = new JMenuItem("Path Thickness...");
+			final JMenu meshMenu = new JMenu("Meshes");
+			meshMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CUBE));
+			optionsMenu.add(meshMenu);
+			final JMenu recMenu = new JMenu("Trees");
+			recMenu.setIcon(IconFactory.getMenuIcon(GLYPH.TREE));
+			optionsMenu.add(recMenu);
+
+			// Mesh customizations
+			JMenuItem mi = new JMenuItem("Recolor...");
 			mi.addActionListener(e -> {
-				if (plottedTrees.isEmpty()) {
-					guiUtils.error("There are no loaded reconstructions");
+				final List<String> keys = getSelectedMeshes();
+				if (keys == null) return;
+				final java.awt.Color c = guiUtils.getColor("Mesh(es) Color", java.awt.Color.WHITE, "HSB");
+				if (c == null) {
+					return; // user pressed cancel
+				}
+				final Color color = fromAWTColor(c);
+				for (final String label : keys) {
+					plottedObjs.get(label).setColor(color);
+				}
+			});
+			meshMenu.add(mi);
+			mi = new JMenuItem("Change Transparency...");
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedMeshes();
+				if (keys == null)
+					return;
+				final Double t = guiUtils.getDouble("Mesh Transparency (%)", "Transparency (%)", 95);
+				if (t == null) {
+					return; // user pressed cancel
+				}
+				final float fValue = 1 - (t.floatValue( ) / 100);
+				if (Float.isNaN(fValue) || fValue <= 0 || fValue >= 1) {
+					guiUtils.error("Invalid transparency value: Only ]0, 100[ accepted.");
 					return;
 				}
+				for (final String label : keys) {
+					plottedObjs.get(label).getColor().a = fValue;
+				}
+			});
+			meshMenu.add(mi);
+
+			// Tree customizations
+			mi = new JMenuItem("Recolor...");
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees();
+				if (keys == null || !okToApplyColor(keys)) return;
+				final ColorRGB c = guiUtils.getColorRGB("Reconstruction(s) Color", java.awt.Color.RED, "HSB");
+				if (c == null) {
+					return; // user pressed cancel
+				}
+				applyColorToPlottedTrees(keys, c);
+			});
+			recMenu.add(mi);
+			mi = new JMenuItem("Thickness...");
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees();
+				if (keys == null) return;
 				String msg = "<HTML><body><div style='width:500;'>"
 						+ "Please specify a constant thickness to be applied "
-						+ "to all reconstructions.";
+						+ "to selected "+ keys.size() + " reconstruction(s).";
 				if (isSNTInstance()) {
 					msg += " This value will only affect how Paths are displayed "
 							+ "in the Reconstruction Viewer.";
@@ -978,31 +1159,30 @@ public class TreePlot3D {
 					guiUtils.error("Invalid thickness value.");
 					return;
 				}
-				applyThicknessToPlottedTrees(thickness.floatValue());
+				applyThicknessToPlottedTrees(keys, thickness.floatValue());
 			});
-			optionsMenu.add(mi);
-			mi = new JMenuItem("Recolor Visible Meshes...");
+			recMenu.add(mi);
+			mi = new JMenuItem("Color Each Cell Uniquely...");
 			mi.addActionListener(e -> {
-				if (plottedObjs.isEmpty()) {
-					guiUtils.error("There are no loaded meshes.");
-					return;
-				}
-				final Set<String> labels = plottedObjs.keySet();
-				labels.retainAll(getLabelsCheckedInManager());
-				if (labels.isEmpty()) {
-					guiUtils.error("There are no visbile meshes.");
-					return;
-				}
-				final java.awt.Color c = guiUtils.getColor("Mesh(es) Color", java.awt.Color.WHITE, "HSB");
-				if (c == null) {
-					return; // user pressed cancel
-				}
-				final Color color = fromAWTColor(c);
-				for (final String label : labels) {
-					plottedObjs.get(label).setColor(color);
-				}
+				final List<String> keys = getSelectedTrees();
+				if (keys == null || !okToApplyColor(keys)) return;
+	
+				final ColorRGB[] colors = SWCColor.getDistinctColors(keys.size());
+				final int[] counter = new int[] { 0 };
+				plottedTrees.forEach((k, shape) -> {
+					if (keys.contains(k)) {
+						for (int i = 0; i < shape.size(); i++) {
+							if (shape.get(i) instanceof LineStrip) {
+								((LineStrip) shape.get(i)).setColor(fromColorRGB(colors[counter[0]]));
+							}
+						}
+						counter[0]++;
+					}
+				});
 			});
-			optionsMenu.add(mi);
+			recMenu.add(mi);
+			
+			// Misc options
 			optionsMenu.addSeparator();
 			mi = new JMenuItem("Screenshot Directory...");
 			mi.addActionListener(e -> {
@@ -1023,14 +1203,24 @@ public class TreePlot3D {
 			return optionsMenu;
 		}
 
+		private boolean okToApplyColor(final List<String> labelsOfselectedTrees) {
+			if (!treesContainColoredNodes(labelsOfselectedTrees))
+				return true;
+			return guiUtils.getConfirmation("Some of the selected reconstructions "
+					+ "seem to be color-coded. Apply homogeneous color nevertheless?", "Override Color Code?");
+		}
+
 		private JPopupMenu addMenu() {
 			final JPopupMenu addMenu = new JPopupMenu();
 			final JMenu legendMenu = new JMenu("Color Legends");
 			final JMenu meshMenu = new JMenu("Meshes");
-			final JMenu tracesMenu = new JMenu("Reconstructions");
-			addMenu.add(legendMenu);
+			meshMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CUBE));
+			final JMenu tracesMenu = new JMenu("Trees");
+			tracesMenu.setIcon(IconFactory.getMenuIcon(GLYPH.TREE));
 			addMenu.add(meshMenu);
 			addMenu.add(tracesMenu);
+			addMenu.addSeparator();
+			addMenu.add(legendMenu);
 
 			// Traces Menu
 			JMenuItem mi = new JMenuItem("Import File...");
@@ -1636,20 +1826,70 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Applies a constant thickness (line width) to plotted trees.
+	 * Applies a constant thickness (line width) to a subset of plotted trees.
 	 *
+	 * @param labels    the Collection of keys specifying the subset of trees
 	 * @param thickness the thickness
 	 */
-	protected void applyThicknessToPlottedTrees(final float thickness) {
-		plottedTrees.values().forEach(shape -> {
-			for (int i = 0; i < shape.size(); i++) {
-				if (shape.get(i) instanceof LineStrip) {
-					((LineStrip) shape.get(i)).setWireframeWidth(thickness);
+	protected void applyThicknessToPlottedTrees(final List<String> labels, final float thickness) {
+		plottedTrees.forEach((k, shape) -> {
+			if (labels.contains(k)) {
+				for (int i = 0; i < shape.size(); i++) {
+					if (shape.get(i) instanceof LineStrip) {
+						((LineStrip) shape.get(i)).setWireframeWidth(thickness);
+					}
 				}
 			}
 		});
 	}
 
+
+	/**
+	 * Applies a color to a subset of plotted trees.
+	 *
+	 * @param labels the Collection of keys specifying the subset of trees
+	 * @param color  the color
+	 */
+	protected void applyColorToPlottedTrees(final List<String> labels, final ColorRGB color) {
+		plottedTrees.forEach((k, shape) -> {
+			if (labels.contains(k)) {
+				for (int i = 0; i < shape.size(); i++) {
+					if (shape.get(i) instanceof LineStrip) {
+						((LineStrip) shape.get(i)).setColor(fromColorRGB(color));
+					}
+				}
+			}
+		});
+	}
+
+	protected boolean treesContainColoredNodes(final List<String> labels) {
+		Color refColor = null;
+		for (final Map.Entry<String, Shape> entry : plottedTrees.entrySet()) {
+			if (labels.contains(entry.getKey())) {
+				final Shape shape = entry.getValue();
+				for (int i = 0; i < shape.size(); i++) {
+					if (!(shape.get(i) instanceof LineStrip)) continue;
+					final Color color = getNodeColor((LineStrip) shape.get(i));
+					if (color == null) continue;
+					if (refColor == null) {
+						refColor = color;
+						continue;
+					}
+					if (color.r != refColor.r || color.g != refColor.g || color.b != refColor.b)
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private Color getNodeColor(LineStrip lineStrip) {
+		for (Point p : lineStrip.getPoints()) {
+			if (p != null) return p.rgb;
+		}
+		return null;
+	}
+	
 	/**
 	 * Applies a constant color to plotted meshes.
 	 *

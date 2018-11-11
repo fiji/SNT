@@ -47,6 +47,8 @@ public class IconFactory {
 		DELETE('\uf55a', true), //
 		EXPLORE('\uf610', true), //
 		EXPORT('\uf56e', true), //
+		EYE('\uf06e', false), //
+		EYE_SLASH('\uf070', false), //
 		FILL('\uf575', true), //
 		FOLDER('\uf07b', false), //
 		HOME('\uf015', true),
@@ -57,17 +59,20 @@ public class IconFactory {
 		LINK('\uf0c1', true), //
 		OPTIONS('\uf013', true), //
 		PEN('\uf303', true), //
+		POINTER('\uf245', true), //
 		PLUS('\uf0fe', false), //
 		ROCKET('\uf135', true), //
 		RULER('\uf546', true), //
 		SAVE('\uf0c7', false), //
 		SLIDERS('\uf1de', true), //
+		SORT('\uf15d', true), //
 		SYNC('\uf2f1', true), //
 		TABLE('\uf0ce', true), //
 		TAG('\uf02b', true), //
 		TEXT('\uf031', true), //
 		TOOL('\uf0ad', true), //
 		TRASH('\uf2ed', false), //
+		TREE('\uf1bb', true), //
 		UNLINK('\uf127', true), //
 		WINDOWS('\uf2d2', false);
 

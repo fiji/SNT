@@ -93,6 +93,7 @@ import javax.swing.text.NumberFormatter;
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.ui.swing.SwingDialog;
 import org.scijava.ui.swing.widget.SwingColorWidget;
+import org.scijava.util.ColorRGB;
 import org.scijava.util.PlatformUtils;
 
 import tracing.SNT;
@@ -195,6 +196,12 @@ public class GuiUtils {
 
 	public Color getColor(final String title, final Color defaultValue) {
 		return SwingColorWidget.showColorDialog(parent, title, defaultValue);
+	}
+
+	public ColorRGB getColorRGB(final String title, final Color defaultValue, final String... panes) {
+		final Color color = getColor(title, defaultValue, panes);
+		if (color == null) return null;
+		return new ColorRGB(color.getRed(), color.getGreen(), color.getBlue());
 	}
 
 	/**

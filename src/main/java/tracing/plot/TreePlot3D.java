@@ -147,7 +147,7 @@ public class TreePlot3D {
 	private static final Color INVERTED_DEF_COLOR = new Color(0f, 0f, 0f, 0.05f);
 
 	/* Maps for plotted objects */
-	private final Map<String, Shape> plottedTrees;
+	private final Map<String, ShapeTree> plottedTrees;
 	private final Map<String, RemountableDrawableVBO> plottedObjs;
 
 	/* Settings */
@@ -282,8 +282,8 @@ public class TreePlot3D {
 			drawableVBO.unmount();
 			chart.add(drawableVBO, false);
 		});
-		plottedTrees.forEach((k, surface) -> {
-			chart.add(surface, false);
+		plottedTrees.forEach((k, shapeTree) -> {
+			chart.add(shapeTree.getShape(), false);
 		});
 	}
 
@@ -296,8 +296,8 @@ public class TreePlot3D {
 			public void valueChanged(final ListSelectionEvent e) {
 				if (!e.getValueIsAdjusting()) {
 					final List<String> selectedKeys = getLabelsCheckedInManager();
-					plottedTrees.forEach((k, surface) -> {
-						surface.setDisplayed(selectedKeys.contains(k));
+					plottedTrees.forEach((k, shapeTree) -> {
+						shapeTree.getShape().setDisplayed(selectedKeys.contains(k));
 					});
 					plottedObjs.forEach((k, drawableVBO) -> {
 						drawableVBO.setDisplayed(selectedKeys.contains(k));
@@ -346,35 +346,11 @@ public class TreePlot3D {
 	 * @see #updateView()
 	 */
 	public void add(final Tree tree) {
-		final Shape surface = getShape(tree);
 		final String label = getUniqueLabel(plottedTrees, "Tree ", tree.getLabel());
-		plottedTrees.put(label, surface);
+		final ShapeTree shapeTree = new ShapeTree(tree);
+		plottedTrees.put(label, shapeTree);
 		addItemToManager(label);
-		chart.add(surface, viewUpdatesEnabled);
-	}
-
-	private Shape getShape(final Tree tree) {
-		final List<LineStrip> lines = new ArrayList<>();
-		for (final Path p : tree.list()) {
-			final LineStrip line = new LineStrip(p.size());
-			for (int i = 0; i < p.size(); ++i) {
-				final PointInImage pim = p.getPointInImage(i);
-				final Coord3d coord = new Coord3d(pim.x, pim.y, pim.z);
-				final Color color = fromAWTColor(p.hasNodeColors() ? p.getNodeColor(i) : p.getColor());
-				final float width = Math.max((float) p.getNodeRadius(i), DEF_NODE_RADIUS);
-				line.add(new Point(coord, color, width));
-			}
-			line.setShowPoints(true);
-			line.setWireframeWidth(defThickness);
-			lines.add(line);
-		}
-
-		// group all lines into a Composite
-		final Shape surface = new Shape();
-		surface.add(lines);
-		surface.setFaceDisplayed(true);
-		surface.setWireframeDisplayed(true);
-		return surface;
+		chart.add(shapeTree.getShape(), viewUpdatesEnabled);
 	}
 
 	private void addItemToManager(final String label) {
@@ -447,8 +423,8 @@ public class TreePlot3D {
 			frame.setVisible(true);
 			return frame;
 		} else if (viewInitialized) {
-			plottedTrees.forEach((k, surface) -> {
-				chart.add(surface, viewUpdatesEnabled);
+			plottedTrees.forEach((k, shapeTree) -> {
+				chart.add(shapeTree.getShape(), viewUpdatesEnabled);
 			});
 			plottedObjs.forEach((k, drawableVBO) -> {
 				chart.add(drawableVBO, viewUpdatesEnabled);
@@ -483,7 +459,11 @@ public class TreePlot3D {
 	 *         {@link #add(Tree)})
 	 */
 	public Map<String, Shape> getTrees() {
-		return plottedTrees;
+		final Map<String, Shape> map = new HashMap<>();
+		plottedTrees.forEach((k, shapeTree) -> {
+			map.put(k, shapeTree.getShape());
+		});
+		return map;
 	}
 
 	/**
@@ -508,7 +488,15 @@ public class TreePlot3D {
 	 * @see #add(Tree)
 	 */
 	public boolean remove(final String treeLabel) {
-		return removeDrawable(plottedTrees, treeLabel);
+		final ShapeTree shapeTree = plottedTrees.get(treeLabel);
+		if (shapeTree == null)
+			return false;
+		boolean removed = plottedTrees.remove(treeLabel) != null;
+		if (chart != null) {
+			removed = removed && chart.getScene().getGraph().remove(shapeTree.getShape(), viewUpdatesEnabled);
+			if (removed) deleteItemFromManager(treeLabel);
+		}
+		return removed;
 	}
 
 	/**
@@ -526,21 +514,23 @@ public class TreePlot3D {
 	 * Removes all loaded OBJ meshes from current plot
 	 */
 	public void removeAllOBJs() {
-		removeAll(plottedObjs);
-	}
+		final Iterator<Entry<String, RemountableDrawableVBO>> it = plottedObjs.entrySet().iterator();
+		while (it.hasNext()) {
+			final Map.Entry<String, RemountableDrawableVBO> entry = it.next();
+			chart.getScene().getGraph().remove(entry.getValue(), false);
+			managerModel.removeElement(entry.getKey());
+			it.remove();
+		}
+		if (viewUpdatesEnabled) chart.render();	}
 
 	/**
 	 * Removes all the Trees from current plot
 	 */
 	public void removeAll() {
-		removeAll(plottedTrees);
-	}
-
-	private <T extends AbstractDrawable>void removeAll(final Map<String, T> map) {
-		final Iterator<Entry<String, T>> it = map.entrySet().iterator();
+		final Iterator<Entry<String, ShapeTree>> it = plottedTrees.entrySet().iterator();
 		while (it.hasNext()) {
-			final Map.Entry<String, T> entry = it.next();
-			chart.getScene().getGraph().remove(entry.getValue(), false);
+			final Map.Entry<String, ShapeTree> entry = it.next();
+			chart.getScene().getGraph().remove(entry.getValue().getShape(), false);
 			managerModel.removeElement(entry.getKey());
 			it.remove();
 		}
@@ -593,16 +583,16 @@ public class TreePlot3D {
 			throw new IllegalArgumentException("SNT is not running.");
 		final Tree tree = new Tree(SNT.getPluginInstance().getPathAndFillManager().getPathsFiltered());
 		if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {
-			chart.getScene().getGraph().remove(plottedTrees.get(PATH_MANAGER_TREE_LABEL));
-			final Shape newShape = getShape(tree);
-			plottedTrees.put(PATH_MANAGER_TREE_LABEL, newShape);
-			chart.add(newShape, viewUpdatesEnabled);
+			chart.getScene().getGraph().remove(plottedTrees.get(PATH_MANAGER_TREE_LABEL).getShape());
+			final ShapeTree newShapeTree = new ShapeTree(tree);
+			plottedTrees.replace(PATH_MANAGER_TREE_LABEL, newShapeTree);
+			chart.add(newShapeTree.getShape(), viewUpdatesEnabled);
 		} else {
 			tree.setLabel(PATH_MANAGER_TREE_LABEL);
 			add(tree);
 		}
 		updateView();
-		return plottedTrees.get(PATH_MANAGER_TREE_LABEL).isDisplayed();
+		return plottedTrees.get(PATH_MANAGER_TREE_LABEL).getShape().isDisplayed();
 	}
 
 	private boolean isValid(final AbstractDrawable drawable) {
@@ -621,8 +611,8 @@ public class TreePlot3D {
 		if (managerList == null) return true;
 		final List<String> selectedKeys = getLabelsCheckedInManager();
 		final BoundingBox3d viewBounds = chart.view().getBounds();
-		return allDrawablesRendered(viewBounds, plottedTrees, selectedKeys)
-				&& allDrawablesRendered(viewBounds, plottedObjs, selectedKeys);
+		return allDrawablesRendered(viewBounds, plottedObjs, selectedKeys)
+				&& allDrawablesRendered(viewBounds, getTrees(), selectedKeys);
 	}
 
 	/** returns true if a drawable was removed */
@@ -650,9 +640,9 @@ public class TreePlot3D {
 	 * @param visible        whether the Object should be displayed
 	 */
 	public void setVisible(final String treeOrObjLabel, final boolean visible) {
-		final Shape tree = plottedTrees.get(treeOrObjLabel);
-		if (tree != null)
-			tree.setDisplayed(visible);
+		final ShapeTree treeShape = plottedTrees.get(treeOrObjLabel);
+		if (treeShape != null)
+			treeShape.getShape().setDisplayed(visible);
 		final DrawableVBO obj = plottedObjs.get(treeOrObjLabel);
 		if (obj != null)
 			obj.setDisplayed(visible);
@@ -1169,7 +1159,8 @@ public class TreePlot3D {
 	
 				final ColorRGB[] colors = SWCColor.getDistinctColors(keys.size());
 				final int[] counter = new int[] { 0 };
-				plottedTrees.forEach((k, shape) -> {
+				plottedTrees.forEach((k, shapeTree) -> {
+					final Shape shape = shapeTree.getShape();
 					if (keys.contains(k)) {
 						for (int i = 0; i < shape.size(); i++) {
 							if (shape.get(i) instanceof LineStrip) {
@@ -1316,6 +1307,63 @@ public class TreePlot3D {
 
 	private TreePlot3D getOuter() {
 		return this;
+	}
+
+	private class ShapeTree {
+
+		private final Tree tree;
+		private Shape shape;
+
+		public ShapeTree(final Tree tree) {
+			this.tree = tree;
+		}
+
+		public Shape getShape() {
+			if (shape == null) assembleShape();
+			return shape;
+		}
+	
+		private void assembleShape() {
+			final List<LineStrip> lines = new ArrayList<>();
+			for (final Path p : tree.list()) {
+				final LineStrip line = new LineStrip(p.size());
+				for (int i = 0; i < p.size(); ++i) {
+					final PointInImage pim = p.getPointInImage(i);
+					final Coord3d coord = new Coord3d(pim.x, pim.y, pim.z);
+					final Color color = fromAWTColor(p.hasNodeColors() ? p.getNodeColor(i) : p.getColor());
+					final float width = Math.max((float) p.getNodeRadius(i), DEF_NODE_RADIUS);
+					line.add(new Point(coord, color, width));
+				}
+				line.setShowPoints(true);
+				line.setWireframeWidth(defThickness);
+				lines.add(line);
+			}
+
+			// group all lines into a Composite
+			shape = new Shape();
+			shape.add(lines);
+			//shape.setFaceDisplayed(true);
+			shape.setWireframeDisplayed(true);
+		}
+
+		public void setThickness(final float thickness) {
+			for (int i = 0; i < shape.size(); i++) {
+				if (shape.get(i) instanceof LineStrip) {
+					((LineStrip) shape.get(i)).setWireframeWidth(thickness);
+				}
+			}
+		}
+
+		public double[] colorize(final String measurement, final ColorTable colorTable) {
+			final TreeColorizer colorizer = new TreeColorizer();
+			colorizer.colorize(tree, measurement, colorTable);
+			if (shape != null && shape.isDisplayed()) {
+				assembleShape();
+				chart.removeDrawable(shape);
+				chart.add(shape);
+			}
+			return colorizer.getMinMax();
+		}
 	}
 
 	private class CmdWorker extends SwingWorker<Boolean, Object> {
@@ -1627,7 +1675,8 @@ public class TreePlot3D {
 			view.getAxe().getLayout().setMainColor(newForeground);
 
 			// Apply foreground color to trees with background color
-			plottedTrees.values().forEach(shape -> {
+			plottedTrees.values().forEach(shapeTree -> {
+				final Shape shape = shapeTree.getShape();
 				if (isSameRGB(shape.getColor(), newBackground)) {
 					shape.setColor(newForeground);
 					return; // replaces continue in lambda expression;
@@ -1832,14 +1881,8 @@ public class TreePlot3D {
 	 * @param thickness the thickness
 	 */
 	protected void applyThicknessToPlottedTrees(final List<String> labels, final float thickness) {
-		plottedTrees.forEach((k, shape) -> {
-			if (labels.contains(k)) {
-				for (int i = 0; i < shape.size(); i++) {
-					if (shape.get(i) instanceof LineStrip) {
-						((LineStrip) shape.get(i)).setWireframeWidth(thickness);
-					}
-				}
-			}
+		plottedTrees.forEach((k, shapeTree) -> {
+			if (labels.contains(k)) shapeTree.setThickness(thickness);
 		});
 	}
 
@@ -1851,8 +1894,9 @@ public class TreePlot3D {
 	 * @param color  the color
 	 */
 	protected void applyColorToPlottedTrees(final List<String> labels, final ColorRGB color) {
-		plottedTrees.forEach((k, shape) -> {
+		plottedTrees.forEach((k, shapeTree) -> {
 			if (labels.contains(k)) {
+				final Shape shape = shapeTree.getShape();
 				for (int i = 0; i < shape.size(); i++) {
 					if (shape.get(i) instanceof LineStrip) {
 						((LineStrip) shape.get(i)).setColor(fromColorRGB(color));
@@ -1864,9 +1908,9 @@ public class TreePlot3D {
 
 	protected boolean treesContainColoredNodes(final List<String> labels) {
 		Color refColor = null;
-		for (final Map.Entry<String, Shape> entry : plottedTrees.entrySet()) {
+		for (final Map.Entry<String, ShapeTree> entry : plottedTrees.entrySet()) {
 			if (labels.contains(entry.getKey())) {
-				final Shape shape = entry.getValue();
+				final Shape shape = entry.getValue().getShape();
 				for (int i = 0; i < shape.size(); i++) {
 					if (!(shape.get(i) instanceof LineStrip)) continue;
 					final Color color = getNodeColor((LineStrip) shape.get(i));

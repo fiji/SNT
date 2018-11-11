@@ -123,7 +123,7 @@ import tracing.analysis.TreeColorizer;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.IconFactory.GLYPH;
-import tracing.gui.cmds.ColorRampCmd;
+import tracing.gui.cmds.ColorizeReconstructionCmd;
 import tracing.gui.cmds.LoadObjCmd;
 import tracing.gui.cmds.LoadReconstructionCmd;
 import tracing.gui.cmds.MLImporterCmd;
@@ -648,6 +648,12 @@ public class TreePlot3D {
 			obj.setDisplayed(visible);
 	}
 
+	public double[] colorize(final String treeLabel, final String measurement, final ColorTable colorTable) {
+		final ShapeTree treeShape = plottedTrees.get(treeLabel);
+		if (treeShape == null) return null;
+		return treeShape.colorize(measurement, colorTable);
+	}
+
 	/**
 	 * Sets the screenshot directory.
 	 *
@@ -1083,7 +1089,7 @@ public class TreePlot3D {
 			optionsMenu.add(recMenu);
 
 			// Mesh customizations
-			JMenuItem mi = new JMenuItem("Recolor...");
+			JMenuItem mi = new JMenuItem("Color...");
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedMeshes();
 				if (keys == null) return;
@@ -1118,7 +1124,7 @@ public class TreePlot3D {
 			meshMenu.add(mi);
 
 			// Tree customizations
-			mi = new JMenuItem("Recolor...");
+			mi = new JMenuItem("Color...");
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees();
 				if (keys == null || !okToApplyColor(keys)) return;
@@ -1152,6 +1158,16 @@ public class TreePlot3D {
 				applyThicknessToPlottedTrees(keys, thickness.floatValue());
 			});
 			recMenu.add(mi);
+			recMenu.addSeparator();
+
+			mi = new JMenuItem("Color Coding...");
+			mi.addActionListener(e -> {
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("labels", getSelectedTrees());
+				runCmd(ColorizeReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
+			recMenu.add(mi);
+
 			mi = new JMenuItem("Color Each Cell Uniquely...");
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees();
@@ -1247,7 +1263,7 @@ public class TreePlot3D {
 			// Legend Menu
 			mi = new JMenuItem("Add...");
 			mi.addActionListener(e -> {
-				runCmd(ColorRampCmd.class, null, CmdWorker.DO_NOTHING);
+				runCmd(ColorizeReconstructionCmd.class, null, CmdWorker.DO_NOTHING);
 			});
 			legendMenu.add(mi);
 			mi = new JMenuItem("Remove Last");

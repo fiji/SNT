@@ -71,9 +71,8 @@ public class TreeColorizer {
 	public static final String Y_COORDINATES = TreeAnalyzer.Y_COORDINATES;
 	public static final String Z_COORDINATES = TreeAnalyzer.Z_COORDINATES;
 	public static final String PATH_DISTANCE = "Path distance to soma";
-	public static final String FIRST_TAG = "Tags/Filename";
+	public static final String FIRST_TAG = "Cell/Tags/Filename";
 	private static final String INTERNAL_COUNTER = "Id";
-
 
 	@Parameter
 	private LUTService lutService;
@@ -95,6 +94,14 @@ public class TreeColorizer {
 	 */
 	public TreeColorizer(final Context context) {
 		context.inject(this);
+	}
+
+	/**
+	 * Instantiates the Colorizer. Note that because the instance is not aware of
+	 * any context, script-friendly methods that use string as arguments may fail to
+	 * retrieve referenced Scijava objects.
+	 */
+	public TreeColorizer() {
 	}
 
 	private void initLuts() {
@@ -192,6 +199,7 @@ public class TreeColorizer {
 				mappedPaths.add(new MappedPath(p, (double) internalCounter));
 			break;
 		case FIRST_TAG:
+			integerScale = true;
 			final List<MappedTaggedPath> mappedTaggedPaths = new ArrayList<>();
 			final TreeSet<String> tags = new TreeSet<>();
 			for (final Path p : paths) {

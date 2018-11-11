@@ -131,14 +131,14 @@ public class TreeColorizerCmd extends DynamicCommand {
 			SNT.log("Displaying in Reconstruction Viewer...");
 			final boolean newInstance = recViewer == null;
 			final boolean sntActive = sntService.isActive();
-			recViewer = (sntActive) ? sntService.getReconstructionViewer() : new TreePlot3D();
+			recViewer = (sntActive) ? sntService.getReconstructionViewer() : new TreePlot3D(getContext());
 			recViewer.addColorBarLegend(colorTable, (float) minMax[0], (float) minMax[1]);
 			if (sntActive) {
 				recViewer.syncPathManagerList();
 			} else if (newInstance) {
 				recViewer.add(tree);
 			}
-			recViewer.show(true);
+			recViewer.show();
 		}
 		SNT.log("Finished...");
 		if (manager != null)

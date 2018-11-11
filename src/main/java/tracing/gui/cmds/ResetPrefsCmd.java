@@ -72,7 +72,7 @@ public class ResetPrefsCmd extends ContextCommand {
 		}
 
 		// gui.cmds
-		prefService.clear(ColorRampCmd.class);
+		prefService.clear(ColorizeReconstructionCmd.class);
 		prefService.clear(CompareFilesCmd.class);
 		prefService.clear(LoadObjCmd.class);
 		prefService.clear(LoadReconstructionCmd.class);

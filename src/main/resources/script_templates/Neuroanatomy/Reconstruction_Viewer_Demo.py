@@ -38,12 +38,12 @@ def run():
 
     # Visualize tree in Reconstruction Viewer
     print("... Done. Preparing Reconstruction Viewer...")
-    viewer = TreePlot3D(context)
+    viewer = TreePlot3D(context) # Initialize viewer with GUI controls
     viewer.add(tree)
     bounds = colorizer.getMinMax()
     viewer.addColorBarLegend(color_table, bounds[0], bounds[1])
     viewer.loadMouseRefBrain()
-    viewer.show(True)  # Display viewer with Manager?
+    viewer.show()
     print("... Done. With Viewer active, Press 'H' or 'F1' for help")
 
 

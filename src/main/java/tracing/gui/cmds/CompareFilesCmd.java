@@ -79,7 +79,7 @@ public class CompareFilesCmd extends ContextCommand {
 			tree2.setColor(color2);
 			//plot3d.setDefaultColor(color2);
 			plot3d.add(tree2);
-			plot3d.show(false).setTitle(file1.getName() + " vs " + file2.getName());
+			plot3d.show().setTitle(file1.getName() + " vs " + file2.getName());
 			report = makeReport(tree1, tree2);
 
 		} catch (final IllegalArgumentException ex) {

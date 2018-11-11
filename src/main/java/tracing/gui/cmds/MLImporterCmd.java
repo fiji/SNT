@@ -173,7 +173,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			recViewer.setViewUpdatesEnabled(false);
 			recViewer.loadMouseRefBrain();
 			recViewer.syncPathManagerList();
-			recViewer.show(true);
+			recViewer.show();
 			recViewer.setViewUpdatesEnabled(true);
 		}
 

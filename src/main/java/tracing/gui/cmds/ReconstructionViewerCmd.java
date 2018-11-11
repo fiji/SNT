@@ -46,7 +46,7 @@ public class ReconstructionViewerCmd extends ContextCommand {
 	@Override
 	public void run() {
 		final TreePlot3D viewer = new TreePlot3D(getContext());
-		viewer.show(true);
+		viewer.show();
 	}
 
 	/* IDE debug method **/

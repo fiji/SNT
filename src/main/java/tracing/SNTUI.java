@@ -26,6 +26,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
@@ -194,6 +195,7 @@ public class SNTUI extends JDialog {
 
 	/* Reconstruction Viewer */
 	protected TreePlot3D recViewer;
+	protected Frame recViewerFrame;
 	private JButton openRefreshRecViewerButton;
 
 	protected final GuiListener listener;
@@ -347,7 +349,6 @@ public class SNTUI extends JDialog {
 			// c3.insets.left = MARGIN * 2;
 			c3.anchor = GridBagConstraints.NORTHEAST;
 			c3.gridwidth = GridBagConstraints.REMAINDER;
-			pack(); // ensure proper width of subsequent JTextAreas
 
 			tabbedPane.addTab(" 3D ", tab3);
 			GuiUtils.addSeparator(tab3, "Reconstruction Viewer:", true, c3);
@@ -1570,7 +1571,7 @@ public class SNTUI extends JDialog {
 		ta.setBackground(getBackground());
 		ta.setEditable(false);
 		ta.setMargin(null);
-		ta.setColumns(getWidth());
+		ta.setColumns(20);
 		ta.setBorder(null);
 		ta.setAutoscrolls(true);
 		ta.setLineWrap(true);
@@ -1594,11 +1595,13 @@ public class SNTUI extends JDialog {
 				recViewer.setDefaultColor(new ColorRGB(plugin.deselectedColor.getRed(),
 						plugin.deselectedColor.getGreen(), plugin.deselectedColor.getBlue()));
 				if (pathAndFillManager.size() > 0) recViewer.syncPathManagerList() ;
-				recViewer.show(true).addWindowListener(new WindowAdapter() {
+				recViewerFrame = recViewer.show();
+				recViewerFrame.addWindowListener(new WindowAdapter() {
 					 @Override
 					 public void windowClosed(final WindowEvent e) {
 						openRefreshRecViewerButton.setEnabled(true);
 						recViewer = null;
+						recViewerFrame = null;
 					 }
 				});
 			}

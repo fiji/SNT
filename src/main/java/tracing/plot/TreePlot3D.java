@@ -156,7 +156,7 @@ public class TreePlot3D {
 	private String screenshotDir;
 
 	/* Color Bar */
-	private AWTColorbarLegend cbar;
+	private AWTColorbarLegend cBar;
 	private Shape cBarShape;
 
 	/* Manager */
@@ -274,7 +274,7 @@ public class TreePlot3D {
 	}
 
 	private void addAllObjects() {
-		if (cBarShape != null && cbar != null) {
+		if (cBarShape != null && cBar != null) {
 			chart.add(cBarShape, false);
 			setColorbarColors(isDarkModeOn());
 		}
@@ -389,22 +389,22 @@ public class TreePlot3D {
 	public void addColorBarLegend(final ColorTable colorTable, final float min, final float max) {
 		cBarShape = new Shape();
 		cBarShape.setColorMapper(new ColorTableMapper(colorTable, min, max));
-		cbar = new AWTColorbarLegend(cBarShape, view.getAxe().getLayout());
+		cBar = new AWTColorbarLegend(cBarShape, view.getAxe().getLayout());
 		setColorbarColors(view.getBackgroundColor() == Color.BLACK);
 		// cbar.setMinimumSize(new Dimension(100, 600));
-		cBarShape.setLegend(cbar);
+		cBarShape.setLegend(cBar);
 		chart.add(cBarShape, viewUpdatesEnabled);
 	}
 
 	private void setColorbarColors(final boolean darkMode) {
-		if (cbar == null)
+		if (cBar == null)
 			return;
 		if (darkMode) {
-			cbar.setBackground(Color.BLACK);
-			cbar.setForeground(Color.WHITE);
+			cBar.setBackground(Color.BLACK);
+			cBar.setForeground(Color.WHITE);
 		} else {
-			cbar.setBackground(Color.WHITE);
-			cbar.setForeground(Color.BLACK);
+			cBar.setBackground(Color.WHITE);
+			cBar.setForeground(Color.BLACK);
 		}
 	}
 
@@ -1172,7 +1172,7 @@ public class TreePlot3D {
 				});
 			});
 			recMenu.add(mi);
-			
+
 			// Misc options
 			optionsMenu.addSeparator();
 			mi = new JMenuItem("Screenshot Directory...");
@@ -1246,7 +1246,12 @@ public class TreePlot3D {
 
 			// Legend Menu
 			mi = new JMenuItem("Add...");
-			mi.addActionListener(e -> runCmd(ColorRampCmd.class, null, CmdWorker.DO_NOTHING));
+			mi.addActionListener(e -> {
+				runCmd(ColorRampCmd.class, null, CmdWorker.DO_NOTHING);
+			});
+			legendMenu.add(mi);
+			mi = new JMenuItem("Remove Last");
+			mi.addActionListener(e -> removeColorLegends(true));
 			legendMenu.add(mi);
 			meshMenu.addSeparator();
 			mi = new JMenuItem("Remove All...");
@@ -1254,16 +1259,7 @@ public class TreePlot3D {
 				if (!guiUtils.getConfirmation("Remove all color legends from scene?", "Remove All Legends?")) {
 					return;
 				}
-				final List<AbstractDrawable> allDrawables = chart.getScene().getGraph().getAll();
-				final Iterator<AbstractDrawable> iterator = allDrawables.iterator();
-				while(iterator.hasNext()) {
-					final AbstractDrawable drawable = iterator.next();
-					if (drawable != null && drawable.hasLegend() && drawable.isLegendDisplayed()) {
-						iterator.remove();
-					}
-				}
-				cbar = null;
-				cBarShape = null;
+				removeColorLegends(false);
 			});
 			legendMenu.add(mi);
 
@@ -1292,6 +1288,20 @@ public class TreePlot3D {
 			});
 			meshMenu.add(mi);
 			return addMenu;
+		}
+
+		private void removeColorLegends(final boolean justLastOne) {
+			final List<AbstractDrawable> allDrawables = chart.getScene().getGraph().getAll();
+			final Iterator<AbstractDrawable> iterator = allDrawables.iterator();
+			while(iterator.hasNext()) {
+				final AbstractDrawable drawable = iterator.next();
+				if (drawable != null && drawable.hasLegend() && drawable.isLegendDisplayed()) {
+					iterator.remove();
+					if (justLastOne) break;
+				}
+			}
+			cBar = null;
+			cBarShape = null;
 		}
 
 		private void runCmd(final Class<? extends Command> cmdClass, final Map<String, Object> inputs,

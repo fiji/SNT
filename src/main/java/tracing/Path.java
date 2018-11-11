@@ -2420,12 +2420,13 @@ public class Path implements Comparable<Path> {
 	synchronized void updateContent3D(final Image3DUniverse univ, final boolean visible, final int paths3DDisplay,
 			final Color3f color, final ImagePlus colorImage) {
 
-		SNT.log("In updateContent3D, colorImage is: " + colorImage);
-		SNT.log("In updateContent3D, color is: " + color);
+//		SNT.log("In updateContent3D, colorImage is: " + colorImage);
+//		SNT.log("In updateContent3D, color is: " + color);
 
 		// So, go through each of the reasons why we might
 		// have to remove (and possibly add back) the path:
 
+	
 		if (!visible) {
 			/*
 			 * It shouldn't be visible - if any of the contents are non-null, remove them:
@@ -2454,12 +2455,12 @@ public class Path implements Comparable<Path> {
 			pathToUse = this;
 		}
 
-		if (SNT.isDebugMode()) {
-			SNT.log("pathToUse is: " + pathToUse);
-			SNT.log("  pathToUse.content3D is: " + pathToUse.content3D);
-			SNT.log("  pathToUse.content3DExtra is: " + pathToUse.content3DExtra);
-			SNT.log("  pathToUse.content3DMultiColored: " + pathToUse.content3DMultiColored);
-		}
+//		if (SNT.isDebugMode()) {
+//			SNT.log("pathToUse is: " + pathToUse);
+//			SNT.log("  pathToUse.content3D is: " + pathToUse.content3D);
+//			SNT.log("  pathToUse.content3DExtra is: " + pathToUse.content3DExtra);
+//			SNT.log("  pathToUse.content3DMultiColored: " + pathToUse.content3DMultiColored);
+//		}
 
 		// Is the the display (lines-and-discs or surfaces) right?
 		if (pathToUse.paths3DDisplay != paths3DDisplay) {
@@ -2747,11 +2748,11 @@ public class Path implements Comparable<Path> {
 			total_length_in_image_space += Math.sqrt(x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
 		}
 		final double mean_inter_point_distance_in_image_space = total_length_in_image_space / (pointsToUse - 1);
-		SNT.log("For path " + this + ", got mean_inter_point_distance_in_image_space: "
-				+ mean_inter_point_distance_in_image_space);
+//		SNT.log("For path " + this + ", got mean_inter_point_distance_in_image_space: "
+//				+ mean_inter_point_distance_in_image_space);
 		final boolean resample = mean_inter_point_distance_in_image_space < 3;
 
-		SNT.log("... so" + (resample ? "" : " not") + " resampling");
+//		SNT.log("... so" + (resample ? "" : " not") + " resampling");
 
 		final ArrayList<Color3f> tubeColors = new ArrayList<>();
 

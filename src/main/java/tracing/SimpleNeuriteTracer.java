@@ -2217,6 +2217,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		new GuiUtils(getActiveWindow()).error(msg);
 	}
 
+	public void showMsg(final String msg, final String title) {
+		new GuiUtils(getActiveWindow()).error(msg, title);
+	}
+
 	private Component getActiveCanvas() {
 		if (!isUIready()) return null;
 		final List<Component> components = new ArrayList<>();
@@ -2232,6 +2236,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	private Component getActiveWindow() {
 		if (!isUIready()) return null;
+		if (ui.isActive()) return ui;
 		final Window[] images = { xy_window, xz_window, zy_window };
 		for (final Window win : images) {
 			if (win != null && win.isActive()) return win;
@@ -2241,7 +2246,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		for (final Window frame : frames) {
 			if (frame.isActive()) return frame;
 		}
-		return ui;
+		return ui.recViewerFrame;
 	}
 
 	public boolean isOnlySelectedPathsVisible() {

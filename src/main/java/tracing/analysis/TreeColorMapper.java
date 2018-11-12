@@ -71,8 +71,14 @@ public class TreeColorMapper extends ColorMapper {
 	public static final String Y_COORDINATES = TreeAnalyzer.Y_COORDINATES;
 	public static final String Z_COORDINATES = TreeAnalyzer.Z_COORDINATES;
 	public static final String PATH_DISTANCE = "Path distance to soma";
-	public static final String FIRST_TAG = "Cell/Tags/Filename";
+	public static final String FIRST_TAG = "Tags/Filename";
 	private static final String INTERNAL_COUNTER = "Id";
+
+	public static final String[] COMMON_MEASUREMENTS = { //
+			TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH, TreeColorMapper.N_BRANCH_POINTS, //
+			TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE, TreeColorMapper.MEAN_RADIUS, //
+			TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES, TreeColorMapper.Y_COORDINATES, //
+			TreeColorMapper.Z_COORDINATES };
 
 	@Parameter
 	private LUTService lutService;

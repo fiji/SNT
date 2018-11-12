@@ -64,6 +64,10 @@ public class MultiTreeColorMapper extends ColorMapper {
 	 */
 	public static final String ID = "Cell/Id";
 
+	public static final String[] PROPERTIES = { //
+			ID, TOTAL_LENGTH, TOTAL_N_BRANCH_POINTS, TOTAL_N_TIPS, ROOT_NUMBER//
+	};
+
 	private final Collection<MappedTree> mappedTrees;
 	private int internalCounter = 1;
 

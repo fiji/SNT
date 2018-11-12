@@ -38,7 +38,7 @@ import org.scijava.plugin.Plugin;
 import net.imagej.ImageJ;
 import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable;
-import tracing.analysis.TreeColorizer;
+import tracing.analysis.TreeColorMapper;
 import tracing.gui.GuiUtils;
 import tracing.plot.TreePlot3D;
 
@@ -54,10 +54,10 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 	private LUTService lutService;
 
 	@Parameter(required = true, label = "Measurement", choices = { //
-			TreeColorizer.BRANCH_ORDER, TreeColorizer.LENGTH, TreeColorizer.N_BRANCH_POINTS, //
-			TreeColorizer.N_NODES, TreeColorizer.PATH_DISTANCE, TreeColorizer.MEAN_RADIUS, //
-			TreeColorizer.NODE_RADIUS, TreeColorizer.X_COORDINATES, TreeColorizer.Y_COORDINATES, //
-			TreeColorizer.Z_COORDINATES})
+			TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH, TreeColorMapper.N_BRANCH_POINTS, //
+			TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE, TreeColorMapper.MEAN_RADIUS, //
+			TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES, TreeColorMapper.Y_COORDINATES, //
+			TreeColorMapper.Z_COORDINATES})
 	private String measurementChoice;
 
 	@Parameter(label = "Min", required = false, description = "Set both limits to zero for automatic scaling")

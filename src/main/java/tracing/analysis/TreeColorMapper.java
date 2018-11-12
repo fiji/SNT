@@ -58,7 +58,7 @@ import tracing.util.PointInImage;
  * @author Tiago Ferreira
  *
  */
-public class TreeColorizer {
+public class TreeColorMapper extends ColorMapper {
 
 	/* For convenience keep references to TreeAnalyzer fields */
 	public static final String BRANCH_ORDER = TreeAnalyzer.BRANCH_ORDER;
@@ -78,10 +78,6 @@ public class TreeColorizer {
 	private LUTService lutService;
 
 	protected ArrayList<Path> paths;
-	protected ColorTable colorTable;
-	protected boolean integerScale;
-	protected double min = Double.MAX_VALUE;
-	protected double max = Double.MIN_VALUE;
 	private Map<String, URL> luts;
 	private int internalCounter = 1;
 
@@ -92,7 +88,7 @@ public class TreeColorizer {
 	 *            the SciJava application context providing the services required by
 	 *            the class
 	 */
-	public TreeColorizer(final Context context) {
+	public TreeColorMapper(final Context context) {
 		context.inject(this);
 	}
 
@@ -101,7 +97,7 @@ public class TreeColorizer {
 	 * any context, script-friendly methods that use string as arguments may fail to
 	 * retrieve referenced Scijava objects.
 	 */
-	public TreeColorizer() {
+	public TreeColorMapper() {
 	}
 
 	private void initLuts() {
@@ -124,14 +120,8 @@ public class TreeColorizer {
 	}
 
 	protected void mapToProperty(final String measurement, final ColorTable colorTable) {
-		if (colorTable == null)
-			return;
-		if (measurement == null)
-			throw new IllegalArgumentException("Parameter cannot be null");
-		final String cMeasurement = new StringBuilder().append(measurement.substring(0, 1).toUpperCase())
-				.append(measurement.substring(1)).toString();
-		this.colorTable = colorTable;
-
+		colorize(measurement, colorTable);
+		final String cMeasurement = normalizedMeasurement(measurement);
 		switch (cMeasurement) {
 		case PATH_DISTANCE:
 			final TreeParser parser = new TreeParser(new Tree(paths));
@@ -349,46 +339,6 @@ public class TreeColorizer {
 				}
 			}
 		}
-	}
-
-	private Color getColor(final double mappedValue) {
-		final int idx;
-		if (mappedValue <= min)
-			idx = 0;
-		else if (mappedValue > max)
-			idx = colorTable.getLength() - 1;
-		else
-			idx = (int) Math.round((colorTable.getLength() - 1) * (mappedValue - min) / (max - min));
-		return new Color(colorTable.get(ColorTable.RED, idx), colorTable.get(ColorTable.GREEN, idx),
-				colorTable.get(ColorTable.BLUE, idx));
-	}
-
-	/**
-	 * Sets the LUT mapping bounds.
-	 *
-	 * @param min
-	 *            the mapping lower bound (i.e., the highest measurement value for
-	 *            the LUT scale). It is automatically calculated (the default) when
-	 *            set to Double.NaN
-	 * @param max
-	 *            the mapping upper bound (i.e., the highest measurement value for
-	 *            the LUT scale).It is automatically calculated (the default) when
-	 *            set to Double.NaN.
-	 */
-	public void setMinMax(final double min, final double max) {
-		if (!Double.isNaN(min) && !Double.isNaN(max) && min > max)
-			throw new IllegalArgumentException("min > max");
-		this.min = (Double.isNaN(min)) ? Double.MAX_VALUE : min;
-		this.max = (Double.isNaN(max)) ? Double.MIN_VALUE : max;
-	}
-
-	/**
-	 * Returns the mapping bounds
-	 *
-	 * @return a two-element array with current {minimum, maximum} mapping bounds
-	 */
-	public double[] getMinMax() {
-		return new double[] {min, max};
 	}
 
 	/**

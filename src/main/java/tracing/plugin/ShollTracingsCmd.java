@@ -74,7 +74,7 @@ import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
 import tracing.Tree;
 import tracing.analysis.TreeAnalyzer;
-import tracing.analysis.TreeColorizer;
+import tracing.analysis.TreeColorMapper;
 import tracing.analysis.sholl.TreeParser;
 import tracing.gui.GuiUtils;
 import tracing.util.PointInCanvas;
@@ -603,7 +603,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive, Can
 				}
 				if (annotationsDescription.contains("paths")) {
 					showStatus("Color coding nodes...");
-					final TreeColorizer treeColorizer = new TreeColorizer(snt.getContext());
+					final TreeColorMapper treeColorizer = new TreeColorMapper(snt.getContext());
 					treeColorizer.colorize(tree, lStats, lutTable);
 				}
 				annotationsDescription = "None";

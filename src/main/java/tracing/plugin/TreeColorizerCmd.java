@@ -47,13 +47,13 @@ import tracing.PathManagerUI;
 import tracing.SNT;
 import tracing.SNTService;
 import tracing.Tree;
-import tracing.analysis.TreeColorizer;
+import tracing.analysis.TreeColorMapper;
 import tracing.plot.TreePlot2D;
 import tracing.plot.TreePlot3D;
 
 /**
  * Command for color coding trees according to their properties using
- * {@link TreeColorizer} with options to display result in
+ * {@link TreeColorMapper} with options to display result in
  *  {@link TreePlot2D} and {@link TreePlot3D}
  *
  * @author Tiago Ferreira
@@ -74,10 +74,10 @@ public class TreeColorizerCmd extends DynamicCommand {
 	private StatusService statusService;
 
 	@Parameter(required = true, label = "Color by", choices = { //
-			TreeColorizer.BRANCH_ORDER, TreeColorizer.LENGTH, TreeColorizer.N_BRANCH_POINTS, //
-			TreeColorizer.N_NODES, TreeColorizer.PATH_DISTANCE, TreeColorizer.MEAN_RADIUS, //
-			TreeColorizer.NODE_RADIUS, TreeColorizer.X_COORDINATES, TreeColorizer.Y_COORDINATES, //
-			TreeColorizer.Z_COORDINATES, TreeColorizer.FIRST_TAG})
+			TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH, TreeColorMapper.N_BRANCH_POINTS, //
+			TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE, TreeColorMapper.MEAN_RADIUS, //
+			TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES, TreeColorMapper.Y_COORDINATES, //
+			TreeColorMapper.Z_COORDINATES, TreeColorMapper.FIRST_TAG})
 	private String measurementChoice;
 
 	@Parameter(label = "LUT", callback = "lutChoiceChanged")
@@ -111,7 +111,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 			cancel("Invalid input tree");
 		statusService.showStatus("Applying Color Code...");
 		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
-		final TreeColorizer colorizer = new TreeColorizer(context());
+		final TreeColorMapper colorizer = new TreeColorMapper(context());
 		colorizer.setMinMax(Double.NaN, Double.NaN);
 		try {
 			colorizer.colorize(tree, measurementChoice, colorTable);

@@ -119,7 +119,7 @@ import tracing.Path;
 import tracing.SNT;
 import tracing.SNTService;
 import tracing.Tree;
-import tracing.analysis.TreeColorizer;
+import tracing.analysis.TreeColorMapper;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.IconFactory.GLYPH;
@@ -1381,7 +1381,7 @@ public class TreePlot3D {
 		}
 
 		public double[] colorize(final String measurement, final ColorTable colorTable) {
-			final TreeColorizer colorizer = new TreeColorizer();
+			final TreeColorMapper colorizer = new TreeColorMapper();
 			colorizer.colorize(tree, measurement, colorTable);
 			if (shape != null && shape.isDisplayed()) {
 				assembleShape();
@@ -1990,8 +1990,8 @@ public class TreePlot3D {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
-		final TreeColorizer colorizer = new TreeColorizer(ij.getContext());
-		colorizer.colorize(tree, TreeColorizer.BRANCH_ORDER, ColorTables.ICE);
+		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
+		colorizer.colorize(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();
 		SNT.setDebugMode(true);
 		final TreePlot3D jzy3D = new TreePlot3D(ij.context());

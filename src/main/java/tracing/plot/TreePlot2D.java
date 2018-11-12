@@ -53,7 +53,7 @@ import org.scijava.util.ColorRGB;
 
 import tracing.Path;
 import tracing.Tree;
-import tracing.analysis.TreeColorizer;
+import tracing.analysis.TreeColorMapper;
 import tracing.plugin.DistributionCmd;
 import tracing.util.PointInImage;
 
@@ -64,7 +64,7 @@ import tracing.util.PointInImage;
  * @author Tiago Ferreira
  *
  */
-public class TreePlot2D extends TreeColorizer {
+public class TreePlot2D extends TreeColorMapper {
 
 	@Parameter
 	private PlotService plotService;

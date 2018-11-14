@@ -24,6 +24,7 @@ package tracing.util;
 
 import java.awt.Color;
 import java.util.Arrays;
+import java.util.Collection;
 
 import org.scijava.util.ColorRGB;
 
@@ -179,6 +180,21 @@ public class SWCColor {
 		final int b = Integer.valueOf(input.substring(4, 6), 16);
 		final int a = (hex.length() < 8) ? 255 : Integer.valueOf(hex.substring(6, 8), 16);
 		return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
+	}
+
+	public static Color average(final Collection<Color> colors) {
+		if (colors == null || colors.isEmpty()) return null;
+		// this will never be accurate because the RGB space is not linear
+		int tR = 0; int tG = 0; int tB = 0; int tA = 0;
+		for (final Color c : colors) {
+			if (c == null) continue;
+			tR += c.getRed();
+			tG += c.getGreen();
+			tB += c.getBlue();
+			tA += c.getAlpha();
+		}
+		final int n = colors.size();
+		return new Color((int) (tR / n), (int) (tG / n), (int) (tB / n), (int) (tA / n));
 	}
 
 	/**

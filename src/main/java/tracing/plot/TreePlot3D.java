@@ -81,9 +81,12 @@ import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.maths.Rectangle;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
+import org.jzy3d.plot3d.primitives.AbstractWireframeable;
 import org.jzy3d.plot3d.primitives.LineStrip;
 import org.jzy3d.plot3d.primitives.Point;
 import org.jzy3d.plot3d.primitives.Shape;
+import org.jzy3d.plot3d.primitives.Sphere;
+import org.jzy3d.plot3d.primitives.Tube;
 import org.jzy3d.plot3d.primitives.vbo.drawable.DrawableVBO;
 import org.jzy3d.plot3d.rendering.canvas.ICanvas;
 import org.jzy3d.plot3d.rendering.canvas.Quality;
@@ -282,9 +285,7 @@ public class TreePlot3D {
 			drawableVBO.unmount();
 			chart.add(drawableVBO, false);
 		});
-		plottedTrees.forEach((k, shapeTree) -> {
-			chart.add(shapeTree.getShape(), false);
-		});
+		plottedTrees.values().forEach(shapeTree -> chart.add(shapeTree.get(), false));
 	}
 
 	private void initManagerList() {
@@ -297,7 +298,7 @@ public class TreePlot3D {
 				if (!e.getValueIsAdjusting()) {
 					final List<String> selectedKeys = getLabelsCheckedInManager();
 					plottedTrees.forEach((k, shapeTree) -> {
-						shapeTree.getShape().setDisplayed(selectedKeys.contains(k));
+						shapeTree.get().setDisplayed(selectedKeys.contains(k));
 					});
 					plottedObjs.forEach((k, drawableVBO) -> {
 						drawableVBO.setDisplayed(selectedKeys.contains(k));
@@ -350,7 +351,7 @@ public class TreePlot3D {
 		final ShapeTree shapeTree = new ShapeTree(tree);
 		plottedTrees.put(label, shapeTree);
 		addItemToManager(label);
-		chart.add(shapeTree.getShape(), viewUpdatesEnabled);
+		chart.add(shapeTree.get(), viewUpdatesEnabled);
 	}
 
 	private void addItemToManager(final String label) {
@@ -424,7 +425,7 @@ public class TreePlot3D {
 			return frame;
 		} else if (viewInitialized) {
 			plottedTrees.forEach((k, shapeTree) -> {
-				chart.add(shapeTree.getShape(), viewUpdatesEnabled);
+				chart.add(shapeTree.get(), viewUpdatesEnabled);
 			});
 			plottedObjs.forEach((k, drawableVBO) -> {
 				chart.add(drawableVBO, viewUpdatesEnabled);
@@ -461,7 +462,7 @@ public class TreePlot3D {
 	public Map<String, Shape> getTrees() {
 		final Map<String, Shape> map = new HashMap<>();
 		plottedTrees.forEach((k, shapeTree) -> {
-			map.put(k, shapeTree.getShape());
+			map.put(k, shapeTree.get());
 		});
 		return map;
 	}
@@ -493,7 +494,7 @@ public class TreePlot3D {
 			return false;
 		boolean removed = plottedTrees.remove(treeLabel) != null;
 		if (chart != null) {
-			removed = removed && chart.getScene().getGraph().remove(shapeTree.getShape(), viewUpdatesEnabled);
+			removed = removed && chart.getScene().getGraph().remove(shapeTree.get(), viewUpdatesEnabled);
 			if (removed) deleteItemFromManager(treeLabel);
 		}
 		return removed;
@@ -530,7 +531,7 @@ public class TreePlot3D {
 		final Iterator<Entry<String, ShapeTree>> it = plottedTrees.entrySet().iterator();
 		while (it.hasNext()) {
 			final Map.Entry<String, ShapeTree> entry = it.next();
-			chart.getScene().getGraph().remove(entry.getValue().getShape(), false);
+			chart.getScene().getGraph().remove(entry.getValue().get(), false);
 			managerModel.removeElement(entry.getKey());
 			it.remove();
 		}
@@ -583,16 +584,16 @@ public class TreePlot3D {
 			throw new IllegalArgumentException("SNT is not running.");
 		final Tree tree = new Tree(SNT.getPluginInstance().getPathAndFillManager().getPathsFiltered());
 		if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {
-			chart.getScene().getGraph().remove(plottedTrees.get(PATH_MANAGER_TREE_LABEL).getShape());
+			chart.getScene().getGraph().remove(plottedTrees.get(PATH_MANAGER_TREE_LABEL).get());
 			final ShapeTree newShapeTree = new ShapeTree(tree);
 			plottedTrees.replace(PATH_MANAGER_TREE_LABEL, newShapeTree);
-			chart.add(newShapeTree.getShape(), viewUpdatesEnabled);
+			chart.add(newShapeTree.get(), viewUpdatesEnabled);
 		} else {
 			tree.setLabel(PATH_MANAGER_TREE_LABEL);
 			add(tree);
 		}
 		updateView();
-		return plottedTrees.get(PATH_MANAGER_TREE_LABEL).getShape().isDisplayed();
+		return plottedTrees.get(PATH_MANAGER_TREE_LABEL).get().isDisplayed();
 	}
 
 	private boolean isValid(final AbstractDrawable drawable) {
@@ -642,7 +643,7 @@ public class TreePlot3D {
 	public void setVisible(final String treeOrObjLabel, final boolean visible) {
 		final ShapeTree treeShape = plottedTrees.get(treeOrObjLabel);
 		if (treeShape != null)
-			treeShape.getShape().setDisplayed(visible);
+			treeShape.get().setDisplayed(visible);
 		final DrawableVBO obj = plottedObjs.get(treeOrObjLabel);
 		if (obj != null)
 			obj.setDisplayed(visible);
@@ -1176,7 +1177,7 @@ public class TreePlot3D {
 				final ColorRGB[] colors = SWCColor.getDistinctColors(keys.size());
 				final int[] counter = new int[] { 0 };
 				plottedTrees.forEach((k, shapeTree) -> {
-					final Shape shape = shapeTree.getShape();
+					final Shape shape = shapeTree.get();
 					if (keys.contains(k)) {
 						for (int i = 0; i < shape.size(); i++) {
 							if (shape.get(i) instanceof LineStrip) {
@@ -1335,23 +1336,68 @@ public class TreePlot3D {
 		return this;
 	}
 
-	private class ShapeTree {
+	private class ShapeTree extends Shape {
 
 		private final Tree tree;
-		private Shape shape;
+		private Shape treeSubShape;
+		private AbstractWireframeable somaSubShape;
 
 		public ShapeTree(final Tree tree) {
+			super();
 			this.tree = tree;
 		}
 
-		public Shape getShape() {
-			if (shape == null) assembleShape();
-			return shape;
+		@Override
+		public boolean isDisplayed() {
+			return (super.isDisplayed())
+					|| ((somaSubShape != null) && somaSubShape.isDisplayed())
+					|| ((treeSubShape != null) && treeSubShape.isDisplayed());
 		}
-	
+
+		@Override
+		public void setDisplayed(boolean displayed) {
+			setArborDisplayed(displayed);
+			setSomaDisplayed(displayed);
+			super.setDisplayed(displayed); // redundant?
+		}
+
+		public void setSomaDisplayed(boolean displayed) {
+			if (somaSubShape != null) somaSubShape.setDisplayed(displayed);
+		}
+
+		public void setArborDisplayed(boolean displayed) {
+			if (treeSubShape != null) treeSubShape.setDisplayed(displayed);
+		}
+
+		public Shape get() {
+			if (components == null || components.isEmpty()) assembleShape();
+			return this;
+		}
+
 		private void assembleShape() {
+
 			final List<LineStrip> lines = new ArrayList<>();
+			final List<PointInImage> somaPoints = new ArrayList<>();
+			final List<java.awt.Color> somaColors = new ArrayList<>();
+
 			for (final Path p : tree.list()) {
+
+				// Stash soma coordinates
+				if (Path.SWC_SOMA == p.getSWCType()) {
+					for (int i = 0; i < p.size(); i++) {
+						final PointInImage pim = p.getPointInImage(i);
+						pim.v = p.getNodeRadius(i);
+						somaPoints.add(pim);
+					}
+					if (p.hasNodeColors()) {
+						somaColors.addAll(Arrays.asList(p.getNodeColors()));
+					} else {
+						somaColors.add(p.getColor());
+					}
+					continue;
+				}
+
+				// Assemble arbor(s)
 				final LineStrip line = new LineStrip(p.size());
 				for (int i = 0; i < p.size(); ++i) {
 					final PointInImage pim = p.getPointInImage(i);
@@ -1365,17 +1411,87 @@ public class TreePlot3D {
 				lines.add(line);
 			}
 
-			// group all lines into a Composite
-			shape = new Shape();
-			shape.add(lines);
+			// Group all lines into a Composite
+			if (!lines.isEmpty()) {
+				treeSubShape = new Shape();
+				treeSubShape.add(lines);
+				add(treeSubShape);
+			}
+			assembleSoma(somaPoints, somaColors);
+			if (somaSubShape != null) add(somaSubShape);
 			//shape.setFaceDisplayed(true);
-			shape.setWireframeDisplayed(true);
+			//shape.setWireframeDisplayed(true);
+		}
+
+		private void assembleSoma(List<PointInImage> somaPoints, List<java.awt.Color> somaColors) {
+			final Color color = fromAWTColor(SWCColor.average(somaColors));
+			switch(somaPoints.size()) {
+			case 0:
+				SNT.log(tree.getLabel() + ": No soma attribute");
+				somaSubShape = null;
+				return;
+			case 1:
+				// single point soma: http://neuromorpho.org/SomaFormat.html
+				final Sphere sSoma = new Sphere();
+				final PointInImage sCenter = somaPoints.get(0);
+				sSoma.setPosition(new Coord3d(sCenter.x, sCenter.y, sCenter.z));
+				sSoma.setVolume((float) Math.max(sCenter.v, 4 * defThickness));
+				sSoma.setColor(color);
+				setSomaLook(sSoma, color);
+				somaSubShape = sSoma;
+				return;
+			case 3 :
+				// 3 point soma representation: http://neuromorpho.org/SomaFormat.html
+				//final PointInImage center = PointInImage.average(somaPoints);
+				final Tube t1 = new Tube();
+				final PointInImage p1 = somaPoints.get(0);
+				final PointInImage p2 = somaPoints.get(1);
+				final PointInImage p3 = somaPoints.get(2);
+				t1.setPosition(new Coord3d((p1.x+ p2.x) /2, (p1.y+ p2.y) /2, (p1.z+ p2.z) /2));
+				t1.setVolume((float)p2.v, (float)p1.v, (float)p2.distanceTo(p1));
+				t1.setColor(color);
+				setSomaLook(t1, color);
+				final Tube t2 = new Tube();
+				t2.setPosition(new Coord3d((p1.x+ p3.x) /2, (p1.y+ p3.y) /2, (p1.z+ p3.z) /2));
+				t2.setVolume((float)p1.v, (float)p3.v, (float)p3.distanceTo(p1));
+				t2.setColor(color);
+				setSomaLook(t2, color);
+				final Shape composite = new Shape();
+				composite.add(t1);
+				composite.add(t2);
+				somaSubShape = composite;
+				return;
+			default:
+				// just create a centroid sphere
+				final Sphere cSoma = new Sphere();
+				final PointInImage cCenter = PointInImage.average(somaPoints);
+				cSoma.setPosition(new Coord3d(cCenter.x, cCenter.y, cCenter.z));
+				cSoma.setVolume((float) Math.max(cCenter.v, 4 * defThickness));
+				cSoma.setColor(color);
+				setSomaLook(cSoma, color);
+				somaSubShape = cSoma;
+				return;
+			}
+		}
+	
+		private <T extends AbstractWireframeable> void setSomaLook(final T t, final Color color) {
+			t.setWireframeColor(contrastColor(color));
+			t.setWireframeWidth(1f);
+			t.setWireframeDisplayed(true);
+		}
+
+		public void rebuildShape() {
+			if (isDisplayed()) {
+				assembleShape();
+				chart.removeDrawable(this, viewUpdatesEnabled);
+				chart.add(this, viewUpdatesEnabled);
+			}
 		}
 
 		public void setThickness(final float thickness) {
-			for (int i = 0; i < shape.size(); i++) {
-				if (shape.get(i) instanceof LineStrip) {
-					((LineStrip) shape.get(i)).setWireframeWidth(thickness);
+			for (int i = 0; i < size(); i++) {
+				if (get(i) instanceof LineStrip) {
+					((LineStrip) get(i)).setWireframeWidth(thickness);
 				}
 			}
 		}
@@ -1383,13 +1499,15 @@ public class TreePlot3D {
 		public double[] colorize(final String measurement, final ColorTable colorTable) {
 			final TreeColorMapper colorizer = new TreeColorMapper();
 			colorizer.colorize(tree, measurement, colorTable);
-			if (shape != null && shape.isDisplayed()) {
-				assembleShape();
-				chart.removeDrawable(shape);
-				chart.add(shape);
-			}
+			rebuildShape();
 			return colorizer.getMinMax();
 		}
+
+		private Color contrastColor(final Color color) {
+			final float factor = 0.25f;
+			return new Color(factor - color.r, factor - color.g, factor - color.b, color.a);
+		}
+
 	}
 
 	private class CmdWorker extends SwingWorker<Boolean, Object> {
@@ -1702,7 +1820,7 @@ public class TreePlot3D {
 
 			// Apply foreground color to trees with background color
 			plottedTrees.values().forEach(shapeTree -> {
-				final Shape shape = shapeTree.getShape();
+				final Shape shape = shapeTree.get();
 				if (isSameRGB(shape.getColor(), newBackground)) {
 					shape.setColor(newForeground);
 					return; // replaces continue in lambda expression;
@@ -1922,7 +2040,7 @@ public class TreePlot3D {
 	protected void applyColorToPlottedTrees(final List<String> labels, final ColorRGB color) {
 		plottedTrees.forEach((k, shapeTree) -> {
 			if (labels.contains(k)) {
-				final Shape shape = shapeTree.getShape();
+				final Shape shape = shapeTree.get();
 				for (int i = 0; i < shape.size(); i++) {
 					if (shape.get(i) instanceof LineStrip) {
 						((LineStrip) shape.get(i)).setColor(fromColorRGB(color));
@@ -1936,7 +2054,7 @@ public class TreePlot3D {
 		Color refColor = null;
 		for (final Map.Entry<String, ShapeTree> entry : plottedTrees.entrySet()) {
 			if (labels.contains(entry.getKey())) {
-				final Shape shape = entry.getValue().getShape();
+				final Shape shape = entry.getValue().get();
 				for (int i = 0; i < shape.size(); i++) {
 					if (!(shape.get(i) instanceof LineStrip)) continue;
 					final Color color = getNodeColor((LineStrip) shape.get(i));

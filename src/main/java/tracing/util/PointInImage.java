@@ -25,8 +25,6 @@ package tracing.util;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-
 import ij.measure.Calibration;
 import sholl.UPoint;
 import tracing.Path;
@@ -47,7 +45,7 @@ public class PointInImage implements SNTPoint {
 	 * A property associated with this point (e.g., voxel intensity) (optional
 	 * field)
 	 */
-	public float v;
+	public double v;
 
 	/** The Path associated with this node, if any (optional field) */
 	public Path onPath = null;
@@ -123,15 +121,20 @@ public class PointInImage implements SNTPoint {
 	}
 
 	public static PointInImage average(final List<PointInImage> points) {
-		final SummaryStatistics xStats = new SummaryStatistics();
-		final SummaryStatistics yStats = new SummaryStatistics();
-		final SummaryStatistics zStats = new SummaryStatistics();
+		double x = 0;
+		double y = 0;
+		double z = 0;
+		double v = 0;
 		for (final PointInImage p : points) {
-			xStats.addValue(p.x);
-			yStats.addValue(p.y);
-			zStats.addValue(p.z);
+			x += p.x;
+			y += p.y;
+			z += p.z;
+			v += p.v;
 		}
-		return new PointInImage(xStats.getMean(), yStats.getMean(), zStats.getMean());
+		final int n = points.size();
+		final PointInImage result = new PointInImage(x / n, y / n, z / n);
+		result.v = v / n;
+		return result;
 	}
 
 	@Override

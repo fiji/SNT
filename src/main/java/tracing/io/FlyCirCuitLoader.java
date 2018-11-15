@@ -38,7 +38,7 @@ import tracing.Tree;
  * 
  * @author Tiago Ferreira
  */
-public class FlyCirCuitLoader {
+public class FlyCirCuitLoader implements RemoteSWCLoader {
 
 	private static final String BASE_URL = "http://www.flycircuit.tw/download/swc/";
 
@@ -47,6 +47,7 @@ public class FlyCirCuitLoader {
 	 *
 	 * @return true, if an HHTP connection could be established, false otherwise
 	 */
+	@Override
 	public boolean isDatabaseAvailable() {
 		HttpURLConnection connection = null;
 		boolean isOnline = false;
@@ -71,6 +72,7 @@ public class FlyCirCuitLoader {
 	 * @param cellId the ID of the cell to be retrieved
 	 * @return the reconstruction URL
 	 */
+	@Override
 	public String getReconstructionURL(final String cellId) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(BASE_URL).append(cellId.replaceAll(" ", "%20"));
@@ -86,6 +88,7 @@ public class FlyCirCuitLoader {
 	 * @return the character stream containing the data, or null if cell ID was not
 	 *         found or could not be retrieved
 	 */
+	@Override
 	public BufferedReader getReader(final String cellId) {
 		try {
 			final URL url = new URL(getReconstructionURL(cellId));
@@ -103,6 +106,7 @@ public class FlyCirCuitLoader {
 	 * @return the data for the specified cell as a {@link Tree}, or null if data
 	 *         could not be retrieved
 	 */
+	@Override
 	public Tree getTree(final String cellId) {
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);

@@ -44,7 +44,7 @@ import tracing.Tree;
  * 
  * @author Tiago Ferreira
  */
-public class NeuroMorphoLoader {
+public class NeuroMorphoLoader implements RemoteSWCLoader {
 
 	private static final String BASE_URL = "http://neuromorpho.org/api/";
 	private final static String NEURON_BASE_URL = BASE_URL + "neuron/name/";
@@ -77,6 +77,7 @@ public class NeuroMorphoLoader {
 	 *
 	 * @return true, if an HHTP connection could be established, false otherwise
 	 */
+	@Override
 	public boolean isDatabaseAvailable() {
 		final JSONObject jObject = getJSon(BASE_URL, "health");
 		if (jObject == null)
@@ -93,6 +94,7 @@ public class NeuroMorphoLoader {
 	 * @return the reconstruction URL, or null if cell ID was not found or could not
 	 *         be retrieved
 	 */
+	@Override
 	public String getReconstructionURL(final String cellId) {
 		final JSONObject json = getJSon(NEURON_BASE_URL, cellId);
 		if (json == null)
@@ -115,6 +117,7 @@ public class NeuroMorphoLoader {
 	 * @return the the character stream containing the data, or null if cell ID was
 	 *         not found or could not be retrieved
 	 */
+	@Override
 	public BufferedReader getReader(final String cellId) {
 		try {
 			final URL url = new URL(getReconstructionURL(cellId));
@@ -132,6 +135,7 @@ public class NeuroMorphoLoader {
 	 * @return the data ('CNG version') for the specified cell as a {@link Tree}, or
 	 *         null if data could not be retrieved
 	 */
+	@Override
 	public Tree getTree(final String cellId) {
 		final String url = getReconstructionURL(cellId);
 		if (url == null) return null;

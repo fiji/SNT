@@ -166,7 +166,7 @@ public class TreeParser implements Parser {
 				continue;
 			}
 		}
-		return (points.isEmpty()) ? null :PointInImage.average(points);
+		return (points.isEmpty()) ? null : PointInImage.average(points);
 	}
 
 	/**

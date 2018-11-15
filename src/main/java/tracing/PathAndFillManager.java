@@ -2056,6 +2056,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			final double yOffset, final double zOffset, final double xScale, final double yScale,
 			final double zScale, final boolean replaceAllPaths) {
 
+		if (filePath == null) return false;
 		final File f = new File(filePath);
 		if (!SNT.fileAvailable(f)) {
 			error("The traces file '" + filePath + "' is not available.");

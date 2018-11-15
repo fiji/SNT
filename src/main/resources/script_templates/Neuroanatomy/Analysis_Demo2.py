@@ -16,6 +16,9 @@ info:
 '''
 
 import math
+from collections import defaultdict
+
+from ij.gui import Plot
 
 from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
 from tracing.io import MLJSONLoader
@@ -48,6 +51,47 @@ def run():
 
         dsummary = d_stats.getDescriptiveStats(TreeStatistics.INTER_NODE_DISTANCE)
         print("The average inter-node distance is %d" % dsummary.getMean())
+        
+        # We can calculate the approximated volume of a tracing
+        compartment_volume = 0
+        manager = PathAndFillManager()
+        for path in tree.list():
+            manager.addPath(path)
+            compartment_volume += path.getApproximatedVolume()
+
+        bb = manager.getBoundingBox(True)
+        bb_dim = bb.getDimensions(False)
+        bb_volume = bb_dim[0] * bb_dim[1] * bb_dim[2]
+        print("Volume of bounding box containing all nodes is %d" % bb_volume)
+        print("Approximate volume of tracing is %d cubic microns" % compartment_volume)
+        print("Tracing uses %d percent of space given by bounding box" % ((compartment_volume/bb_volume)*100))
+
+        # We can look at how mean burke taper changes with branch order
+        order_dict = defaultdict(list)
+        for path in tree.list():
+            Da = path.getNodeRadius(0) * 2
+            Db = path.getNodeRadius(path.size()-1) * 2
+            path_length = path.getLength()
+            try:
+                burke_taper = (Da - Db) / path_length
+                order_dict[path.getOrder()].append(burke_taper)
+            # appears to be finding length 0 paths
+            except ZeroDivisionError:
+                continue
+        l = []
+        
+        for item in order_dict.items():
+            mean_taper = sum(item[1])/len(item[1])
+            l.append((item[0], mean_taper))
+            
+        l = sorted(l, key = lambda x:x[0])
+        xs, ys = zip(*l)
+        plot = Plot('Mean Burke taper vs. Branch Order', 'branch order', 'mean taper')
+        plot.add('x', xs, ys)
+        plot.show()
+        
+        # We may also calculate the longest path from root to endpoint
+        # TODO
 
 
 run()

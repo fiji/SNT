@@ -1907,6 +1907,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			// Now we can start adding points to the path:
 			SWCPoint currentPoint = start;
+			currentPath.setSWCType(currentPoint.type); // Assign point type to path
 			while (currentPoint != null) {
 				currentPath.addPointDouble(currentPoint.x, currentPoint.y, currentPoint.z);
 				currentPath.radiuses[added] = currentPoint.radius;
@@ -1921,8 +1922,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					});
 					currentPoint = newCurrentPoint;
 				} else {
-					currentPath.setSWCType(currentPoint.type); // Assign point
-																// type to path
 					currentPoint = null;
 				}
 			}

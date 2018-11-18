@@ -22,7 +22,6 @@
 
 package tracing;
 
-import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,8 +36,10 @@ import org.scijava.util.ColorRGB;
 
 import ij.IJ;
 import ij.ImagePlus;
+import sholl.UPoint;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeStatistics;
+import tracing.analysis.sholl.TreeParser;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.BoundingBox;
 import tracing.util.PointInCanvas;
@@ -286,6 +287,23 @@ public class Tree {
 	}
 
 	/**
+	 * Gets the centroid position of all nodes tagged as {@link Path#SWC_SOMA}
+	 *
+	 * @return the centroid of soma position or null if no Paths are tagged as soma
+	 */
+	public PointInImage getSomaPosition() {
+		final TreeParser parser = new TreeParser(this);
+		try {
+			parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
+		} catch (final IllegalArgumentException ignored) {
+			SNT.log("No soma attribute found...");
+			return null;
+		}
+		final UPoint center = parser.getCenter();
+		return (center == null) ? null : new PointInImage(center.x, center.y, center.z);
+	}
+
+	/**
 	 * Specifies the offset to be used when rendering this Path in a
 	 * {@link TracerCanvas}. Path coordinates remain unaltered.
 	 *
@@ -494,13 +512,17 @@ public class Tree {
 	}
 
 	/**
-	 * Assigns a color to all the paths in this tree.
+	 * Assigns a color to all the paths in this tree. Note that assigning a non-null
+	 * color will remove node colors from Paths.
 	 *
-	 * @param color            the color to be applied.
+	 * @param color the color to be applied.
+	 * @see Path#hasNodeColors()
 	 */
 	public void setColor(final ColorRGB color) {
-		final Color c = (color==null) ? null : new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
-		tree.stream().forEach(p -> p.setColor(c));
+		tree.stream().forEach(p -> {
+			p.setColorRGB(color);
+			if (color != null) p.setNodeColors(null);
+		});
 	}
 
 	/**

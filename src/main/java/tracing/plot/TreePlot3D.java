@@ -130,7 +130,7 @@ import tracing.gui.cmds.ColorizeReconstructionCmd;
 import tracing.gui.cmds.LoadObjCmd;
 import tracing.gui.cmds.LoadReconstructionCmd;
 import tracing.gui.cmds.MLImporterCmd;
-import tracing.gui.cmds.NMImporterCmd;
+import tracing.gui.cmds.RemoteSWCImporterCmd;
 import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 

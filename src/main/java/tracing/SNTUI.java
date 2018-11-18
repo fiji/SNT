@@ -114,7 +114,7 @@ import tracing.gui.SigmaPalette;
 import tracing.gui.cmds.CompareFilesCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
-import tracing.gui.cmds.NMImporterCmd;
+import tracing.gui.cmds.RemoteSWCImporterCmd;
 import tracing.gui.cmds.ResetPrefsCmd;
 import tracing.gui.cmds.ShowCorrespondencesCmd;
 import tracing.hyperpanes.MultiDThreePanes;
@@ -1991,7 +1991,7 @@ public class SNTUI extends JDialog {
 		final JMenuItem importNeuroMorpho = new JMenuItem("NeuroMorpho Reconstructions...");
 		importSubmenu.add(importNeuroMorpho);
 		importNeuroMorpho.addActionListener(e -> {
-			(new CmdRunner(NMImporterCmd.class, true)).execute();
+			(new CmdRunner(RemoteSWCImporterCmd.class, true)).execute();
 		});
 
 		exportAllSWCMenuItem = new JMenuItem("SWC...");

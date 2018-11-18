@@ -42,17 +42,21 @@ import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
+import tracing.io.FlyCirCuitLoader;
 import tracing.io.NeuroMorphoLoader;
+import tracing.io.RemoteSWCLoader;
 import tracing.plot.TreePlot3D;
 
 /**
- * Command for importing NeuroMorpho.org reconstructions
+ * Command for importing SWC reconstructions from remote databases
  * 
  * @see {@link NeuroMorphoLoader}
+ * @see {@link FlyCirCuitLoader}
+ *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Import NeuroMorpho.org Reconstructions", initializer = "init")
-public class NMImporterCmd extends CommonDynamicCmd {
+@Plugin(type = Command.class, visible = false, initializer = "init")
+public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 
 
 	@Parameter(required = true, persist = true, label = "IDs (comma- or space- separated list)", description = "e.g., AA0001 or 10.25378/janelia.5527672")
@@ -64,7 +68,10 @@ public class NMImporterCmd extends CommonDynamicCmd {
 	@Parameter(required = false, label = "<HTML>&nbsp;")
 	private ColorRGB commonColor;
 
-	@Parameter(required = false, persist = true, label = "Replace existing paths")
+	@Parameter(required = false, label = "Load Template brain")
+	private boolean loadMesh;
+
+	@Parameter(required = false, label = "Replace existing paths")
 	private boolean clearExisting;
 
 	@Parameter(label = "Check Database Access", callback = "pingServer")
@@ -76,8 +83,12 @@ public class NMImporterCmd extends CommonDynamicCmd {
 	@Parameter(persist = false, required = false, visibility = ItemVisibility.INVISIBLE)
 	private TreePlot3D recViewer;
 
-	private NeuroMorphoLoader loader;
+	@Parameter(persist = false, required = true, visibility = ItemVisibility.INVISIBLE)
+	private RemoteSWCLoader loader;
+
 	private PathAndFillManager pafm;
+	private String placeholderQuery;
+	private String database;
 
 	/*
 	 * (non-Javadoc)
@@ -116,7 +127,7 @@ public class NMImporterCmd extends CommonDynamicCmd {
 		}
 
 		status("Retrieving cells. Please wait...", false);
-		SNT.log("NeuroMorpho.org import: Downloading from URL(s)...");
+		SNT.log(database + " import: Downloading from URL(s)...");
 		final int lastExistingPathIdx = pafm.size() - 1;
 		final List<Tree> result = pafm.importSWCs(urlsMap, getColor());
 		final long failures = result.stream().filter(tree -> tree == null || tree.isEmpty()).count();
@@ -137,13 +148,15 @@ public class NMImporterCmd extends CommonDynamicCmd {
 			}
 		}
 
+		if (loadMesh && loader instanceof FlyCirCuitLoader) {
+			recViewer.loadDrosoRefBrain();
+		}
 		if (standAloneViewer) {
 			recViewer.setViewUpdatesEnabled(false);
 			result.forEach(tree -> {
 				if (tree != null && !tree.isEmpty()) recViewer.add(tree);
 			});
 			recViewer.setViewUpdatesEnabled(true);
-			recViewer.validate();
 		}
 		else if (snt != null) {
 			SNT.log("Rebuilding canvases...");
@@ -151,6 +164,7 @@ public class NMImporterCmd extends CommonDynamicCmd {
 			if (recViewer != null) recViewer.syncPathManagerList();
 		}
 
+		if (recViewer != null) recViewer.validate();
 		if (failures > 0) {
 			error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
 			status("Partially successful import...", true);
@@ -178,9 +192,8 @@ public class NMImporterCmd extends CommonDynamicCmd {
 	}
 
 	protected void init() {
-		loader = new NeuroMorphoLoader();
-		if (query == null || query.isEmpty())
-			query = "cnic_001";
+		makeMeDatabaseFriendly();
+		if (query == null || query.isEmpty()) query = placeholderQuery;
 		pingMsg = "Internet connection required. Retrieval of long lists may be rather slow...           ";
 		if (recViewer != null) {
 			// If a stand-alone viewer was specified, customize options specific
@@ -190,14 +203,26 @@ public class NMImporterCmd extends CommonDynamicCmd {
 		}
 	}
 
+	private void makeMeDatabaseFriendly() {
+		if (loader instanceof NeuroMorphoLoader) {
+			placeholderQuery = "cnic_001";
+			database = "NeuroMorpho.org";
+			resolveInput("loadMesh");
+		} else if (loader instanceof FlyCirCuitLoader) {
+			placeholderQuery = "VGlut-F-400787";
+			database = "FlyCircuit.tw";
+		}
+		getInfo().setLabel("Import "+ database + " Reconstructions");
+	}
+
 	@SuppressWarnings("unused")
 	private void pingServer() {
 		pingMsg = getPingMsg(loader.isDatabaseAvailable());
 	}
 
 	private String getPingMsg(final boolean pingResponse) {
-		return (pingResponse) ? "Successfully connected to the NeuroMorpho database."
-				: "NeuroMorpho.org not reached. It is either down or you have no internet access.";
+		return (pingResponse) ? "Successfully connected to "+ database + " database."
+				: database + " not reached. It is either down or you have no internet access.";
 	}
 
 	/* IDE debug method **/
@@ -205,7 +230,7 @@ public class NMImporterCmd extends CommonDynamicCmd {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		ij.command().run(NMImporterCmd.class, true);
+		ij.command().run(RemoteSWCImporterCmd.class, true);
 	}
 
 }

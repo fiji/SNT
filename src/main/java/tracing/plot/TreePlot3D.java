@@ -24,7 +24,10 @@ package tracing.plot;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -89,12 +92,14 @@ import org.jzy3d.plot3d.primitives.Sphere;
 import org.jzy3d.plot3d.primitives.Tube;
 import org.jzy3d.plot3d.primitives.vbo.drawable.DrawableVBO;
 import org.jzy3d.plot3d.rendering.canvas.ICanvas;
+import org.jzy3d.plot3d.rendering.canvas.IScreenCanvas;
 import org.jzy3d.plot3d.rendering.canvas.Quality;
 import org.jzy3d.plot3d.rendering.legends.colorbars.AWTColorbarLegend;
 import org.jzy3d.plot3d.rendering.lights.LightSet;
 import org.jzy3d.plot3d.rendering.scene.Scene;
 import org.jzy3d.plot3d.rendering.view.View;
 import org.jzy3d.plot3d.rendering.view.ViewportMode;
+import org.jzy3d.plot3d.rendering.view.annotation.CameraEyeOverlayAnnotation;
 import org.jzy3d.plot3d.rendering.view.modes.CameraMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewBoundMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewPositionMode;
@@ -112,6 +117,7 @@ import com.jidesoft.swing.ListSearchable;
 import com.jidesoft.swing.Searchable;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GLAnimatorControl;
 import com.jogamp.opengl.GLException;
 
 import ij.gui.HTMLDialog;
@@ -1800,9 +1806,20 @@ public class TreePlot3D {
 			displayMsg("Quality level changed to '" + grades[nextLevelIdx] + "'");
 		}
 
+		private void setEnableDebugMode(final boolean enable) {
+			if (enable){
+				overlayAnnotation = new OverlayAnnotation(chart.getView());
+				((AWTChart)chart).addRenderer(overlayAnnotation);
+			} else {
+				((AWTChart)chart).removeRenderer(overlayAnnotation);
+				overlayAnnotation = null;
+			}
+			SNT.setDebugMode(enable);
+		}
+
 		private void toggleDarkMode() {
-			if (chart == null)
-				return;
+//			if (chart == null)
+//				return;
 			Color newForeground;
 			Color newBackground;
 			if (view.getBackgroundColor() == Color.BLACK) {
@@ -1817,6 +1834,7 @@ public class TreePlot3D {
 			view.setBackgroundColor(newBackground);
 			view.getAxe().getLayout().setGridColor(newForeground);
 			view.getAxe().getLayout().setMainColor(newForeground);
+			if (overlayAnnotation != null) overlayAnnotation.setForegroundColor(newForeground);
 
 			// Apply foreground color to trees with background color
 			plottedTrees.values().forEach(shapeTree -> {
@@ -1894,6 +1912,10 @@ public class TreePlot3D {
 			sb.append("    <td>Press 'D'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
+			sb.append("    <td>Toggle Debug <u>I</u>nfo</td>");
+			sb.append("    <td>Press 'I'</td>");
+			sb.append("  </tr>");
+			sb.append("  <tr>");
 			sb.append("    <td><u>R</u>eset View</td>");
 			sb.append("    <td>Press 'R'</td>");
 			sb.append("  </tr>");
@@ -1917,7 +1939,33 @@ public class TreePlot3D {
 		}
 	}
 
+	private class OverlayAnnotation extends CameraEyeOverlayAnnotation {
 
+		private java.awt.Color color;
+		private GLAnimatorControl control;
+
+		public OverlayAnnotation(final View view) {
+			super(view);
+			control = ((IScreenCanvas)chart.getCanvas()).getAnimator();
+			control.setUpdateFPSFrames(120, null);
+			setForegroundColor(view.getAxe().getLayout().getMainColor());
+		}
+
+		private void setForegroundColor(final Color c) {
+			color = new java.awt.Color(c.r, c.g, c.b);
+		}
+
+		@Override
+		public void paint(final Graphics g, final int canvasWidth, final int canvasHeight) {
+			final Graphics2D g2d = (Graphics2D) g;
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+			g2d.setColor(color);
+			g2d.drawString("View: " + view.getCamera().getEye(), 20, 20);
+			g2d.drawString("FOV: " + view.getCamera().getRenderingSphereRadius(), 20, 40);
+			g2d.drawString(control.getLastFPS()+" FPS", 20, 60);
+		}
+	}
 
 	
 	/**

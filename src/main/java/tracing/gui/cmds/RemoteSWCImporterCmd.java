@@ -149,7 +149,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		}
 
 		if (loadMesh && loader instanceof FlyCirCuitLoader) {
-			recViewer.loadDrosoRefBrain();
+			recViewer.loadDrosoRefBrain("FCWB");
 		}
 		if (standAloneViewer) {
 			recViewer.setViewUpdatesEnabled(false);

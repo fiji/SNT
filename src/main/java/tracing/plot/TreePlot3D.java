@@ -150,6 +150,9 @@ import tracing.util.SWCColor;
 public class TreePlot3D {
 
 	private final static String ALLEN_MESH_LABEL = "MouseBrainAllen.obj";
+	private final static String JFRC2_MESH_LABEL = "JFRCtemplate2010.obj";
+	private final static String JFRC3_MESH_LABEL = "JFRCtemplate2013.obj";
+	private final static String FCWB_MESH_LABEL = "FCWB.obj";
 	private final static String PATH_MANAGER_TREE_LABEL = "Path Manager Contents";
 	private final static float DEF_NODE_RADIUS = 3f;
 	private static final Color DEF_COLOR = new Color(1f, 1f, 1f, 0.05f);
@@ -754,21 +757,61 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Loads the contour meshes for the Allen Mouse Brain Atlas. It will simply
-	 * make the mesh visible if has already been loaded.
+	 * Loads the surface meshes for the Allen Mouse Brain Atlas (CCF). It will
+	 * simply make the mesh visible if has already been loaded.
 	 *
 	 * @throws IllegalArgumentException if Viewer is not available, i.e.,
 	 *                                  {@link #getView()} is null
 	 */
 	public void loadMouseRefBrain() throws IllegalArgumentException {
-		if (getOBJs().keySet().contains(ALLEN_MESH_LABEL)) {
-			setVisible(ALLEN_MESH_LABEL, true);
+		loadRefBrain(ALLEN_MESH_LABEL);
+	}
+
+	/**
+	 * Loads the surface meshes for a Drosophila template brain. It will simply make
+	 * the mesh visible if has already been loaded. These meshes are detailed on the
+	 * <a
+	 * href="https://www.rdocumentation.org/packages/nat.templatebrains/>nat.flybrains
+	 * </a> documentation.
+	 *
+	 * @param templateBrain the template brain to be loaded (case-insensitive).
+	 *                      Either "JFRC2" (AKA JFRC2010), "JFRC3" (AKA JFRC2013),
+	 *                      or "FCWB" (FlyCircuit whole brain template)
+	 * @throws IllegalArgumentException if templateBrain is not recognized Viewer is
+	 *                                  not available, i.e., {@link #getView()} is
+	 *                                  null
+	 */
+	public void loadDrosoRefBrain(final String templateBrain) throws IllegalArgumentException {
+		final String inputType = (templateBrain == null) ? null : templateBrain.toLowerCase();
+		switch (inputType) {
+		case "jfrc2":
+		case "jfrc2010":
+		case "jfrctemplate2010":
+			loadRefBrain(JFRC2_MESH_LABEL);
+			break;
+		case "jfrc3":
+		case "jfrc2013":
+		case "jfrctemplate2013":
+			loadRefBrain(JFRC3_MESH_LABEL);
+			break;
+		case "fcwb":
+		case "flycircuit":
+			loadRefBrain(FCWB_MESH_LABEL);
+			break;
+		default:
+			throw new IllegalArgumentException("Invalid argument");
+		}
+	}
+
+	private void loadRefBrain(final String label) throws IllegalArgumentException {
+		if (getOBJs().keySet().contains(label)) {
+			setVisible(label, true);
 			return;
 		}
 		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		final URL url = loader.getResource("meshes/" + ALLEN_MESH_LABEL);
+		final URL url = loader.getResource("meshes/" + label);
 		if (url == null)
-			throw new IllegalArgumentException(ALLEN_MESH_LABEL + " not found");
+			throw new IllegalArgumentException(label + " not found");
 		loadOBJ(url, getNonUserDefColor());
 	}
 
@@ -1327,6 +1370,18 @@ public class TreePlot3D {
 			});
 			meshMenu.add(mi);
 			return addMenu;
+		private void loadRefBrainAction(final String label) {
+			if (getOBJs().keySet().contains(label)) {
+				guiUtils.error(label + " is already loaded.");
+				managerList.addCheckBoxListSelectedValue(label, true);
+				return;
+			}
+			try {
+				loadRefBrain(label);
+				getOuter().validate();
+			} catch (IllegalArgumentException ex) {
+				guiUtils.error(ex.getMessage());
+			}
 		}
 
 		private void removeColorLegends(final boolean justLastOne) {

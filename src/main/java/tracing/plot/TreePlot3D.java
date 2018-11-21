@@ -43,6 +43,7 @@ import java.nio.IntBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -57,6 +58,7 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -77,6 +79,7 @@ import org.jzy3d.chart.controllers.mouse.AWTMouseUtilities;
 import org.jzy3d.chart.controllers.mouse.camera.AWTCameraMouseController;
 import org.jzy3d.chart.factories.IFrame;
 import org.jzy3d.colors.Color;
+import org.jzy3d.colors.ISingleColorable;
 import org.jzy3d.io.IGLLoader;
 import org.jzy3d.io.obj.OBJFile;
 import org.jzy3d.maths.BoundingBox3d;
@@ -106,6 +109,8 @@ import org.jzy3d.plot3d.rendering.view.modes.ViewPositionMode;
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
+import org.scijava.display.Display;
+import org.scijava.display.DisplayService;
 import org.scijava.plugin.Parameter;
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.util.ColorRGB;
@@ -123,12 +128,15 @@ import com.jogamp.opengl.GLException;
 import ij.gui.HTMLDialog;
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
+import net.imagej.table.DefaultGenericTable;
 import net.imglib2.display.ColorTable;
 import tracing.Path;
 import tracing.SNT;
 import tracing.SNTService;
 import tracing.Tree;
+import tracing.analysis.MultiTreeColorMapper;
 import tracing.analysis.TreeColorMapper;
+import tracing.analysis.TreeStatistics;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.IconFactory.GLYPH;
@@ -137,6 +145,11 @@ import tracing.gui.cmds.LoadObjCmd;
 import tracing.gui.cmds.LoadReconstructionCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.RemoteSWCImporterCmd;
+import tracing.io.FlyCirCuitLoader;
+import tracing.io.NeuroMorphoLoader;
+import tracing.plugin.DistributionCmd;
+import tracing.plugin.ShollTracingsCmd;
+import tracing.plugin.StrahlerCmd;
 import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
@@ -185,7 +198,13 @@ public class TreePlot3D {
 	private final UUID uuid;
 
 	@Parameter
+	private Context context;
+
+	@Parameter
 	private CommandService cmdService;
+
+	@Parameter
+	private DisplayService displayService;
 
 	@Parameter
 	private SNTService sntService;
@@ -658,6 +677,23 @@ public class TreePlot3D {
 			obj.setDisplayed(visible);
 	}
 
+	public double[] colorize(final Collection<String> treeLabels, 
+			final String measurement, final ColorTable colorTable) {
+		final List<ShapeTree>shapeTrees = new ArrayList<>();
+		final List<Tree> trees= new ArrayList<>();
+		treeLabels.forEach(label -> {
+			final ShapeTree sTree = plottedTrees.get(label);
+			if (sTree != null) {
+				shapeTrees.add(sTree);
+				trees.add(sTree.tree);
+			}
+		});
+		final MultiTreeColorMapper mapper = new MultiTreeColorMapper(trees);
+		mapper.colorize(measurement, colorTable);
+		shapeTrees.forEach(st -> st.rebuildShape());
+		return mapper.getMinMax();
+	}
+
 	public double[] colorize(final String treeLabel, final String measurement, final ColorTable colorTable) {
 		final ShapeTree treeShape = plottedTrees.get(treeLabel);
 		if (treeShape == null) return null;
@@ -931,12 +967,42 @@ public class TreePlot3D {
 		}
 	}
 
+	private class Prefs {
+		private static final boolean DEF_NAG_USER_ON_RETRIEVE_ALL = true;
+		private static final boolean DEF_RETRIEVE_ALL_IF_NONE_SELECTED = true;
+
+		public boolean nagUserOnRetrieveAll;
+		public boolean retrieveAllIfNoneSelected;
+
+		public Prefs() {
+			init();
+		}
+
+		private void init() {
+			nagUserOnRetrieveAll = DEF_NAG_USER_ON_RETRIEVE_ALL;
+			retrieveAllIfNoneSelected = DEF_RETRIEVE_ALL_IF_NONE_SELECTED;
+		}
+
+		public void reset() {
+			init();
+			setScreenshotDirectory("");
+			if (keyController != null) {
+				keyController.setEnableDebugMode(false);
+				keyController.resetView();
+			}
+		}
+
+	}
+
 	private class ManagerPanel extends JPanel {
 
 		private static final long serialVersionUID = 1L;
 		private final GuiUtils guiUtils;
 		private final Searchable searchable;
-		
+		private final Prefs prefs;
+		private DefaultGenericTable table;
+
+
 		public ManagerPanel(final GuiUtils guiUtils) {
 			super();
 			this.guiUtils = guiUtils;
@@ -953,16 +1019,21 @@ public class TreePlot3D {
 			add(scrollPane);
 			scrollPane.revalidate();
 			add(buttonPanel());
+			prefs = new Prefs();
 		}
 
 		private JPanel buttonPanel() {
-			final JPanel buttonPanel = new JPanel(new GridLayout(1, 3));
+			final boolean includeAnalysisCmds = !isSNTInstance();
+			final JPanel buttonPanel = new JPanel(new GridLayout(1, (includeAnalysisCmds)?4:5));
 			buttonPanel.setBorder(null);
 			// do not allow panel to resize vertically
 			buttonPanel.setMaximumSize(new Dimension(buttonPanel.getMaximumSize().width,
 					(int) buttonPanel.getPreferredSize().getHeight()));
-			buttonPanel.add(menuButton(GLYPH.SYNC, reloadMenu(), "Reload/Synchronize"));
-			buttonPanel.add(menuButton(GLYPH.ATOM, addMenu(), "Scene Elements"));
+			buttonPanel.add(menuButton(GLYPH.SYNC, reloadMenu(), "Reload Commands"));
+			buttonPanel.add(menuButton(GLYPH.TREE, treesMenu(), "Add/Remove Reconstructions"));
+			buttonPanel.add(menuButton(GLYPH.CUBE, meshMenu(), "Add/Remove Meshes"));
+			if (includeAnalysisCmds)
+				buttonPanel.add(menuButton(GLYPH.CALCULATOR, measureMenu(), "Analyze/Measure"));
 			buttonPanel.add(menuButton(GLYPH.SLIDERS, optionsMenu(), "Customize"));
 			return buttonPanel;
 		}
@@ -976,17 +1047,23 @@ public class TreePlot3D {
 
 		private JPopupMenu reloadMenu() {
 			final JPopupMenu reloadMenu = new JPopupMenu();
-			JMenuItem mi = new JMenuItem("Sync Path Manager Changes");
+			JMenuItem mi = new JMenuItem("Fit View to Visible Objects", IconFactory.getMenuIcon(GLYPH.EXPAND));
+			mi.setMnemonic('f');
 			mi.addActionListener(e -> {
-				try {
-					if (!syncPathManagerList()) rebuild();
-					displayMsg("Path Manager contents updated");
-				} catch (final IllegalArgumentException ex) {
-					guiUtils.error(ex.getMessage());
-				}
+				fitToVisibleObjects();
+				final BoundingBox3d bounds = chart.view().getBounds();
+				final StringBuilder sb = new StringBuilder();
+				sb.append("X: ").append(String.format("%.2f", bounds.getXmin())).append("-")
+						.append(String.format("%.2f", bounds.getXmax()));
+				sb.append(" Y: ").append(String.format("%.2f", bounds.getYmin())).append("-")
+						.append(String.format("%.2f", bounds.getYmax()));
+				sb.append(" Z: ").append(String.format("%.2f", bounds.getZmin())).append("-")
+						.append(String.format("%.2f", bounds.getZmax()));
+				displayMsg("Zoomed to " + sb.toString());
 			});
 			reloadMenu.add(mi);
-			mi = new JMenuItem("Reload Scene/Reset Bounds");
+			mi = new JMenuItem("Reload Scene");
+			mi.setMnemonic('r');
 			mi.addActionListener(e -> {
 				if (!sceneIsOK() && guiUtils.getConfirmation(
 						"Scene was reloaded but some objects have invalid attributes. "//
@@ -1004,6 +1081,19 @@ public class TreePlot3D {
 					rebuild();
 				}
 			});
+			reloadMenu.add(mi);
+			reloadMenu.addSeparator();
+			mi = new JMenuItem("Sync Path Manager Changes");
+			mi.setMnemonic('s');
+			mi.addActionListener(e -> {
+				try {
+					if (!syncPathManagerList()) rebuild();
+					displayMsg("Path Manager contents updated");
+				} catch (final IllegalArgumentException ex) {
+					guiUtils.error(ex.getMessage());
+				}
+			});
+			mi.setEnabled(isSNTInstance());
 			reloadMenu.add(mi);
 			return reloadMenu;
 		}
@@ -1118,46 +1208,125 @@ public class TreePlot3D {
 			managerList.setSelectedObjects(selectedKeys.toArray());
 		}
 
-		protected List<String> getSelectedTrees() {
-			return getSelectedKeys(plottedTrees, "reconstructions");
+		protected List<String> getSelectedTrees(final boolean promptForAllIfNone) {
+			return getSelectedKeys(plottedTrees, "reconstructions", promptForAllIfNone);
 		}
 
-		protected List<String> getSelectedMeshes() {
-			return getSelectedKeys(plottedObjs, "meshes");
+		protected List<String> getSelectedMeshes(final boolean promptForAllIfNone) {
+			return getSelectedKeys(plottedObjs, "meshes", promptForAllIfNone);
 		}
 
-		private List<String> getSelectedKeys(final Map<String, ?> map, final String mapDescriptor) {
+		private List<String> getSelectedKeys(final Map<String, ?> map, final String mapDescriptor, final boolean retrieveAllIfNone) {
 			if (map.isEmpty()) {
 				guiUtils.error("There are no loaded " + mapDescriptor + ".");
 				return null;
 			}
 			final List<?> selectedKeys = managerList.getSelectedValuesList();
 			final List<String> allKeys = new ArrayList<>(map.keySet());
-			if (selectedKeys.isEmpty() || (selectedKeys.size() == 1 && selectedKeys.get(0) == CheckBoxList.ALL_ENTRY)) {
-				if (!guiUtils.getConfirmation(
-						"There are no " + mapDescriptor + " selected. " + "Apply changes to all " + mapDescriptor + "?",
-						"Apply to All?")) {
-					return null;
-				}
+			if (selectedKeys.size() == 1 && selectedKeys.get(0) == CheckBoxList.ALL_ENTRY)
 				return allKeys;
+			if (retrieveAllIfNone && selectedKeys.isEmpty()) {
+				checkRetrieveAllOptions(mapDescriptor);
+				if (prefs.retrieveAllIfNoneSelected) return allKeys;
+				guiUtils.error("There are no selected " + mapDescriptor + ".");
+				return null;
 			}
 			allKeys.retainAll(selectedKeys);
 			return allKeys;
 		}
 
+		private void checkRetrieveAllOptions(final String mapDescriptor) {
+			if (!prefs.nagUserOnRetrieveAll) return;
+			final boolean[] options = guiUtils.getPersistentConfirmation("There are no items selected. "//
+					+ "Apply changes to all " + mapDescriptor + "?", "Apply to All?");
+			prefs.retrieveAllIfNoneSelected = options[0];
+			prefs.nagUserOnRetrieveAll = !options[1];
+		}
+	
+		private JPopupMenu measureMenu() {
+			final JPopupMenu measureMenu = new JPopupMenu();
+			JMenuItem mi = new JMenuItem("Measure", IconFactory.getMenuIcon(GLYPH.TABLE));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(false);
+				if (keys == null) return;
+				if (table == null) table = new DefaultGenericTable();
+				plottedTrees.forEach((k, shapeTree) -> {
+					if (!keys.contains(k)) return;
+					final TreeStatistics tStats = new TreeStatistics(shapeTree.tree);
+					tStats.setTable(table);
+					tStats.summarize(k, true);
+				});
+				final List<Display<?>> displays = displayService.getDisplays(table);
+				if (displays == null || displays.isEmpty()) {
+					displayService.createDisplay("RV Measurements", table);
+				} else {
+					displays.forEach(d->d.update());
+				}
+			});
+			measureMenu.add(mi);
+			mi = new JMenuItem("Distributions...", IconFactory.getMenuIcon(GLYPH.CHART));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(false);
+				if (keys == null || keys.isEmpty()) return;
+				final Tree mergedTree = new Tree();
+				plottedTrees.forEach((k, shapeTree) -> {
+					if (!keys.contains(k)) return;
+					mergedTree.merge(shapeTree.tree);
+				});
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("tree", mergedTree);
+				inputs.put("title", mergedTree.getLabel());
+				runCmd(DistributionCmd.class, inputs, CmdWorker.DO_NOTHING, false);
+			});
+			measureMenu.add(mi);
+			mi = new JMenuItem("Sholl Analysis...", IconFactory.getMenuIcon(GLYPH.BULLSEYE));
+			mi.addActionListener(e -> {
+				final Tree tree = getSingleSelectionTree();
+				if (tree == null) return;
+				final Map<String, Object> input = new HashMap<>();
+				input.put("snt", null);
+				input.put("tree", tree);
+				runCmd(ShollTracingsCmd.class, input, CmdWorker.DO_NOTHING, false);
+			});
+			measureMenu.add(mi);
+			mi = new JMenuItem("Strahler Analysis", IconFactory.getButtonIcon(GLYPH.BRANCH_CODE));
+			mi.addActionListener(e -> {
+				final Tree tree = getSingleSelectionTree();
+				if (tree == null) return;
+				final StrahlerCmd sa = new StrahlerCmd(tree);
+				sa.setContext(context);
+				sa.setTable(new DefaultGenericTable(), "SNT: Horton-Strahler Analysis "+ tree.getLabel());
+				SwingUtilities.invokeLater(() -> sa.run());
+			});
+			measureMenu.add(mi);
+			return measureMenu;
+		}
+
+		private Tree getSingleSelectionTree() {
+			final List<String> keys = getSelectedTrees(false);
+			if (keys == null || keys.isEmpty() || keys.size() > 1) {
+				guiUtils.error("This command requires a single recontruction to be selected.");
+				return null;
+			}
+			return plottedTrees.get(keys.get(0)).tree;
+		}
+
 		private JPopupMenu optionsMenu() {
 			final JPopupMenu optionsMenu = new JPopupMenu();
-			final JMenu meshMenu = new JMenu("Meshes");
-			meshMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CUBE));
-			optionsMenu.add(meshMenu);
 			final JMenu recMenu = new JMenu("Trees");
+			recMenu.setMnemonic('t');
 			recMenu.setIcon(IconFactory.getMenuIcon(GLYPH.TREE));
 			optionsMenu.add(recMenu);
+			final JMenu meshMenu = new JMenu("Meshes");
+			meshMenu.setMnemonic('m');
+			meshMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CUBE));
+			optionsMenu.add(meshMenu);
+			optionsMenu.add(legendMenu());
 
 			// Mesh customizations
-			JMenuItem mi = new JMenuItem("Color...");
+			JMenuItem mi = new JMenuItem("Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedMeshes();
+				final List<String> keys = getSelectedMeshes(true);
 				if (keys == null) return;
 				final java.awt.Color c = guiUtils.getColor("Mesh(es) Color", java.awt.Color.WHITE, "HSB");
 				if (c == null) {
@@ -1169,9 +1338,9 @@ public class TreePlot3D {
 				}
 			});
 			meshMenu.add(mi);
-			mi = new JMenuItem("Change Transparency...");
+			mi = new JMenuItem("Transparency...", IconFactory.getMenuIcon(GLYPH.FILL));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedMeshes();
+				final List<String> keys = getSelectedMeshes(true);
 				if (keys == null)
 					return;
 				final Double t = guiUtils.getDouble("Mesh Transparency (%)", "Transparency (%)", 95);
@@ -1190,9 +1359,9 @@ public class TreePlot3D {
 			meshMenu.add(mi);
 
 			// Tree customizations
-			mi = new JMenuItem("Color...");
+			mi = new JMenuItem("Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees();
+				final List<String> keys = getSelectedTrees(true);
 				if (keys == null || !okToApplyColor(keys)) return;
 				final ColorRGB c = guiUtils.getColorRGB("Reconstruction(s) Color", java.awt.Color.RED, "HSB");
 				if (c == null) {
@@ -1201,9 +1370,9 @@ public class TreePlot3D {
 				applyColorToPlottedTrees(keys, c);
 			});
 			recMenu.add(mi);
-			mi = new JMenuItem("Thickness...");
+			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.PEN));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees();
+				final List<String> keys = getSelectedTrees(true);
 				if (keys == null) return;
 				String msg = "<HTML><body><div style='width:500;'>"
 						+ "Please specify a constant thickness to be applied "
@@ -1226,17 +1395,27 @@ public class TreePlot3D {
 			recMenu.add(mi);
 			recMenu.addSeparator();
 
-			mi = new JMenuItem("Color Coding...");
+			mi = new JMenuItem("Color Coding (Individual Cells)...");
 			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(true);
+				if (keys == null) return;
 				final Map<String, Object> inputs = new HashMap<>();
-				inputs.put("labels", getSelectedTrees());
+				inputs.put("treeMappingLabels", keys);
 				runCmd(ColorizeReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			recMenu.add(mi);
-
+			mi = new JMenuItem("Color Coding (Group of Cells)...");
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(true);
+				if (keys == null) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("multiTreeMappingLabels", keys);
+				runCmd(ColorizeReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
+			recMenu.add(mi);
 			mi = new JMenuItem("Color Each Cell Uniquely...");
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees();
+				final List<String> keys = getSelectedTrees(true);
 				if (keys == null || !okToApplyColor(keys)) return;
 	
 				final ColorRGB[] colors = SWCColor.getDistinctColors(keys.size());
@@ -1254,10 +1433,29 @@ public class TreePlot3D {
 				});
 			});
 			recMenu.add(mi);
-
+			mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.BROOM));
+			mi.addActionListener(e -> {
+				if (guiUtils.getConfirmation("Remove all items from scene? This action cannot be undone.", "Wipe Scene?")) {
+					getOuter().removeAll();
+					removeAllOBJs();
+					removeColorLegends(false);
+				}
+			});
+			optionsMenu.add(mi);
 			// Misc options
 			optionsMenu.addSeparator();
-			mi = new JMenuItem("Screenshot Directory...");
+			optionsMenu.add(settingsMenu());
+			optionsMenu.addSeparator();
+			mi = new JMenuItem("Keyboard Operations...", IconFactory.getMenuIcon(GLYPH.KEYBOARD));
+			mi.addActionListener(e -> keyController.showHelp(true));
+			optionsMenu.add(mi);
+			return optionsMenu;
+		}
+
+		private JMenu settingsMenu() {
+			final JMenu settingsMenu = new JMenu("Options");
+			settingsMenu.setIcon(IconFactory.getMenuIcon(GLYPH.TOOL));
+			JMenuItem mi = new JMenuItem("Screenshot Directory...", IconFactory.getMenuIcon(GLYPH.CAMERA));
 			mi.addActionListener(e -> {
 				final File oldDir = new File(getScreenshotDirectory());
 				final File newDir = guiUtils
@@ -1268,12 +1466,22 @@ public class TreePlot3D {
 					displayMsg("Screenshot directory is now "+ FileUtils.limitPath(newPath, 50));
 				}
 			});
-			optionsMenu.add(mi);
-			optionsMenu.addSeparator();
-			mi = new JMenuItem("Keyboard Operations...");
-			mi.addActionListener(e -> keyController.showHelp(true));
-			optionsMenu.add(mi);
-			return optionsMenu;
+			settingsMenu.add(mi);
+			settingsMenu.addSeparator();
+			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode");
+			jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
+			jcbmi.setMnemonic('d');
+			jcbmi.addItemListener(e -> {
+				keyController.setEnableDebugMode(jcbmi.isSelected());
+			});
+			settingsMenu.add(jcbmi);
+			settingsMenu.addSeparator();
+			mi = new JMenuItem("Reset Preferences...", IconFactory.getMenuIcon(GLYPH.WINDOWS));
+			mi.addActionListener(e -> {
+				if (guiUtils.getConfirmation("Reset Preferences?", "Reset?")) prefs.reset();
+			});
+			settingsMenu.add(mi);
+			return settingsMenu;
 		}
 
 		private boolean okToApplyColor(final List<String> labelsOfselectedTrees) {
@@ -1283,26 +1491,16 @@ public class TreePlot3D {
 					+ "seem to be color-coded. Apply homogeneous color nevertheless?", "Override Color Code?");
 		}
 
-		private JPopupMenu addMenu() {
-			final JPopupMenu addMenu = new JPopupMenu();
-			final JMenu legendMenu = new JMenu("Color Legends");
-			final JMenu meshMenu = new JMenu("Meshes");
-			meshMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CUBE));
-			final JMenu tracesMenu = new JMenu("Trees");
-			tracesMenu.setIcon(IconFactory.getMenuIcon(GLYPH.TREE));
-			addMenu.add(meshMenu);
-			addMenu.add(tracesMenu);
-			addMenu.addSeparator();
-			addMenu.add(legendMenu);
-
-			// Traces Menu
-			JMenuItem mi = new JMenuItem("Import File...");
+		private JPopupMenu treesMenu() {
+			final JPopupMenu tracesMenu = new JPopupMenu();
+			JMenuItem mi = new JMenuItem("Import File...", IconFactory.getMenuIcon(GLYPH.IMPORT));
+			mi.setMnemonic('f');
 			mi.addActionListener(e -> {
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("importDir", false);
 				runCmd(LoadReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});			tracesMenu.add(mi);
-			mi = new JMenuItem("Import Directory...");
+			mi = new JMenuItem("Import Directory...", IconFactory.getMenuIcon(GLYPH.FOLDER));
 			mi.addActionListener(e -> {
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("importDir", true);
@@ -1310,14 +1508,46 @@ public class TreePlot3D {
 			});
 			tracesMenu.add(mi);
 			tracesMenu.addSeparator();
-			mi = new JMenuItem("Import from MouseLight...");
+			final JMenu remoteMenu = new JMenu("Load from Database");
+			remoteMenu.setMnemonic('d');
+			remoteMenu.setDisplayedMnemonicIndex(10);
+			remoteMenu.setIcon(IconFactory.getMenuIcon(GLYPH.DATABASE));
+			tracesMenu.add(remoteMenu);
+			mi = new JMenuItem("FlyCircuit...", 'f');
+			mi.addActionListener(e -> {
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("loader", new FlyCirCuitLoader());
+				runCmd(RemoteSWCImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
+			remoteMenu.add(mi);
+			mi = new JMenuItem("MouseLight...", 'm');
 			mi.addActionListener(e -> runCmd(MLImporterCmd.class, null, CmdWorker.DO_NOTHING));
-			tracesMenu.add(mi);
-			mi = new JMenuItem("Import from NeuroMorpho...");
-			mi.addActionListener(e -> runCmd(NMImporterCmd.class, null, CmdWorker.DO_NOTHING));
-			tracesMenu.add(mi);
+			remoteMenu.add(mi);
+			mi = new JMenuItem("NeuroMorpho...", 'n');
+			mi.addActionListener(e -> {
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("loader", new NeuroMorphoLoader());
+				runCmd(RemoteSWCImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
+			remoteMenu.add(mi);
 			tracesMenu.addSeparator();
-			mi = new JMenuItem("Remove All...");
+			mi = new JMenuItem("Remove Selected...", IconFactory.getMenuIcon(GLYPH.DELETE));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(false);
+				if (keys == null || keys.isEmpty()) {
+					guiUtils.error("There are no selected reconstructions.");
+					return;
+				}
+				if (!guiUtils.getConfirmation("Delete "+ keys.size() + " reconstruction(s)?", "Confirm Deletion")) {
+					return;
+				}
+				getOuter().setViewUpdatesEnabled(false);
+				keys.stream().forEach(k->getOuter().remove(k));
+				getOuter().setViewUpdatesEnabled(true);
+				getOuter().updateView();
+			});
+			tracesMenu.add(mi);
+			mi = new JMenuItem("Remove All...", IconFactory.getMenuIcon(GLYPH.TRASH));
 			mi.addActionListener(e -> {
 				if (!guiUtils.getConfirmation("Remove all reconstructions from scene?", "Remove All Reconstructions?")) {
 					return;
@@ -1325,9 +1555,15 @@ public class TreePlot3D {
 				getOuter().removeAll();
 			});
 			tracesMenu.add(mi);
+			return tracesMenu;
+		}
 
+		private JMenu legendMenu() {
 			// Legend Menu
-			mi = new JMenuItem("Add...");
+			final JMenu legendMenu = new JMenu("Color Legends");
+			legendMenu.setMnemonic('C');
+			legendMenu.setIcon(IconFactory.getMenuIcon(GLYPH.COLOR2));
+			JMenuItem mi = new JMenuItem("Add...");
 			mi.addActionListener(e -> {
 				runCmd(ColorizeReconstructionCmd.class, null, CmdWorker.DO_NOTHING);
 			});
@@ -1335,8 +1571,9 @@ public class TreePlot3D {
 			mi = new JMenuItem("Remove Last");
 			mi.addActionListener(e -> removeColorLegends(true));
 			legendMenu.add(mi);
-			meshMenu.addSeparator();
+			legendMenu.addSeparator();
 			mi = new JMenuItem("Remove All...");
+			mi.setIcon(IconFactory.getMenuIcon(GLYPH.TRASH));
 			mi.addActionListener(e -> {
 				if (!guiUtils.getConfirmation("Remove all color legends from scene?", "Remove All Legends?")) {
 					return;
@@ -1344,24 +1581,50 @@ public class TreePlot3D {
 				removeColorLegends(false);
 			});
 			legendMenu.add(mi);
+			return legendMenu;
+		}
 
-			// Meshes Menu
-			mi = new JMenuItem("Import OBJ File(s)...");
+		private JPopupMenu meshMenu() {
+			final JPopupMenu meshMenu = new JPopupMenu();
+			JMenuItem mi = new JMenuItem("Import OBJ File(s)...", IconFactory.getMenuIcon(GLYPH.GLOBE));
 			mi.addActionListener(e -> runCmd(LoadObjCmd.class, null, CmdWorker.DO_NOTHING));
 			meshMenu.add(mi);
-			mi = new JMenuItem("Load Allen Mouse Brain Atlas Contour");
+			final JMenu refMenu = new JMenu("Reference Brains");
+			refMenu.setMnemonic('R');
+			refMenu.setIcon(IconFactory.getMenuIcon(GLYPH.ATLAS));
+			meshMenu.add(refMenu);
+			mi = new JMenuItem("Mouse: Allen CCF");
+			mi.setMnemonic('A');
+			mi.addActionListener(e -> loadRefBrainAction(ALLEN_MESH_LABEL));
+			refMenu.add(mi);
+			mi = new JMenuItem("Drosophila: FlyCircuit");
+			mi.addActionListener(e -> loadRefBrainAction(FCWB_MESH_LABEL));
+			refMenu.add(mi);
+			mi = new JMenuItem("Drosophila: JFRC2");
+			mi.addActionListener(e -> loadRefBrainAction(JFRC2_MESH_LABEL));
+			refMenu.add(mi);
+			mi = new JMenuItem("Drosophila: JFRC3");
+			mi.addActionListener(e -> loadRefBrainAction(JFRC3_MESH_LABEL));
+			refMenu.add(mi);
+			meshMenu.addSeparator();
+			mi = new JMenuItem("Remove Selected...", IconFactory.getMenuIcon(GLYPH.DELETE));
 			mi.addActionListener(e -> {
-				if (getOBJs().keySet().contains(ALLEN_MESH_LABEL)) {
-					guiUtils.error(ALLEN_MESH_LABEL + " is already loaded.");
-					managerList.addCheckBoxListSelectedValue(ALLEN_MESH_LABEL, true);
+				final List<String> keys = getSelectedMeshes(false);
+				if (keys == null || keys.isEmpty()) {
+					guiUtils.error("There are no selected meshes.");
 					return;
 				}
-				loadMouseRefBrain();
-				getOuter().validate();
+				if (!guiUtils.getConfirmation("Delete "+ keys.size() + " mesh(es)?", "Confirm Deletion")) {
+					return;
+				}
+				getOuter().setViewUpdatesEnabled(false);
+				keys.stream().forEach(k->getOuter().removeOBJ(k));
+				getOuter().setViewUpdatesEnabled(true);
+				getOuter().updateView();
 			});
 			meshMenu.add(mi);
-			meshMenu.addSeparator();
 			mi = new JMenuItem("Remove All...");
+			mi.setIcon(IconFactory.getMenuIcon(GLYPH.TRASH));
 			mi.addActionListener(e -> {
 				if (!guiUtils.getConfirmation("Remove all meshes from scene?", "Remove All Meshes?")) {
 					return;
@@ -1369,7 +1632,9 @@ public class TreePlot3D {
 				removeAllOBJs();
 			});
 			meshMenu.add(mi);
-			return addMenu;
+			return meshMenu;
+		}
+
 		private void loadRefBrainAction(final String label) {
 			if (getOBJs().keySet().contains(label)) {
 				guiUtils.error(label + " is already loaded.");
@@ -1400,12 +1665,17 @@ public class TreePlot3D {
 
 		private void runCmd(final Class<? extends Command> cmdClass, final Map<String, Object> inputs,
 				final int cmdType) {
+			runCmd(cmdClass, inputs, cmdType, true);
+		}
+	
+		private void runCmd(final Class<? extends Command> cmdClass, final Map<String, Object> inputs,
+				final int cmdType, final boolean setRecViewerParamater) {
 			if (cmdService == null) {
 				guiUtils.error("This command requires Reconstruction Viewer to be aware of a Scijava Context");
 				return;
 			}
 			SwingUtilities.invokeLater(() -> {
-			(new CmdWorker(cmdClass, inputs, cmdType)).execute();});
+			(new CmdWorker(cmdClass, inputs, cmdType, setRecViewerParamater)).execute();});
 		}
 	}
 
@@ -1624,19 +1894,21 @@ public class TreePlot3D {
 		private final Class<? extends Command> cmd;
 		private final Map<String, Object> inputs;
 		private final int type;
+		private final boolean setRecViewerParamater;
 
 		public CmdWorker(final Class<? extends Command> cmd, 
-				final Map<String, Object> inputs, final int type) {
+				final Map<String, Object> inputs, final int type, final boolean setRecViewerParamater) {
 			this.cmd = cmd;
 			this.inputs = inputs;
 			this.type = type;
+			this.setRecViewerParamater = setRecViewerParamater;
 		}
-
+	
 		@Override
 		public Boolean doInBackground() {
 			try {
 				final Map<String, Object> input = new HashMap<>();
-				input.put("recViewer", getOuter());
+				if (setRecViewerParamater) input.put("recViewer", getOuter());
 				if (inputs != null) input.putAll(inputs);
 				cmdService.run(cmd, true, input).get();
 				return true;
@@ -1789,6 +2061,7 @@ public class TreePlot3D {
 	private class KeyController extends AbstractCameraController implements KeyListener {
 
 		private static final float STEP = 0.1f;
+		private OverlayAnnotation overlayAnnotation;
 
 		public KeyController(final Chart chart) {
 			register(chart);
@@ -1820,10 +2093,7 @@ public class TreePlot3D {
 				break;
 			case 'r':
 			case 'R':
-				chart.setViewPoint(View.DEFAULT_VIEW);
-				chart.setViewMode(ViewPositionMode.FREE);
-				view.setBoundMode(ViewBoundMode.AUTO_FIT);
-				displayMsg("View reset");
+				resetView();
 				break;
 			case 's':
 			case 'S':
@@ -1863,6 +2133,13 @@ public class TreePlot3D {
 					break;
 				}
 			}
+		}
+
+		private void resetView() {
+			chart.setViewPoint(View.DEFAULT_VIEW);
+			chart.setViewMode(ViewPositionMode.FREE);
+			view.setBoundMode(ViewBoundMode.AUTO_FIT);
+			displayMsg("View reset");
 		}
 
 		/*
@@ -1942,21 +2219,22 @@ public class TreePlot3D {
 
 			// Apply foreground color to trees with background color
 			plottedTrees.values().forEach(shapeTree -> {
-				final Shape shape = shapeTree.get();
-				if (isSameRGB(shape.getColor(), newBackground)) {
-					shape.setColor(newForeground);
+				if (isSameRGB(shapeTree.getSomaColor(), newBackground))
+					shapeTree.setSomaColor(newForeground);
+				if (isSameRGB(shapeTree.getArborWireFrameColor(), newBackground)) {
+					System.out.println("It is the same color "+ newBackground);
+					shapeTree.setArborColor(newForeground);
 					return; // replaces continue in lambda expression;
 				}
-				for (int i = 0; i < shape.size(); i++) {
-					if (shape.get(i) instanceof LineStrip) {
-						final List<Point> points = ((LineStrip) shape.get(i)).getPoints();
-						points.stream().forEach(p -> {
-							final Color pColor = p.getColor();
-							if (isSameRGB(pColor, newBackground)) {
-								changeRGB(pColor, newForeground);
-							}
-						});
-					}
+				final Shape shape = shapeTree.treeSubShape;
+				for (int i = 0; i < shapeTree.treeSubShape.size(); i++) {
+					final List<Point> points = ((LineStrip) shape.get(i)).getPoints();
+					points.stream().forEach(p -> {
+						final Color pColor = p.getColor();
+						if (isSameRGB(pColor, newBackground)) {
+							changeRGB(pColor, newForeground);
+						}
+					});
 				}
 			});
 
@@ -2000,7 +2278,7 @@ public class TreePlot3D {
 			sb.append("    <td>Double left-click</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Snap to View</td>");
+			sb.append("    <td>Snap to Top/Side View</td>");
 			sb.append("    <td>Ctrl + left-click</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
@@ -2008,7 +2286,7 @@ public class TreePlot3D {
 			sb.append("    <td>Press 'A'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Toggle <u>C</u>amera Mode &nbsp;</td>");
+			sb.append("    <td>Toggle <u>C</u>amera Mode</td>");
 			sb.append("    <td>Press 'C'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
@@ -2016,8 +2294,8 @@ public class TreePlot3D {
 			sb.append("    <td>Press 'D'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Toggle Debug <u>I</u>nfo</td>");
-			sb.append("    <td>Press 'I'</td>");
+			sb.append("    <td><u>F</u>it View to Visible Objects &nbsp;</td>");
+			sb.append("    <td>Press 'F'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
 			sb.append("    <td><u>R</u>eset View</td>");
@@ -2037,7 +2315,7 @@ public class TreePlot3D {
 			if (showInDialog) {
 				new HTMLDialog("Reconstruction Viewer Shortcuts", sb.toString(), false);
 			} else {
-				displayMsg(sb.toString(), 9000);
+				displayMsg(sb.toString(), 10000);
 			}
 			
 		}
@@ -2234,9 +2512,9 @@ public class TreePlot3D {
 		Color refColor = null;
 		for (final Map.Entry<String, ShapeTree> entry : plottedTrees.entrySet()) {
 			if (labels.contains(entry.getKey())) {
-				final Shape shape = entry.getValue().get();
+				final Shape shape = entry.getValue().treeSubShape;
 				for (int i = 0; i < shape.size(); i++) {
-					if (!(shape.get(i) instanceof LineStrip)) continue;
+					//treeSubShape is only composed of LineStrips so this is a safe casting
 					final Color color = getNodeColor((LineStrip) shape.get(i));
 					if (color == null) continue;
 					if (refColor == null) {

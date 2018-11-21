@@ -34,9 +34,15 @@ import javax.swing.UIManager;
 public class IconFactory {
 
 	public enum GLYPH {
-		ATOM('\uf5d2', true), //
+		ATLAS('\uf558', true), //
+//		ATOM('\uf5d2', true), //
 		BINOCULARS('\uf1e5', true), //
+		BRANCH_CODE('\uf126', true), //
+		BROOM('\uf51a', true), //
+		BUG('\uf188', true), //
 		BULLSEYE('\uf140', true), //
+		CAMERA('\uf030', true), //
+		CALCULATOR('\uf1ec', true), //
 		CHART('\uf080', false), //
 		CIRCLE('\uf192', false), //
 		CODE('\uf120', true), //
@@ -44,13 +50,18 @@ public class IconFactory {
 		COLOR2('\uf5c3', true), //
 		CROSSHAIR('\uf05b', true), //
 		CUBE('\uf1b2', true), //
+		DANGER('\uf071', true), //
+		DATABASE('\uf1c0', true), //
 		DELETE('\uf55a', true), //
+		DOWNLOAD('\uf019', true), //
+		EXPAND('\uf065', true), //
 		EXPLORE('\uf610', true), //
 		EXPORT('\uf56e', true), //
 		EYE('\uf06e', false), //
 		EYE_SLASH('\uf070', false), //
 		FILL('\uf575', true), //
 		FOLDER('\uf07b', false), //
+		GLOBE('\uf0ac', true), //
 		HOME('\uf015', true),
 		ID('\uf2c1', false), //
 		IMPORT('\uf56f', true), //
@@ -87,7 +98,7 @@ public class IconFactory {
 	}
 
 	public static Icon getButtonIcon(final GLYPH entry) {
-		return new FADerivedIcon(entry.id, UIManager.getFont("Button.font").getSize() * 0.9f,
+		return new FADerivedIcon(entry.id, UIManager.getFont("Button.font").getSize() * 1f,
 				UIManager.getColor("Button.foreground"), entry.solid);
 	}
 

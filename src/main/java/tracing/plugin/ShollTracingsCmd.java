@@ -295,6 +295,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive, Can
 		helper = new Helper(context());
 		logger = new Logger(context());
 		final boolean calledFromSNT = snt != null;
+		final boolean calledFromStandAloneRecViewer = snt == null && tree != null;
 
 		// Adjust Path filtering choices
 		final MutableModuleItem<String> mlitm = (MutableModuleItem<String>) getInfo().getInput("filterChoice", String.class);
@@ -316,12 +317,17 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive, Can
 			resolveInput("snt");
 			resolveInput("center");
 			resolveInput("centerUnscaled");
-			resolveInput("tree");
-			final ArrayList<String> filteredchoices = new ArrayList<String>();
-			for (final String choice: mlitm.getChoices()) {
-				if (!choice.equals("Selected paths")) filteredchoices.add(choice);
+			if (calledFromStandAloneRecViewer) {
+				resolveInput("file");
+			} else {
+				resolveInput("tree");
+				final ArrayList<String> filteredchoices = new ArrayList<String>();
+				for (final String choice : mlitm.getChoices()) {
+					if (!choice.equals("Selected paths"))
+						filteredchoices.add(choice);
+				}
+				mlitm.setChoices(filteredchoices);
 			}
-			mlitm.setChoices(filteredchoices);
 		}
 		readPreferences();
 		getInfo().setLabel("Sholl Analysis " + ShollUtils.version());
@@ -544,9 +550,10 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive, Can
 			lStats.setPrimaryBranches(new TreeAnalyzer(tree).getPrimaryPaths().size());
 
 			if (polynomialChoice.contains("Best")) {
+				showStatus("Computing 'Best Fit' Polynomial...");
 				final int deg = lStats.findBestFit(minDegree, maxDegree, prefService);
 				if (deg == -1) {
-					//helper.error("Polynomial regression failed. You may need to adjust Options for 'Best Fit' Polynomial", null);
+					helper.error("Polynomial regression failed. You may need to adjust (or reset) the options for 'best fit' polynomial", null);
 				}
 			} else if (polynomialChoice.contains("degree") && polynomialDegree > 1) {
 				showStatus("Fitting polynomial...");

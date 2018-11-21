@@ -170,7 +170,11 @@ public class GuiUtils {
 	}
 
 	public int yesNoDialog(final String msg, final String title) {
-		final JOptionPane optionPane = new JOptionPane(getLabel(msg), JOptionPane.QUESTION_MESSAGE,
+		return yesNoDialog(new Object[]{getLabel(msg)}, title);
+	}
+
+	private int yesNoDialog(final Object[] components, final String title) {
+		final JOptionPane optionPane = new JOptionPane(components, JOptionPane.QUESTION_MESSAGE,
 				JOptionPane.YES_NO_OPTION);
 		final JDialog d = optionPane.createDialog(title);
 		d.setModalityType(ModalityType.APPLICATION_MODAL);
@@ -188,6 +192,14 @@ public class GuiUtils {
 
 	public boolean getConfirmation(final String msg, final String title) {
 		return (yesNoDialog(msg, title) == JOptionPane.YES_OPTION);
+	}
+
+	public boolean[] getPersistentConfirmation(final String msg, final String title) {
+		final JCheckBox checkbox = new JCheckBox();
+		checkbox.setText(getWrappedText(checkbox, "Remember my choice and do not prompt me again"));
+		final Object[] params = {getLabel(msg), checkbox};
+		final boolean result = yesNoDialog(params, title) == JOptionPane.YES_OPTION;
+		return new boolean[] {result, checkbox.isSelected()};
 	}
 
 	public String getString(final String promptMsg, final String promptTitle, final String defaultValue) {
@@ -336,6 +348,16 @@ public class GuiUtils {
 		centeredDialog(msg, title, JOptionPane.PLAIN_MESSAGE);
 	}
 
+	public JDialog dialog(final String msg, final JComponent component, final String title) {
+		final Object[] params = {getLabel(msg), component};
+		final JOptionPane optionPane = new JOptionPane(params, 
+				JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION);
+		final JDialog dialog = optionPane.createDialog(title);
+		if (parent != null) dialog.setLocationRelativeTo(parent);
+		return dialog;
+		
+	}
+
 	private int centeredDialog(final String msg, final String title, final int type) {
 		/* if SwingDialogs could be centered, we could simply use */
 		// final SwingDialog d = new SwingDialog(getLabel(msg), type, false);
@@ -359,11 +381,15 @@ public class GuiUtils {
 			return new JLabel(text);
 		} else {
 			final JLabel label = new JLabel();
-			final int width = Math.round(label.getFontMetrics(label.getFont()).stringWidth(text));
-			final int max = (parent==null) ? 500 : parent.getWidth();
-			label.setText("<html><body><div style='width:" + Math.min(width, max) + ";'>" + text);
+			label.setText(getWrappedText(label, text));
 			return label;
 		}
+	}
+
+	private String getWrappedText(JComponent c, final String text) {
+		final int width = Math.round(c.getFontMetrics(c.getFont()).stringWidth(text));
+		final int max = (parent==null) ? 500 : parent.getWidth();
+		return "<html><body><div style='width:" + Math.min(width, max) + ";'>" + text;
 	}
 
 	public void blinkingError(final JComponent blinkingComponent, final String msg) {

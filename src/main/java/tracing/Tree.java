@@ -131,6 +131,7 @@ public class Tree {
 	 * @return true if this Tree changed as a result of the merge
 	 */
 	public boolean merge(final Tree tree) {
+		setLabel(((label == null) ? "" : label) + " " + tree.getLabel());
 		return this.tree.addAll(tree.list());
 	}
 

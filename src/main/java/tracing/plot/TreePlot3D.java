@@ -304,7 +304,7 @@ public class TreePlot3D {
 				if (!e.getValueIsAdjusting()) {
 					final List<String> selectedKeys = getLabelsCheckedInManager();
 					plottedTrees.forEach((k, shapeTree) -> {
-						shapeTree.get().setDisplayed(selectedKeys.contains(k));
+						shapeTree.setDisplayed(selectedKeys.contains(k));
 					});
 					plottedObjs.forEach((k, drawableVBO) -> {
 						drawableVBO.setDisplayed(selectedKeys.contains(k));
@@ -1006,13 +1006,17 @@ public class TreePlot3D {
 			hideMeshes.addActionListener(e -> retainVisibility(plottedTrees));
 			hideMenu.add(hideMeshes);
 			final JMenuItem hideTrees = new JMenuItem("Trees");
-			hideTrees.addActionListener(e -> retainVisibility(plottedObjs));
-			hideMenu.add(hideTrees);
+			hideTrees.addActionListener(e -> {
+				setArborsDisplayed(getLabelsCheckedInManager(), false);
+			});
+			final JMenuItem hideSomas = new JMenuItem("Somas of Visible Trees");
+			hideSomas.addActionListener(e -> displaySomas(false));
+			hideMenu.add(hideSomas);
 			final JMenuItem hideAll = new JMenuItem("All");
 			hideAll.addActionListener(e -> managerList.selectNone());
 			hideMenu.addSeparator();
 			hideMenu.add(hideAll);
-			
+
 			// Show Menu
 			final JMenu showMenu = new JMenu("Show");
 			showMenu.setIcon(IconFactory.getMenuIcon(GLYPH.EYE));
@@ -1022,6 +1026,9 @@ public class TreePlot3D {
 			final JMenuItem showTrees = new JMenuItem("Trees");
 			showTrees.addActionListener(e -> managerList.addCheckBoxListSelectedValues(plottedTrees.keySet().toArray()));
 			showMenu.add(showTrees);
+			final JMenuItem showSomas = new JMenuItem("Somas of Visible Trees");
+			showSomas.addActionListener(e -> displaySomas(true));
+			showMenu.add(showSomas);
 			final JMenuItem showAll = new JMenuItem("All");
 			showAll.addActionListener(e -> managerList.selectAll());
 			showMenu.add(showAll);
@@ -1042,6 +1049,15 @@ public class TreePlot3D {
 			pMenu.addSeparator();
 			pMenu.add(sort);
 			return pMenu;
+		}
+
+		private void displaySomas(final boolean displayed) {
+			final List<String> labels = getLabelsCheckedInManager();
+			if (labels.isEmpty()) {
+				displayMsg("There are no visible reconstructions");
+				return;
+			}
+			setSomasDisplayed(labels, displayed);
 		}
 
 		private void selectRows(final Map<String, ?> map) {
@@ -1344,6 +1360,9 @@ public class TreePlot3D {
 
 	private class ShapeTree extends Shape {
 
+		private static final float SOMA_SCALING_FACTOR = 2.5f;
+		private static final float SOMA_SLICES = 15f; // Sphere default;
+
 		private final Tree tree;
 		private Shape treeSubShape;
 		private AbstractWireframeable somaSubShape;
@@ -1363,8 +1382,7 @@ public class TreePlot3D {
 		@Override
 		public void setDisplayed(boolean displayed) {
 			setArborDisplayed(displayed);
-			setSomaDisplayed(displayed);
-			super.setDisplayed(displayed); // redundant?
+			//setSomaDisplayed(displayed);
 		}
 
 		public void setSomaDisplayed(boolean displayed) {
@@ -1417,9 +1435,13 @@ public class TreePlot3D {
 				lines.add(line);
 			}
 
-			// Group all lines into a Composite
+			// Group all lines into a Composite. BY default the composite
+			// will have no wireframe color, to allow colors for Paths/
+			// nodes to be reveleade. Once a wireframe color is explicit
+			// set it will be applied to all the paths in the composite
 			if (!lines.isEmpty()) {
 				treeSubShape = new Shape();
+				treeSubShape.setWireframeColor(null);
 				treeSubShape.add(lines);
 				add(treeSubShape);
 			}
@@ -1438,30 +1460,16 @@ public class TreePlot3D {
 				return;
 			case 1:
 				// single point soma: http://neuromorpho.org/SomaFormat.html
-				final Sphere sSoma = new Sphere();
 				final PointInImage sCenter = somaPoints.get(0);
-				sSoma.setPosition(new Coord3d(sCenter.x, sCenter.y, sCenter.z));
-				sSoma.setVolume((float) Math.max(sCenter.v, 4 * defThickness));
-				sSoma.setColor(color);
-				setSomaLook(sSoma, color);
-				somaSubShape = sSoma;
+				somaSubShape = sphere(sCenter, color);
 				return;
 			case 3 :
 				// 3 point soma representation: http://neuromorpho.org/SomaFormat.html
-				//final PointInImage center = PointInImage.average(somaPoints);
-				final Tube t1 = new Tube();
 				final PointInImage p1 = somaPoints.get(0);
 				final PointInImage p2 = somaPoints.get(1);
 				final PointInImage p3 = somaPoints.get(2);
-				t1.setPosition(new Coord3d((p1.x+ p2.x) /2, (p1.y+ p2.y) /2, (p1.z+ p2.z) /2));
-				t1.setVolume((float)p2.v, (float)p1.v, (float)p2.distanceTo(p1));
-				t1.setColor(color);
-				setSomaLook(t1, color);
-				final Tube t2 = new Tube();
-				t2.setPosition(new Coord3d((p1.x+ p3.x) /2, (p1.y+ p3.y) /2, (p1.z+ p3.z) /2));
-				t2.setVolume((float)p1.v, (float)p3.v, (float)p3.distanceTo(p1));
-				t2.setColor(color);
-				setSomaLook(t2, color);
+				final Tube t1 = tube(p2, p1, color);
+				final Tube t2 = tube(p1, p3, color);
 				final Shape composite = new Shape();
 				composite.add(t1);
 				composite.add(t2);
@@ -1469,21 +1477,34 @@ public class TreePlot3D {
 				return;
 			default:
 				// just create a centroid sphere
-				final Sphere cSoma = new Sphere();
 				final PointInImage cCenter = PointInImage.average(somaPoints);
-				cSoma.setPosition(new Coord3d(cCenter.x, cCenter.y, cCenter.z));
-				cSoma.setVolume((float) Math.max(cCenter.v, 4 * defThickness));
-				cSoma.setColor(color);
-				setSomaLook(cSoma, color);
-				somaSubShape = cSoma;
+				somaSubShape = sphere(cCenter, color);
 				return;
 			}
 		}
 	
-		private <T extends AbstractWireframeable> void setSomaLook(final T t, final Color color) {
-			t.setWireframeColor(contrastColor(color));
-			t.setWireframeWidth(1f);
+		private <T extends AbstractWireframeable & ISingleColorable> void setWireFrame(final T t, final float r, final Color color) {
+			t.setColor(contrastColor(color).alphaSelf(0.4f));
+			t.setWireframeColor(color.alphaSelf(0.8f));
+			t.setWireframeWidth(Math.max(1f, r/SOMA_SLICES/3));
 			t.setWireframeDisplayed(true);
+		}
+
+		private Tube tube(final PointInImage bottom, final PointInImage top, final Color color) {
+			final Tube tube = new Tube();
+			tube.setPosition(new Coord3d((bottom.x + top.x) / 2, (bottom.y + top.y) / 2, (bottom.z + top.z) / 2));
+			final float height = (float) bottom.distanceTo(top);
+			tube.setVolume((float) bottom.v, (float) top.v, height);
+			return tube;
+		}
+
+		private Sphere sphere(final PointInImage center, final Color color) {
+			final Sphere s = new Sphere();
+			s.setPosition(new Coord3d(center.x, center.y, center.z));
+			final float radius = (float) Math.max(center.v, SOMA_SCALING_FACTOR * defThickness);
+			s.setVolume(radius);
+			setWireFrame(s, radius, color);
+			return s;
 		}
 
 		public void rebuildShape() {
@@ -1495,11 +1516,35 @@ public class TreePlot3D {
 		}
 
 		public void setThickness(final float thickness) {
-			for (int i = 0; i < size(); i++) {
-				if (get(i) instanceof LineStrip) {
-					((LineStrip) get(i)).setWireframeWidth(thickness);
-				}
-			}
+			treeSubShape.setWireframeWidth(thickness);
+		}
+
+		private void setArborColor(final ColorRGB color) {
+			setArborColor(fromColorRGB(color));
+		}
+
+		private void setArborColor(final Color color) {
+			treeSubShape.setWireframeColor(color);
+//			for (int i = 0; i < treeSubShape.size(); i++) {
+//				((LineStrip) treeSubShape.get(i)).setColor(color);
+//			}
+		}
+
+		private Color getArborWireFrameColor() {
+			return (treeSubShape == null) ? null : treeSubShape.getWireframeColor();
+		}
+
+		private Color getSomaColor() {
+			return (somaSubShape == null) ? null : somaSubShape.getWireframeColor();
+		}
+
+		private void setSomaColor(Color color) {
+			if (somaSubShape != null)
+				somaSubShape.setWireframeColor(color);
+		}
+
+		public void setSomaColor(final ColorRGB color) {
+			setSomaColor(fromColorRGB(color));
 		}
 
 		public double[] colorize(final String measurement, final ColorTable colorTable) {
@@ -1510,8 +1555,8 @@ public class TreePlot3D {
 		}
 
 		private Color contrastColor(final Color color) {
-			final float factor = 0.25f;
-			return new Color(factor - color.r, factor - color.g, factor - color.b, color.a);
+			final float factor = 0.75f;
+			return new Color(factor - color.r, factor - color.g, factor - color.b);
 		}
 
 	}
@@ -2078,6 +2123,27 @@ public class TreePlot3D {
 		});
 	}
 
+	private void setArborsDisplayed(final Collection<String> labels, final boolean displayed) {
+		plottedTrees.forEach((k, shapeTree) -> {
+			if (labels.contains(k)) setArborDisplayed(k, displayed);
+		});
+	}
+
+	private void setArborDisplayed(final String treeLabel, final boolean displayed) {
+		final ShapeTree shapeTree = plottedTrees.get(treeLabel);
+		if (shapeTree != null) shapeTree.setArborDisplayed(displayed);
+	}
+
+	public void setSomasDisplayed(final Collection<String> labels, final boolean displayed) {
+		plottedTrees.forEach((k, shapeTree) -> {
+			if (labels.contains(k)) setSomaDisplayed(k, displayed);
+		});
+	}
+
+	private void setSomaDisplayed(final String treeLabel, final boolean displayed) {
+		final ShapeTree shapeTree = plottedTrees.get(treeLabel);
+		if (shapeTree != null) shapeTree.setSomaDisplayed(displayed);
+	}
 
 	/**
 	 * Applies a color to a subset of plotted trees.
@@ -2088,12 +2154,8 @@ public class TreePlot3D {
 	protected void applyColorToPlottedTrees(final List<String> labels, final ColorRGB color) {
 		plottedTrees.forEach((k, shapeTree) -> {
 			if (labels.contains(k)) {
-				final Shape shape = shapeTree.get();
-				for (int i = 0; i < shape.size(); i++) {
-					if (shape.get(i) instanceof LineStrip) {
-						((LineStrip) shape.get(i)).setColor(fromColorRGB(color));
-					}
-				}
+				shapeTree.setArborColor(color);
+				shapeTree.setSomaColor(color);	
 			}
 		});
 	}

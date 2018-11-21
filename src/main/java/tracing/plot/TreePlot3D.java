@@ -1830,6 +1830,10 @@ public class TreePlot3D {
 				saveScreenshot();
 				displayMsg("Screenshot saved to "+ FileUtils.limitPath(getScreenshotDirectory(), 50));
 				break;
+			case 'f':
+			case 'F':
+				fitToVisibleObjects();
+				break;
 			case '+':
 			case '=':
 				mouseController.zoom(0.9f);
@@ -2145,6 +2149,17 @@ public class TreePlot3D {
 	 */
 	public void setDefaultThickness(final float thickness) {
 		this.defThickness = thickness;
+	}
+
+	protected synchronized void fitToVisibleObjects() throws NullPointerException {
+		final List<AbstractDrawable> all = chart.getView().getScene().getGraph().getAll();
+		final BoundingBox3d bounds = new BoundingBox3d(0, 0, 0, 0, 0, 0);
+		all.stream().forEach(d -> {
+			if (d != null && d.isDisplayed() && d.getBounds() != null && !d.getBounds().isReset()) {
+				bounds.add(d.getBounds());
+			}
+		});
+		if (!bounds.isPoint()) chart.view().lookToBox(bounds);
 	}
 
 	/**

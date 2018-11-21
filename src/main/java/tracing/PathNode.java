@@ -34,7 +34,12 @@ import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInImage;
 import tracing.util.SWCColor;
 
-/** Convenience class used to render Path nodes (vertices). */
+/**
+ * Convenience class used to render {@link Path} nodes (vertices) in an
+ * {@link TracerCanvas}.
+ * 
+ * @author Tiago Ferreira
+ */
 public class PathNode {
 
 	/** Flag describing a start point node */
@@ -243,15 +248,6 @@ public class PathNode {
 	 */
 	public void setEditable(final boolean editable) {
 		this.editable = editable;
-	}
-
-	public static double[] unScale(final PointInImage pim) {
-		if (pim.onPath == null)
-			throw new IllegalArgumentException("Only path-associated points can be unscaled");
-		final double x = pim.x / pim.onPath.x_spacing;
-		final double y = pim.y / pim.onPath.y_spacing;
-		final double z = pim.z / pim.onPath.z_spacing;
-		return new double[] { x, y, z };
 	}
 
 	public static double[] unScale(final PointInImage pim, final int plane) {

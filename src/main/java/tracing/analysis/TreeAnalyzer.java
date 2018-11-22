@@ -282,20 +282,24 @@ public class TreeAnalyzer extends ContextCommand {
 	public void summarize(final String rowHeader, final boolean groupByType) {
 		if (table == null)
 			table = new DefaultGenericTable();
-		table.appendRow(rowHeader);
-		final int row = Math.max(0, table.getRowCount() - 1);
 		if (groupByType) {
 			final int[] types = tree.getSWCtypes().stream().mapToInt(v -> v).toArray();
 			for (final int type : types) {
 				restrictToSWCType(type);
 				final String label = Path.getSWCtypeName(type, true);
+				final int row = getNextRow(rowHeader);
 				measureTree(row, label);
 				table.set(getCol("SWC Type"), row, label);
-				restrictToSWCType(types);
+				resetRestrictions();
 			}
 		} else {
-			measureTree(row, "All types");
+			measureTree(getNextRow(rowHeader), "All types");
 		}
+	}
+
+	private int getNextRow(final String rowHeader) {
+		table.appendRow(rowHeader);
+		return table.getRowCount() - 1;
 	}
 
 	private void measureTree(final int row, final String type) {

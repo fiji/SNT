@@ -167,6 +167,7 @@ public class SNTUI extends JDialog {
 	private JButton junkSegment;
 	protected JButton abortButton;
 	private JButton completePath;
+	private JCheckBox debugCheckBox;
 
 	// UI controls for loading 'filtered image'
 	private JPanel filteredImgPanel;
@@ -464,6 +465,16 @@ public class SNTUI extends JDialog {
 		if (plugin.analysisMode && currentState == WAITING_TO_START_PATH)
 			currentState = ANALYSIS_MODE;
 		return currentState;
+	}
+
+	/**
+	 * Enables/disables debug mode
+	 *
+	 * @param enable true to enable debug mode, otherwise false
+	 */
+	public void setEnableDebugMode(final boolean enable ) {
+		debugCheckBox.setSelected(enable);
+		SNT.setDebugMode(enable);
 	}
 
 	private void updateStatusText(final String newStatus,
@@ -1240,24 +1251,11 @@ public class SNTUI extends JDialog {
 		++gdb.gridy;
 		final JCheckBox compressedXMLCheckBox = new JCheckBox(
 			"Use compression when saving traces", plugin.useCompressedXML);
-		compressedXMLCheckBox.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				plugin.useCompressedXML = (e.getStateChange() == ItemEvent.SELECTED);
-			}
-		});
+		compressedXMLCheckBox.addItemListener(e -> plugin.useCompressedXML = (e.getStateChange() == ItemEvent.SELECTED));
 		miscPanel.add(compressedXMLCheckBox, gdb);
 		++gdb.gridy;
-		final JCheckBox debugCheckBox = new JCheckBox("Debug mode", SNT
-			.isDebugMode());
-		debugCheckBox.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				SNT.setDebugMode(e.getStateChange() == ItemEvent.SELECTED);
-			}
-		});
+		debugCheckBox = new JCheckBox("Debug mode", SNT .isDebugMode());
+		debugCheckBox.addItemListener(e -> SNT.setDebugMode(e.getStateChange() == ItemEvent.SELECTED));
 		miscPanel.add(debugCheckBox, gdb);
 		++gdb.gridy;
 		final JButton resetbutton = GuiUtils.smallButton("Reset Preferences...");

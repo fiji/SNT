@@ -1216,16 +1216,16 @@ public class TreePlot3D {
 			return getSelectedKeys(plottedObjs, "meshes", promptForAllIfNone);
 		}
 
-		private List<String> getSelectedKeys(final Map<String, ?> map, final String mapDescriptor, final boolean retrieveAllIfNone) {
+		private List<String> getSelectedKeys(final Map<String, ?> map, final String mapDescriptor, final boolean promptForAllIfNone) {
 			if (map.isEmpty()) {
 				guiUtils.error("There are no loaded " + mapDescriptor + ".");
 				return null;
 			}
 			final List<?> selectedKeys = managerList.getSelectedValuesList();
 			final List<String> allKeys = new ArrayList<>(map.keySet());
-			if (selectedKeys.size() == 1 && selectedKeys.get(0) == CheckBoxList.ALL_ENTRY)
+			if ((promptForAllIfNone && map.size() == 1) || (selectedKeys.size() == 1 && selectedKeys.get(0) == CheckBoxList.ALL_ENTRY))
 				return allKeys;
-			if (retrieveAllIfNone && selectedKeys.isEmpty()) {
+			if (promptForAllIfNone && selectedKeys.isEmpty()) {
 				checkRetrieveAllOptions(mapDescriptor);
 				if (prefs.retrieveAllIfNoneSelected) return allKeys;
 				guiUtils.error("There are no selected " + mapDescriptor + ".");
@@ -1247,7 +1247,7 @@ public class TreePlot3D {
 			final JPopupMenu measureMenu = new JPopupMenu();
 			JMenuItem mi = new JMenuItem("Measure", IconFactory.getMenuIcon(GLYPH.TABLE));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(false);
+				final List<String> keys = getSelectedTrees(true);
 				if (keys == null) return;
 				if (table == null) table = new DefaultGenericTable();
 				plottedTrees.forEach((k, shapeTree) -> {
@@ -1266,7 +1266,7 @@ public class TreePlot3D {
 			measureMenu.add(mi);
 			mi = new JMenuItem("Distributions...", IconFactory.getMenuIcon(GLYPH.CHART));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(false);
+				final List<String> keys = getSelectedTrees(true);
 				if (keys == null || keys.isEmpty()) return;
 				final Tree mergedTree = new Tree();
 				plottedTrees.forEach((k, shapeTree) -> {
@@ -1303,6 +1303,8 @@ public class TreePlot3D {
 		}
 
 		private Tree getSingleSelectionTree() {
+			if (plottedTrees.size()==1)
+				return plottedTrees.values().iterator().next().tree;
 			final List<String> keys = getSelectedTrees(false);
 			if (keys == null || keys.isEmpty() || keys.size() > 1) {
 				guiUtils.error("This command requires a single recontruction to be selected.");
@@ -1473,6 +1475,9 @@ public class TreePlot3D {
 			jcbmi.setMnemonic('d');
 			jcbmi.addItemListener(e -> {
 				keyController.setEnableDebugMode(jcbmi.isSelected());
+				if (isSNTInstance()) {
+					sntService.getPlugin().getUI().setEnableDebugMode(jcbmi.isSelected());
+				}
 			});
 			settingsMenu.add(jcbmi);
 			settingsMenu.addSeparator();

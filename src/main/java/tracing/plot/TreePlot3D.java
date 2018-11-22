@@ -468,6 +468,7 @@ public class TreePlot3D {
 	public Frame show(final boolean showManager) {
 		return show();
 	}
+
 	private void displayMsg(final String msg) {
 		displayMsg(msg, 2500);
 	}
@@ -677,6 +678,19 @@ public class TreePlot3D {
 			obj.setDisplayed(visible);
 	}
 
+	/**
+	 * Runs {@link MultiTreeColorMapper} on the specified collection of
+	 * {@link Tree}s.
+	 *
+	 * @param treeLabels  the collection of identifier of the Trees (as per
+	 *                    {@link #add(Tree)}) to be color mapped
+	 * @param measurement the mapping measurement e.g.,
+	 *                    {@link MultiTreeColorMapper#TOTAL_LENGTH}
+	 *                    {@link MultiTreeColorMapper#TOTAL_N_TIPS}, etc.
+	 * @param colorTable  the mapping color table (LUT), e.g.,
+	 *                    {@link ColorTables#ICE}), or any other known to LutService
+	 * @return the double[] the limits (min and max) of the mapped values
+	 */
 	public double[] colorize(final Collection<String> treeLabels, 
 			final String measurement, final ColorTable colorTable) {
 		final List<ShapeTree>shapeTrees = new ArrayList<>();
@@ -694,6 +708,18 @@ public class TreePlot3D {
 		return mapper.getMinMax();
 	}
 
+	/**
+	 * Runs {@link TreeColorMapper} on the specified {@link Tree}.
+	 *
+	 * @param treeLabels  the identifier of the Tree (as per {@link #add(Tree)}) to
+	 *                    be color mapped
+	 * @param measurement the mapping measurement e.g.,
+	 *                    {@link TreeColorMapper#BRANCH_ORDER}
+	 *                    {@link TreeColorMapper#PATH_DISTANCE}, etc.
+	 * @param colorTable  the mapping color table (LUT), e.g.,
+	 *                    {@link ColorTables#ICE}), or any other known to LutService
+	 * @return the double[] the limits (min and max) of the mapped values
+	 */
 	public double[] colorize(final String treeLabel, final String measurement, final ColorTable colorTable) {
 		final ShapeTree treeShape = plottedTrees.get(treeLabel);
 		if (treeShape == null) return null;
@@ -804,7 +830,7 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Loads the surface meshes for a Drosophila template brain. It will simply make
+	 * Loads the surface mesh of a Drosophila template brain. It will simply make
 	 * the mesh visible if has already been loaded. These meshes are detailed on the
 	 * <a
 	 * href="https://www.rdocumentation.org/packages/nat.templatebrains/>nat.flybrains
@@ -812,10 +838,10 @@ public class TreePlot3D {
 	 *
 	 * @param templateBrain the template brain to be loaded (case-insensitive).
 	 *                      Either "JFRC2" (AKA JFRC2010), "JFRC3" (AKA JFRC2013),
-	 *                      or "FCWB" (FlyCircuit whole brain template)
-	 * @throws IllegalArgumentException if templateBrain is not recognized Viewer is
-	 *                                  not available, i.e., {@link #getView()} is
-	 *                                  null
+	 *                      or "FCWB" (FlyCircuit Whole Brain Template)
+	 * @throws IllegalArgumentException if templateBrain is not recognized, or
+	 *                                  Viewer is not available, i.e.,
+	 *                                  {@link #getView()} is null
 	 */
 	public void loadDrosoRefBrain(final String templateBrain) throws IllegalArgumentException {
 		final String inputType = (templateBrain == null) ? null : templateBrain.toLowerCase();
@@ -1649,7 +1675,7 @@ public class TreePlot3D {
 			try {
 				loadRefBrain(label);
 				getOuter().validate();
-			} catch (IllegalArgumentException ex) {
+			} catch (final IllegalArgumentException ex) {
 				guiUtils.error(ex.getMessage());
 			}
 		}
@@ -1710,16 +1736,16 @@ public class TreePlot3D {
 		}
 
 		@Override
-		public void setDisplayed(boolean displayed) {
+		public void setDisplayed(final boolean displayed) {
 			setArborDisplayed(displayed);
 			//setSomaDisplayed(displayed);
 		}
 
-		public void setSomaDisplayed(boolean displayed) {
+		public void setSomaDisplayed(final boolean displayed) {
 			if (somaSubShape != null) somaSubShape.setDisplayed(displayed);
 		}
 
-		public void setArborDisplayed(boolean displayed) {
+		public void setArborDisplayed(final boolean displayed) {
 			if (treeSubShape != null) treeSubShape.setDisplayed(displayed);
 		}
 
@@ -1781,7 +1807,7 @@ public class TreePlot3D {
 			//shape.setWireframeDisplayed(true);
 		}
 
-		private void assembleSoma(List<PointInImage> somaPoints, List<java.awt.Color> somaColors) {
+		private void assembleSoma(final List<PointInImage> somaPoints, final List<java.awt.Color> somaColors) {
 			final Color color = fromAWTColor(SWCColor.average(somaColors));
 			switch(somaPoints.size()) {
 			case 0:
@@ -1868,7 +1894,7 @@ public class TreePlot3D {
 			return (somaSubShape == null) ? null : somaSubShape.getWireframeColor();
 		}
 
-		private void setSomaColor(Color color) {
+		private void setSomaColor(final Color color) {
 			if (somaSubShape != null)
 				somaSubShape.setWireframeColor(color);
 		}
@@ -2329,7 +2355,7 @@ public class TreePlot3D {
 	private class OverlayAnnotation extends CameraEyeOverlayAnnotation {
 
 		private java.awt.Color color;
-		private GLAnimatorControl control;
+		private final GLAnimatorControl control;
 
 		public OverlayAnnotation(final View view) {
 			super(view);
@@ -2534,8 +2560,8 @@ public class TreePlot3D {
 		return false;
 	}
 
-	private Color getNodeColor(LineStrip lineStrip) {
-		for (Point p : lineStrip.getPoints()) {
+	private Color getNodeColor(final LineStrip lineStrip) {
+		for (final Point p : lineStrip.getPoints()) {
 			if (p != null) return p.rgb;
 		}
 		return null;

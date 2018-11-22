@@ -89,6 +89,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 	 * @see tracing.analysis.ColorMapper#colorize(java.lang.String,
 	 * net.imglib2.display.ColorTable)
 	 */
+	@Override
 	public void colorize(final String measurement, final ColorTable colorTable) {
 		super.colorize(measurement, colorTable);
 		final String cMeasurement = super.normalizedMeasurement(measurement);

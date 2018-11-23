@@ -29,7 +29,10 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 import org.scijava.Context;
 import org.scijava.log.LogService;
@@ -275,6 +278,24 @@ public class SNT {
 		final BoundingBox bd = new BoundingBox();
 		bd.setUnit(unit);
 		return bd.getUnit();
+	}
+
+	/**
+	 * Generates a list of random paths. Only useful for debugging purposes
+	 *
+	 * @return the list of random Paths
+	 */
+	public static List<Path> randomPaths() {
+		final List<Path> data = new ArrayList<>();
+		for (int i = 0; i < 100; i++) {
+			final Path p = new Path(1, 1, 1, "unit");
+			final double v1 = new Random().nextGaussian();
+			final double v2 = new Random().nextGaussian();
+			p.addPointDouble(v1, v2, v1);
+			p.addPointDouble(v2, v1, v2);
+			data.add(p);
+		}
+		return data;
 	}
 
 }

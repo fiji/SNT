@@ -29,9 +29,9 @@ import java.util.List;
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
+import tracing.SNT;
 import tracing.Tree;
 import tracing.plot.TreePlot3D;
-import tracing.plugin.DistributionCmd;
 
 /**
  * Class for color coding groups of {@link Tree}s.
@@ -153,7 +153,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 		ij.ui().showUI();
 		final List<Tree> trees = new ArrayList<>();
 		for (int i = 0; i < 100; i++) {
-			final Tree tree = new Tree(DistributionCmd.randomPaths());
+			final Tree tree = new Tree(SNT.randomPaths());
 			tree.rotate(Tree.Z_AXIS, i * 20);
 			trees.add(tree);
 		}

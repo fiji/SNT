@@ -35,7 +35,6 @@ import net.imagej.ImageJ;
 import tracing.SNTPrefs;
 import tracing.gui.GuiUtils;
 import tracing.plugin.CallLegacyShollPlugin;
-import tracing.plugin.DistributionCmd;
 import tracing.plugin.PlotterCmd;
 import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.ShollTracingsCmd;

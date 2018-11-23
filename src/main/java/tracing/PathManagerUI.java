@@ -103,8 +103,8 @@ import tracing.gui.IconFactory;
 import tracing.gui.PathFitterCmd;
 import tracing.gui.SNTSearchableBar;
 import tracing.gui.SwingSafeResult;
+import tracing.gui.cmds.DistributionCmd;
 import tracing.gui.cmds.SWCTypeOptionsCmd;
-import tracing.plugin.DistributionCmd;
 import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.SkeletonizerCmd;
 import tracing.plugin.TreeColorizerCmd;
@@ -1586,8 +1586,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 			} else if (HISTOGRAM_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
-				input.put("tree", new Tree(selectedPaths));
-				input.put("title", "SNT: Hist. " + getDescription(selectedPaths));
+				final Tree tree = new Tree(selectedPaths);
+				tree.setLabel(getDescription(selectedPaths));
+				input.put("tree", tree);
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(DistributionCmd.class, true, input);
 				return;

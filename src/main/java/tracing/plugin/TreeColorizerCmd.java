@@ -202,7 +202,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
-		final Tree tree = new Tree(DistributionCmd.randomPaths());
+		final Tree tree = new Tree(SNT.randomPaths());
 		input.put("tree", tree);
 		ij.command().run(TreeColorizerCmd.class, true, input);
 	}

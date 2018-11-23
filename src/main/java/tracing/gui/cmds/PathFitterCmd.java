@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.gui;
+package tracing.gui.cmds;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
@@ -32,43 +32,59 @@ import org.scijava.widget.Button;
 
 import net.imagej.ImageJ;
 import tracing.PathFitter;
+import tracing.gui.GuiUtils;
 
 /**
- * Command with the sole purpose of providing a scijava-based GUI for
- * {@link tracing.PathFitter}
+ * GUI command for {@link tracing.PathFitter}
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Fit Paths")
+@Plugin(type = Command.class, visible = false, label = "Refinement of Paths")
 public class PathFitterCmd extends ContextCommand {
 
 	@Parameter
 	private PrefService prefService;
 
+
 	public static final String FITCHOICE_KEY= "choice";
 	public static final String MAXRADIUS_KEY= "maxrad";
 
 	private static final String EMPTY_LABEL = "<html>&nbsp;";
-	private static final String HEADER = "<html><body><div style='width:500;'>";
-	private static final String CHOICE_MIDPOINT = "Midpoint refinement";
-	private static final String CHOICE_RADII = "Radii";
-	private static final String CHOICE_BOTH = "Midpoint refinement and radii";
+	private static final String CHOICE_RADII = "1) Assign radii of fitted cross-sections to nodes";
+	private static final String CHOICE_MIDPOINT = "2) Snap node coordinates to cross-section centroids";
+	private static final String CHOICE_BOTH = "1) & 2): Assign fitted radii and snap node coordinates";
+	private static String HEADER;
+
+	static {
+		GuiUtils.setSystemLookAndFeel();
+		final javax.swing.JLabel label = new javax.swing.JLabel();
+		final int width = label.getFontMetrics(label.getFont()).stringWidth("Type of Fit" + CHOICE_BOTH);
+		HEADER = "<HTML><body><div style='width:" + width + ";'>";
+	}
 
 	@Parameter(required = false, visibility = ItemVisibility.MESSAGE)
 	private String msg1 = HEADER
-			+ "<b>Type of fit:</b> Please choose the type of fit to be performed. The algorithm will fit "
-			+ "circular cross-sections around the signal of existing nodes to "
-			+ "compute radii (node thickness) and midpoint refinement of existing node coordinates:";
+			+ "<b>Type of refinement:</b> SNT can use the fluorescent signal around traced paths " //
+			+ "to optimize curvatures and estimate the thickness of traced structures. The optimization " //
+			+ "algorithm uses pixel intensities to fit circular cross-sections around each node. " //
+			+ "Once computed, fitted cross-sections can be use to: 1) Infer the radius of nodes, " //
+			+ "and/or 2) refine node positioning, by snapping their coordinates to the cross-section " //
+			+ "centroid.<br><br>" //
+			+ "Please specify the type of optimization to be performed when refining paths:";
 
-	@Parameter(required = true, label = EMPTY_LABEL, choices = { CHOICE_BOTH, CHOICE_MIDPOINT, CHOICE_RADII })
+	@Parameter(required = true, label = EMPTY_LABEL, choices = { CHOICE_RADII, CHOICE_MIDPOINT, CHOICE_BOTH })
 	private String fitChoice;
 
 	@Parameter(required = false, visibility = ItemVisibility.MESSAGE)
-	private String msg2 = HEADER
-			+ "<b>Max. radius:</b> You can also specify (in pixels) the maximum radius to be considered:";
+	private String spacer = EMPTY_LABEL;
 
+	@Parameter(required = false, visibility = ItemVisibility.MESSAGE)
+	private String msg2 = HEADER
+			+ "<b>Max. radius:</b> This setting defines (in pixels) the largest radius " //
+			+ "allowed in the fit. It constrains the optimization to minimize fitting " //
+			+ "artifacts caused from neighboring structures:";
 	@Parameter(required = false, label = EMPTY_LABEL)
-	private int maxRadius = 40;
+	private int maxRadius = PathFitter.DEFAULT_MAX_RADIUS;
 
 	@Parameter(required = false, label = "Reset Defaults", callback = "reset")
 	private Button reset;
@@ -96,14 +112,13 @@ public class PathFitterCmd extends ContextCommand {
 
 	@SuppressWarnings("unused")
 	private void reset() {
-		fitChoice = PathFitterCmd.CHOICE_BOTH;
+		fitChoice = PathFitterCmd.CHOICE_RADII;
 		maxRadius = PathFitter.DEFAULT_MAX_RADIUS;
 		prefService.clear(PathFitterCmd.class); // useful if user dismisses dialog after pressing "Reset"
 	}
 
 	/* IDE debug method **/
 	public static void main(final String[] args) {
-		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		ij.command().run(PathFitterCmd.class, true);

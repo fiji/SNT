@@ -703,7 +703,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		resetListeners(justAdded, false);
 	}
 
-	public synchronized void resetListeners(final Path justAdded, final boolean expandAll) {
+	protected synchronized void resetListeners(final Path justAdded, final boolean expandAll) {
 
 		final ArrayList<String> pathListEntries = new ArrayList<>();
 
@@ -748,7 +748,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	protected synchronized void addPath(final Path p, final boolean forceNewName) {
 		if (getPathFromID(p.getID()) != null)
-			throw new RuntimeException("Attempted to add a path with an ID that was already added");
+			throw new IllegalArgumentException("Attempted to add a path with an ID that was already added");
 		if (p.getID() < 0) {
 			p.setID(++maxUsedID);
 		}
@@ -873,39 +873,27 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		resetListeners(null);
 	}
 
-	public void addFill(final Fill fill) {
-
+	protected void addFill(final Fill fill) {
 		allFills.add(fill);
 		resetListeners(null);
 	}
 
-	public void deleteFills(final int[] indices) {
-
+	protected void deleteFills(final int[] indices) {
 		Arrays.sort(indices);
-
 		for (int i = indices.length - 1; i >= 0; --i) {
 			deleteFill(indices[i], false);
 		}
-
 		resetListeners(null);
 	}
 
-	public void deleteFill(final int index) {
-		deleteFill(index, true);
-	}
-
 	private synchronized void deleteFill(final int index, final boolean updateInterface) {
-
 		allFills.remove(index);
-
 		if (updateInterface)
 			resetListeners(null);
 	}
 
-	public void reloadFill(final int index) {
-
+	protected void reloadFill(final int index) {
 		final Fill toReload = allFills.get(index);
-
 		plugin.startFillerThread(
 				FillerThread.fromFill(plugin.getImagePlus(), plugin.stackMin, plugin.stackMax, true, toReload));
 
@@ -913,7 +901,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	// FIXME: should probably use XMLStreamWriter instead of this ad-hoc
 	// approach:
-	synchronized public void writeXML(final String fileName, final boolean compress) throws IOException {
+	synchronized protected void writeXML(final String fileName, final boolean compress) throws IOException {
 
 		PrintWriter pw = null;
 
@@ -1002,7 +990,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				String endsString = "";
 				if (p.startJoins != null) {
 					final int startPathID = p.startJoins.getID();
-					// Find the nearest index for backward compatability:
+					// Find the nearest index for backward compatibility:
 					int nearestIndexOnStartPath = -1;
 					if (p.startJoins.size() > 0) {
 						nearestIndexOnStartPath = p.startJoins.indexNearestTo(p.startJoinsPoint.x, p.startJoinsPoint.y,
@@ -1015,7 +1003,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				}
 				if (p.endJoins != null) {
 					final int endPathID = p.endJoins.getID();
-					// Find the nearest index for backward compatability:
+					// Find the nearest index for backward compatibility:
 					int nearestIndexOnEndPath = -1;
 					if (p.endJoins.size() > 0) {
 						nearestIndexOnEndPath = p.endJoins.indexNearestTo(p.endJoinsPoint.x, p.endJoinsPoint.y,
@@ -1165,7 +1153,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			final String endszString = attributes.getValue("endsz");
 
 			final String nameString = attributes.getValue("name");
-
 			final String primaryString = attributes.getValue("primary");
 
 			if (startsxString == null && startsyString == null && startszString == null) {
@@ -1465,7 +1452,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	}
 
-	public void addTo3DViewer(final Path p) {
+	private void addTo3DViewer(final Path p) {
 		if (plugin != null && plugin.use3DViewer && p.fittedVersionOf == null && p.size() > 1) {
 			Path pathToAdd;
 			if (p.getUseFitted())
@@ -2447,11 +2434,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	/*
-	 * Note that this returns the number of points in th currently in-use version of
-	 * each path.
+	 * NB: this returns the number of points in the currently used version of each
+	 * path.
 	 */
-
-	public int pointsInAllPaths() {
+	@SuppressWarnings("unused")
+	private int pointsInAllPaths() {
 		final AllPointsIterator a = allPointsIterator();
 		int points = 0;
 		while (a.hasNext()) {
@@ -2483,6 +2470,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return result;
 	}
 
+	/**
+	 * Export fills as CSV.
+	 *
+	 * @param outputFile the output file
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
 	public void exportFillsAsCSV(final File outputFile) throws IOException {
 
 		final String[] headers = new String[] { "FillID", "SourcePaths", "Threshold", "Metric", "Volume",
@@ -2515,11 +2508,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		pw.close();
 	}
 
-	/*
-	 * Output some potentially useful information about the paths as a CSV (comma
-	 * separated values) file.
+	/**
+	 * Output some potentially useful information about all the Paths managed by
+	 * this instance as a CSV (comma separated values) file.
+	 *
+	 * @param outputFile the output file
+	 * @throws IOException if data could not be stored
 	 */
-
 	public void exportToCSV(final File outputFile) throws IOException {
 		// FIXME: also add statistics on volumes of fills and
 		// reconstructions...

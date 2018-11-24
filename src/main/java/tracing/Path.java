@@ -60,45 +60,98 @@ import tracing.util.SWCColor;
  **/
 public class Path implements Comparable<Path> {
 
+	// http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
+	/** Flag specifying the SWC type 'undefined'. @see Path#SWC_UNDEFINED_LABEL */
+	public static final int SWC_UNDEFINED = 0;
+	/** Flag specifying the SWC type 'soma'. @see Path#SWC_SOMA_LABEL */
+	public static final int SWC_SOMA = 1;
+	/** Flag specifying the SWC type 'axon'. @see Path#SWC_AXON_LABEL */
+	public static final int SWC_AXON = 2;
+	/** Flag specifying the SWC type '(basal) dendrite'. @see Path#SWC_DENDRITE_LABEL */
+	public static final int SWC_DENDRITE = 3;
+	/** Flag specifying the SWC type 'apical dendrite'. @see Path#SWC_APICAL_DENDRITE_LABEL */
+	public static final int SWC_APICAL_DENDRITE = 4;
+	/** Flag specifying the SWC type 'fork point' @see Path#SWC_FORK_POINT_LABEL */
+	@Deprecated
+	public static final int SWC_FORK_POINT = 5; // redundant
+	@Deprecated
+	/** Flag specifying the SWC type 'end point'. @see Path#SWC_END_POINT_LABEL */
+	public static final int SWC_END_POINT = 6; // redundant
+	/** Flag specifying the SWC type 'custom'. @see Path#SWC_CUSTOM_LABEL */
+	public static final int SWC_CUSTOM = 7;
+	/** String representation of {@link Path#SWC_UNDEFINED} */
+	public static final String SWC_UNDEFINED_LABEL = "undefined";
+	/** String representation of {@link Path#SWC_SOMA} */
+	public static final String SWC_SOMA_LABEL = "soma";
+	/** String representation of {@link Path#SWC_AXON} */
+	public static final String SWC_AXON_LABEL = "axon";
+	/** String representation of {@link Path#SWC_DENDRITE} */
+	public static final String SWC_DENDRITE_LABEL = "(basal) dendrite";
+	/** String representation of {@link Path#SWC_APICAL_DENDRITE} */
+	public static final String SWC_APICAL_DENDRITE_LABEL = "apical dendrite";
+	/** String representation of {@link Path#SWC_FORK_POINT} */
+	public static final String SWC_FORK_POINT_LABEL = "fork point";
+	/** String representation of {@link Path#SWC_END_POINT} */
+	public static final String SWC_END_POINT_LABEL = "end point";
+	/** String representation of {@link Path#SWC_CUSTOM} */
+	public static final String SWC_CUSTOM_LABEL = "custom";
+
 	/* Path properties */
-	private int points; // n. of nodes
-	private int id = -1; // should be assigned by PathAndFillManager
-	private int editableNodeIndex = -1;
-	private int order = 1;
-	private boolean selected;
-	protected Path startJoins;
-	PointInImage startJoinsPoint = null;
-	Path endJoins;
-	PointInImage endJoinsPoint = null;
-	PointInCanvas canvasOffset = new PointInCanvas(0,0,0);
-
-	// Paths should always be given a name (since the name
-	// identifies them to the 3D viewer)...
+	// n. of nodes
+	private int points;
+	// node coordinates
+	protected double[] precise_x_positions;
+	protected double[] precise_y_positions;
+	protected double[] precise_z_positions;
+	// radii and tangents
+	protected double[] radiuses;
+	protected double[] tangents_x;
+	protected double[] tangents_y;
+	protected double[] tangents_z;
+	// numeric properties of nodes (e.g., pixel intensities)
+	private float[] values;
+	// NB: id should be assigned by PathAndFillManager
+	private int id = -1;
+	// NB: The leagacy 3D viewer requires always a unique name
 	private String name;
-	/*
-	 * This is a symmetrical relationship, showing all the other paths this one is
-	 * joined to...
-	 */
-	ArrayList<Path> somehowJoins;
+	// Reverse Horton-Strahler number of this path
+	private int order = 1;
+	// The SWC-type flag of this path
+	int swcType = SWC_UNDEFINED;
+	// is this path selected in the UI?
+	private boolean selected;
+	// the node being edited when in 'Analysis mode'
+	private int editableNodeIndex = -1;
+	// the display offset for this Path in a tracing canvas
+	protected PointInCanvas canvasOffset = new PointInCanvas(0,0,0);
 
-	/*
-	 * We sometimes impose a tree structure on the Path graph, which is largely for
-	 * display purposes. When this is done, we regerated this list. This should
-	 * always be a subset of 'somehowJoins'...
-	 */
-	ArrayList<Path> children;
 	/* Spatial calibration definitions */
 	protected double x_spacing;
 	protected double y_spacing;
 	protected double z_spacing;
 	protected String spacing_units;
 
-	/* Fitting */
-	protected Path fitted; // If this path has a fitted version, this is it.
-	protected boolean useFitted = false; // Use the fitted version in preference to this
-	// path
-	protected Path fittedVersionOf; // If this path is a fitted version of another one,
-	// this is the original
+	/* Branching */
+	protected Path startJoins;
+	protected PointInImage startJoinsPoint = null;
+	protected Path endJoins;
+	protected PointInImage endJoinsPoint = null;
+	// This is a symmetrical relationship, showing
+	// all the other paths this one is joined to...
+	protected ArrayList<Path> somehowJoins;
+	// We sometimes impose a tree structure on the Path
+	// graph, which is largely for display purposes. When
+	// this is done, we regerated this list. This should
+	// always be a subset of 'somehowJoins'...
+	protected ArrayList<Path> children;
+
+	/* Fitting (Path refinement) */
+	// If this path has a fitted version, this is it
+	protected Path fitted;
+	// Prefer the fitted flavor of this path
+	protected boolean useFitted = false;
+	// If this path is a fitted version of another one, this is the original
+	protected Path fittedVersionOf;
 
 	/* Color definitions */
 	private Color color;
@@ -1934,85 +1987,6 @@ public class Path implements Comparable<Path> {
 		return fitted;
 	}
 
-	double[] radiuses;
-
-	double[] tangents_x;
-	double[] tangents_y;
-	double[] tangents_z;
-
-	double[] precise_x_positions;
-	double[] precise_y_positions;
-	double[] precise_z_positions;
-	float[] values;
-
-	// http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
-	/**
-	 * Flag specifying the SWC type 'undefined'.
-	 * 
-	 * @see Path#SWC_UNDEFINED_LABEL
-	 */
-	public static final int SWC_UNDEFINED = 0;
-	/**
-	 * Flag specifying the SWC type 'soma'.
-	 * 
-	 * @see Path#SWC_SOMA_LABEL
-	 */
-	public static final int SWC_SOMA = 1;
-	/**
-	 * Flag specifying the SWC type 'axon'.
-	 * 
-	 * @see Path#SWC_AXON_LABEL
-	 */
-	public static final int SWC_AXON = 2;
-	/**
-	 * Flag specifying the SWC type '(basal) dendrite'.
-	 * 
-	 * @see Path#SWC_DENDRITE_LABEL
-	 */
-	public static final int SWC_DENDRITE = 3;
-	/**
-	 * Flag specifying the SWC type 'apical dendrite'.
-	 * 
-	 * @see Path#SWC_APICAL_DENDRITE_LABEL
-	 */
-	public static final int SWC_APICAL_DENDRITE = 4;
-	/**
-	 * Flag specifying the SWC type 'fork point'.
-	 * 
-	 * @see Path#SWC_FORK_POINT_LABEL
-	 */
-	public static final int SWC_FORK_POINT = 5; // redundant
-	/**
-	 * Flag specifying the SWC type 'end point'.
-	 * 
-	 * @see Path#SWC_END_POINT_LABEL
-	 */
-	public static final int SWC_END_POINT = 6; // redundant
-	/**
-	 * Flag specifying the SWC type 'custom'.
-	 * 
-	 * @see Path#SWC_CUSTOM_LABEL
-	 */
-	public static final int SWC_CUSTOM = 7;
-
-	/** String representation of {@link Path#SWC_UNDEFINED} */
-	public static final String SWC_UNDEFINED_LABEL = "undefined";
-	/** String representation of {@link Path#SWC_SOMA} */
-	public static final String SWC_SOMA_LABEL = "soma";
-	/** String representation of {@link Path#SWC_AXON} */
-	public static final String SWC_AXON_LABEL = "axon";
-	/** String representation of {@link Path#SWC_DENDRITE} */
-	public static final String SWC_DENDRITE_LABEL = "(basal) dendrite";
-	/** String representation of {@link Path#SWC_APICAL_DENDRITE} */
-	public static final String SWC_APICAL_DENDRITE_LABEL = "apical dendrite";
-	/** String representation of {@link Path#SWC_FORK_POINT} */
-	public static final String SWC_FORK_POINT_LABEL = "fork point";
-	/** String representation of {@link Path#SWC_END_POINT} */
-	public static final String SWC_END_POINT_LABEL = "end point";
-	/** String representation of {@link Path#SWC_CUSTOM} */
-	public static final String SWC_CUSTOM_LABEL = "custom";
-
-	int swcType = SWC_UNDEFINED;
 
 	/**
 	 * Gets the list of string representations of non-redundant SWC types (i.e.,

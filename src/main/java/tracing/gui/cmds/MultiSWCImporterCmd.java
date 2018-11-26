@@ -125,6 +125,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 	private Map<String, String> getImportMap() {
 		if (dir == null || !dir.isDirectory() || !dir.exists())
 			return null;
+		if (pattern == null) pattern = "";
 		final File[] files = dir.listFiles((FileFilter) file -> {
 			if (file.isHidden())
 				return false;

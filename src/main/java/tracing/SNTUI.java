@@ -168,6 +168,8 @@ public class SNTUI extends JDialog {
 	protected JButton abortButton;
 	private JButton completePath;
 	private JCheckBox debugCheckBox;
+	private final String ABORT_BUTTON_LABEL_DEF = hotKeyLabel(hotKeyLabel("Cancel/Esc", "C"), "Esc");
+	private final String ABORT_BUTTON_LABEL_EXIT = hotKeyLabel(" Exit/Esc ", "Esc");
 
 	// UI controls for loading 'filtered image'
 	private JPanel filteredImgPanel;
@@ -685,7 +687,7 @@ public class SNTUI extends JDialog {
 	private void disableEverything() {
 		assert SwingUtilities.isEventDispatchThread();
 		disableImageDependentComponents();
-		abortButton.setEnabled(getState() != WAITING_TO_START_PATH);
+		abortButton.setEnabled(getState() != ANALYSIS_MODE);
 		loadTracesMenuItem.setEnabled(false);
 		loadSWCMenuItem.setEnabled(false);
 		exportCSVMenuItem.setEnabled(false);
@@ -719,7 +721,8 @@ public class SNTUI extends JDialog {
 					keepSegment.setEnabled(false);
 					junkSegment.setEnabled(false);
 					completePath.setEnabled(false);
-					abortButton.setEnabled(false);
+					abortButton.setEnabled(!plugin.analysisMode);
+					abortButton.setText(ABORT_BUTTON_LABEL_DEF);
 
 					pmUI.valueChanged(null); // Fake a selection change in the path tree:
 					showPartsNearby.setEnabled(isStackAvailable());
@@ -818,6 +821,7 @@ public class SNTUI extends JDialog {
 				case EDITING_MODE:
 					if (noPathsError())
 						return;
+					abortButton.setText(ABORT_BUTTON_LABEL_EXIT);
 					plugin.setCanvasLabelAllPanes(InteractiveTracerCanvas.EDIT_MODE_LABEL);
 					updateStatusText("Editing Mode. Tracing functions disabled...");
 					disableEverything();
@@ -1639,8 +1643,7 @@ public class SNTUI extends JDialog {
 		gbc.gridx = 2;
 		statusChoicesPanel.add(completePath, gbc);
 		gbc.gridx = 3;
-		abortButton = GuiUtils.smallButton(hotKeyLabel(hotKeyLabel("Cancel/Esc",
-			"C"), "Esc"));
+		abortButton = GuiUtils.smallButton(ABORT_BUTTON_LABEL_DEF);
 		abortButton.addActionListener(listener);
 		gbc.gridx = 4;
 		gbc.ipadx = 0;
@@ -2726,11 +2729,13 @@ public class SNTUI extends JDialog {
 				break;
 			case (PARTIAL_PATH):
 				showStatus("Last temporary path cancelled...", true);
-				plugin.cancelPath();
+				plugin.cancelTemporary();
+				if (plugin.currentPath != null) plugin.cancelPath();
 				break;
 			case (QUERY_KEEP):
 				showStatus("Last segment cancelled...", true);
-				plugin.cancelTemporary();
+				if (plugin.temporaryPath != null) plugin.cancelTemporary();
+				plugin.cancelPath();
 				break;
 			case (FILLING_PATHS):
 				showStatus("Filling out cancelled...", true);
@@ -2753,6 +2758,16 @@ public class SNTUI extends JDialog {
 				return; // do nothing: Currently we have no control over the sigma
 								// palette window
 			case (WAITING_TO_START_PATH):
+				// If user is aborting something in this state, something
+				// went awry!?. Try to abort all possible lingering tasks
+				pmUI.cancelFit(true);
+				plugin.cancelSearch(true);
+				plugin.cancelGaussian();
+				plugin.discardFill(); 
+				if (plugin.currentPath != null) plugin.cancelPath();
+				if (plugin.temporaryPath != null) plugin.cancelTemporary();
+				showStatus("All tasks terminated", true);
+				return;
 			case (LOADING):
 			case (SAVING):
 			case (IMAGE_CLOSED):

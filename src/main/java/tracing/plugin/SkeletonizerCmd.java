@@ -99,7 +99,7 @@ public class SkeletonizerCmd implements Command {
 		final boolean validAreaRoi = (roi == null || !roi.isArea());
 		if (restrictByRoi && validAreaRoi) {
 			if (!getConfirmation(
-					"<HTML>ROI filtering requested but no area ROI was found.<br>"
+					"ROI filtering requested but no area ROI was found.\n"
 					+ "Proceed without ROI filtering?", "Proceed Without ROI Filtering?"))
 				return;
 			restrictByRoi = false;

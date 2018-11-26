@@ -86,7 +86,7 @@ public class LoadObjCmd extends ContextCommand {
 			try {
 				recViewer.loadOBJ(file.getAbsolutePath(), color, transparency);
 			} catch (final IllegalArgumentException exc) {
-				cancel(exc.getMessage());
+				cancel(getExitMsg(exc.getMessage()));
 			}
 			recViewer.validate();
 			return;
@@ -104,13 +104,20 @@ public class LoadObjCmd extends ContextCommand {
 				}
 			}
 			if (failures == files.length) {
-				cancel("No files imported. Invalid Directory?");
+				cancel(getExitMsg("No files imported. Invalid Directory?"));
 			}
 			recViewer.setViewUpdatesEnabled(true);
 			recViewer.validate();
 			final String msg = "" + (files.length - failures) + "/" + files.length + " files successfully imported.";
 			uiService.showDialog(msg, (failures == 0) ? "All Meshes Imported" : "Partially Successful Import");
 		}
+	}
+
+	private String getExitMsg(final String msg) {
+		return "<HTML><body><div style='width:" + 500 + ";'> " + msg
+				+ " Note that the import of complex meshes is currently "
+				+ "not supported. If you think the specified file(s) are "
+				+ "valid, you should try to simplify them using, e.g., MeshLab.";
 	}
 
 	/* IDE debug method **/

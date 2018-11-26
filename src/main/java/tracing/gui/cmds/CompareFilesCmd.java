@@ -83,7 +83,7 @@ public class CompareFilesCmd extends ContextCommand {
 			report = makeReport(tree1, tree2);
 
 		} catch (final IllegalArgumentException ex) {
-			cancel("An error occured: " + ex.getMessage());
+			cancel("<HTML>An error occured: " + ex.getMessage());
 		}
 	}
 

@@ -108,7 +108,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 	@Override
 	public void run() {
 		if (tree == null || tree.isEmpty())
-			cancel("Invalid input tree");
+			cancel("<HTML>Invalid input tree");
 		statusService.showStatus("Applying Color Code...");
 		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
 		final TreeColorMapper colorizer = new TreeColorMapper(context());
@@ -116,7 +116,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 		try {
 			colorizer.colorize(tree, measurementChoice, colorTable);
 		} catch (IllegalArgumentException exc) {
-			cancel(exc.getMessage());
+			cancel("<HTML>"+exc.getMessage());
 			return;
 		}
 		final double[] minMax = colorizer.getMinMax();
@@ -159,7 +159,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 	private void setLUTs() {
 		luts = lutService.findLUTs();
 		if (luts.isEmpty()) {
-			cancel("This command requires at least one LUT to be installed.");
+			cancel("<HTML>This command requires at least one LUT to be installed.");
 		}
 		final ArrayList<String> choices = new ArrayList<>();
 		for (final Map.Entry<String, URL> entry : luts.entrySet()) {

@@ -67,7 +67,7 @@ public class CommonDynamicCmd extends DynamicCommand {
 		if (snt != null) {
 			snt.error(msg);
 		} else {
-			cancel(msg);
+			cancel("<HTML>"+msg); // Linux: UIService uses legacy java.awt dialog if not HTML
 		}
 	}
 

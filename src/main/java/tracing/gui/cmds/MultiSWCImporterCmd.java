@@ -87,7 +87,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 
 		final Map<String, String> importMap = getImportMap();
 		if (importMap == null || importMap.isEmpty()) {
-			cancel("No matching files fould in directory.");
+			cancel("<HTML>No matching files fould in directory.");
 			return;
 		}
 

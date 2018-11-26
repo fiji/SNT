@@ -67,7 +67,7 @@ public class ShowCorrespondencesCmd extends ContextCommand {
 		try {
 			sntService.getPlugin().showCorrespondencesTo(file, new Color(color.getARGB()), distance);
 		} catch (final UnsupportedOperationException | NullPointerException exc) {
-			cancel("SNT's Legacy Viewer is not open");
+			cancel("<HTML>SNT's Legacy Viewer is not open");
 		}
 	}
 

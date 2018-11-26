@@ -1430,19 +1430,19 @@ public class Path implements Comparable<Path> {
 		final double by_s = by * step;
 		final double bz_s = bz * step;
 
-		SNT.log("a (in normal plane) is " + ax + "," + ay + "," + az);
-		SNT.log("b (in normal plane) is " + bx + "," + by + "," + bz);
+//		SNT.log("a (in normal plane) is " + ax + "," + ay + "," + az);
+//		SNT.log("b (in normal plane) is " + bx + "," + by + "," + bz);
 
-		// a and b must be perpendicular:
-		final double a_dot_b = ax * bx + ay * by + az * bz;
+//		// a and b must be perpendicular:
+//		final double a_dot_b = ax * bx + ay * by + az * bz;
 
-		// ... and each must be perpendicular to the normal
-		final double a_dot_n = ax * nx + ay * ny + az * nz;
-		final double b_dot_n = bx * nx + by * ny + bz * nz;
+//		// ... and each must be perpendicular to the normal
+//		final double a_dot_n = ax * nx + ay * ny + az * nz;
+//		final double b_dot_n = bx * nx + by * ny + bz * nz;
 
-		SNT.log("a_dot_b: " + a_dot_b);
-		SNT.log("a_dot_n: " + a_dot_n);
-		SNT.log("b_dot_n: " + b_dot_n);
+//		SNT.log("a_dot_b: " + a_dot_b);
+//		SNT.log("a_dot_n: " + a_dot_n);
+//		SNT.log("b_dot_n: " + b_dot_n);
 
 		final int width = image.getWidth();
 		final int height = image.getHeight();

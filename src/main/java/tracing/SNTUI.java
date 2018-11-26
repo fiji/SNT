@@ -3145,16 +3145,10 @@ public class SNTUI extends JDialog {
 
 				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(),
 					".labels)");
-				final File saveFile = guiUtils.openFile("Select Labels File...",
+				final File openFile = guiUtils.openFile("Select Labels File...",
 					suggestedFile, Collections.singletonList("labels"));
-				if (saveFile == null) return; // user pressed cancel;
-				if (saveFile.exists()) {
-					if (!guiUtils.getConfirmation("The file " + saveFile
-						.getAbsolutePath() + " already exists.\n" +
-						"Do you want to replace it?", "Override SWC file?")) return;
-				}
-				if (saveFile != null) {
-					plugin.loadLabelsFile(saveFile.getAbsolutePath());
+				if (openFile != null) { // null if user pressed cancel;
+					plugin.loadLabelsFile(openFile.getAbsolutePath());
 					return;
 				}
 

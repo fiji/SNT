@@ -30,15 +30,19 @@ import org.scijava.app.StatusService;
  * An implementation of the MultiTaskProgress interface that updates the
  * {@link StatusService} progress bar
  */
-public class FittingProgress implements MultiTaskProgress {
+class FittingProgress implements MultiTaskProgress {
 
 	int totalTasks;
 	double progress;
 	private final StatusService statusService;
 	private final ArrayList<Double> tasksProportionsDone;
+	private final SNTUI sntui;
+	private final String msgStatus;
 
-	public FittingProgress(final StatusService statusService, final int totalTasks) {
+	public FittingProgress(final SNTUI sntui, final StatusService statusService, final int totalTasks) {
 		this.statusService = statusService;
+		this.sntui = sntui;
+		msgStatus = "Fitting "+ totalTasks +" paths... ";
 		tasksProportionsDone = new ArrayList<>();
 		this.totalTasks = totalTasks;
 		for (int i = 0; i < totalTasks; ++i)
@@ -55,7 +59,8 @@ public class FittingProgress implements MultiTaskProgress {
 		double totalDone = 0;
 		for (final double p : tasksProportionsDone)
 			totalDone += p;
-		statusService.showStatus((int) totalDone, totalTasks, "Fitting... ");
+		statusService.showStatus((int) totalDone, totalTasks, msgStatus);
+		sntui.showStatus(msgStatus + SNT.formatDouble(100 * totalDone/totalTasks, 1) + "%", false);
 	}
 
 	protected double getProgress() {
@@ -66,5 +71,6 @@ public class FittingProgress implements MultiTaskProgress {
 	public void done() {
 		statusService.clearStatus();
 		statusService.showProgress(0, 0);
+		sntui.showStatus(null, false);
 	}
 }

@@ -501,12 +501,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		final JDialog msg = guiUtils.floatingMsg(statusMsg, false);
 
 		fitWorker = new SwingWorker<Object, Object>() {
-
+	
 			@Override
 			protected Object doInBackground() {
 
 				final ExecutorService es = Executors.newFixedThreadPool(processors);
-				final FittingProgress progress = new FittingProgress(plugin.statusService, numberOfPathsToFit);
+				final FittingProgress progress = new FittingProgress(plugin.getUI(), plugin.statusService, numberOfPathsToFit);
 				try {
 					for (int i = 0; i < numberOfPathsToFit; ++i) {
 						final PathFitter pf = pathsToFit.get(i);

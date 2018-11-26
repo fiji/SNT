@@ -169,7 +169,7 @@ public class SNTUI extends JDialog {
 	private JButton completePath;
 	private JCheckBox debugCheckBox;
 	private final String ABORT_BUTTON_LABEL_DEF = hotKeyLabel(hotKeyLabel("Cancel/Esc", "C"), "Esc");
-	private final String ABORT_BUTTON_LABEL_EXIT = hotKeyLabel(" Exit/Esc ", "Esc");
+	private final String ABORT_BUTTON_LABEL_EXIT = hotKeyLabel("&nbsp;&nbsp;Exit/Esc&nbsp;&nbsp;", "Esc");
 
 	// UI controls for loading 'filtered image'
 	private JPanel filteredImgPanel;

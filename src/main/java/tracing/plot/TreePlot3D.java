@@ -232,6 +232,7 @@ public class TreePlot3D {
 	 */
 	public TreePlot3D(final Context context) {
 		this();
+		GuiUtils.setSystemLookAndFeel();
 		initManagerList();
 		context.inject(this);
 	}

@@ -99,8 +99,8 @@ public class SkeletonizerCmd implements Command {
 		final boolean validAreaRoi = (roi == null || !roi.isArea());
 		if (restrictByRoi && validAreaRoi) {
 			if (!getConfirmation(
-					"ROI filtering requested but no area ROI was found.\n" + "Proceed without ROI filtering?",
-					"Proceed Without ROI Filtering?"))
+					"<HTML>ROI filtering requested but no area ROI was found.<br>"
+					+ "Proceed without ROI filtering?", "Proceed Without ROI Filtering?"))
 				return;
 			restrictByRoi = false;
 		}
@@ -138,7 +138,8 @@ public class SkeletonizerCmd implements Command {
 	}
 
 	private void error(final String msg) {
-		uiService.getDefaultUI().dialogPrompt(msg, "Error", DialogPrompt.MessageType.ERROR_MESSAGE,
+		// With HTML errors, uiService will not use the java.awt legacy messages that do not scale in hiDPI
+		uiService.getDefaultUI().dialogPrompt("<HTML>"+msg, "Error", DialogPrompt.MessageType.ERROR_MESSAGE,
 				DialogPrompt.OptionType.DEFAULT_OPTION).prompt();
 	}
 

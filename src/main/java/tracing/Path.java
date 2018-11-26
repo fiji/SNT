@@ -1578,20 +1578,27 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected Path fitCircles(final int side, final ImagePlus image, final int type,
-			final boolean display, final SimpleNeuriteTracer plugin, final int progressIndex,
-			final MultiTaskProgress progress) {
+			final boolean display, final SimpleNeuriteTracer plugin, 
+			final int progressIndex, final MultiTaskProgress progress) {
 
-		final Path fitted = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
+		SNT.log("Fitting " + getName() + ", Scope: " + PathFitter.getScopeAsString(type) + ", Max radius: " + side);
+		final boolean fitRadii = (type == PathFitter.RADII_AND_MIDPOINTS || type == PathFitter.RADII);
+		final boolean fitPoints = (type == PathFitter.RADII_AND_MIDPOINTS || type == PathFitter.MIDPOINTS);
+		final boolean outputRadii = fitRadii || hasRadii();
 		final int totalPoints = size();
 		final int pointsEitherSide = 4;
 
-		SNT.log("Started fitting: " + this.getName());
-		SNT.log("Generating cross-section stack... (" + totalPoints + "slices)");
+		final Path fitted = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
+		fitted.setName("Fitted Path [" + getID() + "]");
+		fitted.setColor(getColor());
+		fitted.setSWCType(getSWCType());
+		fitted.setOrder(getOrder());
+		fitted.setCanvasOffset(getCanvasOffset());
 
+		SNT.log("  Generating cross-section stack (" + totalPoints + " slices)...");
 		final int width = image.getWidth();
 		final int height = image.getHeight();
 		final int depth = image.getNSlices();
-
 		final ImageStack stack = new ImageStack(side, side);
 
 		// We assume that the first and the last in the stack are fine;
@@ -1609,9 +1616,7 @@ public class Path implements Comparable<Path> {
 		final double[] optimized_z = new double[totalPoints];
 
 		final double[] scores = new double[totalPoints];
-
 		final double[] moved = new double[totalPoints];
-
 		final boolean[] valid = new boolean[totalPoints];
 
 		final int[] xs_in_image = new int[totalPoints];
@@ -1619,13 +1624,20 @@ public class Path implements Comparable<Path> {
 		final int[] zs_in_image = new int[totalPoints];
 
 		final double scaleInNormalPlane = getMinimumSeparation();
-
 		final double[] tangent = new double[3];
 
-		if (progress != null)
-			progress.updateProgress(progressIndex, 0);
+		if (progress != null) progress.updateProgress(progressIndex, 0);
+
+		final double[] startValues = new double[3];
+		startValues[0] = side / 2.0;
+		startValues[1] = side / 2.0;
+		startValues[2] = 3;
+
+		SNT.log("  Searches starting at: " + startValues[0] + "," + startValues[1] + " radius: " + startValues[2]);
 
 		for (int i = 0; i < totalPoints; ++i) {
+
+			SNT.log("  Node " + i + ". Computing tangents...");
 
 			getTangent(i, pointsEitherSide, tangent);
 
@@ -1636,39 +1648,23 @@ public class Path implements Comparable<Path> {
 			final double[] x_basis_in_plane = new double[3];
 			final double[] y_basis_in_plane = new double[3];
 
-			final float[] normalPlane = squareNormalToVector(side, scaleInNormalPlane, // This
-																						// is
-																						// in
-																						// the
-																						// same
-																						// units
-																						// as
-																						// the
-																						// _spacing,
-																						// etc.
-																						// variables.
-					x_world, // These are scaled now
-					y_world, z_world, tangent[0], tangent[1], tangent[2], x_basis_in_plane, y_basis_in_plane, image);
+			final float[] normalPlane = squareNormalToVector(side, 
+					scaleInNormalPlane, // This is in the same units as
+										// the _spacing, etc. variables.
+					x_world, y_world, z_world, // These are scaled now
+					tangent[0], tangent[1], tangent[2], //
+					x_basis_in_plane, y_basis_in_plane, image);
 
-			/*
-			 * Now at this stage, try to optimize a circle in there...
-			 */
+			// Now at this stage, try to optimize a circle in there...
 
-			// n.b. thes aren't normalized
+			// NB these aren't normalized
 			ts_x[i] = tangent[0];
 			ts_y[i] = tangent[1];
 			ts_z[i] = tangent[2];
 
 			final ConjugateDirectionSearch optimizer = new ConjugateDirectionSearch();
-			// optimizer.prin = 2; // debugging information on
+//			if (SNT.isDebugMode()) optimizer.prin = 1; // debugging level
 			optimizer.step = side / 4.0;
-
-			final double[] startValues = new double[3];
-			startValues[0] = side / 2.0;
-			startValues[1] = side / 2.0;
-			startValues[2] = 3;
-
-			SNT.log("Start search at: " + startValues[0] + "," + startValues[1] + " with radius: " + startValues[2]);
 
 			float minValueInSquare = Float.MAX_VALUE;
 			float maxValueInSquare = Float.MIN_VALUE;
@@ -1684,11 +1680,9 @@ public class Path implements Comparable<Path> {
 			try {
 				optimizer.optimize(attempt, startValues, 2, 2);
 			} catch (final ConjugateDirectionSearch.OptimizationError e) {
+				SNT.log("  Failure :" + e.getMessage());
 				return null;
 			}
-
-			SNT.log("Search optimized to: " + startValues[0] + "," + startValues[1] + " with radius: "
-					+ startValues[2]);
 
 			centre_x_positionsUnscaled[i] = startValues[0];
 			centre_y_positionsUnscaled[i] = startValues[1];
@@ -1711,7 +1705,7 @@ public class Path implements Comparable<Path> {
 			double centre_real_y = y_world;
 			double centre_real_z = z_world;
 
-			SNT.log("Original center co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+			SNT.log("    Original coordinates: " + centre_real_x + "," + centre_real_y + ","
 					+ centre_real_z);
 
 			// FIXME: I really think these should be +=, but it seems clear from
@@ -1724,18 +1718,23 @@ public class Path implements Comparable<Path> {
 			centre_real_z -= x_basis_in_plane[2] * x_from_centre_in_plane
 					+ y_basis_in_plane[2] * y_from_centre_in_plane;
 
-			SNT.log("Adjusted center co-ordinates: " + centre_real_x + "," + centre_real_y + ","
+			SNT.log("    Adjusted coordinates: " + centre_real_x + "," + centre_real_y + ","
 					+ centre_real_z);
 
 			optimized_x[i] = centre_real_x;
 			optimized_y[i] = centre_real_y;
 			optimized_z[i] = centre_real_z;
 
+			if (progress != null)
+				progress.updateProgress(((double) i + 1) / totalPoints, progressIndex);
+	
+			if (!fitRadii && !display) continue;
+
 			int x_in_image = (int) Math.round(centre_real_x / x_spacing);
 			int y_in_image = (int) Math.round(centre_real_y / y_spacing);
 			int z_in_image = (int) Math.round(centre_real_z / z_spacing);
 
-			SNT.log("Adjusted center image position: " + x_in_image + "," + y_in_image + "," + z_in_image);
+//			SNT.log("  Adjusted center image position: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
 			if (x_in_image < 0)
 				x_in_image = 0;
@@ -1762,15 +1761,20 @@ public class Path implements Comparable<Path> {
 			bp.setPixels(normalPlane);
 			stack.addSlice("Node " + (i + 1), bp);
 
-			if (progress != null)
-				progress.updateProgress(((double) i + 1) / totalPoints, progressIndex);
+		}
+
+		if (!fitRadii && !display) {
+			fitted.points = totalPoints;
+			fitted.setFittedCircles(this.tangents_x, this.tangents_y, this.tangents_z, this.radiuses, //
+					optimized_x, optimized_y, optimized_z);
+			SNT.log("Done (radius fitting skipped)");
+			return fitted;
 		}
 
 		/*
 		 * Now at each point along the path we calculate the mode of the radiuses in the
 		 * nearby region:
 		 */
-
 		final int modeEitherSide = 4;
 		final double[] modeRadiusesUnscaled = new double[totalPoints];
 		final double[] modeRadiuses = new double[totalPoints];
@@ -1796,7 +1800,6 @@ public class Path implements Comparable<Path> {
 			Arrays.sort(valuesForMode);
 			modeRadiusesUnscaled[i] = valuesForMode[modeEitherSide];
 			modeRadiuses[i] = scaleInNormalPlane * modeRadiusesUnscaled[i];
-
 			valid[i] = moved[i] < modeRadiusesUnscaled[i];
 		}
 
@@ -1872,13 +1875,10 @@ public class Path implements Comparable<Path> {
 					continue;
 				int n = totalPoints;
 				for (int j = totalPoints - 1; j > i; --j)
-					if (valid[j])
-						n = j;
+					if (valid[j]) n = j;
 				if (overlapsWith[i] == maximumNumberOfOverlaps) {
-					// If the next valid one has
-					// the same number, and that
-					// has a larger radius, remove
-					// that one instead...
+					// If the next valid one has the same number, and that
+					// has a larger radius, remove that one instead...
 					if (n < totalPoints && overlapsWith[n] == maximumNumberOfOverlaps && rs[n] > rs[i]) {
 						valid[n] = false;
 					} else {
@@ -1890,7 +1890,7 @@ public class Path implements Comparable<Path> {
 		}
 
 		int lastValidIndex = 0;
-
+		int fittedPoints = 0;
 		for (int i = 0; i < totalPoints; ++i) {
 
 			final boolean firstOrLast = (i == 0 || i == (points - 1));
@@ -1901,7 +1901,7 @@ public class Path implements Comparable<Path> {
 				// add the original one:
 				final boolean goneTooFar = i - lastValidIndex >= noMoreThanOneEvery;
 				boolean nextValid = false;
-				if (i < (points - 1))
+				if (i < (totalPoints - 1))
 					if (valid[i + 1])
 						nextValid = true;
 
@@ -1927,62 +1927,52 @@ public class Path implements Comparable<Path> {
 					rsUnscaled[i] = 1;
 					rs[i] = scaleInNormalPlane;
 				}
-				fitted.addPointDouble(optimized_x[i], optimized_y[i], optimized_z[i]);
+				//NB: We'll add the points to the path in bulk later on
+				fittedPoints++;
 				lastValidIndex = i;
 			}
 		}
 
-		final int fittedLength = fitted.size();
-
-		final double[] fitted_ts_x = new double[fittedLength];
-		final double[] fitted_ts_y = new double[fittedLength];
-		final double[] fitted_ts_z = new double[fittedLength];
-		final double[] fitted_rs = new double[fittedLength];
-		final double[] fitted_optimized_x = new double[fittedLength];
-		final double[] fitted_optimized_y = new double[fittedLength];
-		final double[] fitted_optimized_z = new double[fittedLength];
+		final double[] fitted_ts_x = (outputRadii) ? new double[fittedPoints] : null;
+		final double[] fitted_ts_y = (outputRadii) ? new double[fittedPoints] : null;
+		final double[] fitted_ts_z = (outputRadii) ? new double[fittedPoints] : null;
+		final double[] fitted_rs = (outputRadii) ? new double[fittedPoints] : null;
+		final double[] fitted_optimized_x = new double[fittedPoints];
+		final double[] fitted_optimized_y = new double[fittedPoints];
+		final double[] fitted_optimized_z = new double[fittedPoints];
 
 		int added = 0;
-
-		for (int i = 0; i < points; ++i) {
-			if (!valid[i])
-				continue;
-			fitted_ts_x[added] = ts_x[i];
-			fitted_ts_y[added] = ts_y[i];
-			fitted_ts_z[added] = ts_z[i];
-			fitted_rs[added] = rs[i];
-			fitted_optimized_x[added] = optimized_x[i];
-			fitted_optimized_y[added] = optimized_y[i];
-			fitted_optimized_z[added] = optimized_z[i];
+		for (int i = 0; i < totalPoints; ++i) {
+			if (!valid[i]) continue;
+			fitted_optimized_x[added] = (fitPoints) ? optimized_x[i] : precise_x_positions[i];
+			fitted_optimized_y[added] = (fitPoints) ? optimized_y[i] : precise_y_positions[i];
+			fitted_optimized_z[added] = (fitPoints) ? optimized_z[i] : precise_z_positions[i];
+			if (outputRadii) {
+				fitted_ts_x[added] = (fitRadii) ? ts_x[i] : tangents_x[i];
+				fitted_ts_y[added] = (fitRadii) ? ts_y[i] : tangents_y[i];
+				fitted_ts_z[added] = (fitRadii) ? ts_z[i] : tangents_z[i];
+				fitted_rs[added] = (fitRadii) ? rs[i] : radiuses[i];
+			}
 			++added;
 		}
 
-		if (added != fittedLength)
-			throw new IllegalArgumentException(
-					"Mismatch of lengths, added=" + added + " and fittedLength=" + fittedLength);
+//		if (added != fittedPoints)
+//			throw new IllegalArgumentException(
+//					"Mismatch of lengths, added=" + added + " and fittedLength=" + fittedPoints);
 
-		final boolean fitRadii = (type == PathFitter.RADII_AND_MIDPOINTS || type == PathFitter.RADII);
-		final boolean fitPoints = (type == PathFitter.RADII_AND_MIDPOINTS || type == PathFitter.MIDPOINTS);
+		fitted.points = fittedPoints;
+		fitted.setFittedCircles(fitted_ts_x, fitted_ts_y, fitted_ts_z, fitted_rs, //
+				fitted_optimized_x, fitted_optimized_y, fitted_optimized_z);
 
-		fitted.setFittedCircles(fitted_ts_x, fitted_ts_y, fitted_ts_z, //
-				(fitRadii) ? fitted_rs : radiuses, //
-				(fitPoints) ? fitted_optimized_x : precise_x_positions,
-				(fitPoints) ? fitted_optimized_y : precise_y_positions,
-				(fitPoints) ? fitted_optimized_z : precise_z_positions);
-		fitted.setName("Fitted Path [" + getID() + "]");
-		fitted.setColor(getColor());
-		fitted.setSWCType(getSWCType());
-		fitted.setOrder(getOrder());
-		setFitted(fitted);
-
+		SNT.log("Done. With " + fittedPoints +"/"+ size()+ " accepted fits");
 		if (display) {
-			SNT.log("Done. Displaying cross-section image");
+			SNT.log("Generating annotated cross view stack");
 			final ImagePlus imp = new ImagePlus("Cross-section View " + fitted.name, stack);
 			imp.setCalibration(plugin.getImagePlus().getCalibration());
 			final NormalPlaneCanvas normalCanvas = new NormalPlaneCanvas(imp, plugin, centre_x_positionsUnscaled,
 					centre_y_positionsUnscaled, rsUnscaled, scores, modeRadiusesUnscaled, angles, valid, fitted);
 			normalCanvas.showImage();
-		}
+		} 
 
 		return fitted;
 	}

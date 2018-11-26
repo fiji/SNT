@@ -40,19 +40,19 @@ public class PathFitter implements Callable<Path> {
 	 * Flag specifying that the computed path should only inherit fitted radii
 	 * attributes
 	 */
-	public static int RADII = 1;
+	public static final int RADII = 1;
 
 	/**
 	 * Flag specifying that the computed path should only inherit midpoint
 	 * refinement of node coordinates
 	 */
-	public static int MIDPOINTS = 2;
+	public static final int MIDPOINTS = 2;
 
 	/**
 	 * Flag specifying that the computed path should inherit both midpoint
 	 * refinement of node coordinates and radii
 	 */
-	public static int RADII_AND_MIDPOINTS = 4;
+	public static final int RADII_AND_MIDPOINTS = 4;
 
 	private final SimpleNeuriteTracer plugin;
 	private final Path path;
@@ -134,10 +134,10 @@ public class PathFitter implements Callable<Path> {
 	 * cross-section circles around the nodes of input path. Computation of fit is
 	 * confined to the neighborhood specified by {@link #setMaxRadius(int)}
 	 *
-	 * @return the reference to the computed result.This Path is automatically set
+	 * @return the reference to the computed result. This Path is automatically set
 	 *         as the fitted version of input Path.
 	 * @throws IllegalArgumentException
-	 *             the illegal argument exception
+	 *             If path already has been fitted, and its fitted version not nullified
 	 * @see #setScope(int)
 	 */
 	@Override
@@ -149,6 +149,7 @@ public class PathFitter implements Callable<Path> {
 			return null;
 		}
 		succeeded = true;
+		path.setFitted(fitted);
 		path.setUseFitted(true);
 		return fitted;
 	}
@@ -191,4 +192,16 @@ public class PathFitter implements Callable<Path> {
 		this.fitScope = scope;
 	}
 
+	protected static String getScopeAsString(final int scope) {
+		switch(scope) {
+		case RADII_AND_MIDPOINTS:
+			return "radii and midpoint refinement";
+		case RADII:
+			return "radii";
+		case MIDPOINTS:
+			return "midpoint refinement";
+		default:
+			return "Unrecognized option";
+		}
+	}
 }

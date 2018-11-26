@@ -1656,7 +1656,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				return;
 
 			} else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
-				if (analysisModeError()) return;
+
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);

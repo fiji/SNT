@@ -69,7 +69,16 @@ public class ResetPrefsCmd extends ContextCommand {
 		if (Result.YES_OPTION != result && Result.OK_OPTION != result) {
 			return;
 		}
+		clearAll();
+		uiService.showDialog("Preferences Reset. You should now restart SNT for changes to take effect.",
+				"Restart Required");
 
+	}
+
+	/**
+	 * Clears all of SNT preferences.
+	 */
+	public void clearAll() {
 		// gui.cmds
 		prefService.clear(ColorizeReconstructionCmd.class);
 		prefService.clear(CompareFilesCmd.class);
@@ -97,10 +106,6 @@ public class ResetPrefsCmd extends ContextCommand {
 
 		// Legacy (IJ1-based) preferences
 		SNTPrefs.clearAll();
-
-		uiService.showDialog("Preferences Reset. You should now restart SNT for changes to take effect.",
-				"Restart Required");
-
 	}
 
 	/* IDE debug method **/

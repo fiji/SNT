@@ -22,16 +22,9 @@
 
 package tracing.gui.cmds;
 
-import io.scif.services.DatasetIOService;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-
-import net.imagej.Dataset;
-import net.imagej.ImageJ;
-import net.imagej.display.ImageDisplayService;
-import net.imagej.legacy.LegacyService;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.DynamicCommand;
@@ -46,6 +39,11 @@ import org.scijava.widget.FileWidget;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.plugin.CompositeConverter;
+import io.scif.services.DatasetIOService;
+import net.imagej.Dataset;
+import net.imagej.ImageJ;
+import net.imagej.display.ImageDisplayService;
+import net.imagej.legacy.LegacyService;
 import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
@@ -202,9 +200,20 @@ public class SNTLoaderCmd extends DynamicCommand {
 		}
 	}
 
+	private void resetPrefs() {
+		// There have been lots of reports of bugs caused simplify by persisting
+		// experimental preferences. We'll wipe everything until this version is
+		// properly released
+		final ResetPrefsCmd resetPrefs = new ResetPrefsCmd();
+		resetPrefs.setContext(context());
+		resetPrefs.clearAll();
+		SNT.log("Prefs reset");
+	}
+
 	@Override
 	public void run() {
 
+		resetPrefs();
 		if (IMAGE_NONE.equals(imageChoice)) {
 			final PathAndFillManager pathAndFillManager = new PathAndFillManager();
 			if (tracesFile != null && tracesFile.exists()) {

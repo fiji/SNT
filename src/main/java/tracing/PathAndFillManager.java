@@ -742,6 +742,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	}
 
+	/**
+	 * Adds the path.
+	 *
+	 * @param p the Path to be added
+	 */
 	public void addPath(final Path p) {
 		addPath(p, false);
 	}
@@ -784,24 +789,40 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * Find the default name for a new path, making sure it doesn't collide with any
 	 * of the existing names:
 	 */
-
 	protected String getDefaultName(final Path p) {
 		if (p.getID() < 0)
 			throw new RuntimeException("A path's ID should never be negative");
 		return "Path (" + p.getID() + ")";
 	}
 
+	/**
+	 * Deletes a Path by index
+	 *
+	 * @param index the index (zero-based) of the Path to be deleted
+	 */
 	public synchronized void deletePath(final int index) {
 		deletePath(index, true);
 	}
 
-	public synchronized void deletePath(final Path p) {
+	/**
+	 * Deletes a path.
+	 *
+	 * @param p the path to be deleted
+	 * @throws IllegalArgumentException if path was not found
+	 */
+	public synchronized void deletePath(final Path p) throws IllegalArgumentException {
 		final int i = getPathIndex(p);
 		if (i < 0)
 			throw new IllegalArgumentException("Trying to delete a non-existent path: " + p);
 		deletePath(i);
 	}
 
+	/**
+	 * Gets the index of a Path
+	 *
+	 * @param p the Path for which the index should be retrieved
+	 * @return the path index, or -1 if p was not found
+	 */
 	public synchronized int getPathIndex(final Path p) {
 		int i = 0;
 		for (i = 0; i < allPaths.size(); ++i) {
@@ -2723,6 +2744,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return pafmResult;
 	}
 
+	/**
+	 * Downsamples alls path using Ramer–Douglas–Peucker simplification.
+	 * Downsampling occurs only between branch points and terminal points.
+	 *
+	 * @param maximumPermittedDistance the maximum permitted distance between nodes.
+	 */
 	public void downsampleAll(final double maximumPermittedDistance) {
 		for (final Path p : allPaths) {
 			p.downsample(maximumPermittedDistance);

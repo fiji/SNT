@@ -88,7 +88,6 @@ public class ResetPrefsCmd extends ContextCommand {
 
 		// tracing.plugin
 		prefService.clear(CallLegacyShollPlugin.class);
-		prefService.clear(DistributionCmd.class);
 		prefService.clear(PlotterCmd.class);
 		prefService.clear(ROIExporterCmd.class);
 		prefService.clear(ShollTracingsCmd.class);

@@ -89,6 +89,7 @@ public class RoiConverter extends TreeAnalyzer {
 	 * @param overlay
 	 *            the target overlay to hold converted point
 	 */
+	@SuppressWarnings("deprecation")
 	public void convertTips(Overlay overlay) {
 		if (overlay == null)
 			overlay = new Overlay();
@@ -103,6 +104,7 @@ public class RoiConverter extends TreeAnalyzer {
 	 * @param overlay
 	 *            the target overlay to hold converted point
 	 */
+	@SuppressWarnings("deprecation")
 	public void convertBranchPoints(Overlay overlay) {
 		if (overlay == null)
 			overlay = new Overlay();

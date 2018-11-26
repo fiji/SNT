@@ -21,7 +21,7 @@
  */
 
 /**
- * Classes for plotting traces
+ * Classes for plotting reconstructions
  *
  * @author Tiago Ferreira
  */

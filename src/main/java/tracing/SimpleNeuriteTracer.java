@@ -834,7 +834,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	}
 
-	private boolean uiReadyForModeChange() {
+	protected boolean uiReadyForModeChange() {
 		return isUIready() &&
 			(getUIState() == SNTUI.WAITING_TO_START_PATH ||
 				getUIState() == SNTUI.ANALYSIS_MODE);

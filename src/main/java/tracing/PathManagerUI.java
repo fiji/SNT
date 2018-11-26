@@ -1545,7 +1545,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		private final static String COLORS_MENU = "Color";
 		private final static String DELETE_CMD = "Delete...";
 		private final static String MERGE_CMD = "Merge...";
-		private final static String DOWNSAMPLE_CMD = "Douglas–Peucker Downsampling...";
+		private final static String DOWNSAMPLE_CMD = "Ramer-Douglas-Peucker Downsampling...";
 		private final static String CUSTOM_TAG_CMD = "Custom...";
 		private final static String LENGTH_TAG_CMD = "Length";
 		private final static String MEAN_RADIUS_TAG_CMD = "Mean Radius";
@@ -1937,11 +1937,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			guiUtils.error("This command is not available in \"Analysis Mode\".");
 		return plugin.analysisMode;
 	}
-
-	private PathManagerUI getInstance() {
-		return this;
-	}
-
 
 	public static String extractTagsFromPath(final Path p) {
 		final String name = p.getName();

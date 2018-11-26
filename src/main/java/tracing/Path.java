@@ -493,11 +493,9 @@ public class Path implements Comparable<Path> {
 	}
 
 	public PointInImage getPointInImage(final int node) {
-
 		if ((node < 0) || node >= size()) {
 			throw new IllegalArgumentException("getPointInImage() was asked for an out-of-range point: " + node);
 		}
-
 		final PointInImage result = new PointInImage(precise_x_positions[node], precise_y_positions[node],
 				precise_z_positions[node]);
 		result.onPath = this;
@@ -845,7 +843,6 @@ public class Path implements Comparable<Path> {
 		 * We may want to skip some points at the beginning of the next path if they're
 		 * the same as the last point on this path:
 		 */
-
 		if (points > 0) {
 			final double last_x = precise_x_positions[points - 1];
 			final double last_y = precise_y_positions[points - 1];
@@ -857,19 +854,15 @@ public class Path implements Comparable<Path> {
 		}
 
 		System.arraycopy(other.precise_x_positions, toSkip, precise_x_positions, points, other.points - toSkip);
-
 		System.arraycopy(other.precise_y_positions, toSkip, precise_y_positions, points, other.points - toSkip);
-
 		System.arraycopy(other.precise_z_positions, toSkip, precise_z_positions, points, other.points - toSkip);
 
 		if (hasRadii()) {
-
 			System.arraycopy(other.radiuses, toSkip, radiuses, points, other.points - toSkip);
-
 		}
 
 		if (endJoins != null)
-			throw new RuntimeException("BUG: we should never be adding to a path that already endJoins");
+			throw new IllegalArgumentException("BUG: we should never be adding to a path that already endJoins");
 
 		if (other.endJoins != null) {
 			setEndJoin(other.endJoins, other.endJoinsPoint);

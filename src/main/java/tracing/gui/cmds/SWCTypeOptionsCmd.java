@@ -42,7 +42,7 @@ import tracing.Path;
 import tracing.gui.GuiUtils;
 
 /**
- * Implements {@link PathManagerUI}'s SWC-SWC-type tagging Options Command.
+ * Implements {@link tracing.PathManagerUI}'s SWC-SWC-type tagging Options Command.
  *
  * @author Tiago Ferreira
  */

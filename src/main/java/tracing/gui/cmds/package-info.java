@@ -21,7 +21,7 @@
  */
 
 /**
- * This package provides Scijava-based GUIs to for SNT built-in commands. There
+ * This package provides Scijava-based GUIs for SNT built-in commands. There
  * should not be a need to script these directly. However, the source code of 
  * these simple Commands exemplifies how to script {@link tracing.SNTService}
  * 

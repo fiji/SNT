@@ -57,8 +57,7 @@ public class TreeStatistics extends TreeAnalyzer {
 	/**
 	 * Instantiates a new instance from a collection of Paths
 	 *
-	 * @param tree the collection of paths to be analyzed as per
-	 *             {@link #TreeAnalyzer(Tree)}
+	 * @param tree the collection of paths to be analyzed
 	 */
 	public TreeStatistics(final Tree tree) {
 		super(tree);

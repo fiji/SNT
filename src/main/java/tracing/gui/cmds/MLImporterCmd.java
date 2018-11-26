@@ -48,7 +48,7 @@ import tracing.plot.TreePlot3D;
 /**
  * Command for importing MouseLight reconstructions
  * 
- * @see {@link MLJSONLoader}
+ * @see MLJSONLoader
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, label = "Import MouseLight Reconstructions", initializer = "init")

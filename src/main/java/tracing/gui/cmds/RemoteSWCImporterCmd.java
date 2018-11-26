@@ -50,8 +50,8 @@ import tracing.plot.TreePlot3D;
 /**
  * Command for importing SWC reconstructions from remote databases
  * 
- * @see {@link NeuroMorphoLoader}
- * @see {@link FlyCirCuitLoader}
+ * @see NeuroMorphoLoader
+ * @see FlyCirCuitLoader
  *
  * @author Tiago Ferreira
  */

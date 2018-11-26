@@ -366,12 +366,12 @@ public class TreePlot3D {
 	 * required to ensure that the current View's bounding box includes the added
 	 * Tree.
 	 *
-	 * @param tree the {@link Tree)} to be added. The Tree's label will be used as
+	 * @param tree the {@link Tree} to be added. The Tree's label will be used as
 	 *             identifier. It is expected to be unique when plotting multiple
 	 *             Trees, if not (or no label exists) a unique label will be
 	 *             generated.
 	 * 
-	 * @see {@link Tree#getLabel()}
+	 * @see Tree#getLabel()
 	 * @see #remove(String)
 	 * @see #updateView()
 	 */
@@ -667,7 +667,7 @@ public class TreePlot3D {
 	 *
 	 * @param treeOrObjLabel the unique identifier of the Tree (as per
 	 *                       {@link #add(Tree)}), or the filename of the loaded OBJ
-	 *                       {@link #loadOBJ(String, java.awt.Color)}
+	 *                       {@link #loadOBJ(String, ColorRGB, double)}
 	 * @param visible        whether the Object should be displayed
 	 */
 	public void setVisible(final String treeOrObjLabel, final boolean visible) {
@@ -712,7 +712,7 @@ public class TreePlot3D {
 	/**
 	 * Runs {@link TreeColorMapper} on the specified {@link Tree}.
 	 *
-	 * @param treeLabels  the identifier of the Tree (as per {@link #add(Tree)}) to
+	 * @param treeLabel  the identifier of the Tree (as per {@link #add(Tree)})to
 	 *                    be color mapped
 	 * @param measurement the mapping measurement e.g.,
 	 *                    {@link TreeColorMapper#BRANCH_ORDER}
@@ -833,9 +833,8 @@ public class TreePlot3D {
 	/**
 	 * Loads the surface mesh of a Drosophila template brain. It will simply make
 	 * the mesh visible if has already been loaded. These meshes are detailed on the
-	 * <a
-	 * href="https://www.rdocumentation.org/packages/nat.templatebrains/>nat.flybrains
-	 * </a> documentation.
+	 * <a href="https://www.rdocumentation.org/packages/nat.templatebrains/">nat.flybrains</a>
+	 * documentation.
 	 *
 	 * @param templateBrain the template brain to be loaded (case-insensitive).
 	 *                      Either "JFRC2" (AKA JFRC2010), "JFRC3" (AKA JFRC2013),

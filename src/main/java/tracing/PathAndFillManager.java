@@ -751,6 +751,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		addPath(p, false);
 	}
 
+	@SuppressWarnings("deprecation")
 	protected synchronized void addPath(final Path p, final boolean forceNewName) {
 		if (getPathFromID(p.getID()) != null)
 			throw new IllegalArgumentException("Attempted to add a path with an ID that was already added");
@@ -1473,6 +1474,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	}
 
+	@SuppressWarnings("deprecation")
 	private void addTo3DViewer(final Path p) {
 		if (plugin != null && plugin.use3DViewer && p.fittedVersionOf == null && p.size() > 1) {
 			Path pathToAdd;
@@ -1701,9 +1703,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 * @return the List of imported {@link Tree}s labeled after the file descriptor.
 	 *         The returned list will not contain null elements: If a file was not
 	 *         successfully imported an empty Tree will be generated
-	 * @see {@link Tree#isEmpty()}
-	 * @see {@link Tree#getLabel()}
-	 * @see {@link SWCColor#getDistinctColors(int)}
+	 * @see Tree#isEmpty()
+	 * @see Tree#getLabel()
+	 * @see SWCColor#getDistinctColors(int)
 	 */
 	public List<Tree> importSWCs(final Map<String, String> swcs, final ColorRGB color) {
 		final List<Tree> result = new ArrayList<>();
@@ -1981,7 +1983,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	 *                    from each ID will assigned unique colors
 	 * @return the map mapping imported ids to imported Trees. A null Tree will be
 	 *         assigned if a morphology could not be imported
-	 * @see {@link SWCColor#getDistinctColors(int)}
+	 * @see SWCColor#getDistinctColors(int)
 	 */
 	public Map<String, Tree> importMLNeurons(final Collection<String> ids, 
 			final String compartment, final ColorRGB color) {

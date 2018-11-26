@@ -39,7 +39,7 @@ import tracing.Path;
 import tracing.gui.GuiUtils;
 
 /**
- * Implements {@link PathManagerUI}'s SWC-type filtering Command.
+ * Implements {@link tracing.PathManagerUI}'s SWC-type filtering Command.
  *
  * @author Tiago Ferreira
  */

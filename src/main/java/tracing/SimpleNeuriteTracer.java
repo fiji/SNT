@@ -1215,6 +1215,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	// When we set temporaryPath, we also want to update the display:
 
+	@SuppressWarnings("deprecation")
 	synchronized public void setTemporaryPath(final Path path) {
 
 		final Path oldTemporaryPath = this.temporaryPath;
@@ -1238,6 +1239,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	synchronized public void setCurrentPath(final Path path) {
 		final Path oldCurrentPath = this.currentPath;
 		currentPath = path;

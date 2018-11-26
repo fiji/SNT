@@ -232,6 +232,7 @@ public class Path implements Comparable<Path> {
 	 */
 	public void setCanvasOffset(final PointInCanvas canvasOffset) {
 		this.canvasOffset = canvasOffset;
+		if (fitted != null) fitted.setCanvasOffset(canvasOffset);
 	}
 
 	/**

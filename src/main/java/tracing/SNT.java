@@ -123,7 +123,7 @@ public class SNT {
 	private static String stringForCSV(final String s) {
 		boolean quote = false;
 		String result = s;
-		if (s.indexOf(',') >= 0) quote = true;
+		if (s.indexOf(',') >= 0 || s.indexOf(' ') >= 0) quote = true;
 		if (s.indexOf('"') >= 0) {
 			quote = true;
 			result = s.replaceAll("\"", "\"\"");

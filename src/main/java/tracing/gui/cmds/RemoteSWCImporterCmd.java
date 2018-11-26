@@ -68,8 +68,8 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 	@Parameter(required = false, label = "<HTML>&nbsp;")
 	private ColorRGB commonColor;
 
-	@Parameter(required = false, label = "Load Template brain")
-	private boolean loadMesh;
+//	@Parameter(required = false, label = "Load Template brain")
+//	private boolean loadMesh;
 
 	@Parameter(required = false, label = "Replace existing paths")
 	private boolean clearExisting;
@@ -148,9 +148,9 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			}
 		}
 
-		if (loadMesh && loader instanceof FlyCirCuitLoader) {
-			recViewer.loadDrosoRefBrain("FCWB");
-		}
+//		if (loadMesh && loader instanceof FlyCirCuitLoader) {
+//			recViewer.loadDrosoRefBrain("FCWB");
+//		}
 		if (standAloneViewer) {
 			recViewer.setViewUpdatesEnabled(false);
 			result.forEach(tree -> {
@@ -207,7 +207,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		if (loader instanceof NeuroMorphoLoader) {
 			placeholderQuery = "cnic_001";
 			database = "NeuroMorpho.org";
-			resolveInput("loadMesh");
+//			resolveInput("loadMesh");
 		} else if (loader instanceof FlyCirCuitLoader) {
 			placeholderQuery = "VGlut-F-400787";
 			database = "FlyCircuit.tw";

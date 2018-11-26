@@ -1473,7 +1473,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		private final static String RENAME_CMD = "Rename...";
 		private final static String MAKE_PRIMARY_CMD = "Make Primary";
 		private final static String DISCONNECT_CMD = "Disconnect...";
-		private final static String EXPLORE_FIT_CMD = "Explore Fit";
+		private final static String EXPLORE_FIT_CMD = "Explore/Preview Fit";
 
 		@Override
 		public void actionPerformed(final ActionEvent e) {
@@ -1619,7 +1619,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			} else if (COLORIZE_PATH_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
-				input.put("manager", getInstance());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(TreeColorizerCmd.class, true, input);
 				return;

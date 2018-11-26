@@ -118,6 +118,8 @@ import tracing.gui.cmds.RemoteSWCImporterCmd;
 import tracing.gui.cmds.ResetPrefsCmd;
 import tracing.gui.cmds.ShowCorrespondencesCmd;
 import tracing.hyperpanes.MultiDThreePanes;
+import tracing.io.FlyCirCuitLoader;
+import tracing.io.NeuroMorphoLoader;
 import tracing.plot.TreePlot3D;
 import tracing.plugin.PlotterCmd;
 import tracing.plugin.StrahlerCmd;
@@ -1984,16 +1986,28 @@ public class SNTUI extends JDialog {
 		loadLabelsMenuItem.addActionListener(listener);
 		importSubmenu.add(loadLabelsMenuItem);
 		importSubmenu.addSeparator();
-		final JMenuItem importMouselight = new JMenuItem("MouseLight Reconstructions...");
-		importSubmenu.add(importMouselight);
+		final JMenu remoteSubmenu = new JMenu("Remote Reconstructions");
+		remoteSubmenu.setIcon(IconFactory.getMenuIcon(GLYPH.DATABASE));
+		final JMenuItem importFlyCircuit = new JMenuItem("FlyCircuit...");
+		remoteSubmenu.add(importFlyCircuit);
+		importFlyCircuit.addActionListener(e -> {
+			final HashMap<String, Object> inputs = new HashMap<>();
+			inputs.put("loader", new FlyCirCuitLoader());
+			(new CmdRunner(RemoteSWCImporterCmd.class, inputs, true)).execute();
+		});
+		final JMenuItem importMouselight = new JMenuItem("MouseLight...");
+		remoteSubmenu.add(importMouselight);
 		importMouselight.addActionListener(e -> {
 			(new CmdRunner(MLImporterCmd.class, true)).execute();
 		});
-		final JMenuItem importNeuroMorpho = new JMenuItem("NeuroMorpho Reconstructions...");
-		importSubmenu.add(importNeuroMorpho);
+		final JMenuItem importNeuroMorpho = new JMenuItem("NeuroMorpho...");
+		remoteSubmenu.add(importNeuroMorpho);
 		importNeuroMorpho.addActionListener(e -> {
-			(new CmdRunner(RemoteSWCImporterCmd.class, true)).execute();
+			final HashMap<String, Object> inputs = new HashMap<>();
+			inputs.put("loader", new NeuroMorphoLoader());
+			(new CmdRunner(RemoteSWCImporterCmd.class, inputs, true)).execute();
 		});
+		importSubmenu.add(remoteSubmenu);
 
 		exportAllSWCMenuItem = new JMenuItem("SWC...");
 		exportAllSWCMenuItem.addActionListener(listener);
@@ -2008,10 +2022,9 @@ public class SNTUI extends JDialog {
 		quitMenuItem.addActionListener(listener);
 		fileMenu.add(quitMenuItem);
 
-		measureMenuItem = new JMenuItem("Quick Statistics");
-		measureMenuItem.setIcon(IconFactory.getMenuIcon(GLYPH.ROCKET));
+		measureMenuItem = new JMenuItem("Quick Statistics", IconFactory.getMenuIcon(GLYPH.ROCKET));
 		measureMenuItem.addActionListener(listener);
-		strahlerMenuItem = new JMenuItem("Strahler Analysis");
+		strahlerMenuItem = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(GLYPH.BRANCH_CODE));
 		strahlerMenuItem.addActionListener(listener);
 		plotMenuItem = new JMenuItem("Plot Traces...");
 		plotMenuItem.addActionListener(listener);
@@ -3257,12 +3270,20 @@ public class SNTUI extends JDialog {
 
 		private final Class<? extends Command> cmd;
 		private boolean analysisModeCmd;
+		final HashMap<String, Object> inputs;
 
 		public CmdRunner(final Class<? extends Command> cmd, final boolean analysisModeCmd) {
 			this.cmd = cmd;
+			this.inputs = null;
 			this.analysisModeCmd = analysisModeCmd;
 		}
-
+	
+		public CmdRunner(final Class<? extends Command> cmd, final HashMap<String, Object> inputs, final boolean analysisModeCmd) {
+			this.cmd = cmd;
+			this.inputs = inputs;
+			this.analysisModeCmd = analysisModeCmd;
+		}
+	
 		@Override
 		public Object doInBackground() {
 			if (analysisModeCmd && getCurrentState() != SNTUI.ANALYSIS_MODE) {
@@ -3275,7 +3296,7 @@ public class SNTUI extends JDialog {
 			}
 			try {
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
-				cmdService.run(cmd, true).get();
+				cmdService.run(cmd, true, inputs).get();
 			} catch (final InterruptedException | ExecutionException e1) {
 				guiUtils.error("Unfortunately an exception occured. See console for details.");
 				e1.printStackTrace();

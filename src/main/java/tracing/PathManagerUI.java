@@ -100,10 +100,10 @@ import tracing.analysis.TreeAnalyzer;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
-import tracing.gui.PathFitterCmd;
 import tracing.gui.SNTSearchableBar;
 import tracing.gui.SwingSafeResult;
 import tracing.gui.cmds.DistributionCmd;
+import tracing.gui.cmds.PathFitterCmd;
 import tracing.gui.cmds.SWCTypeOptionsCmd;
 import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.SkeletonizerCmd;
@@ -234,7 +234,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		jmi.addActionListener(multiPathListener);
 		tagsMenu.add(jmi);
 
-		final JMenu fitMenu = new JMenu("Fit ");
+		final JMenu fitMenu = new JMenu("Refine/Fit");
 		menuBar.add(fitMenu);
 		fitVolumeMenuItem = new JMenuItem("Fit Path(s)...");
 		fitVolumeMenuItem.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.CROSSHAIR));
@@ -483,7 +483,34 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		});
 	}
 
-	private void fitPaths(final List<PathFitter> pathsToFit) {
+	private int[] getFittingOptionsFromUser() {
+		final int[] options = new int[] { PathFitter.RADII, PathFitter.DEFAULT_MAX_RADIUS };
+		String fitTypeString = null;
+		String maxRadiustring = null;
+		final PrefService prefService = plugin.getContext().getService(PrefService.class);
+		final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+		try {
+			CommandModule cm = cmdService.run(PathFitterCmd.class, true).get();
+			if (cm.isCanceled()) return null;
+			fitTypeString = prefService.get(PathFitterCmd.class, PathFitterCmd.FITCHOICE_KEY);
+			maxRadiustring = prefService.get(PathFitterCmd.class, PathFitterCmd.MAXRADIUS_KEY);
+		} catch (final InterruptedException | ExecutionException e) {
+			return null;
+		}
+
+		if (fitTypeString == null || fitTypeString.isEmpty() || maxRadiustring == null || maxRadiustring.isEmpty()) {
+			return null;
+		}
+		try {
+			options[0] = Integer.parseInt(fitTypeString);
+			options[1] = Integer.parseInt(maxRadiustring);
+		} catch (final NumberFormatException ex) {
+			SNT.error("Could not parse settings. Adopting Defaults...", ex);
+		}
+		return options;
+	}
+
+	private void fitPaths(final List<PathFitter> pathsToFit, final int fitType, final int maxRadius) {
 		assert SwingUtilities.isEventDispatchThread();
 
 		if (pathsToFit.isEmpty())
@@ -1209,17 +1236,15 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		ui.showStatus(statusMsg, false);
 		setEnabledCommands(false);
 
-		// Improve browsability of path, while updating the GUI
-		if (!plugin.showOnlySelectedPaths)
-			ui.togglePathsChoice();
-		plugin.enableEditMode(true);
-		plugin.setEditingPath(p);
 		final String text = "Once opened, you can peruse the fit by "
-				+ "navigating the 'Normal Plane' image. Nodes are "
-				+ "automatically synchronized with tracing canvas(es).";
-		final JDialog msg = guiUtils.floatingMsg(text);
-
+				+ "navigating the 'Cross Section View' stack. Edit mode "
+				+ "will be activated and cross section planes automatically "
+				+ "synchronized with tracing canvas(es).";
+		final JDialog msg = guiUtils.floatingMsg(text, false);
+		
 		new Thread(() -> {
+
+			final Path existingFit = p.getFitted();
 
 			// No image is displayed if run on EDT
 			final SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
@@ -1228,13 +1253,22 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				protected Object doInBackground() throws Exception {
 
 					try {
-						// Compute verbose fit
+
+						// discard existing fit, in case a previous fit exists
+						p.setUseFitted(false);
+						p.setFitted(null);
+
+						// Compute verbose fit using settings from previous PathFitterCmd runs
 						final PathFitter fitter = new PathFitter(plugin, p, true);
+						final PrefService prefService = plugin.getContext().getService(PrefService.class);
+						final String rString = prefService.get(PathFitterCmd.class, PathFitterCmd.MAXRADIUS_KEY, 
+								String.valueOf(PathFitter.DEFAULT_MAX_RADIUS));
+						fitter.setMaxRadius(Integer.valueOf(rString));
+						fitter.setScope(PathFitter.RADII_AND_MIDPOINTS);
 						final ExecutorService executor = Executors.newSingleThreadExecutor();
 						final Future<Path> future = executor.submit(fitter);
-						final Path result = future.get();
-						pathAndFillManager.addPath(result);
-						refreshManager(true, false);
+						future.get();
+					
 					} catch (InterruptedException | ExecutionException | RuntimeException e) {
 						msg.dispose();
 						guiUtils.error("Unfortunately an exception occured. See Console for details");
@@ -1245,11 +1279,18 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 				@Override
 				protected void done() {
+					// this is just a preview cmd. Reinstate previous fit, if any
+					p.setFitted(null);
+					p.setFitted(existingFit);
 					// It may take longer to read the text than to compute
 					// Normal Views: we will not call msg.dispose();
 					GuiUtils.setAutoDismiss(msg);
 					setEnabledCommands(true);
-					ui.showStatus(null, false);
+					// Show both original and fitted paths
+					if (plugin.showOnlySelectedPaths)
+						ui.togglePathsChoice();
+					plugin.enableEditMode(true);
+					plugin.setEditingPath(p);
 				}
 			};
 			worker.execute();
@@ -1486,11 +1527,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 					displayTmpMsg("Tracing image is not available. Fit cannot be computed.");
 					return;
 				}
-				if (!plugin.editModeAllowed(false)) {
+				if (!plugin.uiReadyForModeChange()) {
 					displayTmpMsg("Please finish current operation before exploring fit.");
 					return;
 				}
-				
 				exploreFit(p);
 				return;
 			}

@@ -1841,15 +1841,37 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				}
 
 				if (pathsToFit.size() > 0) {
-					fitPaths(pathsToFit); // call refreshManager
-					if (skippedFits > 0) {
-						guiUtils.centeredMsg("Since image is not available, " + skippedFits + "/" + selectedPaths.size()
-								+ " fits could not be computed", "Image Not Available");
+
+					final int finalSkippedFits = skippedFits;
+					class GetOptions extends SwingWorker<int[], Object> {
+						@Override
+						public int[] doInBackground() {
+							return getFittingOptionsFromUser();
+						}
+
+						@Override
+						protected void done() {
+							try {
+								final int[] userOptions = get();
+								if (userOptions == null)
+									return; // user dismissed prompt
+								fitPaths(pathsToFit, userOptions[0], userOptions[1]); // call refreshManager
+								if (finalSkippedFits > 0) {
+									guiUtils.centeredMsg(
+											"Since image is not available, " + finalSkippedFits + "/"
+													+ selectedPaths.size() + " fits could not be computed",
+											"Image Not Available");
+								}
+							} catch (final NullPointerException | InterruptedException | ExecutionException e) {
+								e.printStackTrace();
+							}
+						}
 					}
+					(new GetOptions()).execute();
+
 				} else {
 					refreshManager(true, false);
 				}
-
 				return;
 
 			} else {

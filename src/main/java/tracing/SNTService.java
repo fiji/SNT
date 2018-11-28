@@ -131,9 +131,9 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *             if SimpleNeuriteTracer is not running
 	 */
 	public Tree getTree(final boolean selectedPathsOnly) {
-		if (selectedPathsOnly)
-			return new Tree(getSelectedPaths());
-		return new Tree(getPaths());
+		final Tree tree = new Tree((selectedPathsOnly) ? getSelectedPaths() : getPaths());
+		tree.setLabel((selectedPathsOnly) ? "Selected Paths" : "All Paths");
+		return tree;
 	}
 
 	/**
@@ -146,7 +146,9 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *             if SimpleNeuriteTracer is not running
 	 */
 	public TreeAnalyzer getAnalyzer(final boolean selectedPathsOnly) {
-		return new TreeAnalyzer(getTree(selectedPathsOnly));
+		final TreeAnalyzer tAnalyzer = new TreeAnalyzer(getTree(selectedPathsOnly));
+		tAnalyzer.setContext(getContext());
+		return tAnalyzer;
 	}
 
 	/**
@@ -159,7 +161,9 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *             if SimpleNeuriteTracer is not running
 	 */
 	public TreeStatistics getStatistics(final boolean selectedPathsOnly) {
-		return new TreeStatistics(getTree(selectedPathsOnly));
+		final TreeStatistics tStats = new TreeStatistics(getTree(selectedPathsOnly));
+		tStats.setContext(getContext());
+		return tStats;
 	}
 
 	/**

@@ -125,7 +125,7 @@ public class TreeColorMapper extends ColorMapper {
 	}
 
 	protected void mapToProperty(final String measurement, final ColorTable colorTable) {
-		colorize(measurement, colorTable);
+		map(measurement, colorTable);
 		final String cMeasurement = normalizedMeasurement(measurement);
 		switch (cMeasurement) {
 		case PATH_DISTANCE:

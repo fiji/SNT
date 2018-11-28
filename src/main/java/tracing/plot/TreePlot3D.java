@@ -704,9 +704,23 @@ public class TreePlot3D {
 			}
 		});
 		final MultiTreeColorMapper mapper = new MultiTreeColorMapper(trees);
-		mapper.colorize(measurement, colorTable);
+		mapper.map(measurement, colorTable);
 		shapeTrees.forEach(st -> st.rebuildShape());
 		return mapper.getMinMax();
+	}
+
+	/**
+	 * Toggles the Viewer's animation.
+	 *
+	 * @param enabled if true animation starts. Stops if false
+	 */
+	public void setAnimationEnabled(final boolean enabled) {
+		if (mouseController == null)
+			return;
+		if (enabled)
+			mouseController.startThreadController();
+		else
+			mouseController.stopThreadController();
 	}
 
 	/**
@@ -2578,6 +2592,11 @@ public class TreePlot3D {
 		});
 	}
 
+	/**
+	 * Checks whether this instance is SNT's Reconstruction Viewer.
+	 *
+	 * @return true, if SNT instance, false oyherwise
+	 */
 	public boolean isSNTInstance() {
 		return sntService !=null && sntService.isActive() && sntService.getUI() != null
 				&& this.equals(sntService.getUI().getReconstructionViewer(false));
@@ -2606,6 +2625,7 @@ public class TreePlot3D {
 		jzy3D.add(tree);
 		jzy3D.loadMouseRefBrain();
 		jzy3D.show();
+		jzy3D.setAnimationEnabled(true);
 	}
 
 }

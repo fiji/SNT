@@ -90,8 +90,8 @@ public class MultiTreeColorMapper extends ColorMapper {
 	 * net.imglib2.display.ColorTable)
 	 */
 	@Override
-	public void colorize(final String measurement, final ColorTable colorTable) {
-		super.colorize(measurement, colorTable);
+	public void map(final String measurement, final ColorTable colorTable) {
+		super.map(measurement, colorTable);
 		final String cMeasurement = super.normalizedMeasurement(measurement);
 		for (final MappedTree mt : mappedTrees) {
 			final TreeAnalyzer analyzer = new TreeAnalyzer(mt.tree);
@@ -158,7 +158,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 			trees.add(tree);
 		}
 		final MultiTreeColorMapper mapper = new MultiTreeColorMapper(trees);
-		mapper.colorize(MultiTreeColorMapper.TOTAL_LENGTH, ColorTables.ICE);
+		mapper.map(MultiTreeColorMapper.TOTAL_LENGTH, ColorTables.ICE);
 		final TreePlot3D viewer = new TreePlot3D();
 		for (final Tree tree : trees) viewer.add(tree);
 		final double[] limits = mapper.getMinMax();

@@ -52,7 +52,7 @@ public class ColorMapper {
 		return normMeasurement;
 	}
 
-	public void colorize(final String measurement, final ColorTable colorTable) {
+	public void map(final String measurement, final ColorTable colorTable) {
 		if (colorTable == null)
 			throw new IllegalArgumentException("colorTable cannot be null");
 		if (measurement == null)

@@ -200,8 +200,9 @@ public class Tree {
 	 * Downsamples the tree.
 	 *
 	 * @param maximumAllowedDeviation
-	 *            the maximum allowed distance between path nodes. Note that
-	 *            upsampling is not supported.
+	 *            the maximum allowed distance between 'shaft' path nodes. Note that
+	 *            1) upsampling is not supported, and 2) the position of nodes at
+	 *             branch points and tips remains unaltered during downsampling
 	 * @see PathDownsampler
 	 */
 	public void downSample(final double maximumAllowedDeviation) {

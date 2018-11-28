@@ -170,7 +170,7 @@ class ScriptInstaller implements MenuKeyListener {
 		final JMenu sMenu = new JMenu("Scripts");
 		sMenu.add(getMenu("Analysis"));
 		sMenu.add(getMenu("Tracing"));
-		//sMenu.add(getMenu("Utilities"));
+		sMenu.add(getMenu("Utilities"));
 		sMenu.addSeparator();
 		final JMenu listMenu = getMenu(null);
 		listMenu.setIcon(IconFactory.getMenuIcon(GLYPH.LIST));

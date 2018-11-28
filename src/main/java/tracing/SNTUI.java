@@ -2042,7 +2042,7 @@ public class SNTUI extends JDialog {
 		analysisMenu.addSeparator();
 
 		final JMenu scriptUtilsMenu = installer.getUtilScriptsMenu();
-		scriptUtilsMenu.setText("Script Utils");
+		scriptUtilsMenu.setText("Utility Scripts");
 		scriptUtilsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.PLUS));
 		scriptUtilsMenu.addSeparator();
 		analysisMenu.add(scriptUtilsMenu);

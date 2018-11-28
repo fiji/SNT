@@ -9,11 +9,14 @@
 
 
 '''
-file:       Scripted_Tracing_Demo.py
+file:       Analysis_Demo_(Interactive).py
 author:     Tiago Ferreira
-version:    20180918
+version:    20181126
 info:       Exemplifies how to programatically interact with a running instance
-            of SimpleNeuriteTracer to analyze traced data
+            of SNT to analyze traced data. Because of all the GUI updates, this
+            approach is _significantly slower_ than analyzing reconstructions
+            retrieved directly from the loader.
+            Do check Analysis_Demo_(Headless).py for comparison
 '''
 
 import math
@@ -21,7 +24,7 @@ import math
 from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
 from tracing.io import MLJSONLoader
 from tracing.util import PointInImage
-from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorizer, 
+from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
 from tracing.plot import(TreePlot2D, TreePlot3D)
 
@@ -36,13 +39,9 @@ def run():
     if not snt.isActive():
         ui.showDialog("SNT does not seem to be running. Exiting..", "Error")
         return
- 
-    # Reload UI in 'Analysis Mode' if running in 'Tracing Mode'
-    if snt.getUI().getCurrentState() != SNTUI.ANALYSIS_MODE:
-        SNTUI.reloadUI(snt.getUI(), True)
 
     # Let's import some data from the MouseLight database
-    loader = MLJSONLoader("AA0100")
+    loader = MLJSONLoader("AA0001")
     if not loader.isDatabaseAvailable():
         ui.showDialog("Could not connect to ML database", "Error")
         return
@@ -50,22 +49,22 @@ def run():
         ui.showDialog("Somewhow the specified id was not found", "Error")
         return
 
+    # Reload UI in 'Analysis Mode' if running in 'Tracing Mode'
+    if snt.getUI().getCurrentState() != SNTUI.ANALYSIS_MODE:
+        SNTUI.reloadUI(snt.getUI(), True)
+
     # All the 'raw data' in the MouseLight database is stored as JSONObjects.
-    # These can be access as follows:
+    # If needed, these could be access as follows:
     # http://stleary.github.io/JSON-java/index.html
     axon = loader.getCompartment("axon")  # MLJSONLoader.AXON
-    print(axon)
 
     # But we can import reconstructions directly using PathAndFillManager,
     # SNT's work horse for management of Paths and ints importMLNeurons
-    # method that accepts two parameters: a list of cell ids, and the
-    # compartment to be imported ('all', 'axon', or 'dendrites')
-    # NB: Because of all the GUI changes, this approach is significantly
-    # slower than retrieving the Tree directly from the loader, as in
-    # Analysis_Demo2.py 
+    # method that accepts 3 parameters: a list of cell ids, the compartment
+    # to be imported ('all', 'axon', or 'dendrites') and a color
     # http://javadoc.scijava.org/Fiji/tracing/PathAndFillManager.html
     pafm = snt.getPathAndFillManager()
-    pafm.importMLNeurons(['AA0100'], 'dendrites')
+    pafm.importMLNeurons(['AA0001'], 'all', None)
 
     # Almost all SNT analyses are performed on a Tree, i.e., a collection
     # of Paths. We can immediately retrieve TreeAnalyzer (responsible for
@@ -81,19 +80,30 @@ def run():
     analyzer = snt.getAnalyzer(False)  # Include only selected paths?
     stats = snt.getStatistics(False)   # Include only selected paths?
 
-    summary_stats = stats.getSummaryStats(TreeStatistics.INTER_NODE_DISTANCE)
-    print("The average inter-node distance is %d" % summary_stats.getMean())
-
-	# Stats can also be displayed in SNT's ui.
-	# TBD:  recycle code from Scripted_Tracing_Demo.py
+    # Measurements can be displayed in SNT's UI:
+    analyzer.setTable(snt.getTable())
+    analyzer.summarize("AA0001", True) # Split summary by compartment?
+    analyzer.updateAndDisplayTable()
 
     # It is also possible to build the above instances from a Tree. This
-    # is required if e.g, one needs to manipulate Paths before hand
-    # NB: rotation, and scaling of Trees can be computer intensive
-    tree = snt.getTree(False) # Retrieve only paths selected in the Manager?
-    tree.rotate(Tree.X_AXIS, 90) # rotate 90 degrees along the X axis
+    # is usefule if, e.g, one needs to manipulate Paths in advanced.
+    # NB: rotation, and scaling of large Trees can be computer intensive
+    metric = TreeStatistics.INTER_NODE_DISTANCE # same as "inter-node distance"
+    summary_stats = stats.getSummaryStats(metric)
+    stats.getHistogram(metric).show()
+    print("Smallest inter-node distance: %d" % summary_stats.getMin())
 
-    # Let's see the result:
-    #TBD, recycle code from Scripted_Tracing_Demo.py
+    # E.g., let's' downsample the Tree, imposing 10um between 'shaft' nodes.
+    # NB: When downsampling, branch points and tip positions are not altered
+    tree = snt.getTree(False) # Retrieve only paths selected in the Manager?
+    tree.downSample(10) # 10um
+    tree.setLabel("10um downsampled")
+
+    # Let's compare the metric distribution after downsampling
+    stats = TreeStatistics(tree)
+    summary_stats = stats.getSummaryStats(metric)
+    stats.getHistogram(metric).show()
+    print("After downsampling: %d" % summary_stats.getMin())
+
 
 run()

@@ -12,15 +12,15 @@
 file:       Scripted_Tracing_Demo.py
 author:     Tiago Ferreira
 version:    20180820
-info:       Exemplifies how to programatically interact with a running instance
-            of SimpleNeuriteTracer to perform auto-tracing tasks.
+info:       Exemplifies how to programatically interact with a running
+            instance of SNT to perform auto-tracing tasks.
 '''
 
 import math
 
 from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
 from tracing.util import PointInImage
-from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorizer, 
+from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
 from tracing.plot import(TreePlot2D, TreePlot3D)
 
@@ -69,8 +69,8 @@ def run():
     imp = plugin.getImagePlus()
     dim = imp.getDimensions()
     sx = imp.getCalibration().getX(dim[0]) / 2
-    sy = imp.getCalibration().getY(dim[0]) / 2
-    z = imp.getCalibration().getZ(imp.getCurrentSlice() - 1)
+    sy = imp.getCalibration().getY(dim[1]) / 2
+    z = imp.getCalibration().getZ(imp.getCurrentSlice() - 1)  # 1-based index
 
     # Define a Tree (a collection of Paths) to hold all the paths we'll create
     tree = Tree()

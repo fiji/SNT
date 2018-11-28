@@ -71,7 +71,7 @@ def run():
 
         # Analyze the data grouping measurements by compartment (e.g., axon,
         # dentrite). See TreeAnalyzer's API for more sophisticated analysis
-        analyzer.summarize(True)
+        analyzer.summarize(True) # Split results by compartment?
 
         # Update table before parsing next file
         analyzer.updateAndDisplayTable()

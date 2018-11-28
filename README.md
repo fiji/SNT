@@ -8,35 +8,69 @@ of ImageJ. For details, please see http://imagej.net/SNT
 
 
 ## Development
-SNT is currently under heavy development. Because the ongoing work does not guaranty full backwards compatibility with previous versions, the latest pre-releases are not yet made available through Fiji's main update site but through the [Neuroanatomy](http://imagej.net/Neuroanatomy) update site.
+SNT is currently under heavy development ([scijava](https://github.com/fiji/Simple_Neurite_Tracer/tree/scijava) branch).
+Because the ongoing work does not guaranty full backwards compatibility with previous versions, the latest pre-releases
+are not yet made available through Fiji's main update site but through the [Neuroanatomy](http://imagej.net/Neuroanatomy)
+update site. Bugs are expected during this period, please report them here.
 
 ## Recent Capabilities of SNT (Scijava branch)
 
-### Tracing:
+### Tracing
+* Support for multidimensional images (including multichannel, and those with a time axis).
+  While tracing, visibility of non-traced channels can be toggled at will
+* Precise placement of nodes is aided by a local search that automatically snaps the cursor to
+  to brightest voxel in a 3D neighborhood and automatically brings the cursor to the focal plane
+* A* search can be performed on a second, non-displayed image.
+  This allows for e.g., tracing on a pre-process (filtered) image while interacting with the unfiltered image (or vice-versa).
+  If enough RAM is available toggling between the two data sources is immediate
+* Tracing can be interleaved with image processing routines (see SNT's "Pause" mode)
+* Paths can now be edited, i.e., a path can be merged into a existing one, or split into two
+  Nodes can be moved, deleted, or inserted (see SNT's "Edit mode")
+* Semi-automated tracing can be toggled at will (see SNT's "Manual mode")
+* Sub-pixel accuracy support
 
-* Support for multidimensional images (including multichannel, and those with a time axis)
-* A new option to perform background tracing on a second, non-displayed image
-* Manual Mode: Semi-automated tracing can be temporary disabled
-* Pause mode: Tracing can be interleaved with image processing routines
-* Edit mode: Paths can now be edited, i.e., a path can be merged into a existing one, or split into two. Nodes can be moved, deleted, or inserted.
-* Preliminary support for sub-pixel accuracy,
-* New GUI with extensive options and shortcuts
+### Analysis
+* Traced paths can tagged, searched, grouped and filtered.
+  Tags can be labels of compartments, branch order, or a list of arbitrary strings.
+  Analyses can be performed on all paths, or filtered subsets
+* Direct access to public databases, including [MouseLight](https://ml-neuronbrowser.janelia.org/), [FlyCircuit](http://www.flycircuit.tw) and [NeuroMorpho](http://neuromorpho.org/)
+* Paths can be color-coded by morphometric properties: e.g., compartment, length, radii or depth
+* Paths can be converted to ROIs and voxel intensities profiled
+* Suite of commands for calculating morphometric properties of traced arbors and retrieval of descriptive statistics, including plots histograms
+* Detailed Sholl and Horton-Strahler analyses
 
+### Volume Reconstruction
+* The 3D volume of the traced structured can be reconstructed using either 1) Dijkstra's
+  filling algorithm (see SNT's "FIll Manager") or 2) by fitting circular cross-sections
+  around the fluorescent signal of a path. The latter, can also be used to refine node
+  positioning (with sub-pixel accuracy)
 
-### Analysis:
+## Scripting
+* `SNTService`: Programmatic access to the full SNT API *during* an interactive tracing session. `SNTService` allows the blending of automated workflows with manual curation steps
+* It is now possible to run scripts (in any of the IJ2 supported languages) directly from within SNT.
+  See examples on either the _Templates_ menu of the Script Editor and the _Scripts_ menu of SNT
+* GUI and headless scripts for batch and advanced analyses of multiple files
 
-* Paths can tagged, searched and filtered. Tags can be SWC fields, branch order labels, or a list of arbitrary strings. Analysis can be performed on all paths, or filtered subsets
-* Paths can be color-coded by their properties: e.g., compartment, length, radii or depth
-* Paths can be converted to IJ ROIs
+## Reconstruction Viewer
+* The Reconstruction Viewer is a powerful OpenGL 3D visualization tool for both meshes and reconstructions
+* It can be used as a standalone program or from withing SNT
+* Replaces most of the functionality of the outdated legacy 3D Viewer, with extended features:
+  * Advanced rendering supporting axes, transparency, color interpolation and path smoothing
+  * Interactive scenes (controlled rotations, panning, zoom, scaling, animation, "dark"/"light" mode)
+  * Tools for management and customization of scene elements
+  * Ability to render both local and remote files on the same scene
+  * Loading of surface meshes of several template brains (Drosophila and Allen CCF (Allen Mouse Brain Atlas))
+
+## Reconstruction Plotter
+* Reconstructions can be rendered in a interactive plot capable of vector graphics export (SVG/PDF)
+
+## Performance
+* Multi-threading improvements
+* Migration to Scijava allows most SNT commands to run headless
 * Masks can be generated from filled traces in a more efficient way
-* Distribution command retrieves Histogram and Descriptive statistics of selected path properties
-* Quick statistics command calculates common morphometric properties of traced arbors
-* Detailed Horton-Strahler analysis (tabular and plotted results)
-* Traces can be rendered in a rotating plot and exported as SVG/PDF
-
+* More responsive tabbed GUI with extensive options and shortcuts
 
 ### To Document:
 * ITK bridge
-* Scripting
-* Multi-threading improvements
-* 3D Viewer legacy support
+* SciView support
+

@@ -1858,7 +1858,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		if (spacingIsUnset) {
-			SNT.log("Inferring pixel spacing from imported points... ");
+			if (!headless)
+				SNT.log("Inferring pixel spacing from imported points... ");
 			boundingBox.inferSpacing(points);
 			x_spacing = boundingBox.xSpacing;
 			y_spacing = boundingBox.ySpacing;
@@ -2116,7 +2117,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		try {
-			SNT.log("Guessing file type...");
+			if (!headless) SNT.log("Guessing file type...");
 			InputStream is;
 			final byte[] buf = new byte[8];
 			is = new FileInputStream(filename);

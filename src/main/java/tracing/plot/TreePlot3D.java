@@ -1919,7 +1919,7 @@ public class TreePlot3D {
 
 		public double[] colorize(final String measurement, final ColorTable colorTable) {
 			final TreeColorMapper colorizer = new TreeColorMapper();
-			colorizer.colorize(tree, measurement, colorTable);
+			colorizer.map(tree, measurement, colorTable);
 			rebuildShape();
 			return colorizer.getMinMax();
 		}
@@ -2617,7 +2617,7 @@ public class TreePlot3D {
 		ij.ui().showUI();
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
-		colorizer.colorize(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);
+		colorizer.map(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();
 		SNT.setDebugMode(true);
 		final TreePlot3D jzy3D = new TreePlot3D(ij.context());

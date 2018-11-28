@@ -114,7 +114,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 		final TreeColorMapper colorizer = new TreeColorMapper(context());
 		colorizer.setMinMax(Double.NaN, Double.NaN);
 		try {
-			colorizer.colorize(tree, measurementChoice, colorTable);
+			colorizer.map(tree, measurementChoice, colorTable);
 		} catch (IllegalArgumentException exc) {
 			cancel("<HTML>"+exc.getMessage());
 			return;

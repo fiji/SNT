@@ -215,7 +215,7 @@ public class TreePlot2D extends TreeColorMapper {
 	 *
 	 */
 	public void addTrees(final List<Tree> trees, final String lut) {
-		colorizeTrees(trees, lut);
+		mapTrees(trees, lut);
 		for (final ListIterator<Tree> it = trees.listIterator(); it.hasNext();) {
 			addTree(it.next());
 		}

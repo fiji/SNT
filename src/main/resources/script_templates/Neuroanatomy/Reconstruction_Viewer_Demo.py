@@ -1,18 +1,18 @@
 # @Context context
 # @UIService ui
 # @LUTService lut
-# @SNTService snt
+
 
 '''
 file:       Reconstruction_Viewer_Demo.py
 author:     Tiago Ferreira
 version:    20181010
-info:       Exemplifies how to render a file in a stand-alone
+info:       Exemplifies how to render a remote file in a stand-alone
             Reconstruction Viewer
 '''
 from tracing import Tree
 from tracing.io import MLJSONLoader
-from tracing.analysis import TreeColorizer
+from tracing.analysis import TreeColorMapper
 from tracing.plot import TreePlot3D
 
 def run():
@@ -30,20 +30,21 @@ def run():
     print("... Done. Assembling Tree...")
     tree = loader.getTree('all', None)  # compartment, color
 
-    # Define and assign color table
+    # Define and map branch order to color table
     print("... Done. Assigning LUT to Tree...")
-    colorizer = TreeColorizer(context)
+    mapper = TreeColorMapper(context)
     color_table = lut.loadLUT(lut.findLUTs().get("Ice.lut"))
-    colorizer.colorize(tree, "branch order", color_table)
+    mapper.map(tree, "branch order", color_table)
 
     # Visualize tree in Reconstruction Viewer
     print("... Done. Preparing Reconstruction Viewer...")
     viewer = TreePlot3D(context) # Initialize viewer with GUI controls
     viewer.add(tree)
-    bounds = colorizer.getMinMax()
+    bounds = mapper.getMinMax()
     viewer.addColorBarLegend(color_table, bounds[0], bounds[1])
     viewer.loadMouseRefBrain()
     viewer.show()
+    viewer.setAnimationEnabled(True)
     print("... Done. With Viewer active, Press 'H' or 'F1' for help")
 
 

@@ -611,7 +611,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive, Can
 				if (annotationsDescription.contains("paths")) {
 					showStatus("Color coding nodes...");
 					final TreeColorMapper treeColorizer = new TreeColorMapper(snt.getContext());
-					treeColorizer.colorize(tree, lStats, lutTable);
+					treeColorizer.map(tree, lStats, lutTable);
 				}
 				annotationsDescription = "None";
 			}

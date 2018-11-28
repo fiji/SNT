@@ -320,7 +320,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * @param colorTable the color table specifying the color mapping. Null not
 	 *                   allowed.
 	 */
-	public void colorize(final Tree tree, final LinearProfileStats stats, final ColorTable colorTable) {
+	public void map(final Tree tree, final LinearProfileStats stats, final ColorTable colorTable) {
 		final UPoint ucenter = stats.getProfile().center();
 		if (ucenter == null) {
 			throw new IllegalArgumentException("Center unknown");
@@ -356,7 +356,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * @param colorTable
 	 *            the color table specifying the color mapping. Null not allowed.
 	 */
-	public void colorize(final Tree tree, final String measurement, final ColorTable colorTable) {
+	public void map(final Tree tree, final String measurement, final ColorTable colorTable) {
 		this.paths = tree.list();
 		mapToProperty(measurement, colorTable);
 	}
@@ -373,8 +373,8 @@ public class TreeColorMapper extends ColorMapper {
 	 *            the lookup table specifying the color mapping
 	 *
 	 */
-	public void colorize(final Tree tree, final String measurement, final String lut) {
-		colorize(tree, measurement, getColorTable(lut));
+	public void map(final Tree tree, final String measurement, final String lut) {
+		map(tree, measurement, getColorTable(lut));
 	}
 
 	/**
@@ -386,10 +386,10 @@ public class TreeColorMapper extends ColorMapper {
 	 *            the lookup table specifying the color mapping
 	 *
 	 */
-	public void colorizeTrees(final List<Tree> trees, final String lut) {
+	public void mapTrees(final List<Tree> trees, final String lut) {
 		setMinMax(1, trees.size());
 		for (final ListIterator<Tree> it = trees.listIterator(); it.hasNext();) {
-			colorize(it.next(), INTERNAL_COUNTER, lut);
+			map(it.next(), INTERNAL_COUNTER, lut);
 			internalCounter = it.nextIndex();
 		}
 	}

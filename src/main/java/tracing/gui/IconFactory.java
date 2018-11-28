@@ -54,6 +54,7 @@ public class IconFactory {
 		DATABASE('\uf1c0', true), //
 		DELETE('\uf55a', true), //
 		DOWNLOAD('\uf019', true), //
+		DRAFT('\uf568', true), //
 		EXPAND('\uf065', true), //
 		EXPLORE('\uf610', true), //
 		EXPORT('\uf56e', true), //

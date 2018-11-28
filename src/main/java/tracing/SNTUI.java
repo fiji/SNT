@@ -2022,17 +2022,19 @@ public class SNTUI extends JDialog {
 		quitMenuItem.addActionListener(listener);
 		fileMenu.add(quitMenuItem);
 
-		measureMenuItem = new JMenuItem("Quick Statistics", IconFactory.getMenuIcon(GLYPH.ROCKET));
+		measureMenuItem = new JMenuItem("Quick Measurements", IconFactory.getMenuIcon(GLYPH.ROCKET));
 		measureMenuItem.addActionListener(listener);
 		strahlerMenuItem = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(GLYPH.BRANCH_CODE));
 		strahlerMenuItem.addActionListener(listener);
-		plotMenuItem = new JMenuItem("Plot Traces...");
+		plotMenuItem = new JMenuItem("Reconstruction Plotter...", IconFactory.getMenuIcon(GLYPH.DRAFT));
 		plotMenuItem.addActionListener(listener);
 
-		analysisMenu.add(plotMenuItem);
 		analysisMenu.add(measureMenuItem);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
+
+		analysisMenu.addSeparator();
+		analysisMenu.add(plotMenuItem);
 		final JMenuItem compareFiles = new JMenuItem("Compare Reconstructions...");
 		compareFiles.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BINOCULARS));
 		analysisMenu.add(compareFiles);

@@ -25,32 +25,44 @@ package tracing.plugin;
 import java.awt.Dimension;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.File;
+import java.io.FileFilter;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.scijava.ItemVisibility;
 import org.scijava.command.DynamicCommand;
 import org.scijava.command.Interactive;
+import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.util.ColorRGB;
+import org.scijava.widget.FileWidget;
 import org.scijava.widget.NumberWidget;
 
 import ij.measure.Calibration;
 import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.Tree;
+import tracing.gui.GuiUtils;
 import tracing.gui.cmds.CommonDynamicCmd;
 import tracing.plot.TreePlot2D;
 import tracing.util.PointInImage;
+import tracing.util.SWCColor;
 
 /**
- * Command for interactively plotting trees using {@link TreePlot2D}
+ * Implements Reconstruction Plotter, a command wrapper for interactively
+ * plotting trees using {@link TreePlot2D}
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = DynamicCommand.class, visible = false, label = "Interactive Traces Plot")
+@Plugin(type = DynamicCommand.class, visible = true, menuPath = "Plugins>NeuroAnatomy>Reconstruction Plotter...", label = "Reconstruction Plotter", initializer = "init")
 public class PlotterCmd extends CommonDynamicCmd implements Interactive {
+
+	@Parameter
+	LogService logService;
 
 	@Parameter(required = false, label = "X rotation", description = "Rotation angle in degrees", min = "0", max = "360", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "currentXangleChanged")
 	private int angleX = 0;
@@ -92,6 +104,44 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	private int previousYangle = 0;
 	private int previousZangle = 0;
 
+
+	@SuppressWarnings("unused")
+	private void init() {
+		if (tree == null) {
+			resolveInput("tree");
+			statusService.showStatus("Please select one or more reconstruction files");
+			GuiUtils.setSystemLookAndFeel();
+			final FileFilter filter = (file) -> {
+				final String lName = file.getName().toLowerCase();
+				return lName.endsWith("swc") || lName.endsWith(".traces") || lName.endsWith(".json");
+			};
+			final List<File> files = uiService.chooseFiles(new File(System.getProperty("user.home")),
+					new ArrayList<File>(), filter, FileWidget.OPEN_STYLE);
+			if (files == null || files.isEmpty()) {
+				cancel("");
+				return;
+			}
+			tree = new Tree();
+			final ColorRGB[] colors = SWCColor.getDistinctColors(files.size());
+			int counter = 0;
+			for (final File f : files) {
+				try {
+					final Tree tempTree = new Tree(f.getAbsolutePath());
+					if (tempTree.isEmpty())
+						throw new IllegalArgumentException("Invalid file?");
+					tempTree.setColor(colors[counter++]);
+					tree.merge(tempTree);
+				} catch (final IllegalArgumentException exc) {
+					logService.warn(f.getName() + ": " + exc.getMessage());
+				}
+			}
+			if (tree.isEmpty()) {
+				cancel("<HTML>No reconstructions imported.");
+			} else {
+				logService.info("" + counter + " reconstruction(s) successfully imported ");
+			}
+		}
+	}
 
 	@Override
 	public void run() {

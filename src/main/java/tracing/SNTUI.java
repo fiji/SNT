@@ -2033,13 +2033,19 @@ public class SNTUI extends JDialog {
 		analysisMenu.add(measureMenuItem);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
-		analysisMenu.addSeparator();
 		final JMenuItem compareFiles = new JMenuItem("Compare Reconstructions...");
 		compareFiles.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BINOCULARS));
 		analysisMenu.add(compareFiles);
 		compareFiles.addActionListener(e -> {
 			(new CmdRunner(CompareFilesCmd.class, false)).execute();
 		});
+		analysisMenu.addSeparator();
+
+		final JMenu scriptUtilsMenu = installer.getUtilScriptsMenu();
+		scriptUtilsMenu.setText("Script Utils");
+		scriptUtilsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.PLUS));
+		scriptUtilsMenu.addSeparator();
+		analysisMenu.add(scriptUtilsMenu);
 
 		final JCheckBoxMenuItem xyCanvasMenuItem = new JCheckBoxMenuItem(
 			"Hide XY View");

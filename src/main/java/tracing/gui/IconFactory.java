@@ -68,10 +68,12 @@ public class IconFactory {
 		JET('\uf0fb', true), //
 		KEYBOARD('\uf11c', false), //
 		LINK('\uf0c1', true), //
+		LIST('\uf03a', true), //
 		OPTIONS('\uf013', true), //
 		PEN('\uf303', true), //
 		POINTER('\uf245', true), //
 		PLUS('\uf0fe', false), //
+		QUESTION('\uf128', true), //
 		ROCKET('\uf135', true), //
 		RULER('\uf546', true), //
 		SAVE('\uf0c7', false), //

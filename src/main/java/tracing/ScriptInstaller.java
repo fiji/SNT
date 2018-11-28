@@ -46,6 +46,9 @@ import org.scijava.script.ScriptService;
 import org.scijava.ui.swing.script.TextEditor;
 import org.scijava.util.FileUtils;
 
+import tracing.gui.IconFactory;
+import tracing.gui.IconFactory.GLYPH;
+
 /** Utility class for discovery of scripts scripting SNT */
 class ScriptInstaller implements MenuKeyListener {
 
@@ -130,13 +133,14 @@ class ScriptInstaller implements MenuKeyListener {
 		ui.showStatus("", false);
 	}
 
-	/** Returns a UI list with all available scripts scripting SNT **/
-	protected JMenu getScriptsMenu() {
-
-		final JMenu sMenu = new JMenu("Scripts");
+	private JMenu getMenu(final String folder) {
+		final JMenu sMenu = new JMenu((folder == null) ? "Full List" : folder);
 		sMenu.addMenuKeyListener(this);
 		for (final ScriptInfo si : scripts) {
-			final JMenuItem mItem = new JMenuItem(getScriptLabel(si));
+			final String path = si.getPath();
+			if (path == null || (folder != null && !path.contains(folder)))
+				continue;
+			final JMenuItem mItem = new JMenuItem(getScriptLabel2(si));
 			sMenu.add(mItem);
 			mItem.addMenuKeyListener(this);
 			mItem.addActionListener(e -> {
@@ -148,9 +152,36 @@ class ScriptInstaller implements MenuKeyListener {
 				openInsteadOfRun = false;
 			});
 		}
+		return sMenu;
+	}
+
+	/** Returns a UI list of the SNT 'Utilities' scripts **/
+	protected JMenu getUtilScriptsMenu() {
+		final JMenu menu = getMenu("Utilities");
+		for (int i = 0; i < menu.getItemCount(); i++) {
+			final JMenuItem mItem = menu.getItem(i);
+			mItem.setText(SNT.stripExtension(mItem.getText()) + "...");
+		}
+		return menu;
+	}
+
+	/** Returns a UI list with all available scripts scripting SNT **/
+	protected JMenu getScriptsMenu() {
+		final JMenu sMenu = new JMenu("Scripts");
+		sMenu.add(getMenu("Analysis"));
+		sMenu.add(getMenu("Tracing"));
+		//sMenu.add(getMenu("Utilities"));
+		sMenu.addSeparator();
+		final JMenu listMenu = getMenu(null);
+		listMenu.setIcon(IconFactory.getMenuIcon(GLYPH.LIST));
+		sMenu.add(listMenu);
 		sMenu.addSeparator();
 		sMenu.add(about());
 		return sMenu;
+	}
+
+	private String getScriptLabel2(final ScriptInfo si) {
+		return getScriptLabel(si).replace('_', ' ');
 	}
 
 	private String getScriptLabel(final ScriptInfo si) {
@@ -168,6 +199,7 @@ class ScriptInstaller implements MenuKeyListener {
 
 	private JMenuItem about() {
 		final JMenuItem mItem = new JMenuItem("About SNT Scripts...");
+		mItem.setIcon(IconFactory.getMenuIcon(GLYPH.QUESTION));
 		mItem.addActionListener(e -> {
 			ui.guiUtils.centeredMsg("This menu lists scripting routines that enhance SNT functionality. "
 					+ "The list is automatically populated at startup.<br><br>"

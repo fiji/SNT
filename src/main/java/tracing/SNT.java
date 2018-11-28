@@ -149,8 +149,7 @@ public class SNT {
 
 	public static String stripExtension(final String filename) {
 		final int lastDot = filename.lastIndexOf(".");
-		if (lastDot > 0) return filename.substring(0, lastDot);
-		return null;
+		return (lastDot > 0) ? filename.substring(0, lastDot) : filename;
 	}
 
 	protected static boolean fileAvailable(final File file) {

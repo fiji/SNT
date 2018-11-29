@@ -22,11 +22,12 @@
 
 package tracing.gui.cmds;
 
+import net.imagej.ImageJ;
+
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.ImageJ;
 import tracing.gui.GuiUtils;
 import tracing.plot.TreePlot3D;
 
@@ -35,12 +36,13 @@ import tracing.plot.TreePlot3D;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, menuPath = "Plugins>NeuroAnatomy>Reconstruction Viewer...")
+@Plugin(type = Command.class,
+	menuPath = "Plugins>NeuroAnatomy>Reconstruction Viewer...")
 public class ReconstructionViewerCmd extends ContextCommand {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override

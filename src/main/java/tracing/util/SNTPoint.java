@@ -25,7 +25,7 @@ package tracing.util;
 /**
  * Classes extend this interface implement a point in a 3D space, always using
  * real world coordinates.
- * 
+ *
  * @author Tiago Ferreira
  */
 public interface SNTPoint {

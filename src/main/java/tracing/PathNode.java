@@ -37,7 +37,7 @@ import tracing.util.SWCColor;
 /**
  * Convenience class used to render {@link Path} nodes (vertices) in an
  * {@link TracerCanvas}.
- * 
+ *
  * @author Tiago Ferreira
  */
 public class PathNode {
@@ -65,10 +65,8 @@ public class PathNode {
 	/**
 	 * Creates a path node from a {@link PointInImage}.
 	 *
-	 * @param pim
-	 *            the position of the node (z-position ignored)
-	 * @param canvas
-	 *            the canvas to render this node. Cannot be null
+	 * @param pim the position of the node (z-position ignored)
+	 * @param canvas the canvas to render this node. Cannot be null
 	 */
 	public PathNode(final PointInImage pim, final TracerCanvas canvas) {
 		this.path = pim.onPath;
@@ -79,12 +77,9 @@ public class PathNode {
 	/**
 	 * Creates a node from a Path position.
 	 *
-	 * @param path
-	 *            the path holding this node. Cannot be null
-	 * @param index
-	 *            the position of this node within path
-	 * @param canvas
-	 *            the canvas to render this node. Cannot be null
+	 * @param path the path holding this node. Cannot be null
+	 * @param index the position of this node within path
+	 * @param canvas the canvas to render this node. Cannot be null
 	 */
 	public PathNode(final Path path, final int index, final TracerCanvas canvas) {
 		this.path = path;
@@ -95,61 +90,72 @@ public class PathNode {
 		// Define which type of node we're dealing with
 		if (path.size() == 1) {
 			type = HERMIT;
-		} else if (index == 0 && path.startJoins == null) {
+		}
+		else if (index == 0 && path.startJoins == null) {
 			type = START;
-		} else if (index == path.size() - 1 && path.endJoins == null) {
+		}
+		else if (index == path.size() - 1 && path.endJoins == null) {
 			type = END;
-		} else if ((index == 0 && path.startJoins != null) || (index == path.size() - 1 && path.endJoins != null)) {
+		}
+		else if ((index == 0 && path.startJoins != null) || (index == path.size() -
+			1 && path.endJoins != null))
+		{
 			type = JOINT;
-		} else {
+		}
+		else {
 			type = SLAB;
 		}
 	}
 
 	private void setXYcoordinates(final PointInImage pim) {
 		switch (canvas.getPlane()) {
-		case MultiDThreePanes.XY_PLANE:
-			x = canvas.myScreenXDprecise(path.canvasOffset.x + pim.x / path.x_spacing);
-			y = canvas.myScreenYDprecise(path.canvasOffset.y + pim.y / path.y_spacing);
-			break;
-		case MultiDThreePanes.XZ_PLANE:
-			x = canvas.myScreenXDprecise(path.canvasOffset.x + pim.x / path.x_spacing);
-			y = canvas.myScreenYDprecise(path.canvasOffset.z + pim.z / path.z_spacing);
-			break;
-		case MultiDThreePanes.ZY_PLANE:
-			x = canvas.myScreenXDprecise(path.canvasOffset.z + pim.z / path.z_spacing);
-			y = canvas.myScreenYDprecise(path.canvasOffset.y + pim.y / path.y_spacing);
-			break;
-		default:
-			throw new IllegalArgumentException("BUG: Unknown plane! (" + canvas.getPlane() + ")");
+			case MultiDThreePanes.XY_PLANE:
+				x = canvas.myScreenXDprecise(path.canvasOffset.x + pim.x /
+					path.x_spacing);
+				y = canvas.myScreenYDprecise(path.canvasOffset.y + pim.y /
+					path.y_spacing);
+				break;
+			case MultiDThreePanes.XZ_PLANE:
+				x = canvas.myScreenXDprecise(path.canvasOffset.x + pim.x /
+					path.x_spacing);
+				y = canvas.myScreenYDprecise(path.canvasOffset.z + pim.z /
+					path.z_spacing);
+				break;
+			case MultiDThreePanes.ZY_PLANE:
+				x = canvas.myScreenXDprecise(path.canvasOffset.z + pim.z /
+					path.z_spacing);
+				y = canvas.myScreenYDprecise(path.canvasOffset.y + pim.y /
+					path.y_spacing);
+				break;
+			default:
+				throw new IllegalArgumentException("BUG: Unknown plane! (" + canvas
+					.getPlane() + ")");
 		}
 	}
 
 	private void assignRenderingSize() {
-		if (size > -1)
-			return; // size already specified via setSize()
+		if (size > -1) return; // size already specified via setSize()
 
 		// TODO: set size according to path thickness?
 		final double baseline = canvas.nodeDiameter();
 		switch (type) {
-		case HERMIT:
-			size = 5 * baseline;
-			break;
-		case START:
-			size = 2 * baseline;
-			break;
-		case END:
-			size = 1.5 * baseline;
-			break;
-		case JOINT:
-			size = 3 * baseline;
-			break;
-		case SLAB:
-		default:
-			size = baseline;
+			case HERMIT:
+				size = 5 * baseline;
+				break;
+			case START:
+				size = 2 * baseline;
+				break;
+			case END:
+				size = 1.5 * baseline;
+				break;
+			case JOINT:
+				size = 3 * baseline;
+				break;
+			case SLAB:
+			default:
+				size = baseline;
 		}
-		if (editable)
-			size *= 2;
+		if (editable) size *= 2;
 	}
 
 	/**
@@ -160,9 +166,8 @@ public class PathNode {
 	}
 
 	/**
-	 * @param size
-	 *            the rendering diameter of this node. Set it to -1 to use the
-	 *            default value.
+	 * @param size the rendering diameter of this node. Set it to -1 to use the
+	 *          default value.
 	 * @see TracerCanvas#nodeDiameter()
 	 */
 	public void setSize(final double size) {
@@ -181,22 +186,19 @@ public class PathNode {
 	/**
 	 * Draws this node.
 	 *
-	 * @param g
-	 *            the Graphics2D drawing instance
-	 * @param c
-	 *            the rendering color of this node. Note that this parameter is
-	 *            ignored if a color has already been defined through
-	 *            {@link Path#setNodeColors(Color[])}
+	 * @param g the Graphics2D drawing instance
+	 * @param c the rendering color of this node. Note that this parameter is
+	 *          ignored if a color has already been defined through
+	 *          {@link Path#setNodeColors(Color[])}
 	 */
 	public void draw(final Graphics2D g, final Color c) {
 
-		if (path.isBeingEdited() && !editable)
-			return; // draw only editable node
+		if (path.isBeingEdited() && !editable) return; // draw only editable node
 
 		assignRenderingSize();
-		final Shape node = new Ellipse2D.Double(x - size / 2, y - size / 2, size, size);
-		if (color == null)
-			color = c;
+		final Shape node = new Ellipse2D.Double(x - size / 2, y - size / 2, size,
+			size);
+		if (color == null) color = c;
 		if (editable) {
 			// opaque crosshair and border, transparent fill
 			g.setColor(color);
@@ -213,7 +215,8 @@ public class PathNode {
 			g.fill(node);
 			g.setStroke(stroke);
 
-		} else {
+		}
+		else {
 
 			if (path.isSelected()) {
 				// opaque border and more opaque fill
@@ -221,7 +224,8 @@ public class PathNode {
 				g.draw(node);
 				g.setColor(SWCColor.alphaColor(color, 80));
 				g.fill(node);
-			} else {
+			}
+			else {
 				// semi-border and more transparent fill
 				g.setColor(SWCColor.alphaColor(color, 50));
 				g.fill(node);
@@ -243,8 +247,7 @@ public class PathNode {
 	/**
 	 * Enables the node as editable/non-editable.
 	 *
-	 * @param editable
-	 *            true to render the node as editable.
+	 * @param editable true to render the node as editable.
 	 */
 	public void setEditable(final boolean editable) {
 		this.editable = editable;
@@ -252,20 +255,21 @@ public class PathNode {
 
 	public static double[] unScale(final PointInImage pim, final int plane) {
 		final Path path = pim.onPath;
-		if (path == null)
-			throw new IllegalArgumentException("Only path-associated points can be unscaled");
+		if (path == null) throw new IllegalArgumentException(
+			"Only path-associated points can be unscaled");
 		final double x = pim.x / pim.onPath.x_spacing;
 		final double y = pim.y / pim.onPath.y_spacing;
 		final double z = pim.z / pim.onPath.z_spacing;
 		switch (plane) {
-		case MultiDThreePanes.XY_PLANE:
-			return new double[] { x, y, z };
-		case MultiDThreePanes.XZ_PLANE:
-			return new double[] { x, z, y };
-		case MultiDThreePanes.ZY_PLANE:
-			return new double[] { z, y, x };
-		default:
-			throw new IllegalArgumentException("BUG: Unknown plane! (" + plane + ")");
+			case MultiDThreePanes.XY_PLANE:
+				return new double[] { x, y, z };
+			case MultiDThreePanes.XZ_PLANE:
+				return new double[] { x, z, y };
+			case MultiDThreePanes.ZY_PLANE:
+				return new double[] { z, y, x };
+			default:
+				throw new IllegalArgumentException("BUG: Unknown plane! (" + plane +
+					")");
 		}
 	}
 

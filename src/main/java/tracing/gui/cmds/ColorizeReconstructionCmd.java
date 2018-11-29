@@ -30,15 +30,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import net.imagej.ImageJ;
+import net.imagej.lut.LUTService;
+import net.imglib2.display.ColorTable;
+
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.ImageJ;
-import net.imagej.lut.LUTService;
-import net.imglib2.display.ColorTable;
 import tracing.analysis.MultiTreeColorMapper;
 import tracing.analysis.TreeColorMapper;
 import tracing.gui.GuiUtils;
@@ -49,23 +50,29 @@ import tracing.plot.TreePlot3D;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Tree Color Coder", initializer = "init")
+@Plugin(type = Command.class, visible = false, label = "Tree Color Coder",
+	initializer = "init")
 public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 
 	@Parameter
 	private LUTService lutService;
 
 	@Parameter(required = true, label = "Measurement", choices = { //
-			TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH, TreeColorMapper.N_BRANCH_POINTS, //
-			TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE, TreeColorMapper.MEAN_RADIUS, //
-			TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES, TreeColorMapper.Y_COORDINATES, //
-			TreeColorMapper.Z_COORDINATES})
+		TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH,
+		TreeColorMapper.N_BRANCH_POINTS, //
+		TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE,
+		TreeColorMapper.MEAN_RADIUS, //
+		TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES,
+		TreeColorMapper.Y_COORDINATES, //
+		TreeColorMapper.Z_COORDINATES })
 	private String measurementChoice;
 
-	@Parameter(label = "Min", required = false, description = "Set both limits to zero for automatic scaling")
+	@Parameter(label = "Min", required = false,
+		description = "Set both limits to zero for automatic scaling")
 	private float min;
 
-	@Parameter(label = "Max", required = false, description = "Set both limits to zero for automatic scaling")
+	@Parameter(label = "Max", required = false,
+		description = "Set both limits to zero for automatic scaling")
 	private float max;
 
 	@Parameter(label = "LUT", callback = "lutChoiceChanged")
@@ -88,7 +95,8 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 	private void lutChoiceChanged() {
 		try {
 			colorTable = lutService.loadLUT(luts.get(lutChoice));
-		} catch (final IOException ignored) {
+		}
+		catch (final IOException ignored) {
 			// move on
 		}
 	}
@@ -102,43 +110,49 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 			luTChoices.add(entry.getKey());
 		}
 		Collections.sort(luTChoices);
-		final MutableModuleItem<String> input = getInfo().getMutableInput("lutChoice", String.class);
+		final MutableModuleItem<String> input = getInfo().getMutableInput(
+			"lutChoice", String.class);
 		input.setChoices(luTChoices);
 		lutChoice = input.getDefaultValue();
-		if (lutChoice == null || lutChoice.isEmpty())
-			lutChoice = luTChoices.get(0);
+		if (lutChoice == null || lutChoice.isEmpty()) lutChoice = luTChoices.get(0);
 		lutChoiceChanged();
 
 		List<String> mChoices = null;
-		final MutableModuleItem<String> mInput = getInfo().getMutableInput("measurementChoice", String.class);
+		final MutableModuleItem<String> mInput = getInfo().getMutableInput(
+			"measurementChoice", String.class);
 
 		if (treeMappingLabels == null && multiTreeMappingLabels == null) {
 			// No trees to be color coded: Show only options for color bar legend
 			getInfo().setLabel("Add Color Legend");
-			mChoices = new ArrayList<String>();
+			mChoices = new ArrayList<>();
 			mChoices.add("");
 			mInput.setLabel("<HTML>&nbsp;");
 			mInput.setVisibility(ItemVisibility.MESSAGE);
 			mInput.setPersisted(false);
-			final MutableModuleItem<Float> minInput = getInfo().getMutableInput("min", Float.class);
+			final MutableModuleItem<Float> minInput = getInfo().getMutableInput("min",
+				Float.class);
 			minInput.setDescription("");
-			final MutableModuleItem<Float> maxInput = getInfo().getMutableInput("max", Float.class);
+			final MutableModuleItem<Float> maxInput = getInfo().getMutableInput("max",
+				Float.class);
 			maxInput.setDescription("");
-		} else if (treeMappingLabels != null) {
+		}
+		else if (treeMappingLabels != null) {
 			// Color code single trees
 			mChoices = Arrays.asList(TreeColorMapper.COMMON_MEASUREMENTS);
-		} else if (multiTreeMappingLabels != null) {
+		}
+		else if (multiTreeMappingLabels != null) {
 			mChoices = Arrays.asList(MultiTreeColorMapper.PROPERTIES);
 		}
 		if (mChoices == null) {
-			throw new IllegalArgumentException("Unexpected state. Invalid input parameters");
+			throw new IllegalArgumentException(
+				"Unexpected state. Invalid input parameters");
 		}
 		mInput.setChoices(mChoices);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -159,7 +173,7 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 					error("Invalid Limits " + min + "-" + max);
 					return;
 				}
-				recViewer.addColorBarLegend(colorTable, min, (float) max);
+				recViewer.addColorBarLegend(colorTable, min, max);
 				return;
 			}
 
@@ -170,23 +184,24 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 				limits[0] = Double.MAX_VALUE;
 				limits[1] = Double.MIN_VALUE;
 				for (final String l : treeMappingLabels) {
-					final double[] minMax = recViewer.colorize(l, measurementChoice, colorTable);
-					if (minMax[0] < limits[0])
-						limits[0] = minMax[0];
-					if (minMax[1] > limits[1])
-						limits[1] = minMax[1];
-				};
+					final double[] minMax = recViewer.colorize(l, measurementChoice,
+						colorTable);
+					if (minMax[0] < limits[0]) limits[0] = minMax[0];
+					if (minMax[1] > limits[1]) limits[1] = minMax[1];
+				} ;
 			}
 			else if (multiTreeMappingLabels != null) {
 				// Color group of trees
-				limits = recViewer.colorize(multiTreeMappingLabels, measurementChoice, colorTable);
+				limits = recViewer.colorize(multiTreeMappingLabels, measurementChoice,
+					colorTable);
 			}
 			recViewer.setViewUpdatesEnabled(true);
 			if (!validMin) min = (float) limits[0];
 			if (!validMax) max = (float) limits[1];
 			recViewer.addColorBarLegend(colorTable, min, max);
 
-		} catch (final UnsupportedOperationException | NullPointerException exc) {
+		}
+		catch (final UnsupportedOperationException | NullPointerException exc) {
 			error("SNT's Reconstruction Viewer is not available");
 		}
 

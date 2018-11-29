@@ -39,11 +39,9 @@ public class SWCColor {
 
 	/**
 	 * Instantiates a new SWC color.
-	 * 
-	 * @param color
-	 *            the AWT color
-	 * @param swcType
-	 *            the SWC type integer flag
+	 *
+	 * @param color the AWT color
+	 * @param swcType the SWC type integer flag
 	 */
 	public SWCColor(final Color color, final int swcType) {
 		this.color = color;
@@ -53,8 +51,7 @@ public class SWCColor {
 	/**
 	 * Instantiates a new SWC color without SWC type association
 	 *
-	 * @param color
-	 *            the AWT color
+	 * @param color the AWT color
 	 */
 	public SWCColor(final Color color) {
 		this(color, SWC_TYPE_IGNORED);
@@ -90,8 +87,7 @@ public class SWCColor {
 	/**
 	 * Re-assigns a AWT color.
 	 *
-	 * @param color
-	 *            the new color
+	 * @param color the new color
 	 */
 	public void setAWTColor(final Color color) {
 		this.color = color;
@@ -100,8 +96,7 @@ public class SWCColor {
 	/**
 	 * Re-assigns a SWC type integer flag
 	 *
-	 * @param swcType
-	 *            the new SWC type
+	 * @param swcType the new SWC type
 	 */
 	public void setSWCType(final int swcType) {
 		this.swcType = swcType;
@@ -109,7 +104,7 @@ public class SWCColor {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -123,7 +118,7 @@ public class SWCColor {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -142,7 +137,8 @@ public class SWCColor {
 			if (other.color != null) {
 				return false;
 			}
-		} else if (!color.equals(other.color)) {
+		}
+		else if (!color.equals(other.color)) {
 			return false;
 		}
 		if (swcType != other.swcType) {
@@ -154,38 +150,41 @@ public class SWCColor {
 	/**
 	 * Returns the color encoded as hex string with the format #rrggbbaa.
 	 *
-	 * @param color
-	 *            the input AWT color
+	 * @param color the input AWT color
 	 * @return the converted string
 	 */
 	public static String colorToString(final Color color) {
-		if (color == null)
-			throw new IllegalArgumentException("Cannot convert null object");
-		return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+		if (color == null) throw new IllegalArgumentException(
+			"Cannot convert null object");
+		return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(),
+			color.getBlue(), color.getAlpha());
 	}
 
 	/**
 	 * Returns an AWT Color from a (#)RRGGBB(AA) hex string.
 	 *
-	 * @param hex
-	 *            the input string
+	 * @param hex the input string
 	 * @return the converted AWT color
 	 */
 	public static Color stringToColor(final String hex) {
-		if (hex.length() < 6)
-			throw new IllegalArgumentException("Unsupported format. Only (#)RRGGBB(AA) allowed");
+		if (hex.length() < 6) throw new IllegalArgumentException(
+			"Unsupported format. Only (#)RRGGBB(AA) allowed");
 		final String input = hex.charAt(0) == '#' ? hex.substring(1) : hex;
 		final int r = Integer.valueOf(input.substring(0, 2), 16);
 		final int g = Integer.valueOf(input.substring(2, 4), 16);
 		final int b = Integer.valueOf(input.substring(4, 6), 16);
-		final int a = (hex.length() < 8) ? 255 : Integer.valueOf(hex.substring(6, 8), 16);
+		final int a = (hex.length() < 8) ? 255 : Integer.valueOf(hex.substring(6,
+			8), 16);
 		return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
 	}
 
 	public static Color average(final Collection<Color> colors) {
 		if (colors == null || colors.isEmpty()) return null;
 		// this will never be accurate because the RGB space is not linear
-		int tR = 0; int tG = 0; int tB = 0; int tA = 0;
+		int tR = 0;
+		int tG = 0;
+		int tB = 0;
+		int tA = 0;
 		for (final Color c : colors) {
 			if (c == null) continue;
 			tR += c.getRed();
@@ -194,27 +193,25 @@ public class SWCColor {
 			tA += c.getAlpha();
 		}
 		final int n = colors.size();
-		return new Color((int) (tR / n), (int) (tG / n), (int) (tB / n), (int) (tA / n));
+		return new Color(tR / n, tG / n, tB / n, tA / n);
 	}
 
 	/**
 	 * Adds an alpha component to a AWT colot.
 	 *
-	 * @param c
-	 *            the input color
-	 * @param percent
-	 *            alpha value in percentage
+	 * @param c the input color
+	 * @param percent alpha value in percentage
 	 * @return the color with an alpha component
 	 */
 	public static Color alphaColor(final Color c, final double percent) {
-		return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) Math.round(percent / 100 * 255));
+		return new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) Math.round(
+			percent / 100 * 255));
 	}
 
 	/**
 	 * Returns a suitable 'contrast' color.
 	 *
-	 * @param c
-	 *            the input color
+	 * @param c the input color
 	 * @return Either white or black, as per hue of input color.
 	 */
 	public static Color contrastColor(final Color c) {
@@ -226,7 +223,7 @@ public class SWCColor {
 	 * Returns distinct colors based on Kenneth Kelly's 22 colors of maximum
 	 * contrast (black and white excluded). More details on this
 	 * <a href="https://stackoverflow.com/a/4382138">SO discussion</a>
-	 * 
+	 *
 	 * @param nColors the number of colors to be retrieved.
 	 * @return the maximum contrast colors
 	 */
@@ -235,33 +232,37 @@ public class SWCColor {
 			return Arrays.copyOfRange(KELLY_COLORS, 0, nColors);
 		}
 		final ColorRGB[] colors = Arrays.copyOf(KELLY_COLORS, nColors);
-		for (int last = KELLY_COLORS.length; last != 0 && last < nColors; last <<= 1) {
-			System.arraycopy(colors, 0, colors, last, Math.min(last << 1, nColors) - last);
+		for (int last = KELLY_COLORS.length; last != 0 && last < nColors; last <<=
+			1)
+		{
+			System.arraycopy(colors, 0, colors, last, Math.min(last << 1, nColors) -
+				last);
 		}
 		return colors;
 	}
 
-	private static ColorRGB[] KELLY_COLORS = { // See https://stackoverflow.com/a/4382138 
-			ColorRGB.fromHTMLColor("#FFB300"), // Vivid Yellow
-			ColorRGB.fromHTMLColor("#803E75"), // Strong Purple
-			ColorRGB.fromHTMLColor("#FF6800"), // Vivid Orange
-			ColorRGB.fromHTMLColor("#A6BDD7"), // Very Light Blue
-			ColorRGB.fromHTMLColor("#C10020"), // Vivid Red
-			ColorRGB.fromHTMLColor("#CEA262"), // Grayish Yellow
-			ColorRGB.fromHTMLColor("#817066"), // Medium Gray
-			ColorRGB.fromHTMLColor("#007D34"), // Vivid Green
-			ColorRGB.fromHTMLColor("#F6768E"), // Strong Purplish Pink
-			ColorRGB.fromHTMLColor("#00538A"), // Strong Blue
-			ColorRGB.fromHTMLColor("#FF7A5C"), // Strong Yellowish Pink
-			ColorRGB.fromHTMLColor("#53377A"), // Strong Violet
-			ColorRGB.fromHTMLColor("#FF8E00"), // Vivid Orange Yellow
-			ColorRGB.fromHTMLColor("#B32851"), // Strong Purplish Red
-			ColorRGB.fromHTMLColor("#F4C800"), // Vivid Greenish Yellow
-			ColorRGB.fromHTMLColor("#7F180D"), // Strong Reddish Brown
-			ColorRGB.fromHTMLColor("#93AA00"), // Vivid Yellowish Green
-			ColorRGB.fromHTMLColor("#593315"), // Deep Yellowish Brown
-			ColorRGB.fromHTMLColor("#F13A13"), // Vivid Reddish Orange
-			ColorRGB.fromHTMLColor("#232C16")  // Dark Olive Green
+	private static ColorRGB[] KELLY_COLORS = { // See
+																							// https://stackoverflow.com/a/4382138
+		ColorRGB.fromHTMLColor("#FFB300"), // Vivid Yellow
+		ColorRGB.fromHTMLColor("#803E75"), // Strong Purple
+		ColorRGB.fromHTMLColor("#FF6800"), // Vivid Orange
+		ColorRGB.fromHTMLColor("#A6BDD7"), // Very Light Blue
+		ColorRGB.fromHTMLColor("#C10020"), // Vivid Red
+		ColorRGB.fromHTMLColor("#CEA262"), // Grayish Yellow
+		ColorRGB.fromHTMLColor("#817066"), // Medium Gray
+		ColorRGB.fromHTMLColor("#007D34"), // Vivid Green
+		ColorRGB.fromHTMLColor("#F6768E"), // Strong Purplish Pink
+		ColorRGB.fromHTMLColor("#00538A"), // Strong Blue
+		ColorRGB.fromHTMLColor("#FF7A5C"), // Strong Yellowish Pink
+		ColorRGB.fromHTMLColor("#53377A"), // Strong Violet
+		ColorRGB.fromHTMLColor("#FF8E00"), // Vivid Orange Yellow
+		ColorRGB.fromHTMLColor("#B32851"), // Strong Purplish Red
+		ColorRGB.fromHTMLColor("#F4C800"), // Vivid Greenish Yellow
+		ColorRGB.fromHTMLColor("#7F180D"), // Strong Reddish Brown
+		ColorRGB.fromHTMLColor("#93AA00"), // Vivid Yellowish Green
+		ColorRGB.fromHTMLColor("#593315"), // Deep Yellowish Brown
+		ColorRGB.fromHTMLColor("#F13A13"), // Vivid Reddish Orange
+		ColorRGB.fromHTMLColor("#232C16") // Dark Olive Green
 	};
 
 }

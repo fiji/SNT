@@ -28,46 +28,45 @@ import tracing.util.PointInImage;
 /**
  * This class encapsulates the relationship between an arbitrary point
  * (nearPoint.x,nearPoint.y,nearPoint.z) close to a particular point on a
- * particular path.
- * 
- * The important method here is {@code distanceToPathNearPoint()} which
- * retrieves the distance to the nearest point on the the line segments on
- * either side of the path point, rather than just the point. Also, it will
- * return null if the point appears to be "off the end" of the Path.
- * 
+ * particular path. The important method here is
+ * {@code distanceToPathNearPoint()} which retrieves the distance to the nearest
+ * point on the the line segments on either side of the path point, rather than
+ * just the point. Also, it will return null if the point appears to be "off the
+ * end" of the Path.
+ *
  * @author Mark Longair
  * @author Tiago Ferreira
- * 
  */
 public class NearPoint implements Comparable<NearPoint> {
-
 
 	private final Path path;
 	public final int indexInPath;
 	private final double distanceSquared;
 	private Double cachedDistanceToPathNearPoint;
-	private PointInImage pathPoint;
+	private final PointInImage pathPoint;
 	protected PointInImage near;
 	protected IntersectionOnLine closestIntersection;
 
 	private final boolean unScaledPositions;
 	private final boolean ignoreZ;
 
-
 	public NearPoint(final PointInImage nearPoint, final Path path,
-			final int indexInPath) {
+		final int indexInPath)
+	{
 		this(nearPoint, path, indexInPath, false);
 	}
 
 	/* Constructor for 2D calculations */
 	protected NearPoint(final PointInImage nearPoint, final Path path,
-			final int indexInPath, final boolean unScaledPositions) {
+		final int indexInPath, final boolean unScaledPositions)
+	{
 		this.unScaledPositions = unScaledPositions;
 		this.path = path;
 		this.indexInPath = indexInPath;
 		ignoreZ = Double.isNaN(nearPoint.z);
 		pathPoint = getPathPoint(indexInPath);
-		near = new PointInImage(nearPoint.x, nearPoint.y, (ignoreZ) ? 0 : nearPoint.z);
+		near = new PointInImage(nearPoint.x, nearPoint.y, (ignoreZ) ? 0
+			: nearPoint.z);
 		this.distanceSquared = near.distanceSquaredTo(pathPoint);
 		closestIntersection = null;
 	}
@@ -82,7 +81,8 @@ public class NearPoint implements Comparable<NearPoint> {
 
 	private PointInImage getPathPoint(final int index) {
 		PointInImage node;
-		node = (unScaledPositions) ? path.getPointInCanvas(index) : path.getPointInImage(index);
+		node = (unScaledPositions) ? path.getPointInCanvas(index) : path
+			.getPointInImage(index);
 		if (ignoreZ) node.z = 0;
 		return node;
 	}
@@ -100,10 +100,11 @@ public class NearPoint implements Comparable<NearPoint> {
 
 	@Override
 	public String toString() {
-		return "  near: (" + near.x + "," + near.y + "," + near.z + ")\n" + "  pathPoint: (" + pathPoint.x + ","
-				+ pathPoint.y + "," + pathPoint.z + ")\n" + "  indexInPath: " + indexInPath + "\n" + "  path: " + path
-				+ "\n" + "  distanceSquared: " + distanceSquared + "\n" + "  cachedDistanceToPathNearPoint: "
-				+ cachedDistanceToPathNearPoint;
+		return "  near: (" + near.x + "," + near.y + "," + near.z + ")\n" +
+			"  pathPoint: (" + pathPoint.x + "," + pathPoint.y + "," + pathPoint.z +
+			")\n" + "  indexInPath: " + indexInPath + "\n" + "  path: " + path +
+			"\n" + "  distanceSquared: " + distanceSquared + "\n" +
+			"  cachedDistanceToPathNearPoint: " + cachedDistanceToPathNearPoint;
 	}
 
 	/**
@@ -131,46 +132,57 @@ public class NearPoint implements Comparable<NearPoint> {
 			if (indexInPath == 0) {
 				start = pathPoint;
 				end = getPathPoint(0);
-			} else {
+			}
+			else {
 				start = getPathPoint(pathSize - 2);
 				end = pathPoint;
 			}
 			final IntersectionOnLine intersection;
 			if (path.size() == 1) {
 				final PointInImage point = getPathPoint(0);
-				intersection = distanceFromSinglePointPath(point.x, point.y, point.z, near.x, near.y, near.z);
-			} else {
-				intersection = distanceToLineSegment(near.x, near.y, near.z, start.x, start.y, start.z, end.x, end.y, end.z);
+				intersection = distanceFromSinglePointPath(point.x, point.y, point.z,
+					near.x, near.y, near.z);
+			}
+			else {
+				intersection = distanceToLineSegment(near.x, near.y, near.z, start.x,
+					start.y, start.z, end.x, end.y, end.z);
 			}
 			if (intersection == null) {
 				closestIntersection = null;
 				cachedDistanceToPathNearPoint = new Double(-1);
 				return -1;
-			} else {
+			}
+			else {
 				closestIntersection = intersection;
 				cachedDistanceToPathNearPoint = new Double(intersection.distance);
 				return intersection.distance;
 			}
-		} else {
+		}
+		else {
 			// There's a point on either size:
 			final PointInImage previous = getPathPoint(indexInPath - 1);
 			final PointInImage next = getPathPoint(indexInPath + 1);
-			final IntersectionOnLine intersectionA = distanceToLineSegment(near.x, near.y, near.z, previous.x, previous.y,
-					previous.z, pathPoint.x, pathPoint.y, pathPoint.z);
-			final IntersectionOnLine intersectionB = distanceToLineSegment(near.x, near.y, near.z, pathPoint.x, pathPoint.y,
-					pathPoint.z, next.x, next.y, next.z);
+			final IntersectionOnLine intersectionA = distanceToLineSegment(near.x,
+				near.y, near.z, previous.x, previous.y, previous.z, pathPoint.x,
+				pathPoint.y, pathPoint.z);
+			final IntersectionOnLine intersectionB = distanceToLineSegment(near.x,
+				near.y, near.z, pathPoint.x, pathPoint.y, pathPoint.z, next.x, next.y,
+				next.z);
 			double smallestDistance = -1;
 			if (intersectionA == null && intersectionB != null) {
 				smallestDistance = intersectionB.distance;
 				closestIntersection = intersectionB;
-			} else if (intersectionA != null && intersectionB == null) {
+			}
+			else if (intersectionA != null && intersectionB == null) {
 				smallestDistance = intersectionA.distance;
 				closestIntersection = intersectionA;
-			} else if (intersectionA != null && intersectionB != null) {
+			}
+			else if (intersectionA != null && intersectionB != null) {
 				if (intersectionA.distance < intersectionB.distance) {
 					smallestDistance = intersectionA.distance;
 					closestIntersection = intersectionA;
-				} else {
+				}
+				else {
 					smallestDistance = intersectionB.distance;
 					closestIntersection = intersectionB;
 				}
@@ -182,10 +194,13 @@ public class NearPoint implements Comparable<NearPoint> {
 			/*
 			 * Otherwise the only other possibility is that it's between the planes:
 			 */
-			final boolean afterPlaneAtEndOfPrevious = 0 < normalSideOfPlane(pathPoint.x, pathPoint.y, pathPoint.z,
-					pathPoint.x- previous.x, pathPoint.y - previous.y, pathPoint.z - previous.z, near.x, near.y, near.z);
-			final boolean beforePlaneAtStartOfNext = 0 < normalSideOfPlane(pathPoint.x, pathPoint.y, pathPoint.z,
-					pathPoint.x - next.x, pathPoint.y - next.y, pathPoint.z - next.z, near.x, near.y, near.z);
+			final boolean afterPlaneAtEndOfPrevious = 0 < normalSideOfPlane(
+				pathPoint.x, pathPoint.y, pathPoint.z, pathPoint.x - previous.x,
+				pathPoint.y - previous.y, pathPoint.z - previous.z, near.x, near.y,
+				near.z);
+			final boolean beforePlaneAtStartOfNext = 0 < normalSideOfPlane(
+				pathPoint.x, pathPoint.y, pathPoint.z, pathPoint.x - next.x,
+				pathPoint.y - next.y, pathPoint.z - next.z, near.x, near.y, near.z);
 			if (afterPlaneAtEndOfPrevious && beforePlaneAtStartOfNext) {
 				// Then just return the distance to the point:
 				closestIntersection = new IntersectionOnLine();
@@ -194,9 +209,11 @@ public class NearPoint implements Comparable<NearPoint> {
 				closestIntersection.y = pathPoint.y;
 				closestIntersection.z = pathPoint.z;
 				closestIntersection.fromPerpendicular = false;
-				cachedDistanceToPathNearPoint = new Double(closestIntersection.distance);
+				cachedDistanceToPathNearPoint = new Double(
+					closestIntersection.distance);
 				return closestIntersection.distance;
-			} else {
+			}
+			else {
 				closestIntersection = null;
 				cachedDistanceToPathNearPoint = new Double(-1);
 				return -1;
@@ -209,19 +226,20 @@ public class NearPoint implements Comparable<NearPoint> {
 	 * the segment. Otherwise it returns the shortest distance to this line segment
 	 * and the point of intersection in an IntersectionOnLine object
 	 */
-	public static IntersectionOnLine distanceToLineSegment(final double x, final double y, final double z,
-			final double startX, final double startY, final double startZ, final double endX, final double endY,
-			final double endZ) {
+	public static IntersectionOnLine distanceToLineSegment(final double x,
+		final double y, final double z, final double startX, final double startY,
+		final double startZ, final double endX, final double endY,
+		final double endZ)
+	{
 
-		final boolean insideStartPlane = 0 >= normalSideOfPlane(startX, startY, startZ, startX - endX, startY - endY,
-				startZ - endZ, x, y, z);
-		final boolean insideEndPlane = 0 >= normalSideOfPlane(endX, endY, endZ, endX - startX, endY - startY,
-				endZ - startZ, x, y, z);
-		if (insideStartPlane && insideEndPlane)
-			return distanceFromPointToLine(startX, startY, startZ, endX - startX, endY - startY, endZ - startZ, x, y,
-					z);
-		else
-			return null;
+		final boolean insideStartPlane = 0 >= normalSideOfPlane(startX, startY,
+			startZ, startX - endX, startY - endY, startZ - endZ, x, y, z);
+		final boolean insideEndPlane = 0 >= normalSideOfPlane(endX, endY, endZ,
+			endX - startX, endY - startY, endZ - startZ, x, y, z);
+		if (insideStartPlane && insideEndPlane) return distanceFromPointToLine(
+			startX, startY, startZ, endX - startX, endY - startY, endZ - startZ, x, y,
+			z);
+		else return null;
 	}
 
 	public double distanceToPathPoint() {
@@ -239,20 +257,19 @@ public class NearPoint implements Comparable<NearPoint> {
 	 * the plane pointed to by the normal vector then it returns 1; otherwise (i.e.
 	 * it is on the other side) this returns -1
 	 */
-	public static int normalSideOfPlane(final double cx, final double cy, final double cz, final double nx,
-			final double ny, final double nz, final double x, final double y, final double z) {
+	public static int normalSideOfPlane(final double cx, final double cy,
+		final double cz, final double nx, final double ny, final double nz,
+		final double x, final double y, final double z)
+	{
 		final double vx = x - cx;
 		final double vy = y - cy;
 		final double vz = z - cz;
 
 		final double dotProduct = nx * vx + ny * vy + nz * vz;
 
-		if (dotProduct > 0)
-			return 1;
-		else if (dotProduct < 0)
-			return -1;
-		else
-			return 0;
+		if (dotProduct > 0) return 1;
+		else if (dotProduct < 0) return -1;
+		else return 0;
 	}
 
 	/*
@@ -271,13 +288,17 @@ public class NearPoint implements Comparable<NearPoint> {
 	 */
 
 	static class IntersectionOnLine {
+
 		double x, y, z, distance;
 		boolean fromPerpendicular = true;
 	}
 
-	public static IntersectionOnLine distanceFromPointToLine(final double ax, final double ay, final double az,
-			final double vx, final double vy, final double vz, final double x, final double y, final double z) {
-		final double b = ((x - ax) * vx + (y - ay) * vy + (z - az) * vz) / (vx * vx + vy * vy + vz * vz);
+	public static IntersectionOnLine distanceFromPointToLine(final double ax,
+		final double ay, final double az, final double vx, final double vy,
+		final double vz, final double x, final double y, final double z)
+	{
+		final double b = ((x - ax) * vx + (y - ay) * vy + (z - az) * vz) / (vx *
+			vx + vy * vy + vz * vz);
 
 		final IntersectionOnLine i = new IntersectionOnLine();
 
@@ -293,8 +314,10 @@ public class NearPoint implements Comparable<NearPoint> {
 		return i;
 	}
 
-	protected static IntersectionOnLine distanceFromSinglePointPath(final double pathX, final double pathY,
-			final double pathZ, final double nearPointX, final double nearPointY, final double nearPointZ) {
+	protected static IntersectionOnLine distanceFromSinglePointPath(
+		final double pathX, final double pathY, final double pathZ,
+		final double nearPointX, final double nearPointY, final double nearPointZ)
+	{
 		final IntersectionOnLine i = new IntersectionOnLine();
 		i.x = pathX;
 		i.y = pathY;

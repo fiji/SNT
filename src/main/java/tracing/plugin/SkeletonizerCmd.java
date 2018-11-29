@@ -25,6 +25,8 @@ package tracing.plugin;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.imagej.ImageJ;
+
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -37,7 +39,6 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
-import net.imagej.ImageJ;
 import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
 import sc.fiji.skeletonize3D.Skeletonize3D_;
 import tracing.SNTService;
@@ -50,7 +51,8 @@ import tracing.Tree;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Convert Paths to Topographic Skeletons")
+@Plugin(type = Command.class, visible = false,
+	label = "Convert Paths to Topographic Skeletons")
 public class SkeletonizerCmd implements Command {
 
 	@Parameter
@@ -59,11 +61,13 @@ public class SkeletonizerCmd implements Command {
 	@Parameter
 	private SNTService sntService;
 
-	@Parameter(required = false, label = "Roi filtering", style = ChoiceWidget.RADIO_BUTTON_VERTICAL_STYLE, choices = {
-			"None", "Convert only segments contained by ROI" })
+	@Parameter(required = false, label = "Roi filtering",
+		style = ChoiceWidget.RADIO_BUTTON_VERTICAL_STYLE, choices = { "None",
+			"Convert only segments contained by ROI" })
 	private String roiChoice;
 
-	@Parameter(required = false, label = "Run \"Analyze Skeleton\" after conversion")
+	@Parameter(required = false,
+		label = "Run \"Analyze Skeleton\" after conversion")
 	private boolean callAnalyzeSkeleton;
 
 	@Parameter(required = true)
@@ -73,7 +77,7 @@ public class SkeletonizerCmd implements Command {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -88,19 +92,22 @@ public class SkeletonizerCmd implements Command {
 			error("No active instance of SimpleNeuriteTracer was found.");
 			return;
 		}
-		final boolean twoDdisplayCanvas = plugin.getUIState() == SNTUI.ANALYSIS_MODE
-				&& plugin.getImagePlus().getNSlices() == 1 && tree.is3D();
+		final boolean twoDdisplayCanvas = plugin
+			.getUIState() == SNTUI.ANALYSIS_MODE && plugin.getImagePlus()
+				.getNSlices() == 1 && tree.is3D();
 		if (twoDdisplayCanvas) {
-			error("Paths have a depth component but are being displayed on a 2D canvas.");
+			error(
+				"Paths have a depth component but are being displayed on a 2D canvas.");
 			return;
 		}
-		final Roi roi = (plugin.getImagePlus() == null) ? null : plugin.getImagePlus().getRoi();
+		final Roi roi = (plugin.getImagePlus() == null) ? null : plugin
+			.getImagePlus().getRoi();
 		boolean restrictByRoi = !roiChoice.equals("None");
 		final boolean validAreaRoi = (roi == null || !roi.isArea());
 		if (restrictByRoi && validAreaRoi) {
 			if (!getConfirmation(
-					"ROI filtering requested but no area ROI was found.\n"
-					+ "Proceed without ROI filtering?", "Proceed Without ROI Filtering?"))
+				"ROI filtering requested but no area ROI was found.\n" +
+					"Proceed without ROI filtering?", "Proceed Without ROI Filtering?"))
 				return;
 			restrictByRoi = false;
 		}
@@ -132,15 +139,18 @@ public class SkeletonizerCmd implements Command {
 	}
 
 	private boolean getConfirmation(final String msg, final String title) {
-		final Result res = uiService.getDefaultUI().dialogPrompt(msg, title, DialogPrompt.MessageType.QUESTION_MESSAGE,
-				DialogPrompt.OptionType.YES_NO_OPTION).prompt();
+		final Result res = uiService.getDefaultUI().dialogPrompt(msg, title,
+			DialogPrompt.MessageType.QUESTION_MESSAGE,
+			DialogPrompt.OptionType.YES_NO_OPTION).prompt();
 		return Result.YES_OPTION.equals(res);
 	}
 
 	private void error(final String msg) {
-		// With HTML errors, uiService will not use the java.awt legacy messages that do not scale in hiDPI
-		uiService.getDefaultUI().dialogPrompt("<HTML>"+msg, "Error", DialogPrompt.MessageType.ERROR_MESSAGE,
-				DialogPrompt.OptionType.DEFAULT_OPTION).prompt();
+		// With HTML errors, uiService will not use the java.awt legacy messages
+		// that do not scale in hiDPI
+		uiService.getDefaultUI().dialogPrompt("<HTML>" + msg, "Error",
+			DialogPrompt.MessageType.ERROR_MESSAGE,
+			DialogPrompt.OptionType.DEFAULT_OPTION).prompt();
 	}
 
 	/* IDE debug method **/

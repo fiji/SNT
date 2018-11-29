@@ -33,7 +33,7 @@ import tracing.PathTransformer;
 /**
  * Defines a Point in an image, a node of a traced {@link Path}. Coordinates are
  * always expressed in real-world coordinates.
- * 
+ *
  * @author Tiago Ferreira
  */
 public class PointInImage implements SNTPoint {
@@ -56,14 +56,18 @@ public class PointInImage implements SNTPoint {
 		this.z = z;
 	}
 
-	protected PointInImage(final double x, final double y, final double z, final Path onPath) {
+	protected PointInImage(final double x, final double y, final double z,
+		final Path onPath)
+	{
 		this.x = x;
 		this.y = y;
 		this.z = z;
 		this.onPath = onPath;
 	}
 
-	public double distanceSquaredTo(final double ox, final double oy, final double oz) {
+	public double distanceSquaredTo(final double ox, final double oy,
+		final double oz)
+	{
 		final double xdiff = x - ox;
 		final double ydiff = y - oy;
 		final double zdiff = z - oz;
@@ -90,8 +94,8 @@ public class PointInImage implements SNTPoint {
 	}
 
 	public boolean isReal() {
-		return !(Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z) || Double.isInfinite(x) || Double.isInfinite(y)
-				|| Double.isInfinite(z));
+		return !(Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z) || Double
+			.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z));
 	}
 
 	public boolean isSameLocation(final PointInImage pim) {
@@ -99,15 +103,16 @@ public class PointInImage implements SNTPoint {
 	}
 
 	/**
-	 * Converts the coordinates of this point into pixel units if this
-	 * point is associated with a Path.
+	 * Converts the coordinates of this point into pixel units if this point is
+	 * associated with a Path.
 	 *
 	 * @return this point in pixel coordinates
-	 * @throws IllegalArgumentException if this point is not associated with a Path
+	 * @throws IllegalArgumentException if this point is not associated with a
+	 *           Path
 	 */
 	public PointInCanvas getUnscaledPoint() throws IllegalArgumentException {
-		if (onPath == null)
-			throw new IllegalArgumentException("Point not associated with a Path");
+		if (onPath == null) throw new IllegalArgumentException(
+			"Point not associated with a Path");
 		final Calibration cal = onPath.getCalibration();
 		final PointInCanvas offset = onPath.getCanvasOffset();
 		final double x = this.x / cal.pixelWidth + offset.x;
@@ -138,7 +143,8 @@ public class PointInImage implements SNTPoint {
 	}
 
 	@Override
-	public boolean equals(final Object o) { // NB: onPath is optional: field not evaluated for equality
+	public boolean equals(final Object o) { // NB: onPath is optional: field not
+																					// evaluated for equality
 		if (o == this) return true;
 		if (o == null) return false;
 		if (getClass() != o.getClass()) return false;

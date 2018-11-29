@@ -45,7 +45,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	public static final byte OPEN_FROM_GOAL = 3;
 	public static final byte CLOSED_FROM_GOAL = 4;
 	public static final byte FREE = 5; // Indicates that this node isn't in a
-										// list yet...
+	// list yet...
 
 	/*
 	 * This calculates the cost of moving to a new point in the image. This does not
@@ -59,28 +59,30 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	// image value scaled to 0 to 255 if it is not already an 8
 	// bit value:
 
-	protected double costMovingTo(final int new_x, final int new_y, final int new_z) {
+	protected double costMovingTo(final int new_x, final int new_y,
+		final int new_z)
+	{
 
 		double value_at_new_point = -1;
 		switch (imageType) {
-		case ImagePlus.GRAY8:
-		case ImagePlus.COLOR_256:
-			value_at_new_point = slices_data_b[new_z][new_y * width + new_x] & 0xFF;
-			break;
-		case ImagePlus.GRAY16:
-			value_at_new_point = slices_data_s[new_z][new_y * width + new_x];
-			value_at_new_point = 255.0 * (value_at_new_point - stackMin) / (stackMax - stackMin);
-			break;
-		case ImagePlus.GRAY32:
-			value_at_new_point = slices_data_f[new_z][new_y * width + new_x];
-			value_at_new_point = 255.0 * (value_at_new_point - stackMin) / (stackMax - stackMin);
-			break;
+			case ImagePlus.GRAY8:
+			case ImagePlus.COLOR_256:
+				value_at_new_point = slices_data_b[new_z][new_y * width + new_x] & 0xFF;
+				break;
+			case ImagePlus.GRAY16:
+				value_at_new_point = slices_data_s[new_z][new_y * width + new_x];
+				value_at_new_point = 255.0 * (value_at_new_point - stackMin) /
+					(stackMax - stackMin);
+				break;
+			case ImagePlus.GRAY32:
+				value_at_new_point = slices_data_f[new_z][new_y * width + new_x];
+				value_at_new_point = 255.0 * (value_at_new_point - stackMin) /
+					(stackMax - stackMin);
+				break;
 		}
 
-		if (value_at_new_point == 0)
-			return 2.0;
-		else
-			return 1.0 / value_at_new_point;
+		if (value_at_new_point == 0) return 2.0;
+		else return 1.0 / value_at_new_point;
 
 	}
 
@@ -91,13 +93,15 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 	protected void reportPointsInSearch() {
 		for (final SearchProgressCallback progress : progressListeners)
-			progress.pointsInSearch(this, open_from_start.size() + (bidirectional ? open_from_goal.size() : 0),
-					closed_from_start.size() + (bidirectional ? closed_from_goal.size() : 0));
+			progress.pointsInSearch(this, open_from_start.size() + (bidirectional
+				? open_from_goal.size() : 0), closed_from_start.size() + (bidirectional
+					? closed_from_goal.size() : 0));
 	}
 
 	public int pointsConsideredInSearch() {
-		return open_from_start.size() + (bidirectional ? open_from_goal.size() : 0) + closed_from_start.size()
-				+ (bidirectional ? closed_from_goal.size() : 0);
+		return open_from_start.size() + (bidirectional ? open_from_goal.size()
+			: 0) + closed_from_start.size() + (bidirectional ? closed_from_goal.size()
+				: 0);
 	}
 
 	/*
@@ -105,8 +109,10 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	 * SearchNode:
 	 */
 
-	protected SearchNode createNewNode(final int x, final int y, final int z, final float g, final float h,
-			final SearchNode predecessor, final byte searchStatus) {
+	protected SearchNode createNewNode(final int x, final int y, final int z,
+		final float g, final float h, final SearchNode predecessor,
+		final byte searchStatus)
+	{
 		return new SearchNode(x, y, z, g, h, predecessor, searchStatus);
 	}
 
@@ -122,7 +128,9 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		 */
 	}
 
-	protected boolean atGoal(final int x, final int y, final int z, final boolean fromStart) {
+	protected boolean atGoal(final int x, final int y, final int z,
+		final boolean fromStart)
+	{
 		return false;
 	}
 
@@ -233,8 +241,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	 * Override this method if you want to find out when a point was first
 	 * discovered:
 	 */
-	protected void addingNode(final SearchNode n) {
-	}
+	protected void addingNode(final SearchNode n) {}
 
 	public void reportThreadStatus() {
 		for (final SearchProgressCallback progress : progressListeners)
@@ -254,18 +261,18 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		synchronized (this) {
 			SNT.log("... entered synchronized");
 			switch (threadStatus) {
-			case PAUSED:
-				SNT.log("paused, going to switch to running - interrupting first");
-				this.interrupt();
-				SNT.log("finished interrupting");
-				threadStatus = RUNNING;
-				break;
-			case RUNNING:
-				SNT.log("running, going to switch to paused");
-				threadStatus = PAUSED;
-				break;
-			default:
-				// Do nothing, we're actually stopping anyway.
+				case PAUSED:
+					SNT.log("paused, going to switch to running - interrupting first");
+					this.interrupt();
+					SNT.log("finished interrupting");
+					threadStatus = RUNNING;
+					break;
+				case RUNNING:
+					SNT.log("running, going to switch to paused");
+					threadStatus = PAUSED;
+					break;
+				default:
+					// Do nothing, we're actually stopping anyway.
 			}
 			reportThreadStatus();
 			SNT.log("... leaving synchronized");
@@ -279,9 +286,11 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 	/* If you specify 0 for timeoutSeconds then there is no timeout. */
 
-	public SearchThread(final ImagePlus imagePlus, final float stackMin, final float stackMax,
-			final boolean bidirectional, final boolean definedGoal, final boolean startPaused, final int timeoutSeconds,
-			final long reportEveryMilliseconds) {
+	public SearchThread(final ImagePlus imagePlus, final float stackMin,
+		final float stackMax, final boolean bidirectional,
+		final boolean definedGoal, final boolean startPaused,
+		final int timeoutSeconds, final long reportEveryMilliseconds)
+	{
 
 		this.imagePlus = imagePlus;
 
@@ -301,22 +310,22 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		{
 			final ImageStack s = imagePlus.getStack();
 			switch (imageType) {
-			case ImagePlus.GRAY8:
-			case ImagePlus.COLOR_256:
-				slices_data_b = new byte[depth][];
-				for (int z = 0; z < depth; ++z)
-					slices_data_b[z] = (byte[]) s.getPixels(z + 1);
-				break;
-			case ImagePlus.GRAY16:
-				slices_data_s = new short[depth][];
-				for (int z = 0; z < depth; ++z)
-					slices_data_s[z] = (short[]) s.getPixels(z + 1);
-				break;
-			case ImagePlus.GRAY32:
-				slices_data_f = new float[depth][];
-				for (int z = 0; z < depth; ++z)
-					slices_data_f[z] = (float[]) s.getPixels(z + 1);
-				break;
+				case ImagePlus.GRAY8:
+				case ImagePlus.COLOR_256:
+					slices_data_b = new byte[depth][];
+					for (int z = 0; z < depth; ++z)
+						slices_data_b[z] = (byte[]) s.getPixels(z + 1);
+					break;
+				case ImagePlus.GRAY16:
+					slices_data_s = new short[depth][];
+					for (int z = 0; z < depth; ++z)
+						slices_data_s[z] = (short[]) s.getPixels(z + 1);
+					break;
+				case ImagePlus.GRAY32:
+					slices_data_f = new float[depth][];
+					for (int z = 0; z < depth; ++z)
+						slices_data_f[z] = (float[]) s.getPixels(z + 1);
+					break;
 			}
 		}
 
@@ -329,8 +338,9 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 
-			SNT.error("SearchThread: One dimension of the calibration information was zero: (" + x_spacing + ","
-					+ y_spacing + "," + z_spacing + ")");
+			SNT.error(
+				"SearchThread: One dimension of the calibration information was zero: (" +
+					x_spacing + "," + y_spacing + "," + z_spacing + ")");
 			return;
 
 		}
@@ -346,8 +356,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		}
 
 		nodes_as_image_from_start = new SearchNode[depth][];
-		if (bidirectional)
-			nodes_as_image_from_goal = new SearchNode[depth][];
+		if (bidirectional) nodes_as_image_from_goal = new SearchNode[depth][];
 
 		minimum_cost_per_unit_distance = minimumCostPerUnitDistance();
 
@@ -365,13 +374,15 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	SearchNode[][] nodes_as_image_from_goal;
 
 	public void printStatus() {
-		SNT.log("... with " + open_from_start.size() + " open nodes at the start and " + closed_from_start.size()
-				+ " closed nodes at the start");
+		SNT.log("... with " + open_from_start.size() +
+			" open nodes at the start and " + closed_from_start.size() +
+			" closed nodes at the start");
 		if (bidirectional) {
-			SNT.log("... with " + open_from_goal.size() + " open nodes at the goal and " + closed_from_goal.size()
-					+ " closed nodes at the goal");
-		} else
-			SNT.log(" ... unidirectional search");
+			SNT.log("... with " + open_from_goal.size() +
+				" open nodes at the goal and " + closed_from_goal.size() +
+				" closed nodes at the goal");
+		}
+		else SNT.log(" ... unidirectional search");
 	}
 
 	@Override
@@ -380,16 +391,17 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		try {
 
 			SNT.log("New SearchThread running!");
-			if (verbose)
-				printStatus();
-			SNT.log("... was asked to start it in the " + (startPaused ? "paused" : "unpaused") + " state.");
+			if (verbose) printStatus();
+			SNT.log("... was asked to start it in the " + (startPaused ? "paused"
+				: "unpaused") + " state.");
 
 			synchronized (this) {
 				threadStatus = startPaused ? PAUSED : RUNNING;
 				reportThreadStatus();
 			}
 
-			final long started_at = lastReportMilliseconds = System.currentTimeMillis();
+			final long started_at = lastReportMilliseconds = System
+				.currentTimeMillis();
 
 			int loops_at_last_report = 0;
 			int loops = 0;
@@ -403,19 +415,22 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			 * arrays that are indexed in the same way as voxels in the image.
 			 */
 
-			while ((open_from_start.size() > 0) || (bidirectional && (open_from_goal.size() > 0))) {
+			while ((open_from_start.size() > 0) || (bidirectional && (open_from_goal
+				.size() > 0)))
+			{
 
 				if (threadStatus == STOPPING) {
 					reportThreadStatus();
 					setExitReason(CANCELLED);
 					reportFinished(false);
 					return;
-				} else if (threadStatus == PAUSED) {
+				}
+				else if (threadStatus == PAUSED) {
 					try {
 						reportThreadStatus();
 						Thread.sleep(4000);
-					} catch (final InterruptedException e) {
 					}
+					catch (final InterruptedException e) {}
 				}
 
 				// We only check every thousandth loop for
@@ -427,22 +442,27 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 					final long millisecondsSinceStart = currentMilliseconds - started_at;
 
-					if ((timeoutSeconds > 0) && (millisecondsSinceStart > (1000 * timeoutSeconds))) {
+					if ((timeoutSeconds > 0) && (millisecondsSinceStart > (1000 *
+						timeoutSeconds)))
+					{
 						SNT.log("Timed out...");
 						setExitReason(TIMED_OUT);
 						reportFinished(false);
 						return;
 					}
 
-					final long since_last_report = currentMilliseconds - lastReportMilliseconds;
+					final long since_last_report = currentMilliseconds -
+						lastReportMilliseconds;
 
-					if ((reportEveryMilliseconds > 0) && (since_last_report > reportEveryMilliseconds)) {
+					if ((reportEveryMilliseconds > 0) &&
+						(since_last_report > reportEveryMilliseconds))
+					{
 
 						final int loops_since_last_report = loops - loops_at_last_report;
-						SNT.log("milliseconds per loop: " + (since_last_report / (double) loops_since_last_report));
+						SNT.log("milliseconds per loop: " + (since_last_report /
+							(double) loops_since_last_report));
 
-						if (verbose)
-							printStatus();
+						if (verbose) printStatus();
 
 						reportPointsInSearch();
 
@@ -451,35 +471,35 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 				}
 
 				boolean fromStart = true;
-				if (bidirectional)
-					fromStart = open_from_goal.size() > open_from_start.size();
+				if (bidirectional) fromStart = open_from_goal.size() > open_from_start
+					.size();
 
-				final PriorityQueue<SearchNode> open_queue = fromStart ? open_from_start : open_from_goal;
-				final PriorityQueue<SearchNode> closed_queue = fromStart ? closed_from_start : closed_from_goal;
+				final PriorityQueue<SearchNode> open_queue = fromStart ? open_from_start
+					: open_from_goal;
+				final PriorityQueue<SearchNode> closed_queue = fromStart
+					? closed_from_start : closed_from_goal;
 
-				final SearchNode[][] nodes_as_image_this_search = fromStart ? nodes_as_image_from_start
-						: nodes_as_image_from_goal;
-				final SearchNode[][] nodes_as_image_other_search = fromStart ? nodes_as_image_from_goal
-						: nodes_as_image_from_start;
+				final SearchNode[][] nodes_as_image_this_search = fromStart
+					? nodes_as_image_from_start : nodes_as_image_from_goal;
+				final SearchNode[][] nodes_as_image_other_search = fromStart
+					? nodes_as_image_from_goal : nodes_as_image_from_start;
 
 				SearchNode p = null;
 
-				if (open_queue.size() == 0)
-					continue;
+				if (open_queue.size() == 0) continue;
 
 				// p = get_highest_priority( open_from_start,
 				// open_from_start_hash );
 				p = open_queue.poll();
-				if (p == null)
-					continue;
+				if (p == null) continue;
 
 				// Has the route from the start found the goal?
 				if (definedGoal && atGoal(p.x, p.y, p.z, fromStart)) {
 					SNT.log("Found the goal!");
-					if (fromStart)
-						foundGoal(p.asPath(x_spacing, y_spacing, z_spacing, spacing_units));
-					else
-						foundGoal(p.asPathReversed(x_spacing, y_spacing, z_spacing, spacing_units));
+					if (fromStart) foundGoal(p.asPath(x_spacing, y_spacing, z_spacing,
+						spacing_units));
+					else foundGoal(p.asPathReversed(x_spacing, y_spacing, z_spacing,
+						spacing_units));
 					setExitReason(SUCCESS);
 					reportFinished(true);
 					return;
@@ -495,8 +515,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 				for (int zdiff = -1; zdiff <= 1; zdiff++) {
 
 					final int new_z = p.z + zdiff;
-					if (new_z < 0 || new_z >= depth)
-						continue;
+					if (new_z < 0 || new_z >= depth) continue;
 
 					if (nodes_as_image_this_search[new_z] == null) {
 						nodes_as_image_this_search[new_z] = new SearchNode[width * height];
@@ -505,49 +524,51 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 					for (int xdiff = -1; xdiff <= 1; xdiff++)
 						for (int ydiff = -1; ydiff <= 1; ydiff++) {
 
-							if ((xdiff == 0) && (ydiff == 0) && (zdiff == 0))
-								continue;
+							if ((xdiff == 0) && (ydiff == 0) && (zdiff == 0)) continue;
 
 							final int new_x = p.x + xdiff;
 							final int new_y = p.y + ydiff;
 
-							if (new_x < 0 || new_x >= width)
-								continue;
+							if (new_x < 0 || new_x >= width) continue;
 
-							if (new_y < 0 || new_y >= height)
-								continue;
+							if (new_y < 0 || new_y >= height) continue;
 
 							final double xdiffsq = (xdiff * x_spacing) * (xdiff * x_spacing);
 							final double ydiffsq = (ydiff * y_spacing) * (ydiff * y_spacing);
 							final double zdiffsq = (zdiff * z_spacing) * (zdiff * z_spacing);
 
-							final float h_for_new_point = estimateCostToGoal(new_x, new_y, new_z, fromStart);
+							final float h_for_new_point = estimateCostToGoal(new_x, new_y,
+								new_z, fromStart);
 
-							double cost_moving_to_new_point = costMovingTo(new_x, new_y, new_z);
+							double cost_moving_to_new_point = costMovingTo(new_x, new_y,
+								new_z);
 							if (cost_moving_to_new_point < minimum_cost_per_unit_distance) {
 								cost_moving_to_new_point = minimum_cost_per_unit_distance;
 							}
 
-							final float g_for_new_point = (float) (p.g
-									+ Math.sqrt(xdiffsq + ydiffsq + zdiffsq) * cost_moving_to_new_point);
+							final float g_for_new_point = (float) (p.g + Math.sqrt(xdiffsq +
+								ydiffsq + zdiffsq) * cost_moving_to_new_point);
 
 							final float f_for_new_point = h_for_new_point + g_for_new_point;
 
-							final SearchNode newNode = createNewNode(new_x, new_y, new_z, g_for_new_point,
-									h_for_new_point, p, FREE);
+							final SearchNode newNode = createNewNode(new_x, new_y, new_z,
+								g_for_new_point, h_for_new_point, p, FREE);
 
 							// Is this newNode really new?
-							final SearchNode alreadyThereInThisSearch = nodes_as_image_this_search[new_z][new_y * width
-									+ new_x];
+							final SearchNode alreadyThereInThisSearch =
+								nodes_as_image_this_search[new_z][new_y * width + new_x];
 
 							if (alreadyThereInThisSearch == null) {
 
-								newNode.searchStatus = fromStart ? OPEN_FROM_START : OPEN_FROM_GOAL;
+								newNode.searchStatus = fromStart ? OPEN_FROM_START
+									: OPEN_FROM_GOAL;
 								open_queue.add(newNode);
 								addingNode(newNode);
-								nodes_as_image_this_search[new_z][new_y * width + new_x] = newNode;
+								nodes_as_image_this_search[new_z][new_y * width + new_x] =
+									newNode;
 
-							} else {
+							}
+							else {
 
 								// The other alternative is that this node is
 								// already in one
@@ -557,22 +578,25 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 								if (alreadyThereInThisSearch.f > f_for_new_point) {
 
-									if (alreadyThereInThisSearch.searchStatus == (fromStart ? OPEN_FROM_START
-											: OPEN_FROM_GOAL)) {
+									if (alreadyThereInThisSearch.searchStatus == (fromStart
+										? OPEN_FROM_START : OPEN_FROM_GOAL))
+									{
 
 										open_queue.remove(alreadyThereInThisSearch);
 										alreadyThereInThisSearch.setFrom(newNode);
-										alreadyThereInThisSearch.searchStatus = fromStart ? OPEN_FROM_START
-												: OPEN_FROM_GOAL;
+										alreadyThereInThisSearch.searchStatus = fromStart
+											? OPEN_FROM_START : OPEN_FROM_GOAL;
 										open_queue.add(alreadyThereInThisSearch);
 
-									} else if (alreadyThereInThisSearch.searchStatus == (fromStart ? CLOSED_FROM_START
-											: CLOSED_FROM_GOAL)) {
+									}
+									else if (alreadyThereInThisSearch.searchStatus == (fromStart
+										? CLOSED_FROM_START : CLOSED_FROM_GOAL))
+									{
 
 										closed_queue.remove(alreadyThereInThisSearch);
 										alreadyThereInThisSearch.setFrom(newNode);
-										alreadyThereInThisSearch.searchStatus = fromStart ? OPEN_FROM_START
-												: OPEN_FROM_GOAL;
+										alreadyThereInThisSearch.searchStatus = fromStart
+											? OPEN_FROM_START : OPEN_FROM_GOAL;
 										open_queue.add(alreadyThereInThisSearch);
 									}
 								}
@@ -580,8 +604,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 							if (bidirectional && nodes_as_image_other_search[new_z] != null) {
 
-								final SearchNode alreadyThereInOtherSearch = nodes_as_image_other_search[new_z][new_y
-										* width + new_x];
+								final SearchNode alreadyThereInOtherSearch =
+									nodes_as_image_other_search[new_z][new_y * width + new_x];
 								if (alreadyThereInOtherSearch != null) {
 
 									Path result = null;
@@ -590,20 +614,24 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 									// are true
 									// then we've finished.
 
-									if (alreadyThereInOtherSearch != null
-											&& (alreadyThereInOtherSearch.searchStatus == CLOSED_FROM_START
-													|| alreadyThereInOtherSearch.searchStatus == CLOSED_FROM_GOAL)) {
+									if (alreadyThereInOtherSearch != null &&
+										(alreadyThereInOtherSearch.searchStatus == CLOSED_FROM_START ||
+											alreadyThereInOtherSearch.searchStatus == CLOSED_FROM_GOAL))
+									{
 
 										if (fromStart) {
-											result = p.asPath(x_spacing, y_spacing, z_spacing, spacing_units);
+											result = p.asPath(x_spacing, y_spacing, z_spacing,
+												spacing_units);
 											final Path fromGoalReversed = alreadyThereInOtherSearch
-													.asPathReversed(x_spacing, y_spacing, z_spacing, spacing_units);
-											result.add(fromGoalReversed);
-										} else {
-											result = alreadyThereInOtherSearch.asPath(x_spacing, y_spacing, z_spacing,
+												.asPathReversed(x_spacing, y_spacing, z_spacing,
 													spacing_units);
-											result.add(
-													p.asPathReversed(x_spacing, y_spacing, z_spacing, spacing_units));
+											result.add(fromGoalReversed);
+										}
+										else {
+											result = alreadyThereInOtherSearch.asPath(x_spacing,
+												y_spacing, z_spacing, spacing_units);
+											result.add(p.asPathReversed(x_spacing, y_spacing,
+												z_spacing, spacing_units));
 										}
 										SNT.log("Searches met!");
 										foundGoal(result);
@@ -628,12 +656,14 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			SNT.log("FAILED to find a route.  Shouldn't happen...");
 			setExitReason(POINTS_EXHAUSTED);
 			reportFinished(false);
-		} catch (final OutOfMemoryError oome) {
+		}
+		catch (final OutOfMemoryError oome) {
 			SNT.error("Out Of Memory Error", oome);
 			GuiUtils.errorPrompt("Out of memory while searching for a path");
 			setExitReason(OUT_OF_MEMORY);
 			reportFinished(false);
-		} catch (final Throwable t) {
+		}
+		catch (final Throwable t) {
 			SNT.error("Exception in search thread", t);
 		}
 		return;
@@ -646,7 +676,9 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	 * Dijkstra's algorithm.
 	 */
 
-	float estimateCostToGoal(final int current_x, final int current_y, final int current_z, final boolean fromStart) {
+	float estimateCostToGoal(final int current_x, final int current_y,
+		final int current_z, final boolean fromStart)
+	{
 		return 0;
 	}
 
@@ -656,8 +688,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	public static int POINTS_EXHAUSTED = 3;
 	public static int OUT_OF_MEMORY = 4;
 
-	public static String[] exitReasonStrings = { "SUCCESS", "CANCELLED", "TIMED_OUT", "POINTS_EXHAUSTED",
-			"OUT_OF_MEMORY" };
+	public static String[] exitReasonStrings = { "SUCCESS", "CANCELLED",
+		"TIMED_OUT", "POINTS_EXHAUSTED", "OUT_OF_MEMORY" };
 
 	protected int exitReason;
 
@@ -674,21 +706,21 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		return exitReason;
 	}
 
-	SearchNode anyNodeUnderThreshold(final int x, final int y, final int z, final double threshold) {
+	SearchNode anyNodeUnderThreshold(final int x, final int y, final int z,
+		final double threshold)
+	{
 		final SearchNode[] startSlice = nodes_as_image_from_start[z];
 		SearchNode[] goalSlice = null;
-		if (nodes_as_image_from_goal != null)
-			goalSlice = nodes_as_image_from_goal[z];
+		if (nodes_as_image_from_goal != null) goalSlice =
+			nodes_as_image_from_goal[z];
 		final int index = y * width + x;
 		SearchNode n = null;
 		if (startSlice != null) {
 			n = startSlice[index];
-			if (n != null && threshold >= 0 && n.g > threshold)
-				n = null;
+			if (n != null && threshold >= 0 && n.g > threshold) n = null;
 			if (n == null && goalSlice != null) {
 				n = goalSlice[index];
-				if (threshold >= 0 && n.g > threshold)
-					n = null;
+				if (threshold >= 0 && n.g > threshold) n = null;
 			}
 		}
 		return n;
@@ -701,8 +733,9 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	 */
 
 	@Override
-	public void drawProgressOnSlice(final int plane, final int currentSliceInPlane, final TracerCanvas canvas,
-			final Graphics g) {
+	public void drawProgressOnSlice(final int plane,
+		final int currentSliceInPlane, final TracerCanvas canvas, final Graphics g)
+	{
 
 		for (int i = 0; i < 2; ++i) {
 
@@ -714,50 +747,50 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			final byte start_status = (i == 0) ? OPEN_FROM_START : CLOSED_FROM_START;
 			final byte goal_status = (i == 0) ? OPEN_FROM_GOAL : CLOSED_FROM_GOAL;
 			final Color c = (i == 0) ? openColor : closedColor;
-			if (c == null)
-				continue;
+			if (c == null) continue;
 
 			g.setColor(c);
 
 			int pixel_size = (int) canvas.getMagnification();
-			if (pixel_size < 1)
-				pixel_size = 1;
+			if (pixel_size < 1) pixel_size = 1;
 
 			if (plane == MultiDThreePanes.XY_PLANE) {
 				final int z = currentSliceInPlane;
 				for (int y = 0; y < height; ++y)
 					for (int x = 0; x < width; ++x) {
-						final SearchNode n = anyNodeUnderThreshold(x, y, z, drawingThreshold);
-						if (n == null)
-							continue;
+						final SearchNode n = anyNodeUnderThreshold(x, y, z,
+							drawingThreshold);
+						if (n == null) continue;
 						final byte status = n.searchStatus;
-						if (status == start_status || status == goal_status)
-							g.fillRect(canvas.myScreenX(x) - pixel_size / 2, canvas.myScreenY(y) - pixel_size / 2,
-									pixel_size, pixel_size);
+						if (status == start_status || status == goal_status) g.fillRect(
+							canvas.myScreenX(x) - pixel_size / 2, canvas.myScreenY(y) -
+								pixel_size / 2, pixel_size, pixel_size);
 					}
-			} else if (plane == MultiDThreePanes.XZ_PLANE) {
+			}
+			else if (plane == MultiDThreePanes.XZ_PLANE) {
 				final int y = currentSliceInPlane;
 				for (int z = 0; z < depth; ++z)
 					for (int x = 0; x < width; ++x) {
-						final SearchNode n = anyNodeUnderThreshold(x, y, z, drawingThreshold);
-						if (n == null)
-							continue;
+						final SearchNode n = anyNodeUnderThreshold(x, y, z,
+							drawingThreshold);
+						if (n == null) continue;
 						final byte status = n.searchStatus;
-						if (status == start_status || status == goal_status)
-							g.fillRect(canvas.myScreenX(x) - pixel_size / 2, canvas.myScreenY(z) - pixel_size / 2,
-									pixel_size, pixel_size);
+						if (status == start_status || status == goal_status) g.fillRect(
+							canvas.myScreenX(x) - pixel_size / 2, canvas.myScreenY(z) -
+								pixel_size / 2, pixel_size, pixel_size);
 					}
-			} else if (plane == MultiDThreePanes.ZY_PLANE) {
+			}
+			else if (plane == MultiDThreePanes.ZY_PLANE) {
 				final int x = currentSliceInPlane;
 				for (int y = 0; y < height; ++y)
 					for (int z = 0; z < depth; ++z) {
-						final SearchNode n = anyNodeUnderThreshold(x, y, z, drawingThreshold);
-						if (n == null)
-							continue;
+						final SearchNode n = anyNodeUnderThreshold(x, y, z,
+							drawingThreshold);
+						if (n == null) continue;
 						final byte status = n.searchStatus;
-						if (status == start_status || status == goal_status)
-							g.fillRect(canvas.myScreenX(z) - pixel_size / 2, canvas.myScreenY(y) - pixel_size / 2,
-									pixel_size, pixel_size);
+						if (status == start_status || status == goal_status) g.fillRect(
+							canvas.myScreenX(z) - pixel_size / 2, canvas.myScreenY(y) -
+								pixel_size / 2, pixel_size, pixel_size);
 					}
 			}
 		}
@@ -767,7 +800,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 	public void addNode(final SearchNode n, final boolean fromStart) {
 
-		final SearchNode[][] nodes_as_image = fromStart ? nodes_as_image_from_start : nodes_as_image_from_goal;
+		final SearchNode[][] nodes_as_image = fromStart ? nodes_as_image_from_start
+			: nodes_as_image_from_goal;
 
 		if (nodes_as_image[n.z] == null) {
 			nodes_as_image[n.z] = new SearchNode[width * height];
@@ -783,18 +817,21 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			open_from_start.add(n);
 			nodes_as_image[n.z][n.y * width + n.x] = n;
 
-		} else if (n.searchStatus == OPEN_FROM_GOAL) {
+		}
+		else if (n.searchStatus == OPEN_FROM_GOAL) {
 			assert bidirectional && definedGoal;
 
 			open_from_goal.add(n);
 			nodes_as_image[n.z][n.y * width + n.x] = n;
 
-		} else if (n.searchStatus == CLOSED_FROM_START) {
+		}
+		else if (n.searchStatus == CLOSED_FROM_START) {
 
 			closed_from_start.add(n);
 			nodes_as_image[n.z][n.y * width + n.x] = n;
 
-		} else if (n.searchStatus == CLOSED_FROM_GOAL) {
+		}
+		else if (n.searchStatus == CLOSED_FROM_GOAL) {
 			assert bidirectional && definedGoal;
 
 			closed_from_goal.add(n);

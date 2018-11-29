@@ -34,15 +34,15 @@ import tracing.gui.GuiUtils;
  * A BoundingBox contains information (including spatial calibration) of a
  * tracing canvas bounding box, i.e., the minimum bounding cuboid containing all
  * nodes ({@link SNTPoint}s) of a reconstructed structure.
- * 
+ *
  * @author Tiago Ferreira
  */
 public class BoundingBox {
 
-	private final static PointInImage MIN_ORIGIN = new PointInImage(Double.MIN_VALUE, Double.MIN_VALUE,
-			Double.MIN_VALUE);
-	private final static PointInImage MAX_ORIGIN_OPPOSITE = new PointInImage(Double.MAX_VALUE, Double.MAX_VALUE,
-			Double.MAX_VALUE);
+	private final static PointInImage MIN_ORIGIN = new PointInImage(
+		Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE);
+	private final static PointInImage MAX_ORIGIN_OPPOSITE = new PointInImage(
+		Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
 	private final static String DEF_SPACING_UNIT = "? units";
 
 	/** The 'voxel width' of the bounding box */
@@ -60,29 +60,31 @@ public class BoundingBox {
 	private String spacingUnit = DEF_SPACING_UNIT;
 
 	/** The bounding box origin (SE, lower left corner) */
-	private PointInImage origin = new PointInImage(Double.NaN, Double.NaN, Double.NaN);
+	private PointInImage origin = new PointInImage(Double.NaN, Double.NaN,
+		Double.NaN);
 
 	/** The origin opposite (NW, upper right corner of bounding box) */
-	private PointInImage originOpposite = new PointInImage(Double.NaN, Double.NaN, Double.NaN);
+	private PointInImage originOpposite = new PointInImage(Double.NaN, Double.NaN,
+		Double.NaN);
 
 	/**
 	 * Constructs an 'empty' BoundingBox using default values, with the box origin
-	 * defined as a point with {@link Double#NaN} coordinates and {@link Double#NaN}
-	 * dimensions
+	 * defined as a point with {@link Double#NaN} coordinates and
+	 * {@link Double#NaN} dimensions
 	 */
-	public BoundingBox() {
-	}
+	public BoundingBox() {}
 
 	/**
 	 * Sets the voxel spacing.
 	 *
-	 * @param xSpacing    the 'voxel width' of the bounding box
-	 * @param ySpacing    the 'voxel height' of the bounding box
-	 * @param zSpacing    the 'voxel depth' of the bounding box
+	 * @param xSpacing the 'voxel width' of the bounding box
+	 * @param ySpacing the 'voxel height' of the bounding box
+	 * @param zSpacing the 'voxel depth' of the bounding box
 	 * @param spacingUnit the length unit
 	 */
-	public void setSpacing(final double xSpacing, final double ySpacing, final double zSpacing,
-			final String spacingUnit) {
+	public void setSpacing(final double xSpacing, final double ySpacing,
+		final double zSpacing, final String spacingUnit)
+	{
 		this.xSpacing = xSpacing;
 		this.ySpacing = ySpacing;
 		this.zSpacing = zSpacing;
@@ -96,23 +98,15 @@ public class BoundingBox {
 	 * @param iterator the iterator of the points Collection
 	 */
 	public void compute(final Iterator<? extends SNTPoint> iterator) {
-		if (!origin.isReal())
-			origin = MAX_ORIGIN_OPPOSITE;
-		if (!originOpposite.isReal())
-			originOpposite = MIN_ORIGIN;
+		if (!origin.isReal()) origin = MAX_ORIGIN_OPPOSITE;
+		if (!originOpposite.isReal()) originOpposite = MIN_ORIGIN;
 		iterator.forEachRemaining(point -> {
-			if (point.getX() < origin.x)
-				origin.x = point.getX();
-			else if (point.getX() > originOpposite.x)
-				originOpposite.x = point.getX();
-			if (point.getY() < origin.y)
-				origin.y = point.getY();
-			else if (point.getY() > originOpposite.y)
-				originOpposite.y = point.getY();
-			if (point.getZ() < origin.z)
-				origin.z = point.getZ();
-			else if (point.getZ() > originOpposite.z)
-				originOpposite.z = point.getZ();
+			if (point.getX() < origin.x) origin.x = point.getX();
+			else if (point.getX() > originOpposite.x) originOpposite.x = point.getX();
+			if (point.getY() < origin.y) origin.y = point.getY();
+			else if (point.getY() > originOpposite.y) originOpposite.y = point.getY();
+			if (point.getZ() < origin.z) origin.z = point.getZ();
+			else if (point.getZ() > originOpposite.z) originOpposite.z = point.getZ();
 		});
 	}
 
@@ -126,8 +120,7 @@ public class BoundingBox {
 		final SummaryStatistics xyStats = new SummaryStatistics();
 		final SummaryStatistics zStats = new SummaryStatistics();
 		for (final SWCPoint p : points) {
-			if (p.previousPoint == null)
-				continue;
+			if (p.previousPoint == null) continue;
 			xyStats.addValue(Math.abs(p.x - p.previousPoint.x));
 			xyStats.addValue(Math.abs(p.y - p.previousPoint.y));
 			zStats.addValue(Math.abs(p.z - p.previousPoint.z));
@@ -141,11 +134,12 @@ public class BoundingBox {
 	/**
 	 * Checks whether this BoundingBox is spatially calibrated, i.e., if voxel
 	 * spacing has been specified
-	 * 
+	 *
 	 * @return true, if voxel spacing has been specified
 	 */
 	public boolean isScaled() {
-		return xSpacing != 1d || ySpacing != 1d || zSpacing != 1d || spacingUnit != DEF_SPACING_UNIT;
+		return xSpacing != 1d || ySpacing != 1d || zSpacing != 1d ||
+			spacingUnit != DEF_SPACING_UNIT;
 	}
 
 	/**
@@ -162,9 +156,13 @@ public class BoundingBox {
 		final String sanitizedUnit = unit.trim().toLowerCase();
 		if (sanitizedUnit.isEmpty()) {
 			spacingUnit = DEF_SPACING_UNIT;
-		} else if (sanitizedUnit.equals("um") || sanitizedUnit.equals("micron") || sanitizedUnit.equals("microns")) {
+		}
+		else if (sanitizedUnit.equals("um") || sanitizedUnit.equals("micron") ||
+			sanitizedUnit.equals("microns"))
+		{
 			spacingUnit = GuiUtils.micrometre();
-		} else {
+		}
+		else {
 			spacingUnit = unit;
 		}
 	}
@@ -199,7 +197,7 @@ public class BoundingBox {
 	 * Gets this BoundingBox dimensions.
 	 *
 	 * @param scaled If true, dimensions are retrieved in real world units,
-	 *               otherwise in ("pixel") units
+	 *          otherwise in ("pixel") units
 	 * @return the BoundingBox dimensions {width, height, depth}.
 	 */
 	public double[] getDimensions(final boolean scaled) {
@@ -229,11 +227,11 @@ public class BoundingBox {
 	 */
 	public boolean contains(final BoundingBox boundingBox) {
 		return (boundingBox.origin.x >= origin.x && //
-				boundingBox.origin.y >= origin.y && //
-				boundingBox.origin.z >= origin.z && //
-				boundingBox.originOpposite.x <= originOpposite.x && //
-				boundingBox.originOpposite.y <= originOpposite.y && //
-				boundingBox.originOpposite.z <= originOpposite.z);
+			boundingBox.origin.y >= origin.y && //
+			boundingBox.origin.z >= origin.z && //
+			boundingBox.originOpposite.x <= originOpposite.x && //
+			boundingBox.originOpposite.y <= originOpposite.y && //
+			boundingBox.originOpposite.z <= originOpposite.z);
 	}
 
 	/**
@@ -242,21 +240,24 @@ public class BoundingBox {
 	 * @return the unscaled origin
 	 */
 	public PointInImage unscaledOrigin() {
-		return new PointInImage(origin.x / xSpacing, origin.y / ySpacing, origin.z / zSpacing);
+		return new PointInImage(origin.x / xSpacing, origin.y / ySpacing, origin.z /
+			zSpacing);
 	}
 
 	/**
-	 * Sets the dimensions of this bounding box using uncalibrated (pixel) lengths.
+	 * Sets the dimensions of this bounding box using uncalibrated (pixel)
+	 * lengths.
 	 *
-	 * @param uncalibratedWidth  the uncalibrated width
+	 * @param uncalibratedWidth the uncalibrated width
 	 * @param uncalibratedHeight the uncalibrated height
-	 * @param uncalibratedDepth  the uncalibrated depth
+	 * @param uncalibratedDepth the uncalibrated depth
 	 * @throws IllegalArgumentException If origin has not been set or
-	 *                                  {@link #compute(Iterator)} has not been
-	 *                                  called
+	 *           {@link #compute(Iterator)} has not been called
 	 */
-	public void setDimensions(final int uncalibratedWidth, final int uncalibratedHeight, final int uncalibratedDepth)
-			throws IllegalArgumentException {
+	public void setDimensions(final int uncalibratedWidth,
+		final int uncalibratedHeight, final int uncalibratedDepth)
+		throws IllegalArgumentException
+	{
 		if (!origin.isReal()) {
 			throw new IllegalArgumentException("Origin has not been set");
 		}
@@ -281,16 +282,12 @@ public class BoundingBox {
 	 * @return true, if successful
 	 */
 	public boolean equals(final BoundingBox box) {
-		if (box == null)
-			return false;
-		if (box.xSpacing != xSpacing || box.ySpacing != ySpacing || box.zSpacing != zSpacing)
-			return false;
-		if (!box.spacingUnit.equals(spacingUnit))
-			return false;
-		if (!origin.equals(box.origin))
-			return false;
-		if (!originOpposite.equals(box.originOpposite))
-			return false;
+		if (box == null) return false;
+		if (box.xSpacing != xSpacing || box.ySpacing != ySpacing ||
+			box.zSpacing != zSpacing) return false;
+		if (!box.spacingUnit.equals(spacingUnit)) return false;
+		if (!origin.equals(box.origin)) return false;
+		if (!originOpposite.equals(box.originOpposite)) return false;
 		return true;
 	}
 

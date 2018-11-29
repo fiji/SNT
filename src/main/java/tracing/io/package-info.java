@@ -27,4 +27,5 @@
  *
  * @author Tiago Ferreira
  */
+
 package tracing.io;

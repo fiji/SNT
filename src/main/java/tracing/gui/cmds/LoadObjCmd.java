@@ -25,6 +25,8 @@ package tracing.gui.cmds;
 import java.io.File;
 import java.io.FilenameFilter;
 
+import net.imagej.ImageJ;
+
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
@@ -33,7 +35,6 @@ import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
 import org.scijava.widget.NumberWidget;
 
-import net.imagej.ImageJ;
 import tracing.SNTService;
 import tracing.gui.GuiUtils;
 import tracing.plot.TreePlot3D;
@@ -52,13 +53,17 @@ public class LoadObjCmd extends ContextCommand {
 	@Parameter
 	private UIService uiService;
 
-	@Parameter(label = "File/Directory Path", required = true, description="Path to OBJ file, or directory containing multiple OBJ files")
+	@Parameter(label = "File/Directory Path", required = true,
+		description = "Path to OBJ file, or directory containing multiple OBJ files")
 	private File file;
 
-	@Parameter(label = "Transparency (%)", required = false, min ="0", max ="100", style = NumberWidget.SCROLL_BAR_STYLE, description = "Transparency of imported mesh")
+	@Parameter(label = "Transparency (%)", required = false, min = "0",
+		max = "100", style = NumberWidget.SCROLL_BAR_STYLE,
+		description = "Transparency of imported mesh")
 	private int transparency;
 
-	@Parameter(label = "Color", required = false, description = "Rendering color of imported mesh(es)")
+	@Parameter(label = "Color", required = false,
+		description = "Rendering color of imported mesh(es)")
 	private ColorRGB color;
 
 	@Parameter(required = false)
@@ -66,26 +71,27 @@ public class LoadObjCmd extends ContextCommand {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
 	public void run() {
 		try {
-			if (recViewer == null)
-				recViewer = sntService.getReconstructionViewer();
-		} catch (final UnsupportedOperationException exc) {
+			if (recViewer == null) recViewer = sntService.getReconstructionViewer();
+		}
+		catch (final UnsupportedOperationException exc) {
 			cancel("SNT's Reconstruction Viewer is not open");
 		}
 
-		if (!file.exists())
-			cancel(file.getAbsolutePath() + " is no longer available");
+		if (!file.exists()) cancel(file.getAbsolutePath() +
+			" is no longer available");
 
 		if (transparency <= 0d) transparency = 5;
 		if (file.isFile()) {
 			try {
 				recViewer.loadOBJ(file.getAbsolutePath(), color, transparency);
-			} catch (final IllegalArgumentException exc) {
+			}
+			catch (final IllegalArgumentException exc) {
 				cancel(getExitMsg(exc.getMessage()));
 			}
 			recViewer.validate();
@@ -93,13 +99,15 @@ public class LoadObjCmd extends ContextCommand {
 		}
 
 		if (file.isDirectory()) {
-			final File[] files = file.listFiles((FilenameFilter) (dir, name) -> name.toLowerCase().endsWith("obj"));
+			final File[] files = file.listFiles((FilenameFilter) (dir, name) -> name
+				.toLowerCase().endsWith("obj"));
 			recViewer.setViewUpdatesEnabled(false);
 			int failures = 0;
 			for (final File file : files) {
 				try {
 					recViewer.loadOBJ(file.getAbsolutePath(), color, transparency);
-				} catch (final IllegalArgumentException exc) {
+				}
+				catch (final IllegalArgumentException exc) {
 					failures++;
 				}
 			}
@@ -108,16 +116,18 @@ public class LoadObjCmd extends ContextCommand {
 			}
 			recViewer.setViewUpdatesEnabled(true);
 			recViewer.validate();
-			final String msg = "" + (files.length - failures) + "/" + files.length + " files successfully imported.";
-			uiService.showDialog(msg, (failures == 0) ? "All Meshes Imported" : "Partially Successful Import");
+			final String msg = "" + (files.length - failures) + "/" + files.length +
+				" files successfully imported.";
+			uiService.showDialog(msg, (failures == 0) ? "All Meshes Imported"
+				: "Partially Successful Import");
 		}
 	}
 
 	private String getExitMsg(final String msg) {
-		return "<HTML><body><div style='width:" + 500 + ";'> " + msg
-				+ " Note that the import of complex meshes is currently "
-				+ "not supported. If you think the specified file(s) are "
-				+ "valid, you should try to simplify them using, e.g., MeshLab.";
+		return "<HTML><body><div style='width:" + 500 + ";'> " + msg +
+			" Note that the import of complex meshes is currently " +
+			"not supported. If you think the specified file(s) are " +
+			"valid, you should try to simplify them using, e.g., MeshLab.";
 	}
 
 	/* IDE debug method **/

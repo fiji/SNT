@@ -26,4 +26,5 @@
  *
  * @author Tiago Ferreira
  */
+
 package tracing.hyperpanes;

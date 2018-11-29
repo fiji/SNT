@@ -32,9 +32,12 @@ import ij.IJ;
 
 public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 
-	public TubularGeodesicsTracer(final File oofFile, final float start_x_image, final float start_y_image,
-			final float start_z_image, final float end_x_image, final float end_y_image, final float end_z_image,
-			final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units) {
+	public TubularGeodesicsTracer(final File oofFile, final float start_x_image,
+		final float start_y_image, final float start_z_image,
+		final float end_x_image, final float end_y_image, final float end_z_image,
+		final double x_spacing, final double y_spacing, final double z_spacing,
+		final String spacing_units)
+	{
 
 		this.oofFile = oofFile;
 		this.start_x_image = start_x_image;
@@ -68,17 +71,18 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 
 	@Override
 	public Path getResult() {
-		if (!lastPathResult.getSuccess())
-			return null;
+		if (!lastPathResult.getSuccess()) return null;
 
 		final float[] points = lastPathResult.getPath();
 		final int numberOfPoints = lastPathResult.getNumberOfPoints();
 
-		final Path realResult = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
+		final Path realResult = new Path(x_spacing, y_spacing, z_spacing,
+			spacing_units);
 		realResult.createCircles();
 		for (int i = 0; i < numberOfPoints; ++i) {
 			final int start = i * 4;
-			realResult.addPointDouble(points[start], points[start + 1], points[start + 2]);
+			realResult.addPointDouble(points[start], points[start + 1], points[start +
+				2]);
 			realResult.radiuses[i] = points[start + 3];
 			// System.out.println("point "+i+" is "+points[start]+",
 			// "+points[start+1]+", "+points[start+2]+", "+points[start+3]);
@@ -88,18 +92,21 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 	}
 
 	@Override
-	public void drawProgressOnSlice(final int plane, final int currentSliceInPlane, final TracerCanvas canvas,
-			final Graphics g) {
-	}
+	public void drawProgressOnSlice(final int plane,
+		final int currentSliceInPlane, final TracerCanvas canvas, final Graphics g)
+	{}
 
-	protected ArrayList<SearchProgressCallback> progressListeners = new ArrayList<>();
+	protected ArrayList<SearchProgressCallback> progressListeners =
+		new ArrayList<>();
 
 	public void addProgressListener(final SearchProgressCallback callback) {
 		progressListeners.add(callback);
 	}
 
 	public void reportProgress(final float proportionDone) {
-		System.out.println("No implementation yet for reportProgress; proportionDone: " + proportionDone);
+		System.out.println(
+			"No implementation yet for reportProgress; proportionDone: " +
+				proportionDone);
 	}
 
 	@Override
@@ -108,8 +115,8 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 		try {
 
 			final ClassLoader loader = IJ.getClassLoader();
-			if (loader == null)
-				throw new RuntimeException("IJ.getClassLoader() failed (!)");
+			if (loader == null) throw new RuntimeException(
+				"IJ.getClassLoader() failed (!)");
 
 			try {
 
@@ -118,7 +125,8 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 				 * at compile- or run-time, so we have to try to load it via reflection.
 				 */
 
-				final Class<?> c = loader.loadClass("FijiITKInterface.TubularGeodesics");
+				final Class<?> c = loader.loadClass(
+					"FijiITKInterface.TubularGeodesics");
 				final Object newInstance = c.newInstance();
 
 				final Class<?>[] parameterTypes = {};
@@ -128,34 +136,51 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 
 				m.invoke(newInstance, parameters);
 
-			} catch (final IllegalArgumentException e) {
+			}
+			catch (final IllegalArgumentException e) {
 				reportFinished(false);
-				throw new RuntimeException("There was an illegal argument when trying to invoke interruptSearch: " + e);
-			} catch (final InvocationTargetException e) {
+				throw new RuntimeException(
+					"There was an illegal argument when trying to invoke interruptSearch: " +
+						e);
+			}
+			catch (final InvocationTargetException e) {
 				reportFinished(false);
 				final Throwable realException = e.getTargetException();
-				throw new RuntimeException("There was an exception thrown by interruptSearch: " + realException);
-			} catch (final ClassNotFoundException e) {
-				reportFinished(false);
-				throw new RuntimeException("The FijiITKInterface.TubularGeodesics class was not found: " + e);
-			} catch (final InstantiationException e) {
-				reportFinished(false);
-				throw new RuntimeException("Failed to instantiate the FijiITKInterface.TubularGeodesics object: " + e);
-			} catch (final IllegalAccessException e) {
+				throw new RuntimeException(
+					"There was an exception thrown by interruptSearch: " + realException);
+			}
+			catch (final ClassNotFoundException e) {
 				reportFinished(false);
 				throw new RuntimeException(
-						"IllegalAccessException when trying to create an instance of FijiITKInterface.TubularGeodesics: "
-								+ e);
-			} catch (final NoSuchMethodException e) {
+					"The FijiITKInterface.TubularGeodesics class was not found: " + e);
+			}
+			catch (final InstantiationException e) {
 				reportFinished(false);
 				throw new RuntimeException(
-						"There was a NoSuchMethodException when trying to invoke interruptSearch: " + e);
-			} catch (final SecurityException e) {
+					"Failed to instantiate the FijiITKInterface.TubularGeodesics object: " +
+						e);
+			}
+			catch (final IllegalAccessException e) {
 				reportFinished(false);
-				throw new RuntimeException("There was a SecurityException when trying to invoke interruptSearch: " + e);
+				throw new RuntimeException(
+					"IllegalAccessException when trying to create an instance of FijiITKInterface.TubularGeodesics: " +
+						e);
+			}
+			catch (final NoSuchMethodException e) {
+				reportFinished(false);
+				throw new RuntimeException(
+					"There was a NoSuchMethodException when trying to invoke interruptSearch: " +
+						e);
+			}
+			catch (final SecurityException e) {
+				reportFinished(false);
+				throw new RuntimeException(
+					"There was a SecurityException when trying to invoke interruptSearch: " +
+						e);
 			}
 
-		} catch (final Throwable t) {
+		}
+		catch (final Throwable t) {
 			System.out.println("Got an exception from call to ITK code: " + t);
 			t.printStackTrace();
 			IJ.error("There was an error in calling to ITK code: " + t);
@@ -185,8 +210,8 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 			// Call the JNI here:
 
 			final ClassLoader loader = IJ.getClassLoader();
-			if (loader == null)
-				throw new RuntimeException("IJ.getClassLoader() failed (!)");
+			if (loader == null) throw new RuntimeException(
+				"IJ.getClassLoader() failed (!)");
 
 			try {
 
@@ -195,11 +220,12 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 				 * at compile- or run-time, so we have to try to load it via reflection.
 				 */
 
-				final Class<?> c = loader.loadClass("FijiITKInterface.TubularGeodesics");
+				final Class<?> c = loader.loadClass(
+					"FijiITKInterface.TubularGeodesics");
 				final Object newInstance = c.newInstance();
 
-				final Class<?>[] parameterTypes = { String.class, float[].class, float[].class, PathResult.class,
-						TubularGeodesicsTracer.class };
+				final Class<?>[] parameterTypes = { String.class, float[].class,
+					float[].class, PathResult.class, TubularGeodesicsTracer.class };
 
 				final Method m = c.getMethod("startSearch", parameterTypes);
 				final Object[] parameters = new Object[5];
@@ -211,33 +237,51 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 
 				m.invoke(newInstance, parameters);
 
-			} catch (final IllegalArgumentException e) {
-				reportFinished(false);
-				throw new RuntimeException("There was an illegal argument when trying to invoke startSearch: " + e);
-			} catch (final InvocationTargetException e) {
-				reportFinished(false);
-				final Throwable realException = e.getTargetException();
-				throw new RuntimeException("There was an exception thrown by startSearch: " + realException);
-			} catch (final ClassNotFoundException e) {
-				reportFinished(false);
-				throw new RuntimeException("The FijiITKInterface.TubularGeodesics class was not found: " + e);
-			} catch (final InstantiationException e) {
-				reportFinished(false);
-				throw new RuntimeException("Failed to instantiate the FijiITKInterface.TubularGeodesics object: " + e);
-			} catch (final IllegalAccessException e) {
+			}
+			catch (final IllegalArgumentException e) {
 				reportFinished(false);
 				throw new RuntimeException(
-						"IllegalAccessException when trying to create an instance of FijiITKInterface.TubularGeodesics: "
-								+ e);
-			} catch (final NoSuchMethodException e) {
+					"There was an illegal argument when trying to invoke startSearch: " +
+						e);
+			}
+			catch (final InvocationTargetException e) {
 				reportFinished(false);
-				throw new RuntimeException("There was a NoSuchMethodException when trying to invoke startSearch: " + e);
-			} catch (final SecurityException e) {
+				final Throwable realException = e.getTargetException();
+				throw new RuntimeException(
+					"There was an exception thrown by startSearch: " + realException);
+			}
+			catch (final ClassNotFoundException e) {
 				reportFinished(false);
-				throw new RuntimeException("There was a SecurityException when trying to invoke startSearch: " + e);
+				throw new RuntimeException(
+					"The FijiITKInterface.TubularGeodesics class was not found: " + e);
+			}
+			catch (final InstantiationException e) {
+				reportFinished(false);
+				throw new RuntimeException(
+					"Failed to instantiate the FijiITKInterface.TubularGeodesics object: " +
+						e);
+			}
+			catch (final IllegalAccessException e) {
+				reportFinished(false);
+				throw new RuntimeException(
+					"IllegalAccessException when trying to create an instance of FijiITKInterface.TubularGeodesics: " +
+						e);
+			}
+			catch (final NoSuchMethodException e) {
+				reportFinished(false);
+				throw new RuntimeException(
+					"There was a NoSuchMethodException when trying to invoke startSearch: " +
+						e);
+			}
+			catch (final SecurityException e) {
+				reportFinished(false);
+				throw new RuntimeException(
+					"There was a SecurityException when trying to invoke startSearch: " +
+						e);
 			}
 
-		} catch (final Throwable t) {
+		}
+		catch (final Throwable t) {
 			System.out.println("Got an exception from call to ITK code: " + t);
 			t.printStackTrace();
 			IJ.error("There was an error in calling to ITK code: " + t);
@@ -245,8 +289,7 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 	}
 
 	public void reportFinished(final boolean success) {
-		if (success)
-			lastPathResult = temporaryPathResult;
+		if (success) lastPathResult = temporaryPathResult;
 		for (final SearchProgressCallback progress : progressListeners)
 			progress.finished(this, success);
 		if (!success) {
@@ -255,8 +298,7 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 			 * If this is null, it means that the user cancelled the search, so we don't
 			 * need to report an error:
 			 */
-			if (errorMessage != null)
-				IJ.error("The tracing failed: " + errorMessage);
+			if (errorMessage != null) IJ.error("The tracing failed: " + errorMessage);
 		}
 	}
 

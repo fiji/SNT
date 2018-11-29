@@ -34,12 +34,15 @@ public class ManualTracerThread extends Thread implements SearchInterface {
 	private final double goal_y;
 	private final double goal_z;
 	private final SimpleNeuriteTracer plugin;
-	private final ArrayList<SearchProgressCallback> progListeners = new ArrayList<>();
+	private final ArrayList<SearchProgressCallback> progListeners =
+		new ArrayList<>();
 	private volatile int threadStatus = SearchThread.PAUSED;
 	private Path result;
 
-	public ManualTracerThread(final SimpleNeuriteTracer plugin, final double start_x, final double start_y,
-			final double start_z, final double goal_x, final double goal_y, final double goal_z) {
+	public ManualTracerThread(final SimpleNeuriteTracer plugin,
+		final double start_x, final double start_y, final double start_z,
+		final double goal_x, final double goal_y, final double goal_z)
+	{
 		if (goal_x > plugin.width || goal_y > plugin.width || goal_z > plugin.depth)
 			throw new IllegalArgumentException("Out-of bounds goal");
 		this.start_x = start_x * plugin.x_spacing;
@@ -53,7 +56,8 @@ public class ManualTracerThread extends Thread implements SearchInterface {
 
 	@Override
 	public void run() {
-		result = new Path(plugin.x_spacing, plugin.y_spacing, plugin.z_spacing, plugin.spacing_units);
+		result = new Path(plugin.x_spacing, plugin.y_spacing, plugin.z_spacing,
+			plugin.spacing_units);
 		result.addPointDouble(start_x, start_y, start_z);
 		result.addPointDouble(goal_x, goal_y, goal_z);
 		threadStatus = SearchThread.SUCCESS;
@@ -68,8 +72,9 @@ public class ManualTracerThread extends Thread implements SearchInterface {
 	}
 
 	@Override
-	public void drawProgressOnSlice(final int plane, final int currentSliceInPlane, final TracerCanvas canvas,
-			final Graphics g) {
+	public void drawProgressOnSlice(final int plane,
+		final int currentSliceInPlane, final TracerCanvas canvas, final Graphics g)
+	{
 		// do nothing.
 	}
 
@@ -80,8 +85,7 @@ public class ManualTracerThread extends Thread implements SearchInterface {
 	@Override
 	public void requestStop() {
 		synchronized (this) {
-			if (threadStatus == SearchThread.PAUSED)
-				this.interrupt();
+			if (threadStatus == SearchThread.PAUSED) this.interrupt();
 			threadStatus = SearchThread.STOPPING;
 			reportThreadStatus();
 		}

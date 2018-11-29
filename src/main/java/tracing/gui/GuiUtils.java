@@ -130,8 +130,7 @@ public class GuiUtils {
 
 	public void tempMsg(final String msg) {
 		SwingUtilities.invokeLater(() -> {
-			if (popup != null && popup.isVisible())
-				popup.hidePopupImmediately();
+			if (popup != null && popup.isVisible()) popup.hidePopupImmediately();
 			popup = getPopup(msg);
 			popup.showPopup();
 		});
@@ -170,12 +169,12 @@ public class GuiUtils {
 	}
 
 	public int yesNoDialog(final String msg, final String title) {
-		return yesNoDialog(new Object[]{getLabel(msg)}, title);
+		return yesNoDialog(new Object[] { getLabel(msg) }, title);
 	}
 
 	private int yesNoDialog(final Object[] components, final String title) {
-		final JOptionPane optionPane = new JOptionPane(components, JOptionPane.QUESTION_MESSAGE,
-				JOptionPane.YES_NO_OPTION);
+		final JOptionPane optionPane = new JOptionPane(components,
+			JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
 		final JDialog d = optionPane.createDialog(title);
 		d.setModalityType(ModalityType.APPLICATION_MODAL);
 		if (parent != null) {
@@ -194,15 +193,20 @@ public class GuiUtils {
 		return (yesNoDialog(msg, title) == JOptionPane.YES_OPTION);
 	}
 
-	public boolean[] getPersistentConfirmation(final String msg, final String title) {
+	public boolean[] getPersistentConfirmation(final String msg,
+		final String title)
+	{
 		final JCheckBox checkbox = new JCheckBox();
-		checkbox.setText(getWrappedText(checkbox, "Remember my choice and do not prompt me again"));
-		final Object[] params = {getLabel(msg), checkbox};
+		checkbox.setText(getWrappedText(checkbox,
+			"Remember my choice and do not prompt me again"));
+		final Object[] params = { getLabel(msg), checkbox };
 		final boolean result = yesNoDialog(params, title) == JOptionPane.YES_OPTION;
-		return new boolean[] {result, checkbox.isSelected()};
+		return new boolean[] { result, checkbox.isSelected() };
 	}
 
-	public String getString(final String promptMsg, final String promptTitle, final String defaultValue) {
+	public String getString(final String promptMsg, final String promptTitle,
+		final String defaultValue)
+	{
 		return (String) getObj(promptMsg, promptTitle, defaultValue);
 	}
 
@@ -210,7 +214,9 @@ public class GuiUtils {
 		return SwingColorWidget.showColorDialog(parent, title, defaultValue);
 	}
 
-	public ColorRGB getColorRGB(final String title, final Color defaultValue, final String... panes) {
+	public ColorRGB getColorRGB(final String title, final Color defaultValue,
+		final String... panes)
+	{
 		final Color color = getColor(title, defaultValue, panes);
 		if (color == null) return null;
 		return new ColorRGB(color.getRed(), color.getGreen(), color.getBlue());
@@ -219,22 +225,22 @@ public class GuiUtils {
 	/**
 	 * Simplified color chooser.
 	 *
-	 * @param title
-	 *            the title of the chooser dialog
-	 * @param defaultValue
-	 *            the initial color set in the chooser
-	 * @param panes
-	 *            the panes a list of strings specifying which tabs should be
-	 *            displayed. In most platforms this includes: "Swatches", "HSB" and
-	 *            "RGB". Note that e.g., the GTK L&amp;F may only include the default
-	 *            GtkColorChooser pane
+	 * @param title the title of the chooser dialog
+	 * @param defaultValue the initial color set in the chooser
+	 * @param panes the panes a list of strings specifying which tabs should be
+	 *          displayed. In most platforms this includes: "Swatches", "HSB" and
+	 *          "RGB". Note that e.g., the GTK L&amp;F may only include the
+	 *          default GtkColorChooser pane
 	 * @return the color
 	 */
-	public Color getColor(final String title, final Color defaultValue, final String... panes) {
+	public Color getColor(final String title, final Color defaultValue,
+		final String... panes)
+	{
 
 		assert SwingUtilities.isEventDispatchThread();
 
-		final JColorChooser chooser = new JColorChooser(defaultValue != null ? defaultValue : Color.WHITE);
+		final JColorChooser chooser = new JColorChooser(defaultValue != null
+			? defaultValue : Color.WHITE);
 
 		// remove preview pane
 		chooser.setPreviewPanel(new JPanel());
@@ -244,8 +250,8 @@ public class GuiUtils {
 		if (panes != null) {
 			allowedPanels = Arrays.asList(panes);
 			for (final AbstractColorChooserPanel accp : chooser.getChooserPanels()) {
-				if (!allowedPanels.contains(accp.getDisplayName()) && chooser.getChooserPanels().length > 1)
-					chooser.removeChooserPanel(accp);
+				if (!allowedPanels.contains(accp.getDisplayName()) && chooser
+					.getChooserPanels().length > 1) chooser.removeChooserPanel(accp);
 			}
 		}
 
@@ -269,45 +275,59 @@ public class GuiUtils {
 		}
 
 		final ColorTracker ok = new ColorTracker(chooser);
-		final JDialog dialog = JColorChooser.createDialog(parent, title, true, chooser, ok, null);
+		final JDialog dialog = JColorChooser.createDialog(parent, title, true,
+			chooser, ok, null);
 		dialog.setVisible(true);
 		dialog.toFront();
 		return ok.getColor();
 	}
 
-	public Double getDouble(final String promptMsg, final String promptTitle, final Number defaultValue) {
+	public Double getDouble(final String promptMsg, final String promptTitle,
+		final Number defaultValue)
+	{
 		try {
-			return Double.parseDouble((String) getObj(promptMsg, promptTitle, defaultValue));
-		} catch (final NullPointerException ignored) {
+			return Double.parseDouble((String) getObj(promptMsg, promptTitle,
+				defaultValue));
+		}
+		catch (final NullPointerException ignored) {
 			return null; // user pressed cancel
-		} catch (final NumberFormatException ignored) {
+		}
+		catch (final NumberFormatException ignored) {
 			return Double.NaN; // invalid user input
 		}
 	}
 
-	public File saveFile(final String title, final File file, final List<String> allowedExtensions) {
-		final JFileChooser chooser = fileChooser(title, file, JFileChooser.FILES_ONLY, allowedExtensions);
+	public File saveFile(final String title, final File file,
+		final List<String> allowedExtensions)
+	{
+		final JFileChooser chooser = fileChooser(title, file,
+			JFileChooser.FILES_ONLY, allowedExtensions);
 		if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION)
 			return chooser.getSelectedFile();
 		return null;
 	}
 
-	public File openFile(final String title, final File file, final List<String> allowedExtensions) {
-		final JFileChooser chooser = fileChooser(title, file, JFileChooser.FILES_ONLY, allowedExtensions);
+	public File openFile(final String title, final File file,
+		final List<String> allowedExtensions)
+	{
+		final JFileChooser chooser = fileChooser(title, file,
+			JFileChooser.FILES_ONLY, allowedExtensions);
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
 			return chooser.getSelectedFile();
 		return null;
 	}
 
 	public File chooseDirectory(final String title, final File file) {
-		final JFileChooser chooser = fileChooser(title, file, JFileChooser.DIRECTORIES_ONLY, null);
+		final JFileChooser chooser = fileChooser(title, file,
+			JFileChooser.DIRECTORIES_ONLY, null);
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
 			return chooser.getSelectedFile();
 		return null;
 	}
 
-	private JFileChooser fileChooser(final String title, final File file, final int type,
-			final List<String> allowedExtensions) {
+	private JFileChooser fileChooser(final String title, final File file,
+		final int type, final List<String> allowedExtensions)
+	{
 		final JFileChooser chooser = new JFileChooser(file);
 		chooser.setSelectedFile(file);
 		chooser.setDialogTitle(title);
@@ -325,11 +345,11 @@ public class GuiUtils {
 				public boolean accept(final File f) {
 					if (f.isDirectory()) {
 						return true;
-					} else {
+					}
+					else {
 						final String filename = f.getName().toLowerCase();
 						for (final String ext : allowedExtensions) {
-							if (filename.endsWith(ext))
-								return true;
+							if (filename.endsWith(ext)) return true;
 						}
 						return false;
 					}
@@ -339,31 +359,38 @@ public class GuiUtils {
 		return chooser;
 	}
 
-	private Object getObj(final String promptMsg, final String promptTitle, final Object defaultValue) {
-		return JOptionPane.showInputDialog(parent, promptMsg, promptTitle, JOptionPane.PLAIN_MESSAGE, null, null,
-				defaultValue);
+	private Object getObj(final String promptMsg, final String promptTitle,
+		final Object defaultValue)
+	{
+		return JOptionPane.showInputDialog(parent, promptMsg, promptTitle,
+			JOptionPane.PLAIN_MESSAGE, null, null, defaultValue);
 	}
 
 	public void centeredMsg(final String msg, final String title) {
 		centeredDialog(msg, title, JOptionPane.PLAIN_MESSAGE);
 	}
 
-	public JDialog dialog(final String msg, final JComponent component, final String title) {
-		final Object[] params = {getLabel(msg), component};
-		final JOptionPane optionPane = new JOptionPane(params, 
-				JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION);
+	public JDialog dialog(final String msg, final JComponent component,
+		final String title)
+	{
+		final Object[] params = { getLabel(msg), component };
+		final JOptionPane optionPane = new JOptionPane(params,
+			JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION);
 		final JDialog dialog = optionPane.createDialog(title);
 		if (parent != null) dialog.setLocationRelativeTo(parent);
 		return dialog;
-		
+
 	}
 
-	private int centeredDialog(final String msg, final String title, final int type) {
+	private int centeredDialog(final String msg, final String title,
+		final int type)
+	{
 		/* if SwingDialogs could be centered, we could simply use */
 		// final SwingDialog d = new SwingDialog(getLabel(msg), type, false);
 		// if (parent != null) d.setParent(parent);
 		// return d.show();
-		final JOptionPane optionPane = new JOptionPane(getLabel(msg), type, JOptionPane.DEFAULT_OPTION);
+		final JOptionPane optionPane = new JOptionPane(getLabel(msg), type,
+			JOptionPane.DEFAULT_OPTION);
 		final JDialog d = optionPane.createDialog(title);
 		if (parent != null) {
 			AWTWindows.centerWindow(parent.getBounds(), d);
@@ -379,20 +406,25 @@ public class GuiUtils {
 	private JLabel getLabel(final String text) {
 		if (text == null || text.startsWith("<")) {
 			return new JLabel(text);
-		} else {
+		}
+		else {
 			final JLabel label = new JLabel();
 			label.setText(getWrappedText(label, text));
 			return label;
 		}
 	}
 
-	private String getWrappedText(JComponent c, final String text) {
-		final int width = Math.round(c.getFontMetrics(c.getFont()).stringWidth(text));
-		final int max = (parent==null) ? 500 : parent.getWidth();
-		return "<html><body><div style='width:" + Math.min(width, max) + ";'>" + text;
+	private String getWrappedText(final JComponent c, final String text) {
+		final int width = Math.round(c.getFontMetrics(c.getFont()).stringWidth(
+			text));
+		final int max = (parent == null) ? 500 : parent.getWidth();
+		return "<html><body><div style='width:" + Math.min(width, max) + ";'>" +
+			text;
 	}
 
-	public void blinkingError(final JComponent blinkingComponent, final String msg) {
+	public void blinkingError(final JComponent blinkingComponent,
+		final String msg)
+	{
 		final Color prevColor = blinkingComponent.getForeground();
 		final Color flashColor = Color.RED;
 		final Timer blinkTimer = new Timer(400, new ActionListener() {
@@ -406,7 +438,8 @@ public class GuiUtils {
 				if (count >= maxCount) {
 					blinkingComponent.setForeground(prevColor);
 					((Timer) e.getSource()).stop();
-				} else {
+				}
+				else {
 					blinkingComponent.setForeground(on ? flashColor : prevColor);
 					on = !on;
 					count++;
@@ -414,8 +447,10 @@ public class GuiUtils {
 			}
 		});
 		blinkTimer.start();
-		if (centeredDialog(msg, "Ongoing Operation", JOptionPane.PLAIN_MESSAGE) > Integer.MIN_VALUE) { // Dialog
-																										// dismissed
+		if (centeredDialog(msg, "Ongoing Operation",
+			JOptionPane.PLAIN_MESSAGE) > Integer.MIN_VALUE)
+		{ // Dialog
+			// dismissed
 			blinkTimer.stop();
 		}
 		blinkingComponent.setForeground(prevColor);
@@ -423,31 +458,37 @@ public class GuiUtils {
 
 	/* Static methods */
 
-	public static void addSeparator(final JComponent component, final String heading, final boolean vgap,
-			final GridBagConstraints c) {
+	public static void addSeparator(final JComponent component,
+		final String heading, final boolean vgap, final GridBagConstraints c)
+	{
 		final int previousTopGap = c.insets.top;
 		final JLabel label = leftAlignedLabel(heading, true);
 		final Font font = label.getFont();
 		label.setFont(font.deriveFont((float) (font.getSize() * .85)));
-		if (vgap)
-			c.insets.top = (int) (component.getFontMetrics(font).getHeight() * 1.5);
+		if (vgap) c.insets.top = (int) (component.getFontMetrics(font).getHeight() *
+			1.5);
 		component.add(label, c);
-		if (vgap)
-			c.insets.top = previousTopGap;
+		if (vgap) c.insets.top = previousTopGap;
 	}
 
-	public static JLabel leftAlignedLabel(final String text, final boolean enabled) {
+	public static JLabel leftAlignedLabel(final String text,
+		final boolean enabled)
+	{
 		final JLabel label = new JLabel(text);
 		label.setHorizontalAlignment(SwingConstants.LEFT);
 		label.setEnabled(enabled);
-		if (!enabled)
-			label.setForeground(getDisabledComponentColor()); // required for MACOS!?
+		if (!enabled) label.setForeground(getDisabledComponentColor()); // required
+																																		// for
+																																		// MACOS!?
 		return label;
 	}
 
-	public static ImageIcon createIcon(final Color color, final int width, final int height) {
+	public static ImageIcon createIcon(final Color color, final int width,
+		final int height)
+	{
 		if (color == null) return null;
-		final BufferedImage image = new BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+		final BufferedImage image = new BufferedImage(width, height,
+			java.awt.image.BufferedImage.TYPE_INT_ARGB);
 		final Graphics2D graphics = image.createGraphics();
 		graphics.setColor(color);
 		graphics.fillRect(0, 0, width, height);
@@ -460,8 +501,7 @@ public class GuiUtils {
 
 	public static int getMenuItemHeight() {
 		Font font = UIManager.getDefaults().getFont("CheckBoxMenuItem.font");
-		if (font == null)
-			font = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
+		if (font == null) font = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
 		final Canvas c = new Canvas();
 		return c.getFontMetrics(font).getHeight();
 	}
@@ -489,7 +529,8 @@ public class GuiUtils {
 	public static Color getDisabledComponentColor() {
 		try {
 			return UIManager.getColor("MenuItem.disabledBackground");
-		} catch (final Exception ignored) {
+		}
+		catch (final Exception ignored) {
 			return Color.GRAY;
 		}
 	}
@@ -500,29 +541,35 @@ public class GuiUtils {
 		final Font font = button.getFont();
 		button.setFont(font.deriveFont((float) (font.getSize() * SCALE)));
 		final Insets insets = button.getMargin();
-		button.setMargin(new Insets((int) (insets.top * SCALE), (int) (insets.left * SCALE),
-				(int) (insets.bottom * SCALE), (int) (insets.right * SCALE)));
+		button.setMargin(new Insets((int) (insets.top * SCALE), (int) (insets.left *
+			SCALE), (int) (insets.bottom * SCALE), (int) (insets.right * SCALE)));
 		return button;
 	}
 
-	public static JSpinner integerSpinner(final int value, final int min, final int max, final int step) {
+	public static JSpinner integerSpinner(final int value, final int min,
+		final int max, final int step)
+	{
 		final int maxDigits = Integer.toString(max).length();
 		final SpinnerModel model = new SpinnerNumberModel(value, min, max, step);
 		final JSpinner spinner = new JSpinner(model);
-		final JFormattedTextField textfield = ((DefaultEditor) spinner.getEditor()).getTextField();
+		final JFormattedTextField textfield = ((DefaultEditor) spinner.getEditor())
+			.getTextField();
 		textfield.setColumns(maxDigits);
 		textfield.setEditable(false);
 		return spinner;
 	}
 
-	public static JSpinner doubleSpinner(final double value, final double min, final double max, final double step,
-			final int nDecimals) {
+	public static JSpinner doubleSpinner(final double value, final double min,
+		final double max, final double step, final int nDecimals)
+	{
 		final int maxDigits = SNT.formatDouble(max, nDecimals).length();
 		final SpinnerModel model = new SpinnerNumberModel(value, min, max, step);
 		final JSpinner spinner = new JSpinner(model);
-		final JFormattedTextField textfield = ((DefaultEditor) spinner.getEditor()).getTextField();
+		final JFormattedTextField textfield = ((DefaultEditor) spinner.getEditor())
+			.getTextField();
 		textfield.setColumns(maxDigits);
-		final NumberFormatter formatter = (NumberFormatter) textfield.getFormatter();
+		final NumberFormatter formatter = (NumberFormatter) textfield
+			.getFormatter();
 		String decString = "";
 		while (decString.length() <= nDecimals)
 			decString += "0";
@@ -548,16 +595,22 @@ public class GuiUtils {
 	public static double extractDouble(final JTextField textfield) {
 		try {
 			return Double.parseDouble(textfield.getText());
-		} catch (final NullPointerException | NumberFormatException ignored) {
+		}
+		catch (final NullPointerException | NumberFormatException ignored) {
 			return Double.NaN;
 		}
 	}
 
-	public static void enableComponents(final java.awt.Container container, final boolean enable) {
+	public static void enableComponents(final java.awt.Container container,
+		final boolean enable)
+	{
 		final Component[] components = container.getComponents();
 		for (final Component component : components) {
-			if (!(component instanceof JPanel))
-				component.setEnabled(enable); // otherwise JPanel background will change
+			if (!(component instanceof JPanel)) component.setEnabled(enable); // otherwise
+																																				// JPanel
+																																				// background
+																																				// will
+																																				// change
 			if (component instanceof java.awt.Container) {
 				enableComponents((java.awt.Container) component, enable);
 			}
@@ -579,7 +632,8 @@ public class GuiUtils {
 			// GTK+ L&F otherwise no scaling occurs with hiDPI screens
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			checkGTKLookAndFeel();
-		} catch (final Exception ignored) {
+		}
+		catch (final Exception ignored) {
 			// move on
 		}
 	}
@@ -587,11 +641,9 @@ public class GuiUtils {
 	/** HACK Font too big on ubuntu: https://stackoverflow.com/a/31345102 */
 	private static void checkGTKLookAndFeel() throws Exception {
 		final LookAndFeel look = UIManager.getLookAndFeel();
-		if (!look.getID().equals("GTK"))
-			return;
+		if (!look.getID().equals("GTK")) return;
 		final int dpi = Toolkit.getDefaultToolkit().getScreenResolution();
-		if (dpi <= 72)
-			return;
+		if (dpi <= 72) return;
 		final float scaleFont = dpi / 72;
 		new JFrame();
 		new JButton();
@@ -610,18 +662,22 @@ public class GuiUtils {
 		new JMenuItem();
 
 		Object styleFactory;
-		final Field styleFactoryField = look.getClass().getDeclaredField("styleFactory");
+		final Field styleFactoryField = look.getClass().getDeclaredField(
+			"styleFactory");
 		styleFactoryField.setAccessible(true);
 		styleFactory = styleFactoryField.get(look);
 
-		final Field defaultFontField = styleFactory.getClass().getDeclaredField("defaultFont");
+		final Field defaultFontField = styleFactory.getClass().getDeclaredField(
+			"defaultFont");
 		defaultFontField.setAccessible(true);
 		final Font defaultFont = (Font) defaultFontField.get(styleFactory);
 		FontUIResource newFontUI;
-		newFontUI = new FontUIResource(defaultFont.deriveFont(defaultFont.getSize() - scaleFont));
+		newFontUI = new FontUIResource(defaultFont.deriveFont(defaultFont
+			.getSize() - scaleFont));
 		defaultFontField.set(styleFactory, newFontUI);
 
-		final Field stylesCacheField = styleFactory.getClass().getDeclaredField("stylesCache");
+		final Field stylesCacheField = styleFactory.getClass().getDeclaredField(
+			"stylesCache");
 		stylesCacheField.setAccessible(true);
 		final Object stylesCache = stylesCacheField.get(styleFactory);
 		final Map<?, ?> stylesMap = (Map<?, ?>) stylesCache;
@@ -635,13 +691,7 @@ public class GuiUtils {
 
 	public static void setAutoDismiss(final JDialog dialog) {
 		final int DELAY = timeOut;
-		final Timer timer = new Timer(DELAY, new ActionListener() {
-
-			@Override
-			public void actionPerformed(final ActionEvent e) {
-				dialog.dispose();
-			}
-		});
+		final Timer timer = new Timer(DELAY, e -> dialog.dispose());
 		timer.setRepeats(false);
 		dialog.addMouseListener(new MouseAdapter() {
 
@@ -654,10 +704,8 @@ public class GuiUtils {
 
 			@Override
 			public void mouseExited(final MouseEvent e) {
-				if (System.currentTimeMillis() - lastUpdate > DELAY)
-					dialog.dispose();
-				else
-					timer.start();
+				if (System.currentTimeMillis() - lastUpdate > DELAY) dialog.dispose();
+				else timer.start();
 			}
 
 			@Override
@@ -670,7 +718,9 @@ public class GuiUtils {
 		timer.start();
 	}
 
-	private class FloatingDialog extends JDialog implements ComponentListener, WindowListener {
+	private class FloatingDialog extends JDialog implements ComponentListener,
+		WindowListener
+	{
 
 		private static final long serialVersionUID = 1L;
 
@@ -690,31 +740,29 @@ public class GuiUtils {
 			add(label);
 			pack();
 			centerOnParent();
-			if (parent != null)
-				parent.addComponentListener(this);
+			if (parent != null) parent.addComponentListener(this);
 			setVisible(true);
 			toFront();
 		}
 
 		@Override
 		public void dispose() {
-			if (parent != null)
-				parent.removeComponentListener(this);
+			if (parent != null) parent.removeComponentListener(this);
 			super.dispose();
 		}
 
 		private void centerOnParent() {
-			if (parent == null)
-				return;
-			final Point p = new Point(parent.getWidth() / 2 - getWidth() / 2, parent.getHeight() / 2 - getHeight() / 2);
+			if (parent == null) return;
+			final Point p = new Point(parent.getWidth() / 2 - getWidth() / 2, parent
+				.getHeight() / 2 - getHeight() / 2);
 			setLocation(p.x + parent.getX(), p.y + parent.getY());
 		}
 
 		private void recenter() {
 			assert SwingUtilities.isEventDispatchThread();
-			//setVisible(false);
+			// setVisible(false);
 			centerOnParent();
-			//setVisible(true);
+			// setVisible(true);
 		}
 
 		@Override

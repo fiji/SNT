@@ -60,10 +60,12 @@ public class ROIExporterCmd implements Command {
 	@Parameter
 	private StatusService statusService;
 
-	@Parameter(required = false, label = "Convert", choices = { "Path segments", "Branch Points", "Tips", "All" })
+	@Parameter(required = false, label = "Convert", choices = { "Path segments",
+		"Branch Points", "Tips", "All" })
 	private String roiChoice;
 
-	@Parameter(required = false, label = "View", choices = { "XY (default)", "XZ", "ZY" })
+	@Parameter(required = false, label = "View", choices = { "XY (default)", "XZ",
+		"ZY" })
 	private String viewChoice;
 
 	@Parameter(required = false, label = "Impose SWC colors")
@@ -97,42 +99,36 @@ public class ROIExporterCmd implements Command {
 		final int skippedPaths = tree.size() - converter.getParsedTree().size();
 		logService.info("Converting paths to ROIs...");
 		statusService.showStatus("Converting paths to ROIs...");
-		if (skippedPaths > 0)
-			warn("" + skippedPaths + " were rejected and will not be converted");
+		if (skippedPaths > 0) warn("" + skippedPaths +
+			" were rejected and will not be converted");
 
 		converter.useSWCcolors(useSWCcolors);
 		converter.setStrokeWidth((avgWidth) ? -1 : 0);
 		overlay = new Overlay();
 
-		if (viewChoice.contains("XZ"))
-			converter.setView(RoiConverter.XZ_PLANE);
-		else if (viewChoice.contains("ZY"))
-			converter.setView(RoiConverter.ZY_PLANE);
-		else
-			converter.setView(RoiConverter.XY_PLANE);
+		if (viewChoice.contains("XZ")) converter.setView(RoiConverter.XZ_PLANE);
+		else if (viewChoice.contains("ZY")) converter.setView(
+			RoiConverter.ZY_PLANE);
+		else converter.setView(RoiConverter.XY_PLANE);
 
 		roiChoice = roiChoice.toLowerCase();
-		if (roiChoice.contains("all"))
-			roiChoice = "tips branch points segments";
+		if (roiChoice.contains("all")) roiChoice = "tips branch points segments";
 
 		int size = 0;
 		if (roiChoice.contains("tips")) {
 			size = overlay.size();
 			converter.convertTips(overlay);
-			if (overlay.size() == size)
-				warn(noConversion("tips"));
+			if (overlay.size() == size) warn(noConversion("tips"));
 		}
 		if (roiChoice.contains("branch points")) {
 			size = overlay.size();
 			converter.convertBranchPoints(overlay);
-			if (overlay.size() == size)
-				warn(noConversion("branch points"));
+			if (overlay.size() == size) warn(noConversion("branch points"));
 		}
 		if (roiChoice.contains("segments")) {
 			size = overlay.size();
 			converter.convertPaths(overlay);
-			if (overlay.size() == size)
-				warn(noConversion("segments"));
+			if (overlay.size() == size) warn(noConversion("segments"));
 		}
 
 		if (overlay.size() == 0) {
@@ -141,10 +137,8 @@ public class ROIExporterCmd implements Command {
 		}
 
 		RoiManager rm = RoiManager.getInstance2();
-		if (rm == null)
-			rm = new RoiManager();
-		else if (discardExisting)
-			rm.reset();
+		if (rm == null) rm = new RoiManager();
+		else if (discardExisting) rm.reset();
 		// Prefs.showAllSliceOnly = !plugin.is2D();
 		// rm.setEditMode(plugin.getImagePlus(), false);
 		for (final Roi roi : overlay.toArray())
@@ -155,13 +149,15 @@ public class ROIExporterCmd implements Command {
 		statusService.clearStatus();
 
 		if (warningsExist) {
-			warnUser("ROIs generated but some exceptions occured.\nPlease see Console for details.");
+			warnUser(
+				"ROIs generated but some exceptions occured.\nPlease see Console for details.");
 		}
 
 	}
 
 	private String noConversion(final String roiType) {
-		return "Conversion did not generated valid " + roiType + ". Specified features do not exist on input path(s)?";
+		return "Conversion did not generated valid " + roiType +
+			". Specified features do not exist on input path(s)?";
 	}
 
 	private void warn(final String msg) {
@@ -170,8 +166,9 @@ public class ROIExporterCmd implements Command {
 	}
 
 	private void warnUser(final String msg) {
-		uiService.getDefaultUI().dialogPrompt(msg, "Warning", DialogPrompt.MessageType.WARNING_MESSAGE,
-				DialogPrompt.OptionType.DEFAULT_OPTION).prompt();
+		uiService.getDefaultUI().dialogPrompt(msg, "Warning",
+			DialogPrompt.MessageType.WARNING_MESSAGE,
+			DialogPrompt.OptionType.DEFAULT_OPTION).prompt();
 	}
 
 	/* IDE debug method **/

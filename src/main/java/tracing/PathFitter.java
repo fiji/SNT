@@ -82,19 +82,17 @@ public class PathFitter implements Callable<Path> {
 	/**
 	 * Instantiates a new PathFitter.
 	 *
-	 * @param imp
-	 *            the Image containing the signal to which the fit will be performed
-	 * @param path
-	 *            the {@link Path} to be fitted
-	 * 
+	 * @param imp the Image containing the signal to which the fit will be
+	 *          performed
+	 * @param path the {@link Path} to be fitted
 	 */
 	public PathFitter(final ImagePlus imp, final Path path) {
-		if (path == null)
-			throw new IllegalArgumentException("Cannot fit a null path");
-		if (path.isFittedVersionOfAnotherPath())
-			throw new IllegalArgumentException("Trying to fit an already fitted path");
-		if (imp == null)
-			throw new IllegalArgumentException("Cannot fit a null image");
+		if (path == null) throw new IllegalArgumentException(
+			"Cannot fit a null path");
+		if (path.isFittedVersionOfAnotherPath()) throw new IllegalArgumentException(
+			"Trying to fit an already fitted path");
+		if (imp == null) throw new IllegalArgumentException(
+			"Cannot fit a null image");
 		this.imp = imp;
 		this.plugin = null;
 		this.path = path;
@@ -106,22 +104,21 @@ public class PathFitter implements Callable<Path> {
 	/**
 	 * Instantiates a new PathFitter.
 	 *
-	 * @param plugin
-	 *            the {@link SimpleNeuriteTracer} instance specifying input image.
-	 *            The computation will be performed on the image currently loaded by
-	 *            the plugin.
-	 * @param path
-	 *            the {@link Path} to be fitted
-	 * @param showFit
-	 *            If true, an interactive stack (cross-section view) of the fit is
-	 *            displayed. Note that this is probably only useful if SNT's UI is
-	 *            visible and functional.
+	 * @param plugin the {@link SimpleNeuriteTracer} instance specifying input
+	 *          image. The computation will be performed on the image currently
+	 *          loaded by the plugin.
+	 * @param path the {@link Path} to be fitted
+	 * @param showFit If true, an interactive stack (cross-section view) of the
+	 *          fit is displayed. Note that this is probably only useful if SNT's
+	 *          UI is visible and functional.
 	 */
-	public PathFitter(final SimpleNeuriteTracer plugin, final Path path, final boolean showFit) {
-		if (path == null)
-			throw new IllegalArgumentException("Cannot fit a null path");
-		if (path.isFittedVersionOfAnotherPath())
-			throw new IllegalArgumentException("Trying to fit an already fitted path");
+	public PathFitter(final SimpleNeuriteTracer plugin, final Path path,
+		final boolean showFit)
+	{
+		if (path == null) throw new IllegalArgumentException(
+			"Cannot fit a null path");
+		if (path.isFittedVersionOfAnotherPath()) throw new IllegalArgumentException(
+			"Trying to fit an already fitted path");
 		this.plugin = plugin;
 		this.imp = plugin.getLoadedDataAsImp();
 		this.path = path;
@@ -130,7 +127,9 @@ public class PathFitter implements Callable<Path> {
 		this.showDetailedFittingResults = showFit;
 	}
 
-	public void setProgressCallback(final int fitterIndex, final MultiTaskProgress progress) {
+	public void setProgressCallback(final int fitterIndex,
+		final MultiTaskProgress progress)
+	{
 		this.fitterIndex = fitterIndex;
 		this.progress = progress;
 	}
@@ -140,10 +139,10 @@ public class PathFitter implements Callable<Path> {
 	 * cross-section circles around the nodes of input path. Computation of fit is
 	 * confined to the neighborhood specified by {@link #setMaxRadius(int)}
 	 *
-	 * @return the reference to the computed result. This Path is automatically set
-	 *         as the fitted version of input Path.
-	 * @throws IllegalArgumentException
-	 *             If path already has been fitted, and its fitted version not nullified
+	 * @return the reference to the computed result. This Path is automatically
+	 *         set as the fitted version of input Path.
+	 * @throws IllegalArgumentException If path already has been fitted, and its
+	 *           fitted version not nullified
 	 * @see #setScope(int)
 	 */
 	@Override
@@ -173,8 +172,7 @@ public class PathFitter implements Callable<Path> {
 	/**
 	 * Sets the max radius (side search) for constraining the fit.
 	 *
-	 * @param maxRadius
-	 *            the new maximum radius
+	 * @param maxRadius the new maximum radius
 	 */
 	public void setMaxRadius(final int maxRadius) {
 		this.sideSearch = maxRadius;
@@ -183,48 +181,54 @@ public class PathFitter implements Callable<Path> {
 	/**
 	 * Sets the fitting scope.
 	 *
-	 * @param scope
-	 *            Either {@link #RADII}, {@link #MIDPOINTS}, or
-	 *            {@link #RADII_AND_MIDPOINTS}
+	 * @param scope Either {@link #RADII}, {@link #MIDPOINTS}, or
+	 *          {@link #RADII_AND_MIDPOINTS}
 	 */
 	public void setScope(final int scope) {
-		if (scope != PathFitter.RADII_AND_MIDPOINTS && scope != PathFitter.RADII && scope != PathFitter.MIDPOINTS) {
-			throw new IllegalArgumentException(" Invalid flag. Only RADII, RADII, or RADII_AND_MIDPOINTS allowed");
+		if (scope != PathFitter.RADII_AND_MIDPOINTS && scope != PathFitter.RADII &&
+			scope != PathFitter.MIDPOINTS)
+		{
+			throw new IllegalArgumentException(
+				" Invalid flag. Only RADII, RADII, or RADII_AND_MIDPOINTS allowed");
 		}
 		this.fitScope = scope;
 	}
 
 	private String getScopeAsString() {
-		switch(fitScope) {
-		case RADII_AND_MIDPOINTS:
-			return "radii and midpoint refinement";
-		case RADII:
-			return "radii";
-		case MIDPOINTS:
-			return "midpoint refinement";
-		default:
-			return "Unrecognized option";
+		switch (fitScope) {
+			case RADII_AND_MIDPOINTS:
+				return "radii and midpoint refinement";
+			case RADII:
+				return "radii";
+			case MIDPOINTS:
+				return "midpoint refinement";
+			default:
+				return "Unrecognized option";
 		}
 	}
-	
 
 	private void fitCircles() {
 
-		SNT.log("Fitting " + path.getName() + ", Scope: " + getScopeAsString() + ", Max radius: " + sideSearch);
-		final boolean fitRadii = (fitScope == PathFitter.RADII_AND_MIDPOINTS || fitScope == PathFitter.RADII);
-		final boolean fitPoints = (fitScope == PathFitter.RADII_AND_MIDPOINTS || fitScope == PathFitter.MIDPOINTS);
+		SNT.log("Fitting " + path.getName() + ", Scope: " + getScopeAsString() +
+			", Max radius: " + sideSearch);
+		final boolean fitRadii = (fitScope == PathFitter.RADII_AND_MIDPOINTS ||
+			fitScope == PathFitter.RADII);
+		final boolean fitPoints = (fitScope == PathFitter.RADII_AND_MIDPOINTS ||
+			fitScope == PathFitter.MIDPOINTS);
 		final boolean outputRadii = fitRadii || path.hasRadii();
 		final int totalPoints = path.size();
 		final int pointsEitherSide = 4;
 
-		fitted = new Path(path.x_spacing, path.y_spacing, path.z_spacing, path.spacing_units);
+		fitted = new Path(path.x_spacing, path.y_spacing, path.z_spacing,
+			path.spacing_units);
 		fitted.setName("Fitted Path [" + path.getID() + "]");
 		fitted.setColor(path.getColor());
 		fitted.setSWCType(path.getSWCType());
 		fitted.setOrder(path.getOrder());
 		fitted.setCanvasOffset(path.getCanvasOffset());
 
-		SNT.log("  Generating cross-section stack (" + totalPoints + "slices/nodes)");
+		SNT.log("  Generating cross-section stack (" + totalPoints +
+			"slices/nodes)");
 		final int width = imp.getWidth();
 		final int height = imp.getHeight();
 		final int depth = imp.getNSlices();
@@ -262,7 +266,8 @@ public class PathFitter implements Callable<Path> {
 		startValues[1] = sideSearch / 2.0;
 		startValues[2] = 3;
 
-		SNT.log("  Searches starting at: " + startValues[0] + "," + startValues[1] + " radius: " + startValues[2]);
+		SNT.log("  Searches starting at: " + startValues[0] + "," + startValues[1] +
+			" radius: " + startValues[2]);
 
 		for (int i = 0; i < totalPoints; ++i) {
 
@@ -277,12 +282,12 @@ public class PathFitter implements Callable<Path> {
 			final double[] x_basis_in_plane = new double[3];
 			final double[] y_basis_in_plane = new double[3];
 
-			final float[] normalPlane = squareNormalToVector(sideSearch, 
-					scaleInNormalPlane, // This is in the same units as
-										// the _spacing, etc. variables.
-					x_world, y_world, z_world, // These are scaled now
-					tangent[0], tangent[1], tangent[2], //
-					x_basis_in_plane, y_basis_in_plane, imp);
+			final float[] normalPlane = squareNormalToVector(sideSearch,
+				scaleInNormalPlane, // This is in the same units as
+				// the _spacing, etc. variables.
+				x_world, y_world, z_world, // These are scaled now
+				tangent[0], tangent[1], tangent[2], //
+				x_basis_in_plane, y_basis_in_plane, imp);
 
 			// Now at this stage, try to optimize a circle in there...
 
@@ -303,12 +308,13 @@ public class PathFitter implements Callable<Path> {
 				minValueInSquare = Math.min(value, minValueInSquare);
 			}
 
-			final CircleAttempt attempt = new CircleAttempt(startValues, normalPlane, minValueInSquare,
-					maxValueInSquare, sideSearch);
+			final CircleAttempt attempt = new CircleAttempt(startValues, normalPlane,
+				minValueInSquare, maxValueInSquare, sideSearch);
 
 			try {
 				optimizer.optimize(attempt, startValues, 2, 2);
-			} catch (final ConjugateDirectionSearch.OptimizationError e) {
+			}
+			catch (final ConjugateDirectionSearch.OptimizationError e) {
 				SNT.log("  Failure :" + e.getMessage());
 				fitted = null;
 				return;
@@ -326,38 +332,40 @@ public class PathFitter implements Callable<Path> {
 			final double x_from_centre_in_plane = startValues[0] - (sideSearch / 2.0);
 			final double y_from_centre_in_plane = startValues[1] - (sideSearch / 2.0);
 
-			moved[i] = scaleInNormalPlane * Math.sqrt(
-					x_from_centre_in_plane * x_from_centre_in_plane + y_from_centre_in_plane * y_from_centre_in_plane);
+			moved[i] = scaleInNormalPlane * Math.sqrt(x_from_centre_in_plane *
+				x_from_centre_in_plane + y_from_centre_in_plane *
+					y_from_centre_in_plane);
 
-			//SNT.log("Vector to new centre from original: " + x_from_centre_in_plane + "," + y_from_centre_in_plane);
+			// SNT.log("Vector to new centre from original: " + x_from_centre_in_plane
+			// + "," + y_from_centre_in_plane);
 
 			double centre_real_x = x_world;
 			double centre_real_y = y_world;
 			double centre_real_z = z_world;
 
-			SNT.log("    Original coordinates: " + centre_real_x + "," + centre_real_y + ","
-					+ centre_real_z);
+			SNT.log("    Original coordinates: " + centre_real_x + "," +
+				centre_real_y + "," + centre_real_z);
 
 			// FIXME: I really think these should be +=, but it seems clear from
 			// the results that I've got a sign wrong somewhere :(
 
-			centre_real_x -= x_basis_in_plane[0] * x_from_centre_in_plane
-					+ y_basis_in_plane[0] * y_from_centre_in_plane;
-			centre_real_y -= x_basis_in_plane[1] * x_from_centre_in_plane
-					+ y_basis_in_plane[1] * y_from_centre_in_plane;
-			centre_real_z -= x_basis_in_plane[2] * x_from_centre_in_plane
-					+ y_basis_in_plane[2] * y_from_centre_in_plane;
+			centre_real_x -= x_basis_in_plane[0] * x_from_centre_in_plane +
+				y_basis_in_plane[0] * y_from_centre_in_plane;
+			centre_real_y -= x_basis_in_plane[1] * x_from_centre_in_plane +
+				y_basis_in_plane[1] * y_from_centre_in_plane;
+			centre_real_z -= x_basis_in_plane[2] * x_from_centre_in_plane +
+				y_basis_in_plane[2] * y_from_centre_in_plane;
 
-			SNT.log("    Adjusted coordinates: " + centre_real_x + "," + centre_real_y + ","
-					+ centre_real_z);
+			SNT.log("    Adjusted coordinates: " + centre_real_x + "," +
+				centre_real_y + "," + centre_real_z);
 
 			optimized_x[i] = centre_real_x;
 			optimized_y[i] = centre_real_y;
 			optimized_z[i] = centre_real_z;
 
-			if (progress != null)
-				progress.updateProgress(((double) i + 1) / totalPoints, fitterIndex);
-	
+			if (progress != null) progress.updateProgress(((double) i + 1) /
+				totalPoints, fitterIndex);
+
 			if (!fitRadii && !showDetailedFittingResults) continue;
 
 			int x_in_image = (int) Math.round(centre_real_x / path.x_spacing);
@@ -366,26 +374,21 @@ public class PathFitter implements Callable<Path> {
 
 //			SNT.log("  Adjusted center image position: " + x_in_image + "," + y_in_image + "," + z_in_image);
 
-			if (x_in_image < 0)
-				x_in_image = 0;
-			if (x_in_image >= width)
-				x_in_image = width - 1;
-			if (y_in_image < 0)
-				y_in_image = 0;
-			if (y_in_image >= height)
-				y_in_image = height - 1;
-			if (z_in_image < 0)
-				z_in_image = 0;
-			if (z_in_image >= depth)
-				z_in_image = depth - 1;
+			if (x_in_image < 0) x_in_image = 0;
+			if (x_in_image >= width) x_in_image = width - 1;
+			if (y_in_image < 0) y_in_image = 0;
+			if (y_in_image >= height) y_in_image = height - 1;
+			if (z_in_image < 0) z_in_image = 0;
+			if (z_in_image >= depth) z_in_image = depth - 1;
 
-			//SNT.log("addingPoint: " + x_in_image + "," + y_in_image + "," + z_in_image);
+			// SNT.log("addingPoint: " + x_in_image + "," + y_in_image + "," +
+			// z_in_image);
 
 			xs_in_image[i] = x_in_image;
 			ys_in_image[i] = y_in_image;
 			zs_in_image[i] = z_in_image;
 
-			//SNT.log("Adding a real slice.");
+			// SNT.log("Adding a real slice.");
 
 			final FloatProcessor bp = new FloatProcessor(sideSearch, sideSearch);
 			bp.setPixels(normalPlane);
@@ -394,8 +397,9 @@ public class PathFitter implements Callable<Path> {
 		}
 
 		if (!fitRadii && !showDetailedFittingResults) {
-			fitted.setFittedCircles(totalPoints, path.tangents_x, path.tangents_y, path.tangents_z, path.radiuses, //
-					optimized_x, optimized_y, optimized_z);
+			fitted.setFittedCircles(totalPoints, path.tangents_x, path.tangents_y,
+				path.tangents_z, path.radiuses, //
+				optimized_x, optimized_y, optimized_z);
 			SNT.log("Done (radius fitting skipped)");
 		}
 
@@ -413,15 +417,11 @@ public class PathFitter implements Callable<Path> {
 			final int maxIndex = i + modeEitherSide;
 			int c = 0;
 			for (int modeIndex = minIndex; modeIndex <= maxIndex; ++modeIndex) {
-				if (modeIndex < 0)
-					valuesForMode[c] = Double.MIN_VALUE;
-				else if (modeIndex >= totalPoints)
-					valuesForMode[c] = Double.MAX_VALUE;
+				if (modeIndex < 0) valuesForMode[c] = Double.MIN_VALUE;
+				else if (modeIndex >= totalPoints) valuesForMode[c] = Double.MAX_VALUE;
 				else {
-					if (rsUnscaled[modeIndex] < 1)
-						valuesForMode[c] = 1;
-					else
-						valuesForMode[c] = rsUnscaled[modeIndex];
+					if (rsUnscaled[modeIndex] < 1) valuesForMode[c] = 1;
+					else valuesForMode[c] = rsUnscaled[modeIndex];
 				}
 				++c;
 			}
@@ -441,14 +441,12 @@ public class PathFitter implements Callable<Path> {
 			// just use the first:
 			int previousValid = 0;
 			for (int j = 0; j < i; ++j)
-				if (valid[j])
-					previousValid = j;
+				if (valid[j]) previousValid = j;
 			// If there's no next valid one then just use
 			// the first:
 			int nextValid = totalPoints - 1;
 			for (int j = totalPoints - 1; j > i; --j)
-				if (valid[j])
-					nextValid = j;
+				if (valid[j]) nextValid = j;
 			final double adiffx = optimized_x[previousValid] - optimized_x[i];
 			final double adiffy = optimized_y[previousValid] - optimized_y[i];
 			final double adiffz = optimized_z[previousValid] - optimized_z[i];
@@ -456,11 +454,12 @@ public class PathFitter implements Callable<Path> {
 			final double bdiffy = optimized_y[nextValid] - optimized_y[i];
 			final double bdiffz = optimized_z[nextValid] - optimized_z[i];
 			final double adotb = adiffx * bdiffx + adiffy * bdiffy + adiffz * bdiffz;
-			final double asize = Math.sqrt(adiffx * adiffx + adiffy * adiffy + adiffz * adiffz);
-			final double bsize = Math.sqrt(bdiffx * bdiffx + bdiffy * bdiffy + bdiffz * bdiffz);
+			final double asize = Math.sqrt(adiffx * adiffx + adiffy * adiffy +
+				adiffz * adiffz);
+			final double bsize = Math.sqrt(bdiffx * bdiffx + bdiffy * bdiffy +
+				bdiffz * bdiffz);
 			angles[i] = Math.acos(adotb / (asize * bsize));
-			if (angles[i] < (Math.PI / 2))
-				valid[i] = false;
+			if (angles[i] < (Math.PI / 2)) valid[i] = false;
 		}
 
 		/*
@@ -477,21 +476,20 @@ public class PathFitter implements Callable<Path> {
 			int maximumNumberOfOverlaps = -1;
 			for (int i = 0; i < totalPoints; ++i) {
 				overlapsWith[i] = 0;
-				if (!valid[i])
-					continue;
+				if (!valid[i]) continue;
 				for (int j = 0; j < totalPoints; ++j) {
-					if (!valid[j])
-						continue;
-					if (i == j)
-						continue;
-					if (circlesOverlap(ts_x[i], ts_y[i], ts_z[i], optimized_x[i], optimized_y[i], optimized_z[i], rs[i],
-							ts_x[j], ts_y[j], ts_z[j], optimized_x[j], optimized_y[j], optimized_z[j], rs[j])) {
+					if (!valid[j]) continue;
+					if (i == j) continue;
+					if (circlesOverlap(ts_x[i], ts_y[i], ts_z[i], optimized_x[i],
+						optimized_y[i], optimized_z[i], rs[i], ts_x[j], ts_y[j], ts_z[j],
+						optimized_x[j], optimized_y[j], optimized_z[j], rs[j]))
+					{
 						++overlapsWith[i];
 						someStillOverlap = true;
 					}
 				}
-				if (overlapsWith[i] > maximumNumberOfOverlaps)
-					maximumNumberOfOverlaps = overlapsWith[i];
+				if (overlapsWith[i] > maximumNumberOfOverlaps) maximumNumberOfOverlaps =
+					overlapsWith[i];
 			}
 			if (maximumNumberOfOverlaps <= 0) {
 				break;
@@ -499,17 +497,19 @@ public class PathFitter implements Callable<Path> {
 			// Now we've built the array, go through and
 			// remove the worst offenders:
 			for (int i = 0; i < totalPoints; ++i) {
-				if (!valid[i])
-					continue;
+				if (!valid[i]) continue;
 				int n = totalPoints;
 				for (int j = totalPoints - 1; j > i; --j)
 					if (valid[j]) n = j;
 				if (overlapsWith[i] == maximumNumberOfOverlaps) {
 					// If the next valid one has the same number, and that
 					// has a larger radius, remove that one instead...
-					if (n < totalPoints && overlapsWith[n] == maximumNumberOfOverlaps && rs[n] > rs[i]) {
+					if (n < totalPoints && overlapsWith[n] == maximumNumberOfOverlaps &&
+						rs[n] > rs[i])
+					{
 						valid[n] = false;
-					} else {
+					}
+					else {
 						valid[i] = false;
 					}
 					break;
@@ -527,11 +527,10 @@ public class PathFitter implements Callable<Path> {
 				// The if we're gone too far without a
 				// successfully optimized datapoint,
 				// add the original one:
-				final boolean goneTooFar = i - lastValidIndex >= Path.noMoreThanOneEvery;
+				final boolean goneTooFar = i -
+					lastValidIndex >= Path.noMoreThanOneEvery;
 				boolean nextValid = false;
-				if (i < (totalPoints - 1))
-					if (valid[i + 1])
-						nextValid = true;
+				if (i < (totalPoints - 1)) if (valid[i + 1]) nextValid = true;
 
 				if ((goneTooFar && !nextValid) || firstOrLast) {
 					valid[i] = true;
@@ -555,15 +554,18 @@ public class PathFitter implements Callable<Path> {
 					rsUnscaled[i] = 1;
 					rs[i] = scaleInNormalPlane;
 				}
-				//NB: We'll add the points to the path in bulk later on
+				// NB: We'll add the points to the path in bulk later on
 				fittedPoints++;
 				lastValidIndex = i;
 			}
 		}
 
-		final double[] fitted_ts_x = (outputRadii) ? new double[fittedPoints] : null;
-		final double[] fitted_ts_y = (outputRadii) ? new double[fittedPoints] : null;
-		final double[] fitted_ts_z = (outputRadii) ? new double[fittedPoints] : null;
+		final double[] fitted_ts_x = (outputRadii) ? new double[fittedPoints]
+			: null;
+		final double[] fitted_ts_y = (outputRadii) ? new double[fittedPoints]
+			: null;
+		final double[] fitted_ts_z = (outputRadii) ? new double[fittedPoints]
+			: null;
 		final double[] fitted_rs = (outputRadii) ? new double[fittedPoints] : null;
 		final double[] fitted_optimized_x = new double[fittedPoints];
 		final double[] fitted_optimized_y = new double[fittedPoints];
@@ -572,9 +574,12 @@ public class PathFitter implements Callable<Path> {
 		int added = 0;
 		for (int i = 0; i < totalPoints; ++i) {
 			if (!valid[i]) continue;
-			fitted_optimized_x[added] = (fitPoints) ? optimized_x[i] : path.precise_x_positions[i];
-			fitted_optimized_y[added] = (fitPoints) ? optimized_y[i] : path.precise_y_positions[i];
-			fitted_optimized_z[added] = (fitPoints) ? optimized_z[i] : path.precise_z_positions[i];
+			fitted_optimized_x[added] = (fitPoints) ? optimized_x[i]
+				: path.precise_x_positions[i];
+			fitted_optimized_y[added] = (fitPoints) ? optimized_y[i]
+				: path.precise_y_positions[i];
+			fitted_optimized_z[added] = (fitPoints) ? optimized_z[i]
+				: path.precise_z_positions[i];
 			if (outputRadii) {
 				fitted_ts_x[added] = (fitRadii) ? ts_x[i] : path.tangents_x[i];
 				fitted_ts_y[added] = (fitRadii) ? ts_y[i] : path.tangents_y[i];
@@ -588,30 +593,36 @@ public class PathFitter implements Callable<Path> {
 //			throw new IllegalArgumentException(
 //					"Mismatch of lengths, added=" + added + " and fittedLength=" + fittedPoints);
 
-		fitted.setFittedCircles(fittedPoints, fitted_ts_x, fitted_ts_y, fitted_ts_z, fitted_rs, //
-				fitted_optimized_x, fitted_optimized_y, fitted_optimized_z);
+		fitted.setFittedCircles(fittedPoints, fitted_ts_x, fitted_ts_y, fitted_ts_z,
+			fitted_rs, //
+			fitted_optimized_x, fitted_optimized_y, fitted_optimized_z);
 
-		SNT.log("Done. With " + fittedPoints +"/"+ totalPoints + " accepted fits");
+		SNT.log("Done. With " + fittedPoints + "/" + totalPoints +
+			" accepted fits");
 		if (showDetailedFittingResults) {
 			SNT.log("Generating annotated cross view stack");
-			final ImagePlus imp = new ImagePlus("Cross-section View " + fitted.getName(), stack);
+			final ImagePlus imp = new ImagePlus("Cross-section View " + fitted
+				.getName(), stack);
 			imp.setCalibration(this.imp.getCalibration());
 			if (plugin == null) {
 				imp.show();
-			} else {
-				final NormalPlaneCanvas normalCanvas = new NormalPlaneCanvas(imp, plugin, centre_x_positionsUnscaled,
-						centre_y_positionsUnscaled, rsUnscaled, scores, modeRadiusesUnscaled, angles, valid, fitted);
+			}
+			else {
+				final NormalPlaneCanvas normalCanvas = new NormalPlaneCanvas(imp,
+					plugin, centre_x_positionsUnscaled, centre_y_positionsUnscaled,
+					rsUnscaled, scores, modeRadiusesUnscaled, angles, valid, fitted);
 				normalCanvas.showImage();
 			}
 		}
 
 	}
 
-
-	private boolean circlesOverlap(final double n1x, final double n1y, final double n1z, final double c1x,
-			final double c1y, final double c1z, final double radius1, final double n2x, final double n2y,
-			final double n2z, final double c2x, final double c2y, final double c2z, final double radius2)
-			throws IllegalArgumentException {
+	private boolean circlesOverlap(final double n1x, final double n1y,
+		final double n1z, final double c1x, final double c1y, final double c1z,
+		final double radius1, final double n2x, final double n2y, final double n2z,
+		final double c2x, final double c2y, final double c2z, final double radius2)
+		throws IllegalArgumentException
+	{
 		/*
 		 * Roughly following the steps described here:
 		 * http://local.wasp.uwa.edu.au/~pbourke/geometry/planeplane/
@@ -624,7 +635,9 @@ public class PathFitter implements Callable<Path> {
 		final double crossx = n1y * n2z - n1z * n2y;
 		final double crossy = n1z * n2x - n1x * n2z;
 		final double crossz = n1x * n2y - n1y * n2x;
-		if (Math.abs(crossx) < epsilon && Math.abs(crossy) < epsilon && Math.abs(crossz) < epsilon) {
+		if (Math.abs(crossx) < epsilon && Math.abs(crossy) < epsilon && Math.abs(
+			crossz) < epsilon)
+		{
 			// Then they don't overlap unless they're in
 			// the same plane:
 			final double cdiffx = c2x - c1x;
@@ -670,22 +683,24 @@ public class PathFitter implements Callable<Path> {
 		 *
 		 */
 		final double a1 = crossx * crossx + crossy * crossy + crossz * crossz;
-		final double b1 = 2 * (crossx * (constant1 * n1x + constant2 * n2x - c1x)
-				+ crossy * (constant1 * n1y + constant2 * n2y - c1y)
-				+ crossz * (constant1 * n1z + constant2 * n2z - c1z));
-		final double c1 = (constant1 * n1x + constant2 * n2x - c1x) * (constant1 * n1x + constant2 * n2x - c1x)
-				+ (constant1 * n1y + constant2 * n2y - c1y) * (constant1 * n1y + constant2 * n2y - c1y)
-				+ (constant1 * n1z + constant2 * n2z - c1z) * (constant1 * n1z + constant2 * n2z - c1z)
-				- radius1 * radius1;
+		final double b1 = 2 * (crossx * (constant1 * n1x + constant2 * n2x - c1x) +
+			crossy * (constant1 * n1y + constant2 * n2y - c1y) + crossz * (constant1 *
+				n1z + constant2 * n2z - c1z));
+		final double c1 = (constant1 * n1x + constant2 * n2x - c1x) * (constant1 *
+			n1x + constant2 * n2x - c1x) + (constant1 * n1y + constant2 * n2y - c1y) *
+				(constant1 * n1y + constant2 * n2y - c1y) + (constant1 * n1z +
+					constant2 * n2z - c1z) * (constant1 * n1z + constant2 * n2z - c1z) -
+			radius1 * radius1;
 
 		final double a2 = crossx * crossx + crossy * crossy + crossz * crossz;
-		final double b2 = 2 * (crossx * (constant1 * n1x + constant2 * n2x - c2x)
-				+ crossy * (constant1 * n1y + constant2 * n2y - c2y)
-				+ crossz * (constant1 * n1z + constant2 * n2z - c2z));
-		final double c2 = (constant1 * n1x + constant2 * n2x - c2x) * (constant1 * n1x + constant2 * n2x - c2x)
-				+ (constant1 * n1y + constant2 * n2y - c2y) * (constant1 * n1y + constant2 * n2y - c2y)
-				+ (constant1 * n1z + constant2 * n2z - c2z) * (constant1 * n1z + constant2 * n2z - c2z)
-				- radius2 * radius2;
+		final double b2 = 2 * (crossx * (constant1 * n1x + constant2 * n2x - c2x) +
+			crossy * (constant1 * n1y + constant2 * n2y - c2y) + crossz * (constant1 *
+				n1z + constant2 * n2z - c2z));
+		final double c2 = (constant1 * n1x + constant2 * n2x - c2x) * (constant1 *
+			n1x + constant2 * n2x - c2x) + (constant1 * n1y + constant2 * n2y - c2y) *
+				(constant1 * n1y + constant2 * n2y - c2y) + (constant1 * n1z +
+					constant2 * n2z - c2z) * (constant1 * n1z + constant2 * n2z - c2z) -
+			radius2 * radius2;
 
 		// So now calculate the discriminants:
 		final double discriminant1 = b1 * b1 - 4 * a1 * c1;
@@ -714,22 +729,18 @@ public class PathFitter implements Callable<Path> {
 		final double u2_larger = Math.max(u2_1, u2_2);
 
 		// Non-overlapping cases:
-		if (u1_larger < u2_smaller)
-			return false;
-		if (u2_larger < u1_smaller)
-			return false;
+		if (u1_larger < u2_smaller) return false;
+		if (u2_larger < u1_smaller) return false;
 
 		// Totally overlapping cases:
-		if (u1_smaller <= u2_smaller && u2_larger <= u1_larger)
-			return true;
-		if (u2_smaller <= u1_smaller && u1_larger <= u2_larger)
-			return true;
+		if (u1_smaller <= u2_smaller && u2_larger <= u1_larger) return true;
+		if (u2_smaller <= u1_smaller && u1_larger <= u2_larger) return true;
 
 		// Partially overlapping cases:
-		if (u1_smaller <= u2_smaller && u2_smaller <= u1_larger && u1_larger <= u2_larger)
-			return true;
-		if (u2_smaller <= u1_smaller && u1_smaller <= u2_larger && u2_larger <= u1_larger)
-			return true;
+		if (u1_smaller <= u2_smaller && u2_smaller <= u1_larger &&
+			u1_larger <= u2_larger) return true;
+		if (u2_smaller <= u1_smaller && u1_smaller <= u2_larger &&
+			u2_larger <= u1_larger) return true;
 
 		/*
 		 * We only reach here if something has gone badly wrong, so dump helpful values
@@ -746,24 +757,25 @@ public class PathFitter implements Callable<Path> {
 		SNT.log("radius1: " + radius1);
 		SNT.log("radius2: " + radius2);
 
-		throw new IllegalArgumentException("Some overlapping case missed: " + "u1_smaller=" + u1_smaller + "u1_larger="
-				+ u1_larger + "u2_smaller=" + u2_smaller + "u2_larger=" + u2_larger);
+		throw new IllegalArgumentException("Some overlapping case missed: " +
+			"u1_smaller=" + u1_smaller + "u1_larger=" + u1_larger + "u2_smaller=" +
+			u2_smaller + "u2_larger=" + u2_larger);
 	}
 
-
 	private float[] squareNormalToVector(final int side, // The number of samples
-															// in x and y in the
-															// plane, separated by
-															// step
-			final double step, // step is in the same units as the _spacing,
-								// etc. variables.
-			final double ox, /* These are scaled now */
-			final double oy, final double oz, final double nx, final double ny, final double nz,
-			final double[] x_basis_vector, /*
-											 * The basis vectors are returned here
-											 */
-			final double[] y_basis_vector, /* they *are* scaled by _spacing */
-			final ImagePlus image) {
+		// in x and y in the
+		// plane, separated by
+		// step
+		final double step, // step is in the same units as the _spacing,
+		// etc. variables.
+		final double ox, /* These are scaled now */
+		final double oy, final double oz, final double nx, final double ny,
+		final double nz, final double[] x_basis_vector, /*
+																										* The basis vectors are returned here
+																										*/
+		final double[] y_basis_vector, /* they *are* scaled by _spacing */
+		final ImagePlus image)
+	{
 
 		final float[] result = new float[side * side];
 
@@ -782,7 +794,8 @@ public class PathFitter implements Callable<Path> {
 			ax = nz;
 			ay = 0;
 			az = -nx;
-		} else {
+		}
+		else {
 			// Cross with (0,0,1):
 			ax = -ny;
 			ay = nx;
@@ -849,7 +862,8 @@ public class PathFitter implements Callable<Path> {
 					fa[i] = bytePixels[i] & 0xFF;
 				v[z] = fa;
 			}
-		} else if (imageType == ImagePlus.GRAY16) {
+		}
+		else if (imageType == ImagePlus.GRAY16) {
 			for (int z = 0; z < depth; ++z) {
 				final short[] shortPixels = (short[]) s.getPixels(z + 1);
 				final float[] fa = new float[arraySize];
@@ -857,7 +871,8 @@ public class PathFitter implements Callable<Path> {
 					fa[i] = shortPixels[i];
 				v[z] = fa;
 			}
-		} else if (imageType == ImagePlus.GRAY32) {
+		}
+		else if (imageType == ImagePlus.GRAY32) {
 			for (int z = 0; z < depth; ++z) {
 				v[z] = (float[]) s.getPixels(z + 1);
 			}
@@ -911,8 +926,10 @@ public class PathFitter implements Callable<Path> {
 				double fcc;
 				double ccc;
 
-				if ((x_f < 0) || (x_c < 0) || (y_f < 0) || (y_c < 0) || (z_f < 0) || (z_c < 0) || (x_f >= width)
-						|| (x_c >= width) || (y_f >= height) || (y_c >= height) || (z_f >= depth) || (z_c >= depth)) {
+				if ((x_f < 0) || (x_c < 0) || (y_f < 0) || (y_c < 0) || (z_f < 0) ||
+					(z_c < 0) || (x_f >= width) || (x_c >= width) || (y_f >= height) ||
+					(y_c >= height) || (z_f >= depth) || (z_c >= depth))
+				{
 
 					fff = 0;
 					cff = 0;
@@ -923,7 +940,8 @@ public class PathFitter implements Callable<Path> {
 					fcc = 0;
 					ccc = 0;
 
-				} else {
+				}
+				else {
 
 					fff = v[z_f][width * y_f + x_f];
 					cff = v[z_c][width * y_f + x_f];
@@ -967,8 +985,9 @@ public class PathFitter implements Callable<Path> {
 		return result;
 	}
 
-
-	private class CircleAttempt implements MultivariateFunction, Comparable<CircleAttempt> {
+	private class CircleAttempt implements MultivariateFunction,
+		Comparable<CircleAttempt>
+	{
 
 		double min;
 		float[] data;
@@ -976,8 +995,9 @@ public class PathFitter implements Callable<Path> {
 		float maxValueInData;
 		int side;
 
-		public CircleAttempt(final double[] start, final float[] data, final float minValueInData,
-				final float maxValueInData, final int side) {
+		public CircleAttempt(final double[] start, final float[] data,
+			final float minValueInData, final float maxValueInData, final int side)
+		{
 
 			this.data = data;
 			this.minValueInData = minValueInData;
@@ -989,12 +1009,9 @@ public class PathFitter implements Callable<Path> {
 
 		@Override
 		public int compareTo(final CircleAttempt o) {
-			if (min < o.min)
-				return -1;
-			else if (min > o.min)
-				return +1;
-			else
-				return 0;
+			if (min < o.min) return -1;
+			else if (min > o.min) return +1;
+			else return 0;
 		}
 
 		@Override
@@ -1024,26 +1041,28 @@ public class PathFitter implements Callable<Path> {
 			return badness;
 		}
 
-		public double evaluateCircle(final double x, final double y, final double r) {
+		public double evaluateCircle(final double x, final double y,
+			final double r)
+		{
 
-			final double maximumPointPenalty = (maxValueInData - minValueInData) * (maxValueInData - minValueInData);
+			final double maximumPointPenalty = (maxValueInData - minValueInData) *
+				(maxValueInData - minValueInData);
 
 			double badness = 0;
 
 			for (int i = 0; i < side; ++i) {
 				for (int j = 0; j < side; ++j) {
 					final float value = data[j * side + i];
-					if (r * r > ((i - x) * (i - x) + (j - y) * (j - y)))
-						badness += (maxValueInData - value) * (maxValueInData - value);
-					else
-						badness += (value - minValueInData) * (value - minValueInData);
+					if (r * r > ((i - x) * (i - x) + (j - y) * (j - y))) badness +=
+						(maxValueInData - value) * (maxValueInData - value);
+					else badness += (value - minValueInData) * (value - minValueInData);
 				}
 			}
 
 			for (double ic = (x - r); ic <= (x + r); ++ic) {
 				for (double jc = (y - r); jc <= (y + r); ++jc) {
-					if (ic < 0 || ic > side || jc < 0 || jc > side)
-						badness += maximumPointPenalty;
+					if (ic < 0 || ic > side || jc < 0 || jc > side) badness +=
+						maximumPointPenalty;
 				}
 			}
 

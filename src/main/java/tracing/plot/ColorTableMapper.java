@@ -19,21 +19,24 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-package tracing.plot;
 
-import org.jzy3d.colors.Color;
-import org.jzy3d.colors.ColorMapper;
+package tracing.plot;
 
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
 
+import org.jzy3d.colors.Color;
+import org.jzy3d.colors.ColorMapper;
+
 class ColorTableMapper extends ColorMapper {
 
-	private ColorTable colorTable;
+	private final ColorTable colorTable;
 	private double min;
 	private double max;
 
-	public ColorTableMapper(final ColorTable colorTable, final double min, final double max) {
+	public ColorTableMapper(final ColorTable colorTable, final double min,
+		final double max)
+	{
 		super();
 		this.colorTable = (colorTable == null) ? ColorTables.ICE : colorTable;
 		this.min = min;
@@ -43,14 +46,12 @@ class ColorTableMapper extends ColorMapper {
 	@Override
 	public Color getColor(final double mappedValue) {
 		final int idx;
-		if (mappedValue <= min)
-			idx = 0;
-		else if (mappedValue > max)
-			idx = colorTable.getLength() - 1;
-		else
-			idx = (int) Math.round((colorTable.getLength() - 1) * (mappedValue - min) / (max - min));
-		return new Color(colorTable.get(ColorTable.RED, idx), colorTable.get(ColorTable.GREEN, idx),
-				colorTable.get(ColorTable.BLUE, idx));
+		if (mappedValue <= min) idx = 0;
+		else if (mappedValue > max) idx = colorTable.getLength() - 1;
+		else idx = (int) Math.round((colorTable.getLength() - 1) * (mappedValue -
+			min) / (max - min));
+		return new Color(colorTable.get(ColorTable.RED, idx), colorTable.get(
+			ColorTable.GREEN, idx), colorTable.get(ColorTable.BLUE, idx));
 	}
 
 	@Override
@@ -64,12 +65,12 @@ class ColorTableMapper extends ColorMapper {
 	}
 
 	@Override
-	public void setMin(double min) {
+	public void setMin(final double min) {
 		this.min = min;
 	}
 
 	@Override
-	public void setMax(double max) {
+	public void setMax(final double max) {
 		this.max = max;
 	}
 

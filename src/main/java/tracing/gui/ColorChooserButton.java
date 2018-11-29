@@ -24,8 +24,6 @@ package tracing.gui;
 
 import java.awt.Color;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
@@ -49,18 +47,24 @@ public class ColorChooserButton extends JButton {
 		this(c, label, 1d);
 	}
 
-	public ColorChooserButton(final Color c, final String label, final double scaleFactor) {
+	public ColorChooserButton(final Color c, final String label,
+		final double scaleFactor)
+	{
 		this(c, label, scaleFactor, SwingConstants.LEFT);
 	}
 
-	public ColorChooserButton(final Color c, final String label, final double scaleFactor, final int textPosition) {
+	public ColorChooserButton(final Color c, final String label,
+		final double scaleFactor, final int textPosition)
+	{
 		super(label);
 		if (scaleFactor != 1d) {
-			setFont(getFont().deriveFont((float) (getFont().getSize() * scaleFactor)));
+			setFont(getFont().deriveFont((float) (getFont().getSize() *
+				scaleFactor)));
 			final Insets margin = getMargin();
 			if (margin != null) {
-				setMargin(new Insets((int) (margin.top * scaleFactor), (int) (margin.left * scaleFactor),
-						(int) (margin.bottom * scaleFactor), (int) (margin.right * scaleFactor)));
+				setMargin(new Insets((int) (margin.top * scaleFactor),
+					(int) (margin.left * scaleFactor), (int) (margin.bottom *
+						scaleFactor), (int) (margin.right * scaleFactor)));
 			}
 		}
 		setSelectedColor(c);
@@ -68,19 +72,14 @@ public class ColorChooserButton extends JButton {
 		setVerticalTextPosition(SwingConstants.CENTER);
 		setHorizontalTextPosition(textPosition);
 		setIconTextGap(getFontMetrics(getFont()).stringWidth("  "));
-		addActionListener(new ActionListener() {
+		addActionListener(arg0 -> {
+			if (arg0 == null) return;
+			final String title = (thisButton.getName() == null) ? "Choose new color"
+				: "New " + thisButton.getName();
+			final Color newColor = new GuiUtils(SwingUtilities.getRoot(thisButton))
+				.getColor(title, getSelectedColor(), "HSB");
+			setSelectedColor(newColor);
 
-			@Override
-			public void actionPerformed(final ActionEvent arg0) {
-				if (arg0 == null)
-					return;
-				final String title = (thisButton.getName() == null) ? "Choose new color"
-						: "New " + thisButton.getName();
-				final Color newColor = new GuiUtils(SwingUtilities.getRoot(thisButton)).getColor(title,
-						getSelectedColor(), "HSB");
-				setSelectedColor(newColor);
-
-			}
 		});
 	}
 
@@ -93,14 +92,12 @@ public class ColorChooserButton extends JButton {
 	}
 
 	public void setSelectedColor(final Color newColor, final boolean notify) {
-		if (newColor == null)
-			return;
+		if (newColor == null) return;
 		current = newColor;
 		final int h = getFontMetrics(getFont()).getAscent();
 		setIcon(GuiUtils.createIcon(current, h * 2, h));
 		repaint();
-		if (notify && listener != null)
-			listener.colorChanged(newColor);
+		if (notify && listener != null) listener.colorChanged(newColor);
 	}
 
 	public void addColorChangedListener(final ColorChangedListener listener) {
@@ -115,26 +112,20 @@ public class ColorChooserButton extends JButton {
 	public static void main(final String[] args) {
 		final javax.swing.JFrame f = new javax.swing.JFrame();
 		f.setLayout(new java.awt.FlowLayout());
-		final ColorChooserButton colorChooser1 = new ColorChooserButton(Color.WHITE, "Selected");
+		final ColorChooserButton colorChooser1 = new ColorChooserButton(Color.WHITE,
+			"Selected");
 		colorChooser1.setName("Color for Selected Paths");
-		colorChooser1.addColorChangedListener(new ColorChangedListener() {
-
-			@Override
-			public void colorChanged(final Color newColor) {
-				System.out.print(colorChooser1);
-				System.out.print(newColor);
-			}
+		colorChooser1.addColorChangedListener(newColor -> {
+			System.out.print(colorChooser1);
+			System.out.print(newColor);
 		});
 		f.add(colorChooser1);
-		final ColorChooserButton colorChooser2 = new ColorChooserButton(Color.RED, "Deselected");
+		final ColorChooserButton colorChooser2 = new ColorChooserButton(Color.RED,
+			"Deselected");
 		colorChooser2.setName("Color for Deselected Paths");
-		colorChooser2.addColorChangedListener(new ColorChangedListener() {
-
-			@Override
-			public void colorChanged(final Color newColor) {
-				System.out.print(colorChooser2);
-				System.out.print(newColor);
-			}
+		colorChooser2.addColorChangedListener(newColor -> {
+			System.out.print(colorChooser2);
+			System.out.print(newColor);
 		});
 		f.add(colorChooser2);
 

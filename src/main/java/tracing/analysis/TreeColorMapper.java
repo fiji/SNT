@@ -34,13 +34,14 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.imagej.ImageJ;
+import net.imagej.lut.LUTService;
+import net.imglib2.display.ColorTable;
+
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.Context;
 import org.scijava.plugin.Parameter;
 
-import net.imagej.ImageJ;
-import net.imagej.lut.LUTService;
-import net.imglib2.display.ColorTable;
 import sholl.ProfileEntry;
 import sholl.UPoint;
 import sholl.math.LinearProfileStats;
@@ -55,7 +56,6 @@ import tracing.util.PointInImage;
  * Class for color coding {@link Tree}s.
  *
  * @author Tiago Ferreira
- *
  */
 public class TreeColorMapper extends ColorMapper {
 
@@ -74,10 +74,13 @@ public class TreeColorMapper extends ColorMapper {
 	private static final String INTERNAL_COUNTER = "Id";
 
 	public static final String[] COMMON_MEASUREMENTS = { //
-			TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH, TreeColorMapper.N_BRANCH_POINTS, //
-			TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE, TreeColorMapper.MEAN_RADIUS, //
-			TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES, TreeColorMapper.Y_COORDINATES, //
-			TreeColorMapper.Z_COORDINATES };
+		TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH,
+		TreeColorMapper.N_BRANCH_POINTS, //
+		TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE,
+		TreeColorMapper.MEAN_RADIUS, //
+		TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES,
+		TreeColorMapper.Y_COORDINATES, //
+		TreeColorMapper.Z_COORDINATES };
 
 	@Parameter
 	private LUTService lutService;
@@ -89,9 +92,8 @@ public class TreeColorMapper extends ColorMapper {
 	/**
 	 * Instantiates the Colorizer.
 	 *
-	 * @param context
-	 *            the SciJava application context providing the services required by
-	 *            the class
+	 * @param context the SciJava application context providing the services
+	 *          required by the class
 	 */
 	public TreeColorMapper(final Context context) {
 		context.inject(this);
@@ -99,15 +101,13 @@ public class TreeColorMapper extends ColorMapper {
 
 	/**
 	 * Instantiates the Colorizer. Note that because the instance is not aware of
-	 * any context, script-friendly methods that use string as arguments may fail to
-	 * retrieve referenced Scijava objects.
+	 * any context, script-friendly methods that use string as arguments may fail
+	 * to retrieve referenced Scijava objects.
 	 */
-	public TreeColorMapper() {
-	}
+	public TreeColorMapper() {}
 
 	private void initLuts() {
-		if (luts == null)
-			luts = lutService.findLUTs();
+		if (luts == null) luts = lutService.findLUTs();
 	}
 
 	protected ColorTable getColorTable(final String lut) {
@@ -116,7 +116,8 @@ public class TreeColorMapper extends ColorMapper {
 			if (entry.getKey().contains(lut)) {
 				try {
 					return lutService.loadLUT(entry.getValue());
-				} catch (final IOException e) {
+				}
+				catch (final IOException e) {
 					e.printStackTrace();
 				}
 			}
@@ -124,98 +125,109 @@ public class TreeColorMapper extends ColorMapper {
 		return null;
 	}
 
-	protected void mapToProperty(final String measurement, final ColorTable colorTable) {
+	protected void mapToProperty(final String measurement,
+		final ColorTable colorTable)
+	{
 		map(measurement, colorTable);
 		final String cMeasurement = normalizedMeasurement(measurement);
 		switch (cMeasurement) {
-		case PATH_DISTANCE:
-			final TreeParser parser = new TreeParser(new Tree(paths));
-			try {
-				parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
-			} catch (final IllegalArgumentException ignored) {
-				SNT.log("No soma attribute found... Defaulting to average of all root nodes");
-				parser.setCenter(TreeParser.PRIMARY_NODES_ANY);
-			}
-			final UPoint center = parser.getCenter();
-			final PointInImage root = new PointInImage(center.x, center.y, center.z);
-			mapPathDistances(root);
-			break;
-		case BRANCH_ORDER:
-		case LENGTH:
-		case MEAN_RADIUS:
-		case N_NODES:
-		case N_BRANCH_POINTS:
-		case INTERNAL_COUNTER:
-		case FIRST_TAG:
-			mapToPathProperty(cMeasurement, colorTable);
-			break;
-		case X_COORDINATES:
-		case Y_COORDINATES:
-		case Z_COORDINATES:
-		case NODE_RADIUS:
-			mapToNodeProperty(cMeasurement, colorTable);
-			break;
-		default:
-			throw new IllegalArgumentException("Unknown parameter");
+			case PATH_DISTANCE:
+				final TreeParser parser = new TreeParser(new Tree(paths));
+				try {
+					parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
+				}
+				catch (final IllegalArgumentException ignored) {
+					SNT.log(
+						"No soma attribute found... Defaulting to average of all root nodes");
+					parser.setCenter(TreeParser.PRIMARY_NODES_ANY);
+				}
+				final UPoint center = parser.getCenter();
+				final PointInImage root = new PointInImage(center.x, center.y,
+					center.z);
+				mapPathDistances(root);
+				break;
+			case BRANCH_ORDER:
+			case LENGTH:
+			case MEAN_RADIUS:
+			case N_NODES:
+			case N_BRANCH_POINTS:
+			case INTERNAL_COUNTER:
+			case FIRST_TAG:
+				mapToPathProperty(cMeasurement, colorTable);
+				break;
+			case X_COORDINATES:
+			case Y_COORDINATES:
+			case Z_COORDINATES:
+			case NODE_RADIUS:
+				mapToNodeProperty(cMeasurement, colorTable);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown parameter");
 		}
 	}
 
-	private void mapToPathProperty(final String measurement, final ColorTable colorTable) {
+	private void mapToPathProperty(final String measurement,
+		final ColorTable colorTable)
+	{
 		final List<MappedPath> mappedPaths = new ArrayList<>();
 		switch (measurement) {
-		case BRANCH_ORDER:
-			integerScale = true;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, (double) p.getOrder()));
-			break;
-		case LENGTH:
-			integerScale = false;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, p.getLength()));
-			break;
-		case MEAN_RADIUS:
-			integerScale = false;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, p.getMeanRadius()));
-			break;
-		case N_NODES:
-			integerScale = true;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, (double) p.size()));
-			break;
-		case N_BRANCH_POINTS:
-			integerScale = true;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, (double) p.findJoinedPoints().size()));
-			break;
-		case INTERNAL_COUNTER:
-			integerScale = true;
-			for (final Path p : paths)
-				mappedPaths.add(new MappedPath(p, (double) internalCounter));
-			break;
-		case FIRST_TAG:
-			integerScale = true;
-			final List<MappedTaggedPath> mappedTaggedPaths = new ArrayList<>();
-			final TreeSet<String> tags = new TreeSet<>();
-			for (final Path p : paths) {
-				final MappedTaggedPath mp = new MappedTaggedPath(p);
-				mappedTaggedPaths.add(mp);
-				tags.add(mp.mappedTag);
-			}
-			final int nTags = tags.size();
-			for (final MappedTaggedPath p : mappedTaggedPaths) {
-				mappedPaths.add(new MappedPath(p.path, (double)tags.headSet(p.mappedTag).size()/nTags));
-			}
-			break;
-		default:
-			throw new IllegalArgumentException("Unknown parameter");
+			case BRANCH_ORDER:
+				integerScale = true;
+				for (final Path p : paths)
+					mappedPaths.add(new MappedPath(p, (double) p.getOrder()));
+				break;
+			case LENGTH:
+				integerScale = false;
+				for (final Path p : paths)
+					mappedPaths.add(new MappedPath(p, p.getLength()));
+				break;
+			case MEAN_RADIUS:
+				integerScale = false;
+				for (final Path p : paths)
+					mappedPaths.add(new MappedPath(p, p.getMeanRadius()));
+				break;
+			case N_NODES:
+				integerScale = true;
+				for (final Path p : paths)
+					mappedPaths.add(new MappedPath(p, (double) p.size()));
+				break;
+			case N_BRANCH_POINTS:
+				integerScale = true;
+				for (final Path p : paths)
+					mappedPaths.add(new MappedPath(p, (double) p.findJoinedPoints()
+						.size()));
+				break;
+			case INTERNAL_COUNTER:
+				integerScale = true;
+				for (final Path p : paths)
+					mappedPaths.add(new MappedPath(p, (double) internalCounter));
+				break;
+			case FIRST_TAG:
+				integerScale = true;
+				final List<MappedTaggedPath> mappedTaggedPaths = new ArrayList<>();
+				final TreeSet<String> tags = new TreeSet<>();
+				for (final Path p : paths) {
+					final MappedTaggedPath mp = new MappedTaggedPath(p);
+					mappedTaggedPaths.add(mp);
+					tags.add(mp.mappedTag);
+				}
+				final int nTags = tags.size();
+				for (final MappedTaggedPath p : mappedTaggedPaths) {
+					mappedPaths.add(new MappedPath(p.path, (double) tags.headSet(
+						p.mappedTag).size() / nTags));
+				}
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown parameter");
 		}
 		for (final MappedPath mp : mappedPaths) {
 			mp.path.setColor(getColor(mp.mappedValue));
 		}
 	}
 
-	private void mapToNodeProperty(final String measurement, final ColorTable colorTable) {
+	private void mapToNodeProperty(final String measurement,
+		final ColorTable colorTable)
+	{
 		if (Double.isNaN(min) || Double.isNaN(max) || min > max) {
 			final TreeStatistics tStats = new TreeStatistics(new Tree(paths));
 			final SummaryStatistics sStats = tStats.getSummaryStats(measurement);
@@ -226,20 +238,20 @@ public class TreeColorMapper extends ColorMapper {
 			for (int node = 0; node < p.size(); node++) {
 				double value;
 				switch (measurement) {
-				case X_COORDINATES:
-					value = p.getPointInImage(node).x;
-					break;
-				case Y_COORDINATES:
-					value = p.getPointInImage(node).y;
-					break;
-				case Z_COORDINATES:
-					value = p.getPointInImage(node).z;
-					break;
-				case NODE_RADIUS:
-					value = p.getNodeRadius(node);
-					break;
-				default:
-					throw new IllegalArgumentException("Unknow parameter");
+					case X_COORDINATES:
+						value = p.getPointInImage(node).x;
+						break;
+					case Y_COORDINATES:
+						value = p.getPointInImage(node).y;
+						break;
+					case Z_COORDINATES:
+						value = p.getPointInImage(node).z;
+						break;
+					case NODE_RADIUS:
+						value = p.getNodeRadius(node);
+						break;
+					default:
+						throw new IllegalArgumentException("Unknow parameter");
 				}
 				colors[node] = getColor(value);
 			}
@@ -252,21 +264,22 @@ public class TreeColorMapper extends ColorMapper {
 			throw new IllegalArgumentException("source point cannot be null");
 		}
 
-		final boolean setLimits = (Double.isNaN(min) || Double.isNaN(max) || min > max);
+		final boolean setLimits = (Double.isNaN(min) || Double.isNaN(max) ||
+			min > max);
 		if (setLimits) {
 			min = Float.MAX_VALUE;
 			max = 0f;
 		}
 
 		// 1st pass: Calculate distances for primary paths.
-		for (Path p : paths) {
+		for (final Path p : paths) {
 			if (p.isPrimary()) {
 				float dx = (float) p.getPointInImage(0).distanceTo(root);
 				p.setValue(dx, 0);
 				for (int i = 1; i < p.size(); ++i) {
-					float dxPrev = p.getValue(i-1);
-					PointInImage prev = p.getPointInImage(i-1);
-					PointInImage curr = p.getPointInImage(i);
+					final float dxPrev = p.getValue(i - 1);
+					final PointInImage prev = p.getPointInImage(i - 1);
+					final PointInImage curr = p.getPointInImage(i);
 					dx = (float) curr.distanceTo(prev) + dxPrev;
 					p.setValue(dx, i);
 					if (setLimits) {
@@ -278,15 +291,16 @@ public class TreeColorMapper extends ColorMapper {
 		}
 
 		// 2nd pass: Calculate distances for remaining paths
-		for (Path p : paths) {
+		for (final Path p : paths) {
 			if (p.isPrimary()) continue;
-			PointInImage pim = p.getPointInImage(0);
-			float dx = p.getStartJoins().getValue(p.getStartJoins().getNodeIndex(pim)); // very inneficient
+			final PointInImage pim = p.getPointInImage(0);
+			float dx = p.getStartJoins().getValue(p.getStartJoins().getNodeIndex(
+				pim)); // very inneficient
 			p.setValue(dx, 0);
 			for (int i = 1; i < p.size(); ++i) {
-				float dxPrev = p.getValue(i-1);
-				PointInImage prev = p.getPointInImage(i-1);
-				PointInImage curr = p.getPointInImage(i);
+				final float dxPrev = p.getValue(i - 1);
+				final PointInImage prev = p.getPointInImage(i - 1);
+				final PointInImage curr = p.getPointInImage(i);
 				dx = (float) curr.distanceTo(prev) + dxPrev;
 				p.setValue(dx, i);
 				if (setLimits) {
@@ -299,28 +313,30 @@ public class TreeColorMapper extends ColorMapper {
 		// now color nodes
 		if (setLimits) setMinMax(min, max);
 		SNT.log("Coloring nodes by path distance to " + root);
-		SNT.log("Range of mapped distances: "+ min + "-"+ max);
+		SNT.log("Range of mapped distances: " + min + "-" + max);
 		for (final Path p : paths) {
 			for (int node = 0; node < p.size(); node++) {
-				//if (p.isPrimary()) System.out.println(p.getValue(node));
+				// if (p.isPrimary()) System.out.println(p.getValue(node));
 				p.setNodeColor(getColor(p.getValue(node)), node);
 			}
 		}
-	
+
 	}
 
 	/**
 	 * Colorizes a tree using Sholl data.
 	 *
-	 * @param tree       the tree to be colorized
-	 * @param stats      the LinearProfileStats instance containing the mapping
-	 *                   profile. if a polynomial fit has been successfully
-	 *                   performed, mapping is done against the fitted data,
-	 *                   otherwise sampled intersections are used.
+	 * @param tree the tree to be colorized
+	 * @param stats the LinearProfileStats instance containing the mapping
+	 *          profile. if a polynomial fit has been successfully performed,
+	 *          mapping is done against the fitted data, otherwise sampled
+	 *          intersections are used.
 	 * @param colorTable the color table specifying the color mapping. Null not
-	 *                   allowed.
+	 *          allowed.
 	 */
-	public void map(final Tree tree, final LinearProfileStats stats, final ColorTable colorTable) {
+	public void map(final Tree tree, final LinearProfileStats stats,
+		final ColorTable colorTable)
+	{
 		final UPoint ucenter = stats.getProfile().center();
 		if (ucenter == null) {
 			throw new IllegalArgumentException("Center unknown");
@@ -330,7 +346,8 @@ public class TreeColorMapper extends ColorMapper {
 		final boolean useFitted = stats.validFit();
 		SNT.log("Mapping to fitted values: " + useFitted);
 		setMinMax(stats.getMin(useFitted), stats.getMax(useFitted));
-		final PointInImage center = new PointInImage(ucenter.x, ucenter.y, ucenter.z);
+		final PointInImage center = new PointInImage(ucenter.x, ucenter.y,
+			ucenter.z);
 		final double stepSize = stats.getProfile().stepSize();
 		final double stepSizeSq = stepSize * stepSize;
 		for (final ProfileEntry entry : stats.getProfile().entries()) {
@@ -349,14 +366,15 @@ public class TreeColorMapper extends ColorMapper {
 	/**
 	 * Colorizes a tree after the specified measurement.
 	 *
-	 * @param tree
-	 *            the tree to be colorized
-	 * @param measurement
-	 *            the measurement ({@link BRANCH_ORDER} }{@link LENGTH}, etc.)
-	 * @param colorTable
-	 *            the color table specifying the color mapping. Null not allowed.
+	 * @param tree the tree to be colorized
+	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 *          etc.)
+	 * @param colorTable the color table specifying the color mapping. Null not
+	 *          allowed.
 	 */
-	public void map(final Tree tree, final String measurement, final ColorTable colorTable) {
+	public void map(final Tree tree, final String measurement,
+		final ColorTable colorTable)
+	{
 		this.paths = tree.list();
 		mapToProperty(measurement, colorTable);
 	}
@@ -365,13 +383,10 @@ public class TreeColorMapper extends ColorMapper {
 	 * Colorizes a tree after the specified measurement. Mapping bounds are
 	 * automatically determined.
 	 *
-	 * @param tree
-	 *            the tree to be plotted
-	 * @param measurement
-	 *            the measurement ({@link BRANCH_ORDER} }{@link LENGTH}, etc.)
-	 * @param lut
-	 *            the lookup table specifying the color mapping
-	 *
+	 * @param tree the tree to be plotted
+	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 *          etc.)
+	 * @param lut the lookup table specifying the color mapping
 	 */
 	public void map(final Tree tree, final String measurement, final String lut) {
 		map(tree, measurement, getColorTable(lut));
@@ -380,11 +395,8 @@ public class TreeColorMapper extends ColorMapper {
 	/**
 	 * Colorizes a list of trees, with each tree being assigned a LUT index.
 	 *
-	 * @param trees
-	 *            the list of trees to be colorized
-	 * @param lut
-	 *            the lookup table specifying the color mapping
-	 *
+	 * @param trees the list of trees to be colorized
+	 * @param lut the lookup table specifying the color mapping
 	 */
 	public void mapTrees(final List<Tree> trees, final String lut) {
 		setMinMax(1, trees.size());
@@ -412,10 +424,8 @@ public class TreeColorMapper extends ColorMapper {
 		private MappedPath(final Path path, final Double mappedValue) {
 			this.path = path;
 			this.mappedValue = mappedValue;
-			if (mappedValue > max)
-				max = mappedValue;
-			if (mappedValue < min)
-				min = mappedValue;
+			if (mappedValue > max) max = mappedValue;
+			if (mappedValue < min) min = mappedValue;
 		}
 	}
 

@@ -22,6 +22,10 @@
 
 package tracing;
 
+import com.jidesoft.swing.Searchable;
+import com.jidesoft.swing.SearchableBar;
+import com.jidesoft.swing.TreeSearchable;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -48,7 +52,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,6 +75,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
+import javax.swing.WindowConstants;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -83,19 +87,16 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import net.imagej.ImageJ;
+import net.imagej.table.DefaultGenericTable;
+
 import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.prefs.PrefService;
 
-import com.jidesoft.swing.Searchable;
-import com.jidesoft.swing.SearchableBar;
-import com.jidesoft.swing.TreeSearchable;
-
 import ij.ImagePlus;
-import net.imagej.ImageJ;
-import net.imagej.table.DefaultGenericTable;
 import tracing.analysis.TreeAnalyzer;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
@@ -113,16 +114,18 @@ import tracing.util.SWCPoint;
 
 /**
  * Creates the "Path Manager" Dialog.
- * 
+ *
  * @author Tiago Ferreira
  */
-public class PathManagerUI extends JDialog implements PathAndFillListener, TreeSelectionListener {
+public class PathManagerUI extends JDialog implements PathAndFillListener,
+	TreeSelectionListener
+{
 
 	private static final long serialVersionUID = 1L;
-	private HelpfulJTree tree;
+	private final HelpfulJTree tree;
 	private DefaultMutableTreeNode root;
 	private final SimpleNeuriteTracer plugin;
-	private PathAndFillManager pathAndFillManager;
+	private final PathAndFillManager pathAndFillManager;
 	private DefaultGenericTable table;
 	private boolean tableSaved;
 	protected SwingWorker<Object, Object> fitWorker;
@@ -141,9 +144,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	/**
 	 * Instantiates a new Path Manager {@link JFrame}
 	 *
-	 * @param plugin
-	 *            the the {@link SimpleNeuriteTracer} instance to be associated with
-	 *            this Path Manager
+	 * @param plugin the the {@link SimpleNeuriteTracer} instance to be associated
+	 *          with this Path Manager
 	 */
 	public PathManagerUI(final SimpleNeuriteTracer plugin) {
 
@@ -165,23 +167,28 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 		// Create all the menu items:
 		final NoPathActionListener noPathListener = new NoPathActionListener();
-		final SinglePathActionListener singlePathListener = new SinglePathActionListener();
-		final MultiPathActionListener multiPathListener = new MultiPathActionListener();
+		final SinglePathActionListener singlePathListener =
+			new SinglePathActionListener();
+		final MultiPathActionListener multiPathListener =
+			new MultiPathActionListener();
 
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 
 		final JMenu editMenu = new JMenu("Edit");
 		menuBar.add(editMenu);
-		final JMenuItem deleteMitem = new JMenuItem(MultiPathActionListener.DELETE_CMD);
+		final JMenuItem deleteMitem = new JMenuItem(
+			MultiPathActionListener.DELETE_CMD);
 		deleteMitem.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.TRASH));
 		deleteMitem.addActionListener(multiPathListener);
 		editMenu.add(deleteMitem);
-		final JMenuItem renameMitem = new JMenuItem(SinglePathActionListener.RENAME_CMD);
+		final JMenuItem renameMitem = new JMenuItem(
+			SinglePathActionListener.RENAME_CMD);
 		renameMitem.addActionListener(singlePathListener);
 		editMenu.add(renameMitem);
 		editMenu.addSeparator();
-		final JMenuItem primaryMitem = new JMenuItem(SinglePathActionListener.MAKE_PRIMARY_CMD);
+		final JMenuItem primaryMitem = new JMenuItem(
+			SinglePathActionListener.MAKE_PRIMARY_CMD);
 		primaryMitem.addActionListener(singlePathListener);
 		editMenu.add(primaryMitem);
 		JMenuItem jmi = new JMenuItem(SinglePathActionListener.DISCONNECT_CMD);
@@ -213,13 +220,16 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		tagsMenu.add(colorMenu);
 
 		morphoTagsMenu = new JMenu("Morphology");
-		final JCheckBoxMenuItem tagOrderCbmi = new JCheckBoxMenuItem(MultiPathActionListener.ORDER_TAG_CMD, false);
+		final JCheckBoxMenuItem tagOrderCbmi = new JCheckBoxMenuItem(
+			MultiPathActionListener.ORDER_TAG_CMD, false);
 		tagOrderCbmi.addItemListener(multiPathListener);
 		morphoTagsMenu.add(tagOrderCbmi);
-		final JCheckBoxMenuItem tagLengthCbmi = new JCheckBoxMenuItem(MultiPathActionListener.LENGTH_TAG_CMD, false);
+		final JCheckBoxMenuItem tagLengthCbmi = new JCheckBoxMenuItem(
+			MultiPathActionListener.LENGTH_TAG_CMD, false);
 		tagLengthCbmi.addItemListener(multiPathListener);
 		morphoTagsMenu.add(tagLengthCbmi);
-		final JCheckBoxMenuItem tagRadiusCbmi = new JCheckBoxMenuItem(MultiPathActionListener.MEAN_RADIUS_TAG_CMD, false);
+		final JCheckBoxMenuItem tagRadiusCbmi = new JCheckBoxMenuItem(
+			MultiPathActionListener.MEAN_RADIUS_TAG_CMD, false);
 		tagRadiusCbmi.addItemListener(multiPathListener);
 		morphoTagsMenu.add(tagRadiusCbmi);
 		tagsMenu.add(morphoTagsMenu);
@@ -237,7 +247,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		final JMenu fitMenu = new JMenu("Refine/Fit");
 		menuBar.add(fitMenu);
 		fitVolumeMenuItem = new JMenuItem("Fit Path(s)...");
-		fitVolumeMenuItem.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.CROSSHAIR));
+		fitVolumeMenuItem.setIcon(IconFactory.getMenuIcon(
+			IconFactory.GLYPH.CROSSHAIR));
 		fitVolumeMenuItem.addActionListener(multiPathListener);
 		fitMenu.add(fitVolumeMenuItem);
 		jmi = new JMenuItem(SinglePathActionListener.EXPLORE_FIT_CMD);
@@ -259,7 +270,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		final JMenu advanced = new JMenu("Analyze");
 		menuBar.add(advanced);
 		jmi = new JMenuItem(MultiPathActionListener.COLORIZE_PATH_CMD);
-		//jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.COLOR2));
+		// jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.COLOR2));
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.HISTOGRAM_CMD);
@@ -301,10 +312,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		// advanced.add(toggleDnDMenuItem);
 
 		popup = new JPopupMenu();
-		final JMenuItem deleteMitem2 = new JMenuItem(MultiPathActionListener.DELETE_CMD);
+		final JMenuItem deleteMitem2 = new JMenuItem(
+			MultiPathActionListener.DELETE_CMD);
 		deleteMitem2.addActionListener(multiPathListener);
 		popup.add(deleteMitem2);
-		final JMenuItem renameMitem2 = new JMenuItem(SinglePathActionListener.RENAME_CMD);
+		final JMenuItem renameMitem2 = new JMenuItem(
+			SinglePathActionListener.RENAME_CMD);
 		renameMitem2.addActionListener(singlePathListener);
 		popup.add(renameMitem2);
 		popup.addSeparator();
@@ -317,13 +330,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		pjmi.addActionListener(noPathListener);
 		final JMenuItem jcbmi = new JCheckBoxMenuItem("Expand Selected Nodes");
 		jcbmi.setSelected(tree.getExpandsSelectedPaths());
-		jcbmi.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(final ItemEvent e) {
-				tree.setExpandsSelectedPaths(jcbmi.isSelected());
-				tree.setScrollsOnExpand(jcbmi.isSelected());
-			}
+		jcbmi.addItemListener(e -> {
+			tree.setExpandsSelectedPaths(jcbmi.isSelected());
+			tree.setScrollsOnExpand(jcbmi.isSelected());
 		});
 		popup.addSeparator();
 		popup.add(jcbmi);
@@ -332,15 +341,15 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 			@Override
 			public void mouseReleased(final MouseEvent me) { // Required for Windows
-				if (me.isPopupTrigger())
-					showPopup(me);
+				if (me.isPopupTrigger()) showPopup(me);
 			}
 
 			@Override
 			public void mousePressed(final MouseEvent me) {
 				if (me.isPopupTrigger()) {
 					showPopup(me);
-				} else if (tree.getRowForLocation(me.getX(), me.getY()) == -1) {
+				}
+				else if (tree.getRowForLocation(me.getX(), me.getY()) == -1) {
 					tree.clearSelection(); // Deselect when clicking on 'empty space'
 				}
 			}
@@ -351,7 +360,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		final SearchableBar sBar = new SNTSearchableBar(this);
 		add(sBar, BorderLayout.PAGE_END);
 		pack();
-		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE); // prevent closing
+		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE); // prevent
+																																		// closing
 	}
 
 	private void assembleSWCtypeMenu(final boolean applyPromptOptions) {
@@ -361,47 +371,49 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		final SWCTypeOptionsCmd optionsCmd = new SWCTypeOptionsCmd();
 		optionsCmd.setContext(plugin.getContext());
 		final TreeMap<Integer, Color> map = optionsCmd.getColorMap();
-		boolean assignColors = optionsCmd.isColorPairingEnabled();
+		final boolean assignColors = optionsCmd.isColorPairingEnabled();
 		map.forEach((key, value) -> {
 
 			final Color color = (assignColors) ? value : null;
 			final ImageIcon icon = GuiUtils.createIcon(color, iconSize, iconSize);
-			final JRadioButtonMenuItem rbmi = new JRadioButtonMenuItem(Path.getSWCtypeName(key, true), icon);
+			final JRadioButtonMenuItem rbmi = new JRadioButtonMenuItem(Path
+				.getSWCtypeName(key, true), icon);
 			rbmi.setName(String.valueOf(key)); // store SWC type flag as name
 			swcTypeButtonGroup.add(rbmi);
-			rbmi.addActionListener(new ActionListener() {
-
-				@Override
-				public void actionPerformed(final ActionEvent e) {
-					final Collection<Path> selectedPaths = getSelectedPaths(true);
-					if (selectedPaths.size() == 0) {
-						guiUtils.error("There are no traced paths.");
-						selectSWCTypeMenuEntry(-1);
-						return;
-					}
-					if (tree.getSelectionCount() == 0
-							&& !guiUtils.getConfirmation("Currently no paths are selected. Change type of all paths?",
-									"Apply to All?")) {
-						selectSWCTypeMenuEntry(-1);
-						return;
-					}
-					setSWCType(selectedPaths, key, color);
-					refreshManager(true, assignColors);
+			rbmi.addActionListener(e -> {
+				final Collection<Path> selectedPaths = getSelectedPaths(true);
+				if (selectedPaths.size() == 0) {
+					guiUtils.error("There are no traced paths.");
+					selectSWCTypeMenuEntry(-1);
+					return;
 				}
+				if (tree.getSelectionCount() == 0 && !guiUtils.getConfirmation(
+					"Currently no paths are selected. Change type of all paths?",
+					"Apply to All?"))
+				{
+					selectSWCTypeMenuEntry(-1);
+					return;
+				}
+				setSWCType(selectedPaths, key, color);
+				refreshManager(true, assignColors);
 			});
 			swcTypeMenu.add(rbmi);
 		});
-		JMenuItem jmi = new JMenuItem("Options...");
+		final JMenuItem jmi = new JMenuItem("Options...");
 		jmi.addActionListener(e -> {
 
 			class GetOptions extends SwingWorker<Object, Object> {
+
 				@Override
 				public Object doInBackground() {
 					try {
-						final CommandService cmdService = plugin.getContext().getService(CommandService.class);
-						CommandModule cm = cmdService.run(SWCTypeOptionsCmd.class, true).get();
+						final CommandService cmdService = plugin.getContext().getService(
+							CommandService.class);
+						final CommandModule cm = cmdService.run(SWCTypeOptionsCmd.class,
+							true).get();
 						if (cm.isCanceled()) return null;
-					} catch (InterruptedException | ExecutionException e1) {
+					}
+					catch (InterruptedException | ExecutionException e1) {
 						e1.printStackTrace();
 					}
 					return null;
@@ -417,18 +429,23 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		});
 		swcTypeMenu.addSeparator();
 		swcTypeMenu.add(jmi);
-		if (applyPromptOptions && pathAndFillManager.size() > 0
-				&& guiUtils.getConfirmation("Apply new color options to all paths?", "Apply Colors")) {
+		if (applyPromptOptions && pathAndFillManager.size() > 0 && guiUtils
+			.getConfirmation("Apply new color options to all paths?", "Apply Colors"))
+		{
 			if (assignColors) {
-				pathAndFillManager.getPathsFiltered().forEach(p -> p.setColor(map.get(p.getSWCType())));
-			} else {
+				pathAndFillManager.getPathsFiltered().forEach(p -> p.setColor(map.get(p
+					.getSWCType())));
+			}
+			else {
 				pathAndFillManager.getPathsFiltered().forEach(p -> p.setColor(null));
 			}
 			refreshManager(false, true);
 		}
 	}
 
-	private void setSWCType(final Collection<Path> paths, final int swcType, final Color color) {
+	private void setSWCType(final Collection<Path> paths, final int swcType,
+		final Color color)
+	{
 		for (final Path p : paths) {
 			p.setSWCType(swcType);
 			p.setColor(color);
@@ -453,87 +470,96 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	/**
 	 * Gets the paths currently selected in the Manager's {@link JTree} list.
 	 *
-	 * @param ifNoneSelectedGetAll
-	 *            if true and no paths are currently selected, all Paths in the list
-	 *            will be returned
-	 * @return the selected paths. Note that children of a Path are not returned if
-	 *         unselected.
+	 * @param ifNoneSelectedGetAll if true and no paths are currently selected,
+	 *          all Paths in the list will be returned
+	 * @return the selected paths. Note that children of a Path are not returned
+	 *         if unselected.
 	 */
 	public Collection<Path> getSelectedPaths(final boolean ifNoneSelectedGetAll) {
-		return SwingSafeResult.getResult(new Callable<Collection<Path>>() {
-
-			@Override
-			public Collection<Path> call() {
-				if (ifNoneSelectedGetAll && tree.getSelectionCount() == 0)
-					return pathAndFillManager.getPathsFiltered();
-				final Collection<Path> result = new ArrayList<>();
-				final TreePath[] selectedPaths = tree.getSelectionPaths();
-				if (selectedPaths == null || selectedPaths.length == 0) {
-					return result;
-				}
-				for (final TreePath tp : selectedPaths) {
-					final DefaultMutableTreeNode node = (DefaultMutableTreeNode) (tp.getLastPathComponent());
-					if (node != root) {
-						final Path p = (Path) node.getUserObject();
-						result.add(p);
-					}
-				}
+		return SwingSafeResult.getResult(() -> {
+			if (ifNoneSelectedGetAll && tree.getSelectionCount() == 0)
+				return pathAndFillManager.getPathsFiltered();
+			final Collection<Path> result = new ArrayList<>();
+			final TreePath[] selectedPaths = tree.getSelectionPaths();
+			if (selectedPaths == null || selectedPaths.length == 0) {
 				return result;
 			}
+			for (final TreePath tp : selectedPaths) {
+				final DefaultMutableTreeNode node = (DefaultMutableTreeNode) (tp
+					.getLastPathComponent());
+				if (node != root) {
+					final Path p = (Path) node.getUserObject();
+					result.add(p);
+				}
+			}
+			return result;
 		});
 	}
 
 	private int[] getFittingOptionsFromUser() {
-		final int[] options = new int[] { PathFitter.RADII, PathFitter.DEFAULT_MAX_RADIUS };
+		final int[] options = new int[] { PathFitter.RADII,
+			PathFitter.DEFAULT_MAX_RADIUS };
 		String fitTypeString = null;
 		String maxRadiustring = null;
-		final PrefService prefService = plugin.getContext().getService(PrefService.class);
-		final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+		final PrefService prefService = plugin.getContext().getService(
+			PrefService.class);
+		final CommandService cmdService = plugin.getContext().getService(
+			CommandService.class);
 		try {
-			CommandModule cm = cmdService.run(PathFitterCmd.class, true).get();
+			final CommandModule cm = cmdService.run(PathFitterCmd.class, true).get();
 			if (cm.isCanceled()) return null;
-			fitTypeString = prefService.get(PathFitterCmd.class, PathFitterCmd.FITCHOICE_KEY);
-			maxRadiustring = prefService.get(PathFitterCmd.class, PathFitterCmd.MAXRADIUS_KEY);
-		} catch (final InterruptedException | ExecutionException e) {
+			fitTypeString = prefService.get(PathFitterCmd.class,
+				PathFitterCmd.FITCHOICE_KEY);
+			maxRadiustring = prefService.get(PathFitterCmd.class,
+				PathFitterCmd.MAXRADIUS_KEY);
+		}
+		catch (final InterruptedException | ExecutionException e) {
 			return null;
 		}
 
-		if (fitTypeString == null || fitTypeString.isEmpty() || maxRadiustring == null || maxRadiustring.isEmpty()) {
+		if (fitTypeString == null || fitTypeString.isEmpty() ||
+			maxRadiustring == null || maxRadiustring.isEmpty())
+		{
 			return null;
 		}
 		try {
 			options[0] = Integer.parseInt(fitTypeString);
 			options[1] = Integer.parseInt(maxRadiustring);
-		} catch (final NumberFormatException ex) {
+		}
+		catch (final NumberFormatException ex) {
 			SNT.error("Could not parse settings. Adopting Defaults...", ex);
 		}
 		return options;
 	}
 
-	private void fitPaths(final List<PathFitter> pathsToFit, final int fitType, final int maxRadius) {
+	private void fitPaths(final List<PathFitter> pathsToFit, final int fitType,
+		final int maxRadius)
+	{
 		assert SwingUtilities.isEventDispatchThread();
 
-		if (pathsToFit.isEmpty())
-			return; // nothing to fit
+		if (pathsToFit.isEmpty()) return; // nothing to fit
 
 		final SNTUI ui = plugin.getUI();
 		final int preFittingState = ui.getState();
 		ui.changeState(SNTUI.FITTING_PATHS);
 		final int numberOfPathsToFit = pathsToFit.size();
-		final int processors = Math.min(numberOfPathsToFit, Runtime.getRuntime().availableProcessors());
+		final int processors = Math.min(numberOfPathsToFit, Runtime.getRuntime()
+			.availableProcessors());
 		final String statusMsg = (processors == 1) ? "Fitting 1 path..."
-				: "Fitting " + numberOfPathsToFit + " paths (" + processors + " threads)...";
+			: "Fitting " + numberOfPathsToFit + " paths (" + processors +
+				" threads)...";
 		ui.showStatus(statusMsg, false);
 		setEnabledCommands(false);
 		final JDialog msg = guiUtils.floatingMsg(statusMsg, false);
 
 		fitWorker = new SwingWorker<Object, Object>() {
-	
+
 			@Override
 			protected Object doInBackground() {
 
 				final ExecutorService es = Executors.newFixedThreadPool(processors);
-				final FittingProgress progress = new FittingProgress(plugin.getUI(), plugin.statusService, numberOfPathsToFit);
+				final FittingProgress progress = new FittingProgress(plugin.getUI(),
+					plugin.statusService, numberOfPathsToFit);
 				try {
 					for (int i = 0; i < numberOfPathsToFit; ++i) {
 						final PathFitter pf = pathsToFit.get(i);
@@ -544,11 +570,14 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 					for (final Future<Path> future : es.invokeAll(pathsToFit)) {
 						pathAndFillManager.addPath(future.get());
 					}
-				} catch (InterruptedException | ExecutionException | RuntimeException e) {
+				}
+				catch (InterruptedException | ExecutionException | RuntimeException e) {
 					msg.dispose();
-					guiUtils.error("Unfortunately an Exception occured. See Console for details");
+					guiUtils.error(
+						"Unfortunately an Exception occured. See Console for details");
 					e.printStackTrace();
-				} finally {
+				}
+				finally {
 					progress.done();
 				}
 				return null;
@@ -570,8 +599,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		if (fitWorker != null) {
 			synchronized (fitWorker) {
 				fitWorker.cancel(true);
-				if (updateUIState)
-					plugin.changeUIState(SNTUI.WAITING_TO_START_PATH);
+				if (updateUIState) plugin.changeUIState(SNTUI.WAITING_TO_START_PATH);
 				fitWorker = null;
 			}
 		}
@@ -582,30 +610,33 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		List<SWCPoint> swcPoints = null;
 		try {
 			swcPoints = pathAndFillManager.getSWCFor(selectedPaths);
-		} catch (final SWCExportException see) {
+		}
+		catch (final SWCExportException see) {
 			guiUtils.error("" + see.getMessage());
 			return;
 		}
 
 		File saveFile = new File(plugin.getImagePlus().getShortTitle(), ".swc");
-		saveFile = guiUtils.saveFile("Export SWC file ...", saveFile, Collections.singletonList(".swc"));
+		saveFile = guiUtils.saveFile("Export SWC file ...", saveFile, Collections
+			.singletonList(".swc"));
 
 		if (saveFile == null) {
 			return; // user pressed cancel
 		}
 
-		if (saveFile.exists()
-				&& !guiUtils.getConfirmation("The file " + saveFile.getAbsolutePath() + " already exists. Replace it?",
-						"Override?"))
-			return;
+		if (saveFile.exists() && !guiUtils.getConfirmation("The file " + saveFile
+			.getAbsolutePath() + " already exists. Replace it?", "Override?")) return;
 
-		plugin.statusService.showStatus("Exporting SWC data to " + saveFile.getAbsolutePath());
+		plugin.statusService.showStatus("Exporting SWC data to " + saveFile
+			.getAbsolutePath());
 
 		try {
-			final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(saveFile), "UTF-8"));
+			final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
+				new FileOutputStream(saveFile), "UTF-8"));
 			pathAndFillManager.flushSWCPoints(swcPoints, pw);
 			pw.close();
-		} catch (final IOException ioe) {
+		}
+		catch (final IOException ioe) {
 			guiUtils.error("Saving to " + saveFile.getAbsolutePath() + " failed");
 			return;
 		}
@@ -615,27 +646,33 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		assert SwingUtilities.isEventDispatchThread();
 		if (p.getUseFitted()) {
 			fitVolumeMenuItem.setText("Un-fit Path");
-		} else {
+		}
+		else {
 			final boolean fitExists = p.getFitted() != null;
-			fitVolumeMenuItem.setText((fitExists)?"Apply Existing Fit":"Fit Path...");
-			fitVolumeMenuItem.setToolTipText(
-					(fitExists) ? "<html>Path has never been fitted:<br>Fit will be computed for the first time"
-							: "<html>Path has already been fitted:\nCached properties will be aplied");
+			fitVolumeMenuItem.setText((fitExists) ? "Apply Existing Fit"
+				: "Fit Path...");
+			fitVolumeMenuItem.setToolTipText((fitExists)
+				? "<html>Path has never been fitted:<br>Fit will be computed for the first time"
+				: "<html>Path has already been fitted:\nCached properties will be aplied");
 		}
 		colorMenu.selectSWCColor(new SWCColor(p.getColor(), p.getSWCType()));
 		selectSWCTypeMenuEntry(p.getSWCType());
 	}
 
-	private void updateCmdsManyOrNoneSelected(final Collection<Path> selectedPaths) {
+	private void updateCmdsManyOrNoneSelected(
+		final Collection<Path> selectedPaths)
+	{
 		assert SwingUtilities.isEventDispatchThread();
 
 		if (allUsingFittedVersion(selectedPaths)) {
 			fitVolumeMenuItem.setText("Un-fit Paths");
 			fitVolumeMenuItem.setToolTipText(null);
-		} else {
+		}
+		else {
 			fitVolumeMenuItem.setText("Fit Paths...");
-			fitVolumeMenuItem.setToolTipText("<html>If fitting has run for a selected path, cached properties<br>"
-					+ " will be applied, otherwise a new computation will be performed");
+			fitVolumeMenuItem.setToolTipText(
+				"<html>If fitting has run for a selected path, cached properties<br>" +
+					" will be applied, otherwise a new computation will be performed");
 		}
 
 		// Update Type & Tags Menu entries only if a real selection exists
@@ -656,7 +693,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		if (allWithSWCType(selectedPaths, type)) {
 			colorMenu.selectSWCColor(new SWCColor(firstColor, type));
 			selectSWCTypeMenuEntry(type);
-		} else {
+		}
+		else {
 			colorMenu.selectColor(firstColor);
 			selectSWCTypeMenuEntry(-1);
 		}
@@ -668,8 +706,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			return;
 		}
 		for (final Component component : swcTypeMenu.getMenuComponents()) {
-			if (!(component instanceof JRadioButtonMenuItem))
-				continue;
+			if (!(component instanceof JRadioButtonMenuItem)) continue;
 			final JRadioButtonMenuItem mi = (JRadioButtonMenuItem) component;
 			if (Integer.parseInt(mi.getName()) == index) {
 				mi.setSelected(true);
@@ -679,21 +716,19 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	}
 
 	private boolean allWithSWCType(final Collection<Path> paths, final int type) {
-		if (paths == null || paths.isEmpty())
-			return false;
+		if (paths == null || paths.isEmpty()) return false;
 		for (final Path p : paths) {
-			if (p.getSWCType() != type)
-				return false;
+			if (p.getSWCType() != type) return false;
 		}
 		return true;
 	}
 
-	private boolean allWithColor(final Collection<Path> paths, final Color color) {
-		if (paths == null || paths.isEmpty())
-			return false;
+	private boolean allWithColor(final Collection<Path> paths,
+		final Color color)
+	{
+		if (paths == null || paths.isEmpty()) return false;
 		for (final Path p : paths) {
-			if (p.getColor() != color)
-				return false;
+			if (p.getColor() != color) return false;
 		}
 		return true;
 	}
@@ -717,10 +752,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		final int selectionCount = tree.getSelectionCount();
 		if (selectionCount == 1) {
 			updateCmdsOneSelected(selectedPaths.iterator().next());
-		} else {
+		}
+		else {
 			updateCmdsManyOrNoneSelected(selectedPaths);
 		}
-		pathAndFillManager.setSelected((selectionCount == 0)?null:selectedPaths, this);
+		pathAndFillManager.setSelected((selectionCount == 0) ? null : selectedPaths,
+			this);
 	}
 
 	private void displayTmpMsg(final String msg) {
@@ -730,11 +767,15 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 	// private boolean confirmDnD() {
 	// return guiUtils.getConfirmation(
-	// "Enabling this option will allow you to re-link paths through drag-and drop "
+	// "Enabling this option will allow you to re-link paths through drag-and drop
+	// "
 	// +
-	// "of their respective nodes. Re-organizing paths in such way is useful to " +
-	// "proof-edit ill-relashionships but can also render the existing hierarchy " +
-	// "of paths meaningless. Please save your work before enabling this option. " +
+	// "of their respective nodes. Re-organizing paths in such way is useful to "
+	// +
+	// "proof-edit ill-relashionships but can also render the existing hierarchy "
+	// +
+	// "of paths meaningless. Please save your work before enabling this option. "
+	// +
 	// "Enable it now?", "Confirm Hierarchy Edits?");
 	// }
 
@@ -743,33 +784,36 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		popup.show(me.getComponent(), me.getX(), me.getY());
 	}
 
-	private void getExpandedPaths(final HelpfulJTree tree, final TreeModel model, final MutableTreeNode node,
-			final HashSet<Path> set) {
+	private void getExpandedPaths(final HelpfulJTree tree, final TreeModel model,
+		final MutableTreeNode node, final HashSet<Path> set)
+	{
 		assert SwingUtilities.isEventDispatchThread();
 		final int count = model.getChildCount(node);
 		for (int i = 0; i < count; i++) {
-			final DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild(node, i);
+			final DefaultMutableTreeNode child = (DefaultMutableTreeNode) model
+				.getChild(node, i);
 			final Path p = (Path) child.getUserObject();
 			if (tree.isExpanded(child.getPath())) {
 				set.add(p);
 			}
-			if (!model.isLeaf(child))
-				getExpandedPaths(tree, model, child, set);
+			if (!model.isLeaf(child)) getExpandedPaths(tree, model, child, set);
 		}
 	}
 
-	private void setExpandedPaths(final HelpfulJTree tree, final TreeModel model, final MutableTreeNode node,
-			final HashSet<Path> set, final Path justAdded) {
+	private void setExpandedPaths(final HelpfulJTree tree, final TreeModel model,
+		final MutableTreeNode node, final HashSet<Path> set, final Path justAdded)
+	{
 		assert SwingUtilities.isEventDispatchThread();
 		final int count = model.getChildCount(node);
 		for (int i = 0; i < count; i++) {
-			final DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild(node, i);
+			final DefaultMutableTreeNode child = (DefaultMutableTreeNode) model
+				.getChild(node, i);
 			final Path p = (Path) child.getUserObject();
 			if (set.contains(p) || ((justAdded != null) && (justAdded == p))) {
 				tree.setExpanded(child.getPath(), true);
 			}
-			if (!model.isLeaf(child))
-				setExpandedPaths(tree, model, child, set, justAdded);
+			if (!model.isLeaf(child)) setExpandedPaths(tree, model, child, set,
+				justAdded);
 		}
 
 	}
@@ -778,13 +822,14 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	 * @see tracing.PathAndFillListener#setSelectedPaths(java.util.HashSet, java.lang.Object)
 	 */
 	@Override
-	public void setSelectedPaths(final HashSet<Path> selectedPaths, final Object source) {
+	public void setSelectedPaths(final HashSet<Path> selectedPaths,
+		final Object source)
+	{
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
 			public void run() {
-				if (source == this || !pathAndFillManager.enableUIupdates)
-					return;
+				if (source == this || !pathAndFillManager.enableUIupdates) return;
 				final TreePath[] noTreePaths = {};
 				tree.setSelectionPaths(noTreePaths);
 				setSelectedPaths(tree, tree.getModel(), root, selectedPaths);
@@ -792,18 +837,19 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		});
 	}
 
-	private void setSelectedPaths(final HelpfulJTree tree, final TreeModel model, final MutableTreeNode node,
-			final HashSet<Path> set) {
+	private void setSelectedPaths(final HelpfulJTree tree, final TreeModel model,
+		final MutableTreeNode node, final HashSet<Path> set)
+	{
 		assert SwingUtilities.isEventDispatchThread();
 		final int count = model.getChildCount(node);
 		for (int i = 0; i < count; i++) {
-			final DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild(node, i);
+			final DefaultMutableTreeNode child = (DefaultMutableTreeNode) model
+				.getChild(node, i);
 			final Path p = (Path) child.getUserObject();
 			if (set.contains(p)) {
 				tree.setSelected(child.getPath());
 			}
-			if (!model.isLeaf(child))
-				setSelectedPaths(tree, model, child, set);
+			if (!model.isLeaf(child)) setSelectedPaths(tree, model, child, set);
 		}
 	}
 
@@ -811,7 +857,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	 * @see tracing.PathAndFillListener#setPathList(java.lang.String[], tracing.Path, boolean)
 	 */
 	@Override
-	public void setPathList(final String[] pathList, final Path justAdded, final boolean expandAll) {
+	public void setPathList(final String[] pathList, final Path justAdded,
+		final boolean expandAll)
+	{
 
 		if (!pathAndFillManager.enableUIupdates) return;
 		SwingUtilities.invokeLater(() -> {
@@ -821,15 +869,17 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			final HashSet<Path> selectedPathsBefore = new HashSet<>();
 			final HashSet<Path> expandedPathsBefore = new HashSet<>();
 
-			if (selectedBefore != null)
-				for (int i1 = 0; i1 < selectedBefore.length; ++i1) {
-					final TreePath tp = selectedBefore[i1];
-					final DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode) tp.getLastPathComponent();
-					if (dmtn != root) {
-						final Path p = (Path) dmtn.getUserObject();
-						selectedPathsBefore.add(p);
-					}
+			if (selectedBefore != null) for (int i1 =
+				0; i1 < selectedBefore.length; ++i1)
+			{
+				final TreePath tp = selectedBefore[i1];
+				final DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode) tp
+					.getLastPathComponent();
+				if (dmtn != root) {
+					final Path p = (Path) dmtn.getUserObject();
+					selectedPathsBefore.add(p);
 				}
+			}
 
 			// Save the expanded state:
 			getExpandedPaths(tree, tree.getModel(), root, expandedPathsBefore);
@@ -837,7 +887,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			/*
 			 * Ignore the arguments and get the real path list from the PathAndFillManager:
 			 */
-			final DefaultMutableTreeNode newRoot = new DefaultMutableTreeNode("All Paths");
+			final DefaultMutableTreeNode newRoot = new DefaultMutableTreeNode(
+				"All Paths");
 			final DefaultTreeModel model = new DefaultTreeModel(newRoot);
 			// DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
 			final Path[] primaryPaths = pathAndFillManager.getPathsStructured();
@@ -845,8 +896,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				final Path primaryPath = primaryPaths[i2];
 				// Add the primary path if it's not just a fitted version of
 				// another:
-				if (!primaryPath.isFittedVersionOfAnotherPath())
-					addNode(newRoot, primaryPath, model);
+				if (!primaryPath.isFittedVersionOfAnotherPath()) addNode(newRoot,
+					primaryPath, model);
 			}
 			root = newRoot;
 			tree.setModel(model);
@@ -857,14 +908,16 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			if (expandAll) {
 				for (int i3 = 0; i3 < tree.getRowCount(); ++i3)
 					tree.expandRow(i3);
-			} else
-				setExpandedPaths(tree, model, root, expandedPathsBefore, justAdded);
+			}
+			else setExpandedPaths(tree, model, root, expandedPathsBefore, justAdded);
 
 			setSelectedPaths(tree, model, root, selectedPathsBefore);
 		});
 	}
 
-	private void addNode(final MutableTreeNode parent, final Path childPath, final DefaultTreeModel model) {
+	private void addNode(final MutableTreeNode parent, final Path childPath,
+		final DefaultTreeModel model)
+	{
 		assert SwingUtilities.isEventDispatchThread();
 		final MutableTreeNode newNode = new DefaultMutableTreeNode(childPath);
 		model.insertNodeInto(newNode, parent, parent.getChildCount());
@@ -876,8 +929,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	 * @see tracing.PathAndFillListener#setFillList(java.lang.String[])
 	 */
 	@Override
-	public void setFillList(final String[] fillList) {
-	}
+	public void setFillList(final String[] fillList) {}
 
 	/** This class defines the JTree hosting traced paths */
 	private class HelpfulJTree extends JTree {
@@ -891,27 +943,23 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			final DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer() {
 
 				@Override
-				public Component getTreeCellRendererComponent(final JTree tree, final Object value,
-						final boolean selected, final boolean expanded, final boolean isLeaf, final int row,
-						final boolean focused) {
-					final Component c = super.getTreeCellRendererComponent(tree, value, selected, expanded, isLeaf, row,
-							focused);
+				public Component getTreeCellRendererComponent(final JTree tree,
+					final Object value, final boolean selected, final boolean expanded,
+					final boolean isLeaf, final int row, final boolean focused)
+				{
+					final Component c = super.getTreeCellRendererComponent(tree, value,
+						selected, expanded, isLeaf, row, focused);
 					final TreePath tp = tree.getPathForRow(row);
-					if (tp == null)
-						return c;
-					final DefaultMutableTreeNode node = (DefaultMutableTreeNode) (tp.getLastPathComponent());
-					if (node == null || node == root)
-						return c;
+					if (tp == null) return c;
+					final DefaultMutableTreeNode node = (DefaultMutableTreeNode) (tp
+						.getLastPathComponent());
+					if (node == null || node == root) return c;
 					final Path p = (Path) node.getUserObject();
 					final Color color = p.getColor();
-					if (color == null)
-						return c;
-					if (isLeaf)
-						setIcon(new NodeIcon(NodeIcon.EMPTY, color));
-					else if (!expanded)
-						setIcon(new NodeIcon(NodeIcon.PLUS, color));
-					else
-						setIcon(new NodeIcon(NodeIcon.MINUS, color));
+					if (color == null) return c;
+					if (isLeaf) setIcon(new NodeIcon(NodeIcon.EMPTY, color));
+					else if (!expanded) setIcon(new NodeIcon(NodeIcon.PLUS, color));
+					else setIcon(new NodeIcon(NodeIcon.MINUS, color));
 					return c;
 				}
 			};
@@ -919,7 +967,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			renderer.setOpenIcon(new NodeIcon(NodeIcon.MINUS));
 			renderer.setLeafIcon(new NodeIcon(NodeIcon.EMPTY));
 			setCellRenderer(renderer);
-			getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+			getSelectionModel().setSelectionMode(
+				TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 			// setDragEnabled(true);
 			// setDropMode(DropMode.ON_OR_INSERT);
 			// setTransferHandler(new TreeTransferHandler());
@@ -977,18 +1026,20 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 		/* see https://stackoverflow.com/a/9780689 */
 		private boolean closerToBlack(final Color c) {
-			final double y = 0.2126 * c.getRed() + 0.7152 * c.getGreen() + 0.0722 * c.getBlue();
+			final double y = 0.2126 * c.getRed() + 0.7152 * c.getGreen() + 0.0722 * c
+				.getBlue();
 			return y < 100;
 		}
 
 		@Override
-		public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
+		public void paintIcon(final Component c, final Graphics g, final int x,
+			final int y)
+		{
 			g.setColor(color);
 			g.fillRect(x, y, SIZE - 1, SIZE - 1);
 			g.setColor(Color.BLACK);
 			g.drawRect(x, y, SIZE - 1, SIZE - 1);
-			if (type == EMPTY)
-				return;
+			if (type == EMPTY) return;
 			g.setColor(closerToBlack(color) ? Color.WHITE : Color.BLACK);
 			g.drawLine(x + 2, y + SIZE / 2, x + SIZE - 3, y + SIZE / 2);
 			if (type == PLUS) {
@@ -1018,11 +1069,13 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 		public TreeTransferHandler() {
 			try {
-				final String mimeType = DataFlavor.javaJVMLocalObjectMimeType + ";class=\""
-						+ javax.swing.tree.DefaultMutableTreeNode[].class.getName() + "\"";
+				final String mimeType = DataFlavor.javaJVMLocalObjectMimeType +
+					";class=\"" + javax.swing.tree.DefaultMutableTreeNode[].class
+						.getName() + "\"";
 				nodesFlavor = new DataFlavor(mimeType);
 				flavors[0] = nodesFlavor;
-			} catch (final ClassNotFoundException e) {
+			}
+			catch (final ClassNotFoundException e) {
 				System.out.println("ClassNotFound: " + e.getMessage());
 			}
 		}
@@ -1037,7 +1090,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				return false;
 			}
 			// Do not allow a drop on the drag source selections.
-			final JTree.DropLocation dl = (JTree.DropLocation) support.getDropLocation();
+			final JTree.DropLocation dl = (JTree.DropLocation) support
+				.getDropLocation();
 			final JTree tree = (JTree) support.getComponent();
 			final int dropRow = tree.getRowForPath(dl.getPath());
 			final int[] selRows = tree.getSelectionRows();
@@ -1055,10 +1109,14 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			// Do not allow a non-leaf node to be copied to a level
 			// which is less than its source level.
 			final TreePath dest = dl.getPath();
-			final DefaultMutableTreeNode target = (DefaultMutableTreeNode) dest.getLastPathComponent();
+			final DefaultMutableTreeNode target = (DefaultMutableTreeNode) dest
+				.getLastPathComponent();
 			final TreePath path = tree.getPathForRow(selRows[0]);
-			final DefaultMutableTreeNode firstNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-			if (firstNode.getChildCount() > 0 && target.getLevel() < firstNode.getLevel()) {
+			final DefaultMutableTreeNode firstNode = (DefaultMutableTreeNode) path
+				.getLastPathComponent();
+			if (firstNode.getChildCount() > 0 && target.getLevel() < firstNode
+				.getLevel())
+			{
 				return false;
 			}
 			return true;
@@ -1067,15 +1125,16 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		private boolean haveCompleteNode(final JTree tree) {
 			final int[] selRows = tree.getSelectionRows();
 			TreePath path = tree.getPathForRow(selRows[0]);
-			final DefaultMutableTreeNode first = (DefaultMutableTreeNode) path.getLastPathComponent();
+			final DefaultMutableTreeNode first = (DefaultMutableTreeNode) path
+				.getLastPathComponent();
 			final int childCount = first.getChildCount();
 			// first has children and no children are selected.
-			if (childCount > 0 && selRows.length == 1)
-				return false;
+			if (childCount > 0 && selRows.length == 1) return false;
 			// first may have children.
 			for (int i = 1; i < selRows.length; i++) {
 				path = tree.getPathForRow(selRows[i]);
-				final DefaultMutableTreeNode next = (DefaultMutableTreeNode) path.getLastPathComponent();
+				final DefaultMutableTreeNode next = (DefaultMutableTreeNode) path
+					.getLastPathComponent();
 				if (first.isNodeChild(next)) {
 					// Found a child of first.
 					if (childCount > selRows.length - 1) {
@@ -1097,25 +1156,31 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				// exportDone after a successful drop.
 				final List<DefaultMutableTreeNode> copies = new ArrayList<>();
 				final List<DefaultMutableTreeNode> toRemove = new ArrayList<>();
-				final DefaultMutableTreeNode node = (DefaultMutableTreeNode) paths[0].getLastPathComponent();
+				final DefaultMutableTreeNode node = (DefaultMutableTreeNode) paths[0]
+					.getLastPathComponent();
 				final DefaultMutableTreeNode copy = copy(node);
 				copies.add(copy);
 				toRemove.add(node);
 				for (int i = 1; i < paths.length; i++) {
-					final DefaultMutableTreeNode next = (DefaultMutableTreeNode) paths[i].getLastPathComponent();
+					final DefaultMutableTreeNode next = (DefaultMutableTreeNode) paths[i]
+						.getLastPathComponent();
 					// Do not allow higher level nodes to be added to list.
 					if (next.getLevel() < node.getLevel()) {
 						break;
-					} else if (next.getLevel() > node.getLevel()) { // child node
+					}
+					else if (next.getLevel() > node.getLevel()) { // child node
 						copy.add(copy(next));
 						// node already contains child
-					} else { // sibling
+					}
+					else { // sibling
 						copies.add(copy(next));
 						toRemove.add(next);
 					}
 				}
-				final DefaultMutableTreeNode[] nodes = copies.toArray(new DefaultMutableTreeNode[copies.size()]);
-				nodesToRemove = toRemove.toArray(new DefaultMutableTreeNode[toRemove.size()]);
+				final DefaultMutableTreeNode[] nodes = copies.toArray(
+					new DefaultMutableTreeNode[copies.size()]);
+				nodesToRemove = toRemove.toArray(new DefaultMutableTreeNode[toRemove
+					.size()]);
 				return new NodesTransferable(nodes);
 			}
 			return null;
@@ -1128,7 +1193,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		}
 
 		@Override
-		protected void exportDone(final JComponent source, final Transferable data, final int action) {
+		protected void exportDone(final JComponent source, final Transferable data,
+			final int action)
+		{
 			if ((action & MOVE) == MOVE) {
 				final JTree tree = (JTree) source;
 				final DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
@@ -1154,16 +1221,20 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			try {
 				final Transferable t = support.getTransferable();
 				nodes = (DefaultMutableTreeNode[]) t.getTransferData(nodesFlavor);
-			} catch (final UnsupportedFlavorException ufe) {
+			}
+			catch (final UnsupportedFlavorException ufe) {
 				System.out.println("UnsupportedFlavor: " + ufe.getMessage());
-			} catch (final java.io.IOException ioe) {
+			}
+			catch (final java.io.IOException ioe) {
 				System.out.println("I/O error: " + ioe.getMessage());
 			}
 			// Get drop location info.
-			final JTree.DropLocation dl = (JTree.DropLocation) support.getDropLocation();
+			final JTree.DropLocation dl = (JTree.DropLocation) support
+				.getDropLocation();
 			final int childIndex = dl.getChildIndex();
 			final TreePath dest = dl.getPath();
-			final DefaultMutableTreeNode parent = (DefaultMutableTreeNode) dest.getLastPathComponent();
+			final DefaultMutableTreeNode parent = (DefaultMutableTreeNode) dest
+				.getLastPathComponent();
 			final JTree tree = (JTree) support.getComponent();
 			final DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
 			// Configure for drop mode.
@@ -1192,7 +1263,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			}
 
 			@Override
-			public Object getTransferData(final DataFlavor flavor) throws UnsupportedFlavorException {
+			public Object getTransferData(final DataFlavor flavor)
+				throws UnsupportedFlavorException
+			{
 				if (!isDataFlavorSupported(flavor))
 					throw new UnsupportedFlavorException(flavor);
 				return nodes;
@@ -1236,12 +1309,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		ui.showStatus(statusMsg, false);
 		setEnabledCommands(false);
 
-		final String text = "Once opened, you can peruse the fit by "
-				+ "navigating the 'Cross Section View' stack. Edit mode "
-				+ "will be activated and cross section planes automatically "
-				+ "synchronized with tracing canvas(es).";
+		final String text = "Once opened, you can peruse the fit by " +
+			"navigating the 'Cross Section View' stack. Edit mode " +
+			"will be activated and cross section planes automatically " +
+			"synchronized with tracing canvas(es).";
 		final JDialog msg = guiUtils.floatingMsg(text, false);
-		
+
 		new Thread(() -> {
 
 			final Path existingFit = p.getFitted();
@@ -1258,20 +1331,28 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 						p.setUseFitted(false);
 						p.setFitted(null);
 
-						// Compute verbose fit using settings from previous PathFitterCmd runs
+						// Compute verbose fit using settings from previous PathFitterCmd
+						// runs
 						final PathFitter fitter = new PathFitter(plugin, p, true);
-						final PrefService prefService = plugin.getContext().getService(PrefService.class);
-						final String rString = prefService.get(PathFitterCmd.class, PathFitterCmd.MAXRADIUS_KEY, 
-								String.valueOf(PathFitter.DEFAULT_MAX_RADIUS));
+						final PrefService prefService = plugin.getContext().getService(
+							PrefService.class);
+						final String rString = prefService.get(PathFitterCmd.class,
+							PathFitterCmd.MAXRADIUS_KEY, String.valueOf(
+								PathFitter.DEFAULT_MAX_RADIUS));
 						fitter.setMaxRadius(Integer.valueOf(rString));
 						fitter.setScope(PathFitter.RADII_AND_MIDPOINTS);
-						final ExecutorService executor = Executors.newSingleThreadExecutor();
+						final ExecutorService executor = Executors
+							.newSingleThreadExecutor();
 						final Future<Path> future = executor.submit(fitter);
 						future.get();
-					
-					} catch (InterruptedException | ExecutionException | RuntimeException e) {
+
+					}
+					catch (InterruptedException | ExecutionException
+							| RuntimeException e)
+					{
 						msg.dispose();
-						guiUtils.error("Unfortunately an exception occured. See Console for details");
+						guiUtils.error(
+							"Unfortunately an exception occured. See Console for details");
 						e.printStackTrace();
 					}
 					return null;
@@ -1287,8 +1368,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 					GuiUtils.setAutoDismiss(msg);
 					setEnabledCommands(true);
 					// Show both original and fitted paths
-					if (plugin.showOnlySelectedPaths)
-						ui.togglePathsChoice();
+					if (plugin.showOnlySelectedPaths) ui.togglePathsChoice();
 					plugin.enableEditMode(true);
 					plugin.setEditingPath(p);
 				}
@@ -1297,16 +1377,16 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		}).start();
 	}
 
-	public void refreshManager(final boolean refreshCmds, final boolean refreshViewers) {
+	public void refreshManager(final boolean refreshCmds,
+		final boolean refreshViewers)
+	{
 		pathAndFillManager.resetListeners(null);
 		if (refreshViewers) plugin.updateAllViewers();
-		if (!refreshCmds)
-			return;
+		if (!refreshCmds) return;
 		final Collection<Path> selectedPaths = getSelectedPaths(true);
-		if (tree.getSelectionCount() == 1)
-			updateCmdsOneSelected(selectedPaths.iterator().next());
-		else
-			updateCmdsManyOrNoneSelected(selectedPaths);
+		if (tree.getSelectionCount() == 1) updateCmdsOneSelected(selectedPaths
+			.iterator().next());
+		else updateCmdsManyOrNoneSelected(selectedPaths);
 	}
 
 	/**
@@ -1318,14 +1398,13 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	}
 
 	protected void closeTable() {
-		final Display<?> display = plugin.getContext().getService(DisplayService.class).getDisplay(TABLE_TITLE);
-		if (display != null && display.isDisplaying(table))
-			display.close();
+		final Display<?> display = plugin.getContext().getService(
+			DisplayService.class).getDisplay(TABLE_TITLE);
+		if (display != null && display.isDisplaying(table)) display.close();
 	}
 
 	protected DefaultGenericTable getTable() {
-		if (table == null)
-			table = new DefaultGenericTable();
+		if (table == null) table = new DefaultGenericTable();
 		// we will assume that immediately after being retrieved,
 		// the table will contain unsaved data. //FIXME: sloppy
 		tableSaved = false;
@@ -1353,13 +1432,14 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	}
 
 	private boolean validTableMeasurements() {
-		return table != null && table.getRowCount() > 0 && table.getColumnCount() > 0;
+		return table != null && table.getRowCount() > 0 && table
+			.getColumnCount() > 0;
 	}
 
 	private void saveTable(final File outputFile) throws IOException {
 		final String sep = ",";
-		final PrintWriter pw = new PrintWriter(
-				new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+		final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
+			new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
 		final int columns = table.getColumnCount();
 		final int rows = table.getRowCount();
 
@@ -1368,8 +1448,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		pw.print(sep);
 		for (int col = 0; col < columns; ++col) {
 			SNT.csvQuoteAndPrint(pw, table.getColumnHeader(col));
-			if (col < (columns - 1))
-				pw.print(sep);
+			if (col < (columns - 1)) pw.print(sep);
 		}
 		pw.print("\r\n");
 		for (int row = 0; row < rows; row++) {
@@ -1377,8 +1456,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			pw.print(sep);
 			for (int col = 0; col < columns; col++) {
 				SNT.csvQuoteAndPrint(pw, table.get(col, row));
-				if (col < (columns - 1))
-					pw.print(sep);
+				if (col < (columns - 1)) pw.print(sep);
 			}
 			pw.print("\r\n");
 		}
@@ -1392,20 +1470,22 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			return;
 		}
 		File saveFile = new File("/home/tferr/Desktop/");
-		saveFile = guiUtils.saveFile("Save SNT Measurements...", saveFile, Collections.singletonList(".csv"));
-		if (saveFile == null)
-			return; // user pressed cancel
+		saveFile = guiUtils.saveFile("Save SNT Measurements...", saveFile,
+			Collections.singletonList(".csv"));
+		if (saveFile == null) return; // user pressed cancel
 
-		if (saveFile.exists()
-				&& !guiUtils.getConfirmation("The file " + saveFile.getAbsolutePath() + " already exists. Replace it?",
-						"Override?")) {
+		if (saveFile.exists() && !guiUtils.getConfirmation("The file " + saveFile
+			.getAbsolutePath() + " already exists. Replace it?", "Override?"))
+		{
 			return;
 		}
 		plugin.getUI().showStatus("Exporting Measurements..", false);
 		try {
 			saveTable(saveFile);
-		} catch (final IOException e) {
-			plugin.error("Unfortunately an Exception occured. See Console for details");
+		}
+		catch (final IOException e) {
+			plugin.error(
+				"Unfortunately an Exception occured. See Console for details");
 			plugin.getUI().showStatus("Exporting Failed..", true);
 			e.printStackTrace();
 		}
@@ -1414,25 +1494,29 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 	private void removeOrderTags(final Collection<Path> selectedPaths) {
 		for (final Path p : selectedPaths) {
-			p.setName(p.getName().replaceAll(MultiPathActionListener.TAG_ORDER_PATTERN, ""));
+			p.setName(p.getName().replaceAll(
+				MultiPathActionListener.TAG_ORDER_PATTERN, ""));
 		}
 	}
 
 	private void removeLengthTags(final Collection<Path> selectedPaths) {
 		for (final Path p : selectedPaths) {
-			p.setName(p.getName().replaceAll(MultiPathActionListener.TAG_LENGTH_PATTERN, ""));
+			p.setName(p.getName().replaceAll(
+				MultiPathActionListener.TAG_LENGTH_PATTERN, ""));
 		}
 	}
 
 	private void removeRadiusTags(final Collection<Path> selectedPaths) {
 		for (final Path p : selectedPaths) {
-			p.setName(p.getName().replaceAll(MultiPathActionListener.TAG_RADIUS_PATTERN, ""));
+			p.setName(p.getName().replaceAll(
+				MultiPathActionListener.TAG_RADIUS_PATTERN, ""));
 		}
 	}
 
 	private void removeCustomTags(final Collection<Path> selectedPaths) {
 		for (final Path p : selectedPaths) {
-			p.setName(p.getName().replaceAll(MultiPathActionListener.TAG_CUSTOM_PATTERN, ""));
+			p.setName(p.getName().replaceAll(
+				MultiPathActionListener.TAG_CUSTOM_PATTERN, ""));
 		}
 	}
 
@@ -1454,16 +1538,18 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			if (e.getActionCommand().equals(SELECT_NONE_CMD)) {
 				tree.clearSelection();
 				return;
-			} else if (e.getActionCommand().equals(EXPAND_ALL_CMD)) {
+			}
+			else if (e.getActionCommand().equals(EXPAND_ALL_CMD)) {
 				for (int i = 0; i < tree.getRowCount(); i++)
 					tree.expandRow(i);
 				return;
-			} else if (e.getActionCommand().equals(COLLAPSE_ALL_CMD)) {
+			}
+			else if (e.getActionCommand().equals(COLLAPSE_ALL_CMD)) {
 				for (int i = 0; i < tree.getRowCount(); i++)
 					tree.collapseRow(i);
 				return;
-			} else
-				SNT.error("Unexpectedly got an event from an unknown source: " + e);
+			}
+			else SNT.error("Unexpectedly got an event from an unknown source: " + e);
 		}
 	}
 
@@ -1487,23 +1573,26 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			final Path p = selectedPaths.iterator().next();
 
 			if (e.getActionCommand().equals(RENAME_CMD)) {
-				final String s = guiUtils.getString("Rename this path to (clear to reset name):", "Rename Path",
-						p.getName());
-				if (s == null)
-					return; // user pressed cancel
+				final String s = guiUtils.getString(
+					"Rename this path to (clear to reset name):", "Rename Path", p
+						.getName());
+				if (s == null) return; // user pressed cancel
 				synchronized (getPathAndFillManager()) {
 					if (s.trim().isEmpty()) {
 						p.setName("");
-					} else if (getPathAndFillManager().getPathFromName(s, false) != null) {
+					}
+					else if (getPathAndFillManager().getPathFromName(s, false) != null) {
 						displayTmpMsg("There is already a path named:\n('" + s + "')");
 						return;
-					} else {// Otherwise this is OK, change the name:
+					}
+					else {// Otherwise this is OK, change the name:
 						p.setName(s);
 					}
 					refreshManager(false, false);
 				}
 				return;
-			} else if (e.getActionCommand().equals(MAKE_PRIMARY_CMD)) {
+			}
+			else if (e.getActionCommand().equals(MAKE_PRIMARY_CMD)) {
 				final HashSet<Path> pathsExplored = new HashSet<>();
 				p.setIsPrimary(true);
 				pathsExplored.add(p);
@@ -1512,23 +1601,26 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				refreshManager(false, false);
 				return;
 
-			} else if (e.getActionCommand().equals(DISCONNECT_CMD)) {
-				if (!guiUtils.getConfirmation("Disconnect \"" + p.toString() + "\" from all it connections?",
-						"Confirm Disconnect"))
-					return;
+			}
+			else if (e.getActionCommand().equals(DISCONNECT_CMD)) {
+				if (!guiUtils.getConfirmation("Disconnect \"" + p.toString() +
+					"\" from all it connections?", "Confirm Disconnect")) return;
 				p.disconnectFromAll();
 				removeAllOrderTags();
 				refreshManager(false, false);
 				return;
 
-			} else if (e.getActionCommand().equals(EXPLORE_FIT_CMD)) {
+			}
+			else if (e.getActionCommand().equals(EXPLORE_FIT_CMD)) {
 				if (analysisModeError()) return;
 				if (plugin.getImagePlus() == null) {
-					displayTmpMsg("Tracing image is not available. Fit cannot be computed.");
+					displayTmpMsg(
+						"Tracing image is not available. Fit cannot be computed.");
 					return;
 				}
 				if (!plugin.uiReadyForModeChange()) {
-					displayTmpMsg("Please finish current operation before exploring fit.");
+					displayTmpMsg(
+						"Please finish current operation before exploring fit.");
 					return;
 				}
 				exploreFit(p);
@@ -1540,12 +1632,15 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	}
 
 	/** ActionListener for commands that can operate on multiple paths */
-	private class MultiPathActionListener implements ActionListener, ItemListener {
+	private class MultiPathActionListener implements ActionListener,
+		ItemListener
+	{
 
 		private final static String COLORS_MENU = "Color";
 		private final static String DELETE_CMD = "Delete...";
 		private final static String MERGE_CMD = "Merge...";
-		private final static String DOWNSAMPLE_CMD = "Ramer-Douglas-Peucker Downsampling...";
+		private final static String DOWNSAMPLE_CMD =
+			"Ramer-Douglas-Peucker Downsampling...";
 		private final static String CUSTOM_TAG_CMD = "Custom...";
 		private final static String LENGTH_TAG_CMD = "Length";
 		private final static String MEAN_RADIUS_TAG_CMD = "Mean Radius";
@@ -1562,10 +1657,15 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
 		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";
 
-		private final static String TAG_LENGTH_PATTERN =   " ?\\[L:\\d+\\.?\\d+\\s?.+\\w+\\]";
-		private final static String TAG_RADIUS_PATTERN =   " ?\\[MR:\\d+\\.?\\d+\\s?.+\\w+\\]";
-		private final static String TAG_ORDER_PATTERN =    " ?\\[Order \\d+\\]";
-		private final static String TAG_CUSTOM_PATTERN =   " ?\\{.*\\}"; // anything flanked by curly braces
+		private final static String TAG_LENGTH_PATTERN =
+			" ?\\[L:\\d+\\.?\\d+\\s?.+\\w+\\]";
+		private final static String TAG_RADIUS_PATTERN =
+			" ?\\[MR:\\d+\\.?\\d+\\s?.+\\w+\\]";
+		private final static String TAG_ORDER_PATTERN = " ?\\[Order \\d+\\]";
+		private final static String TAG_CUSTOM_PATTERN = " ?\\{.*\\}"; // anything
+																																		// flanked
+																																		// by curly
+																																		// braces
 
 		@Override
 		public void actionPerformed(final ActionEvent e) {
@@ -1581,7 +1681,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 			// If no path is selected, remind user that action applies to all paths
 			final boolean assumeAll = tree.getSelectionCount() == 0;
-			// final boolean assumeAll = noSelection && guiUtils.getConfirmation("Currently
+			// final boolean assumeAll = noSelection &&
+			// guiUtils.getConfirmation("Currently
 			// no paths are selected. Apply command to all paths?", cmd);
 			// if (noSelection && !assumeAll) return;
 
@@ -1593,7 +1694,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				refreshManager(true, true);
 				return;
 
-			} else if (MEASURE_CMD.equals(cmd)) {
+			}
+			else if (MEASURE_CMD.equals(cmd)) {
 				try {
 					final TreeAnalyzer ta = new TreeAnalyzer(new Tree(selectedPaths));
 					ta.setContext(plugin.getContext());
@@ -1605,46 +1707,57 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 					ta.summarize(getDescription(selectedPaths), true);
 					ta.updateAndDisplayTable();
 					return;
-				} catch (final IllegalArgumentException ignored) {
-					guiUtils.error("Selected paths do not fullfill requirements for measurements");
+				}
+				catch (final IllegalArgumentException ignored) {
+					guiUtils.error(
+						"Selected paths do not fullfill requirements for measurements");
 				}
 
-			} else if (CONVERT_TO_ROI_CMD.equals(cmd)) {
+			}
+			else if (CONVERT_TO_ROI_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
-				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				final CommandService cmdService = plugin.getContext().getService(
+					CommandService.class);
 				cmdService.run(ROIExporterCmd.class, true, input);
 				return;
 
-			} else if (COLORIZE_PATH_CMD.equals(cmd)) {
+			}
+			else if (COLORIZE_PATH_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
-				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				final CommandService cmdService = plugin.getContext().getService(
+					CommandService.class);
 				cmdService.run(TreeColorizerCmd.class, true, input);
 				return;
 
-			} else if (HISTOGRAM_CMD.equals(cmd)) {
+			}
+			else if (HISTOGRAM_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				final Tree tree = new Tree(selectedPaths);
 				tree.setLabel(getDescription(selectedPaths));
 				input.put("tree", tree);
-				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				final CommandService cmdService = plugin.getContext().getService(
+					CommandService.class);
 				cmdService.run(DistributionCmd.class, true, input);
 				return;
 
-			} if (CUSTOM_TAG_CMD.equals(cmd)) {
+			}
+			if (CUSTOM_TAG_CMD.equals(cmd)) {
 
-				final String existingTags = extractTagsFromPath(selectedPaths.iterator().next());
-				String tags = guiUtils.getString("Enter one or more (space or comma-separated list) tags:\n"
-						+ "(Clearing the field will remove existing tags)",
-						"Custom Tags", existingTags);
-				if (tags == null)
-					return; // user pressed cancel
+				final String existingTags = extractTagsFromPath(selectedPaths.iterator()
+					.next());
+				String tags = guiUtils.getString(
+					"Enter one or more (space or comma-separated list) tags:\n" +
+						"(Clearing the field will remove existing tags)", "Custom Tags",
+					existingTags);
+				if (tags == null) return; // user pressed cancel
 				tags = tags.trim();
 				if (tags.isEmpty()) {
 					removeCustomTags(selectedPaths);
 					displayTmpMsg("Tags removed");
-				} else {
+				}
+				else {
 					for (final Path p : selectedPaths) {
 						tags = tags.replace("[", "(");
 						tags = tags.replace("]", ")");
@@ -1654,33 +1767,40 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				refreshManager(false, false);
 				return;
 
-			} else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
+			}
+			else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
 
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
-				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				final CommandService cmdService = plugin.getContext().getService(
+					CommandService.class);
 				cmdService.run(SkeletonizerCmd.class, true, input);
 				return;
 
-			} else if (CONVERT_TO_SWC_CMD.equals(cmd)) {
+			}
+			else if (CONVERT_TO_SWC_CMD.equals(cmd)) {
 				exportSelectedPaths(selectedPaths);
 				return;
 
-			} else if (FILL_OUT_CMD.equals(cmd)) {
+			}
+			else if (FILL_OUT_CMD.equals(cmd)) {
 				if (analysisModeError()) return;
-				plugin.startFillingPaths(new HashSet<Path>(selectedPaths));
+				plugin.startFillingPaths(new HashSet<>(selectedPaths));
 				return;
 
-			} else if (SPECIFY_RADIUS_CMD.equals(e.getActionCommand())) {
+			}
+			else if (SPECIFY_RADIUS_CMD.equals(e.getActionCommand())) {
 				if (allUsingFittedVersion(selectedPaths)) {
 					guiUtils.error("This command only applies to unfitted paths.");
 					return;
 				}
 				final double rad = 2 * plugin.getMinimumSeparation();
-				final Double userRad = guiUtils.getDouble("<HTML><body><div style='width:" + Math.min(getWidth(), 500)
-						+ ";'>" + "Please specify a constant radius to be applied to all the nodes "
-						+ "of selected path(s). This setting only applies to unfitted "
-						+ "paths and <b>overrides</b> any existing values.", "Assign Constant Diameter", rad);
+				final Double userRad = guiUtils.getDouble(
+					"<HTML><body><div style='width:" + Math.min(getWidth(), 500) + ";'>" +
+						"Please specify a constant radius to be applied to all the nodes " +
+						"of selected path(s). This setting only applies to unfitted " +
+						"paths and <b>overrides</b> any existing values.",
+					"Assign Constant Diameter", rad);
 				if (userRad == null) {
 					return; // user pressed cancel
 				}
@@ -1688,8 +1808,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 					guiUtils.error("Invalid diameter value.");
 					return;
 				}
-				if (userRad == 0d && !guiUtils.getConfirmation("Discard thickness information from selected paths?",
-						"Confirm Removal of Diameters")) {
+				if (userRad == 0d && !guiUtils.getConfirmation(
+					"Discard thickness information from selected paths?",
+					"Confirm Removal of Diameters"))
+				{
 					return;
 				}
 				selectedPaths.parallelStream().forEach(p -> {
@@ -1702,13 +1824,17 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 			// Case 2: Commands that require some sort of confirmation
 			else if (DELETE_CMD.equals(cmd)) {
-				if (guiUtils.getConfirmation((assumeAll) ? "Are you really sure you want to delete everything?"
-						: "Delete the selected " + n + " paths?", "Confirm Deletion?"))
+				if (guiUtils.getConfirmation((assumeAll)
+					? "Are you really sure you want to delete everything?"
+					: "Delete the selected " + n + " paths?", "Confirm Deletion?"))
 					deletePaths(selectedPaths);
 				return;
-			} else if (REMOVE_ALL_TAGS_CMD.equals(cmd)) {
-				if (guiUtils.getConfirmation("Remove all tags from " + ((assumeAll) ? "all " : "the selected ") + n
-						+ " paths? (SWC-type tags will be preserved)", "Confirm Tag Removal?")) {
+			}
+			else if (REMOVE_ALL_TAGS_CMD.equals(cmd)) {
+				if (guiUtils.getConfirmation("Remove all tags from " + ((assumeAll)
+					? "all " : "the selected ") + n +
+					" paths? (SWC-type tags will be preserved)", "Confirm Tag Removal?"))
+				{
 					removeOrderTags(selectedPaths);
 					removeCustomTags(selectedPaths);
 					removeLengthTags(selectedPaths);
@@ -1720,34 +1846,37 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 					}
 					return;
 				}
-			} else if (MERGE_CMD.equals(cmd)) {
+			}
+			else if (MERGE_CMD.equals(cmd)) {
 				if (n == 1) {
 					displayTmpMsg("You must have at least two paths selected.");
 					return;
 				}
 				final Path refPath = selectedPaths.iterator().next();
 				if (refPath.getEndJoins() != null) {
-					guiUtils.error("The first path in the selection cannot have an end-point junction.",
-							"Invalid Merge Selection");
+					guiUtils.error(
+						"The first path in the selection cannot have an end-point junction.",
+						"Invalid Merge Selection");
 					return;
 				}
-				if (!guiUtils.getConfirmation(
-						"Merge " + n + " selected paths? (this destructive operation cannot be undone!)",
-						"Confirm merge?")) {
+				if (!guiUtils.getConfirmation("Merge " + n +
+					" selected paths? (this destructive operation cannot be undone!)",
+					"Confirm merge?"))
+				{
 					return;
 				}
 				final HashSet<Path> pathsToMerge = new HashSet<>();
 				for (final Path p : selectedPaths) {
-					if (refPath.equals(p) || refPath.somehowJoins.contains(p) || p.somehowJoins.contains(refPath))
-						continue;
+					if (refPath.equals(p) || refPath.somehowJoins.contains(p) ||
+						p.somehowJoins.contains(refPath)) continue;
 					pathsToMerge.add(p);
 				}
-				if (pathsToMerge.size() < n - 1
-						&& !guiUtils.getConfirmation(
-								"Some of the selected paths are connected and cannot be merged. "
-										+ "Proceed with the merge of the " + pathsToMerge.size()
-										+ " disconnected path(s) in the selection?",
-								"Only Disconnected Paths Can Be Merged")) {
+				if (pathsToMerge.size() < n - 1 && !guiUtils.getConfirmation(
+					"Some of the selected paths are connected and cannot be merged. " +
+						"Proceed with the merge of the " + pathsToMerge.size() +
+						" disconnected path(s) in the selection?",
+					"Only Disconnected Paths Can Be Merged"))
+				{
 					return;
 				}
 				for (final Path p : pathsToMerge) {
@@ -1758,20 +1887,24 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				refreshManager(true, true);
 				return;
 
-			} else if (DOWNSAMPLE_CMD.equals(cmd)) {
+			}
+			else if (DOWNSAMPLE_CMD.equals(cmd)) {
 				final double minSep = plugin.getMinimumSeparation();
-				final Double userMaxDeviation = guiUtils.getDouble("<HTML><body><div style='width:500;'>"
-						+ "Please specify the maximum permitted distance between nodes:<ul>"
-						+ "<li>This destructive operation cannot be undone!</li>"
-						+ "<li>Paths can only be downsampled: Smaller inter-node distances will not be interpolated</li>"
-						+ "<li>Currently, the smallest voxel dimension is " + SNT.formatDouble(minSep, 3)
-						+ plugin.spacing_units + "</li>", "Downsampling: " + n + " Selected Path(s)", 2 * minSep);
-				if (userMaxDeviation == null)
-					return; // user pressed cancel
+				final Double userMaxDeviation = guiUtils.getDouble(
+					"<HTML><body><div style='width:500;'>" +
+						"Please specify the maximum permitted distance between nodes:<ul>" +
+						"<li>This destructive operation cannot be undone!</li>" +
+						"<li>Paths can only be downsampled: Smaller inter-node distances will not be interpolated</li>" +
+						"<li>Currently, the smallest voxel dimension is " + SNT
+							.formatDouble(minSep, 3) + plugin.spacing_units + "</li>",
+					"Downsampling: " + n + " Selected Path(s)", 2 * minSep);
+				if (userMaxDeviation == null) return; // user pressed cancel
 
 				final double maxDeviation = userMaxDeviation.doubleValue();
 				if (Double.isNaN(maxDeviation) || maxDeviation <= 0) {
-					guiUtils.error("The maximum permitted distance must be a postive number", "Invalid Input");
+					guiUtils.error(
+						"The maximum permitted distance must be a postive number",
+						"Invalid Input");
 					return;
 				}
 				for (final Path p : selectedPaths) {
@@ -1785,10 +1918,11 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				plugin.updateAllViewers();
 				return;
 
-			} else if (RESET_FITS.equals(cmd)) {
+			}
+			else if (RESET_FITS.equals(cmd)) {
 				if (analysisModeError()) return;
-				if (!guiUtils.getConfirmation("Discard existing fits?", "Confirm Discard?"))
-					return;
+				if (!guiUtils.getConfirmation("Discard existing fits?",
+					"Confirm Discard?")) return;
 				for (final Path p : selectedPaths) {
 					p.setUseFitted(false);
 					p.setFitted(null);
@@ -1796,7 +1930,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				refreshManager(true, false);
 				return;
 
-			} else if (e.getSource().equals(fitVolumeMenuItem)) {
+			}
+			else if (e.getSource().equals(fitVolumeMenuItem)) {
 
 				if (analysisModeError()) return;
 
@@ -1809,8 +1944,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 				}
 
 				final int currentState = plugin.getUI().getState();
-				final boolean imagenotAvailable = currentState == SNTUI.IMAGE_CLOSED
-						|| currentState == SNTUI.ANALYSIS_MODE;
+				final boolean imagenotAvailable = currentState == SNTUI.IMAGE_CLOSED ||
+					currentState == SNTUI.ANALYSIS_MODE;
 				final ArrayList<PathFitter> pathsToFit = new ArrayList<>();
 				int skippedFits = 0;
 
@@ -1826,7 +1961,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 						if (imagenotAvailable) {
 							// Keep a tally of how many computations we are skipping
 							skippedFits++;
-						} else {
+						}
+						else {
 							// Prepare for computation
 							final PathFitter pathFitter = new PathFitter(plugin, p, false);
 							pathsToFit.add(pathFitter);
@@ -1843,6 +1979,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 
 					final int finalSkippedFits = skippedFits;
 					class GetOptions extends SwingWorker<int[], Object> {
+
 						@Override
 						public int[] doInBackground() {
 							return getFittingOptionsFromUser();
@@ -1852,39 +1989,43 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 						protected void done() {
 							try {
 								final int[] userOptions = get();
-								if (userOptions == null)
-									return; // user dismissed prompt
-								fitPaths(pathsToFit, userOptions[0], userOptions[1]); // call refreshManager
+								if (userOptions == null) return; // user dismissed prompt
+								fitPaths(pathsToFit, userOptions[0], userOptions[1]); // call
+																																			// refreshManager
 								if (finalSkippedFits > 0) {
-									guiUtils.centeredMsg(
-											"Since image is not available, " + finalSkippedFits + "/"
-													+ selectedPaths.size() + " fits could not be computed",
-											"Image Not Available");
+									guiUtils.centeredMsg("Since image is not available, " +
+										finalSkippedFits + "/" + selectedPaths.size() +
+										" fits could not be computed", "Image Not Available");
 								}
-							} catch (final NullPointerException | InterruptedException | ExecutionException e) {
+							}
+							catch (final NullPointerException | InterruptedException
+									| ExecutionException e)
+							{
 								e.printStackTrace();
 							}
 						}
 					}
 					(new GetOptions()).execute();
 
-				} else {
+				}
+				else {
 					refreshManager(true, false);
 				}
 				return;
 
-			} else {
+			}
+			else {
 				SNT.error("Unexpectedly got an event from an unknown source: " + e);
 				return;
 			}
 		}
 
-		private boolean allPathNamesContain(final Collection<Path> selectedPaths, final String string) {
-			if (string == null || string.trim().isEmpty())
-				return false;
+		private boolean allPathNamesContain(final Collection<Path> selectedPaths,
+			final String string)
+		{
+			if (string == null || string.trim().isEmpty()) return false;
 			for (final Path p : selectedPaths) {
-				if (!p.getName().contains(string))
-					return false;
+				if (!p.getName().contains(string)) return false;
 			}
 			return true;
 		}
@@ -1894,12 +2035,18 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			final int n = selectedPaths.size();
 			if (n == getPathAndFillManager().getPathsFiltered().size()) {
 				description = "All Paths";
-			} else if (n == 1) {
+			}
+			else if (n == 1) {
 				description = selectedPaths.iterator().next().getName();
-			} else if (n > 1 && allPathNamesContain(selectedPaths, getSearchable().getSearchingText())) {
+			}
+			else if (n > 1 && allPathNamesContain(selectedPaths, getSearchable()
+				.getSearchingText()))
+			{
 				description = "Filter [" + getSearchable().getSearchingText() + "]";
-			} else {
-				description = "Path IDs [" + Path.pathsToIDListString(new ArrayList<>(selectedPaths)) + "]";
+			}
+			else {
+				description = "Path IDs [" + Path.pathsToIDListString(new ArrayList<>(
+					selectedPaths)) + "]";
 			}
 			return description;
 		}
@@ -1907,7 +2054,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 		@Override
 		public void itemStateChanged(final ItemEvent e) {
 			// NB: Length & order tagging apply to all paths, independent of selection
-			final List<Path> selectedPaths = getPathAndFillManager().getPathsFiltered();
+			final List<Path> selectedPaths = getPathAndFillManager()
+				.getPathsFiltered();
 			final int n = selectedPaths.size();
 			if (n == 0) {
 				guiUtils.error("There are no traced paths.");
@@ -1918,30 +2066,37 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 			if (LENGTH_TAG_CMD.equals(cmd)) {
 				if (jcbmi.isSelected()) {
 					for (final Path p : selectedPaths) {
-						final String lengthTag = " [L:" + p.getRealLengthString() + p.spacing_units + "]";
+						final String lengthTag = " [L:" + p.getRealLengthString() +
+							p.spacing_units + "]";
 						p.setName(p.getName() + lengthTag);
 					}
-				} else {
+				}
+				else {
 					removeLengthTags(selectedPaths);
 				}
 
-			} else if (MEAN_RADIUS_TAG_CMD.equals(cmd)) {
+			}
+			else if (MEAN_RADIUS_TAG_CMD.equals(cmd)) {
 				if (jcbmi.isSelected()) {
 					for (final Path p : selectedPaths) {
-						final String radiusTag = " [MR:" + SNT.formatDouble(p.getMeanRadius(), 3) + p.spacing_units + "]";
+						final String radiusTag = " [MR:" + SNT.formatDouble(p
+							.getMeanRadius(), 3) + p.spacing_units + "]";
 						p.setName(p.getName() + radiusTag);
 					}
-				} else {
+				}
+				else {
 					removeRadiusTags(selectedPaths);
 				}
 
-			} else if (ORDER_TAG_CMD.equals(cmd)) {
+			}
+			else if (ORDER_TAG_CMD.equals(cmd)) {
 				if (jcbmi.isSelected()) {
 					for (final Path p : selectedPaths) {
 						final String orderTag = " [Order " + p.getOrder() + "]";
 						p.setName(p.getName() + orderTag);
 					}
-				} else {
+				}
+				else {
 					removeOrderTags(selectedPaths);
 				}
 			}
@@ -1954,8 +2109,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener, TreeS
 	}
 
 	private boolean analysisModeError() {
-		if (plugin.analysisMode)
-			guiUtils.error("This command is not available in \"Analysis Mode\".");
+		if (plugin.analysisMode) guiUtils.error(
+			"This command is not available in \"Analysis Mode\".");
 		return plugin.analysisMode;
 	}
 

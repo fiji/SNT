@@ -28,6 +28,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import net.imagej.ImageJ;
+
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
@@ -37,22 +39,22 @@ import org.scijava.prefs.PrefService;
 import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
-import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.gui.GuiUtils;
 
 /**
- * Implements {@link tracing.PathManagerUI}'s SWC-SWC-type tagging Options Command.
+ * Implements {@link tracing.PathManagerUI}'s SWC-SWC-type tagging Options
+ * Command.
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "SWC-type Tagging", initializer = "init")
+@Plugin(type = Command.class, visible = false, label = "SWC-type Tagging",
+	initializer = "init")
 public class SWCTypeOptionsCmd extends ContextCommand {
 
 	private static final String HEADER = "<html><body><div style='width:500;'>";
 	private static final String MAP_KEY = "colors";
 	private static final String ASSIGN_KEY = "assign";
-
 
 	@Parameter
 	private PrefService prefService;
@@ -68,7 +70,8 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	@Parameter(required = true, persist = false, label = Path.SWC_DENDRITE_LABEL)
 	private ColorRGB basalDendriteColor;
 
-	@Parameter(required = true, persist = false, label = Path.SWC_APICAL_DENDRITE_LABEL)
+	@Parameter(required = true, persist = false,
+		label = Path.SWC_APICAL_DENDRITE_LABEL)
 	private ColorRGB apicalDendriteColor;
 
 	@Parameter(required = true, persist = false, label = Path.SWC_AXON_LABEL)
@@ -83,25 +86,29 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	@Parameter(required = true, persist = false, label = Path.SWC_UNDEFINED_LABEL)
 	private ColorRGB undefinedColor;
 
-	@Parameter(required = false, persist = false, label = "Reset Defaults", callback = "reset")
+	@Parameter(required = false, persist = false, label = "Reset Defaults",
+		callback = "reset")
 	private Button reset;
 
 	@Parameter(visibility = ItemVisibility.MESSAGE)
-	private final String msg = HEADER + "When <i>color pairing</i> is enabled, "
-			+ "assigning a <i>SWC-type</i> tag automaticaly colors the path "
-			+ "with the respective listed color. Note that it is also possible "
-			+ "to assign ad-hoc colors using the <i>Tag>Color></i> menu.";
+	private final String msg = HEADER + "When <i>color pairing</i> is enabled, " +
+		"assigning a <i>SWC-type</i> tag automaticaly colors the path " +
+		"with the respective listed color. Note that it is also possible " +
+		"to assign ad-hoc colors using the <i>Tag>Color></i> menu.";
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
 	public void run() {
-		final LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
-		map.put(String.valueOf(Path.SWC_DENDRITE), basalDendriteColor.toHTMLColor());
-		map.put(String.valueOf(Path.SWC_APICAL_DENDRITE), apicalDendriteColor.toHTMLColor());
+		final LinkedHashMap<String, String> map =
+			new LinkedHashMap<>();
+		map.put(String.valueOf(Path.SWC_DENDRITE), basalDendriteColor
+			.toHTMLColor());
+		map.put(String.valueOf(Path.SWC_APICAL_DENDRITE), apicalDendriteColor
+			.toHTMLColor());
 		map.put(String.valueOf(Path.SWC_AXON), axonColor.toHTMLColor());
 		map.put(String.valueOf(Path.SWC_CUSTOM), customColor.toHTMLColor());
 		map.put(String.valueOf(Path.SWC_SOMA), somaColor.toHTMLColor());
@@ -111,9 +118,11 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	}
 
 	private Map<Integer, ColorRGB> getDefaultMap() {
-		final LinkedHashMap<Integer, ColorRGB> map = new LinkedHashMap<Integer, ColorRGB>();
+		final LinkedHashMap<Integer, ColorRGB> map =
+			new LinkedHashMap<>();
 		map.put(Path.SWC_DENDRITE, getDefaultSWCColorRGB(Path.SWC_DENDRITE));
-		map.put(Path.SWC_APICAL_DENDRITE, getDefaultSWCColorRGB(Path.SWC_APICAL_DENDRITE));
+		map.put(Path.SWC_APICAL_DENDRITE, getDefaultSWCColorRGB(
+			Path.SWC_APICAL_DENDRITE));
 		map.put(Path.SWC_AXON, getDefaultSWCColorRGB(Path.SWC_AXON));
 		map.put(Path.SWC_CUSTOM, getDefaultSWCColorRGB(Path.SWC_CUSTOM));
 		map.put(Path.SWC_SOMA, getDefaultSWCColorRGB(Path.SWC_SOMA));
@@ -122,18 +131,21 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	}
 
 	private Map<Integer, ColorRGB> getSavedMap() {
-		final Map<String, String> smap = prefService.getMap(SWCTypeOptionsCmd.class, MAP_KEY);
+		final Map<String, String> smap = prefService.getMap(SWCTypeOptionsCmd.class,
+			MAP_KEY);
 		if (smap == null || smap.isEmpty()) {
 			return getDefaultMap();
 		}
-		final LinkedHashMap<Integer, ColorRGB> map = new LinkedHashMap<Integer, ColorRGB>();
+		final LinkedHashMap<Integer, ColorRGB> map =
+			new LinkedHashMap<>();
 		for (final Map.Entry<String, String> entry : smap.entrySet()) {
 			final String key = entry.getKey();
 			final String value = entry.getValue();
 			map.put(Integer.valueOf(key), ColorRGB.fromHTMLColor(value));
 		}
 		// while at it, read other preferences
-		enableColors = prefService.getBoolean(SWCTypeOptionsCmd.class, ASSIGN_KEY, true);
+		enableColors = prefService.getBoolean(SWCTypeOptionsCmd.class, ASSIGN_KEY,
+			true);
 		return map;
 	}
 
@@ -159,6 +171,7 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	}
 
 	private class SWCTypeComparator implements Comparator<Integer> {
+
 		@Override
 		public int compare(final Integer i1, final Integer i2) {
 			final String s1 = Path.getSWCtypeName(i1, false);
@@ -169,7 +182,8 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 
 	public TreeMap<Integer, Color> getColorMap() {
 		final Map<Integer, ColorRGB> maprgb = getSavedMap();
-		final TreeMap<Integer, Color> map = new TreeMap<Integer, Color>(new SWCTypeComparator()); //new SWCTypeComparator());
+		final TreeMap<Integer, Color> map = new TreeMap<>(
+			new SWCTypeComparator()); // new SWCTypeComparator());
 		for (final Map.Entry<Integer, ColorRGB> entry : maprgb.entrySet()) {
 			final int key = entry.getKey();
 			final ColorRGB color = entry.getValue();
@@ -177,7 +191,6 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 		}
 		return map;
 	}
-
 
 	public boolean isColorPairingEnabled() {
 		return enableColors;
@@ -198,7 +211,6 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 	private Color getDefaultSWCColor(final int swcType) {
 		return Path.getSWCcolor(swcType);
 	}
-
 
 	/* IDE debug method **/
 	public static void main(final String[] args) {

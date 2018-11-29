@@ -22,6 +22,8 @@
 
 package tracing.gui.cmds;
 
+import net.imagej.ImageJ;
+
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
@@ -31,7 +33,6 @@ import org.scijava.ui.DialogPrompt.MessageType;
 import org.scijava.ui.DialogPrompt.Result;
 import org.scijava.ui.UIService;
 
-import net.imagej.ImageJ;
 import tracing.SNTPrefs;
 import tracing.gui.GuiUtils;
 import tracing.plugin.CallLegacyShollPlugin;
@@ -44,7 +45,7 @@ import tracing.plugin.TreeColorizerCmd;
 
 /**
  * Command for resetting SNT Preferences.
- * 
+ *
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false)
@@ -58,20 +59,22 @@ public class ResetPrefsCmd extends ContextCommand {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
 	public void run() {
 
-		final Result result = uiService.showDialog("Reset preferences to defaults? (A restart may be required)",
-				MessageType.QUESTION_MESSAGE);
+		final Result result = uiService.showDialog(
+			"Reset preferences to defaults? (A restart may be required)",
+			MessageType.QUESTION_MESSAGE);
 		if (Result.YES_OPTION != result && Result.OK_OPTION != result) {
 			return;
 		}
 		clearAll();
-		uiService.showDialog("Preferences Reset. You should now restart SNT for changes to take effect.",
-				"Restart Required");
+		uiService.showDialog(
+			"Preferences Reset. You should now restart SNT for changes to take effect.",
+			"Restart Required");
 
 	}
 

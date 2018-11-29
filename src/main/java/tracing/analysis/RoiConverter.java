@@ -42,7 +42,6 @@ import tracing.util.PointInImage;
  * Converts SNT {@link Path}s into (IJ1) ROIs.
  *
  * @see tracing.plugin.ROIExporterCmd
- *
  * @author Tiago Ferreira
  */
 public class RoiConverter extends TreeAnalyzer {
@@ -65,16 +64,15 @@ public class RoiConverter extends TreeAnalyzer {
 	/**
 	 * Converts paths into 2D polyline ROIs (segment paths)
 	 *
-	 * @param overlay
-	 *            the target overlay to hold converted paths
+	 * @param overlay the target overlay to hold converted paths
 	 */
 	public void convertPaths(Overlay overlay) {
-		if (overlay == null)
-			overlay = new Overlay();
+		if (overlay == null) overlay = new Overlay();
 		for (final Path p : tree.list()) {
 			if (p.size() > 1) {
 				drawPathSegments(p, overlay);
-			} else { // Single Point Path
+			}
+			else { // Single Point Path
 				final HashSet<PointInImage> pim = new HashSet<>();
 				pim.add(p.getPointInImage(0));
 				convertPoints(pim, overlay, getColor(p), "SPP");
@@ -83,17 +81,17 @@ public class RoiConverter extends TreeAnalyzer {
 	}
 
 	/**
-	 * Converts all the tips associated with the parsed paths into {@link ij.gui.PointRoi}s
+	 * Converts all the tips associated with the parsed paths into
+	 * {@link ij.gui.PointRoi}s
 	 *
 	 * @see TreeAnalyzer#getTips()
-	 * @param overlay
-	 *            the target overlay to hold converted point
+	 * @param overlay the target overlay to hold converted point
 	 */
 	@SuppressWarnings("deprecation")
 	public void convertTips(Overlay overlay) {
-		if (overlay == null)
-			overlay = new Overlay();
-		convertPoints(getTips(), overlay, Path.getSWCcolor(Path.SWC_END_POINT), Path.SWC_END_POINT_LABEL);
+		if (overlay == null) overlay = new Overlay();
+		convertPoints(getTips(), overlay, Path.getSWCcolor(Path.SWC_END_POINT),
+			Path.SWC_END_POINT_LABEL);
 	}
 
 	/**
@@ -101,34 +99,32 @@ public class RoiConverter extends TreeAnalyzer {
 	 * {@link ij.gui.PointRoi}s
 	 *
 	 * @see TreeAnalyzer#getBranchPoints()
-	 * @param overlay
-	 *            the target overlay to hold converted point
+	 * @param overlay the target overlay to hold converted point
 	 */
 	@SuppressWarnings("deprecation")
 	public void convertBranchPoints(Overlay overlay) {
-		if (overlay == null)
-			overlay = new Overlay();
-		convertPoints(getBranchPoints(), overlay, Path.getSWCcolor(Path.SWC_FORK_POINT), Path.SWC_FORK_POINT_LABEL);
+		if (overlay == null) overlay = new Overlay();
+		convertPoints(getBranchPoints(), overlay, Path.getSWCcolor(
+			Path.SWC_FORK_POINT), Path.SWC_FORK_POINT_LABEL);
 	}
 
 	/**
 	 * Sets the exporting view for segment paths (XY by default).
 	 *
-	 * @param view
-	 *            either {@link XY_PLANE}, {@link XZ_PLANE} or {@link ZY_PLANE}.
+	 * @param view either {@link XY_PLANE}, {@link XZ_PLANE} or {@link ZY_PLANE}.
 	 */
 	public void setView(final int view) {
 		if (view != XY_PLANE && view != ZY_PLANE && view != XZ_PLANE)
-			throw new IllegalArgumentException("plane is not a valid MultiDThreePanes flag");
+			throw new IllegalArgumentException(
+				"plane is not a valid MultiDThreePanes flag");
 		this.exportPlane = view;
 	}
 
 	/**
 	 * Specifies coloring of ROIs by SWC type.
 	 *
-	 * @param useSWCcolors
-	 *            if true converted ROIs are colored according to their SWC type
-	 *            integer flag
+	 * @param useSWCcolors if true converted ROIs are colored according to their
+	 *          SWC type integer flag
 	 */
 	public void useSWCcolors(final boolean useSWCcolors) {
 		this.useSWCcolors = useSWCcolors;
@@ -138,8 +134,7 @@ public class RoiConverter extends TreeAnalyzer {
 	 * Sets the line width of converted segment paths. Set it to -1 to have ROIs
 	 * plotted using the average diameter of the path
 	 *
-	 * @param width
-	 *            the new stroke width
+	 * @param width the new stroke width
 	 * @see tracing.Path#getMeanRadius
 	 * @see ij.gui.Roi#getStrokeWidth
 	 */
@@ -168,29 +163,31 @@ public class RoiConverter extends TreeAnalyzer {
 			int slice_of_point = Integer.MIN_VALUE;
 
 			switch (exportPlane) {
-			case XY_PLANE:
-				x = path.getXUnscaledDouble(i);
-				y = path.getYUnscaledDouble(i);
-				slice_of_point = path.getZUnscaled(i);
-				break;
-			case XZ_PLANE:
-				x = path.getXUnscaledDouble(i);
-				y = path.getZUnscaledDouble(i);
-				slice_of_point = path.getYUnscaled(i);
-				break;
-			case ZY_PLANE:
-				x = path.getZUnscaledDouble(i);
-				y = path.getYUnscaledDouble(i);
-				slice_of_point = path.getXUnscaled(i);
-				break;
-			default:
-				throw new IllegalArgumentException("exportPlane is not valid");
+				case XY_PLANE:
+					x = path.getXUnscaledDouble(i);
+					y = path.getYUnscaledDouble(i);
+					slice_of_point = path.getZUnscaled(i);
+					break;
+				case XZ_PLANE:
+					x = path.getXUnscaledDouble(i);
+					y = path.getZUnscaledDouble(i);
+					slice_of_point = path.getYUnscaled(i);
+					break;
+				case ZY_PLANE:
+					x = path.getZUnscaledDouble(i);
+					y = path.getYUnscaledDouble(i);
+					slice_of_point = path.getXUnscaled(i);
+					break;
+				default:
+					throw new IllegalArgumentException("exportPlane is not valid");
 			}
 
 			if (current_roi_slice == slice_of_point || i == 0) {
 				polygon.addPoint(x, y);
-			} else {
-				addPolyLineToOverlay(polygon, current_roi_slice, basename, roi_identifier++, color, stroke, overlay);
+			}
+			else {
+				addPolyLineToOverlay(polygon, current_roi_slice, basename,
+					roi_identifier++, color, stroke, overlay);
 				polygon = new FloatPolygon(); // reset ROI
 				polygon.addPoint(x, y);
 			}
@@ -199,12 +196,15 @@ public class RoiConverter extends TreeAnalyzer {
 		}
 
 		// Create ROI from any remaining points
-		addPolyLineToOverlay(polygon, current_roi_slice, basename, roi_identifier, color, stroke, overlay);
+		addPolyLineToOverlay(polygon, current_roi_slice, basename, roi_identifier,
+			color, stroke, overlay);
 
 	}
 
-	private void addPolyLineToOverlay(final FloatPolygon p, final int z_position, final String basename,
-			final int roi_id, final Color color, final double strokeWidth, final Overlay overlay) {
+	private void addPolyLineToOverlay(final FloatPolygon p, final int z_position,
+		final String basename, final int roi_id, final Color color,
+		final double strokeWidth, final Overlay overlay)
+	{
 		final String sPlane = getExportPlaneAsString();
 		if (p.npoints > 0) {
 			if (p.npoints == 1) {
@@ -218,21 +218,26 @@ public class RoiConverter extends TreeAnalyzer {
 			// polyline.fitSplineForStraightening();
 			polyline.setStrokeColor(color);
 			polyline.setStrokeWidth(strokeWidth);
-			polyline.setName(String.format("%s-%s-%04d-Z%d", basename, sPlane, roi_id, z_position));
+			polyline.setName(String.format("%s-%s-%04d-Z%d", basename, sPlane, roi_id,
+				z_position));
 			polyline.setPosition(0, z_position, 0);
 			overlay.add(polyline);
 		}
 	}
 
 	/* this will aggregate all points into a single multipoint ROI */
-	private void convertPoints(final HashSet<PointInImage> points, final Overlay overlay, final Color color,
-			final String id) {
-		if (points.isEmpty())
-			return;
-		final ImagePlus boundsImp = tree.getImpContainer(exportPlane); // NB: this image is just required to
-																		// assign Z -positions to points. It is
-																		// an overhead and not required for 2D
-																		// images
+	private void convertPoints(final HashSet<PointInImage> points,
+		final Overlay overlay, final Color color, final String id)
+	{
+		if (points.isEmpty()) return;
+		final ImagePlus boundsImp = tree.getImpContainer(exportPlane); // NB: this
+																																		// image is
+																																		// just
+																																		// required
+																																		// to
+		// assign Z -positions to points. It is
+		// an overhead and not required for 2D
+		// images
 		final SNTPointRoi roi = new SNTPointRoi(boundsImp);
 		final String sPlane = getExportPlaneAsString();
 		for (final PointInImage p : points) {
@@ -252,19 +257,19 @@ public class RoiConverter extends TreeAnalyzer {
 
 	private String getExportPlaneAsString() {
 		switch (exportPlane) {
-		case XZ_PLANE:
-			return "XZ";
-		case ZY_PLANE:
-			return "ZY";
-		default:
-			return "XY";
+			case XZ_PLANE:
+				return "XZ";
+			case ZY_PLANE:
+				return "ZY";
+			default:
+				return "XY";
 		}
 	}
 
 	/**
-	 * With current IJ1.51u API the only way to set the z-position of a point is to
-	 * activate the corresponding image z-slice. This class makes it easier to do
-	 * so.
+	 * With current IJ1.51u API the only way to set the z-position of a point is
+	 * to activate the corresponding image z-slice. This class makes it easier to
+	 * do so.
 	 */
 	private static class SNTPointRoi extends PointRoi {
 

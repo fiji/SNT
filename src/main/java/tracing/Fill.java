@@ -33,6 +33,7 @@ public class Fill {
 	public double distanceThreshold;
 
 	public class Node {
+
 		public int x;
 		public int y;
 		public int z;
@@ -47,8 +48,9 @@ public class Fill {
 		nodeList = new ArrayList<>();
 	}
 
-	public void add(final int x, final int y, final int z, final double distance, final int previous,
-			final boolean open) {
+	public void add(final int x, final int y, final int z, final double distance,
+		final int previous, final boolean open)
+	{
 		final Node n = new Node();
 		n.x = x;
 		n.y = y;
@@ -86,7 +88,9 @@ public class Fill {
 	public double x_spacing, y_spacing, z_spacing;
 	public String spacing_units;
 
-	public void setSpacing(final double x_spacing, final double y_spacing, final double z_spacing, final String units) {
+	public void setSpacing(final double x_spacing, final double y_spacing,
+		final double z_spacing, final String units)
+	{
 		this.x_spacing = x_spacing;
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
@@ -105,9 +109,10 @@ public class Fill {
 
 		int i = 0;
 		for (final Node n : nodeList) {
-			pw.println("    <node id=\"" + i + "\" " + "x=\"" + n.x + "\" " + "y=\"" + n.y + "\" " + "z=\"" + n.z
-					+ "\" " + ((n.previous >= 0) ? "previousid=\"" + n.previous + "\" " : "") + "distance=\""
-					+ n.distance + "\" status=\"" + (n.open ? "open" : "closed") + "\"/>");
+			pw.println("    <node id=\"" + i + "\" " + "x=\"" + n.x + "\" " + "y=\"" +
+				n.y + "\" " + "z=\"" + n.z + "\" " + ((n.previous >= 0)
+					? "previousid=\"" + n.previous + "\" " : "") + "distance=\"" +
+				n.distance + "\" status=\"" + (n.open ? "open" : "closed") + "\"/>");
 			++i;
 		}
 	}
@@ -120,7 +125,8 @@ public class Fill {
 			pw.print("\"");
 		}
 		pw.print(" volume=\"" + getVolume() + "\"");
-		pw.println(" metric=\"" + getMetric() + "\" threshold=\"" + getThreshold() + "\">");
+		pw.println(" metric=\"" + getMetric() + "\" threshold=\"" + getThreshold() +
+			"\">");
 		writeNodesXML(pw);
 		pw.println("  </fill>");
 	}
@@ -134,8 +140,7 @@ public class Fill {
 	public double getVolume() {
 		int subThresholdNodes = 0;
 		for (final Node n : nodeList) {
-			if (n.distance <= distanceThreshold)
-				++subThresholdNodes;
+			if (n.distance <= distanceThreshold) ++subThresholdNodes;
 		}
 		return subThresholdNodes * x_spacing * y_spacing * z_spacing;
 	}
@@ -150,8 +155,8 @@ public class Fill {
 		for (final Path p : sourcePaths) {
 			if (first) {
 				first = false;
-			} else
-				result.append(", ");
+			}
+			else result.append(", ");
 			result.append("" + p.getID());
 		}
 
@@ -166,8 +171,7 @@ public class Fill {
 
 		for (int j = 0; j < sortedSourcePaths.length; ++j) {
 			final Path p = sortedSourcePaths[j];
-			if (j != 0)
-				result.append(", ");
+			if (j != 0) result.append(", ");
 			result.append("(" + p.getID() + ")");
 		}
 

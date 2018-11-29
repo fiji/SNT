@@ -39,10 +39,12 @@ class FittingProgress implements MultiTaskProgress {
 	private final SNTUI sntui;
 	private final String msgStatus;
 
-	public FittingProgress(final SNTUI sntui, final StatusService statusService, final int totalTasks) {
+	public FittingProgress(final SNTUI sntui, final StatusService statusService,
+		final int totalTasks)
+	{
 		this.statusService = statusService;
 		this.sntui = sntui;
-		msgStatus = "Fitting "+ totalTasks +" paths... ";
+		msgStatus = "Fitting " + totalTasks + " paths... ";
 		tasksProportionsDone = new ArrayList<>();
 		this.totalTasks = totalTasks;
 		for (int i = 0; i < totalTasks; ++i)
@@ -50,7 +52,9 @@ class FittingProgress implements MultiTaskProgress {
 	}
 
 	@Override
-	synchronized public void updateProgress(final double proportion, final int taskIndex) {
+	synchronized public void updateProgress(final double proportion,
+		final int taskIndex)
+	{
 		tasksProportionsDone.set(taskIndex, proportion);
 		updateStatus();
 	}
@@ -60,7 +64,8 @@ class FittingProgress implements MultiTaskProgress {
 		for (final double p : tasksProportionsDone)
 			totalDone += p;
 		statusService.showStatus((int) totalDone, totalTasks, msgStatus);
-		sntui.showStatus(msgStatus + SNT.formatDouble(100 * totalDone/totalTasks, 1) + "%", false);
+		sntui.showStatus(msgStatus + SNT.formatDouble(100 * totalDone / totalTasks,
+			1) + "%", false);
 	}
 
 	protected double getProgress() {

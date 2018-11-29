@@ -23,12 +23,14 @@
 package tracing.plugin;
 
 import java.awt.Dimension;
-import java.util.HashMap;
-import java.util.Map;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import net.imagej.ImageJ;
 
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
@@ -43,7 +45,6 @@ import org.scijava.widget.FileWidget;
 import org.scijava.widget.NumberWidget;
 
 import ij.measure.Calibration;
-import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
@@ -58,30 +59,44 @@ import tracing.util.SWCColor;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = DynamicCommand.class, visible = true, menuPath = "Plugins>NeuroAnatomy>Reconstruction Plotter...", label = "Reconstruction Plotter", initializer = "init")
+@Plugin(type = DynamicCommand.class, visible = true,
+	menuPath = "Plugins>NeuroAnatomy>Reconstruction Plotter...",
+	label = "Reconstruction Plotter", initializer = "init")
 public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 
 	@Parameter
 	LogService logService;
 
-	@Parameter(required = false, label = "X rotation", description = "Rotation angle in degrees", min = "0", max = "360", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "currentXangleChanged")
+	@Parameter(required = false, label = "X rotation",
+		description = "Rotation angle in degrees", min = "0", max = "360",
+		stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE,
+		callback = "currentXangleChanged")
 	private int angleX = 0;
 
-	@Parameter(required = false, label = "Y rotation", description = "Rotation angle in degrees", min = "0", max = "360", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "currentYangleChanged")
+	@Parameter(required = false, label = "Y rotation",
+		description = "Rotation angle in degrees", min = "0", max = "360",
+		stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE,
+		callback = "currentYangleChanged")
 	private int angleY = 0;
 
-	@Parameter(required = false, label = "Z rotation", description = "Rotation angle in degrees", min = "0", max = "360", stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE, callback = "currentZangleChanged")
+	@Parameter(required = false, label = "Z rotation",
+		description = "Rotation angle in degrees", min = "0", max = "360",
+		stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE,
+		callback = "currentZangleChanged")
 	private int angleZ = 0;
 
-	@Parameter(required = false, persist = false, label = "Actions", choices = { ACTION_NONE, ACTION_FLIP_H, ACTION_FLIP_V,
-			ACTION_RESET, ACTION_SNAPSHOT }, callback = "runAction")
+	@Parameter(required = false, persist = false, label = "Actions", choices = {
+		ACTION_NONE, ACTION_FLIP_H, ACTION_FLIP_V, ACTION_RESET, ACTION_SNAPSHOT },
+		callback = "runAction")
 	private String actionChoice = ACTION_NONE;
 
-	@Parameter(required = false, persist = false, label = "Preview", callback = "updatePlot",
-			description="NB: UI may become sluggish while previewing large reconstructions...")
-	private boolean preview = true;
+	@Parameter(required = false, persist = false, label = "Preview",
+		callback = "updatePlot",
+		description = "NB: UI may become sluggish while previewing large reconstructions...")
+	private final boolean preview = true;
 
-	@Parameter(required = false, persist = false, visibility = ItemVisibility.MESSAGE)
+	@Parameter(required = false, persist = false,
+		visibility = ItemVisibility.MESSAGE)
 	private String msg = "";
 
 	@Parameter(required = true)
@@ -104,19 +119,21 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	private int previousYangle = 0;
 	private int previousZangle = 0;
 
-
 	@SuppressWarnings("unused")
 	private void init() {
 		if (tree == null) {
 			resolveInput("tree");
-			statusService.showStatus("Please select one or more reconstruction files");
+			statusService.showStatus(
+				"Please select one or more reconstruction files");
 			GuiUtils.setSystemLookAndFeel();
 			final FileFilter filter = (file) -> {
 				final String lName = file.getName().toLowerCase();
-				return lName.endsWith("swc") || lName.endsWith(".traces") || lName.endsWith(".json");
+				return lName.endsWith("swc") || lName.endsWith(".traces") || lName
+					.endsWith(".json");
 			};
-			final List<File> files = uiService.chooseFiles(new File(System.getProperty("user.home")),
-					new ArrayList<File>(), filter, FileWidget.OPEN_STYLE);
+			final List<File> files = uiService.chooseFiles(new File(System
+				.getProperty("user.home")), new ArrayList<File>(), filter,
+				FileWidget.OPEN_STYLE);
 			if (files == null || files.isEmpty()) {
 				cancel("");
 				return;
@@ -127,18 +144,21 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 			for (final File f : files) {
 				try {
 					final Tree tempTree = new Tree(f.getAbsolutePath());
-					if (tempTree.isEmpty())
-						throw new IllegalArgumentException("Invalid file?");
+					if (tempTree.isEmpty()) throw new IllegalArgumentException(
+						"Invalid file?");
 					tempTree.setColor(colors[counter++]);
 					tree.merge(tempTree);
-				} catch (final IllegalArgumentException exc) {
+				}
+				catch (final IllegalArgumentException exc) {
 					logService.warn(f.getName() + ": " + exc.getMessage());
 				}
 			}
 			if (tree.isEmpty()) {
 				cancel("<HTML>No reconstructions imported.");
-			} else {
-				logService.info("" + counter + " reconstruction(s) successfully imported ");
+			}
+			else {
+				logService.info("" + counter +
+					" reconstruction(s) successfully imported ");
 			}
 		}
 	}
@@ -146,8 +166,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	@Override
 	public void run() {
 
-		if (tree == null || tree.isEmpty())
-			error("No paths to plot");
+		if (tree == null || tree.isEmpty()) error("No paths to plot");
 		status("Building Plot...", false);
 		// Tree rotation occurs in place so we'll copy plotting coordinates
 		// to a new Tree. To avoid rotation lags we'll keep it monochrome,
@@ -156,12 +175,11 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 		snapshotTree = new Tree();
 		for (final Path p : tree.list()) {
 			Path pathToPlot;
-			if (p.getUseFitted())
-				pathToPlot = p.getFitted();
-			else
-				pathToPlot = p;
+			if (p.getUseFitted()) pathToPlot = p.getFitted();
+			else pathToPlot = p;
 			final Calibration cal = pathToPlot.getCalibration();
-			final Path dup = new Path(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth, cal.getUnit());
+			final Path dup = new Path(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth,
+				cal.getUnit());
 			for (int i = 0; i < pathToPlot.size(); i++) {
 				final PointInImage pim = pathToPlot.getPointInImage(i);
 				dup.addPointDouble(pim.x, pim.y, pim.z);
@@ -193,7 +211,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 			chart.getXYPlot().setDataset(plot.getChart().getXYPlot().getDataset());
 			frame.setVisible(true); // re-open frame if it has been closed
 			msg = "";
-		// frame.toFront();
+			// frame.toFront();
 		}
 	}
 
@@ -232,40 +250,38 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	}
 
 	private int getBoundedAngle(int angle) {
-		if (angle >= 360)
-			angle -= 360;
-		if (angle < 0)
-			angle += 360;
+		if (angle >= 360) angle -= 360;
+		if (angle < 0) angle += 360;
 		return angle;
 	}
 
 	@SuppressWarnings("unused")
 	private void runAction() {
 		switch (actionChoice) {
-		case ACTION_NONE:
-			return;
-		case ACTION_RESET:
-			resetRotation();
-			actionChoice = ACTION_NONE;
-			return;
-		case ACTION_SNAPSHOT:
-			snapshot();
-			actionChoice = ACTION_NONE;
-			return;
-		case ACTION_FLIP_V:
-			angleX = getBoundedAngle(180 + angleX);
-			plottingTree.rotate(Tree.X_AXIS, angleX);
-			previousXangle = angleX;
-			updatePlot();
-			break;
-		case ACTION_FLIP_H:
-			angleY = getBoundedAngle(180 + angleY);
-			plottingTree.rotate(Tree.Y_AXIS, angleY);
-			previousYangle = angleY;
-			updatePlot();
-			break;
-		default:
-			throw new IllegalArgumentException("Invalid action");
+			case ACTION_NONE:
+				return;
+			case ACTION_RESET:
+				resetRotation();
+				actionChoice = ACTION_NONE;
+				return;
+			case ACTION_SNAPSHOT:
+				snapshot();
+				actionChoice = ACTION_NONE;
+				return;
+			case ACTION_FLIP_V:
+				angleX = getBoundedAngle(180 + angleX);
+				plottingTree.rotate(Tree.X_AXIS, angleX);
+				previousXangle = angleX;
+				updatePlot();
+				break;
+			case ACTION_FLIP_H:
+				angleY = getBoundedAngle(180 + angleY);
+				plottingTree.rotate(Tree.Y_AXIS, angleY);
+				previousYangle = angleY;
+				updatePlot();
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid action");
 		}
 		actionChoice = ACTION_NONE;
 	}
@@ -280,7 +296,8 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 			plottingPath.setNodeColors(inputPath.getNodeColors());
 		}
 		buildPlot();
-		plot.setTitle("[X " + angleX + "deg Y " + angleY + "deg Z " + angleZ + "deg]");
+		plot.setTitle("[X " + angleX + "deg Y " + angleY + "deg Z " + angleZ +
+			"deg]");
 		plot.setPreferredSize(frame.getWidth(), frame.getHeight());
 		plot.showPlot();
 		// make tree monochrome

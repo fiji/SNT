@@ -25,11 +25,12 @@ package tracing.gui.cmds;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.imagej.ImageJ;
+
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.ImageJ;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.analysis.TreeAnalyzer;
@@ -42,25 +43,26 @@ import tracing.gui.GuiUtils;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Distribution of Morphometric Traits")
+@Plugin(type = Command.class, visible = false,
+	label = "Distribution of Morphometric Traits")
 public class DistributionCmd implements Command {
 
-	@Parameter(required = true, label = "Measurement", choices = { TreeAnalyzer.BRANCH_ORDER,
-			TreeAnalyzer.INTER_NODE_DISTANCE, TreeAnalyzer.LENGTH, TreeAnalyzer.N_BRANCH_POINTS, TreeAnalyzer.N_NODES,
-			TreeAnalyzer.NODE_RADIUS, TreeAnalyzer.MEAN_RADIUS, TreeAnalyzer.X_COORDINATES, TreeAnalyzer.Y_COORDINATES,
-			TreeAnalyzer.Z_COORDINATES })
+	@Parameter(required = true, label = "Measurement", choices = {
+		TreeAnalyzer.BRANCH_ORDER, TreeAnalyzer.INTER_NODE_DISTANCE,
+		TreeAnalyzer.LENGTH, TreeAnalyzer.N_BRANCH_POINTS, TreeAnalyzer.N_NODES,
+		TreeAnalyzer.NODE_RADIUS, TreeAnalyzer.MEAN_RADIUS,
+		TreeAnalyzer.X_COORDINATES, TreeAnalyzer.Y_COORDINATES,
+		TreeAnalyzer.Z_COORDINATES })
 	private String measurementChoice;
 
 	@Parameter(required = true)
 	private Tree tree;
-
 
 	@Override
 	public void run() {
 		final TreeStatistics treeStats = new TreeStatistics(tree);
 		treeStats.getHistogram(measurementChoice).setVisible(true);
 	}
-
 
 	/* IDE debug method **/
 	public static void main(final String[] args) {

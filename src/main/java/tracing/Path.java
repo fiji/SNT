@@ -69,11 +69,19 @@ public class Path implements Comparable<Path> {
 	public static final int SWC_SOMA = 1;
 	/** Flag specifying the SWC type 'axon'. @see Path#SWC_AXON_LABEL */
 	public static final int SWC_AXON = 2;
-	/** Flag specifying the SWC type '(basal) dendrite'. @see Path#SWC_DENDRITE_LABEL */
+	/**
+	 * Flag specifying the SWC type '(basal) dendrite'. @see
+	 * Path#SWC_DENDRITE_LABEL
+	 */
 	public static final int SWC_DENDRITE = 3;
-	/** Flag specifying the SWC type 'apical dendrite'. @see Path#SWC_APICAL_DENDRITE_LABEL */
+	/**
+	 * Flag specifying the SWC type 'apical dendrite'. @see
+	 * Path#SWC_APICAL_DENDRITE_LABEL
+	 */
 	public static final int SWC_APICAL_DENDRITE = 4;
-	/** Flag specifying the SWC type 'fork point' @see Path#SWC_FORK_POINT_LABEL */
+	/**
+	 * Flag specifying the SWC type 'fork point' @see Path#SWC_FORK_POINT_LABEL
+	 */
 	@Deprecated
 	public static final int SWC_FORK_POINT = 5; // redundant
 	@Deprecated
@@ -131,7 +139,7 @@ public class Path implements Comparable<Path> {
 	// the node being edited when in 'Analysis mode'
 	private int editableNodeIndex = -1;
 	// the display offset for this Path in a tracing canvas
-	protected PointInCanvas canvasOffset = new PointInCanvas(0,0,0);
+	protected PointInCanvas canvasOffset = new PointInCanvas(0, 0, 0);
 
 	/* Spatial calibration definitions */
 	protected double x_spacing;
@@ -172,25 +180,24 @@ public class Path implements Comparable<Path> {
 	private static final int PATH_END = 1;
 	private int maxPoints;
 
-
 	/**
 	 * Instantiates a new path.
 	 *
-	 * @param x_spacing
-	 *            Pixel width in spacing_units
-	 * @param y_spacing
-	 *            Pixel height in spacing_units
-	 * @param z_spacing
-	 *            Pixel depth in spacing_units
-	 * @param spacing_units
-	 *            the length unit in physical world units (typically "um").
+	 * @param x_spacing Pixel width in spacing_units
+	 * @param y_spacing Pixel height in spacing_units
+	 * @param z_spacing Pixel depth in spacing_units
+	 * @param spacing_units the length unit in physical world units (typically
+	 *          "um").
 	 */
-	public Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units) {
+	public Path(final double x_spacing, final double y_spacing,
+		final double z_spacing, final String spacing_units)
+	{
 		this(x_spacing, y_spacing, z_spacing, spacing_units, 128);
 	}
 
-	Path(final double x_spacing, final double y_spacing, final double z_spacing, final String spacing_units,
-			final int reserve) {
+	Path(final double x_spacing, final double y_spacing, final double z_spacing,
+		final String spacing_units, final int reserve)
+	{
 		this.x_spacing = x_spacing;
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
@@ -209,10 +216,8 @@ public class Path implements Comparable<Path> {
 	 */
 	@Override
 	public int compareTo(final Path o) {
-		if (id == o.id)
-			return 0;
-		if (id < o.id)
-			return -1;
+		if (id == o.id) return 0;
+		if (id < o.id) return -1;
 		return 1;
 	}
 
@@ -233,9 +238,8 @@ public class Path implements Comparable<Path> {
 	 * Specifies a translation offset when rendering this Path in a
 	 * {@link TracerCanvas}. Path coordinates remain unaltered.
 	 *
-	 * @param canvasOffset
-	 *            the x,y,z coordinates (pixel-based) specifying the translation
-	 *            offset
+	 * @param canvasOffset the x,y,z coordinates (pixel-based) specifying the
+	 *          translation offset
 	 */
 	public void setCanvasOffset(final PointInCanvas canvasOffset) {
 		this.canvasOffset = canvasOffset;
@@ -273,13 +277,12 @@ public class Path implements Comparable<Path> {
 	 * Sets this Path's name. Set it to null or {@code ""}, to reset it to the
 	 * default.
 	 *
-	 * @param newName
-	 *            the new name.
+	 * @param newName the new name.
 	 * @see #getName()
 	 */
 	public void setName(final String newName) {
 		this.name = newName;
-		getName(); //assign default if newName is null
+		getName(); // assign default if newName is null
 	}
 
 	/**
@@ -289,8 +292,7 @@ public class Path implements Comparable<Path> {
 	 * @see #setName(String)
 	 */
 	public String getName() {
-		if (name == null || name.isEmpty())
-			name = "Path " + id;
+		if (name == null || name.isEmpty()) name = "Path " + id;
 		return name;
 	}
 
@@ -348,9 +350,9 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected void createCircles() {
-		if (tangents_x != null || tangents_y != null || tangents_z != null || radiuses != null)
-			throw new IllegalArgumentException(
-					"Trying to create circles data arrays when at least one is already there");
+		if (tangents_x != null || tangents_y != null || tangents_z != null ||
+			radiuses != null) throw new IllegalArgumentException(
+				"Trying to create circles data arrays when at least one is already there");
 		tangents_x = new double[maxPoints];
 		tangents_y = new double[maxPoints];
 		tangents_z = new double[maxPoints];
@@ -390,8 +392,8 @@ public class Path implements Comparable<Path> {
 				other.endJoinsPoint = null;
 			}
 			final int indexInOtherSomehowJoins = other.somehowJoins.indexOf(this);
-			if (indexInOtherSomehowJoins >= 0)
-				other.somehowJoins.remove(indexInOtherSomehowJoins);
+			if (indexInOtherSomehowJoins >= 0) other.somehowJoins.remove(
+				indexInOtherSomehowJoins);
 		}
 		somehowJoins.clear();
 		startJoins = null;
@@ -412,22 +414,27 @@ public class Path implements Comparable<Path> {
 	/*
 	 * This should be the only method that links one path to another
 	 */
-	protected void setJoin(final int startOrEnd, final Path other, final PointInImage joinPoint) {
+	protected void setJoin(final int startOrEnd, final Path other,
+		final PointInImage joinPoint)
+	{
 		if (other == null) {
-			throw new IllegalArgumentException("setJoin should never take a null path");
+			throw new IllegalArgumentException(
+				"setJoin should never take a null path");
 		}
 		if (startOrEnd == PATH_START) {
 			// If there was an existing path, that's an error:
-			if (startJoins != null)
-				throw new IllegalArgumentException("setJoin for START should not replace another join");
+			if (startJoins != null) throw new IllegalArgumentException(
+				"setJoin for START should not replace another join");
 			startJoins = other;
 			startJoinsPoint = joinPoint;
-		} else if (startOrEnd == PATH_END) {
-			if (endJoins != null)
-				throw new IllegalArgumentException("setJoin for END should not replace another join");
+		}
+		else if (startOrEnd == PATH_END) {
+			if (endJoins != null) throw new IllegalArgumentException(
+				"setJoin for END should not replace another join");
 			endJoins = other;
 			endJoinsPoint = joinPoint;
-		} else {
+		}
+		else {
 			SNT.log("BUG: unknown first parameter to setJoin");
 		}
 		// Also update the somehowJoins list:
@@ -455,21 +462,26 @@ public class Path implements Comparable<Path> {
 		if (startOrEnd == PATH_START) {
 			other = startJoins;
 			leaveAloneJoin = endJoins;
-		} else {
+		}
+		else {
 			other = endJoins;
 			leaveAloneJoin = startJoins;
 		}
 		if (other == null) {
-			throw new IllegalArgumentException("Don't call unsetJoin if the other Path is already null");
+			throw new IllegalArgumentException(
+				"Don't call unsetJoin if the other Path is already null");
 		}
-		if (!(other.startJoins == this || other.endJoins == this || leaveAloneJoin == other)) {
+		if (!(other.startJoins == this || other.endJoins == this ||
+			leaveAloneJoin == other))
+		{
 			somehowJoins.remove(other);
 			other.somehowJoins.remove(this);
 		}
 		if (startOrEnd == PATH_START) {
 			startJoins = null;
 			startJoinsPoint = null;
-		} else {
+		}
+		else {
 			endJoins = null;
 			endJoinsPoint = null;
 		}
@@ -477,7 +489,8 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected double getMinimumSeparation() {
-		return Math.min(Math.abs(x_spacing), Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
+		return Math.min(Math.abs(x_spacing), Math.min(Math.abs(y_spacing), Math.abs(
+			z_spacing)));
 	}
 
 	/**
@@ -492,7 +505,8 @@ public class Path implements Comparable<Path> {
 	public void getPointDouble(final int i, final double[] p) {
 
 		if ((i < 0) || i >= size()) {
-			throw new RuntimeException("BUG: getPointDouble was asked for an out-of-range point: " + i);
+			throw new RuntimeException(
+				"BUG: getPointDouble was asked for an out-of-range point: " + i);
 		}
 
 		p[0] = precise_x_positions[i];
@@ -502,17 +516,18 @@ public class Path implements Comparable<Path> {
 
 	public PointInImage getPointInImage(final int node) {
 		if ((node < 0) || node >= size()) {
-			throw new IllegalArgumentException("getPointInImage() was asked for an out-of-range point: " + node);
+			throw new IllegalArgumentException(
+				"getPointInImage() was asked for an out-of-range point: " + node);
 		}
-		final PointInImage result = new PointInImage(precise_x_positions[node], precise_y_positions[node],
-				precise_z_positions[node]);
+		final PointInImage result = new PointInImage(precise_x_positions[node],
+			precise_y_positions[node], precise_z_positions[node]);
 		result.onPath = this;
 		return result;
 	}
 
 	protected PointInCanvas getPointInCanvas(final int node) {
-		final PointInCanvas result = new PointInCanvas(getXUnscaledDouble(node), getYUnscaledDouble(node),
-				getZUnscaledDouble(node));
+		final PointInCanvas result = new PointInCanvas(getXUnscaledDouble(node),
+			getYUnscaledDouble(node), getZUnscaledDouble(node));
 		result.onPath = this;
 		return result;
 	}
@@ -523,85 +538,78 @@ public class Path implements Comparable<Path> {
 		final double minY = rect.getMinY();
 		final double maxX = rect.getMaxX();
 		final double maxY = rect.getMaxY();
-		for (int i = 0; i< size(); i++) {
+		for (int i = 0; i < size(); i++) {
 			final PointInCanvas node = getPointInCanvas(i);
-			if (node.x >= minX && node.y >= minY && node.x <= maxX && node.y <= maxY) return true;
+			if (node.x >= minX && node.y >= minY && node.x <= maxX && node.y <= maxY)
+				return true;
 		}
 		return false;
 	}
 
 	/**
 	 * Check whether this Path contains the specified point
-	 * 
-	 * @param pim
-	 *            the {@link PointInImage} node
+	 *
+	 * @param pim the {@link PointInImage} node
 	 * @return true, if successful
 	 */
 	public boolean contains(final PointInImage pim) {
 		if (pim.onPath != null) return pim.onPath == this;
-		return (DoubleStream.of(precise_x_positions).anyMatch(x -> x == pim.x)
-				&& DoubleStream.of(precise_y_positions).anyMatch(y -> y == pim.y)
-				&& DoubleStream.of(precise_z_positions).anyMatch(z -> z == pim.z));
+		return (DoubleStream.of(precise_x_positions).anyMatch(x -> x == pim.x) &&
+			DoubleStream.of(precise_y_positions).anyMatch(y -> y == pim.y) &&
+			DoubleStream.of(precise_z_positions).anyMatch(z -> z == pim.z));
 	}
 
 	/**
 	 * Inserts a node at a specified position.
 	 *
-	 * @param index
-	 *            the (zero-based) index of the position of the new node
-	 * @param point
-	 *            the node to be inserted
-	 * @throws IllegalArgumentException
-	 *             if index is out-of-range
+	 * @param index the (zero-based) index of the position of the new node
+	 * @param point the node to be inserted
+	 * @throws IllegalArgumentException if index is out-of-range
 	 */
 	public void addNode(final int index, final PointInImage point) {
-		if (index < 0 || index > size())
-			throw new IllegalArgumentException("addNode() asked for an out-of-range point: " + index);
+		if (index < 0 || index > size()) throw new IllegalArgumentException(
+			"addNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
-		precise_x_positions = ArrayUtils.insert(index, precise_x_positions, point.x);
-		precise_y_positions = ArrayUtils.insert(index, precise_y_positions, point.y);
-		precise_z_positions = ArrayUtils.insert(index, precise_z_positions, point.z);
+		precise_x_positions = ArrayUtils.insert(index, precise_x_positions,
+			point.x);
+		precise_y_positions = ArrayUtils.insert(index, precise_y_positions,
+			point.y);
+		precise_z_positions = ArrayUtils.insert(index, precise_z_positions,
+			point.z);
 	}
 
 	/**
-	 * Removes the specified node if this path has at least two nodes. Does nothing
-	 * if this is a single point path.
+	 * Removes the specified node if this path has at least two nodes. Does
+	 * nothing if this is a single point path.
 	 *
-	 * @param index
-	 *            the zero-based index of the node to be removed
-	 * @throws IllegalArgumentException
-	 *             if index is out-of-range
+	 * @param index the zero-based index of the node to be removed
+	 * @throws IllegalArgumentException if index is out-of-range
 	 */
 	public void removeNode(final int index) {
-		if (points == 1)
-			return;
-		if (index < 0 || index >= points)
-			throw new IllegalArgumentException("removeNode() asked for an out-of-range point: " + index);
+		if (points == 1) return;
+		if (index < 0 || index >= points) throw new IllegalArgumentException(
+			"removeNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
 		final PointInImage p = getPointInImage(index);
 		precise_x_positions = ArrayUtils.remove(precise_x_positions, index);
 		precise_y_positions = ArrayUtils.remove(precise_y_positions, index);
 		precise_z_positions = ArrayUtils.remove(precise_z_positions, index);
 		points -= 1;
-		if (p.equals(startJoinsPoint))
-			startJoinsPoint = getPointInImage(0);
-		if (p.equals(endJoinsPoint) && points > 0)
-			endJoinsPoint = getPointInImage(points - 1);
+		if (p.equals(startJoinsPoint)) startJoinsPoint = getPointInImage(0);
+		if (p.equals(endJoinsPoint) && points > 0) endJoinsPoint = getPointInImage(
+			points - 1);
 	}
 
 	/**
 	 * Assigns a new location to the specified node.
 	 *
-	 * @param index
-	 *            the zero-based index of the node to be modified
-	 * @param destination
-	 *            the new node location
-	 * @throws IllegalArgumentException
-	 *             if index is out-of-range
+	 * @param index the zero-based index of the node to be modified
+	 * @param destination the new node location
+	 * @throws IllegalArgumentException if index is out-of-range
 	 */
 	public void moveNode(final int index, final PointInImage destination) {
-		if (index < 0 || index >= size())
-			throw new IllegalArgumentException("moveNode() asked for an out-of-range point: " + index);
+		if (index < 0 || index >= size()) throw new IllegalArgumentException(
+			"moveNode() asked for an out-of-range point: " + index);
 		precise_x_positions[index] = destination.x;
 		precise_y_positions[index] = destination.y;
 		precise_z_positions[index] = destination.z;
@@ -611,16 +619,16 @@ public class Path implements Comparable<Path> {
 	 * Gets the first node index associated with the specified image coordinates.
 	 * Returns -1 if no such node was found.
 	 *
-	 * @param pim
-	 *            the image position (calibrated coordinates)
+	 * @param pim the image position (calibrated coordinates)
 	 * @return the index of the first node occurrence or -1 if there is no such
 	 *         occurrence
 	 */
 	public int getNodeIndex(final PointInImage pim) {
 		for (int i = 0; i < points; ++i) {
-			if (Math.abs(precise_x_positions[i] - pim.x) < x_spacing
-					&& Math.abs(precise_y_positions[i] - pim.y) < y_spacing
-					&& Math.abs(precise_z_positions[i] - pim.z) < z_spacing) {
+			if (Math.abs(precise_x_positions[i] - pim.x) < x_spacing && Math.abs(
+				precise_y_positions[i] - pim.y) < y_spacing && Math.abs(
+					precise_z_positions[i] - pim.z) < z_spacing)
+			{
 				return i;
 			}
 		}
@@ -631,23 +639,21 @@ public class Path implements Comparable<Path> {
 	 * Gets the index of the closest node associated with the specified world
 	 * coordinates.
 	 *
-	 * @param x
-	 *            the x-coordinates (spatially calibrated image units)
-	 * @param y
-	 *            the y-coordinates (spatially calibrated image units)
-	 * @param z
-	 *            the z-coordinates (spatially calibrated image units)
-	 * @param within
-	 *            sets the search sensitivity. E.g., Setting it to Double.MAX_VALUE
-	 *            (or the image's largest dimension) will always return a valid
-	 *            index.
+	 * @param x the x-coordinates (spatially calibrated image units)
+	 * @param y the y-coordinates (spatially calibrated image units)
+	 * @param z the z-coordinates (spatially calibrated image units)
+	 * @param within sets the search sensitivity. E.g., Setting it to
+	 *          Double.MAX_VALUE (or the image's largest dimension) will always
+	 *          return a valid index.
 	 * @return the index of the closest node to the specified coordinates. Returns
 	 *         -1 if no such node was found.
 	 */
-	public int indexNearestTo(final double x, final double y, final double z, final double within) {
+	public int indexNearestTo(final double x, final double y, final double z,
+		final double within)
+	{
 
-		if (size() < 1)
-			throw new IllegalArgumentException("indexNearestTo called on a Path of size() = 0");
+		if (size() < 1) throw new IllegalArgumentException(
+			"indexNearestTo called on a Path of size() = 0");
 
 		double minimumDistanceSquared = within * within;
 		int indexOfMinimum = -1;
@@ -658,7 +664,8 @@ public class Path implements Comparable<Path> {
 			final double diff_y = y - precise_y_positions[i];
 			final double diff_z = z - precise_z_positions[i];
 
-			final double thisDistanceSquared = diff_x * diff_x + diff_y * diff_y + diff_z * diff_z;
+			final double thisDistanceSquared = diff_x * diff_x + diff_y * diff_y +
+				diff_z * diff_z;
 
 			if (thisDistanceSquared < minimumDistanceSquared) {
 				indexOfMinimum = i;
@@ -669,7 +676,9 @@ public class Path implements Comparable<Path> {
 		return indexOfMinimum;
 	}
 
-	protected int indexNearestToCanvasPosition2D(final double xInCanvas, final double yInCanvas, final double withinPixels) {
+	protected int indexNearestToCanvasPosition2D(final double xInCanvas,
+		final double yInCanvas, final double withinPixels)
+	{
 		double minimumDistanceSquared = withinPixels * withinPixels;
 		int indexOfMinimum = -1;
 		for (int i = 0; i < size(); ++i) {
@@ -691,8 +700,8 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Gets the position of the node tagged as 'editable', if any.
 	 *
-	 * @return the index of the point currently tagged as editable, or -1 if no such
-	 *         point exists
+	 * @return the index of the point currently tagged as editable, or -1 if no
+	 *         such point exists
 	 */
 	public int getEditableNodeIndex() {
 		return editableNodeIndex;
@@ -701,9 +710,8 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Tags the specified point position as 'editable'.
 	 *
-	 * @param index
-	 *            the index of the point to be tagged. Set it to -1 to for no
-	 *            tagging
+	 * @param index the index of the point to be tagged. Set it to -1 to for no
+	 *          tagging
 	 */
 	public void setEditableNode(final int index) {
 		this.editableNodeIndex = index;
@@ -788,11 +796,9 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected PointInImage lastPoint() {
-		if (points < 1)
-			return null;
-		else
-			return new PointInImage(precise_x_positions[points - 1], precise_y_positions[points - 1],
-					precise_z_positions[points - 1]);
+		if (points < 1) return null;
+		else return new PointInImage(precise_x_positions[points - 1],
+			precise_y_positions[points - 1], precise_z_positions[points - 1]);
 	}
 
 	private void expandTo(final int newMaxPoints) {
@@ -800,9 +806,12 @@ public class Path implements Comparable<Path> {
 		final double[] new_precise_x_positions = new double[newMaxPoints];
 		final double[] new_precise_y_positions = new double[newMaxPoints];
 		final double[] new_precise_z_positions = new double[newMaxPoints];
-		System.arraycopy(precise_x_positions, 0, new_precise_x_positions, 0, points);
-		System.arraycopy(precise_y_positions, 0, new_precise_y_positions, 0, points);
-		System.arraycopy(precise_z_positions, 0, new_precise_z_positions, 0, points);
+		System.arraycopy(precise_x_positions, 0, new_precise_x_positions, 0,
+			points);
+		System.arraycopy(precise_y_positions, 0, new_precise_y_positions, 0,
+			points);
+		System.arraycopy(precise_z_positions, 0, new_precise_z_positions, 0,
+			points);
 		precise_x_positions = new_precise_x_positions;
 		precise_y_positions = new_precise_y_positions;
 		precise_z_positions = new_precise_z_positions;
@@ -855,22 +864,28 @@ public class Path implements Comparable<Path> {
 			final double last_x = precise_x_positions[points - 1];
 			final double last_y = precise_y_positions[points - 1];
 			final double last_z = precise_z_positions[points - 1];
-			while ((other.precise_x_positions[toSkip] == last_x) && (other.precise_y_positions[toSkip] == last_y)
-					&& (other.precise_z_positions[toSkip] == last_z)) {
+			while ((other.precise_x_positions[toSkip] == last_x) &&
+				(other.precise_y_positions[toSkip] == last_y) &&
+				(other.precise_z_positions[toSkip] == last_z))
+			{
 				++toSkip;
 			}
 		}
 
-		System.arraycopy(other.precise_x_positions, toSkip, precise_x_positions, points, other.points - toSkip);
-		System.arraycopy(other.precise_y_positions, toSkip, precise_y_positions, points, other.points - toSkip);
-		System.arraycopy(other.precise_z_positions, toSkip, precise_z_positions, points, other.points - toSkip);
+		System.arraycopy(other.precise_x_positions, toSkip, precise_x_positions,
+			points, other.points - toSkip);
+		System.arraycopy(other.precise_y_positions, toSkip, precise_y_positions,
+			points, other.points - toSkip);
+		System.arraycopy(other.precise_z_positions, toSkip, precise_z_positions,
+			points, other.points - toSkip);
 
 		if (hasRadii()) {
-			System.arraycopy(other.radiuses, toSkip, radiuses, points, other.points - toSkip);
+			System.arraycopy(other.radiuses, toSkip, radiuses, points, other.points -
+				toSkip);
 		}
 
-		if (endJoins != null)
-			throw new IllegalArgumentException("BUG: we should never be adding to a path that already endJoins");
+		if (endJoins != null) throw new IllegalArgumentException(
+			"BUG: we should never be adding to a path that already endJoins");
 
 		if (other.endJoins != null) {
 			setEndJoin(other.endJoins, other.endJoinsPoint);
@@ -886,8 +901,7 @@ public class Path implements Comparable<Path> {
 
 	protected void unsetPrimaryForConnected(final HashSet<Path> pathsExplored) {
 		for (final Path p : somehowJoins) {
-			if (pathsExplored.contains(p))
-				continue;
+			if (pathsExplored.contains(p)) continue;
 			p.setIsPrimary(false);
 			pathsExplored.add(p);
 			p.unsetPrimaryForConnected(pathsExplored);
@@ -895,7 +909,8 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected Path reversed() {
-		final Path c = new Path(x_spacing, y_spacing, z_spacing, spacing_units, points);
+		final Path c = new Path(x_spacing, y_spacing, z_spacing, spacing_units,
+			points);
 		c.points = points;
 		for (int i = 0; i < points; ++i) {
 			c.precise_x_positions[i] = precise_x_positions[(points - 1) - i];
@@ -915,39 +930,44 @@ public class Path implements Comparable<Path> {
 		precise_z_positions[points++] = z;
 	}
 
-	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c, final int plane,
-			final boolean highContrast, final boolean drawDiameter) {
+	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g,
+		final java.awt.Color c, final int plane, final boolean highContrast,
+		final boolean drawDiameter)
+	{
 		drawPathAsPoints(canvas, g, c, plane, highContrast, drawDiameter, 0, -1);
 	}
 
-	protected void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g, final java.awt.Color c,
-			final int plane, final boolean drawDiameter, final int slice, final int either_side) {
-		drawPathAsPoints(canvas, g, c, plane, false, drawDiameter, slice, either_side);
+	protected void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g,
+		final java.awt.Color c, final int plane, final boolean drawDiameter,
+		final int slice, final int either_side)
+	{
+		drawPathAsPoints(canvas, g, c, plane, false, drawDiameter, slice,
+			either_side);
 	}
 
-	protected void drawPathAsPoints(final Graphics2D g2, final TracerCanvas canvas, final SimpleNeuriteTracer snt) {
+	protected void drawPathAsPoints(final Graphics2D g2,
+		final TracerCanvas canvas, final SimpleNeuriteTracer snt)
+	{
 		final boolean customColor = (hasCustomColor && snt.displayCustomPathColors);
 		Color color = snt.deselectedColor;
-		if (isSelected() && !customColor)
-			color = snt.selectedColor;
-		else if (customColor)
-			color = getColor();
+		if (isSelected() && !customColor) color = snt.selectedColor;
+		else if (customColor) color = getColor();
 		final int sliceZeroIndexed = canvas.getImage().getZ() - 1;
 		int eitherSideParameter = canvas.eitherSide;
-		if (!canvas.just_near_slices)
-			eitherSideParameter = -1;
-		drawPathAsPoints(canvas, g2, color, canvas.getPlane(), customColor, snt.drawDiametersXY, sliceZeroIndexed,
-				eitherSideParameter);
+		if (!canvas.just_near_slices) eitherSideParameter = -1;
+		drawPathAsPoints(canvas, g2, color, canvas.getPlane(), customColor,
+			snt.drawDiametersXY, sliceZeroIndexed, eitherSideParameter);
 	}
 
-	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g2, final java.awt.Color c,
-			final int plane, final boolean highContrast, boolean drawDiameter, final int slice, final int either_side) {
+	public void drawPathAsPoints(final TracerCanvas canvas, final Graphics2D g2,
+		final java.awt.Color c, final int plane, final boolean highContrast,
+		boolean drawDiameter, final int slice, final int either_side)
+	{
 
 		g2.setColor(c);
 		int startIndexOfLastDrawnLine = -1;
 
-		if (!hasRadii())
-			drawDiameter = false;
+		if (!hasRadii()) drawDiameter = false;
 
 		for (int i = 0; i < points; ++i) {
 
@@ -960,64 +980,81 @@ public class Path implements Comparable<Path> {
 			int slice_of_point = Integer.MIN_VALUE;
 
 			switch (plane) {
-			case MultiDThreePanes.XY_PLANE:
-				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i - 1));
-					previous_y_on_screen = canvas.myScreenYDprecise(getXUnscaledDouble(i - 1));
-				}
-				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i + 1));
-					next_y_on_screen = canvas.myScreenYDprecise(getYUnscaledDouble(i + 1));
-				}
-				slice_of_point = getZUnscaled(i);
-				break;
-			case MultiDThreePanes.XZ_PLANE:
-				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i - 1));
-					previous_y_on_screen = canvas.myScreenYDprecise(getZUnscaledDouble(i - 1));
-				}
-				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i + 1));
-					next_y_on_screen = canvas.myScreenYDprecise(getZUnscaledDouble(i + 1));
-				}
-				slice_of_point = getYUnscaled(i);
-				break;
-			case MultiDThreePanes.ZY_PLANE:
-				if (notFirstPoint) {
-					previous_x_on_screen = canvas.myScreenXDprecise(getZUnscaledDouble(i - 1));
-					previous_y_on_screen = canvas.myScreenYDprecise(getYUnscaledDouble(i - 1));
-				}
-				if (notLastPoint) {
-					next_x_on_screen = canvas.myScreenXDprecise(getZUnscaledDouble(i + 1));
-					next_y_on_screen = canvas.myScreenYDprecise(getYUnscaledDouble(i + 1));
-				}
-				slice_of_point = getXUnscaled(i);
-				break;
-			default:
-				throw new IllegalArgumentException("BUG: Unknown plane! (" + plane + ")");
+				case MultiDThreePanes.XY_PLANE:
+					if (notFirstPoint) {
+						previous_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(
+							i - 1));
+						previous_y_on_screen = canvas.myScreenYDprecise(getXUnscaledDouble(
+							i - 1));
+					}
+					if (notLastPoint) {
+						next_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i +
+							1));
+						next_y_on_screen = canvas.myScreenYDprecise(getYUnscaledDouble(i +
+							1));
+					}
+					slice_of_point = getZUnscaled(i);
+					break;
+				case MultiDThreePanes.XZ_PLANE:
+					if (notFirstPoint) {
+						previous_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(
+							i - 1));
+						previous_y_on_screen = canvas.myScreenYDprecise(getZUnscaledDouble(
+							i - 1));
+					}
+					if (notLastPoint) {
+						next_x_on_screen = canvas.myScreenXDprecise(getXUnscaledDouble(i +
+							1));
+						next_y_on_screen = canvas.myScreenYDprecise(getZUnscaledDouble(i +
+							1));
+					}
+					slice_of_point = getYUnscaled(i);
+					break;
+				case MultiDThreePanes.ZY_PLANE:
+					if (notFirstPoint) {
+						previous_x_on_screen = canvas.myScreenXDprecise(getZUnscaledDouble(
+							i - 1));
+						previous_y_on_screen = canvas.myScreenYDprecise(getYUnscaledDouble(
+							i - 1));
+					}
+					if (notLastPoint) {
+						next_x_on_screen = canvas.myScreenXDprecise(getZUnscaledDouble(i +
+							1));
+						next_y_on_screen = canvas.myScreenYDprecise(getYUnscaledDouble(i +
+							1));
+					}
+					slice_of_point = getXUnscaled(i);
+					break;
+				default:
+					throw new IllegalArgumentException("BUG: Unknown plane! (" + plane +
+						")");
 			}
 
 			final PathNode pn = new PathNode(this, i, canvas);
-			final boolean outOfDepthBounds = (either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side);
+			final boolean outOfDepthBounds = (either_side >= 0) && (Math.abs(
+				slice_of_point - slice) > either_side);
 			g2.setColor(SWCColor.alphaColor(c, (outOfDepthBounds) ? 50 : 100));
 
-			// If there was a previous point in this path, draw a line from there to here:
+			// If there was a previous point in this path, draw a line from there to
+			// here:
 			if (notFirstPoint) {
 				// Don't redraw the line if we drew it the previous time, though:
 				if (startIndexOfLastDrawnLine != i - 1) {
-					g2.draw(new Line2D.Double(previous_x_on_screen, previous_y_on_screen, pn.x, pn.y));
+					g2.draw(new Line2D.Double(previous_x_on_screen, previous_y_on_screen,
+						pn.x, pn.y));
 					startIndexOfLastDrawnLine = i - 1;
 				}
 			}
 
 			// If there's a next point in this path, draw a line from here to there:
 			if (notLastPoint) {
-				g2.draw(new Line2D.Double(pn.x, pn.y, next_x_on_screen, next_y_on_screen));
+				g2.draw(new Line2D.Double(pn.x, pn.y, next_x_on_screen,
+					next_y_on_screen));
 				startIndexOfLastDrawnLine = i;
 			}
 
-			if (outOfDepthBounds)
-				continue; // draw nothing more for points out-of-bounds
+			if (outOfDepthBounds) continue; // draw nothing more for points
+																			// out-of-bounds
 
 			// If we've been asked to draw the diameters, just do it in XY
 			if (drawDiameter && plane == MultiDThreePanes.XY_PLANE) {
@@ -1033,7 +1070,8 @@ public class Path implements Comparable<Path> {
 				final double cross_y = n_z * t_x - n_x * t_z;
 				// double cross_z = n_x * t_y - n_y * t_x;
 
-				final double sizeInPlane = Math.sqrt(cross_x * cross_x + cross_y * cross_y);
+				final double sizeInPlane = Math.sqrt(cross_x * cross_x + cross_y *
+					cross_y);
 				final double normalized_cross_x = cross_x / sizeInPlane;
 				final double normalized_cross_y = cross_y / sizeInPlane;
 				final double zdiff = Math.abs((slice - slice_of_point) * z_spacing);
@@ -1042,26 +1080,37 @@ public class Path implements Comparable<Path> {
 				if (either_side < 0 || zdiff <= realRadius) {
 
 					double effective_radius;
-					if (either_side < 0)
-						effective_radius = realRadius;
-					else
-						effective_radius = Math.sqrt(realRadius * realRadius - zdiff * zdiff);
+					if (either_side < 0) effective_radius = realRadius;
+					else effective_radius = Math.sqrt(realRadius * realRadius - zdiff *
+						zdiff);
 
-					final double left_x = precise_x_positions[i] + normalized_cross_x * effective_radius;
-					final double left_y = precise_y_positions[i] + normalized_cross_y * effective_radius;
-					final double right_x = precise_x_positions[i] - normalized_cross_x * effective_radius;
-					final double right_y = precise_y_positions[i] - normalized_cross_y * effective_radius;
+					final double left_x = precise_x_positions[i] + normalized_cross_x *
+						effective_radius;
+					final double left_y = precise_y_positions[i] + normalized_cross_y *
+						effective_radius;
+					final double right_x = precise_x_positions[i] - normalized_cross_x *
+						effective_radius;
+					final double right_y = precise_y_positions[i] - normalized_cross_y *
+						effective_radius;
 
-					final double left_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + left_x / x_spacing);
-					final double left_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + left_y / y_spacing);
-					final double right_x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + right_x / x_spacing);
-					final double right_y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + right_y / y_spacing);
+					final double left_x_on_screen = canvas.myScreenXDprecise(
+						canvasOffset.x + left_x / x_spacing);
+					final double left_y_on_screen = canvas.myScreenYDprecise(
+						canvasOffset.y + left_y / y_spacing);
+					final double right_x_on_screen = canvas.myScreenXDprecise(
+						canvasOffset.x + right_x / x_spacing);
+					final double right_y_on_screen = canvas.myScreenYDprecise(
+						canvasOffset.y + right_y / y_spacing);
 
-					final double x_on_screen = canvas.myScreenXDprecise(canvasOffset.x + precise_x_positions[i] / x_spacing);
-					final double y_on_screen = canvas.myScreenYDprecise(canvasOffset.y + precise_y_positions[i] / y_spacing);
+					final double x_on_screen = canvas.myScreenXDprecise(canvasOffset.x +
+						precise_x_positions[i] / x_spacing);
+					final double y_on_screen = canvas.myScreenYDprecise(canvasOffset.y +
+						precise_y_positions[i] / y_spacing);
 
-					g2.draw(new Line2D.Double(x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen));
-					g2.draw(new Line2D.Double(x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen));
+					g2.draw(new Line2D.Double(x_on_screen, y_on_screen, left_x_on_screen,
+						left_y_on_screen));
+					g2.draw(new Line2D.Double(x_on_screen, y_on_screen, right_x_on_screen,
+						right_y_on_screen));
 				}
 
 			}
@@ -1077,13 +1126,13 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Sets the node colors.
 	 *
-	 * @param colors
-	 *            the colors used to render the nodes of this. If null (the default)
-	 *            all nodes are rendered using the Path color.
+	 * @param colors the colors used to render the nodes of this. If null (the
+	 *          default) all nodes are rendered using the Path color.
 	 */
 	public void setNodeColors(final Color[] colors) {
 		if (colors != null && colors.length != size()) {
-			throw new IllegalArgumentException("colors array must have as many elements as nodes");
+			throw new IllegalArgumentException(
+				"colors array must have as many elements as nodes");
 		}
 		nodeColors = colors;
 	}
@@ -1101,9 +1150,8 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Gets the node color.
 	 *
-	 * @param pos
-	 *            the node position
-	 * @return the node color, or null if 
+	 * @param pos the node position
+	 * @return the node color, or null if
 	 */
 	public Color getNodeColor(final int pos) {
 		return (nodeColors == null) ? null : nodeColors[pos];
@@ -1113,15 +1161,15 @@ public class Path implements Comparable<Path> {
 	 * Sets the node color.
 	 *
 	 * @param color the node color
-	 * @param pos   the node position
+	 * @param pos the node position
 	 */
 	public void setNodeColor(final Color color, final int pos) {
-		if(nodeColors == null) nodeColors = new Color[size()];
+		if (nodeColors == null) nodeColors = new Color[size()];
 		nodeColors[pos] = color;
 	}
 
 	public void setValue(final float value, final int pos) {
-		if(values == null) values = new float[size()];
+		if (values == null) values = new float[size()];
 		values[pos] = value;
 	}
 
@@ -1143,32 +1191,28 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Sets this path color.
 	 *
-	 * @param color
-	 *            the path color. Set it to null, to have SNT rendered using default
-	 *            settings.
+	 * @param color the path color. Set it to null, to have SNT rendered using
+	 *          default settings.
 	 */
 	public void setColor(final Color color) {
 		this.color = color;
 		hasCustomColor = color != null;
-		if (fitted != null)
-			fitted.setColor(color);
+		if (fitted != null) fitted.setColor(color);
 	}
 
 	/**
 	 * Sets this path color.
 	 *
-	 * @param colorRGB
-	 *            the path color. Set it to null, to have SNT rendered using default
-	 *            settings.
+	 * @param colorRGB the path color. Set it to null, to have SNT rendered using
+	 *          default settings.
 	 */
 	public void setColorRGB(final ColorRGB colorRGB) {
 		setColor((colorRGB == null) ? null : new Color(colorRGB.getARGB()));
 	}
 
 	/**
-	 * Assesses whether a custom color has been assigned to this Path, or its nodes
-	 * have been assigned an array of colors
-	 *
+	 * Assesses whether a custom color has been assigned to this Path, or its
+	 * nodes have been assigned an array of colors
 	 *
 	 * @return true, if successful
 	 * @see #hasNodeColors()
@@ -1178,7 +1222,8 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Assesses whether the nodes of this path have been assigned an array of colors
+	 * Assesses whether the nodes of this path have been assigned an array of
+	 * colors
 	 *
 	 * @return true, if successful
 	 * @see #getNodeColors()
@@ -1190,30 +1235,29 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Gets the default SWC colors used by SNT.
 	 *
-	 * @param swcType
-	 *            the SEC type (e.g., {@link Path#SWC_AXON},
-	 *            {@link Path#SWC_DENDRITE}, etc.)
+	 * @param swcType the SEC type (e.g., {@link Path#SWC_AXON},
+	 *          {@link Path#SWC_DENDRITE}, etc.)
 	 * @return the SWC color
 	 */
 	public static Color getSWCcolor(final int swcType) {
 		switch (swcType) {
-		case Path.SWC_SOMA:
-			return Color.BLUE;
-		case Path.SWC_DENDRITE:
-			return Color.GREEN;
-		case Path.SWC_APICAL_DENDRITE:
-			return Color.CYAN;
-		case Path.SWC_AXON:
-			return Color.RED;
-		case Path.SWC_FORK_POINT:
-			return Color.ORANGE;
-		case Path.SWC_END_POINT:
-			return Color.PINK;
-		case Path.SWC_CUSTOM:
-			return Color.YELLOW;
-		case Path.SWC_UNDEFINED:
-		default:
-			return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
+			case Path.SWC_SOMA:
+				return Color.BLUE;
+			case Path.SWC_DENDRITE:
+				return Color.GREEN;
+			case Path.SWC_APICAL_DENDRITE:
+				return Color.CYAN;
+			case Path.SWC_AXON:
+				return Color.RED;
+			case Path.SWC_FORK_POINT:
+				return Color.ORANGE;
+			case Path.SWC_END_POINT:
+				return Color.PINK;
+			case Path.SWC_CUSTOM:
+				return Color.YELLOW;
+			case Path.SWC_UNDEFINED:
+			default:
+				return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
 		}
 	}
 
@@ -1228,12 +1272,14 @@ public class Path implements Comparable<Path> {
 
 	protected void setFitted(final Path p) {
 		if (fitted != null && p != null) {
-			throw new IllegalArgumentException("BUG: Trying to set a fitted path when there already is one...");
+			throw new IllegalArgumentException(
+				"BUG: Trying to set a fitted path when there already is one...");
 		}
 		fitted = p;
 		if (p == null) {
 			setUseFitted(false);
-		} else {
+		}
+		else {
 			p.fittedVersionOf = this;
 		}
 	}
@@ -1244,9 +1290,11 @@ public class Path implements Comparable<Path> {
 	 * @param useFitted the new use fitted
 	 * @throws IllegalArgumentException if this Path has not been fitted
 	 */
-	public void setUseFitted(final boolean useFitted) throws IllegalArgumentException {
-		if (useFitted && fitted == null)
-			throw new IllegalArgumentException("setUseFitted(true) called, but 'fitted' member was null");
+	public void setUseFitted(final boolean useFitted)
+		throws IllegalArgumentException
+	{
+		if (useFitted && fitted == null) throw new IllegalArgumentException(
+			"setUseFitted(true) called, but 'fitted' member was null");
 		this.useFitted = useFitted;
 	}
 
@@ -1270,7 +1318,8 @@ public class Path implements Comparable<Path> {
 
 	protected void setGuessedTangents(final int pointsEitherSide) {
 		if (tangents_x == null || tangents_y == null || tangents_z == null)
-			throw new IllegalArgumentException("BUG: setGuessedTangents called with one of the tangent arrays null");
+			throw new IllegalArgumentException(
+				"BUG: setGuessedTangents called with one of the tangent arrays null");
 		final double[] tangent = new double[3];
 		for (int i = 0; i < points; ++i) {
 			getTangent(i, pointsEitherSide, tangent);
@@ -1280,14 +1329,14 @@ public class Path implements Comparable<Path> {
 		}
 	}
 
-	protected void getTangent(final int i, final int pointsEitherSide, final double[] result) {
+	protected void getTangent(final int i, final int pointsEitherSide,
+		final double[] result)
+	{
 		int min_index = i - pointsEitherSide;
-		if (min_index < 0)
-			min_index = 0;
+		if (min_index < 0) min_index = 0;
 
 		int max_index = i + pointsEitherSide;
-		if (max_index >= points)
-			max_index = points - 1;
+		if (max_index >= points) max_index = points - 1;
 
 		result[0] = precise_x_positions[max_index] - precise_x_positions[min_index];
 		result[1] = precise_y_positions[max_index] - precise_y_positions[min_index];
@@ -1298,7 +1347,7 @@ public class Path implements Comparable<Path> {
 	 * Gets the list of string representations of non-redundant SWC types (i.e.,
 	 * excluding {@link Path#SWC_FORK_POINT_LABEL}, and
 	 * {@link Path#SWC_FORK_POINT_LABEL}
-	 * 
+	 *
 	 * @return the list of SWC type names
 	 */
 	public static ArrayList<String> getSWCtypeNames() {
@@ -1308,16 +1357,17 @@ public class Path implements Comparable<Path> {
 		swcTypes.add(SWC_AXON_LABEL);
 		swcTypes.add(SWC_DENDRITE_LABEL);
 		swcTypes.add(SWC_APICAL_DENDRITE_LABEL);
-		//swcTypes.add(SWC_FORK_POINT_LABEL);
-		//swcTypes.add(SWC_END_POINT_LABEL);
+		// swcTypes.add(SWC_FORK_POINT_LABEL);
+		// swcTypes.add(SWC_END_POINT_LABEL);
 		swcTypes.add(SWC_CUSTOM_LABEL);
 		return swcTypes;
 	}
 
 	/**
-	 * Gets the list of non-redundant SWC types (i.e., excluding the redundant types
-	 * {@link Path#SWC_FORK_POINT_LABEL}, and {@link Path#SWC_FORK_POINT_LABEL}
-	 * 
+	 * Gets the list of non-redundant SWC types (i.e., excluding the redundant
+	 * types {@link Path#SWC_FORK_POINT_LABEL}, and
+	 * {@link Path#SWC_FORK_POINT_LABEL}
+	 *
 	 * @return the list of SWC type flags
 	 */
 	public static ArrayList<Integer> getSWCtypes() {
@@ -1327,52 +1377,54 @@ public class Path implements Comparable<Path> {
 		swcTypes.add(SWC_AXON);
 		swcTypes.add(SWC_DENDRITE);
 		swcTypes.add(SWC_APICAL_DENDRITE);
-		//swcTypes.add(SWC_FORK_POINT);
-		//swcTypes.add(SWC_END_POINT);
+		// swcTypes.add(SWC_FORK_POINT);
+		// swcTypes.add(SWC_END_POINT);
 		swcTypes.add(SWC_CUSTOM);
 		return swcTypes;
 	}
 
 	/**
-	 * Gets the SWC type label associated with the specified type flag. SNT follows
-	 * the specification detailed at <a href=
+	 * Gets the SWC type label associated with the specified type flag. SNT
+	 * follows the specification detailed at <a href=
 	 * "http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html">neuronland</a>
 	 *
-	 * @param type            the SWC type flag
+	 * @param type the SWC type flag
 	 * @param capitalized whether output String should be capitalized
-	 * @return the respective label, or {@link Path#SWC_UNDEFINED_LABEL} if flag was
-	 *         not recognized
+	 * @return the respective label, or {@link Path#SWC_UNDEFINED_LABEL} if flag
+	 *         was not recognized
 	 */
-	public static String getSWCtypeName(final int type, final boolean capitalized) {
+	public static String getSWCtypeName(final int type,
+		final boolean capitalized)
+	{
 		String typeName;
 		switch (type) {
-		case SWC_UNDEFINED:
-			typeName = SWC_UNDEFINED_LABEL;
-			break;
-		case SWC_SOMA:
-			typeName = SWC_SOMA_LABEL;
-			break;
-		case SWC_AXON:
-			typeName = SWC_AXON_LABEL;
-			break;
-		case SWC_DENDRITE:
-			typeName = SWC_DENDRITE_LABEL;
-			break;
-		case SWC_APICAL_DENDRITE:
-			typeName = SWC_APICAL_DENDRITE_LABEL;
-			break;
-		case SWC_FORK_POINT:
-			typeName = SWC_FORK_POINT_LABEL;
-			break;
-		case SWC_END_POINT:
-			typeName = SWC_END_POINT_LABEL;
-			break;
-		case SWC_CUSTOM:
-			typeName = SWC_CUSTOM_LABEL;
-			break;
-		default:
-			typeName = SWC_UNDEFINED_LABEL;
-			break;
+			case SWC_UNDEFINED:
+				typeName = SWC_UNDEFINED_LABEL;
+				break;
+			case SWC_SOMA:
+				typeName = SWC_SOMA_LABEL;
+				break;
+			case SWC_AXON:
+				typeName = SWC_AXON_LABEL;
+				break;
+			case SWC_DENDRITE:
+				typeName = SWC_DENDRITE_LABEL;
+				break;
+			case SWC_APICAL_DENDRITE:
+				typeName = SWC_APICAL_DENDRITE_LABEL;
+				break;
+			case SWC_FORK_POINT:
+				typeName = SWC_FORK_POINT_LABEL;
+				break;
+			case SWC_END_POINT:
+				typeName = SWC_END_POINT_LABEL;
+				break;
+			case SWC_CUSTOM:
+				typeName = SWC_CUSTOM_LABEL;
+				break;
+			default:
+				typeName = SWC_UNDEFINED_LABEL;
+				break;
 		}
 		if (!capitalized) return typeName;
 
@@ -1382,7 +1434,8 @@ public class Path implements Comparable<Path> {
 			final char ch = buffer[i];
 			if (Character.isWhitespace(ch) || !Character.isLetter(ch)) {
 				capitalizeNext = true;
-			} else if (capitalizeNext) {
+			}
+			else if (capitalizeNext) {
 				buffer[i] = Character.toTitleCase(ch);
 				capitalizeNext = false;
 			}
@@ -1404,16 +1457,15 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Gets the radius of the specified node.
 	 *
-	 * @param pos
-	 *            the node position
-	 * @return the radius at the specified position, or zero if path has no defined
-	 *         thickness
+	 * @param pos the node position
+	 * @return the radius at the specified position, or zero if path has no
+	 *         defined thickness
 	 */
 	public double getNodeRadius(final int pos) {
-		if (radiuses == null)
-			return 0;
+		if (radiuses == null) return 0;
 		if ((pos < 0) || pos >= size()) {
-			throw new IllegalArgumentException("getNodeRadius() was asked for an out-of-range point: " + pos);
+			throw new IllegalArgumentException(
+				"getNodeRadius() was asked for an out-of-range point: " + pos);
 		}
 		return radiuses[pos];
 	}
@@ -1428,9 +1480,11 @@ public class Path implements Comparable<Path> {
 		return radiuses != null;
 	}
 
-	protected void setFittedCircles(final int nPoints, final double[] tangents_x, final double[] tangents_y, final double[] tangents_z,
-			final double[] radiuses, final double[] optimized_x, final double[] optimized_y,
-			final double[] optimized_z) {
+	protected void setFittedCircles(final int nPoints, final double[] tangents_x,
+		final double[] tangents_y, final double[] tangents_z,
+		final double[] radiuses, final double[] optimized_x,
+		final double[] optimized_y, final double[] optimized_z)
+	{
 
 		this.points = nPoints;
 		this.tangents_x = tangents_x.clone();
@@ -1446,49 +1500,47 @@ public class Path implements Comparable<Path> {
 
 	public String realToString() {
 		String name = getName();
-		if (name == null)
-			name = "Path " + id;
-		if (size() == 1)
-			name += " [Single Point]";
+		if (name == null) name = "Path " + id;
+		if (size() == 1) name += " [Single Point]";
 //		if (startJoins != null) {
 //			name += ", starts on " + startJoins.getName();
 //		}
 //		if (endJoins != null) {
 //			name += ", ends on " + endJoins.getName();
 //		}
-		if (swcType != SWC_UNDEFINED)
-			name += " [" + getSWCtypeName(swcType, false) + "]";
+		if (swcType != SWC_UNDEFINED) name += " [" + getSWCtypeName(swcType,
+			false) + "]";
 		return name;
 	}
 
 	/**
 	 * This toString() method shows details of the path which is actually being
-	 * displayed, not necessarily this path object. FIXME: this is probably horribly
-	 * confusing.
+	 * displayed, not necessarily this path object. FIXME: this is probably
+	 * horribly confusing.
 	 *
 	 * @return the string
 	 */
 
 	@Override
 	public String toString() {
-		if (useFitted)
-			return fitted.realToString();
+		if (useFitted) return fitted.realToString();
 		return realToString();
 	}
 
 	/**
 	 * Sets the SWC type.
 	 *
-	 * @param newSWCType
-	 *            the new SWC type
+	 * @param newSWCType the new SWC type
 	 */
 	public void setSWCType(final int newSWCType) {
 		setSWCType(newSWCType, true);
 	}
 
-	protected void setSWCType(final int newSWCType, final boolean alsoSetInFittedVersion) {
-		if (newSWCType < 0)
-			throw new IllegalArgumentException("BUG: Unknown SWC type " + newSWCType);
+	protected void setSWCType(final int newSWCType,
+		final boolean alsoSetInFittedVersion)
+	{
+		if (newSWCType < 0) throw new IllegalArgumentException(
+			"BUG: Unknown SWC type " + newSWCType);
 		swcType = newSWCType;
 		if (alsoSetInFittedVersion) {
 			/*
@@ -1496,10 +1548,10 @@ public class Path implements Comparable<Path> {
 			 * called on the non-fitted version of the path, so raise an error if it's been
 			 * called on the fitted version by mistake instead:
 			 */
-			if (isFittedVersionOfAnotherPath() && fittedVersionOf.getSWCType() != newSWCType)
-				throw new IllegalArgumentException("BUG: only call setSWCType on the unfitted path");
-			if (fitted != null)
-				fitted.setSWCType(newSWCType);
+			if (isFittedVersionOfAnotherPath() && fittedVersionOf
+				.getSWCType() != newSWCType) throw new IllegalArgumentException(
+					"BUG: only call setSWCType on the unfitted path");
+			if (fitted != null) fitted.setSWCType(newSWCType);
 		}
 	}
 
@@ -1523,8 +1575,8 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Gets the branching order of this Path
 	 *
-	 * @return the branching order (reverse Horton-Strahler order) of this path or A
-	 *         primary path is always of order 1.
+	 * @return the branching order (reverse Horton-Strahler order) of this path or
+	 *         A primary path is always of order 1.
 	 */
 	public int getOrder() {
 		return order;
@@ -1532,8 +1584,7 @@ public class Path implements Comparable<Path> {
 
 	protected void setOrder(final int order) {
 		this.order = order;
-		if (fitted != null)
-			fitted.setOrder(order);
+		if (fitted != null) fitted.setOrder(order);
 	}
 
 	/*
@@ -1550,14 +1601,17 @@ public class Path implements Comparable<Path> {
 	String nameWhenAddedToViewer;
 	String nameWhenAddedToViewerExtra;
 
-	synchronized void removeIncludingFittedFrom3DViewer(final Image3DUniverse univ) {
+	synchronized void removeIncludingFittedFrom3DViewer(
+		final Image3DUniverse univ)
+	{
 		removeFrom3DViewer(univ);
-		if (useFitted)
-			fitted.removeFrom3DViewer(univ);
+		if (useFitted) fitted.removeFrom3DViewer(univ);
 	}
 
-	synchronized void updateContent3D(final Image3DUniverse univ, final boolean visible, final int paths3DDisplay,
-			final Color3f color, final ImagePlus colorImage) {
+	synchronized void updateContent3D(final Image3DUniverse univ,
+		final boolean visible, final int paths3DDisplay, final Color3f color,
+		final ImagePlus colorImage)
+	{
 
 //		SNT.log("In updateContent3D, colorImage is: " + colorImage);
 //		SNT.log("In updateContent3D, color is: " + color);
@@ -1565,7 +1619,6 @@ public class Path implements Comparable<Path> {
 		// So, go through each of the reasons why we might
 		// have to remove (and possibly add back) the path:
 
-	
 		if (!visible) {
 			/*
 			 * It shouldn't be visible - if any of the contents are non-null, remove them:
@@ -1584,7 +1637,8 @@ public class Path implements Comparable<Path> {
 			 */
 			removeFrom3DViewer(univ);
 			pathToUse = fitted;
-		} else {
+		}
+		else {
 			/*
 			 * If the fitted version is currently being displayed, remove it:
 			 */
@@ -1612,10 +1666,11 @@ public class Path implements Comparable<Path> {
 		/* Were we previously using a colour image, but now not? */
 
 		if (colorImage == null) {
-			if ((paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
-					&& pathToUse.content3DExtraMultiColored != null)
-					|| (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE
-							&& pathToUse.content3DMultiColored != null)) {
+			if ((paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS &&
+				pathToUse.content3DExtraMultiColored != null) ||
+				(paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE &&
+					pathToUse.content3DMultiColored != null))
+			{
 				pathToUse.removeFrom3DViewer(univ);
 				pathToUse.addTo3DViewer(univ, color, colorImage);
 				return;
@@ -1626,11 +1681,13 @@ public class Path implements Comparable<Path> {
 			 * different colour image or no colour image?
 			 */
 
-		} else {
-			if ((paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
-					&& pathToUse.content3DExtraMultiColored != colorImage)
-					|| (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE
-							&& pathToUse.content3DMultiColored != colorImage)) {
+		}
+		else {
+			if ((paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS &&
+				pathToUse.content3DExtraMultiColored != colorImage) ||
+				(paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE &&
+					pathToUse.content3DMultiColored != colorImage))
+			{
 				pathToUse.removeFrom3DViewer(univ);
 				pathToUse.addTo3DViewer(univ, color, colorImage);
 				return;
@@ -1658,10 +1715,9 @@ public class Path implements Comparable<Path> {
 
 			if (pathToUse.content3D != null || pathToUse.content3DExtra != null) {
 
-				if (pathToUse.content3D != null)
-					pathToUse.content3D.setColor(color);
-				if (pathToUse.content3DExtra != null)
-					pathToUse.content3DExtra.setColor(color);
+				if (pathToUse.content3D != null) pathToUse.content3D.setColor(color);
+				if (pathToUse.content3DExtra != null) pathToUse.content3DExtra.setColor(
+					color);
 				pathToUse.realColor = color;
 				return;
 
@@ -1673,7 +1729,9 @@ public class Path implements Comparable<Path> {
 			return;
 		}
 
-		if (pathToUse.nameWhenAddedToViewer == null || !univ.contains(pathToUse.nameWhenAddedToViewer)) {
+		if (pathToUse.nameWhenAddedToViewer == null || !univ.contains(
+			pathToUse.nameWhenAddedToViewer))
+		{
 			pathToUse.paths3DDisplay = paths3DDisplay;
 			pathToUse.addTo3DViewer(univ, color, colorImage);
 		}
@@ -1693,7 +1751,8 @@ public class Path implements Comparable<Path> {
 	protected List<PointInImage> getPointInImageList() {
 		final ArrayList<PointInImage> linePoints = new ArrayList<>();
 		for (int i = 0; i < points; ++i) {
-			linePoints.add(new PointInImage(precise_x_positions[i], precise_y_positions[i], precise_z_positions[i]));
+			linePoints.add(new PointInImage(precise_x_positions[i],
+				precise_y_positions[i], precise_z_positions[i]));
 		}
 		return linePoints;
 	}
@@ -1701,14 +1760,13 @@ public class Path implements Comparable<Path> {
 	public java.util.List<Point3f> getPoint3fList() {
 		final ArrayList<Point3f> linePoints = new ArrayList<>();
 		for (int i = 0; i < points; ++i) {
-			linePoints.add(new Point3f((float) precise_x_positions[i], (float) precise_y_positions[i],
-					(float) precise_z_positions[i]));
+			linePoints.add(new Point3f((float) precise_x_positions[i],
+				(float) precise_y_positions[i], (float) precise_z_positions[i]));
 		}
 		return linePoints;
 	}
 
 	protected boolean invalid3DMesh = false;
-
 
 	private void invalidate3DView() {
 		invalid3DMesh = true;
@@ -1719,56 +1777,68 @@ public class Path implements Comparable<Path> {
 	}
 
 	@Deprecated
-	public Content addAsLinesTo3DViewer(final Image3DUniverse univ, final Color c, final ImagePlus colorImage) {
+	public Content addAsLinesTo3DViewer(final Image3DUniverse univ, final Color c,
+		final ImagePlus colorImage)
+	{
 		return addAsLinesTo3DViewer(univ, new Color3f(c), colorImage);
 	}
 
 	@Deprecated
-	protected Content addAsLinesTo3DViewer(final Image3DUniverse univ, final Color3f c, final ImagePlus colorImage) {
+	protected Content addAsLinesTo3DViewer(final Image3DUniverse univ,
+		final Color3f c, final ImagePlus colorImage)
+	{
 		final String safeName = univ.getSafeContentName(getName() + " as lines");
 		return univ.addLineMesh(getPoint3fList(), c, safeName, true);
 	}
 
 	@Deprecated
-	public Content addDiscsTo3DViewer(final Image3DUniverse univ, final Color c, final ImagePlus colorImage) {
+	public Content addDiscsTo3DViewer(final Image3DUniverse univ, final Color c,
+		final ImagePlus colorImage)
+	{
 		return addDiscsTo3DViewer(univ, new Color3f(c), colorImage);
 	}
 
 	@Deprecated
-	public Content addDiscsTo3DViewer(final Image3DUniverse univ, final Color3f c, final ImagePlus colorImage) {
-		if (!hasRadii())
-			return null;
+	public Content addDiscsTo3DViewer(final Image3DUniverse univ, final Color3f c,
+		final ImagePlus colorImage)
+	{
+		if (!hasRadii()) return null;
 
-		final Color3f[] originalColors = Pipe.getPointColors(precise_x_positions, precise_y_positions,
-				precise_z_positions, c, colorImage);
+		final Color3f[] originalColors = Pipe.getPointColors(precise_x_positions,
+			precise_y_positions, precise_z_positions, c, colorImage);
 
 		final List<Color3f> meshColors = new ArrayList<>();
 
 		final int edges = 8;
 		final List<Point3f> allTriangles = new ArrayList<>(edges * points);
 		for (int i = 0; i < points; ++i) {
-			final List<Point3f> discMesh = customnode.MeshMaker.createDisc(precise_x_positions[i],
-					precise_y_positions[i], precise_z_positions[i], tangents_x[i], tangents_y[i], tangents_z[i],
-					radiuses[i], 8);
+			final List<Point3f> discMesh = customnode.MeshMaker.createDisc(
+				precise_x_positions[i], precise_y_positions[i], precise_z_positions[i],
+				tangents_x[i], tangents_y[i], tangents_z[i], radiuses[i], 8);
 			final int pointsInDiscMesh = discMesh.size();
 			for (int j = 0; j < pointsInDiscMesh; ++j)
 				meshColors.add(originalColors[i]);
 			allTriangles.addAll(discMesh);
 		}
-		return univ.addTriangleMesh(allTriangles, meshColors, univ.getSafeContentName("Discs for path " + getName()));
+		return univ.addTriangleMesh(allTriangles, meshColors, univ
+			.getSafeContentName("Discs for path " + getName()));
 	}
 
 	@Deprecated
-	synchronized public void addTo3DViewer(final Image3DUniverse univ, final Color c, final ImagePlus colorImage) {
-		if (c == null)
-			throw new IllegalArgumentException("In addTo3DViewer, Color can no longer be null");
+	synchronized public void addTo3DViewer(final Image3DUniverse univ,
+		final Color c, final ImagePlus colorImage)
+	{
+		if (c == null) throw new IllegalArgumentException(
+			"In addTo3DViewer, Color can no longer be null");
 		addTo3DViewer(univ, new Color3f(c), colorImage);
 	}
 
 	@Deprecated
-	synchronized public void addTo3DViewer(final Image3DUniverse univ, final Color3f c, final ImagePlus colorImage) {
-		if (c == null)
-			throw new IllegalArgumentException("In addTo3DViewer, Color3f can no longer be null");
+	synchronized public void addTo3DViewer(final Image3DUniverse univ,
+		final Color3f c, final ImagePlus colorImage)
+	{
+		if (c == null) throw new IllegalArgumentException(
+			"In addTo3DViewer, Color3f can no longer be null");
 
 		realColor = (c == null) ? new Color3f(Color.magenta) : c;
 
@@ -1778,8 +1848,9 @@ public class Path implements Comparable<Path> {
 			return;
 		}
 
-		if (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES
-				|| paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS) {
+		if (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES ||
+			paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS)
+		{
 			content3D = addAsLinesTo3DViewer(univ, realColor, colorImage);
 			content3D.setLocked(true);
 			nameWhenAddedToViewer = content3D.getName();
@@ -1788,7 +1859,8 @@ public class Path implements Comparable<Path> {
 				content3DExtraMultiColored = colorImage;
 				if (content3DExtra == null) {
 					nameWhenAddedToViewerExtra = null;
-				} else {
+				}
+				else {
 					content3DExtra.setLocked(true);
 					nameWhenAddedToViewerExtra = content3DExtra.getName();
 				}
@@ -1808,7 +1880,9 @@ public class Path implements Comparable<Path> {
 			int added = 0;
 			int lastIndexAdded = -noMoreThanOneEvery;
 			for (int i = 0; i < points; ++i) {
-				if ((points <= noMoreThanOneEvery) || (i - lastIndexAdded >= noMoreThanOneEvery)) {
+				if ((points <= noMoreThanOneEvery) || (i -
+					lastIndexAdded >= noMoreThanOneEvery))
+				{
 					x_points_d[added] = precise_x_positions[i];
 					y_points_d[added] = precise_y_positions[i];
 					z_points_d[added] = precise_z_positions[i];
@@ -1818,7 +1892,8 @@ public class Path implements Comparable<Path> {
 				}
 			}
 			pointsToUse = added;
-		} else {
+		}
+		else {
 			for (int i = 0; i < points; ++i) {
 				x_points_d[i] = precise_x_positions[i];
 				y_points_d[i] = precise_y_positions[i];
@@ -1881,12 +1956,17 @@ public class Path implements Comparable<Path> {
 
 		double total_length_in_image_space = 0;
 		for (int i = 1; i < pointsToUse; ++i) {
-			final double x_diff = (x_points_d_trimmed[i] - x_points_d_trimmed[i - 1]) / x_spacing;
-			final double y_diff = (y_points_d_trimmed[i] - y_points_d_trimmed[i - 1]) / y_spacing;
-			final double z_diff = (z_points_d_trimmed[i] - z_points_d_trimmed[i - 1]) / z_spacing;
-			total_length_in_image_space += Math.sqrt(x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
+			final double x_diff = (x_points_d_trimmed[i] - x_points_d_trimmed[i -
+				1]) / x_spacing;
+			final double y_diff = (y_points_d_trimmed[i] - y_points_d_trimmed[i -
+				1]) / y_spacing;
+			final double z_diff = (z_points_d_trimmed[i] - z_points_d_trimmed[i -
+				1]) / z_spacing;
+			total_length_in_image_space += Math.sqrt(x_diff * x_diff + y_diff *
+				y_diff + z_diff * z_diff);
 		}
-		final double mean_inter_point_distance_in_image_space = total_length_in_image_space / (pointsToUse - 1);
+		final double mean_inter_point_distance_in_image_space =
+			total_length_in_image_space / (pointsToUse - 1);
 //		SNT.log("For path " + this + ", got mean_inter_point_distance_in_image_space: "
 //				+ mean_inter_point_distance_in_image_space);
 		final boolean resample = mean_inter_point_distance_in_image_space < 3;
@@ -1895,15 +1975,16 @@ public class Path implements Comparable<Path> {
 
 		final ArrayList<Color3f> tubeColors = new ArrayList<>();
 
-		final double[][][] allPoints = Pipe.makeTube(x_points_d_trimmed, y_points_d_trimmed, z_points_d_trimmed,
-				radiuses_d_trimmed, resample ? 2 : 1, // resample - 1 means just
-														// "use mean distance
-														// between points", 3 is
-														// three times that,
-														// etc.
-				12, // "parallels" (12 means cross-sections are dodecagons)
-				resample, // do_resample
-				realColor, colorImage, tubeColors);
+		final double[][][] allPoints = Pipe.makeTube(x_points_d_trimmed,
+			y_points_d_trimmed, z_points_d_trimmed, radiuses_d_trimmed, resample ? 2
+				: 1, // resample - 1 means just
+			// "use mean distance
+			// between points", 3 is
+			// three times that,
+			// etc.
+			12, // "parallels" (12 means cross-sections are dodecagons)
+			resample, // do_resample
+			realColor, colorImage, tubeColors);
 
 		if (allPoints == null) {
 			content3D = null;
@@ -1915,11 +1996,12 @@ public class Path implements Comparable<Path> {
 
 		final List<Color3f> vertexColorList = new ArrayList<>();
 		final List<Point3f> triangles = Pipe.generateTriangles(allPoints, 1, // scale
-				tubeColors, vertexColorList);
+			tubeColors, vertexColorList);
 
 		nameWhenAddedToViewer = univ.getSafeContentName(getName());
 		// univ.resetView();
-		content3D = univ.addTriangleMesh(triangles, vertexColorList, nameWhenAddedToViewer);
+		content3D = univ.addTriangleMesh(triangles, vertexColorList,
+			nameWhenAddedToViewer);
 		content3D.setLocked(true);
 		content3DMultiColored = colorImage;
 
@@ -1940,30 +2022,29 @@ public class Path implements Comparable<Path> {
 
 	// TODO: this should be renamed
 	public boolean versionInUse() {
-		if (fittedVersionOf != null)
-			return fittedVersionOf.useFitted;
+		if (fittedVersionOf != null) return fittedVersionOf.useFitted;
 		return !useFitted;
 	}
 
 	/**
 	 * Returns an estimated volume of this path.
 	 * <p>
-	 * The most accurate volume of each path segment would be the volume of a convex
-	 * hull of two arbitrarily oriented and sized circles in space. This is tough to
-	 * work out analytically, and this precision isn't really warranted given the
-	 * errors introduced in the fitting process, the tracing in the first place,
-	 * etc. So, this method produces an approximate volume assuming that the volume
-	 * of each of these parts is that of a truncated cone (Frustum) , with circles
-	 * of the same size (i.e., as if the circles had simply been reoriented to be
-	 * parallel and have a common normal vector)
+	 * The most accurate volume of each path segment would be the volume of a
+	 * convex hull of two arbitrarily oriented and sized circles in space. This is
+	 * tough to work out analytically, and this precision isn't really warranted
+	 * given the errors introduced in the fitting process, the tracing in the
+	 * first place, etc. So, this method produces an approximate volume assuming
+	 * that the volume of each of these parts is that of a truncated cone
+	 * (Frustum) , with circles of the same size (i.e., as if the circles had
+	 * simply been reoriented to be parallel and have a common normal vector)
 	 * </p>
 	 * <p>
-	 * For more accurate measurements of the volumes of a neuron, you should use the
-	 * filling interface.
+	 * For more accurate measurements of the volumes of a neuron, you should use
+	 * the filling interface.
 	 * </p>
-	 * 
-	 * @return the approximate fitted volume (in physical units), or -1 if this Path
-	 *         has no radii
+	 *
+	 * @return the approximate fitted volume (in physical units), or -1 if this
+	 *         Path has no radii
 	 * @see #hasRadii()
 	 */
 	public double getApproximatedVolume() {
@@ -1980,7 +2061,8 @@ public class Path implements Comparable<Path> {
 			final double r1 = radiuses[i];
 			final double r2 = radiuses[i + 1];
 			// See http://en.wikipedia.org/wiki/Frustum
-			final double partVolume = (Math.PI * h * (r1 * r1 + r2 * r2 + r1 * r2)) / 3.0;
+			final double partVolume = (Math.PI * h * (r1 * r1 + r2 * r2 + r1 * r2)) /
+				3.0;
 			totalVolume += partVolume;
 		}
 
@@ -1992,7 +2074,9 @@ public class Path implements Comparable<Path> {
 	 * involve other paths which were probably also transformed by the caller.
 	 */
 
-	public Path transform(final PathTransformer transformation, final ImagePlus template, final ImagePlus model) {
+	public Path transform(final PathTransformer transformation,
+		final ImagePlus template, final ImagePlus model)
+	{
 
 		double templatePixelWidth = 1;
 		double templatePixelHeight = 1;
@@ -2007,8 +2091,8 @@ public class Path implements Comparable<Path> {
 			templateUnits = SNT.getSanitizedUnit(templateCalibration.getUnit());
 		}
 
-		final Path result = new Path(templatePixelWidth, templatePixelHeight, templatePixelDepth, templateUnits,
-				size());
+		final Path result = new Path(templatePixelWidth, templatePixelHeight,
+			templatePixelDepth, templateUnits, size());
 		final double[] transformed = new double[3];
 
 		// Actually, just say you'll have to refit all the
@@ -2018,7 +2102,8 @@ public class Path implements Comparable<Path> {
 			final double original_x = precise_x_positions[i];
 			final double original_y = precise_y_positions[i];
 			final double original_z = precise_z_positions[i];
-			transformation.transformPoint(original_x, original_y, original_z, transformed);
+			transformation.transformPoint(original_x, original_y, original_z,
+				transformed);
 			final double new_x = transformed[0];
 			final double new_y = transformed[1];
 			final double new_z = transformed[2];
@@ -2100,14 +2185,15 @@ public class Path implements Comparable<Path> {
 				// Now downsample between those points:
 				final ArrayList<SimplePoint> forDownsampling = new ArrayList<>();
 				for (int i = start; i <= end; ++i) {
-					forDownsampling.add(
-							new SimplePoint(precise_x_positions[i], precise_y_positions[i], precise_z_positions[i], i));
+					forDownsampling.add(new SimplePoint(precise_x_positions[i],
+						precise_y_positions[i], precise_z_positions[i], i));
 				}
-				final ArrayList<SimplePoint> downsampled = PathDownsampler.downsample(forDownsampling,
-						maximumAllowedDeviation);
+				final ArrayList<SimplePoint> downsampled = PathDownsampler.downsample(
+					forDownsampling, maximumAllowedDeviation);
 
 				// Now update x_points, y_points, z_points:
-				final int pointsDroppedThisTime = forDownsampling.size() - downsampled.size();
+				final int pointsDroppedThisTime = forDownsampling.size() - downsampled
+					.size();
 				totalDroppedPoints += pointsDroppedThisTime;
 				final int newLength = points - pointsDroppedThisTime;
 				final double[] new_x_points = new double[maxPoints];
@@ -2125,9 +2211,12 @@ public class Path implements Comparable<Path> {
 					new_y_points[start + i] = sp.y;
 					new_z_points[start + i] = sp.z;
 				}
-				System.arraycopy(precise_x_positions, end, new_x_points, (start + downsampledLength) - 1, points - end);
-				System.arraycopy(precise_y_positions, end, new_y_points, (start + downsampledLength) - 1, points - end);
-				System.arraycopy(precise_z_positions, end, new_z_points, (start + downsampledLength) - 1, points - end);
+				System.arraycopy(precise_x_positions, end, new_x_points, (start +
+					downsampledLength) - 1, points - end);
+				System.arraycopy(precise_y_positions, end, new_y_points, (start +
+					downsampledLength) - 1, points - end);
+				System.arraycopy(precise_z_positions, end, new_z_points, (start +
+					downsampledLength) - 1, points - end);
 
 				double[] new_radiuses = null;
 				if (hasRadii()) {
@@ -2145,15 +2234,19 @@ public class Path implements Comparable<Path> {
 							final SimplePoint spNext = downsampled.get(i + 1);
 							firstRadiusIndex = sp.originalIndex;
 							lastRadiusIndex = (sp.originalIndex + spNext.originalIndex) / 2;
-						} else if (i == downsampledLength - 1) {
+						}
+						else if (i == downsampledLength - 1) {
 							// The this is the last point:
 							final SimplePoint spPrevious = downsampled.get(i - 1);
-							firstRadiusIndex = (spPrevious.originalIndex + sp.originalIndex) / 2;
+							firstRadiusIndex = (spPrevious.originalIndex + sp.originalIndex) /
+								2;
 							lastRadiusIndex = sp.originalIndex;
-						} else {
+						}
+						else {
 							final SimplePoint spPrevious = downsampled.get(i - 1);
 							final SimplePoint spNext = downsampled.get(i + 1);
-							firstRadiusIndex = (sp.originalIndex + spPrevious.originalIndex) / 2;
+							firstRadiusIndex = (sp.originalIndex + spPrevious.originalIndex) /
+								2;
 							lastRadiusIndex = (sp.originalIndex + spNext.originalIndex) / 2;
 						}
 						for (int j = firstRadiusIndex; j <= lastRadiusIndex; ++j) {
@@ -2162,7 +2255,8 @@ public class Path implements Comparable<Path> {
 						}
 						new_radiuses[start + i] = total / n;
 					}
-					System.arraycopy(radiuses, end, new_radiuses, (start + downsampledLength) - 1, points - end);
+					System.arraycopy(radiuses, end, new_radiuses, (start +
+						downsampledLength) - 1, points - end);
 				}
 
 				// Now update all of those fields:
@@ -2183,14 +2277,14 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Assigns a fixed radius to all the nodes of this Path
 	 *
-	 * @param r
-	 *            the radius to be assigned. Setting it to 0 or Double.NaN removes
-	 *            the radius attribute from the Path
+	 * @param r the radius to be assigned. Setting it to 0 or Double.NaN removes
+	 *          the radius attribute from the Path
 	 */
 	public void setRadius(final double r) {
 		if (Double.isNaN(r) || r == 0d) {
 			radiuses = null;
-		} else {
+		}
+		else {
 			if (radiuses == null) {
 				createCircles();
 				setGuessedTangents(2);
@@ -2202,17 +2296,19 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Assigns radii to this Path
 	 *
-	 * @param radii
-	 *            the radii array. Setting it null removes the radius attribute from
-	 *            the Path
+	 * @param radii the radii array. Setting it null removes the radius attribute
+	 *          from the Path
 	 * @see #setRadius(double)
 	 */
 	public void setRadii(final double[] radii) {
 		if (radii == null || radii.length == 0) {
 			radiuses = null;
-		} else if (radii != null && radii.length != size()) {
-			throw new IllegalArgumentException("radii array must have as many elements as nodes");
-		} else {
+		}
+		else if (radii != null && radii.length != size()) {
+			throw new IllegalArgumentException(
+				"radii array must have as many elements as nodes");
+		}
+		else {
 			if (radiuses == null) {
 				createCircles();
 				setGuessedTangents(2);

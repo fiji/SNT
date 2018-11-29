@@ -49,7 +49,9 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	private boolean waveInteractionsToIJ;
 	protected boolean cursorLocked;
 
-	protected MultiDThreePanesCanvas(final ImagePlus imagePlus, final PaneOwner owner, final int plane) {
+	protected MultiDThreePanesCanvas(final ImagePlus imagePlus,
+		final PaneOwner owner, final int plane)
+	{
 		super(imagePlus);
 		this.owner = owner;
 		this.plane = plane;
@@ -59,7 +61,9 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		this(imagePlus, null, plane);
 	}
 
-	public static Object newThreePanesCanvas(final ImagePlus imagePlus, final PaneOwner owner, final int plane) {
+	public static Object newThreePanesCanvas(final ImagePlus imagePlus,
+		final PaneOwner owner, final int plane)
+	{
 		return new MultiDThreePanesCanvas(imagePlus, owner, plane);
 	}
 
@@ -70,14 +74,12 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	protected void drawOverlay(final Graphics2D g) {
 		drawCanvasText(g, canvasText);
 		final boolean draw_string = validString(cursorText);
-		if (!draw_crosshairs && !draw_string)
-			return;
+		if (!draw_crosshairs && !draw_string) return;
 		final Point2d pos = getCursorPos();
 		g.setColor(getAnnotationsColor());
-		if (draw_crosshairs)
-			drawCrosshairs(g, pos.x, pos.y);
-		if (draw_string)
-			drawString(g, cursorText, (float) pos.x + 2, (float) pos.y);
+		if (draw_crosshairs) drawCrosshairs(g, pos.x, pos.y);
+		if (draw_string) drawString(g, cursorText, (float) pos.x + 2,
+			(float) pos.y);
 	}
 
 	/**
@@ -88,29 +90,33 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		if (plane == MultiDThreePanes.XY_PLANE) {
 			x = myScreenXDprecise(current_x);
 			y = myScreenYDprecise(current_y);
-		} else if (plane == MultiDThreePanes.XZ_PLANE) {
+		}
+		else if (plane == MultiDThreePanes.XZ_PLANE) {
 			x = myScreenXDprecise(current_x);
 			y = myScreenYDprecise(current_z);
-		} else if (plane == MultiDThreePanes.ZY_PLANE) {
+		}
+		else if (plane == MultiDThreePanes.ZY_PLANE) {
 			x = myScreenXDprecise(current_z);
 			y = myScreenYDprecise(current_y);
-		} else
-			throw new IllegalArgumentException("Unknow pane");
+		}
+		else throw new IllegalArgumentException("Unknow pane");
 		return new Point2d(x, y);
 	}
 
 	public Graphics2D getGraphics2D(final Graphics g) {
 		final Graphics2D g2 = (Graphics2D) g;
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+			RenderingHints.VALUE_ANTIALIAS_ON);
+		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+			RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		return g2;
 	}
 
-	protected void triggerZoomEvent(final boolean in, final int off_screen_x, final int off_screen_y) {
-		if (in)
-			super.zoomIn(screenX(off_screen_x), screenY(off_screen_y));
-		else
-			super.zoomOut(screenX(off_screen_x), screenY(off_screen_y));
+	protected void triggerZoomEvent(final boolean in, final int off_screen_x,
+		final int off_screen_y)
+	{
+		if (in) super.zoomIn(screenX(off_screen_x), screenY(off_screen_y));
+		else super.zoomOut(screenX(off_screen_x), screenY(off_screen_y));
 	}
 
 	@Override
@@ -125,29 +131,37 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 		owner.zoomEventOccured(false, offScreenX(sx), offScreenY(sy), plane);
 	}
 
-	protected void drawCrosshairs(final Graphics2D g, final double x_on_screen, final double y_on_screen) {
+	protected void drawCrosshairs(final Graphics2D g, final double x_on_screen,
+		final double y_on_screen)
+	{
 		final int hairLength = 10;
-		g.draw(new Line2D.Double(x_on_screen, y_on_screen, x_on_screen, y_on_screen + hairLength));
-		g.draw(new Line2D.Double(x_on_screen, y_on_screen - 1, x_on_screen, y_on_screen - hairLength));
-		g.draw(new Line2D.Double(x_on_screen + 1, y_on_screen, x_on_screen + hairLength, y_on_screen));
-		g.draw(new Line2D.Double(x_on_screen - 1, y_on_screen, x_on_screen - hairLength, y_on_screen));
+		g.draw(new Line2D.Double(x_on_screen, y_on_screen, x_on_screen,
+			y_on_screen + hairLength));
+		g.draw(new Line2D.Double(x_on_screen, y_on_screen - 1, x_on_screen,
+			y_on_screen - hairLength));
+		g.draw(new Line2D.Double(x_on_screen + 1, y_on_screen, x_on_screen +
+			hairLength, y_on_screen));
+		g.draw(new Line2D.Double(x_on_screen - 1, y_on_screen, x_on_screen -
+			hairLength, y_on_screen));
 	}
 
 	private Font getScaledFont() {
 		final double size = Math.max(9, Math.min(18 * magnification, 30));
-		final Font font = new Font("SansSerif", Font.PLAIN, 18).deriveFont((float) size);
+		final Font font = new Font("SansSerif", Font.PLAIN, 18).deriveFont(
+			(float) size);
 		return font;
 	}
 
-	private void drawString(final Graphics2D g, final String str, final float x_on_screen, final float y_on_screen) {
+	private void drawString(final Graphics2D g, final String str,
+		final float x_on_screen, final float y_on_screen)
+	{
 		g.setFont(getScaledFont());
 		g.setColor(getAnnotationsColor());
 		g.drawString(str, x_on_screen, y_on_screen);
 	}
 
 	private void drawCanvasText(final Graphics2D g, final String text) {
-		if (!validString(text))
-			return;
+		if (!validString(text)) return;
 		final int edge = 4;
 		final Font font = getScaledFont();
 		final FontMetrics fm = getFontMetrics(font);
@@ -167,7 +181,9 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	@Deprecated
-	public void setCrosshairs(final double x, final double y, final double z, final boolean display) {
+	public void setCrosshairs(final double x, final double y, final double z,
+		final boolean display)
+	{
 		updateCursor(x, y, z);
 		setDrawCrosshairs(display);
 	}
@@ -184,7 +200,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	 */
 
 	/**
-	 *  Converts a screen x-coordinate to an offscreen (image) x-coordinate.
+	 * Converts a screen x-coordinate to an offscreen (image) x-coordinate.
 	 *
 	 * @param sx the screen x coordinate
 	 * @return the image x coordinate
@@ -194,7 +210,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	/**
-	 *  Converts a screen y-coordinate to an offscreen (image) y-coordinate.
+	 * Converts a screen y-coordinate to an offscreen (image) y-coordinate.
 	 *
 	 * @param sy the screen y coordinate
 	 * @return the image y coordinate
@@ -226,27 +242,30 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	/**
-	 *  Converts an offscreen (image) x-coordinate to a screen x-coordinate.
+	 * Converts an offscreen (image) x-coordinate to a screen x-coordinate.
 	 *
 	 * @param ox the image x coordinate
 	 * @return the screen x coordinate
 	 */
 	public int myScreenX(final int ox) {
-		return (int) Math.round((ox - srcRect.x) * magnification + magnification / 2);
+		return (int) Math.round((ox - srcRect.x) * magnification + magnification /
+			2);
 	}
 
 	/**
-	 *  Converts an offscreen (image) y-coordinate to a screen y-coordinate.
+	 * Converts an offscreen (image) y-coordinate to a screen y-coordinate.
 	 *
 	 * @param oy the image y coordinate
 	 * @return the screen y coordinate
 	 */
 	public int myScreenY(final int oy) {
-		return (int) Math.round((oy - srcRect.y) * magnification + magnification / 2);
+		return (int) Math.round((oy - srcRect.y) * magnification + magnification /
+			2);
 	}
 
 	/**
-	 * Converts a floating-point offscreen (image) x-coordinate to a screen x-coordinate.
+	 * Converts a floating-point offscreen (image) x-coordinate to a screen
+	 * x-coordinate.
 	 *
 	 * @param ox the image x coordinate
 	 * @return the screen x coordinate
@@ -267,7 +286,8 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	/**
-	 * Converts a floating-point offscreen (image) x-coordinate to a screen x-coordinate.
+	 * Converts a floating-point offscreen (image) x-coordinate to a screen
+	 * x-coordinate.
 	 *
 	 * @param oy the image x coordinate
 	 * @return the screen x coordinate
@@ -295,8 +315,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	/**
 	 * Sets the string to be rendered on canvas' upper left corner.
 	 *
-	 * @param label
-	 *            the string to be displayed
+	 * @param label the string to be displayed
 	 */
 	public void setCanvasLabel(final String label) {
 		canvasText = label;
@@ -305,8 +324,7 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	/**
 	 * Sets the string to be appended to the current cursor.
 	 *
-	 * @param cursorText
-	 *            the string to be displayed around the cursor
+	 * @param cursorText the string to be displayed around the cursor
 	 */
 	public void setCursorText(final String cursorText) {
 		this.cursorText = cursorText;
@@ -330,13 +348,11 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	/**
 	 * Sets whether mouse and key events should be waived back to IJ.
 	 *
-	 * @param disable
-	 *            If true, SNT will not be notified of mouse/keyboard events
+	 * @param disable If true, SNT will not be notified of mouse/keyboard events
 	 */
 	public void disableEvents(final boolean disable) {
 		waveInteractionsToIJ = disable;
-		if (disable)
-			cursorLocked = false;
+		if (disable) cursorLocked = false;
 	}
 
 	protected void setLockCursor(final boolean lock) {

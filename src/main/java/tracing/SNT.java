@@ -24,7 +24,6 @@ package tracing;
 
 import java.awt.Color;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -70,8 +69,8 @@ public class SNT {
 	}
 
 	public static String getReadableVersion() {
-		if (VERSION.length()< 21) return "SNT "+ VERSION;
-		return "SNT "+ VERSION.substring(0, 21) + "...";
+		if (VERSION.length() < 21) return "SNT " + VERSION;
+		return "SNT " + VERSION.substring(0, 21) + "...";
 	}
 
 	private static String getVersion() {
@@ -210,13 +209,7 @@ public class SNT {
 		try {
 			SNT.log("Finding closest pair for " + file);
 			final File dir = file.getParentFile();
-			final String[] list = dir.list(new FilenameFilter() {
-
-				@Override
-				public boolean accept(final File f, final String s) {
-					return s.endsWith(pairExt);
-				}
-			});
+			final String[] list = dir.list((f, s) -> s.endsWith(pairExt));
 			SNT.log("Found " + list.length + " " + pairExt + " files");
 			if (list.length == 0) return null;
 			Arrays.sort(list);

@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import net.imagej.ImageJ;
+
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.module.MutableModuleItem;
@@ -38,7 +40,6 @@ import org.scijava.plugin.Plugin;
 import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
-import net.imagej.ImageJ;
 import tracing.PathAndFillManager;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
@@ -47,11 +48,12 @@ import tracing.plot.TreePlot3D;
 
 /**
  * Command for importing MouseLight reconstructions
- * 
+ *
  * @see MLJSONLoader
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Import MouseLight Reconstructions", initializer = "init")
+@Plugin(type = Command.class, visible = false,
+	label = "Import MouseLight Reconstructions", initializer = "init")
 public class MLImporterCmd extends CommonDynamicCmd {
 
 	private static final String EMPTY_LABEL = "<html>&nbsp;";
@@ -62,22 +64,24 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	private final static String DOI_MATCHER = ".*\\d+/janelia\\.\\d+.*";
 	private final static String ID_MATCHER = "[A-Z]{2}\\d{4}";
 
-
-	@Parameter(required = true, persist = true, label = "IDs / DOIs (comma- or space- separated list)", description = "e.g., AA0001 or 10.25378/janelia.5527672")
+	@Parameter(required = true, persist = true,
+		label = "IDs / DOIs (comma- or space- separated list)",
+		description = "e.g., AA0001 or 10.25378/janelia.5527672")
 	private String query;
 
-	@Parameter(required = false, persist = true, label = "Structures to import", choices = { CHOICE_BOTH, CHOICE_AXONS,
-			CHOICE_DENDRITES, CHOICE_SOMA})
+	@Parameter(required = false, persist = true, label = "Structures to import",
+		choices = { CHOICE_BOTH, CHOICE_AXONS, CHOICE_DENDRITES, CHOICE_SOMA })
 	private String arborChoice;
 
-	@Parameter(required = false, label = "Colors", choices = {"Distinct (each id labelled uniquely)", "Common color specified below"})
+	@Parameter(required = false, label = "Colors", choices = {
+		"Distinct (each id labelled uniquely)", "Common color specified below" })
 	private String colorChoice;
 
 	@Parameter(required = false, label = "<HTML>&nbsp;")
 	private ColorRGB commonColor;
 
 	@Parameter(required = false, persist = true, label = "Load brain mesh")
-	private boolean meshViewer = false;
+	private final boolean meshViewer = false;
 
 	@Parameter(required = false, persist = true, label = "Replace existing paths")
 	private boolean clearExisting;
@@ -94,14 +98,15 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
 	private String pingMsg;
 
-	@Parameter(persist = false, required = false, visibility = ItemVisibility.INVISIBLE)
+	@Parameter(persist = false, required = false,
+		visibility = ItemVisibility.INVISIBLE)
 	private TreePlot3D recViewer;
 
 	private PathAndFillManager pafm;
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -112,7 +117,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			return;
 		}
 		final List<String> ids = getIdsFromQuery(query);
-		if (ids==null) {
+		if (ids == null) {
 			error("Invalid query. No reconstructions retrieved.");
 			return;
 		}
@@ -125,14 +130,17 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			snt = sntService.getPlugin();
 			ui = sntService.getUI();
 			pafm = sntService.getPathAndFillManager();
-		} else {
+		}
+		else {
 			pafm = new PathAndFillManager();
 		}
 
 		status("Retrieving ids... Please wait...", false);
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final Map<String, Tree> result = pafm.importMLNeurons(ids, getCompartment(arborChoice), getColor());
-		final long failures = result.values().stream().filter(tree -> (tree == null || tree.isEmpty()) ).count();
+		final Map<String, Tree> result = pafm.importMLNeurons(ids, getCompartment(
+			arborChoice), getColor());
+		final long failures = result.values().stream().filter(
+			tree -> (tree == null || tree.isEmpty())).count();
 		if (failures == ids.size()) {
 			error("No reconstructions could be retrieved: Invalid Query?");
 			status("Error... No reconstructions imported", true);
@@ -141,9 +149,11 @@ public class MLImporterCmd extends CommonDynamicCmd {
 		if (clearExisting) {
 			if (recViewer == null) {
 				// We are importing into a functional SNTUI with Path Manager
-				final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
+				final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx)
+					.toArray();
 				pafm.deletePaths(indices);
-			} else {
+			}
+			else {
 				// We are importing into a stand-alone Reconstruction Viewer
 				recViewer.removeAll();
 			}
@@ -178,10 +188,13 @@ public class MLImporterCmd extends CommonDynamicCmd {
 		}
 
 		if (failures > 0) {
-			error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
+			error(String.format("%d/%d reconstructions could not be retrieved.",
+				failures, result.size()));
 			status("Partially successful import...", true);
-		} else {
-			status("Successful imported " + result.size() + " reconstruction(s)...", true);
+		}
+		else {
+			status("Successful imported " + result.size() + " reconstruction(s)...",
+				true);
 		}
 	}
 
@@ -194,11 +207,11 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	private List<String> getIdsFromQuery(final String query) {
 		final List<String> ids;
 		if (query == null) return null;
-		ids = new LinkedList<String>(Arrays.asList(query.split("\\s*(,|\\s)\\s*")));
+		ids = new LinkedList<>(Arrays.asList(query.split("\\s*(,|\\s)\\s*")));
 		final Iterator<String> it = ids.iterator();
 		while (it.hasNext()) {
 			final String id = it.next();
-			if ( !(id.matches(ID_MATCHER) || id.matches(DOI_MATCHER)) ) {
+			if (!(id.matches(ID_MATCHER) || id.matches(DOI_MATCHER))) {
 				it.remove();
 			}
 		}
@@ -215,25 +228,31 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	 */
 	private String getCompartment(final String choice) {
 		if (choice == null) return null;
-		switch(choice) {
-		case CHOICE_AXONS: return MLJSONLoader.AXON;
-		case CHOICE_DENDRITES: return MLJSONLoader.DENDRITE;
-		case CHOICE_SOMA: return MLJSONLoader.SOMA;
-		default: return "all";
+		switch (choice) {
+			case CHOICE_AXONS:
+				return MLJSONLoader.AXON;
+			case CHOICE_DENDRITES:
+				return MLJSONLoader.DENDRITE;
+			case CHOICE_SOMA:
+				return MLJSONLoader.SOMA;
+			default:
+				return "all";
 		}
 	}
 
 	@SuppressWarnings("unused")
 	private void init() {
-		if (query == null || query.isEmpty())
-			query = "AA0001";
-		pingMsg = "Internet connection required. Retrieval of long lists may be rather slow...           ";
+		if (query == null || query.isEmpty()) query = "AA0001";
+		pingMsg =
+			"Internet connection required. Retrieval of long lists may be rather slow...           ";
 		if (recViewer != null) {
 			// If a stand-alone viewer was specified, customize options specific
 			// to the SNT UI
-			final MutableModuleItem<Boolean> meshViewerInput = getInfo().getMutableInput("meshViewer", Boolean.class);
+			final MutableModuleItem<Boolean> meshViewerInput = getInfo()
+				.getMutableInput("meshViewer", Boolean.class);
 			meshViewerInput.setLabel("Load Allen Brain countour");
-			final MutableModuleItem<Boolean> clearExistingInput = getInfo().getMutableInput("clearExisting", Boolean.class);
+			final MutableModuleItem<Boolean> clearExistingInput = getInfo()
+				.getMutableInput("clearExisting", Boolean.class);
 			clearExistingInput.setLabel("Clear existing reconstructions");
 		}
 	}
@@ -242,10 +261,10 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	private void validateIDs() {
 		validationMsg = "Validating....";
 		final List<String> list = getIdsFromQuery(query);
-		if (list == null)
-			validationMsg = "Query does not seem to contain valid IDs!";
-		else
-			validationMsg = "Query seems to contain "+ list.size() + " valid ID(s).";
+		if (list == null) validationMsg =
+			"Query does not seem to contain valid IDs!";
+		else validationMsg = "Query seems to contain " + list.size() +
+			" valid ID(s).";
 	}
 
 	private ColorRGB getColor() {
@@ -259,7 +278,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 
 	private String getPingMsg(final boolean pingResponse) {
 		return (pingResponse) ? "Successfully connected to the MouseLight database."
-				: "MouseLight server not reached. It is either down or you have no internet access.";
+			: "MouseLight server not reached. It is either down or you have no internet access.";
 	}
 
 	/* IDE debug method **/

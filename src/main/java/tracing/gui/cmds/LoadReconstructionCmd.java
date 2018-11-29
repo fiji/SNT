@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.imagej.ImageJ;
+
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.module.MutableModuleItem;
@@ -38,7 +40,6 @@ import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 import org.scijava.widget.FileWidget;
 
-import net.imagej.ImageJ;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.plot.TreePlot3D;
@@ -50,19 +51,25 @@ import tracing.util.SWCColor;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, initializer = "init", label = "Load Reconstruction(s)...")
+@Plugin(type = Command.class, visible = false, initializer = "init",
+	label = "Load Reconstruction(s)...")
 public class LoadReconstructionCmd extends CommonDynamicCmd {
 
-	private static final String COLOR_CHOICE_MONO = "Common color specified below";
-	private static final String COLOR_CHOICE_POLY = "Distinct (each file labelled uniquely)";
+	private static final String COLOR_CHOICE_MONO =
+		"Common color specified below";
+	private static final String COLOR_CHOICE_POLY =
+		"Distinct (each file labelled uniquely)";
 
-	@Parameter(label = "File", required = true, description = "Supported extensions: traces, (e)SWC, json")
+	@Parameter(label = "File", required = true,
+		description = "Supported extensions: traces, (e)SWC, json")
 	private File file;
 
-	@Parameter(required = false, label = "Color", choices = { COLOR_CHOICE_MONO, COLOR_CHOICE_POLY })
+	@Parameter(required = false, label = "Color", choices = { COLOR_CHOICE_MONO,
+		COLOR_CHOICE_POLY })
 	private String colorChoice;
 
-	@Parameter(label = "<HTML>&nbsp;", required = false, description = "Rendering color of imported file(s)")
+	@Parameter(label = "<HTML>&nbsp;", required = false,
+		description = "Rendering color of imported file(s)")
 	private ColorRGB color;
 
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
@@ -72,18 +79,22 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 	private TreePlot3D recViewer;
 
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
-	private boolean importDir = false;
+	private final boolean importDir = false;
 
 	@SuppressWarnings("unused")
 	private void init() {
 		if (importDir) {
-			final MutableModuleItem<File> fileMitem = getInfo().getMutableInput("file", File.class);
+			final MutableModuleItem<File> fileMitem = getInfo().getMutableInput(
+				"file", File.class);
 			fileMitem.setWidgetStyle(FileWidget.DIRECTORY_STYLE);
 			fileMitem.setLabel("Directory");
-			fileMitem.setDescription("<HTML>Path to directory containing multiple files."
-					+ "<br>Supported extensions: traces, (e)SWC, json");
-		} else {
-			final MutableModuleItem<String> colorChoiceMitem = getInfo().getMutableInput("colorChoice", String.class);
+			fileMitem.setDescription(
+				"<HTML>Path to directory containing multiple files." +
+					"<br>Supported extensions: traces, (e)SWC, json");
+		}
+		else {
+			final MutableModuleItem<String> colorChoiceMitem = getInfo()
+				.getMutableInput("colorChoice", String.class);
 			colorChoiceMitem.setRequired(false);
 			final List<String> options = new ArrayList<>();
 			options.add("Color specified below");
@@ -101,7 +112,8 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 		}
 		if (recViewer != null && recViewer.isSNTInstance()) {
 			msg = "NB: Loaded file(s) will not be listed in Path Manager";
-		} else {
+		}
+		else {
 			msg = " ";
 		}
 	}
@@ -109,34 +121,34 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 	@SuppressWarnings("unused")
 	private void colorChoiceChanged() {
 		final ColorRGB colorTemp = Colors.getColor(colorChoice.toLowerCase());
-		if (colorTemp != null)
-			color = colorTemp;
+		if (colorTemp != null) color = colorTemp;
 	}
 
 	/*
-	 * 
+	 *
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
 	public void run() {
 
 		try {
-			if (recViewer == null)
-				recViewer = sntService.getReconstructionViewer();
-		} catch (final UnsupportedOperationException exc) {
-			error("SNT's Reconstruction Viewer is not open and no other Viewer was specified.");
+			if (recViewer == null) recViewer = sntService.getReconstructionViewer();
+		}
+		catch (final UnsupportedOperationException exc) {
+			error(
+				"SNT's Reconstruction Viewer is not open and no other Viewer was specified.");
 		}
 
-		if (!file.exists())
-			error(file.getAbsolutePath() + " is no longer available");
+		if (!file.exists()) error(file.getAbsolutePath() +
+			" is no longer available");
 
 		if (file.isFile()) {
 			final Tree tree = new Tree(file.getAbsolutePath());
 			tree.setColor(color);
-			if (tree.isEmpty())
-				cancel("No Paths could be extracted from file. Invalid path?");
+			if (tree.isEmpty()) cancel(
+				"No Paths could be extracted from file. Invalid path?");
 			recViewer.add(tree);
 			recViewer.validate();
 			return;
@@ -145,17 +157,19 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 		if (file.isDirectory()) {
 			final File[] files = file.listFiles((FilenameFilter) (dir, name) -> {
 				final String lcName = name.toLowerCase();
-				return (lcName.endsWith("swc") || lcName.endsWith("traces") || lcName.endsWith("json"));
+				return (lcName.endsWith("swc") || lcName.endsWith("traces") || lcName
+					.endsWith("json"));
 			});
 			recViewer.setViewUpdatesEnabled(false);
 			int failures = 0;
-			final ColorRGB[] colors = (colorChoice.contains("unique")) ? SWCColor.getDistinctColors(files.length)
-					: null;
+			final ColorRGB[] colors = (colorChoice.contains("unique")) ? SWCColor
+				.getDistinctColors(files.length) : null;
 			int idx = 0;
 			for (final File file : files) {
 				final Tree tree = new Tree(file.getAbsolutePath());
 				if (tree.isEmpty()) {
-					SNT.log("Skipping file... No Paths extracted from " + file.getAbsolutePath());
+					SNT.log("Skipping file... No Paths extracted from " + file
+						.getAbsolutePath());
 					failures++;
 					continue;
 				}
@@ -167,8 +181,10 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 			}
 			recViewer.setViewUpdatesEnabled(true);
 			recViewer.validate();
-			final String msg = "" + (files.length - failures) + "/" + files.length + " files successfully imported.";
-			msg(msg, (failures == 0) ? "All Reconstructions Imported" : "Partially Successful Import");
+			final String msg = "" + (files.length - failures) + "/" + files.length +
+				" files successfully imported.";
+			msg(msg, (failures == 0) ? "All Reconstructions Imported"
+				: "Partially Successful Import");
 		}
 	}
 

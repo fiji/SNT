@@ -29,6 +29,7 @@ import java.util.List;
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
+
 import tracing.SNT;
 import tracing.Tree;
 import tracing.plot.TreePlot3D;
@@ -50,7 +51,8 @@ public class MultiTreeColorMapper extends ColorMapper {
 	public static final String TOTAL_LENGTH = "Total length";
 
 	/** Mapping property: Count of all branch points */
-	public static final String TOTAL_N_BRANCH_POINTS = "Total no. of branch points";
+	public static final String TOTAL_N_BRANCH_POINTS =
+		"Total no. of branch points";
 
 	/** Mapping property: Count of all tips (end points) */
 	public static final String TOTAL_N_TIPS = "Total no. of tips";
@@ -65,7 +67,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 	public static final String ID = "Cell/Id";
 
 	public static final String[] PROPERTIES = { //
-			ID, TOTAL_LENGTH, TOTAL_N_BRANCH_POINTS, TOTAL_N_TIPS, ROOT_NUMBER//
+		ID, TOTAL_LENGTH, TOTAL_N_BRANCH_POINTS, TOTAL_N_TIPS, ROOT_NUMBER//
 	};
 
 	private final Collection<MappedTree> mappedTrees;
@@ -73,7 +75,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 
 	/**
 	 * Instantiates the MultiTreeColorMapper.
-	 * 
+	 *
 	 * @param trees the group of trees to be mapped,
 	 */
 	public MultiTreeColorMapper(final Collection<Tree> trees) {
@@ -85,7 +87,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see tracing.analysis.ColorMapper#colorize(java.lang.String,
 	 * net.imglib2.display.ColorTable)
 	 */
@@ -96,27 +98,27 @@ public class MultiTreeColorMapper extends ColorMapper {
 		for (final MappedTree mt : mappedTrees) {
 			final TreeAnalyzer analyzer = new TreeAnalyzer(mt.tree);
 			switch (cMeasurement) {
-			case ROOT_NUMBER:
-				integerScale = true;
-				mt.value = (double) analyzer.getStrahlerRootNumber();
-				break;
-			case TOTAL_LENGTH:
-				mt.value = analyzer.getCableLength();
-				break;
-			case TOTAL_N_BRANCH_POINTS:
-				integerScale = true;
-				mt.value = (double) analyzer.getBranchPoints().size();
-				break;
-			case TOTAL_N_TIPS:
-				integerScale = true;
-				mt.value = (double) analyzer.getTips().size();
-				break;
-			case ID:
-				integerScale = true;
-				mt.value = (double) internalCounter++;
-				break;
-			default:
-				throw new IllegalArgumentException("Unknown parameter");
+				case ROOT_NUMBER:
+					integerScale = true;
+					mt.value = analyzer.getStrahlerRootNumber();
+					break;
+				case TOTAL_LENGTH:
+					mt.value = analyzer.getCableLength();
+					break;
+				case TOTAL_N_BRANCH_POINTS:
+					integerScale = true;
+					mt.value = analyzer.getBranchPoints().size();
+					break;
+				case TOTAL_N_TIPS:
+					integerScale = true;
+					mt.value = analyzer.getTips().size();
+					break;
+				case ID:
+					integerScale = true;
+					mt.value = internalCounter++;
+					break;
+				default:
+					throw new IllegalArgumentException("Unknown parameter");
 			}
 		}
 		assignMinMax();
@@ -130,15 +132,14 @@ public class MultiTreeColorMapper extends ColorMapper {
 			min = Double.MAX_VALUE;
 			max = Double.MIN_VALUE;
 			for (final MappedTree mt : mappedTrees) {
-				if (mt.value < min)
-					min = mt.value;
-				if (mt.value > max)
-					max = mt.value;
+				if (mt.value < min) min = mt.value;
+				if (mt.value > max) max = mt.value;
 			}
 		}
 	}
 
 	private class MappedTree {
+
 		public final Tree tree;
 		public double value;
 
@@ -160,9 +161,11 @@ public class MultiTreeColorMapper extends ColorMapper {
 		final MultiTreeColorMapper mapper = new MultiTreeColorMapper(trees);
 		mapper.map(MultiTreeColorMapper.TOTAL_LENGTH, ColorTables.ICE);
 		final TreePlot3D viewer = new TreePlot3D();
-		for (final Tree tree : trees) viewer.add(tree);
+		for (final Tree tree : trees)
+			viewer.add(tree);
 		final double[] limits = mapper.getMinMax();
-		viewer.addColorBarLegend(ColorTables.ICE, (float) limits[0], (float) limits[1]);
+		viewer.addColorBarLegend(ColorTables.ICE, (float) limits[0],
+			(float) limits[1]);
 		viewer.show();
 	}
 

@@ -43,17 +43,22 @@ import javax.swing.JTextField;
 import ij.Prefs; //TODO: Use SNT.Prefs
 
 @SuppressWarnings("serial")
-public class SWCImportOptionsDialog extends JDialog implements ActionListener, ItemListener {
+public class SWCImportOptionsDialog extends JDialog implements ActionListener,
+	ItemListener
+{
 
 	private boolean succeeded = false;
 
-	private final JCheckBox replaceExistingPathsCheckbox = new JCheckBox("Replace existing paths?");
+	private final JCheckBox replaceExistingPathsCheckbox = new JCheckBox(
+		"Replace existing paths?");
 
 	private final JCheckBox ignoreCalibrationCheckbox = new JCheckBox(
-			"Ignore calibration: assume SWC uses pixel coordinates");
+		"Ignore calibration: assume SWC uses pixel coordinates");
 
-	private final JCheckBox applyOffsetCheckbox = new JCheckBox("Apply offset to SWC file coordinates");
-	private final JCheckBox applyScaleCheckbox = new JCheckBox("Apply scale to SWC file coordinates");
+	private final JCheckBox applyOffsetCheckbox = new JCheckBox(
+		"Apply offset to SWC file coordinates");
+	private final JCheckBox applyScaleCheckbox = new JCheckBox(
+		"Apply scale to SWC file coordinates");
 
 	private final String offsetDefault = "0.0";
 	private final String scaleDefault = "1.0";
@@ -66,20 +71,27 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener, I
 	private final JTextField zScaleTextField = new JTextField(scaleDefault);
 	private final JButton okButton = new JButton("Load");
 	private final JButton cancelButton = new JButton("Cancel");
-	private final JButton restoreToDefaultsButton = new JButton("Restore default options");
+	private final JButton restoreToDefaultsButton = new JButton(
+		"Restore default options");
 
 	private void setFieldsFromPrefs() {
 
-		xOffsetTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.xOffset", offsetDefault));
-		yOffsetTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.yOffset", offsetDefault));
-		zOffsetTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.zOffset", offsetDefault));
+		xOffsetTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.xOffset",
+			offsetDefault));
+		yOffsetTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.yOffset",
+			offsetDefault));
+		zOffsetTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.zOffset",
+			offsetDefault));
 
-		xScaleTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.xScale", scaleDefault));
-		yScaleTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.yScale", scaleDefault));
-		zScaleTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.zScale", scaleDefault));
+		xScaleTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.xScale",
+			scaleDefault));
+		yScaleTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.yScale",
+			scaleDefault));
+		zScaleTextField.setText(Prefs.get("tracing.SWCImportOptionsDialog.zScale",
+			scaleDefault));
 
-		if (Prefs.get("tracing.SWCImportOptionsDialog.applyOffset", "false").equals("true"))
-			applyOffsetCheckbox.setSelected(true);
+		if (Prefs.get("tracing.SWCImportOptionsDialog.applyOffset", "false").equals(
+			"true")) applyOffsetCheckbox.setSelected(true);
 		else {
 			applyOffsetCheckbox.setSelected(false);
 			xOffsetTextField.setText(offsetDefault);
@@ -87,8 +99,8 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener, I
 			zOffsetTextField.setText(offsetDefault);
 		}
 
-		if (Prefs.get("tracing.SWCImportOptionsDialog.applyScale", "false").equals("true"))
-			applyScaleCheckbox.setSelected(true);
+		if (Prefs.get("tracing.SWCImportOptionsDialog.applyScale", "false").equals(
+			"true")) applyScaleCheckbox.setSelected(true);
 		else {
 			applyScaleCheckbox.setSelected(false);
 			xScaleTextField.setText(scaleDefault);
@@ -96,11 +108,13 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener, I
 			zScaleTextField.setText(scaleDefault);
 		}
 
-		ignoreCalibrationCheckbox
-				.setSelected(Prefs.get("tracing.SWCImportOptionsDialog.ignoreCalibration", "false").equals("true"));
+		ignoreCalibrationCheckbox.setSelected(Prefs.get(
+			"tracing.SWCImportOptionsDialog.ignoreCalibration", "false").equals(
+				"true"));
 
-		replaceExistingPathsCheckbox
-				.setSelected(Prefs.get("tracing.SWCImportOptionsDialog.replaceExistingPaths", "true").equals("true"));
+		replaceExistingPathsCheckbox.setSelected(Prefs.get(
+			"tracing.SWCImportOptionsDialog.replaceExistingPaths", "true").equals(
+				"true"));
 
 		updateEnabled();
 	}
@@ -117,16 +131,20 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener, I
 				Double.parseDouble(xScaleTextField.getText());
 				Double.parseDouble(yScaleTextField.getText());
 				Double.parseDouble(zScaleTextField.getText());
-			} catch (final NumberFormatException nfe) {
-				GuiUtils.errorPrompt("Couldn't parse an offset or scale as a number: " + nfe);
+			}
+			catch (final NumberFormatException nfe) {
+				GuiUtils.errorPrompt("Couldn't parse an offset or scale as a number: " +
+					nfe);
 				return;
 			}
 			succeeded = true;
 			saveFieldsToPrefs();
 			dispose();
-		} else if (source == cancelButton) {
+		}
+		else if (source == cancelButton) {
 			dispose();
-		} else if (source == restoreToDefaultsButton) {
+		}
+		else if (source == restoreToDefaultsButton) {
 			restoreToDefaults();
 		}
 	}
@@ -138,11 +156,12 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener, I
 			updateEnabled();
 	}
 
-	private void enableTextField(final JTextField tf, final boolean enabled, final String defaultValue) {
+	private void enableTextField(final JTextField tf, final boolean enabled,
+		final String defaultValue)
+	{
 		tf.setEnabled(enabled);
 		tf.setVisible(enabled);
-		if (!enabled)
-			tf.setText(defaultValue);
+		if (!enabled) tf.setText(defaultValue);
 	}
 
 	private void updateEnabled() {
@@ -159,20 +178,30 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener, I
 
 	private void saveFieldsToPrefs() {
 
-		Prefs.set("tracing.SWCImportOptionsDialog.xOffset", xOffsetTextField.getText());
-		Prefs.set("tracing.SWCImportOptionsDialog.yOffset", yOffsetTextField.getText());
-		Prefs.set("tracing.SWCImportOptionsDialog.zOffset", zOffsetTextField.getText());
-		Prefs.set("tracing.SWCImportOptionsDialog.xScale", xScaleTextField.getText());
-		Prefs.set("tracing.SWCImportOptionsDialog.yScale", yScaleTextField.getText());
-		Prefs.set("tracing.SWCImportOptionsDialog.zScale", zScaleTextField.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.xOffset", xOffsetTextField
+			.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.yOffset", yOffsetTextField
+			.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.zOffset", zOffsetTextField
+			.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.xScale", xScaleTextField
+			.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.yScale", yScaleTextField
+			.getText());
+		Prefs.set("tracing.SWCImportOptionsDialog.zScale", zScaleTextField
+			.getText());
 
-		Prefs.set("tracing.SWCImportOptionsDialog.applyOffset", applyOffsetCheckbox.isSelected());
+		Prefs.set("tracing.SWCImportOptionsDialog.applyOffset", applyOffsetCheckbox
+			.isSelected());
 
-		Prefs.set("tracing.SWCImportOptionsDialog.applyScale", applyScaleCheckbox.isSelected());
+		Prefs.set("tracing.SWCImportOptionsDialog.applyScale", applyScaleCheckbox
+			.isSelected());
 
-		Prefs.set("tracing.SWCImportOptionsDialog.ignoreCalibration", ignoreCalibrationCheckbox.isSelected());
+		Prefs.set("tracing.SWCImportOptionsDialog.ignoreCalibration",
+			ignoreCalibrationCheckbox.isSelected());
 
-		Prefs.set("tracing.SWCImportOptionsDialog.replaceExistingPaths", replaceExistingPathsCheckbox.isSelected());
+		Prefs.set("tracing.SWCImportOptionsDialog.replaceExistingPaths",
+			replaceExistingPathsCheckbox.isSelected());
 
 		Prefs.savePreferences();
 	}
@@ -208,7 +237,8 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener, I
 		scalePanel.add(yScaleTextField, BorderLayout.CENTER);
 		scalePanel.add(zScaleTextField, BorderLayout.SOUTH);
 
-		final JPanel okCancelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		final JPanel okCancelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0,
+			0));
 		okCancelPanel.add(okButton);
 		okCancelPanel.add(cancelButton);
 

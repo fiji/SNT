@@ -37,7 +37,7 @@ import tracing.SNT;
  * Defines a node in an SWC reconstruction. The SWC file format is detailed
  * <a href=
  * "http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html">here</a>
- * 
+ *
  * @author Tiago Ferreira
  */
 public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
@@ -72,9 +72,9 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	/** The Path associated with this node (if any) */
 	public Path onPath = null;
 
-
-	public SWCPoint(final int id, final int type, final double x, final double y, final double z, final double radius,
-			final int parent) {
+	public SWCPoint(final int id, final int type, final double x, final double y,
+		final double z, final double radius, final int parent)
+	{
 		nextPoints = new ArrayList<>();
 		this.id = id;
 		this.type = type;
@@ -103,7 +103,8 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	 *         previousPoint exists.
 	 */
 	public double xSeparationFromPreviousPoint() {
-		return (previousPoint == null) ? Double.NaN : Math.abs(this.x - previousPoint.x);
+		return (previousPoint == null) ? Double.NaN : Math.abs(this.x -
+			previousPoint.x);
 	}
 
 	/**
@@ -113,7 +114,8 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	 *         previousPoint exists.
 	 */
 	public double ySeparationFromPreviousPoint() {
-		return (previousPoint == null) ? Double.NaN : Math.abs(this.y - previousPoint.y);
+		return (previousPoint == null) ? Double.NaN : Math.abs(this.y -
+			previousPoint.y);
 	}
 
 	/**
@@ -128,18 +130,19 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return "SWCPoint [" + id + "] " + Path.getSWCtypeName(type, false) + " " + "(" + x + "," + y + "," + z + ") "
-				+ "radius: " + radius + ", " + "[previous: " + parent + "]";
+		return "SWCPoint [" + id + "] " + Path.getSWCtypeName(type, false) + " " +
+			"(" + x + "," + y + "," + z + ") " + "radius: " + radius + ", " +
+			"[previous: " + parent + "]";
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
 	@Override
@@ -149,38 +152,37 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
 	public boolean equals(final Object o) {
-		if (this == o)
-			return true;
-		if (o == null)
-			return false;
-		if (!(o instanceof SWCPoint))
-			return false;
+		if (this == o) return true;
+		if (o == null) return false;
+		if (!(o instanceof SWCPoint)) return false;
 		return this.id == ((SWCPoint) o).id;
 	}
 
 	/**
 	 * Converts a collection of SWC points into a Reader.
 	 *
-	 * @param points the collection of SWC points to be converted into a space/ tab
-	 *               separated String. Points should be sorted by sample number to
-	 *               ensure valid connectivity.
+	 * @param points the collection of SWC points to be converted into a space/
+	 *          tab separated String. Points should be sorted by sample number to
+	 *          ensure valid connectivity.
 	 * @return the Reader
 	 */
-	public static StringReader collectionAsReader(final Collection<SWCPoint> points) {
+	public static StringReader collectionAsReader(
+		final Collection<SWCPoint> points)
+	{
 		final StringBuilder sb = new StringBuilder();
 		for (final SWCPoint p : points) {
 			sb.append(p.id).append("\t") //
-					.append(p.type).append("\t") //
-					.append(String.format("%.6f", p.x)).append(" ") //
-					.append(String.format("%.6f", p.y)).append(" ") //
-					.append(String.format("%.6f", p.z)).append(" ") //
-					.append(String.format("%.6f", p.radius)).append("\t") //
-					.append(p.parent).append(System.lineSeparator());
+				.append(p.type).append("\t") //
+				.append(String.format("%.6f", p.x)).append(" ") //
+				.append(String.format("%.6f", p.y)).append(" ") //
+				.append(String.format("%.6f", p.z)).append(" ") //
+				.append(String.format("%.6f", p.radius)).append("\t") //
+				.append(p.parent).append(System.lineSeparator());
 		}
 		return new StringReader(sb.toString());
 	}
@@ -189,20 +191,23 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	 * Prints a list of points as space-separated values.
 	 *
 	 * @param points the collections of SWC points to be printed.
-	 * @param pw     the PrintWriter to write to.
+	 * @param pw the PrintWriter to write to.
 	 * @see SWCPoint#collectionAsReader(Collection)
 	 */
-	public static void flush(final Collection<SWCPoint> points, final PrintWriter pw) {
+	public static void flush(final Collection<SWCPoint> points,
+		final PrintWriter pw)
+	{
 		try (BufferedReader br = new BufferedReader(collectionAsReader(points))) {
 			br.lines().forEach(pw::println);
-		} catch (final IOException e) {
+		}
+		catch (final IOException e) {
 			SNT.error("IO Error", e);
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see tracing.util.SNTPoint#getX()
 	 */
 	@Override
@@ -212,7 +217,7 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see tracing.util.SNTPoint#getY()
 	 */
 	@Override
@@ -222,7 +227,7 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see tracing.util.SNTPoint#getZ()
 	 */
 	@Override

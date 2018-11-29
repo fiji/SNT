@@ -25,48 +25,53 @@ package tracing.gui.cmds;
 import java.awt.Color;
 import java.io.File;
 
+import net.imagej.ImageJ;
+
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.util.ColorRGB;
 
-import net.imagej.ImageJ;
 import tracing.SNTService;
 import tracing.gui.GuiUtils;
 
 /**
- * Command for highlighting the correspondences between two reconstructions in the Legacy 3D Viewer
+ * Command for highlighting the correspondences between two reconstructions in
+ * the Legacy 3D Viewer
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Show Correspondences...")
+@Plugin(type = Command.class, visible = false,
+	label = "Show Correspondences...")
 public class ShowCorrespondencesCmd extends ContextCommand {
 
 	@Parameter
 	private SNTService sntService;
 
-	@Parameter(label = "SWC file", style="extensions:swc/eswc")
+	@Parameter(label = "SWC file", style = "extensions:swc/eswc")
 	private File file;
 
-	@Parameter(label = "Distance for node correspondence", description = "The confinement distance for node correspondence between the two traced structures.")
+	@Parameter(label = "Distance for node correspondence",
+		description = "The confinement distance for node correspondence between the two traced structures.")
 	private double distance;
 
 	@Parameter(label = "Color", description = "Color for rendering imported file")
 	private ColorRGB color;
 
-
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@SuppressWarnings("deprecation")
 	@Override
 	public void run() {
 		try {
-			sntService.getPlugin().showCorrespondencesTo(file, new Color(color.getARGB()), distance);
-		} catch (final UnsupportedOperationException | NullPointerException exc) {
+			sntService.getPlugin().showCorrespondencesTo(file, new Color(color
+				.getARGB()), distance);
+		}
+		catch (final UnsupportedOperationException | NullPointerException exc) {
 			cancel("<HTML>SNT's Legacy Viewer is not open");
 		}
 	}

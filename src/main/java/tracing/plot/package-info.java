@@ -25,4 +25,5 @@
  *
  * @author Tiago Ferreira
  */
+
 package tracing.plot;

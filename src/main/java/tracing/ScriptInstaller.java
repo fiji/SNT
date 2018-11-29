@@ -27,7 +27,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.Future;
@@ -70,22 +69,19 @@ class ScriptInstaller implements MenuKeyListener {
 		context.inject(this);
 		this.ui = ui;
 
-		scripts = new TreeSet<>(new Comparator<ScriptInfo>() {
-			// ensure files will be listed in alphabetic order
-			@Override
-			public int compare(final ScriptInfo o1, final ScriptInfo o2) {
-				return getScriptLabel(o1).compareTo(getScriptLabel(o2));
-			}
-		});
+		scripts = new TreeSet<>((o1, o2) -> getScriptLabel(o1).compareTo(
+			getScriptLabel(o2)));
 
 		// 1. Include script_templates that are not discovered by ScriptService
 		final File baseDir = appService.getApp().getBaseDirectory();
-		final Map<String, URL> map = FileUtils.findResources(null, "script_templates/Neuroanatomy", baseDir);
+		final Map<String, URL> map = FileUtils.findResources(null,
+			"script_templates/Neuroanatomy", baseDir);
 		if (map != null) {
 			map.forEach((k, v) -> {
 				try {
 					scripts.add(new ScriptInfo(context, v, k));
-				} catch (final IOException ignored) {
+				}
+				catch (final IOException ignored) {
 					// just skip file
 				}
 			});
@@ -93,20 +89,21 @@ class ScriptInstaller implements MenuKeyListener {
 
 		// 2. Include discovered scripts
 		for (final ScriptInfo si : scriptService.getScripts()) {
-			final boolean pathMatch = si.getPath() != null
-					&& (si.getPath().contains("SNT") || si.getPath().toLowerCase().contains("neuroanatomy"));
-			if (pathMatch)
-				scripts.add(si);
+			final boolean pathMatch = si.getPath() != null && (si.getPath().contains(
+				"SNT") || si.getPath().toLowerCase().contains("neuroanatomy"));
+			if (pathMatch) scripts.add(si);
 		}
 
 	}
 
 	private void runScript(final ScriptInfo si) {
 		ui.showStatus("Running script...", false);
-		final Future<ScriptModule> fsm = scriptService.run(si, true, (Map<String, Object>) null);
+		final Future<ScriptModule> fsm = scriptService.run(si, true,
+			(Map<String, Object>) null);
 		if (fsm.isCancelled()) {
 			ui.showStatus("Script canceled...", true);
-		} else if (fsm.isDone()) {
+		}
+		else if (fsm.isDone()) {
 			ui.showStatus("Script completed...", true);
 		}
 	}
@@ -117,7 +114,8 @@ class ScriptInstaller implements MenuKeyListener {
 		final BufferedReader reader = si.getReader();
 		if (reader == null) { // local file
 			editor.open(new File(si.getPath()));
-		} else { // jar file
+		}
+		else { // jar file
 			try {
 				final StringBuffer stringBuffer = new StringBuffer();
 				String line = null;
@@ -125,7 +123,8 @@ class ScriptInstaller implements MenuKeyListener {
 					stringBuffer.append(line).append("\n");
 				}
 				editor.createNewDocument(getScriptLabel(si), stringBuffer.toString());
-			} catch (final IOException e) {
+			}
+			catch (final IOException e) {
 				e.printStackTrace();
 			}
 		}
@@ -138,15 +137,17 @@ class ScriptInstaller implements MenuKeyListener {
 		sMenu.addMenuKeyListener(this);
 		for (final ScriptInfo si : scripts) {
 			final String path = si.getPath();
-			if (path == null || (folder != null && !path.contains(folder)))
-				continue;
+			if (path == null || (folder != null && !path.contains(folder))) continue;
 			final JMenuItem mItem = new JMenuItem(getScriptLabel2(si));
 			sMenu.add(mItem);
 			mItem.addMenuKeyListener(this);
 			mItem.addActionListener(e -> {
-				if (openInsteadOfRun || (e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
+				if (openInsteadOfRun || (e.getModifiers() &
+					InputEvent.SHIFT_MASK) != 0)
+				{
 					openScript(si);
-				} else {
+				}
+				else {
 					runScript(si);
 				}
 				openInsteadOfRun = false;
@@ -186,14 +187,12 @@ class ScriptInstaller implements MenuKeyListener {
 
 	private String getScriptLabel(final ScriptInfo si) {
 		String label = si.getLabel();
-		if (label != null)
-			return label;
+		if (label != null) return label;
 		label = si.getName();
-		if (label != null)
-			return label;
+		if (label != null) return label;
 		label = si.getPath();
-		if (label != null)
-			return label.substring(label.lastIndexOf(File.separator) + 1);
+		if (label != null) return label.substring(label.lastIndexOf(
+			File.separator) + 1);
 		return si.getIdentifier(); // never null
 	}
 
@@ -201,17 +200,18 @@ class ScriptInstaller implements MenuKeyListener {
 		final JMenuItem mItem = new JMenuItem("About SNT Scripts...");
 		mItem.setIcon(IconFactory.getMenuIcon(GLYPH.QUESTION));
 		mItem.addActionListener(e -> {
-			ui.guiUtils.centeredMsg("This menu lists scripting routines that enhance SNT functionality. "
-					+ "The list is automatically populated at startup.<br><br>"
-					+ "To have your own scripts listed here, save them in the <tt>scripts</tt> "
-					+ "directory while including <i>SNT</i> in the filename (e.g., <tt>"
-					+ appService.getApp().getBaseDirectory() + File.separator + " scripts" + File.separator
-					+ "My_SNT_script.py</tt>) <br><br>"
-					+ "To edit a listed script hold \"Shift\" while clicking on its menu entry.<br><br>"
-					+ "Several programming examples are available through the Script Editor's "
-					+ "<i>Templates>Neuroanatomy></i> menu.  Please submit a pull request to SNT source "
-					+ "code repository if you would like to have your scripts distributed with Fiji.",
-					"About SNT Scripts...");
+			ui.guiUtils.centeredMsg(
+				"This menu lists scripting routines that enhance SNT functionality. " +
+					"The list is automatically populated at startup.<br><br>" +
+					"To have your own scripts listed here, save them in the <tt>scripts</tt> " +
+					"directory while including <i>SNT</i> in the filename (e.g., <tt>" +
+					appService.getApp().getBaseDirectory() + File.separator + " scripts" +
+					File.separator + "My_SNT_script.py</tt>) <br><br>" +
+					"To edit a listed script hold \"Shift\" while clicking on its menu entry.<br><br>" +
+					"Several programming examples are available through the Script Editor's " +
+					"<i>Templates>Neuroanatomy></i> menu.  Please submit a pull request to SNT source " +
+					"code repository if you would like to have your scripts distributed with Fiji.",
+				"About SNT Scripts...");
 		});
 		return mItem;
 	}

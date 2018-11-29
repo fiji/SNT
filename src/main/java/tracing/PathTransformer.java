@@ -36,7 +36,8 @@ package tracing;
  */
 public interface PathTransformer {
 
-	public void transformPoint(double x, double y, double z, double[] transformed);
+	public void transformPoint(double x, double y, double z,
+		double[] transformed);
 
 	public void transformPoint(double x, double y, double z, int[] transformed);
 

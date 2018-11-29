@@ -29,6 +29,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.stream.IntStream;
 
+import net.imagej.table.DefaultGenericTable;
+
 import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;
 import org.scijava.display.Display;
@@ -36,7 +38,6 @@ import org.scijava.display.DisplayService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.table.DefaultGenericTable;
 import tracing.Path;
 import tracing.Tree;
 import tracing.util.PointInImage;
@@ -57,7 +58,8 @@ public class TreeAnalyzer extends ContextCommand {
 
 	public static final String BRANCH_ORDER = "Branch order";
 	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
-	public static final String INTER_NODE_DISTANCE_SQUARED = "Inter-node distance (squared)";
+	public static final String INTER_NODE_DISTANCE_SQUARED =
+		"Inter-node distance (squared)";
 	public static final String LENGTH = "Length";
 	public static final String N_BRANCH_POINTS = "No. of branch points";
 	public static final String N_NODES = "No. of nodes";
@@ -82,25 +84,23 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Instantiates a new Tree analyzer.
 	 *
-	 * @param tree
-	 *            Collection of Paths to be analyzed. Note that null Paths are
-	 *            discarded. Also, when a Path has been fitted and its
-	 *            {@link Path#getUseFitted()} is true, its fitted flavor is used.
-	 *
+	 * @param tree Collection of Paths to be analyzed. Note that null Paths are
+	 *          discarded. Also, when a Path has been fitted and its
+	 *          {@link Path#getUseFitted()} is true, its fitted flavor is used.
 	 * @see #getParsedTree()
 	 */
 	public TreeAnalyzer(final Tree tree) {
 		this.tree = new Tree();
 		this.tree.setLabel(tree.getLabel());
 		for (final Path p : tree.list()) {
-			if (p == null)
-				continue;
+			if (p == null) continue;
 			Path pathToAdd;
 			// If fitted flavor of path exists use it instead
 			if (p.getUseFitted() && p.getFitted() != null) {
 				pathToAdd = p.getFitted();
 				fittedPathsCounter++;
-			} else {
+			}
+			else {
 				pathToAdd = p;
 			}
 			this.tree.add(pathToAdd);
@@ -111,8 +111,7 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Restricts analysis to Paths sharing the specified SWC flag(s).
 	 *
-	 * @param types
-	 *            the allowed SWC flags (e.g., {@link Path#SWC_AXON}, etc.)
+	 * @param types the allowed SWC flags (e.g., {@link Path#SWC_AXON}, etc.)
 	 */
 	public void restrictToSWCType(final int... types) {
 		initializeSnapshotTree();
@@ -122,8 +121,8 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Ignores Paths sharing the specified SWC flag(s).
 	 *
-	 * @param types
-	 *            the SWC flags to be ignored (e.g., {@link Path#SWC_AXON}, etc.)
+	 * @param types the SWC flags to be ignored (e.g., {@link Path#SWC_AXON},
+	 *          etc.)
 	 */
 	public void ignoreSWCType(final int... types) {
 		initializeSnapshotTree();
@@ -137,15 +136,15 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Restricts analysis to Paths sharing the specified branching order(s).
 	 *
-	 * @param orders
-	 *            the allowed branching orders
+	 * @param orders the allowed branching orders
 	 */
 	public void restrictToOrder(final int... orders) {
 		initializeSnapshotTree();
 		final Iterator<Path> it = tree.list().iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
-			final boolean valid = Arrays.stream(orders).anyMatch(t -> t == p.getOrder());
+			final boolean valid = Arrays.stream(orders).anyMatch(t -> t == p
+				.getOrder());
 			if (!valid) {
 				updateFittedPathsCounter(p);
 				it.remove();
@@ -156,12 +155,10 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Restricts analysis to paths having the specified number of nodes.
 	 *
-	 * @param minSize
-	 *            the smallest number of nodes a path must have in order to be
-	 *            analyzed. Set it to -1 to disable minSize filtering
-	 * @param maxSize
-	 *            the largest number of nodes a path must have in order to be
-	 *            analyzed. Set it to -1 to disable maxSize filtering
+	 * @param minSize the smallest number of nodes a path must have in order to be
+	 *          analyzed. Set it to -1 to disable minSize filtering
+	 * @param maxSize the largest number of nodes a path must have in order to be
+	 *          analyzed. Set it to -1 to disable maxSize filtering
 	 */
 	public void restrictToSize(final int minSize, final int maxSize) {
 		initializeSnapshotTree();
@@ -179,14 +176,14 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Restricts analysis to paths sharing the specified length range.
 	 *
-	 * @param lowerBound
-	 *            the smallest length a path must have in order to be analyzed. Set
-	 *            it to Double.NaN to disable lowerBound filtering
-	 * @param upperBound
-	 *            the largest length a path must have in order to be analyzed. Set
-	 *            it to Double.NaN to disable upperBound filtering
+	 * @param lowerBound the smallest length a path must have in order to be
+	 *          analyzed. Set it to Double.NaN to disable lowerBound filtering
+	 * @param upperBound the largest length a path must have in order to be
+	 *          analyzed. Set it to Double.NaN to disable upperBound filtering
 	 */
-	public void restrictToLength(final double lowerBound, final double upperBound) {
+	public void restrictToLength(final double lowerBound,
+		final double upperBound)
+	{
 		initializeSnapshotTree();
 		final Iterator<Path> it = tree.list().iterator();
 		while (it.hasNext()) {
@@ -202,8 +199,7 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Restricts analysis to Paths containing the specified string in their name.
 	 *
-	 * @param pattern
-	 *            the string to search for
+	 * @param pattern the string to search for
 	 */
 	public void restrictToNamePattern(final String pattern) {
 		initializeSnapshotTree();
@@ -230,8 +226,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Does nothing if no paths are currently being excluded from the analysis.
 	 */
 	public void resetRestrictions() {
-		if (unfilteredTree == null)
-			return; // no filtering has occurred
+		if (unfilteredTree == null) return; // no filtering has occurred
 		tree.replaceAll(unfilteredTree.list());
 		joints = null;
 		primaries = null;
@@ -258,9 +253,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Outputs a summary of the current analysis to the Analyzer table using the
 	 * default Tree label.
 	 *
-	 * @param groupByType
-	 *            if true measurements are grouped by SWC-type flag
-	 *
+	 * @param groupByType if true measurements are grouped by SWC-type flag
 	 * @see #run()
 	 * @see #setTable(DefaultGenericTable)
 	 */
@@ -271,19 +264,16 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Outputs a summary of the current analysis to the Analyzer table.
 	 *
-	 * @param rowHeader
-	 *            the String to be used as label for the summary
-	 * @param groupByType
-	 *            if true measurements are grouped by SWC-type flag
-	 *
+	 * @param rowHeader the String to be used as label for the summary
+	 * @param groupByType if true measurements are grouped by SWC-type flag
 	 * @see #run()
 	 * @see #setTable(DefaultGenericTable)
 	 */
 	public void summarize(final String rowHeader, final boolean groupByType) {
-		if (table == null)
-			table = new DefaultGenericTable();
+		if (table == null) table = new DefaultGenericTable();
 		if (groupByType) {
-			final int[] types = tree.getSWCtypes().stream().mapToInt(v -> v).toArray();
+			final int[] types = tree.getSWCtypes().stream().mapToInt(v -> v)
+				.toArray();
 			for (final int type : types) {
 				restrictToSWCType(type);
 				final String label = Path.getSWCtypeName(type, true);
@@ -292,7 +282,8 @@ public class TreeAnalyzer extends ContextCommand {
 				table.set(getCol("SWC Type"), row, label);
 				resetRestrictions();
 			}
-		} else {
+		}
+		else {
 			measureTree(getNextRow(rowHeader), "All types");
 		}
 	}
@@ -320,8 +311,7 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Sets the Analyzer table.
 	 *
-	 * @param table
-	 *            the table to be used by the analyzer
+	 * @param table the table to be used by the analyzer
 	 * @see #summarize(boolean)
 	 */
 	public void setTable(final DefaultGenericTable table) {
@@ -331,10 +321,8 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Sets the table.
 	 *
-	 * @param table
-	 *            the table to be used by the analyzer
-	 * @param title
-	 *            the title of the table display window
+	 * @param table the table to be used by the analyzer
+	 * @param title the title of the table display window
 	 */
 	public void setTable(final DefaultGenericTable table, final String title) {
 		this.table = table;
@@ -353,7 +341,7 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Generates detailed summaries in which measurements are grouped by SWC-type
 	 * flags
-	 * 
+	 *
 	 * @see #summarize(String, boolean)
 	 */
 	@Override
@@ -373,11 +361,13 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Updates and displays the Analyzer table.
 	 */
 	public void updateAndDisplayTable() {
-		final String displayName = (tableTitle == null) ? "Path Measurements" : tableTitle;
+		final String displayName = (tableTitle == null) ? "Path Measurements"
+			: tableTitle;
 		final Display<?> display = displayService.getDisplay(displayName);
 		if (display != null && display.isDisplaying(table)) {
 			display.update();
-		} else {
+		}
+		else {
 			displayService.createDisplay(displayName, table);
 		}
 	}
@@ -392,7 +382,7 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	private int getSinglePointPaths() {
-		return (int) tree.list().stream().filter( p -> p.size() == 1).count();
+		return (int) tree.list().stream().filter(p -> p.size() == 1).count();
 	}
 
 	/**
@@ -412,8 +402,7 @@ public class TreeAnalyzer extends ContextCommand {
 	public HashSet<Path> getPrimaryPaths() {
 		primaries = new HashSet<>();
 		for (final Path p : tree.list()) {
-			if (p.isPrimary())
-				primaries.add(p);
+			if (p.isPrimary()) primaries.add(p);
 		}
 		return primaries;
 	}
@@ -425,16 +414,15 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see #restrictToOrder(int...)
 	 */
 	public HashSet<Path> getTerminalPaths() {
-		if (tips == null)
-			getTips();
+		if (tips == null) getTips();
 		terminals = new HashSet<>();
 		for (final PointInImage tip : tips) {
 			if (tip.onPath != null) {
 				terminals.add(tip.onPath);
-			} else {
+			}
+			else {
 				for (final Path p : tree.list()) {
-					if (p.contains(tip))
-						terminals.add(p);
+					if (p.contains(tip)) terminals.add(p);
 				}
 			}
 		}
@@ -452,7 +440,8 @@ public class TreeAnalyzer extends ContextCommand {
 		tips = new HashSet<>();
 		for (final Path p : tree.list()) {
 			IntStream.of(0, p.size() - 1).forEach(i -> {
-				tips.add(p.getPointInImage(i)); // duplicated points (as in single-point paths) will not be added
+				tips.add(p.getPointInImage(i)); // duplicated points (as in single-point
+																				// paths) will not be added
 			});
 		}
 
@@ -491,8 +480,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @return the primary length
 	 */
 	public double getPrimaryLength() {
-		if (primaries == null)
-			getPrimaryPaths();
+		if (primaries == null) getPrimaryPaths();
 		return sumLength(primaries);
 	}
 
@@ -502,8 +490,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @return the terminal length
 	 */
 	public double getTerminalLength() {
-		if (terminals == null)
-			getTerminalPaths();
+		if (terminals == null) getTerminalPaths();
 		return sumLength(terminals);
 	}
 
@@ -516,8 +503,7 @@ public class TreeAnalyzer extends ContextCommand {
 		int root = -1;
 		for (final Path p : tree.list()) {
 			final int order = p.getOrder();
-			if (order > root)
-				root = order;
+			if (order > root) root = order;
 		}
 		return root;
 	}

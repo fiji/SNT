@@ -30,7 +30,7 @@ public class SearchNode implements Comparable<SearchNode> {
 
 	public float g; // cost of the path so far (up to and including this node)
 	public float h; // heuristic esimate of the cost of going from here to the
-					// goal
+	// goal
 
 	public float f; // should always be the sum of g and h
 
@@ -53,8 +53,9 @@ public class SearchNode implements Comparable<SearchNode> {
 
 	public byte searchStatus;
 
-	public SearchNode(final int x, final int y, final int z, final float g, final float h, final SearchNode predecessor,
-			final byte searchStatus) {
+	public SearchNode(final int x, final int y, final int z, final float g,
+		final float h, final SearchNode predecessor, final byte searchStatus)
+	{
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -99,43 +100,34 @@ public class SearchNode implements Comparable<SearchNode> {
 	public int compareTo(final SearchNode o) {
 
 		int compare_f_result = 0;
-		if (f > o.f)
-			compare_f_result = 1;
-		else if (f < o.f)
-			compare_f_result = -1;
+		if (f > o.f) compare_f_result = 1;
+		else if (f < o.f) compare_f_result = -1;
 
 		if (compare_f_result != 0) {
 
 			return compare_f_result;
 
-		} else {
+		}
+		else {
 
 			// Annoyingly, we need to distinguish between nodes with the
 			// same priority, but which are at different locations.
 
 			int x_compare = 0;
-			if (x > o.x)
-				x_compare = 1;
-			if (x < o.x)
-				x_compare = -1;
+			if (x > o.x) x_compare = 1;
+			if (x < o.x) x_compare = -1;
 
-			if (x_compare != 0)
-				return x_compare;
+			if (x_compare != 0) return x_compare;
 
 			int y_compare = 0;
-			if (y > o.y)
-				y_compare = 1;
-			if (y < o.y)
-				y_compare = -1;
+			if (y > o.y) y_compare = 1;
+			if (y < o.y) y_compare = -1;
 
-			if (y_compare != 0)
-				return y_compare;
+			if (y_compare != 0) return y_compare;
 
 			int z_compare = 0;
-			if (z > o.z)
-				z_compare = 1;
-			if (z < o.z)
-				z_compare = -1;
+			if (z > o.z) z_compare = 1;
+			if (z < o.z) z_compare = -1;
 
 			return z_compare;
 
@@ -146,38 +138,45 @@ public class SearchNode implements Comparable<SearchNode> {
 	@Override
 	public String toString() {
 		String searchStatusString = "BUG: unknown!";
-		if (searchStatus == SearchThread.OPEN_FROM_START)
-			searchStatusString = "open from start";
+		if (searchStatus == SearchThread.OPEN_FROM_START) searchStatusString =
+			"open from start";
 		else if (searchStatus == SearchThread.CLOSED_FROM_START)
 			searchStatusString = "closed from start";
-		else if (searchStatus == SearchThread.OPEN_FROM_GOAL)
-			searchStatusString = "open from goal";
-		else if (searchStatus == SearchThread.CLOSED_FROM_GOAL)
-			searchStatusString = "closed from goal";
-		else if (searchStatus == SearchThread.FREE)
-			searchStatusString = "free";
-		return "(" + x + "," + y + "," + z + ") h: " + h + " g: " + g + " f: " + f + " [" + searchStatusString + "]";
+		else if (searchStatus == SearchThread.OPEN_FROM_GOAL) searchStatusString =
+			"open from goal";
+		else if (searchStatus == SearchThread.CLOSED_FROM_GOAL) searchStatusString =
+			"closed from goal";
+		else if (searchStatus == SearchThread.FREE) searchStatusString = "free";
+		return "(" + x + "," + y + "," + z + ") h: " + h + " g: " + g + " f: " + f +
+			" [" + searchStatusString + "]";
 	}
 
-	public Path asPath(final double x_spacing, final double y_spacing, final double z_spacing,
-			final String spacing_units) {
-		final Path creversed = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
+	public Path asPath(final double x_spacing, final double y_spacing,
+		final double z_spacing, final String spacing_units)
+	{
+		final Path creversed = new Path(x_spacing, y_spacing, z_spacing,
+			spacing_units);
 		SearchNode p = this;
 		do {
-			creversed.addPointDouble(p.x * x_spacing, p.y * y_spacing, p.z * z_spacing);
+			creversed.addPointDouble(p.x * x_spacing, p.y * y_spacing, p.z *
+				z_spacing);
 			p = p.predecessor;
-		} while (p != null);
+		}
+		while (p != null);
 		return creversed.reversed();
 	}
 
-	public Path asPathReversed(final double x_spacing, final double y_spacing, final double z_spacing,
-			final String spacing_units) {
-		final Path result = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
+	public Path asPathReversed(final double x_spacing, final double y_spacing,
+		final double z_spacing, final String spacing_units)
+	{
+		final Path result = new Path(x_spacing, y_spacing, z_spacing,
+			spacing_units);
 		SearchNode p = this;
 		do {
 			result.addPointDouble(p.x * x_spacing, p.y * y_spacing, p.z * z_spacing);
 			p = p.predecessor;
-		} while (p != null);
+		}
+		while (p != null);
 		return result;
 	}
 

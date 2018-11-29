@@ -19,21 +19,23 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package tracing.plugin;
+
+import net.imagej.ImageJ;
+import net.imagej.legacy.LegacyService;
 
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-
-import net.imagej.ImageJ;
-import net.imagej.legacy.LegacyService;
 
 /**
  * Command to invoke the legacy "Sholl Analysis (Tracings)..." IJ1 plugin
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, menuPath = "Analyze>Sholl>Deprecated>Sholl Analysis (Tracings)...")
+@Plugin(type = Command.class,
+	menuPath = "Analyze>Sholl>Deprecated>Sholl Analysis (Tracings)...")
 public class CallLegacyShollPlugin implements Command {
 
 	@Parameter

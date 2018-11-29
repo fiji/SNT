@@ -8,62 +8,46 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-/*******************************************************************************
- * Copyright (C) 2017 Tiago Ferreira
- * Copyright (C) 2006-2011 Mark Longair
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************/
-/* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
-
-/* Some very basic unit tests for tracing through a simple image */
 
 package tracing;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
-import features.ComputeCurvatures;
-import ij.ImagePlus;
-import ij.measure.Calibration;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import features.ComputeCurvatures;
+import ij.ImagePlus;
+import ij.measure.Calibration;
 import util.BatchOpener;
 
 public class Tracing2DTest {
 
 	ImagePlus image;
 
-	double startX = 73.539; double startY = 48.449;
-	double endX = 1.730; double endY = 13.554;
+	double startX = 73.539;
+	double startY = 48.449;
+	double endX = 1.730;
+	double endY = 13.554;
 
-	@Before public void setUp() {
-		image = BatchOpener.openFirstChannel("tests/sample-data/c061AG-small-section-z-max.tif" );
+	@Before
+	public void setUp() {
+		image = BatchOpener.openFirstChannel(
+			"tests/sample-data/c061AG-small-section-z-max.tif");
 		assumeNotNull(image);
 	}
 
@@ -78,90 +62,70 @@ public class Tracing2DTest {
 		double pixelWidth = 1;
 		double pixelHeight = 1;
 		double minimumSeparation = 1;
-		Calibration calibration = image.getCalibration();
-		if( calibration != null ) {
-			minimumSeparation = Math.min(Math.abs(calibration.pixelWidth),
-						     Math.min(Math.abs(calibration.pixelHeight),
-							      Math.abs(calibration.pixelDepth)));
+		final Calibration calibration = image.getCalibration();
+		if (calibration != null) {
+			minimumSeparation = Math.min(Math.abs(calibration.pixelWidth), Math.min(
+				Math.abs(calibration.pixelHeight), Math.abs(calibration.pixelDepth)));
 			pixelWidth = calibration.pixelWidth;
 			pixelHeight = calibration.pixelHeight;
 		}
 
 		int pointsExploredNormal = 0;
 		{
-			TracerThread tracer = new TracerThread(image,
-							       0,
-							       255,
-							       -1, // timeoutSeconds
-							       100, // reportEveryMilliseconds
-							       (int)( startX / pixelWidth ),
-							       (int)( startY / pixelHeight ),
-							       0,
-							       (int)( endX / pixelWidth ),
-							       (int)( endY / pixelHeight ),
-							       0,
-							       true, // reciprocal
-							       true, // singleSlice
-							       null,
-							       1, // multiplier
-							       null,
-							       false);
+			final TracerThread tracer = new TracerThread(image, 0, 255, -1, // timeoutSeconds
+				100, // reportEveryMilliseconds
+				(int) (startX / pixelWidth), (int) (startY / pixelHeight), 0,
+				(int) (endX / pixelWidth), (int) (endY / pixelHeight), 0, true, // reciprocal
+				true, // singleSlice
+				null, 1, // multiplier
+				null, false);
 
 			tracer.run();
-			Path result = tracer.getResult();
-			assertNotNull("Not path found",result);
+			final Path result = tracer.getResult();
+			assertNotNull("Not path found", result);
 
-			double foundPathLength = result.getLength();
-			assertTrue( "Path length must be greater than 100 micrometres",
-				    foundPathLength > 100 );
+			final double foundPathLength = result.getLength();
+			assertTrue("Path length must be greater than 100 micrometres",
+				foundPathLength > 100);
 
-			assertTrue( "Path length must be less than 105 micrometres",
-				    foundPathLength < 105 );
+			assertTrue("Path length must be less than 105 micrometres",
+				foundPathLength < 105);
 
 			pointsExploredNormal = tracer.pointsConsideredInSearch();
 		}
 
 		int pointsExploredHessian = 0;
 		{
-			ComputeCurvatures hessian = new ComputeCurvatures(image, minimumSeparation, null, calibration != null);
-                        hessian.run();
+			final ComputeCurvatures hessian = new ComputeCurvatures(image,
+				minimumSeparation, null, calibration != null);
+			hessian.run();
 
-			TracerThread tracer = new TracerThread(image,
-							       0,
-							       255,
-							       -1, // timeoutSeconds
-							       100, // reportEveryMilliseconds
-							       (int)( startX / pixelWidth ),
-							       (int)( startY / pixelHeight ),
-							       0,
-							       (int)( endX / pixelWidth ),
-							       (int)( endY / pixelHeight ),
-							       0,
-							       true, // reciprocal
-							       true, // singleSlice
-							       hessian,
-							       50, // multiplier
-							       null,
-							       true);
+			final TracerThread tracer = new TracerThread(image, 0, 255, -1, // timeoutSeconds
+				100, // reportEveryMilliseconds
+				(int) (startX / pixelWidth), (int) (startY / pixelHeight), 0,
+				(int) (endX / pixelWidth), (int) (endY / pixelHeight), 0, true, // reciprocal
+				true, // singleSlice
+				hessian, 50, // multiplier
+				null, true);
 
 			tracer.run();
-			Path result = tracer.getResult();
-			assertNotNull("Not path found",result);
+			final Path result = tracer.getResult();
+			assertNotNull("Not path found", result);
 
-			double foundPathLength = result.getLength();
+			final double foundPathLength = result.getLength();
 
-			assertTrue( "Path length must be greater than 92 micrometres",
-				    foundPathLength > 92 );
+			assertTrue("Path length must be greater than 92 micrometres",
+				foundPathLength > 92);
 
-			assertTrue( "Path length must be less than 96 micrometres",
-				    foundPathLength < 96 );
+			assertTrue("Path length must be less than 96 micrometres",
+				foundPathLength < 96);
 
 			pointsExploredHessian = tracer.pointsConsideredInSearch();
 
-			assertTrue( "Hessian-based analysis should reduce the points explored " +
-				    "by at least a two fifths; in fact went from " +
-				    pointsExploredNormal + " to " +pointsExploredHessian,
-				    pointsExploredHessian < pointsExploredNormal * 0.8 );
+			assertTrue("Hessian-based analysis should reduce the points explored " +
+				"by at least a two fifths; in fact went from " + pointsExploredNormal +
+				" to " + pointsExploredHessian,
+				pointsExploredHessian < pointsExploredNormal * 0.8);
 		}
 	}
 }

@@ -28,7 +28,8 @@ public interface SearchInterface {
 
 	public Path getResult();
 
-	public void drawProgressOnSlice(int plane, int currentSliceInPlane, TracerCanvas canvas, Graphics g);
+	public void drawProgressOnSlice(int plane, int currentSliceInPlane,
+		TracerCanvas canvas, Graphics g);
 
 	public void requestStop();
 

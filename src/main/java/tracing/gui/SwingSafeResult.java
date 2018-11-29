@@ -39,17 +39,17 @@ public class SwingSafeResult {
 
 		final FutureTask<T> ft = new FutureTask<>(c);
 
-		if (SwingUtilities.isEventDispatchThread())
-			ft.run();
-		else
-			SwingUtilities.invokeLater(ft);
+		if (SwingUtilities.isEventDispatchThread()) ft.run();
+		else SwingUtilities.invokeLater(ft);
 
 		while (true) {
 			try {
 				return ft.get();
-			} catch (final InterruptedException e) {
+			}
+			catch (final InterruptedException e) {
 				// just try again...
-			} catch (final ExecutionException e) {
+			}
+			catch (final ExecutionException e) {
 				e.getCause().printStackTrace();
 				return null;
 			}

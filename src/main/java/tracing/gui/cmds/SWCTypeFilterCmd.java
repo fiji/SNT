@@ -26,6 +26,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import net.imagej.ImageJ;
+
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.command.CommandModule;
@@ -34,7 +36,6 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
-import net.imagej.ImageJ;
 import tracing.Path;
 import tracing.gui.GuiUtils;
 
@@ -43,7 +44,8 @@ import tracing.gui.GuiUtils;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "SWC-type Filtering", initializer = "init")
+@Plugin(type = Command.class, visible = false, label = "SWC-type Filtering",
+	initializer = "init")
 public class SWCTypeFilterCmd extends ContextCommand {
 
 	private static final String CHOSEN_TYPES = "chosenTYpes";
@@ -69,9 +71,8 @@ public class SWCTypeFilterCmd extends ContextCommand {
 	@Parameter(persist = false, label = Path.SWC_UNDEFINED_LABEL)
 	private boolean undefined;
 
-	
 	/* (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -87,21 +88,25 @@ public class SWCTypeFilterCmd extends ContextCommand {
 	}
 
 	public static Set<Integer> getChosenTypes(final Context context) {
-		final String stringTypes = context.getService(PrefService.class).get(SWCTypeFilterCmd.class, CHOSEN_TYPES, "");
+		final String stringTypes = context.getService(PrefService.class).get(
+			SWCTypeFilterCmd.class, CHOSEN_TYPES, "");
 		if (stringTypes.isEmpty()) return null;
 		final Set<Integer> set = new HashSet<>();
-		for(final char c : stringTypes.toCharArray()) {
+		for (final char c : stringTypes.toCharArray()) {
 			set.add(Character.getNumericValue(c));
 		}
 		return set;
 	}
 
 	/* IDE debug method **/
-	public static void main(final String[] args) throws InterruptedException, ExecutionException {
+	public static void main(final String[] args) throws InterruptedException,
+		ExecutionException
+	{
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		final CommandModule cm = ij.command().run(SWCTypeFilterCmd.class, true).get();
+		final CommandModule cm = ij.command().run(SWCTypeFilterCmd.class, true)
+			.get();
 		if (cm.isCanceled()) {
 			System.out.println("Command canceled ");
 			return;

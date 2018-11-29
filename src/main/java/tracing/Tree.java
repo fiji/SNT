@@ -59,7 +59,7 @@ public class Tree {
 	public static final int X_AXIS = 1;
 	public static final int Y_AXIS = 2;
 	public static final int Z_AXIS = 4;
-	
+
 	private ArrayList<Path> tree;
 	private String label;
 	private BoundingBox box;
@@ -74,27 +74,26 @@ public class Tree {
 	/**
 	 * Instantiates a new Tree from a set of paths.
 	 *
-	 * @param paths
-	 *            the Collection of paths forming this tree. Null not allowed.
+	 * @param paths the Collection of paths forming this tree. Null not allowed.
 	 */
 	public Tree(final Collection<Path> paths) {
-		if (paths == null)
-			throw new IllegalArgumentException("Cannot instantiate a new tree from a null collection");
+		if (paths == null) throw new IllegalArgumentException(
+			"Cannot instantiate a new tree from a null collection");
 		tree = new ArrayList<>(paths);
 	}
 
 	/**
 	 * Instantiates a new tree from a SWC or TRACES file.
 	 *
-	 * @param filename            the absolute file path of the imported file
+	 * @param filename the absolute file path of the imported file
 	 */
 	public Tree(final String filename) {
 		final File f = new File(filename);
-		if (!f.exists())
-			throw new IllegalArgumentException("File does not exist: " + filename);
+		if (!f.exists()) throw new IllegalArgumentException(
+			"File does not exist: " + filename);
 		final PathAndFillManager pafm = PathAndFillManager.createFromFile(filename);
-		if (pafm == null)
-			throw new IllegalArgumentException("No paths extracted from " + filename + " Invalid file?");
+		if (pafm == null) throw new IllegalArgumentException(
+			"No paths extracted from " + filename + " Invalid file?");
 		tree = pafm.getPaths();
 		setLabel(f.getName());
 	}
@@ -102,12 +101,10 @@ public class Tree {
 	/**
 	 * Instantiates a new tree from a filtered SWC or TRACES file.
 	 *
-	 * @param filename
-	 *            the absolute file path of the imported file
-	 * @param swcTypes
-	 *            only paths matching the specified SWC type(s) (e.g.,
-	 *            {@link Path#SWC_AXON}, {@link Path#SWC_DENDRITE}, etc.) will be
-	 *            imported
+	 * @param filename the absolute file path of the imported file
+	 * @param swcTypes only paths matching the specified SWC type(s) (e.g.,
+	 *          {@link Path#SWC_AXON}, {@link Path#SWC_DENDRITE}, etc.) will be
+	 *          imported
 	 */
 	public Tree(final String filename, final int... swcTypes) {
 		this(filename);
@@ -117,7 +114,7 @@ public class Tree {
 	/**
 	 * Adds a new Path to this Tree.
 	 *
-	 * @param p            the Path to be added
+	 * @param p the Path to be added
 	 * @return true, if Path successful added
 	 */
 	public boolean add(final Path p) {
@@ -147,8 +144,7 @@ public class Tree {
 	/**
 	 * Replaces all Paths in this Tree.
 	 *
-	 * @param paths
-	 *            the replacing Paths
+	 * @param paths the replacing Paths
 	 */
 	public void replaceAll(final List<Path> paths) {
 		tree = new ArrayList<>(paths);
@@ -157,11 +153,9 @@ public class Tree {
 	/**
 	 * Returns the Path at the specified position.
 	 *
-	 * @param index
-	 *            index of the element to return
+	 * @param index index of the element to return
 	 * @return the element at the specified position
-	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 * @throws IndexOutOfBoundsException {@inheritDoc}
 	 */
 	public Path get(final int index) {
 		return tree.get(index);
@@ -170,8 +164,7 @@ public class Tree {
 	/**
 	 * Removes a path from this tree.
 	 *
-	 * @param p
-	 *            the Path to be removed
+	 * @param p the Path to be removed
 	 * @return true if this tree contained p
 	 */
 	public boolean remove(final Path p) {
@@ -199,10 +192,10 @@ public class Tree {
 	/**
 	 * Downsamples the tree.
 	 *
-	 * @param maximumAllowedDeviation
-	 *            the maximum allowed distance between 'shaft' path nodes. Note that
-	 *            1) upsampling is not supported, and 2) the position of nodes at
-	 *             branch points and tips remains unaltered during downsampling
+	 * @param maximumAllowedDeviation the maximum allowed distance between 'shaft'
+	 *          path nodes. Note that 1) upsampling is not supported, and 2) the
+	 *          position of nodes at branch points and tips remains unaltered
+	 *          during downsampling
 	 * @see PathDownsampler
 	 */
 	public void downSample(final double maximumAllowedDeviation) {
@@ -214,20 +207,19 @@ public class Tree {
 	/**
 	 * Extracts the subset of paths matching the specified criteria.
 	 *
-	 * @param swcTypes
-	 *            SWC type(s) (e.g., {@link Path#SWC_AXON},
-	 *            {@link Path#SWC_DENDRITE}, etc.) allowed in the subtree
-	 * @return the subset of paths matching the filtering criteria, or an empty Tree
-	 *         if no hits were retrieved
+	 * @param swcTypes SWC type(s) (e.g., {@link Path#SWC_AXON},
+	 *          {@link Path#SWC_DENDRITE}, etc.) allowed in the subtree
+	 * @return the subset of paths matching the filtering criteria, or an empty
+	 *         Tree if no hits were retrieved
 	 */
 	public Tree subTree(final int... swcTypes) {
 		final Tree subtree = new Tree();
 		final Iterator<Path> it = tree.iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
-			final boolean filteredType = Arrays.stream(swcTypes).anyMatch(t -> t == p.getSWCType());
-			if (filteredType)
-				subtree.add(p);
+			final boolean filteredType = Arrays.stream(swcTypes).anyMatch(t -> t == p
+				.getSWCType());
+			if (filteredType) subtree.add(p);
 		}
 		return subtree;
 	}
@@ -235,9 +227,8 @@ public class Tree {
 	/**
 	 * Assigns an SWC type label to all the Paths in this Tree.
 	 *
-	 * @param type
-	 *            the SWC type (e.g., {@link Path#SWC_AXON},
-	 *            {@link Path#SWC_DENDRITE}, etc.)
+	 * @param type the SWC type (e.g., {@link Path#SWC_AXON},
+	 *          {@link Path#SWC_DENDRITE}, etc.)
 	 */
 	public void setType(final int type) {
 		tree.stream().forEach(p -> p.setSWCType(type));
@@ -246,29 +237,29 @@ public class Tree {
 	/**
 	 * Assigns an SWC type label to all the Paths in this Tree.
 	 *
-	 * @param type
-	 *            the SWC type (e.g., "soma", "axon", "(basal) dendrite", "apical
-	 *            dendrite", etc.)
+	 * @param type the SWC type (e.g., "soma", "axon", "(basal) dendrite", "apical
+	 *          dendrite", etc.)
 	 */
 	public void setSWCType(final String type) {
-		String inputType = (type == null) ? Path.SWC_UNDEFINED_LABEL : type.trim().toLowerCase();
+		String inputType = (type == null) ? Path.SWC_UNDEFINED_LABEL : type.trim()
+			.toLowerCase();
 		switch (inputType) {
-		case "dendrite":
-		case "dend":
-			inputType = Path.SWC_DENDRITE_LABEL;
-			break;
-		case "":
-		case "none":
-		case "unknown":
-		case "undef":
-			inputType = Path.SWC_UNDEFINED_LABEL;
-			break;
-		default:
-			break; // keep input
+			case "dendrite":
+			case "dend":
+				inputType = Path.SWC_DENDRITE_LABEL;
+				break;
+			case "":
+			case "none":
+			case "unknown":
+			case "undef":
+				inputType = Path.SWC_UNDEFINED_LABEL;
+				break;
+			default:
+				break; // keep input
 		}
 		final int labelIdx = Path.getSWCtypeNames().indexOf(type);
-		if (labelIdx == -1)
-			throw new IllegalArgumentException("Unrecognized SWC-type label:" + type);
+		if (labelIdx == -1) throw new IllegalArgumentException(
+			"Unrecognized SWC-type label:" + type);
 		final int intType = Path.getSWCtypes().get(labelIdx);
 		tree.stream().forEach(p -> p.setSWCType(intType));
 	}
@@ -291,32 +282,34 @@ public class Tree {
 	/**
 	 * Gets the centroid position of all nodes tagged as {@link Path#SWC_SOMA}
 	 *
-	 * @return the centroid of soma position or null if no Paths are tagged as soma
+	 * @return the centroid of soma position or null if no Paths are tagged as
+	 *         soma
 	 */
 	public PointInImage getSomaPosition() {
 		final TreeParser parser = new TreeParser(this);
 		try {
 			parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
-		} catch (final IllegalArgumentException ignored) {
+		}
+		catch (final IllegalArgumentException ignored) {
 			SNT.log("No soma attribute found...");
 			return null;
 		}
 		final UPoint center = parser.getCenter();
-		return (center == null) ? null : new PointInImage(center.x, center.y, center.z);
+		return (center == null) ? null : new PointInImage(center.x, center.y,
+			center.z);
 	}
 
 	/**
 	 * Specifies the offset to be used when rendering this Path in a
 	 * {@link TracerCanvas}. Path coordinates remain unaltered.
 	 *
-	 * @param xOffset
-	 *            the x offset (in pixels)
-	 * @param yOffset
-	 *            the y offset (in pixels)
-	 * @param zOffset
-	 *            the z offset (in pixels)
+	 * @param xOffset the x offset (in pixels)
+	 * @param yOffset the y offset (in pixels)
+	 * @param zOffset the z offset (in pixels)
 	 */
-	public void applyCanvasOffset(final double xOffset, final double yOffset, final double zOffset) {
+	public void applyCanvasOffset(final double xOffset, final double yOffset,
+		final double zOffset)
+	{
 		final PointInCanvas offset = new PointInCanvas(xOffset, yOffset, zOffset);
 		tree.stream().forEach(p -> p.setCanvasOffset(offset));
 	}
@@ -324,14 +317,13 @@ public class Tree {
 	/**
 	 * Translates the tree by the specified offset.
 	 *
-	 * @param xOffset
-	 *            the x offset
-	 * @param yOffset
-	 *            the y offset
-	 * @param zOffset
-	 *            the z offset
+	 * @param xOffset the x offset
+	 * @param yOffset the y offset
+	 * @param zOffset the z offset
 	 */
-	public void translate(final double xOffset, final double yOffset, final double zOffset) {
+	public void translate(final double xOffset, final double yOffset,
+		final double zOffset)
+	{
 		tree.parallelStream().forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] += xOffset;
@@ -344,14 +336,13 @@ public class Tree {
 	/**
 	 * Scales the tree by the specified scaling factors.
 	 *
-	 * @param xScale
-	 *            the scaling factor for x coordinates
-	 * @param yScale
-	 *            the scaling factor for y coordinates
-	 * @param zScale
-	 *            the scaling factor for z coordinates
+	 * @param xScale the scaling factor for x coordinates
+	 * @param yScale the scaling factor for y coordinates
+	 * @param zScale the scaling factor for z coordinates
 	 */
-	public void scale(final double xScale, final double yScale, final double zScale) {
+	public void scale(final double xScale, final double yScale,
+		final double zScale)
+	{
 		tree.parallelStream().forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] *= xScale;
@@ -364,52 +355,50 @@ public class Tree {
 	/**
 	 * Rotates the tree.
 	 *
-	 * @param axis
-	 *            the rotation axis. Either {@link X_AXIS}, {@link Y_AXIS}, or
-	 *            {@link Z_AXIS}
-	 * @param angle
-	 *            the rotation angle in degrees
+	 * @param axis the rotation axis. Either {@link X_AXIS}, {@link Y_AXIS}, or
+	 *          {@link Z_AXIS}
+	 * @param angle the rotation angle in degrees
 	 */
 	public void rotate(final int axis, final double angle) {
 		// See http://www.petercollingridge.appspot.com/3D-tutorial
-		if (Double.isNaN(angle))
-			throw new IllegalArgumentException("Angle not valid");
+		if (Double.isNaN(angle)) throw new IllegalArgumentException(
+			"Angle not valid");
 		final double radAngle = Math.toRadians(angle);
 		final double sin = Math.sin(radAngle);
 		final double cos = Math.cos(radAngle);
 		switch (axis) {
-		case Z_AXIS:
-			tree.parallelStream().forEach(p -> {
-				for (int node = 0; node < p.size(); node++) {
-					final PointInImage pim = p.getPointInImage(node);
-					final double x = pim.x * cos - pim.y * sin;
-					final double y = pim.y * cos + pim.x * sin;
-					p.moveNode(node, new PointInImage(x, y, pim.z));
-				}
-			});
-			break;
-		case Y_AXIS:
-			tree.parallelStream().forEach(p -> {
-				for (int node = 0; node < p.size(); node++) {
-					final PointInImage pim = p.getPointInImage(node);
-					final double x = pim.x * cos - pim.z * sin;
-					final double z = pim.z * cos + pim.x * sin;
-					p.moveNode(node, new PointInImage(x, pim.y, z));
-				}
-			});
-			break;
-		case X_AXIS:
-			tree.parallelStream().forEach(p -> {
-				for (int node = 0; node < p.size(); node++) {
-					final PointInImage pim = p.getPointInImage(node);
-					final double y = pim.y * cos - pim.z * sin;
-					final double z = pim.z * cos + pim.y * sin;
-					p.moveNode(node, new PointInImage(pim.x, y, z));
-				}
-			});
-			break;
-		default:
-			throw new IllegalArgumentException("Unrecognized rotation axis" + axis);
+			case Z_AXIS:
+				tree.parallelStream().forEach(p -> {
+					for (int node = 0; node < p.size(); node++) {
+						final PointInImage pim = p.getPointInImage(node);
+						final double x = pim.x * cos - pim.y * sin;
+						final double y = pim.y * cos + pim.x * sin;
+						p.moveNode(node, new PointInImage(x, y, pim.z));
+					}
+				});
+				break;
+			case Y_AXIS:
+				tree.parallelStream().forEach(p -> {
+					for (int node = 0; node < p.size(); node++) {
+						final PointInImage pim = p.getPointInImage(node);
+						final double x = pim.x * cos - pim.z * sin;
+						final double z = pim.z * cos + pim.x * sin;
+						p.moveNode(node, new PointInImage(x, pim.y, z));
+					}
+				});
+				break;
+			case X_AXIS:
+				tree.parallelStream().forEach(p -> {
+					for (int node = 0; node < p.size(); node++) {
+						final PointInImage pim = p.getPointInImage(node);
+						final double y = pim.y * cos - pim.z * sin;
+						final double z = pim.z * cos + pim.y * sin;
+						p.moveNode(node, new PointInImage(pim.x, y, z));
+					}
+				});
+				break;
+			default:
+				throw new IllegalArgumentException("Unrecognized rotation axis" + axis);
 		}
 	}
 
@@ -443,8 +432,8 @@ public class Tree {
 	/**
 	 * Associates a bounding box to this tree.
 	 *
-	 * @param box the BoundingBox, typically referring to the image associated with
-	 *            this tree
+	 * @param box the BoundingBox, typically referring to the image associated
+	 *          with this tree
 	 */
 	public void setBoundingBox(final BoundingBox box) {
 		this.box = box;
@@ -453,9 +442,9 @@ public class Tree {
 	/**
 	 * Gets the bounding box associated with this tree.
 	 *
-	 * @param computeIfUnset if {@code true} no BoundingBox has been explicitly set,
-	 *                       and, a BoundingBox will be compute from all the nodes
-	 *                       of this Tree
+	 * @param computeIfUnset if {@code true} no BoundingBox has been explicitly
+	 *          set, and, a BoundingBox will be compute from all the nodes of this
+	 *          Tree
 	 * @return the BoundingBox
 	 */
 	public BoundingBox getBoundingBox(final boolean computeIfUnset) {
@@ -467,23 +456,28 @@ public class Tree {
 	}
 
 	/**
-	 * Gets an empty image capable of holding the skeletonized version of this tree.
+	 * Gets an empty image capable of holding the skeletonized version of this
+	 * tree.
 	 *
-	 * @param multiDThreePaneView
-	 *            the pane flag indicating the SNT view for this image e.g.,
-	 *            {@link MultiDThreePanes#XY_PLANE}
+	 * @param multiDThreePaneView the pane flag indicating the SNT view for this
+	 *          image e.g., {@link MultiDThreePanes#XY_PLANE}
 	 * @return the empty 8-bit {@link ImagePlus} container
 	 */
 	public ImagePlus getImpContainer(final int multiDThreePaneView) {
-		if (tree.isEmpty())
-			throw new IllegalArgumentException("tree contains no paths");
-		//TODO: this should be handled by BoundingBox
+		if (tree.isEmpty()) throw new IllegalArgumentException(
+			"tree contains no paths");
+		// TODO: this should be handled by BoundingBox
 		final TreeStatistics tStats = new TreeStatistics(this);
-		final SummaryStatistics xCoordStats = tStats.getSummaryStats(TreeAnalyzer.X_COORDINATES);
-		final SummaryStatistics yCoordStats = tStats.getSummaryStats(TreeAnalyzer.Y_COORDINATES);
-		final SummaryStatistics zCoordStats = tStats.getSummaryStats(TreeAnalyzer.Z_COORDINATES);
-		final PointInImage p1 = new PointInImage(xCoordStats.getMin(), yCoordStats.getMin(), zCoordStats.getMin());
-		final PointInImage p2 = new PointInImage(xCoordStats.getMax(), yCoordStats.getMax(), zCoordStats.getMax());
+		final SummaryStatistics xCoordStats = tStats.getSummaryStats(
+			TreeAnalyzer.X_COORDINATES);
+		final SummaryStatistics yCoordStats = tStats.getSummaryStats(
+			TreeAnalyzer.Y_COORDINATES);
+		final SummaryStatistics zCoordStats = tStats.getSummaryStats(
+			TreeAnalyzer.Z_COORDINATES);
+		final PointInImage p1 = new PointInImage(xCoordStats.getMin(), yCoordStats
+			.getMin(), zCoordStats.getMin());
+		final PointInImage p2 = new PointInImage(xCoordStats.getMax(), yCoordStats
+			.getMax(), zCoordStats.getMax());
 		final Path referencePath = tree.iterator().next();
 		p1.onPath = referencePath;
 		p2.onPath = referencePath;
@@ -497,10 +491,8 @@ public class Tree {
 		final int w = (int) (bound2[0] - bound1[0]) + xyPadding;
 		final int h = (int) (bound2[1] - bound1[1]) + xyPadding;
 		int d = (int) (bound2[2] - bound1[2]);
-		if (d < 1)
-			d = 1;
-		if (d > 1)
-			d += zPadding;
+		if (d < 1) d = 1;
+		if (d > 1) d += zPadding;
 		return IJ.createImage(null, w, h, d, 8);
 	}
 
@@ -514,8 +506,8 @@ public class Tree {
 	}
 
 	/**
-	 * Assigns a color to all the paths in this tree. Note that assigning a non-null
-	 * color will remove node colors from Paths.
+	 * Assigns a color to all the paths in this tree. Note that assigning a
+	 * non-null color will remove node colors from Paths.
 	 *
 	 * @param color the color to be applied.
 	 * @see Path#hasNodeColors()
@@ -530,8 +522,8 @@ public class Tree {
 	/**
 	 * Assigns a fixed radius to all the nodes in this tree.
 	 *
-	 * @param r            the radius to be assigned. Setting it to 0 or Double.NaN removes
-	 *            the radius attribute from the Tree
+	 * @param r the radius to be assigned. Setting it to 0 or Double.NaN removes
+	 *          the radius attribute from the Tree
 	 */
 	public void setRadii(final double r) {
 		tree.parallelStream().forEach(p -> p.setRadius(r));
@@ -540,8 +532,7 @@ public class Tree {
 	/**
 	 * Sets an identifying label for this Tree.
 	 *
-	 * @param label
-	 *            the identifying string
+	 * @param label the identifying string
 	 */
 	public void setLabel(final String label) {
 		this.label = label;

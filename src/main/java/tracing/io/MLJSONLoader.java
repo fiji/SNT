@@ -68,34 +68,36 @@ public class MLJSONLoader {
 	/** The Constant SOMA. */
 	public static final String SOMA = "soma";
 
-	private final static String TRACINGS_URL = "https://ml-neuronbrowser.janelia.org/tracings";
-	private final static String GRAPHQL_URL = "https://ml-neuronbrowser.janelia.org/graphql";
+	private final static String TRACINGS_URL =
+		"https://ml-neuronbrowser.janelia.org/tracings";
+	private final static String GRAPHQL_URL =
+		"https://ml-neuronbrowser.janelia.org/graphql";
 	private final static String GRAPHQL_BODY = "{\n" + //
-			"    \"query\": \"query QueryData($filters: [FilterInput!]) {\\n  queryData(filters: $filters) {\\n    totalCount\\n    queryTime\\n    nonce\\n    error {\\n      name\\n      message\\n      __typename\\n    }\\n    neurons {\\n      id\\n      idString\\n      brainArea {\\n        id\\n        acronym\\n        __typename\\n      }\\n      tracings {\\n        id\\n        tracingStructure {\\n          id\\n          name\\n          value\\n          __typename\\n        }\\n        soma {\\n          id\\n          x\\n          y\\n          z\\n          radius\\n          parentNumber\\n          sampleNumber\\n          brainAreaId\\n          structureIdentifierId\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\",\n"
-			+ "    \"variables\": {\n" + //
-			"        \"filters\": [\n" + //
-			"            {\n" + //
-			"            	\"tracingIdsOrDOIs\": [\"%s\"],\n" + //
-			"                \"tracingIdsOrDOIsExactMatch\": true,\n" + //
-			"                \"tracingStructureIds\": [\"\"],\n" + //
-			"                \"nodeStructureIds\": [\"\"],\n" + //
-			"                \"operatorId\": \"\",\n" + //
-			"                \"amount\": null,\n" + //
-			"                \"brainAreaIds\": [\"\"],\n" + //
-			"                \"arbCenter\": {\n" + //
-			"                    \"x\": null,\n" + //
-			"                    \"y\": null,\n" + //
-			"                    \"z\": null\n" + //
-			"                },\n" + //
-			"                \"arbSize\": null,\n" + //
-			"                \"invert\": false,\n" + //
-			"                \"composition\": null,\n" + //
-			"                \"nonce\": \"\"\n" + //
-			"            }\n" + //
-			"        ]\n" + //
-			"    },\n" + //
-			"    \"operationName\": \"QueryData\"\n" + //
-			"}";
+		"    \"query\": \"query QueryData($filters: [FilterInput!]) {\\n  queryData(filters: $filters) {\\n    totalCount\\n    queryTime\\n    nonce\\n    error {\\n      name\\n      message\\n      __typename\\n    }\\n    neurons {\\n      id\\n      idString\\n      brainArea {\\n        id\\n        acronym\\n        __typename\\n      }\\n      tracings {\\n        id\\n        tracingStructure {\\n          id\\n          name\\n          value\\n          __typename\\n        }\\n        soma {\\n          id\\n          x\\n          y\\n          z\\n          radius\\n          parentNumber\\n          sampleNumber\\n          brainAreaId\\n          structureIdentifierId\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\",\n" +
+		"    \"variables\": {\n" + //
+		"        \"filters\": [\n" + //
+		"            {\n" + //
+		"            	\"tracingIdsOrDOIs\": [\"%s\"],\n" + //
+		"                \"tracingIdsOrDOIsExactMatch\": true,\n" + //
+		"                \"tracingStructureIds\": [\"\"],\n" + //
+		"                \"nodeStructureIds\": [\"\"],\n" + //
+		"                \"operatorId\": \"\",\n" + //
+		"                \"amount\": null,\n" + //
+		"                \"brainAreaIds\": [\"\"],\n" + //
+		"                \"arbCenter\": {\n" + //
+		"                    \"x\": null,\n" + //
+		"                    \"y\": null,\n" + //
+		"                    \"z\": null\n" + //
+		"                },\n" + //
+		"                \"arbSize\": null,\n" + //
+		"                \"invert\": false,\n" + //
+		"                \"composition\": null,\n" + //
+		"                \"nonce\": \"\"\n" + //
+		"            }\n" + //
+		"        ]\n" + //
+		"    },\n" + //
+		"    \"operationName\": \"QueryData\"\n" + //
+		"}";
 
 	/* Maps tracingStructure name to tracingStructure id */
 	private Map<String, UUID> nameMap;
@@ -111,7 +113,7 @@ public class MLJSONLoader {
 	 * Instantiates a new loader.
 	 *
 	 * @param id the neuron id (e.g., "AA0001") or DOI (e.g.,
-	 *           "10.25378/janelia.5527672") of the neuron to be loaded
+	 *          "10.25378/janelia.5527672") of the neuron to be loaded
 	 */
 	public MLJSONLoader(final String id) {
 		this.publicID = id;
@@ -120,14 +122,15 @@ public class MLJSONLoader {
 	/**
 	 * Checks whether the neuron to be loaded was found in the database.
 	 *
-	 * @return true, if the neuron id specified in the constructor was found in the
-	 *         database
+	 * @return true, if the neuron id specified in the constructor was found in
+	 *         the database
 	 */
 	public boolean idExists() {
 		if (!initialized) {
 			try {
 				initialize();
-			} catch (final JSONException | IllegalArgumentException ignored) {
+			}
+			catch (final JSONException | IllegalArgumentException ignored) {
 				return false;
 			}
 		}
@@ -138,22 +141,26 @@ public class MLJSONLoader {
 		try {
 			final OkHttpClient client = new OkHttpClient();
 			final MediaType mediaType = MediaType.parse("application/json");
-			final RequestBody body = RequestBody.create(mediaType, String.format(GRAPHQL_BODY, publicID));
+			final RequestBody body = RequestBody.create(mediaType, String.format(
+				GRAPHQL_BODY, publicID));
 			final Request request = new Request.Builder().url(GRAPHQL_URL).post(body)
-					.addHeader("Content-Type", "application/json").addHeader("Cache-Control", "no-cache").build();
+				.addHeader("Content-Type", "application/json").addHeader(
+					"Cache-Control", "no-cache").build();
 			final Response response = client.newCall(request).execute();
 			final String resStr = response.body().string().toString();
 			response.close();
 			// Parse response
 			final JSONObject json = new JSONObject(resStr);
-			final JSONArray neuronsArray = json.getJSONObject("data").getJSONObject("queryData")
-					.getJSONArray("neurons");
+			final JSONArray neuronsArray = json.getJSONObject("data").getJSONObject(
+				"queryData").getJSONArray("neurons");
 			if (neuronsArray == null || neuronsArray.length() == 0)
-				throw new IllegalArgumentException("No tracing structures available for " + publicID);
+				throw new IllegalArgumentException(
+					"No tracing structures available for " + publicID);
 
 			nameMap = new HashMap<>();
 			for (int n = 0; n < neuronsArray.length(); n++) {
-				final JSONArray tracingsArray = neuronsArray.getJSONObject(n).getJSONArray("tracings");
+				final JSONArray tracingsArray = neuronsArray.getJSONObject(n)
+					.getJSONArray("tracings");
 
 				for (int t = 0; t < tracingsArray.length(); t++) {
 					final JSONObject compartment = tracingsArray.getJSONObject(t);
@@ -166,14 +173,17 @@ public class MLJSONLoader {
 						final int parent = jsonSoma.getInt("parentNumber"); // always -1
 						soma = new SWCPoint(0, Path.SWC_SOMA, sX, sY, sZ, sRadius, parent);
 					}
-					final JSONObject tracingStructure = compartment.getJSONObject("tracingStructure");
+					final JSONObject tracingStructure = compartment.getJSONObject(
+						"tracingStructure");
 					final String name = tracingStructure.getString("name");
-					final UUID compartmentID = UUID.fromString(compartment.getString("id"));
+					final UUID compartmentID = UUID.fromString(compartment.getString(
+						"id"));
 					nameMap.put(name, compartmentID);
 				}
 			}
 			assembleSwcTypeMap();
-		} catch (final IOException | JSONException exc) {
+		}
+		catch (final IOException | JSONException exc) {
 			SNT.error("Failed to initialize loader", exc);
 			initialized = false;
 		}
@@ -191,23 +201,23 @@ public class MLJSONLoader {
 	}
 
 	private void assembleSwcTypeMap() throws IllegalArgumentException {
-		if (nameMap == null)
-			throw new IllegalArgumentException("nameMap undefined");
+		if (nameMap == null) throw new IllegalArgumentException(
+			"nameMap undefined");
 		swcTypeMap = new HashMap<>();
 		for (final Entry<String, UUID> entry : nameMap.entrySet()) {
 			final String key = entry.getKey();
-			if (key == null)
-				throw new IllegalArgumentException("structureIdentifierId UUIDs unset");
+			if (key == null) throw new IllegalArgumentException(
+				"structureIdentifierId UUIDs unset");
 			switch (key) {
-			case AXON:
-				swcTypeMap.put(entry.getValue(), Path.SWC_AXON);
-				break;
-			case DENDRITE:
-				swcTypeMap.put(entry.getValue(), Path.SWC_DENDRITE);
-				break;
-			default:
-				swcTypeMap.put(entry.getValue(), Path.SWC_UNDEFINED);
-				break;
+				case AXON:
+					swcTypeMap.put(entry.getValue(), Path.SWC_AXON);
+					break;
+				case DENDRITE:
+					swcTypeMap.put(entry.getValue(), Path.SWC_DENDRITE);
+					break;
+				default:
+					swcTypeMap.put(entry.getValue(), Path.SWC_UNDEFINED);
+					break;
 			}
 		}
 	}
@@ -225,27 +235,28 @@ public class MLJSONLoader {
 			final Request request = new Request.Builder().url(TRACINGS_URL).build();
 			response = client.newCall(request).execute();
 			success = response.isSuccessful();
-		} catch (final IOException ignored) {
+		}
+		catch (final IOException ignored) {
 			success = false;
-		} finally {
-			if (response != null)
-				response.close();
+		}
+		finally {
+			if (response != null) response.close();
 		}
 		return success;
 	}
 
 	private String normalizedStructure(final String structure) {
-		switch(structure.toLowerCase()) {
-		case "dendrite":
-		case "dendrites":
-			return DENDRITE;
-		case "axon":
-		case "axons":
-			return AXON;
-		default:
-			throw new IllegalArgumentException("Unrecognized compartment");
+		switch (structure.toLowerCase()) {
+			case "dendrite":
+			case "dendrites":
+				return DENDRITE;
+			case "axon":
+			case "axons":
+				return AXON;
+			default:
+				throw new IllegalArgumentException("Unrecognized compartment");
 		}
-		
+
 	}
 
 	/**
@@ -253,28 +264,31 @@ public class MLJSONLoader {
 	 *
 	 * @param structure either {@link #AXON} or {@link #DENDRITE}
 	 * @return the specified compartment as a JSON object
-	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
-	 *                                  possible or {@code structure} was not
-	 *                                  recognized
+	 * @throws IllegalArgumentException if retrieval of data for this neuron is
+	 *           not possible or {@code structure} was not recognized
 	 */
-	public JSONObject getCompartment(final String structure) throws IllegalArgumentException {
-		if (!initialized)
-			initialize();
+	public JSONObject getCompartment(final String structure)
+		throws IllegalArgumentException
+	{
+		if (!initialized) initialize();
 		final UUID structureID = nameMap.get(normalizedStructure(structure));
-		if (structureID == null)
-			throw new IllegalArgumentException("Structure name not recognized: " + structure);
+		if (structureID == null) throw new IllegalArgumentException(
+			"Structure name not recognized: " + structure);
 
 		final OkHttpClient client = new OkHttpClient();
 		final MediaType mediaType = MediaType.parse("application/json");
-		final RequestBody body = RequestBody.create(mediaType, "{\n\"ids\": [\n\"" + structureID + "\"\n]\n}");
+		final RequestBody body = RequestBody.create(mediaType, "{\n\"ids\": [\n\"" +
+			structureID + "\"\n]\n}");
 		try {
 			final Request request = new Request.Builder().url(TRACINGS_URL).post(body)
-					.addHeader("Content-Type", "application/json").addHeader("Cache-Control", "no-cache").build();
+				.addHeader("Content-Type", "application/json").addHeader(
+					"Cache-Control", "no-cache").build();
 			final Response response = client.newCall(request).execute();
 			final String resStr = response.body().string().toString();
 			response.close();
 			return new JSONObject(resStr);
-		} catch (final IOException | JSONException exc) {
+		}
+		catch (final IOException | JSONException exc) {
 			exc.printStackTrace();
 			return null;
 		}
@@ -286,15 +300,13 @@ public class MLJSONLoader {
 	 *
 	 * @return the list of nodes of the neuron as {@link SWCPoint}s. Note that the
 	 *         first point in the set (the soma) has an SWC sample number of 0.
-	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
-	 *                                  possible
+	 * @throws IllegalArgumentException if retrieval of data for this neuron is
+	 *           not possible
 	 */
 	public TreeSet<SWCPoint> getNodes() throws IllegalArgumentException {
-		if (!initialized)
-			initialize();
+		if (!initialized) initialize();
 		final TreeSet<SWCPoint> points = new TreeSet<>();
-		if (soma != null)
-			points.add(soma);
+		if (soma != null) points.add(soma);
 		int idOffset = 0;
 		for (final Entry<String, UUID> entry : nameMap.entrySet()) {
 			final JSONObject c = getCompartment(entry.getKey());
@@ -308,8 +320,8 @@ public class MLJSONLoader {
 	 * Extracts the nodes of the axonal arbor of loaded neuron.
 	 *
 	 * @return the list of nodes of the axonal arbor as {@link SWCPoint}s
-	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
-	 *                                  possible
+	 * @throws IllegalArgumentException if retrieval of data for this neuron is
+	 *           not possible
 	 */
 	public TreeSet<SWCPoint> getAxonNodes() throws IllegalArgumentException {
 		return getNodesInternal(MLJSONLoader.AXON);
@@ -319,8 +331,8 @@ public class MLJSONLoader {
 	 * Extracts the nodes of the dendritic arbor of loaded neuron.
 	 *
 	 * @return the list of nodes of the dendritic arbor as {@link SWCPoint}s
-	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
-	 *                                  possible
+	 * @throws IllegalArgumentException if retrieval of data for this neuron is
+	 *           not possible
 	 */
 	public TreeSet<SWCPoint> getDendriteNodes() throws IllegalArgumentException {
 		return getNodesInternal(MLJSONLoader.DENDRITE);
@@ -333,17 +345,17 @@ public class MLJSONLoader {
 	 * @return the list of nodes of the neuron as {@link SWCPoint}s. All nodes are
 	 *         retrieved if compartment was not recognized.
 	 * @throws IllegalArgumentException if compartment is not recognized or
-	 *                                  retrieval of data for this neuron is not
-	 *                                  possible
+	 *           retrieval of data for this neuron is not possible
 	 */
-	public TreeSet<SWCPoint> getNodes(final String compartment) throws IllegalArgumentException {
+	public TreeSet<SWCPoint> getNodes(final String compartment)
+		throws IllegalArgumentException
+	{
 		if (compartment == null || compartment.trim().isEmpty())
 			throw new IllegalArgumentException("Invalid compartment" + compartment);
-		if (!initialized)
-			initialize();
+		if (!initialized) initialize();
 		final String comp = compartment.toLowerCase();
-		if (SOMA.equals(comp) || nameMap.containsKey(comp))
-			return getNodesInternal(comp);
+		if (SOMA.equals(comp) || nameMap.containsKey(comp)) return getNodesInternal(
+			comp);
 		return getNodes();
 	}
 
@@ -351,32 +363,33 @@ public class MLJSONLoader {
 	 * Script-friendly method to extract a compartment as a collection of Paths
 	 *
 	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
-	 * @param color       the color to be applied to the Tree. Null not expected.
+	 * @param color the color to be applied to the Tree. Null not expected.
 	 * @return the compartment as a {@link Tree}, or null if data could not be
 	 *         retrieved
 	 * @throws IllegalArgumentException if compartment is not recognized or
-	 *                                  retrieval of data for this neuron is not
-	 *                                  possible
+	 *           retrieval of data for this neuron is not possible
 	 */
-	public Tree getTree(final String compartment, final ColorRGB color) throws IllegalArgumentException {
+	public Tree getTree(final String compartment, final ColorRGB color)
+		throws IllegalArgumentException
+	{
 		if (compartment == null || compartment.trim().isEmpty())
 			throw new IllegalArgumentException("Invalid compartment" + compartment);
-		if (!initialized)
-			initialize();
+		if (!initialized) initialize();
 		final String comp = compartment.toLowerCase();
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);
-		final Map<String, Tree> map = pafm.importMLNeurons(Collections.singletonList(publicID), comp, color);
+		final Map<String, Tree> map = pafm.importMLNeurons(Collections
+			.singletonList(publicID), comp, color);
 		return map.get(publicID);
 	}
 
 	private TreeSet<SWCPoint> getNodesInternal(final String compartment) {
-		if (!initialized)
-			initialize();
+		if (!initialized) initialize();
 		final TreeSet<SWCPoint> points = new TreeSet<>();
 		if (SOMA.equals(compartment)) {
 			points.add(getSoma());
-		} else {
+		}
+		else {
 			assignNodes(getCompartment(compartment), points);
 		}
 		return points;
@@ -387,24 +400,26 @@ public class MLJSONLoader {
 	 *
 	 * @return the soma as {@link SWCPoint}. Note that point has an SWC sample
 	 *         number of 0.
-	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
-	 *                                  possible
+	 * @throws IllegalArgumentException if retrieval of data for this neuron is
+	 *           not possible
 	 */
 	public SWCPoint getSoma() throws IllegalArgumentException {
-		if (!initialized)
-			initialize();
+		if (!initialized) initialize();
 		return soma;
 	}
 
-	private void assignNodes(final JSONObject compartment, final TreeSet<SWCPoint> points) {
+	private void assignNodes(final JSONObject compartment,
+		final TreeSet<SWCPoint> points)
+	{
 		assignNodes(compartment, points, 0);
 	}
 
-	private void assignNodes(final JSONObject compartment, final TreeSet<SWCPoint> points, final int idOffset) {
-		if (compartment == null)
-			throw new IllegalArgumentException("Cannot extract nodes from null compartment");
-		if (!initialized)
-			initialize();
+	private void assignNodes(final JSONObject compartment,
+		final TreeSet<SWCPoint> points, final int idOffset)
+	{
+		if (compartment == null) throw new IllegalArgumentException(
+			"Cannot extract nodes from null compartment");
+		if (!initialized) initialize();
 		try {
 			final JSONArray tracings = compartment.getJSONArray("tracings");
 			for (int traceIdx = 0; traceIdx < tracings.length(); traceIdx++) {
@@ -424,7 +439,8 @@ public class MLJSONLoader {
 				}
 			}
 
-		} catch (final JSONException exc) {
+		}
+		catch (final JSONException exc) {
 			SNT.error("Error while extracting nodes", exc);
 		}
 	}
@@ -433,7 +449,8 @@ public class MLJSONLoader {
 	private int getSWCflag(final UUID tracingStructureUUID) {
 		try {
 			return swcTypeMap.get(tracingStructureUUID);
-		} catch (final NullPointerException nep) {
+		}
+		catch (final NullPointerException nep) {
 			return Path.SWC_UNDEFINED;
 		}
 	}
@@ -443,15 +460,20 @@ public class MLJSONLoader {
 		System.out.println("# Retrieving neuron");
 		final String id = "10.25378/janelia.5527672"; // 10.25378/janelia.5527672";
 		final MLJSONLoader loader = new MLJSONLoader(id);
-		try (PrintWriter out = new PrintWriter("/home/tferr/Desktop/" + id.replaceAll("/", "-") + ".swc")) {
-			final StringReader reader = SWCPoint.collectionAsReader(loader.getNodes());
+		try (PrintWriter out = new PrintWriter("/home/tferr/Desktop/" + id
+			.replaceAll("/", "-") + ".swc"))
+		{
+			final StringReader reader = SWCPoint.collectionAsReader(loader
+				.getNodes());
 			try (BufferedReader br = new BufferedReader(reader)) {
 				br.lines().forEach(out::println);
-			} catch (final IOException e) {
+			}
+			catch (final IOException e) {
 				e.printStackTrace();
 			}
 			out.println("# End of Tree ");
-		} catch (final FileNotFoundException | IllegalArgumentException e) {
+		}
+		catch (final FileNotFoundException | IllegalArgumentException e) {
 			e.printStackTrace();
 		}
 		System.out.println("# All done");

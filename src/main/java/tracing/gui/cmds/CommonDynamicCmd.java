@@ -36,7 +36,7 @@ import tracing.SimpleNeuriteTracer;
 
 /**
  * Command class for GUI commands extending DynamicCommand
- * 
+ *
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false)
@@ -57,7 +57,8 @@ public class CommonDynamicCmd extends DynamicCommand {
 	protected void status(final String statusMsg, final boolean temporaryMsg) {
 		if (ui == null) {
 			statusService.showStatus(statusMsg);
-		} else {
+		}
+		else {
 			ui.showStatus(statusMsg, temporaryMsg);
 		}
 		SNT.log("Rebuilding canvases...");
@@ -66,15 +67,18 @@ public class CommonDynamicCmd extends DynamicCommand {
 	protected void error(final String msg) {
 		if (snt != null) {
 			snt.error(msg);
-		} else {
-			cancel("<HTML>"+msg); // Linux: UIService uses legacy java.awt dialog if not HTML
+		}
+		else {
+			cancel("<HTML>" + msg); // Linux: UIService uses legacy java.awt dialog if
+															// not HTML
 		}
 	}
 
 	protected void msg(final String msg, final String title) {
 		if (snt != null) {
 			snt.showMsg(msg, title);
-		} else {
+		}
+		else {
 			uiService.showDialog(msg, title);
 		}
 	}

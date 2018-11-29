@@ -101,7 +101,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		if (keyCode == KeyEvent.VK_SPACE) {// IJ's pan tool shortcut
 			if (canvas != null) tracerPlugin.panMode = true;
 			waiveKeyPress(e);
- 			return;
+			return;
 		}
 
 		// NB: we don't want accidental keystrokes to interfere with SNT tasks
@@ -219,7 +219,9 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 
 		// Keystrokes exclusive to tracing mode
-		else if (canvas != null && !canvas.isEditMode() && !tracerPlugin.analysisMode) {
+		else if (canvas != null && !canvas.isEditMode() &&
+			!tracerPlugin.analysisMode)
+		{
 
 			if (keyChar == 'y' || keyChar == 'Y') {
 				// IJ1 built-in: ROI Properties...
@@ -237,8 +239,8 @@ class QueueJumpingKeyListener implements KeyListener {
 			}
 			else if (keyChar == 'c' || keyChar == 'C') {
 				// IJ1 built-in: Copy
-				if (tracerPlugin.getUIState() == SNTUI.PARTIAL_PATH)
-					tracerPlugin.cancelPath();
+				if (tracerPlugin.getUIState() == SNTUI.PARTIAL_PATH) tracerPlugin
+					.cancelPath();
 				else if (doublePress) tracerPlugin.getUI().abortCurrentOperation();
 				e.consume();
 			}
@@ -297,7 +299,8 @@ class QueueJumpingKeyListener implements KeyListener {
 		final Content c = picker.getPickedContent(p.x, p.y);
 		if (null == c) return null;
 		final Point3d point = picker.getPickPointGeometry(c, p.x, p.y);
-		final double diagonalLength = tracerPlugin.getImpDiagonalLength(true, false);
+		final double diagonalLength = tracerPlugin.getImpDiagonalLength(true,
+			false);
 		final NearPoint np = tracerPlugin.getPathAndFillManager()
 			.nearestPointOnAnyPath(point.x, point.y, point.z, diagonalLength);
 		if (np == null) {
@@ -318,7 +321,7 @@ class QueueJumpingKeyListener implements KeyListener {
 				return;
 			}
 			final Path path = np.getPath();
-		tracerPlugin.selectPath(path, shift_down);
+			tracerPlugin.selectPath(path, shift_down);
 		}).start();
 	}
 
@@ -331,7 +334,9 @@ class QueueJumpingKeyListener implements KeyListener {
 
 	@Override
 	public void keyReleased(final KeyEvent e) {
-		if (e.getKeyCode() == KeyEvent.VK_SPACE && canvas != null) { // IJ's pan tool shortcut
+		if (e.getKeyCode() == KeyEvent.VK_SPACE && canvas != null) { // IJ's pan
+																																	// tool
+																																	// shortcut
 			tracerPlugin.panMode = false;
 		}
 		for (final KeyListener kl : listeners) {
@@ -378,22 +383,18 @@ class QueueJumpingKeyListener implements KeyListener {
 
 		@Override
 		public void doProcess(final KeyEvent e) {
-			SwingUtilities.invokeLater(new Runnable() {
-
-				@Override
-				public void run() {
-					final char keyChar = e.getKeyChar();
-					if (keyChar == 'w' || keyChar == 'W') {
-						Toolbar.getInstance().setTool(Toolbar.WAND);
-						gUtils.tempMsg("Wand Tool selected");
-					}
-					else if (keyChar == 'h' || keyChar == 'H') {
-						Toolbar.getInstance().setTool(Toolbar.HAND);
-						gUtils.tempMsg("Hand Tool selected");
-					}
-					else {
-						keyPressed(e);
-					}
+			SwingUtilities.invokeLater(() -> {
+				final char keyChar = e.getKeyChar();
+				if (keyChar == 'w' || keyChar == 'W') {
+					Toolbar.getInstance().setTool(Toolbar.WAND);
+					gUtils.tempMsg("Wand Tool selected");
+				}
+				else if (keyChar == 'h' || keyChar == 'H') {
+					Toolbar.getInstance().setTool(Toolbar.HAND);
+					gUtils.tempMsg("Hand Tool selected");
+				}
+				else {
+					keyPressed(e);
 				}
 			});
 		}
@@ -423,13 +424,8 @@ class QueueJumpingKeyListener implements KeyListener {
 			final boolean joiner_modifier_down = mac ? ((me.getModifiersEx() &
 				InputEvent.ALT_DOWN_MASK) != 0) : ((me.getModifiersEx() &
 					InputEvent.CTRL_DOWN_MASK) != 0);
-			SwingUtilities.invokeLater(new Runnable() {
-
-				@Override
-				public void run() {
-					tracerPlugin.clickForTrace(point, joiner_modifier_down);
-				}
-			});
+			SwingUtilities.invokeLater(() -> tracerPlugin.clickForTrace(point,
+				joiner_modifier_down));
 		}
 	}
 }

@@ -77,7 +77,8 @@ public class SNTPrefs { // TODO: Adopt PrefService
 
 	protected int get3DViewerResamplingFactor() {
 		if (resFactor3Dcontent == -1) {
-			resFactor3Dcontent = Content.getDefaultResamplingFactor(snt.getImagePlus(), ContentConstants.VOLUME);
+			resFactor3Dcontent = Content.getDefaultResamplingFactor(snt
+				.getImagePlus(), ContentConstants.VOLUME);
 		}
 		return resFactor3Dcontent;
 	}
@@ -98,8 +99,10 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	}
 
 	private void imposeIJ1Prefs() {
-		Prefs.reverseNextPreviousOrder = true; // required for scroll wheel z-tracing
-		Prefs.usePointerCursor = false; // required for tracing mode/editing mode distinction
+		Prefs.reverseNextPreviousOrder = true; // required for scroll wheel
+																						// z-tracing
+		Prefs.usePointerCursor = false; // required for tracing mode/editing mode
+																		// distinction
 	}
 
 	private void restoreIJ1Prefs() {
@@ -114,8 +117,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	private void getBooleans() {
 		// Somehow Prefs.getInt() fails. We'll cast from double instead
 		currentBooleans = (int) Prefs.get(BOOLEANS, UNSET_PREFS);
-		if (currentBooleans == UNSET_PREFS)
-			currentBooleans = getDefaultBooleans();
+		if (currentBooleans == UNSET_PREFS) currentBooleans = getDefaultBooleans();
 	}
 
 	protected void loadPluginPrefs() {
@@ -126,23 +128,21 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		snt.drawDiametersXY = getPref(DRAW_DIAMETERS_XY);
 		snt.displayCustomPathColors = !getPref(ENFORCE_DEFAULT_PATH_COLORS);
 		snt.setShowOnlySelectedPaths(getPref(SHOW_ONLY_SELECTED), false);
-		if (!SNT.isDebugMode())
-			SNT.setDebugMode(getPref(DEBUG));
+		if (!SNT.isDebugMode()) SNT.setDebugMode(getPref(DEBUG));
 		snt.cursorSnapWindowXY = (int) Prefs.get(SNAP_XY, 4);
 		snt.cursorSnapWindowXY = whithinBoundaries(snt.cursorSnapWindowXY,
-				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY);
+			SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY,
+			SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY);
 		snt.cursorSnapWindowZ = (int) Prefs.get(SNAP_Z, 0);
-		snt.cursorSnapWindowZ = whithinBoundaries(snt.cursorSnapWindowZ, SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z,
-				SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z);
-		if (snt.cursorSnapWindowZ > snt.depth)
-			snt.cursorSnapWindowZ = snt.depth;
+		snt.cursorSnapWindowZ = whithinBoundaries(snt.cursorSnapWindowZ,
+			SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z,
+			SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z);
+		if (snt.cursorSnapWindowZ > snt.depth) snt.cursorSnapWindowZ = snt.depth;
 	}
 
 	private int whithinBoundaries(final int value, final int min, final int max) {
-		if (value < min)
-			return min;
-		if (value > max)
-			return max;
+		if (value < min) return min;
+		if (value > max) return max;
 		return value;
 	}
 
@@ -171,8 +171,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	protected void savePluginPrefs(final boolean restoreIJ1prefs) {
 		setPref(COMPRESSED_XML, snt.useCompressedXML);
 		setPref(AUTO_CANVAS_ACTIVATION, snt.autoCanvasActivation);
-		if (!snt.analysisMode)
-			setPref(SNAP_CURSOR, snt.snapCursor);
+		if (!snt.analysisMode) setPref(SNAP_CURSOR, snt.snapCursor);
 		Prefs.set(SNAP_XY, snt.cursorSnapWindowXY);
 		Prefs.set(SNAP_Z, snt.cursorSnapWindowZ);
 		setPref(DRAW_DIAMETERS_XY, snt.drawDiametersXY);
@@ -183,17 +182,13 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		clearLegacyPrefs();
 		if (isSaveWinLocations()) {
 			final SNTUI rd = snt.getUI();
-			if (rd == null)
-				return;
+			if (rd == null) return;
 			final PathManagerUI pw = rd.getPathManager();
-			if (pw != null)
-				Prefs.saveLocation(PATHWIN_LOC, pw.getLocation());
+			if (pw != null) Prefs.saveLocation(PATHWIN_LOC, pw.getLocation());
 			final FillManagerUI fw = rd.getFillManager();
-			if (fw != null)
-				Prefs.saveLocation(FILLWIN_LOC, fw.getLocation());
+			if (fw != null) Prefs.saveLocation(FILLWIN_LOC, fw.getLocation());
 		}
-		if (restoreIJ1prefs)
-			restoreIJ1Prefs();
+		if (restoreIJ1prefs) restoreIJ1Prefs();
 	}
 
 	protected boolean isSaveWinLocations() {
@@ -205,10 +200,8 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	}
 
 	private void setPref(final int key, final boolean value) {
-		if (value)
-			currentBooleans |= key;
-		else
-			currentBooleans &= ~key;
+		if (value) currentBooleans |= key;
+		else currentBooleans &= ~key;
 	}
 
 	protected Point getPathWindowLocation() {
@@ -247,10 +240,8 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	}
 
 	protected File getRecentFile() {
-		if (recentFile == null)
-			return snt.loadedImageFile();
-		else
-			return recentFile;
+		if (recentFile == null) return snt.loadedImageFile();
+		else return recentFile;
 	}
 
 	public static void setRecentDirectory(final String dir) {

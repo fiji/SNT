@@ -55,18 +55,21 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 
 import net.imagej.ImageJ;
-import tracing.gui.GuiUtils;
+
 import ij.ImagePlus;
+import tracing.gui.GuiUtils;
 
 /**
  * Creates the "Fill Manager" Dialog.
- * 
+ *
  * @author Tiago Ferreira
  */
-public class FillManagerUI extends JDialog
-		implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
+public class FillManagerUI extends JDialog implements PathAndFillListener,
+	ActionListener, ItemListener, FillerProgressCallback
+{
 
 	private static final long serialVersionUID = 1L;
 	private final SimpleNeuriteTracer plugin;
@@ -101,9 +104,8 @@ public class FillManagerUI extends JDialog
 	/**
 	 * Instantiates a new Fill Manager {@link JDialog}
 	 *
-	 * @param plugin
-	 *            the the {@link SimpleNeuriteTracer} instance to be associated with
-	 *            this FillManager
+	 * @param plugin the the {@link SimpleNeuriteTracer} instance to be associated
+	 *          with this FillManager
 	 */
 	public FillManagerUI(final SimpleNeuriteTracer plugin) {
 		super(plugin.getUI(), "Fill Manager");
@@ -145,13 +147,15 @@ public class FillManagerUI extends JDialog
 			++c.gridy;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), " Distance Threshold for Fill Search:", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(),
+			" Distance Threshold for Fill Search:", true, c);
 		++c.gridy;
 
 		{
 			final JPanel distancePanel = new JPanel(new GridBagLayout());
 			final GridBagConstraints gdb = GuiUtils.defaultGbc();
-			final JRadioButton cursorRButton = new JRadioButton("Set by clicking on traced strucure (preferred)");
+			final JRadioButton cursorRButton = new JRadioButton(
+				"Set by clicking on traced strucure (preferred)");
 
 			final JPanel t1Panel = leftAlignedPanel();
 			t1Panel.add(cursorRButton);
@@ -194,13 +198,17 @@ public class FillManagerUI extends JDialog
 			setMaxThreshold.setEnabled(false);
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), " Search Status:", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Search Status:",
+			true, c);
 		++c.gridy;
 
 		{
-			currentThreshold = GuiUtils.leftAlignedLabel("No Pahs are currently being filled...", false);
-			maxThreshold = GuiUtils.leftAlignedLabel("This message will be updated once a Fill-out", false);
-			fillStatus = GuiUtils.leftAlignedLabel("command is run from the Path Manager...", false);
+			currentThreshold = GuiUtils.leftAlignedLabel(
+				"No Pahs are currently being filled...", false);
+			maxThreshold = GuiUtils.leftAlignedLabel(
+				"This message will be updated once a Fill-out", false);
+			fillStatus = GuiUtils.leftAlignedLabel(
+				"command is run from the Path Manager...", false);
 			final int storedPady = c.ipady;
 			final Insets storedInsets = c.insets;
 			c.ipady = 0;
@@ -215,11 +223,13 @@ public class FillManagerUI extends JDialog
 			c.insets = storedInsets;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), " Rendering Options:", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Rendering Options:",
+			true, c);
 		++c.gridy;
 
 		{
-			transparent = new JCheckBox(" Transparent overlay (may slow down filling)");
+			transparent = new JCheckBox(
+				" Transparent overlay (may slow down filling)");
 			transparent.addItemListener(this);
 			final JPanel transparencyPanel = leftAlignedPanel();
 			transparencyPanel.add(transparent);
@@ -227,7 +237,8 @@ public class FillManagerUI extends JDialog
 			c.gridy++;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), " Filler Thread Controls:", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(),
+			" Filler Thread Controls:", true, c);
 		++c.gridy;
 
 		{
@@ -245,7 +256,8 @@ public class FillManagerUI extends JDialog
 			++c.gridy;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), " Export Fill(s):", true, c);
+		GuiUtils.addSeparator((JComponent) getContentPane(), " Export Fill(s):",
+			true, c);
 		++c.gridy;
 
 		{
@@ -254,6 +266,8 @@ public class FillManagerUI extends JDialog
 			assembleViewFillsMenu();
 			view3D = new JButton("Image Stack...");
 			view3D.addMouseListener(new MouseAdapter() {
+
+				@Override
 				public void mousePressed(final MouseEvent e) {
 					viewFillsMenu.show(e.getComponent(), e.getX(), e.getY());
 				}
@@ -266,7 +280,8 @@ public class FillManagerUI extends JDialog
 		}
 
 		pack();
-		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE); // prevent closing
+		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE); // prevent
+																																		// closing
 
 	}
 
@@ -345,21 +360,19 @@ public class FillManagerUI extends JDialog
 	 * @see tracing.PathAndFillListener#setPathList(java.lang.String[], tracing.Path, boolean)
 	 */
 	@Override
-	public void setPathList(final String[] pathList, final Path justAdded, final boolean expandAll) {
-	}
+	public void setPathList(final String[] pathList, final Path justAdded,
+		final boolean expandAll)
+	{}
 
 	/* (non-Javadoc)
 	 * @see tracing.PathAndFillListener#setFillList(java.lang.String[])
 	 */
 	@Override
 	public void setFillList(final String[] newList) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				listModel.removeAllElements();
-				for (int i = 0; i < newList.length; ++i)
-					listModel.addElement(newList[i]);
-			}
+		SwingUtilities.invokeLater(() -> {
+			listModel.removeAllElements();
+			for (int i = 0; i < newList.length; ++i)
+				listModel.addElement(newList[i]);
 		});
 	}
 
@@ -367,7 +380,9 @@ public class FillManagerUI extends JDialog
 	 * @see tracing.PathAndFillListener#setSelectedPaths(java.util.HashSet, java.lang.Object)
 	 */
 	@Override
-	public void setSelectedPaths(final HashSet<Path> selectedPathSet, final Object source) {
+	public void setSelectedPaths(final HashSet<Path> selectedPathSet,
+		final Object source)
+	{
 		// This dialog doesn't deal with paths, so ignore this.
 	}
 
@@ -390,20 +405,24 @@ public class FillManagerUI extends JDialog
 			pathAndFillManager.deleteFills(selectedIndices);
 			plugin.updateAllViewers();
 
-		} else if (source == reloadFill) {
+		}
+		else if (source == reloadFill) {
 
 			final int[] selectedIndices = fillList.getSelectedIndices();
 			if (selectedIndices.length != 1) {
-				gUtils.error("You must have a single fill selected in order to reload.");
+				gUtils.error(
+					"You must have a single fill selected in order to reload.");
 				return;
 			}
 			pathAndFillManager.reloadFill(selectedIndices[0]);
 
-		} else if (source == setMaxThreshold) {
+		}
+		else if (source == setMaxThreshold) {
 
 			plugin.setFillThreshold(maxThresholdValue);
 
-		} else if (source == setThreshold || source == thresholdField) {
+		}
+		else if (source == setThreshold || source == thresholdField) {
 
 			try {
 				final double t = Double.parseDouble(thresholdField.getText());
@@ -412,43 +431,56 @@ public class FillManagerUI extends JDialog
 					return;
 				}
 				plugin.setFillThreshold(t);
-			} catch (final NumberFormatException nfe) {
-				gUtils.error("The threshold '" + thresholdField.getText() + "' wasn't a valid number.");
+			}
+			catch (final NumberFormatException nfe) {
+				gUtils.error("The threshold '" + thresholdField.getText() +
+					"' wasn't a valid number.");
 				return;
 			}
 
-		} else if (source == discardFill) {
+		}
+		else if (source == discardFill) {
 
 			plugin.discardFill();
 
-		} else if (source == saveFill) {
+		}
+		else if (source == saveFill) {
 
 			plugin.saveFill();
 
-		} else if (source == pauseOrRestartFilling) {
+		}
+		else if (source == pauseOrRestartFilling) {
 
 			plugin.pauseOrRestartFilling();
 
-		} else if (source == exportAsCSV) {
+		}
+		else if (source == exportAsCSV) {
 
-			final File file = SNT.findClosestPair(plugin.prefs.getRecentFile(), "csv");
-			final File saveFile = gUtils.saveFile("Export CSV Summary...", file, Collections.singletonList(".csv"));
-			if (saveFile == null)
-				return; // user pressed cancel;
+			final File file = SNT.findClosestPair(plugin.prefs.getRecentFile(),
+				"csv");
+			final File saveFile = gUtils.saveFile("Export CSV Summary...", file,
+				Collections.singletonList(".csv"));
+			if (saveFile == null) return; // user pressed cancel;
 			if (saveFile.exists() && !gUtils.getConfirmation("Export data...",
-					"The file " + saveFile.getAbsolutePath() + " already exists. Do you want to replace it?")) {
+				"The file " + saveFile.getAbsolutePath() +
+					" already exists. Do you want to replace it?"))
+			{
 				return;
 			}
-			plugin.getUI().showStatus("Exporting CSV data to " + saveFile.getAbsolutePath(), false);
+			plugin.getUI().showStatus("Exporting CSV data to " + saveFile
+				.getAbsolutePath(), false);
 			try {
 				pathAndFillManager.exportFillsAsCSV(saveFile);
-			} catch (final IOException ioe) {
-				gUtils.error("Saving to " + saveFile.getAbsolutePath() + " failed. See console for details");
+			}
+			catch (final IOException ioe) {
+				gUtils.error("Saving to " + saveFile.getAbsolutePath() +
+					" failed. See console for details");
 				SNT.error("IO Error", ioe);
 				return;
 			}
 			plugin.getUI().showStatus("Done... ", true);
-		} else {
+		}
+		else {
 			SNT.error("BUG: FillWindow received an event from an unknown source.");
 		}
 
@@ -456,14 +488,22 @@ public class FillManagerUI extends JDialog
 
 	private void assembleViewFillsMenu() {
 		viewFillsMenu = new JPopupMenu();
-		viewFillsMenu.add(new JMenuItem(new AbstractAction("As Grayscale Image...") {
+		viewFillsMenu.add(new JMenuItem(new AbstractAction(
+			"As Grayscale Image...")
+		{
+
 			private static final long serialVersionUID = 1L;
+
+			@Override
 			public void actionPerformed(final ActionEvent e) {
 				plugin.viewFillIn3D(false);
 			}
 		}));
 		viewFillsMenu.add(new JMenuItem(new AbstractAction("As Binary Mask...") {
+
 			private static final long serialVersionUID = 1L;
+
+			@Override
 			public void actionPerformed(final ActionEvent e) {
 				plugin.viewFillIn3D(true);
 			}
@@ -476,19 +516,16 @@ public class FillManagerUI extends JDialog
 	@Override
 	public void itemStateChanged(final ItemEvent ie) {
 		assert SwingUtilities.isEventDispatchThread();
-		if (ie.getSource() == transparent)
-			plugin.setFillTransparent(transparent.isSelected());
+		if (ie.getSource() == transparent) plugin.setFillTransparent(transparent
+			.isSelected());
 	}
 
 	protected void thresholdChanged(final double f) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				assert SwingUtilities.isEventDispatchThread();
-				final String value = SNT.formatDouble(f, 3);
-				thresholdField.setText(SNT.formatDouble(f, 3));
-				currentThreshold.setText("Current threshold distance: " + value);
-			}
+		SwingUtilities.invokeLater(() -> {
+			assert SwingUtilities.isEventDispatchThread();
+			final String value = SNT.formatDouble(f, 3);
+			thresholdField.setText(SNT.formatDouble(f, 3));
+			currentThreshold.setText("Current threshold distance: " + value);
 		});
 	}
 
@@ -496,13 +533,12 @@ public class FillManagerUI extends JDialog
 	 * @see tracing.FillerProgressCallback#maximumDistanceCompletelyExplored(tracing.SearchThread, float)
 	 */
 	@Override
-	public void maximumDistanceCompletelyExplored(final SearchThread source, final float f) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				maxThreshold.setText("Max. explored distance: " + SNT.formatDouble(f, 3));
-				maxThresholdValue = f;
-			}
+	public void maximumDistanceCompletelyExplored(final SearchThread source,
+		final float f)
+	{
+		SwingUtilities.invokeLater(() -> {
+			maxThreshold.setText("Max. explored distance: " + SNT.formatDouble(f, 3));
+			maxThresholdValue = f;
 		});
 	}
 
@@ -510,7 +546,9 @@ public class FillManagerUI extends JDialog
 	 * @see tracing.SearchProgressCallback#pointsInSearch(tracing.SearchInterface, int, int)
 	 */
 	@Override
-	public void pointsInSearch(final SearchInterface source, final int inOpen, final int inClosed) {
+	public void pointsInSearch(final SearchInterface source, final int inOpen,
+		final int inClosed)
+	{
 		// Do nothing...
 	}
 
@@ -526,11 +564,11 @@ public class FillManagerUI extends JDialog
 	 * @see tracing.SearchProgressCallback#threadStatus(tracing.SearchInterface, int)
 	 */
 	@Override
-	public void threadStatus(final SearchInterface source, final int currentStatus) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				switch (currentStatus) {
+	public void threadStatus(final SearchInterface source,
+		final int currentStatus)
+	{
+		SwingUtilities.invokeLater(() -> {
+			switch (currentStatus) {
 				case SearchThread.STOPPING:
 					pauseOrRestartFilling.setText("Stopped");
 					pauseOrRestartFilling.setEnabled(false);
@@ -545,27 +583,22 @@ public class FillManagerUI extends JDialog
 					pauseOrRestartFilling.setText("Pause");
 					saveFill.setEnabled(false);
 					break;
-				}
-				fillControlPanel.doLayout();
 			}
+			fillControlPanel.doLayout();
 		});
 	}
 
 	protected void showMouseThreshold(final float t) {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				String newStatus = null;
-				if (t < 0) {
-					newStatus = "Cursor position: Not reached by search yet";
-				}
-				else {
-					newStatus = "Cursor position: Distance from path is " + SNT
-						.formatDouble(t, 3);
-				}
-				fillStatus.setText(newStatus);
+		SwingUtilities.invokeLater(() -> {
+			String newStatus = null;
+			if (t < 0) {
+				newStatus = "Cursor position: Not reached by search yet";
 			}
+			else {
+				newStatus = "Cursor position: Distance from path is " + SNT
+					.formatDouble(t, 3);
+			}
+			fillStatus.setText(newStatus);
 		});
 	}
 
@@ -580,6 +613,7 @@ public class FillManagerUI extends JDialog
 	}
 
 	private class RadioGroupListener implements ActionListener {
+
 		@Override
 		public void actionPerformed(final ActionEvent e) {
 			setThreshold.setEnabled(manualRButton.isSelected());

@@ -24,15 +24,14 @@ package tracing.analysis;
 
 import java.awt.Color;
 
-import org.scijava.util.ColorRGB;
-
 import net.imglib2.display.ColorTable;
+
+import org.scijava.util.ColorRGB;
 
 /**
  * Parent class for ColorMappers.
  *
  * @author Tiago Ferreira
- *
  */
 public class ColorMapper {
 
@@ -47,54 +46,50 @@ public class ColorMapper {
 	 */
 	protected String normalizedMeasurement(final String measurement) {
 		String normMeasurement = measurement.toLowerCase().replace("_", " ");
-		normMeasurement = new StringBuilder().append(normMeasurement.substring(0, 1).toUpperCase())
-				.append(normMeasurement.substring(1)).toString();
+		normMeasurement = new StringBuilder().append(normMeasurement.substring(0, 1)
+			.toUpperCase()).append(normMeasurement.substring(1)).toString();
 		return normMeasurement;
 	}
 
 	public void map(final String measurement, final ColorTable colorTable) {
-		if (colorTable == null)
-			throw new IllegalArgumentException("colorTable cannot be null");
-		if (measurement == null)
-			throw new IllegalArgumentException("measurement cannot be null");
+		if (colorTable == null) throw new IllegalArgumentException(
+			"colorTable cannot be null");
+		if (measurement == null) throw new IllegalArgumentException(
+			"measurement cannot be null");
 		this.colorTable = colorTable;
 		// Implementation left to extending classes
 	}
 
 	protected Color getColor(final double mappedValue) {
 		final int idx = getColorTableIdx(mappedValue);
-		return new Color(colorTable.get(ColorTable.RED, idx), colorTable.get(ColorTable.GREEN, idx),
-				colorTable.get(ColorTable.BLUE, idx));
+		return new Color(colorTable.get(ColorTable.RED, idx), colorTable.get(
+			ColorTable.GREEN, idx), colorTable.get(ColorTable.BLUE, idx));
 	}
 
 	protected ColorRGB getColorRGB(final double mappedValue) {
 		final int idx = getColorTableIdx(mappedValue);
-		return new ColorRGB(colorTable.get(ColorTable.RED, idx), colorTable.get(ColorTable.GREEN, idx),
-				colorTable.get(ColorTable.BLUE, idx));
+		return new ColorRGB(colorTable.get(ColorTable.RED, idx), colorTable.get(
+			ColorTable.GREEN, idx), colorTable.get(ColorTable.BLUE, idx));
 	}
 
 	private int getColorTableIdx(final double mappedValue) {
 		final int idx;
-		if (mappedValue <= min)
-			idx = 0;
-		else if (mappedValue > max)
-			idx = colorTable.getLength() - 1;
-		else
-			idx = (int) Math.round((colorTable.getLength() - 1) * (mappedValue - min) / (max - min));
+		if (mappedValue <= min) idx = 0;
+		else if (mappedValue > max) idx = colorTable.getLength() - 1;
+		else idx = (int) Math.round((colorTable.getLength() - 1) * (mappedValue -
+			min) / (max - min));
 		return idx;
 	}
 
 	/**
 	 * Sets the LUT mapping bounds.
 	 *
-	 * @param min
-	 *            the mapping lower bound (i.e., the highest measurement value for
-	 *            the LUT scale). It is automatically calculated (the default) when
-	 *            set to Double.NaN
-	 * @param max
-	 *            the mapping upper bound (i.e., the highest measurement value for
-	 *            the LUT scale).It is automatically calculated (the default) when
-	 *            set to Double.NaN.
+	 * @param min the mapping lower bound (i.e., the highest measurement value for
+	 *          the LUT scale). It is automatically calculated (the default) when
+	 *          set to Double.NaN
+	 * @param max the mapping upper bound (i.e., the highest measurement value for
+	 *          the LUT scale).It is automatically calculated (the default) when
+	 *          set to Double.NaN.
 	 */
 	public void setMinMax(final double min, final double max) {
 		if (!Double.isNaN(min) && !Double.isNaN(max) && min > max)
@@ -109,7 +104,7 @@ public class ColorMapper {
 	 * @return a two-element array with current {minimum, maximum} mapping bounds
 	 */
 	public double[] getMinMax() {
-		return new double[] {min, max};
+		return new double[] { min, max };
 	}
 
 }

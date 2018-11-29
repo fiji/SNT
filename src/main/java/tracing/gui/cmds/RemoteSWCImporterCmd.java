@@ -29,6 +29,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import net.imagej.ImageJ;
+
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.module.MutableModuleItem;
@@ -37,7 +39,6 @@ import org.scijava.plugin.Plugin;
 import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
-import net.imagej.ImageJ;
 import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.Tree;
@@ -49,20 +50,21 @@ import tracing.plot.TreePlot3D;
 
 /**
  * Command for importing SWC reconstructions from remote databases
- * 
+ *
  * @see NeuroMorphoLoader
  * @see FlyCirCuitLoader
- *
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, initializer = "init")
 public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 
-
-	@Parameter(required = true, persist = true, label = "IDs (comma- or space- separated list)", description = "e.g., AA0001 or 10.25378/janelia.5527672")
+	@Parameter(required = true, persist = true,
+		label = "IDs (comma- or space- separated list)",
+		description = "e.g., AA0001 or 10.25378/janelia.5527672")
 	private String query;
 
-	@Parameter(required = false, label = "Colors", choices = {"Distinct (each cell labelled uniquely)", "Common color specified below"})
+	@Parameter(required = false, label = "Colors", choices = {
+		"Distinct (each cell labelled uniquely)", "Common color specified below" })
 	private String colorChoice;
 
 	@Parameter(required = false, label = "<HTML>&nbsp;")
@@ -80,10 +82,12 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
 	private String pingMsg;
 
-	@Parameter(persist = false, required = false, visibility = ItemVisibility.INVISIBLE)
+	@Parameter(persist = false, required = false,
+		visibility = ItemVisibility.INVISIBLE)
 	private TreePlot3D recViewer;
 
-	@Parameter(persist = false, required = true, visibility = ItemVisibility.INVISIBLE)
+	@Parameter(persist = false, required = true,
+		visibility = ItemVisibility.INVISIBLE)
 	private RemoteSWCLoader loader;
 
 	private PathAndFillManager pafm;
@@ -92,7 +96,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -100,7 +104,8 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 
 		final boolean standAloneViewer = recViewer != null;
 		if (!standAloneViewer && !sntService.isActive()) {
-			error("No Reconstruction Viewer specified and no active instance of SimpleNeuriteTracer was found.");
+			error(
+				"No Reconstruction Viewer specified and no active instance of SimpleNeuriteTracer was found.");
 			return;
 		}
 
@@ -122,15 +127,18 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			ui = sntService.getUI();
 			pafm = sntService.getPathAndFillManager();
 			recViewer = (ui == null) ? null : ui.getReconstructionViewer(false);
-		} else {
-			throw new IllegalArgumentException("Somehow neither a Viewer nor a SNT instance are available");
+		}
+		else {
+			throw new IllegalArgumentException(
+				"Somehow neither a Viewer nor a SNT instance are available");
 		}
 
 		status("Retrieving cells. Please wait...", false);
 		SNT.log(database + " import: Downloading from URL(s)...");
 		final int lastExistingPathIdx = pafm.size() - 1;
 		final List<Tree> result = pafm.importSWCs(urlsMap, getColor());
-		final long failures = result.stream().filter(tree -> tree == null || tree.isEmpty()).count();
+		final long failures = result.stream().filter(tree -> tree == null || tree
+			.isEmpty()).count();
 		if (failures == result.size()) {
 			error("No reconstructions could be retrieved. Invalid Query?");
 			status("Error... No reconstructions imported", true);
@@ -143,7 +151,8 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			}
 			else {
 				// We are importing into a functional SNTUI with Path Manager
-				final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
+				final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx)
+					.toArray();
 				pafm.deletePaths(indices);
 			}
 		}
@@ -166,12 +175,17 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 
 		if (recViewer != null) recViewer.validate();
 		if (failures > 0) {
-			error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
+			error(String.format("%d/%d reconstructions could not be retrieved.",
+				failures, result.size()));
 			status("Partially successful import...", true);
 			SNT.log("Import failed for the following queried morphologies:");
-			result.forEach(tree -> { if (tree.isEmpty()) SNT.log(tree.getLabel()); });
-		} else {
-			status("Successful imported " + result.size() + " reconstruction(s)...", true);
+			result.forEach(tree -> {
+				if (tree.isEmpty()) SNT.log(tree.getLabel());
+			});
+		}
+		else {
+			status("Successful imported " + result.size() + " reconstruction(s)...",
+				true);
 		}
 	}
 
@@ -180,13 +194,13 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 	}
 
 	private LinkedHashMap<String, String> getURLmapFromQuery(final String query) {
-		if (query == null)
-			return null;
-		final List<String> ids = new LinkedList<String>(Arrays.asList(query.split("\\s*(,|\\s)\\s*")));
-		if (ids.isEmpty())
-			return null;
+		if (query == null) return null;
+		final List<String> ids = new LinkedList<>(Arrays.asList(query.split(
+			"\\s*(,|\\s)\\s*")));
+		if (ids.isEmpty()) return null;
 		Collections.sort(ids);
-		final LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
+		final LinkedHashMap<String, String> map =
+			new LinkedHashMap<>();
 		ids.forEach(id -> map.put(id, loader.getReconstructionURL(id)));
 		return map;
 	}
@@ -194,11 +208,13 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 	protected void init() {
 		makeMeDatabaseFriendly();
 		if (query == null || query.isEmpty()) query = placeholderQuery;
-		pingMsg = "Internet connection required. Retrieval of long lists may be rather slow...           ";
+		pingMsg =
+			"Internet connection required. Retrieval of long lists may be rather slow...           ";
 		if (recViewer != null) {
 			// If a stand-alone viewer was specified, customize options specific
 			// to the SNT UI
-			final MutableModuleItem<Boolean> clearExistingInput = getInfo().getMutableInput("clearExisting", Boolean.class);
+			final MutableModuleItem<Boolean> clearExistingInput = getInfo()
+				.getMutableInput("clearExisting", Boolean.class);
 			clearExistingInput.setLabel("Clear existing reconstructions");
 		}
 	}
@@ -208,11 +224,12 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			placeholderQuery = "cnic_001";
 			database = "NeuroMorpho.org";
 //			resolveInput("loadMesh");
-		} else if (loader instanceof FlyCirCuitLoader) {
+		}
+		else if (loader instanceof FlyCirCuitLoader) {
 			placeholderQuery = "VGlut-F-400787";
 			database = "FlyCircuit.tw";
 		}
-		getInfo().setLabel("Import "+ database + " Reconstructions");
+		getInfo().setLabel("Import " + database + " Reconstructions");
 	}
 
 	@SuppressWarnings("unused")
@@ -221,8 +238,9 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 	}
 
 	private String getPingMsg(final boolean pingResponse) {
-		return (pingResponse) ? "Successfully connected to "+ database + " database."
-				: database + " not reached. It is either down or you have no internet access.";
+		return (pingResponse) ? "Successfully connected to " + database +
+			" database." : database +
+				" not reached. It is either down or you have no internet access.";
 	}
 
 	/* IDE debug method **/

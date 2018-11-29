@@ -25,10 +25,13 @@ package tracing;
 import java.util.ArrayList;
 
 class SimplePoint {
+
 	public double x = 0, y = 0, z = 0;
 	public int originalIndex;
 
-	public SimplePoint(final double x, final double y, final double z, final int originalIndex) {
+	public SimplePoint(final double x, final double y, final double z,
+		final int originalIndex)
+	{
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -43,8 +46,9 @@ class SimplePoint {
  */
 public class PathDownsampler {
 
-	protected static ArrayList<SimplePoint> downsample(final ArrayList<SimplePoint> points,
-			final double permittedDeviation) {
+	protected static ArrayList<SimplePoint> downsample(
+		final ArrayList<SimplePoint> points, final double permittedDeviation)
+	{
 		final int n = points.size();
 		final SimplePoint startPoint = points.get(0);
 		final SimplePoint endPoint = points.get(n - 1);
@@ -67,7 +71,8 @@ public class PathDownsampler {
 			final double dz = midPoint.z - startPoint.z;
 			final double projectedLength = dx * vx + dy * vy + dz * vz;
 			final double dLengthSquared = dx * dx + dy * dy + dz * dz;
-			final double distanceSquared = dLengthSquared - projectedLength * projectedLength;
+			final double distanceSquared = dLengthSquared - projectedLength *
+				projectedLength;
 			if (distanceSquared > maxDistanceSquared) {
 				maxDistanceSquared = distanceSquared;
 				maxIndex = i;
@@ -86,7 +91,8 @@ public class PathDownsampler {
 			firstPart.remove(firstPart.size() - 1);
 			firstPart.addAll(secondPart);
 			return firstPart;
-		} else {
+		}
+		else {
 			// Otherwise just return the first and last points:
 			final ArrayList<SimplePoint> result = new ArrayList<>();
 			result.add(startPoint);

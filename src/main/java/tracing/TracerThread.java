@@ -45,16 +45,19 @@ public class TracerThread extends SearchThread {
 	private Path result;
 
 	/* If you specify 0 for timeoutSeconds then there is no timeout. */
-	public TracerThread(final ImagePlus imagePlus, final float stackMin, final float stackMax, final int timeoutSeconds,
-			final long reportEveryMilliseconds, final int start_x, final int start_y, final int start_z,
-			final int goal_x, final int goal_y, final int goal_z, final boolean reciprocal, final boolean singleSlice,
-			final ComputeCurvatures hessian, final double multiplier, final float[][] filtered,
-			final boolean useHessian) {
+	public TracerThread(final ImagePlus imagePlus, final float stackMin,
+		final float stackMax, final int timeoutSeconds,
+		final long reportEveryMilliseconds, final int start_x, final int start_y,
+		final int start_z, final int goal_x, final int goal_y, final int goal_z,
+		final boolean reciprocal, final boolean singleSlice,
+		final ComputeCurvatures hessian, final double multiplier,
+		final float[][] filtered, final boolean useHessian)
+	{
 
 		super(imagePlus, stackMin, stackMax, true, // bidirectional
-				true, // definedGoal
-				false, // startPaused,
-				timeoutSeconds, reportEveryMilliseconds);
+			true, // definedGoal
+			false, // startPaused,
+			timeoutSeconds, reportEveryMilliseconds);
 
 		this.reciprocal = reciprocal;
 		this.singleSlice = singleSlice;
@@ -72,11 +75,12 @@ public class TracerThread extends SearchThread {
 		this.goal_z = goal_z;
 
 		final SearchNode s = createNewNode(start_x, start_y, start_z, 0,
-				estimateCostToGoal(start_x, start_y, start_z, true), null, OPEN_FROM_START);
+			estimateCostToGoal(start_x, start_y, start_z, true), null,
+			OPEN_FROM_START);
 		addNode(s, true);
 
-		final SearchNode g = createNewNode(goal_x, goal_y, goal_z, 0, estimateCostToGoal(goal_x, goal_y, goal_z, false),
-				null, OPEN_FROM_GOAL);
+		final SearchNode g = createNewNode(goal_x, goal_y, goal_z, 0,
+			estimateCostToGoal(goal_x, goal_y, goal_z, false), null, OPEN_FROM_GOAL);
 
 		addNode(g, false);
 
@@ -84,20 +88,23 @@ public class TracerThread extends SearchThread {
 	}
 
 	/* If you specify 0 for timeoutSeconds then there is no timeout. */
-	public TracerThread(final ImagePlus imagePlus, final float stackMin, final float stackMax, final int start_x,
-			final int start_y, final int start_z, final int goal_x, final int goal_y, final int goal_z,
-			final boolean reciprocal, final boolean singleSlice, final ComputeCurvatures hessian,
-			final double multiplier) {
-		this(imagePlus, stackMin, stackMax, 0, 1000, start_x, start_y, start_z, goal_x, goal_y, goal_z, true,
-				imagePlus.getNSlices() == 1, hessian, multiplier, null, true);
+	public TracerThread(final ImagePlus imagePlus, final float stackMin,
+		final float stackMax, final int start_x, final int start_y,
+		final int start_z, final int goal_x, final int goal_y, final int goal_z,
+		final boolean reciprocal, final boolean singleSlice,
+		final ComputeCurvatures hessian, final double multiplier)
+	{
+		this(imagePlus, stackMin, stackMax, 0, 1000, start_x, start_y, start_z,
+			goal_x, goal_y, goal_z, true, imagePlus.getNSlices() == 1, hessian,
+			multiplier, null, true);
 	}
 
 	@Override
-	protected boolean atGoal(final int x, final int y, final int z, final boolean fromStart) {
-		if (fromStart)
-			return (x == goal_x) && (y == goal_y) && (z == goal_z);
-		else
-			return (x == start_x) && (y == start_y) && (z == start_z);
+	protected boolean atGoal(final int x, final int y, final int z,
+		final boolean fromStart)
+	{
+		if (fromStart) return (x == goal_x) && (y == goal_y) && (z == goal_z);
+		else return (x == start_x) && (y == start_y) && (z == start_z);
 	}
 
 	@Override
@@ -109,7 +116,8 @@ public class TracerThread extends SearchThread {
 
 			minimum_cost = reciprocal ? (1 / 255.0) : 1;
 
-		} else {
+		}
+		else {
 
 			// result = 1E-4; /* for the ratio of e0/e1 */
 			// result = 0.002; // 1; /* for e1 - e0 */
@@ -147,25 +155,29 @@ public class TracerThread extends SearchThread {
 	 */
 
 	@Override
-	protected double costMovingTo(final int new_x, final int new_y, final int new_z) {
+	protected double costMovingTo(final int new_x, final int new_y,
+		final int new_z)
+	{
 
 		double value_at_new_point = -1;
 
 		switch (imageType) {
-		case ImagePlus.GRAY8:
-		case ImagePlus.COLOR_256:
-			value_at_new_point = slices_data_b[new_z][new_y * width + new_x] & 0xFF;
-			break;
-		case ImagePlus.GRAY16: {
-			value_at_new_point = slices_data_s[new_z][new_y * width + new_x];
-			value_at_new_point = 255.0 * (value_at_new_point - stackMin) / (stackMax - stackMin);
-			break;
-		}
-		case ImagePlus.GRAY32: {
-			value_at_new_point = slices_data_f[new_z][new_y * width + new_x];
-			value_at_new_point = 255.0 * (value_at_new_point - stackMin) / (stackMax - stackMin);
-			break;
-		}
+			case ImagePlus.GRAY8:
+			case ImagePlus.COLOR_256:
+				value_at_new_point = slices_data_b[new_z][new_y * width + new_x] & 0xFF;
+				break;
+			case ImagePlus.GRAY16: {
+				value_at_new_point = slices_data_s[new_z][new_y * width + new_x];
+				value_at_new_point = 255.0 * (value_at_new_point - stackMin) /
+					(stackMax - stackMin);
+				break;
+			}
+			case ImagePlus.GRAY32: {
+				value_at_new_point = slices_data_f[new_z][new_y * width + new_x];
+				value_at_new_point = 255.0 * (value_at_new_point - stackMin) /
+					(stackMax - stackMin);
+				break;
+			}
 		}
 
 		double cost;
@@ -178,8 +190,8 @@ public class TracerThread extends SearchThread {
 
 					final double[] hessianEigenValues = new double[2];
 
-					final boolean real = hessian.hessianEigenvaluesAtPoint2D(new_x, new_y, true, hessianEigenValues,
-							false, true, x_spacing, y_spacing);
+					final boolean real = hessian.hessianEigenvaluesAtPoint2D(new_x, new_y,
+						true, hessianEigenValues, false, true, x_spacing, y_spacing);
 
 					// Just use the absolute value
 					// of the largest eigenvalue
@@ -189,27 +201,29 @@ public class TracerThread extends SearchThread {
 
 						double measure = Math.abs(hessianEigenValues[1]);
 						if (measure == 0) // This should never happen in
-											// practice...
+							// practice...
 							measure = 0.2;
 
 						measure *= multiplier;
-						if (measure > 256)
-							measure = 256;
+						if (measure > 256) measure = 256;
 
 						cost = 1 / measure;
 
-					} else {
+					}
+					else {
 
 						cost = 1 / 0.2;
 
 					}
 
-				} else {
+				}
+				else {
 
 					final double[] hessianEigenValues = new double[3];
 
-					final boolean real = hessian.hessianEigenvaluesAtPoint3D(new_x, new_y, new_z, true,
-							hessianEigenValues, false, true, x_spacing, y_spacing, z_spacing);
+					final boolean real = hessian.hessianEigenvaluesAtPoint3D(new_x, new_y,
+						new_z, true, hessianEigenValues, false, true, x_spacing, y_spacing,
+						z_spacing);
 
 					/*
 					 * FIXME: there's lots of literature on how to pick this rule (see Sato et al,
@@ -226,16 +240,16 @@ public class TracerThread extends SearchThread {
 						double measure = Math.sqrt(e1 * e2);
 
 						if (measure == 0) // This should never happen in
-											// practice...
+							// practice...
 							measure = 0.2;
 
 						measure *= multiplier;
-						if (measure > 256)
-							measure = 256;
+						if (measure > 256) measure = 256;
 
 						cost = 1 / measure;
 
-					} else {
+					}
+					else {
 
 						cost = 1 / 0.2;
 
@@ -243,23 +257,24 @@ public class TracerThread extends SearchThread {
 
 				}
 
-			} else {
+			}
+			else {
 
 				// Then this saves a lot of time:
 				float measure = filtered[new_z][new_y * width + new_x];
-				if (measure == 0)
-					measure = 0.2f;
+				if (measure == 0) measure = 0.2f;
 				cost = 1 / measure;
 
 			}
 
-		} else {
+		}
+		else {
 
 			if (reciprocal) {
 				cost = 1 / RECIPROCAL_FUDGE;
-				if (value_at_new_point != 0)
-					cost = 1.0 / value_at_new_point;
-			} else {
+				if (value_at_new_point != 0) cost = 1.0 / value_at_new_point;
+			}
+			else {
 				cost = 256 - value_at_new_point;
 			}
 
@@ -269,13 +284,19 @@ public class TracerThread extends SearchThread {
 	}
 
 	@Override
-	float estimateCostToGoal(final int current_x, final int current_y, final int current_z, final boolean fromStart) {
+	float estimateCostToGoal(final int current_x, final int current_y,
+		final int current_z, final boolean fromStart)
+	{
 
-		final double xdiff = ((fromStart ? goal_x : start_x) - current_x) * x_spacing;
-		final double ydiff = ((fromStart ? goal_y : start_y) - current_y) * y_spacing;
-		final double zdiff = ((fromStart ? goal_z : start_z) - current_z) * z_spacing;
+		final double xdiff = ((fromStart ? goal_x : start_x) - current_x) *
+			x_spacing;
+		final double ydiff = ((fromStart ? goal_y : start_y) - current_y) *
+			y_spacing;
+		final double zdiff = ((fromStart ? goal_z : start_z) - current_z) *
+			z_spacing;
 
-		final double distance = Math.sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
+		final double distance = Math.sqrt(xdiff * xdiff + ydiff * ydiff + zdiff *
+			zdiff);
 
 		return (float) (minimum_cost_per_unit_distance * distance);
 	}

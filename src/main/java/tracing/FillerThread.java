@@ -47,21 +47,20 @@ public class FillerThread extends SearchThread {
 
 	double reciprocal_fudge = 0.5;
 
-	public float getDistanceAtPoint(final double xd, final double yd, final double zd) {
+	public float getDistanceAtPoint(final double xd, final double yd,
+		final double zd)
+	{
 
 		final int x = (int) Math.round(xd);
 		final int y = (int) Math.round(yd);
 		final int z = (int) Math.round(zd);
 
 		final SearchNode[] slice = nodes_as_image_from_start[z];
-		if (slice == null)
-			return -1.0f;
+		if (slice == null) return -1.0f;
 
 		final SearchNode n = slice[y * width + x];
-		if (n == null)
-			return -1.0f;
-		else
-			return n.g;
+		if (n == null) return -1.0f;
+		else return n.g;
 	}
 
 	// FIXME: may be buggy, synchronization issues
@@ -102,10 +101,8 @@ public class FillerThread extends SearchThread {
 		final Fill fill = new Fill();
 
 		fill.setThreshold(threshold);
-		if (reciprocal)
-			fill.setMetric("reciprocal-intensity-scaled");
-		else
-			fill.setMetric("256-minus-intensity-scaled");
+		if (reciprocal) fill.setMetric("reciprocal-intensity-scaled");
+		else fill.setMetric("256-minus-intensity-scaled");
 
 		fill.setSpacing(x_spacing, y_spacing, z_spacing, spacing_units);
 
@@ -133,31 +130,37 @@ public class FillerThread extends SearchThread {
 
 	Set<Path> sourcePaths;
 
-	public static FillerThread fromFill(final ImagePlus imagePlus, final float stackMin, final float stackMax,
-			final boolean startPaused, final Fill fill) {
+	public static FillerThread fromFill(final ImagePlus imagePlus,
+		final float stackMin, final float stackMax, final boolean startPaused,
+		final Fill fill)
+	{
 
 		boolean reciprocal;
 		final String metric = fill.getMetric();
 
 		if (metric.equals("reciprocal-intensity-scaled")) {
 			reciprocal = true;
-		} else if (metric.equals("256-minus-intensity-scaled")) {
+		}
+		else if (metric.equals("256-minus-intensity-scaled")) {
 			reciprocal = false;
-		} else {
-			SNT.error("Trying to load a fill with an unknown metric ('" + metric + "')");
+		}
+		else {
+			SNT.error("Trying to load a fill with an unknown metric ('" + metric +
+				"')");
 			return null;
 		}
 
 		SNT.log("loading a fill with threshold: " + fill.getThreshold());
 
-		final FillerThread result = new FillerThread(imagePlus, stackMin, stackMax, startPaused, reciprocal,
-				fill.getThreshold(), 5000);
+		final FillerThread result = new FillerThread(imagePlus, stackMin, stackMax,
+			startPaused, reciprocal, fill.getThreshold(), 5000);
 
 		final ArrayList<SearchNode> tempNodes = new ArrayList<>();
 
 		for (final Fill.Node n : fill.nodeList) {
 
-			final SearchNode s = new SearchNode(n.x, n.y, n.z, (float) n.distance, 0, null, SearchThread.FREE);
+			final SearchNode s = new SearchNode(n.x, n.y, n.z, (float) n.distance, 0,
+				null, SearchThread.FREE);
 			tempNodes.add(s);
 		}
 
@@ -170,7 +173,8 @@ public class FillerThread extends SearchThread {
 			if (n.open) {
 				s.searchStatus = OPEN_FROM_START;
 				result.addNode(s, true);
-			} else {
+			}
+			else {
 				s.searchStatus = CLOSED_FROM_START;
 				result.addNode(s, true);
 			}
@@ -191,13 +195,14 @@ public class FillerThread extends SearchThread {
 
 	/* If you specify 0 for timeoutSeconds then there is no timeout. */
 
-	public FillerThread(final ImagePlus imagePlus, final float stackMin, final float stackMax,
-			final boolean startPaused, final boolean reciprocal, final double initialThreshold,
-			final long reportEveryMilliseconds) {
+	public FillerThread(final ImagePlus imagePlus, final float stackMin,
+		final float stackMax, final boolean startPaused, final boolean reciprocal,
+		final double initialThreshold, final long reportEveryMilliseconds)
+	{
 
 		super(imagePlus, stackMin, stackMax, false, // bidirectional
-				false, // definedGoal
-				startPaused, 0, reportEveryMilliseconds);
+			false, // definedGoal
+			startPaused, 0, reportEveryMilliseconds);
 
 		this.reciprocal = reciprocal;
 		setThreshold(initialThreshold);
@@ -209,11 +214,10 @@ public class FillerThread extends SearchThread {
 		sourcePaths = new HashSet<>();
 		sourcePaths.addAll(newSourcePaths);
 		for (final Path p : newSourcePaths) {
-			if (p == null)
-				return;
+			if (p == null) return;
 			for (int k = 0; k < p.size(); ++k) {
-				final SearchNode f = new SearchNode(p.getXUnscaled(k), p.getYUnscaled(k), p.getZUnscaled(k), 0, 0, null,
-						OPEN_FROM_START);
+				final SearchNode f = new SearchNode(p.getXUnscaled(k), p.getYUnscaled(
+					k), p.getZUnscaled(k), 0, 0, null, OPEN_FROM_START);
 				addNode(f, true);
 			}
 		}
@@ -227,16 +231,16 @@ public class FillerThread extends SearchThread {
 
 		for (int z = 0; z < depth; ++z) {
 			switch (imageType) {
-			case ImagePlus.GRAY8:
-			case ImagePlus.COLOR_256:
-				new_slice_data_b[z] = new byte[width * height];
-				break;
-			case ImagePlus.GRAY16:
-				new_slice_data_s[z] = new short[width * height];
-				break;
-			case ImagePlus.GRAY32:
-				new_slice_data_f[z] = new float[width * height];
-				break;
+				case ImagePlus.GRAY8:
+				case ImagePlus.COLOR_256:
+					new_slice_data_b[z] = new byte[width * height];
+					break;
+				case ImagePlus.GRAY16:
+					new_slice_data_s[z] = new short[width * height];
+					break;
+				case ImagePlus.GRAY32:
+					new_slice_data_f[z] = new float[width * height];
+					break;
 			}
 		}
 
@@ -244,49 +248,50 @@ public class FillerThread extends SearchThread {
 
 		for (int z = 0; z < depth; ++z) {
 			final SearchNode[] nodes_this_slice = nodes_as_image_from_start[z];
-			if (nodes_this_slice != null)
-				for (int y = 0; y < height; ++y) {
-					for (int x = 0; x < width; ++x) {
-						final SearchNode s = nodes_as_image_from_start[z][y * width + x];
-						if ((s != null) && (s.g <= threshold)) {
-							switch (imageType) {
+			if (nodes_this_slice != null) for (int y = 0; y < height; ++y) {
+				for (int x = 0; x < width; ++x) {
+					final SearchNode s = nodes_as_image_from_start[z][y * width + x];
+					if ((s != null) && (s.g <= threshold)) {
+						switch (imageType) {
 							case ImagePlus.GRAY8:
 							case ImagePlus.COLOR_256:
-								new_slice_data_b[z][y * width + x] = realData ? slices_data_b[z][y * width + x]
-										: (byte) 255;
+								new_slice_data_b[z][y * width + x] = realData
+									? slices_data_b[z][y * width + x] : (byte) 255;
 								break;
 							case ImagePlus.GRAY16:
-								new_slice_data_s[z][y * width + x] = realData ? slices_data_s[z][y * width + x] : 255;
+								new_slice_data_s[z][y * width + x] = realData
+									? slices_data_s[z][y * width + x] : 255;
 								break;
 							case ImagePlus.GRAY32:
-								new_slice_data_f[z][y * width + x] = realData ? slices_data_f[z][y * width + x] : 255;
+								new_slice_data_f[z][y * width + x] = realData
+									? slices_data_f[z][y * width + x] : 255;
 								break;
 							default:
 								break;
-							}
 						}
 					}
 				}
+			}
 
 			switch (imageType) {
-			case ImagePlus.GRAY8:
-			case ImagePlus.COLOR_256:
-				final ByteProcessor bp = new ByteProcessor(width, height);
-				bp.setPixels(new_slice_data_b[z]);
-				stack.addSlice(null, bp);
-				break;
-			case ImagePlus.GRAY16:
-				final ShortProcessor sp = new ShortProcessor(width, height);
-				sp.setPixels(new_slice_data_s[z]);
-				stack.addSlice(null, sp);
-				break;
-			case ImagePlus.GRAY32:
-				final FloatProcessor fp = new FloatProcessor(width, height);
-				fp.setPixels(new_slice_data_f[z]);
-				stack.addSlice(null, fp);
-				break;
-			default:
-				break;
+				case ImagePlus.GRAY8:
+				case ImagePlus.COLOR_256:
+					final ByteProcessor bp = new ByteProcessor(width, height);
+					bp.setPixels(new_slice_data_b[z]);
+					stack.addSlice(null, bp);
+					break;
+				case ImagePlus.GRAY16:
+					final ShortProcessor sp = new ShortProcessor(width, height);
+					sp.setPixels(new_slice_data_s[z]);
+					stack.addSlice(null, sp);
+					break;
+				case ImagePlus.GRAY32:
+					final FloatProcessor fp = new FloatProcessor(width, height);
+					fp.setPixels(new_slice_data_f[z]);
+					stack.addSlice(null, fp);
+					break;
+				default:
+					break;
 			}
 
 		}
@@ -305,23 +310,25 @@ public class FillerThread extends SearchThread {
 
 		// Find the minimum distance in the open list.
 		final SearchNode p = open_from_start.peek();
-		if (p == null)
-			return;
+		if (p == null) return;
 
 		final float minimumDistanceInOpen = p.g;
 
 		for (final SearchProgressCallback progress : progressListeners) {
 			if (progress instanceof FillerProgressCallback) {
-				final FillerProgressCallback fillerProgress = (FillerProgressCallback) progress;
-				fillerProgress.maximumDistanceCompletelyExplored(this, minimumDistanceInOpen);
+				final FillerProgressCallback fillerProgress =
+					(FillerProgressCallback) progress;
+				fillerProgress.maximumDistanceCompletelyExplored(this,
+					minimumDistanceInOpen);
 			}
 		}
 
 	}
 
 	@Override
-	public void drawProgressOnSlice(final int plane, final int currentSliceInPlane, final TracerCanvas canvas,
-			final Graphics g) {
+	public void drawProgressOnSlice(final int plane,
+		final int currentSliceInPlane, final TracerCanvas canvas, final Graphics g)
+	{
 
 		super.drawProgressOnSlice(plane, currentSliceInPlane, canvas, g);
 
@@ -329,6 +336,7 @@ public class FillerThread extends SearchThread {
 
 	@Override
 	public Path getResult() {
-		throw new RuntimeException("BUG: getResult should never be called on a FillerThread");
+		throw new RuntimeException(
+			"BUG: getResult should never be called on a FillerThread");
 	}
 }

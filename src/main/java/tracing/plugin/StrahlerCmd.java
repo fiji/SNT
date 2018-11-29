@@ -82,14 +82,17 @@ public class StrahlerCmd extends TreeAnalyzer {
 	public void compute() {
 		maxBranchOrder = 1;
 		for (final Path p : tree.list()) {
-			if (p.getOrder() > maxBranchOrder)
-				maxBranchOrder = p.getOrder();
+			if (p.getOrder() > maxBranchOrder) maxBranchOrder = p.getOrder();
 		}
 		IntStream.rangeClosed(1, maxBranchOrder).forEach(order -> {
 
-			final ArrayList<Path> groupedPaths = tree.list().stream() // convert set of paths to stream
-					.filter(path -> path.getOrder() == order) // include only those of this order
-					.collect(Collectors.toCollection(ArrayList::new)); // collect the output in a new list
+			final ArrayList<Path> groupedPaths = tree.list().stream() // convert set
+																																// of paths to
+																																// stream
+				.filter(path -> path.getOrder() == order) // include only those of this
+																									// order
+				.collect(Collectors.toCollection(ArrayList::new)); // collect the output
+																														// in a new list
 
 			// now measure the group
 			final TreeAnalyzer analyzer = new TreeAnalyzer(new Tree(groupedPaths));
@@ -98,7 +101,8 @@ public class StrahlerCmd extends TreeAnalyzer {
 				final int nPaths = analyzer.getNPaths();
 				nPathsMap.put(order, (double) nPaths);
 				bPointsMap.put(order, (double) analyzer.getBranchPoints().size());
-				bRatioMap.put(order, (order > 1) ? (double) nPaths / nPathsPreviousOrder : Double.NaN);
+				bRatioMap.put(order, (order > 1) ? (double) nPaths / nPathsPreviousOrder
+					: Double.NaN);
 				nPathsPreviousOrder = nPaths;
 			}
 		});
@@ -106,8 +110,8 @@ public class StrahlerCmd extends TreeAnalyzer {
 
 	@Override
 	public void updateAndDisplayTable() {
-		if (table == null)
-			setTable(new DefaultGenericTable(), "Horton-Strahler Analysis");
+		if (table == null) setTable(new DefaultGenericTable(),
+			"Horton-Strahler Analysis");
 		IntStream.rangeClosed(1, maxBranchOrder).forEach(order -> {
 			table.appendRow();
 			final int row = Math.max(0, table.getRowCount() - 1);
@@ -115,7 +119,8 @@ public class StrahlerCmd extends TreeAnalyzer {
 			table.set(getCol("Horton-Strahler #"), row, maxBranchOrder - order + 1);
 			table.set(getCol("Length (Sum)"), row, tLengthMap.get(order));
 			table.set(getCol("# Paths"), row, (nPathsMap.get(order).intValue()));
-			table.set(getCol("# Branch Points"), row, bPointsMap.get(order).intValue());
+			table.set(getCol("# Branch Points"), row, bPointsMap.get(order)
+				.intValue());
 			table.set(getCol("Bifurcation ratio"), row, bRatioMap.get(order));
 		});
 		super.updateAndDisplayTable();
@@ -123,8 +128,10 @@ public class StrahlerCmd extends TreeAnalyzer {
 
 	public void displayPlot() {
 
-		final CategoryChart<Integer> chart = plotService.newCategoryChart(Integer.class);
-		final List<Integer> categories = IntStream.rangeClosed(1, maxBranchOrder).boxed().collect(Collectors.toList());
+		final CategoryChart<Integer> chart = plotService.newCategoryChart(
+			Integer.class);
+		final List<Integer> categories = IntStream.rangeClosed(1, maxBranchOrder)
+			.boxed().collect(Collectors.toList());
 		Collections.sort(categories, Collections.reverseOrder());
 		chart.categoryAxis().setManualCategories(categories);
 
@@ -155,17 +162,16 @@ public class StrahlerCmd extends TreeAnalyzer {
 	}
 
 	/**
-	 * @return the map containing the number of branch points on each order (reverse
-	 *         Horton-Strahler number as key and branch point count as value).
-	 *         Single-point paths are ignored. An empty map will be returned if
-	 *         {{@link #compute()} has not been called.
+	 * @return the map containing the number of branch points on each order
+	 *         (reverse Horton-Strahler number as key and branch point count as
+	 *         value). Single-point paths are ignored. An empty map will be
+	 *         returned if {{@link #compute()} has not been called.
 	 */
 	public Map<Integer, Double> getBranchPointMap() {
 		return bPointsMap;
 	}
 
 	/**
-	 *
 	 * @return the highest Horton-Strahler number of the parsed tree.
 	 */
 	public int getRootNumber() {
@@ -174,8 +180,8 @@ public class StrahlerCmd extends TreeAnalyzer {
 
 	/**
 	 * @return the map containing the total path lengh on each order (reverse
-	 *         Horton-Strahler number as key and sum length as value). Single-point
-	 *         paths are ignored. An empty map will be returned if
+	 *         Horton-Strahler number as key and sum length as value).
+	 *         Single-point paths are ignored. An empty map will be returned if
 	 *         {{@link #compute()} has not been called.
 	 */
 	public Map<Integer, Double> getLengthMap() {

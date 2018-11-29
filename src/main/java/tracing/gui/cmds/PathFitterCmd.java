@@ -22,6 +22,8 @@
 
 package tracing.gui.cmds;
 
+import net.imagej.ImageJ;
+
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
@@ -30,7 +32,6 @@ import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 import org.scijava.widget.Button;
 
-import net.imagej.ImageJ;
 import tracing.PathFitter;
 import tracing.gui.GuiUtils;
 
@@ -45,44 +46,53 @@ public class PathFitterCmd extends ContextCommand {
 	@Parameter
 	private PrefService prefService;
 
-
-	public static final String FITCHOICE_KEY= "choice";
-	public static final String MAXRADIUS_KEY= "maxrad";
+	public static final String FITCHOICE_KEY = "choice";
+	public static final String MAXRADIUS_KEY = "maxrad";
 
 	private static final String EMPTY_LABEL = "<html>&nbsp;";
-	private static final String CHOICE_RADII = "1) Assign radii of fitted cross-sections to nodes";
-	private static final String CHOICE_MIDPOINT = "2) Snap node coordinates to cross-section centroids";
-	private static final String CHOICE_BOTH = "1) & 2): Assign fitted radii and snap node coordinates";
+	private static final String CHOICE_RADII =
+		"1) Assign radii of fitted cross-sections to nodes";
+	private static final String CHOICE_MIDPOINT =
+		"2) Snap node coordinates to cross-section centroids";
+	private static final String CHOICE_BOTH =
+		"1) & 2): Assign fitted radii and snap node coordinates";
 	private static String HEADER;
 
 	static {
 		GuiUtils.setSystemLookAndFeel();
 		final javax.swing.JLabel label = new javax.swing.JLabel();
-		final int width = label.getFontMetrics(label.getFont()).stringWidth("Type of Fit" + CHOICE_BOTH);
+		final int width = label.getFontMetrics(label.getFont()).stringWidth(
+			"Type of Fit" + CHOICE_BOTH);
 		HEADER = "<HTML><body><div style='width:" + width + ";'>";
 	}
 
 	@Parameter(required = false, visibility = ItemVisibility.MESSAGE)
-	private String msg1 = HEADER
-			+ "<b>Type of refinement:</b> SNT can use the fluorescent signal around traced paths " //
-			+ "to optimize curvatures and estimate the thickness of traced structures. The optimization " //
-			+ "algorithm uses pixel intensities to fit circular cross-sections around each node. " //
-			+ "Once computed, fitted cross-sections can be use to: 1) Infer the radius of nodes, " //
-			+ "and/or 2) refine node positioning, by snapping their coordinates to the cross-section " //
-			+ "centroid.<br><br>" //
-			+ "Please specify the type of optimization to be performed when refining paths:";
+	private final String msg1 = HEADER +
+		"<b>Type of refinement:</b> SNT can use the fluorescent signal around traced paths " //
+		+
+		"to optimize curvatures and estimate the thickness of traced structures. The optimization " //
+		+
+		"algorithm uses pixel intensities to fit circular cross-sections around each node. " //
+		+
+		"Once computed, fitted cross-sections can be use to: 1) Infer the radius of nodes, " //
+		+
+		"and/or 2) refine node positioning, by snapping their coordinates to the cross-section " //
+		+ "centroid.<br><br>" //
+		+
+		"Please specify the type of optimization to be performed when refining paths:";
 
-	@Parameter(required = true, label = EMPTY_LABEL, choices = { CHOICE_RADII, CHOICE_MIDPOINT, CHOICE_BOTH })
+	@Parameter(required = true, label = EMPTY_LABEL, choices = { CHOICE_RADII,
+		CHOICE_MIDPOINT, CHOICE_BOTH })
 	private String fitChoice;
 
 	@Parameter(required = false, visibility = ItemVisibility.MESSAGE)
-	private String spacer = EMPTY_LABEL;
+	private final String spacer = EMPTY_LABEL;
 
 	@Parameter(required = false, visibility = ItemVisibility.MESSAGE)
-	private String msg2 = HEADER
-			+ "<b>Max. radius:</b> This setting defines (in pixels) the largest radius " //
-			+ "allowed in the fit. It constrains the optimization to minimize fitting " //
-			+ "artifacts caused from neighboring structures:";
+	private final String msg2 = HEADER +
+		"<b>Max. radius:</b> This setting defines (in pixels) the largest radius " //
+		+ "allowed in the fit. It constrains the optimization to minimize fitting " //
+		+ "artifacts caused from neighboring structures:";
 	@Parameter(required = false, label = EMPTY_LABEL)
 	private int maxRadius = PathFitter.DEFAULT_MAX_RADIUS;
 
@@ -91,21 +101,23 @@ public class PathFitterCmd extends ContextCommand {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
 	public void run() {
 		switch (fitChoice) {
-		case CHOICE_MIDPOINT:
-			prefService.put(PathFitterCmd.class, FITCHOICE_KEY, PathFitter.MIDPOINTS);
-			break;
-		case CHOICE_RADII:
-			prefService.put(PathFitterCmd.class, FITCHOICE_KEY, PathFitter.RADII);
-			break;
-		default:
-			prefService.put(PathFitterCmd.class, FITCHOICE_KEY, PathFitter.RADII_AND_MIDPOINTS);
-			break;
+			case CHOICE_MIDPOINT:
+				prefService.put(PathFitterCmd.class, FITCHOICE_KEY,
+					PathFitter.MIDPOINTS);
+				break;
+			case CHOICE_RADII:
+				prefService.put(PathFitterCmd.class, FITCHOICE_KEY, PathFitter.RADII);
+				break;
+			default:
+				prefService.put(PathFitterCmd.class, FITCHOICE_KEY,
+					PathFitter.RADII_AND_MIDPOINTS);
+				break;
 		}
 		prefService.put(PathFitterCmd.class, MAXRADIUS_KEY, maxRadius);
 	}
@@ -114,7 +126,8 @@ public class PathFitterCmd extends ContextCommand {
 	private void reset() {
 		fitChoice = PathFitterCmd.CHOICE_RADII;
 		maxRadius = PathFitter.DEFAULT_MAX_RADIUS;
-		prefService.clear(PathFitterCmd.class); // useful if user dismisses dialog after pressing "Reset"
+		prefService.clear(PathFitterCmd.class); // useful if user dismisses dialog
+																						// after pressing "Reset"
 	}
 
 	/* IDE debug method **/

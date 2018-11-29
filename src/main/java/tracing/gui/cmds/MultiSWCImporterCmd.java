@@ -29,13 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import net.imagej.ImageJ;
+
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.util.ColorRGB;
 
-import net.imagej.ImageJ;
 import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.SNTService;
@@ -49,7 +50,8 @@ import tracing.gui.GuiUtils;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Import Directory of SWC files")
+@Plugin(type = Command.class, visible = false,
+	label = "Import Directory of SWC files")
 public class MultiSWCImporterCmd extends ContextCommand {
 
 	@Parameter
@@ -58,13 +60,13 @@ public class MultiSWCImporterCmd extends ContextCommand {
 	@Parameter(style = "directory", label = "Directory")
 	private File dir;
 
-	@Parameter(label = "Filenames containing", required = false,//
-			description = "<html>Only files containing this string will be considered."
-					+ "<br>Leave blank to consider all SWC files in the directory.")
+	@Parameter(label = "Filenames containing", required = false, //
+		description = "<html>Only files containing this string will be considered." +
+			"<br>Leave blank to consider all SWC files in the directory.")
 	private String pattern;
 
-	@Parameter(required = false, label = "Colors", 
-			choices = {"Distinct (each file labelled uniquely)", "Common color specified below"})
+	@Parameter(required = false, label = "Colors", choices = {
+		"Distinct (each file labelled uniquely)", "Common color specified below" })
 	private String colorChoice;
 
 	@Parameter(required = false, label = "<HTML>&nbsp;")
@@ -75,7 +77,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -96,25 +98,32 @@ public class MultiSWCImporterCmd extends ContextCommand {
 
 		final int lastExistingPathIdx = pafm.size() - 1;
 		final List<Tree> result = pafm.importSWCs(importMap, getColor());
-		final long failures = result.stream().filter(tree -> tree.isEmpty()).count();
+		final long failures = result.stream().filter(tree -> tree.isEmpty())
+			.count();
 		if (failures == result.size()) {
 			snt.error("No reconstructions could be retrieved. Invalid Query?");
 			ui.showStatus("Error... No reconstructions imported", true);
 			return;
 		}
 		if (clearExisting) {
-			final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
+			final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx)
+				.toArray();
 			pafm.deletePaths(indices);
 		}
 		SNT.log("Rebuilding canvases...");
 		snt.rebuildDisplayCanvases();
 		if (failures > 0) {
-			snt.error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
+			snt.error(String.format("%d/%d reconstructions could not be retrieved.",
+				failures, result.size()));
 			ui.showStatus("Partially successful import...", true);
 			SNT.log("Import failed for the following files:");
-			result.forEach(tree -> {if (tree.isEmpty()) SNT.log(tree.getLabel());});
-		} else {
-			ui.showStatus("Successful imported " + result.size() + " reconstruction(s)...", true);
+			result.forEach(tree -> {
+				if (tree.isEmpty()) SNT.log(tree.getLabel());
+			});
+		}
+		else {
+			ui.showStatus("Successful imported " + result.size() +
+				" reconstruction(s)...", true);
 		}
 	}
 
@@ -123,18 +132,15 @@ public class MultiSWCImporterCmd extends ContextCommand {
 	}
 
 	private Map<String, String> getImportMap() {
-		if (dir == null || !dir.isDirectory() || !dir.exists())
-			return null;
+		if (dir == null || !dir.isDirectory() || !dir.exists()) return null;
 		if (pattern == null) pattern = "";
 		final File[] files = dir.listFiles((FileFilter) file -> {
-			if (file.isHidden())
-				return false;
+			if (file.isHidden()) return false;
 			final String fName = file.getName().toLowerCase();
 			return fName.endsWith("swc") && fName.contains(pattern);
 		});
-		if (files == null || files.length == 0)
-			return null;
-		final Map<String, String> map = new HashMap<String, String>();
+		if (files == null || files.length == 0) return null;
+		final Map<String, String> map = new HashMap<>();
 		for (final File file : files) {
 			map.put(SNT.stripExtension(file.getName()), file.getAbsolutePath());
 		}

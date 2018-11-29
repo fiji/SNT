@@ -8,17 +8,18 @@
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
+
 package tracing.analysis.sholl;
 
 import java.util.ArrayList;
@@ -26,12 +27,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import net.imagej.display.ColorTables;
+import net.imglib2.display.ColorTable;
+
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
 import ij.process.ShortProcessor;
-import net.imagej.display.ColorTables;
-import net.imglib2.display.ColorTable;
 import sholl.Profile;
 import sholl.ProfileEntry;
 import sholl.ShollUtils;
@@ -51,44 +53,44 @@ import tracing.util.PointInImage;
 public class TreeParser implements Parser {
 
 	/**
-	 * Flag for defining the profile center as the average position of root nodes of
-	 * all primary Paths.
+	 * Flag for defining the profile center as the average position of root nodes
+	 * of all primary Paths.
 	 */
 	public static final int PRIMARY_NODES_ANY = 0;
 
 	/**
-	 * Flag for defining the profile center as the average position of root nodes of
-	 * Paths tagged as Apical Dendrite.
+	 * Flag for defining the profile center as the average position of root nodes
+	 * of Paths tagged as Apical Dendrite.
 	 */
 	public static final int PRIMARY_NODES_APICAL_DENDRITE = 1;
 
 	/**
-	 * Flag for defining the profile center as the average position of root nodes of
-	 * Paths tagged as Axon.
+	 * Flag for defining the profile center as the average position of root nodes
+	 * of Paths tagged as Axon.
 	 */
 	public static final int PRIMARY_NODES_AXON = 2;
 
 	/**
-	 * Flag for defining the profile center as the average position of root nodes of
-	 * Paths tagged as Custom.
+	 * Flag for defining the profile center as the average position of root nodes
+	 * of Paths tagged as Custom.
 	 */
 	public static final int PRIMARY_NODES_CUSTOM = 3;
 
 	/**
-	 * Flag for defining the profile center as the average position of root nodes of
-	 * Paths tagged as (Basal) Dendrite
+	 * Flag for defining the profile center as the average position of root nodes
+	 * of Paths tagged as (Basal) Dendrite
 	 */
 	public static final int PRIMARY_NODES_DENDRITE = 4;
 
 	/**
-	 * Flag for defining the profile center as the average position of root nodes of
-	 * Paths tagged as Soma
+	 * Flag for defining the profile center as the average position of root nodes
+	 * of Paths tagged as Soma
 	 */
 	public static final int PRIMARY_NODES_SOMA = 5;
 
 	/**
-	 * Flag for defining the profile center as the average position of root nodes of
-	 * Paths tagged as Undefined
+	 * Flag for defining the profile center as the average position of root nodes
+	 * of Paths tagged as Undefined
 	 */
 	public static final int PRIMARY_NODES_UNDEFINED = 6;
 
@@ -114,38 +116,38 @@ public class TreeParser implements Parser {
 	 * Computes the center of the Profile.
 	 *
 	 * @param choice the flag specifying the center (e.g.,
-	 *               {@link #PRIMARY_NODES_SOMA}, {@link #PRIMARY_NODES_ANY}, etc.)
-	 * @throws IllegalArgumentException if choice is not a recognized flag or if no
-	 *                                  Paths in the Tree match the choice criteria
+	 *          {@link #PRIMARY_NODES_SOMA}, {@link #PRIMARY_NODES_ANY}, etc.)
+	 * @throws IllegalArgumentException if choice is not a recognized flag or if
+	 *           no Paths in the Tree match the choice criteria
 	 */
 	public void setCenter(final int choice) throws IllegalArgumentException {
 		switch (choice) {
-		case PRIMARY_NODES_ANY:
-			center = getCenter(-1);
-			break;
-		case PRIMARY_NODES_UNDEFINED:
-			center = getCenter(Path.SWC_UNDEFINED);
-			break;
-		case PRIMARY_NODES_SOMA:
-			center = getCenter(Path.SWC_SOMA);
-			break;
-		case PRIMARY_NODES_AXON:
-			center = getCenter(Path.SWC_AXON);
-			break;
-		case PRIMARY_NODES_DENDRITE:
-			center = getCenter(Path.SWC_DENDRITE);
-			break;
-		case PRIMARY_NODES_APICAL_DENDRITE:
-			center = getCenter(Path.SWC_APICAL_DENDRITE);
-			break;
-		case PRIMARY_NODES_CUSTOM:
-			center = getCenter(Path.SWC_CUSTOM);
-			break;
-		default:
-			throw new IllegalArgumentException("Center choice was not understood");
+			case PRIMARY_NODES_ANY:
+				center = getCenter(-1);
+				break;
+			case PRIMARY_NODES_UNDEFINED:
+				center = getCenter(Path.SWC_UNDEFINED);
+				break;
+			case PRIMARY_NODES_SOMA:
+				center = getCenter(Path.SWC_SOMA);
+				break;
+			case PRIMARY_NODES_AXON:
+				center = getCenter(Path.SWC_AXON);
+				break;
+			case PRIMARY_NODES_DENDRITE:
+				center = getCenter(Path.SWC_DENDRITE);
+				break;
+			case PRIMARY_NODES_APICAL_DENDRITE:
+				center = getCenter(Path.SWC_APICAL_DENDRITE);
+				break;
+			case PRIMARY_NODES_CUSTOM:
+				center = getCenter(Path.SWC_CUSTOM);
+				break;
+			default:
+				throw new IllegalArgumentException("Center choice was not understood");
 		}
-		if (center == null)
-			throw new IllegalArgumentException("Tree does not contain Paths matching specified choice");
+		if (center == null) throw new IllegalArgumentException(
+			"Tree does not contain Paths matching specified choice");
 	}
 
 	/**
@@ -175,8 +177,8 @@ public class TreeParser implements Parser {
 	 * @param center the focal point of the profile
 	 */
 	public void setCenter(final PointInImage center) {
-		if (successful())
-			throw new UnsupportedOperationException("setCenter() must be called before parsing data");
+		if (successful()) throw new UnsupportedOperationException(
+			"setCenter() must be called before parsing data");
 		this.center = center;
 	}
 
@@ -186,8 +188,8 @@ public class TreeParser implements Parser {
 	 * @param stepSize the radius step size
 	 */
 	public void setStepSize(final double stepSize) {
-		if (successful())
-			throw new UnsupportedOperationException("setStepSize() must be called before parsing data");
+		if (successful()) throw new UnsupportedOperationException(
+			"setStepSize() must be called before parsing data");
 		this.stepSize = (stepSize < 0) ? 0 : stepSize;
 	}
 
@@ -200,15 +202,15 @@ public class TreeParser implements Parser {
 			throw new IllegalArgumentException("Invalid tree");
 		}
 		if (center == null) {
-			throw new IllegalArgumentException("Data cannot be parsed unless a center is specified");
+			throw new IllegalArgumentException(
+				"Data cannot be parsed unless a center is specified");
 		}
 		profile = new Profile();
-		if (tree.getLabel() != null)
-			profile.setIdentifier(tree.getLabel());
-		profile.setNDimensions((tree.is3D())?3:2);
+		if (tree.getLabel() != null) profile.setIdentifier(tree.getLabel());
+		profile.setNDimensions((tree.is3D()) ? 3 : 2);
 		profile.setCenter(center.toUPoint());
-		if (tree.getBoundingBox(false) != null)
-			profile.setSpatialCalibration(tree.getBoundingBox(false).getCalibration());
+		if (tree.getBoundingBox(false) != null) profile.setSpatialCalibration(tree
+			.getBoundingBox(false).getCalibration());
 		profile.getProperties().setProperty(KEY_SOURCE, SRC_TRACES);
 		assembleSortedShollPointList();
 		assembleProfile();
@@ -241,20 +243,21 @@ public class TreeParser implements Parser {
 	private void assembleSortedShollPointList() {
 		shollPointsList = new ArrayList<>();
 		tree.list().stream().forEach(p -> {
-			if (!running)
-				return;
+			if (!running) return;
 			for (int i = 0; i < p.size() - 1; ++i) {
 				final PointInImage pim1 = p.getPointInImage(i);
 				final PointInImage pim2 = p.getPointInImage(i + 1);
 				final double distanceSquaredFirst = pim1.distanceSquaredTo(center);
 				final double distanceSquaredSecond = pim2.distanceSquaredTo(center);
-				shollPointsList.add(new ShollPoint(distanceSquaredFirst, distanceSquaredFirst < distanceSquaredSecond));
-				shollPointsList
-						.add(new ShollPoint(distanceSquaredSecond, distanceSquaredFirst >= distanceSquaredSecond));
+				shollPointsList.add(new ShollPoint(distanceSquaredFirst,
+					distanceSquaredFirst < distanceSquaredSecond));
+				shollPointsList.add(new ShollPoint(distanceSquaredSecond,
+					distanceSquaredFirst >= distanceSquaredSecond));
 			}
 		});
 		// Ensure we are not keeping duplicated data points
-		shollPointsList = shollPointsList.stream().distinct().collect(Collectors.toList());
+		shollPointsList = shollPointsList.stream().distinct().collect(Collectors
+			.toList());
 		Collections.sort(shollPointsList);
 	}
 
@@ -266,15 +269,12 @@ public class TreeParser implements Parser {
 		Collections.sort(shollPointsList);
 		for (int i = 0; i < n; ++i) {
 			final ShollPoint p = shollPointsList.get(i);
-			if (p.nearer)
-				++currentCrossings;
-			else
-				--currentCrossings;
+			if (p.nearer) ++currentCrossings;
+			else--currentCrossings;
 			squaredRangeStarts[i] = p.distanceSquared;
 			crossingsPastEach[i] = currentCrossings;
 		}
-		if (!running)
-			return;
+		if (!running) return;
 		int nSamples;
 		if (stepSize > 0) { // Discontinuous sampling
 
@@ -287,7 +287,8 @@ public class TreeParser implements Parser {
 				profile.add(entry);
 			}
 
-		} else { // Continuous sampling
+		}
+		else { // Continuous sampling
 
 			nSamples = squaredRangeStarts.length;
 			for (int i = 0; i < nSamples; ++i) {
@@ -303,21 +304,18 @@ public class TreeParser implements Parser {
 	private int crossingsAtDistanceSquared(final double distanceSquared) {
 		int minIndex = 0;
 		int maxIndex = squaredRangeStarts.length - 1;
-		if (distanceSquared < squaredRangeStarts[minIndex])
-			return 1;
-		else if (distanceSquared > squaredRangeStarts[maxIndex])
-			return 0;
+		if (distanceSquared < squaredRangeStarts[minIndex]) return 1;
+		else if (distanceSquared > squaredRangeStarts[maxIndex]) return 0;
 		while (maxIndex - minIndex > 1) {
 			final int midPoint = (maxIndex + minIndex) / 2;
-			if (distanceSquared < squaredRangeStarts[midPoint])
-				maxIndex = midPoint;
-			else
-				minIndex = midPoint;
+			if (distanceSquared < squaredRangeStarts[midPoint]) maxIndex = midPoint;
+			else minIndex = midPoint;
 		}
 		return crossingsPastEach[minIndex];
 	}
 
 	private class ShollPoint implements Comparable<ShollPoint> {
+
 		private final boolean nearer;
 		private final double distanceSquared;
 
@@ -328,28 +326,24 @@ public class TreeParser implements Parser {
 
 		@Override
 		public int compareTo(final ShollPoint other) {
-			if (this.distanceSquared < other.distanceSquared)
-				return -1;
-			else if (other.distanceSquared < this.distanceSquared)
-				return 1;
+			if (this.distanceSquared < other.distanceSquared) return -1;
+			else if (other.distanceSquared < this.distanceSquared) return 1;
 			return 0;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see java.lang.Object#equals(java.lang.Object)
 		 */
 		@Override
 		public boolean equals(final Object o) {
-			if (this == o)
-				return true;
-			if (o == null)
-				return false;
-			if (!(o instanceof ShollPoint))
-				return false;
+			if (this == o) return true;
+			if (o == null) return false;
+			if (!(o instanceof ShollPoint)) return false;
 			final ShollPoint other = (ShollPoint) o;
-			return (nearer == other.nearer && distanceSquared == other.distanceSquared);
+			return (nearer == other.nearer &&
+				distanceSquared == other.distanceSquared);
 		}
 	}
 
@@ -360,10 +354,13 @@ public class TreeParser implements Parser {
 	 * @param cTable the c table
 	 * @return the labels image
 	 */
-	public ImagePlus getLabelsImage(final ImagePlus templateImg, final ColorTable cTable) {
-		if (templateImg == null)
-			throw new IllegalArgumentException("Template image cannot be null");
-		if (!successful() || crossingsPastEach == null || squaredRangeStarts == null || center == null)
+	public ImagePlus getLabelsImage(final ImagePlus templateImg,
+		final ColorTable cTable)
+	{
+		if (templateImg == null) throw new IllegalArgumentException(
+			"Template image cannot be null");
+		if (!successful() || crossingsPastEach == null ||
+			squaredRangeStarts == null || center == null)
 			throw new UnsupportedOperationException("Data has not been parsed");
 		final int width = templateImg.getWidth();
 		final int height = templateImg.getHeight();
@@ -382,8 +379,10 @@ public class TreeParser implements Parser {
 			final short[] pixels = new short[width * height];
 			for (int y = 0; y < height; ++y) {
 				for (int x = 0; x < width; ++x) {
-					final PointInImage point = new PointInImage(x_spacing * x, y_spacing * y, z_spacing * z);
-					pixels[y * width + x] = (short) crossingsAtDistanceSquared(point.distanceSquaredTo(center));
+					final PointInImage point = new PointInImage(x_spacing * x, y_spacing *
+						y, z_spacing * z);
+					pixels[y * width + x] = (short) crossingsAtDistanceSquared(point
+						.distanceSquaredTo(center));
 				}
 			}
 			final ShortProcessor sp = new ShortProcessor(width, height);
@@ -391,8 +390,9 @@ public class TreeParser implements Parser {
 			stack.addSlice("", sp);
 		}
 		final ImagePlus result = new ImagePlus("Labels Image", stack);
-		result.setLut(ShollUtils.getLut((cTable == null) ? ColorTables.ICE : cTable));
-		result.setDisplayRange(0,  new LinearProfileStats(profile).getMax());
+		result.setLut(ShollUtils.getLut((cTable == null) ? ColorTables.ICE
+			: cTable));
+		result.setDisplayRange(0, new LinearProfileStats(profile).getMax());
 		result.setCalibration(templateImg.getCalibration());
 		return result;
 	}

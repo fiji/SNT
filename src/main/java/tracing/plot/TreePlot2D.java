@@ -58,11 +58,10 @@ import tracing.analysis.TreeColorMapper;
 import tracing.util.PointInImage;
 
 /**
- * Class for rendering {@link Tree}s as 2D plots that can be exported as SVG, PNG or
- * PDF.
+ * Class for rendering {@link Tree}s as 2D plots that can be exported as SVG,
+ * PNG or PDF.
  *
  * @author Tiago Ferreira
- *
  */
 public class TreePlot2D extends TreeColorMapper {
 
@@ -80,9 +79,8 @@ public class TreePlot2D extends TreeColorMapper {
 	/**
 	 * Instantiates an empty tree plot.
 	 *
-	 * @param context
-	 *            the SciJava application context providing the services required by
-	 *            the class
+	 * @param context the SciJava application context providing the services
+	 *          required by the class
 	 */
 	public TreePlot2D(final Context context) {
 		super(context);
@@ -94,8 +92,7 @@ public class TreePlot2D extends TreeColorMapper {
 	}
 
 	private void initPlot() {
-		if (plot == null)
-			plot = plotService.newXYPlot();
+		if (plot == null) plot = plotService.newXYPlot();
 	}
 
 	private void plotPaths() {
@@ -120,8 +117,10 @@ public class TreePlot2D extends TreeColorMapper {
 			series.setValues(xc, yc);
 			series.setLegendVisible(false);
 			final ColorRGB color = (p.getColor() == null) ? defaultColor
-					: new ColorRGB(p.getColor().getRed(), p.getColor().getGreen(), p.getColor().getBlue());
-			series.setStyle(plot.newSeriesStyle(color, LineStyle.SOLID, MarkerStyle.NONE));
+				: new ColorRGB(p.getColor().getRed(), p.getColor().getGreen(), p
+					.getColor().getBlue());
+			series.setStyle(plot.newSeriesStyle(color, LineStyle.SOLID,
+				MarkerStyle.NONE));
 		}
 	}
 
@@ -136,8 +135,10 @@ public class TreePlot2D extends TreeColorMapper {
 			series.setValues(xc, yc);
 			series.setLegendVisible(false);
 			final Color c = p.getNodeColor(node);
-			final ColorRGB cc = (c==null) ? defaultColor : new ColorRGB(c.getRed(), c.getGreen(), c.getBlue());
-			series.setStyle(plot.newSeriesStyle(cc, LineStyle.NONE, MarkerStyle.FILLEDCIRCLE));
+			final ColorRGB cc = (c == null) ? defaultColor : new ColorRGB(c.getRed(),
+				c.getGreen(), c.getBlue());
+			series.setStyle(plot.newSeriesStyle(cc, LineStyle.NONE,
+				MarkerStyle.FILLEDCIRCLE));
 		}
 	}
 
@@ -145,10 +146,12 @@ public class TreePlot2D extends TreeColorMapper {
 	 * Adds a color bar legend (LUT ramp).
 	 *
 	 * @param colorTable the color table
-	 * @param min        the minimum value in the color table
-	 * @param max        the maximum value in the color table
+	 * @param min the minimum value in the color table
+	 * @param max the maximum value in the color table
 	 */
-	public void addColorBarLegend(final ColorTable colorTable, final double min, final double max) {
+	public void addColorBarLegend(final ColorTable colorTable, final double min,
+		final double max)
+	{
 		final double previousMin = this.min;
 		final double previousMax = this.max;
 		final ColorTable previousColorTable = this.colorTable;
@@ -163,20 +166,20 @@ public class TreePlot2D extends TreeColorMapper {
 
 	/**
 	 * Adds a color bar legend (LUT ramp) to the plot. Does nothing if no
-	 * measurement mapping occurred successfully.
-	 *
-	 * Note that when performing mapping to different measurements, the legend
-	 * reflects only the last mapped measurement.
+	 * measurement mapping occurred successfully. Note that when performing
+	 * mapping to different measurements, the legend reflects only the last mapped
+	 * measurement.
 	 */
 	public void addColorBarLegend() {
 
-		if (min >= max || colorTable == null)
-			return;
+		if (min >= max || colorTable == null) return;
 
-		final LookupPaintScale paintScale = new LookupPaintScale(min, max, Color.BLACK);
+		final LookupPaintScale paintScale = new LookupPaintScale(min, max,
+			Color.BLACK);
 		for (int i = 0; i < colorTable.getLength(); i++) {
-			final Color color = new Color(colorTable.get(ColorTable.RED, i), colorTable.get(ColorTable.GREEN, i),
-					colorTable.get(ColorTable.BLUE, i));
+			final Color color = new Color(colorTable.get(ColorTable.RED, i),
+				colorTable.get(ColorTable.GREEN, i), colorTable.get(ColorTable.BLUE,
+					i));
 			final double value = i * (max - min) / colorTable.getLength();
 			paintScale.add(value, color);
 		}
@@ -198,8 +201,7 @@ public class TreePlot2D extends TreeColorMapper {
 	/**
 	 * Appends a tree to the plot using default options.
 	 *
-	 * @param tree
-	 *            the Collection of paths to be plotted
+	 * @param tree the Collection of paths to be plotted
 	 */
 	public void addTree(final Tree tree) {
 		addPaths(tree.list());
@@ -208,11 +210,8 @@ public class TreePlot2D extends TreeColorMapper {
 	/**
 	 * Adds a list of trees while assigning each tree to a LUT index.
 	 *
-	 * @param trees
-	 *            the list of trees to be plotted
-	 * @param lut
-	 *            the lookup table specifying the color mapping
-	 *
+	 * @param trees the list of trees to be plotted
+	 * @param lut the lookup table specifying the color mapping
 	 */
 	public void addTrees(final List<Tree> trees, final String lut) {
 		mapTrees(trees, lut);
@@ -224,10 +223,8 @@ public class TreePlot2D extends TreeColorMapper {
 	/**
 	 * Appends a tree to the plot.
 	 *
-	 * @param tree
-	 *            the Collection of paths to be plotted
-	 * @param color
-	 *            the color to render the Tree
+	 * @param tree the Collection of paths to be plotted
+	 * @param color the color to render the Tree
 	 */
 	public void addTree(final Tree tree, final ColorRGB color) {
 		final ColorRGB prevDefaultColor = defaultColor;
@@ -239,21 +236,18 @@ public class TreePlot2D extends TreeColorMapper {
 	/**
 	 * Appends a tree to the plot rendered after the specified measurement.
 	 *
-	 * @param tree
-	 *            the tree to be plotted
-	 * @param measurement
-	 *            the measurement ({@link BRANCH_ORDER} }{@link LENGTH}, etc.)
-	 * @param colorTable
-	 *            the color table specifying the color mapping
-	 * @param min
-	 *            the mapping lower bound (i.e., the highest measurement value for
-	 *            the LUT scale)
-	 * @param max
-	 *            the mapping upper bound (i.e., the highest measurement value for
-	 *            the LUT scale)
+	 * @param tree the tree to be plotted
+	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 *          etc.)
+	 * @param colorTable the color table specifying the color mapping
+	 * @param min the mapping lower bound (i.e., the highest measurement value for
+	 *          the LUT scale)
+	 * @param max the mapping upper bound (i.e., the highest measurement value for
+	 *          the LUT scale)
 	 */
-	public void addTree(final Tree tree, final String measurement, final ColorTable colorTable, final double min,
-			final double max) {
+	public void addTree(final Tree tree, final String measurement,
+		final ColorTable colorTable, final double min, final double max)
+	{
 		this.paths = tree.list();
 		setMinMax(min, max);
 		mapToProperty(measurement, colorTable);
@@ -261,38 +255,35 @@ public class TreePlot2D extends TreeColorMapper {
 	}
 
 	/**
-	 * Appends a tree to the plot rendered after the specified measurement. Mapping
-	 * bounds are automatically determined.
+	 * Appends a tree to the plot rendered after the specified measurement.
+	 * Mapping bounds are automatically determined.
 	 *
-	 * @param tree
-	 *            the tree to be plotted
-	 * @param measurement
-	 *            the measurement ({@link BRANCH_ORDER} }{@link LENGTH}, etc.)
-	 * @param lut
-	 *            the lookup table specifying the color mapping
+	 * @param tree the tree to be plotted
+	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 *          etc.)
+	 * @param lut the lookup table specifying the color mapping
 	 */
-	public void addTree(final Tree tree, final String measurement, final String lut) {
+	public void addTree(final Tree tree, final String measurement,
+		final String lut)
+	{
 		addTree(tree, measurement, getColorTable(lut), Double.NaN, Double.NaN);
 	}
 
 	/**
 	 * Appends a tree to the plot rendered after the specified measurement.
 	 *
-	 * @param tree
-	 *            the tree to be plotted
-	 * @param measurement
-	 *            the measurement ({@link BRANCH_ORDER} }{@link LENGTH}, etc.)
-	 * @param lut
-	 *            the lookup table specifying the color mapping
-	 * @param min
-	 *            the mapping lower bound (i.e., the highest measurement value for
-	 *            the LUT scale)
-	 * @param max
-	 *            the mapping upper bound (i.e., the highest measurement value for
-	 *            the LUT scale)
+	 * @param tree the tree to be plotted
+	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 *          etc.)
+	 * @param lut the lookup table specifying the color mapping
+	 * @param min the mapping lower bound (i.e., the highest measurement value for
+	 *          the LUT scale)
+	 * @param max the mapping upper bound (i.e., the highest measurement value for
+	 *          the LUT scale)
 	 */
-	public void addTree(final Tree tree, final String measurement, final String lut, final double min,
-			final double max) {
+	public void addTree(final Tree tree, final String measurement,
+		final String lut, final double min, final double max)
+	{
 		addTree(tree, measurement, getColorTable(lut), min, max);
 	}
 
@@ -302,8 +293,7 @@ public class TreePlot2D extends TreeColorMapper {
 	 * @return the converted plot
 	 */
 	public JFreeChart getChart() {
-		if (plot == null)
-			plot = plotService.newXYPlot();
+		if (plot == null) plot = plotService.newXYPlot();
 		final XYPlotConverter converter = new XYPlotConverter();
 		return converter.convert(plot, JFreeChart.class);
 		// chart.setAntiAlias(true);
@@ -313,8 +303,7 @@ public class TreePlot2D extends TreeColorMapper {
 	/**
 	 * Gets the current plot as a {@link XYPlot} object
 	 *
-	 * @param show
-	 *            if true, plot is displayed
+	 * @param show if true, plot is displayed
 	 * @return the current plot
 	 */
 	public XYPlot getPlot(final boolean show) {
@@ -324,7 +313,8 @@ public class TreePlot2D extends TreeColorMapper {
 		if (show) {
 			if (chart == null) {
 				uiService.show((title == null) ? "SNT Path Plot" : title, plot);
-			} else {
+			}
+			else {
 				final ChartFrame frame = new ChartFrame(title, chart);
 				frame.setPreferredSize(new Dimension(600, 450));
 				frame.pack();
@@ -337,21 +327,17 @@ public class TreePlot2D extends TreeColorMapper {
 	/**
 	 * Sets the default (fallback) color for plotting paths.
 	 *
-	 * @param color
-	 *            null not allowed
+	 * @param color null not allowed
 	 */
 	public void setDefaultColor(final ColorRGB color) {
-		if (color != null)
-			defaultColor = color;
+		if (color != null) defaultColor = color;
 	}
 
 	/**
 	 * Sets the preferred size of the plot to a constant value.
 	 *
-	 * @param width
-	 *            the preferred width
-	 * @param height
-	 *            the preferred height
+	 * @param width the preferred width
+	 * @param height the preferred height
 	 */
 	public void setPreferredSize(final int width, final int height) {
 		initPlot();
@@ -361,8 +347,7 @@ public class TreePlot2D extends TreeColorMapper {
 	/**
 	 * Sets the plot display title.
 	 *
-	 * @param title
-	 *            the new title
+	 * @param title the new title
 	 */
 	public void setTitle(final String title) {
 		this.title = title;

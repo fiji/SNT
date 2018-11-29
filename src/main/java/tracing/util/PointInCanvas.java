@@ -27,7 +27,7 @@ import tracing.Path;
 
 /**
  * Defines a Point in a tracing canvas in pixel coordinates.
- * 
+ *
  * @author Tiago Ferreira
  */
 public class PointInCanvas extends PointInImage implements SNTPoint {
@@ -36,7 +36,9 @@ public class PointInCanvas extends PointInImage implements SNTPoint {
 		super(x, y, z);
 	}
 
-	protected PointInCanvas(final double x, final double y, final double z, final Path onPath) {
+	protected PointInCanvas(final double x, final double y, final double z,
+		final Path onPath)
+	{
 		super(x, y, z, onPath);
 	}
 
@@ -45,11 +47,12 @@ public class PointInCanvas extends PointInImage implements SNTPoint {
 	 * this point is associated with a Path.
 	 *
 	 * @return this point in spatially calibrated units
-	 * @throws IllegalArgumentException if this point is not associated with a Path
+	 * @throws IllegalArgumentException if this point is not associated with a
+	 *           Path
 	 */
 	public PointInImage getScaledPoint() throws IllegalArgumentException {
-		if (onPath == null)
-			throw new IllegalArgumentException("Point not associated with a Path");
+		if (onPath == null) throw new IllegalArgumentException(
+			"Point not associated with a Path");
 		final double x, y, z;
 		final Calibration cal = onPath.getCalibration();
 		x = this.x * cal.pixelWidth;

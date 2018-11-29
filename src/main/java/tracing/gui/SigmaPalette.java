@@ -30,10 +30,6 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Label;
 import java.awt.Panel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -69,10 +65,8 @@ public class SigmaPalette extends Thread {
 		/**
 		 * Notifies listeners that the user OKed the sigma wizard.
 		 *
-		 * @param sigma
-		 *            the user's chosen value for sigma
-		 * @param multiplier
-		 *            the user's chosen value for the multiplier
+		 * @param sigma the user's chosen value for sigma
+		 * @param multiplier the user's chosen value for the multiplier
 		 */
 		public void sigmaPaletteOKed(double sigma, double multiplier);
 
@@ -89,7 +83,9 @@ public class SigmaPalette extends Thread {
 		private ScrollbarWithLabel maxValueScrollbar;
 		private boolean manuallyChangedAlready = false;
 
-		public PaletteStackWindow(final ImagePlus imp, final ImageCanvas ic, final double defaultMax) {
+		public PaletteStackWindow(final ImagePlus imp, final ImageCanvas ic,
+			final double defaultMax)
+		{
 			super(imp, ic);
 			buildMaxValueScrollbar(defaultMax);
 			add(maxValueScrollbar);
@@ -100,46 +96,33 @@ public class SigmaPalette extends Thread {
 		}
 
 		private Panel buttonPanel() {
-			final Panel buttonPanel = new Panel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+			final Panel buttonPanel = new Panel(new FlowLayout(FlowLayout.CENTER, 0,
+				0));
 			final Button cButton = new Button("Cancel");
-			final int width = (int) getLayout().preferredLayoutSize(this).getWidth() / 2 - (2 * ImageWindow.HGAP);
+			final int width = (int) getLayout().preferredLayoutSize(this).getWidth() /
+				2 - (2 * ImageWindow.HGAP);
 			final int height = 25;
 			cButton.setPreferredSize(new Dimension(width, height));
-			cButton.addActionListener(new ActionListener() {
-
-				@Override
-				public void actionPerformed(final ActionEvent e) {
-					dismiss();
-				}
-			});
+			cButton.addActionListener(e -> dismiss());
 			buttonPanel.add(cButton);
 			final Button aButton = new Button("Apply");
 			aButton.setPreferredSize(new Dimension(width, height));
-			aButton.addActionListener(new ActionListener() {
-
-				@Override
-				public void actionPerformed(final ActionEvent e) {
-					apply();
-				}
-			});
+			aButton.addActionListener(e -> apply());
 			buttonPanel.add(aButton);
 			return buttonPanel;
 		}
 
 		private void buildMaxValueScrollbar(final double defaultMaxValue) {
-			maxValueScrollbar = new ScrollbarWithLabel(this, (int) defaultMaxValue, 1, 1, 601, '\u00D7');
+			maxValueScrollbar = new ScrollbarWithLabel(this, (int) defaultMaxValue, 1,
+				1, 601, '\u00D7');
 			maxValueScrollbar.setFocusable(false); // prevents scroll bar from
-													// blinking on Windows
+			// blinking on Windows
 			maxValueScrollbar.setUnitIncrement(1);
 			maxValueScrollbar.setBlockIncrement(1);
-			maxValueScrollbar.addAdjustmentListener(new AdjustmentListener() {
-
-				@Override
-				public void adjustmentValueChanged(final AdjustmentEvent e) {
-					manuallyChangedAlready = true;
-					final int newValue = e.getValue();
-					maxChanged(newValue);
-				}
+			maxValueScrollbar.addAdjustmentListener(e -> {
+				manuallyChangedAlready = true;
+				final int newValue = e.getValue();
+				maxChanged(newValue);
 			});
 		}
 
@@ -151,8 +134,9 @@ public class SigmaPalette extends Thread {
 		}
 
 		private void updateLabel() {
-			label.setText("\u03C3 = " + getSelectedSigma() + "; \u00D7 = "
-					+ SNT.formatDouble(getSelectedMultiplier(), 2) + "; Maximum: " + (int) selectedMax);
+			label.setText("\u03C3 = " + getSelectedSigma() + "; \u00D7 = " + SNT
+				.formatDouble(getSelectedMultiplier(), 2) + "; Maximum: " +
+				(int) selectedMax);
 		}
 
 		private void maxChanged(final double newValue) {
@@ -168,8 +152,7 @@ public class SigmaPalette extends Thread {
 		@Override
 		public String createSubtitle() {
 			String label = "Sigma preview grid: \u03C3=" + getMouseOverSigma();
-			if (zSelector != null)
-				label += "  z=" + zSelector.getValue();
+			if (zSelector != null) label += "  z=" + zSelector.getValue();
 			return label;
 		}
 
@@ -183,8 +166,9 @@ public class SigmaPalette extends Thread {
 		private final int sigmasAcross;
 		private final int sigmasDown;
 
-		public PaletteCanvas(final ImagePlus imagePlus, final int croppedWidth, final int croppedHeight,
-				final int sigmasAcross, final int sigmasDown) {
+		public PaletteCanvas(final ImagePlus imagePlus, final int croppedWidth,
+			final int croppedHeight, final int sigmasAcross, final int sigmasDown)
+		{
 			super(imagePlus);
 			this.croppedWidth = croppedWidth;
 			this.croppedHeight = croppedHeight;
@@ -205,10 +189,8 @@ public class SigmaPalette extends Thread {
 		private int sigmaIndexFromMouseEvent(final MouseEvent e) {
 			final int[] sigmaXY = getTileXY(e);
 			final int sigmaIndex = sigmaXY[1] * sigmasAcross + sigmaXY[0];
-			if (sigmaIndex >= 0 && sigmaIndex < sigmaValues.length)
-				return sigmaIndex;
-			else
-				return -1;
+			if (sigmaIndex >= 0 && sigmaIndex < sigmaValues.length) return sigmaIndex;
+			else return -1;
 		}
 
 		@Override
@@ -254,9 +236,9 @@ public class SigmaPalette extends Thread {
 		@Override
 		public void paint(final Graphics g) {
 
-			if (backBufferWidth != getSize().width || backBufferHeight != getSize().height || backBufferImage == null
-					|| backBufferGraphics == null)
-				resetBackBuffer();
+			if (backBufferWidth != getSize().width ||
+				backBufferHeight != getSize().height || backBufferImage == null ||
+				backBufferGraphics == null) resetBackBuffer();
 
 			super.paint(backBufferGraphics);
 			drawOverlayGrid(backBufferGraphics);
@@ -307,7 +289,8 @@ public class SigmaPalette extends Thread {
 		public void keyPressed(final KeyEvent e) {
 			if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 				dismiss();
-			} else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+			}
+			else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 				apply();
 			}
 		}
@@ -336,8 +319,7 @@ public class SigmaPalette extends Thread {
 	/**
 	 * Attaches a listener to the current wizard.
 	 *
-	 * @param listener
-	 *            the SigmaPaletteListener listener
+	 * @param listener the SigmaPaletteListener listener
 	 */
 	public void setListener(final SigmaPaletteListener listener) {
 		this.listener = listener;
@@ -382,9 +364,12 @@ public class SigmaPalette extends Thread {
 	}
 
 	private void setOverlayLabel(final int sigmaIndex, final int[] xyTile) {
-		final String label = "\u03C3 = " + SNT.formatDouble(sigmaValues[sigmaIndex], 1);
-		final TextRoi roi = new TextRoi(xyTile[0] * croppedWidth + 2, xyTile[1] * croppedHeight + 2, label);
-		roi.setStrokeColor((getSelectedSigmaIndex() == sigmaIndex) ? Color.GREEN : Color.MAGENTA);
+		final String label = "\u03C3 = " + SNT.formatDouble(sigmaValues[sigmaIndex],
+			1);
+		final TextRoi roi = new TextRoi(xyTile[0] * croppedWidth + 2, xyTile[1] *
+			croppedHeight + 2, label);
+		roi.setStrokeColor((getSelectedSigmaIndex() == sigmaIndex) ? Color.GREEN
+			: Color.MAGENTA);
 		roi.setAntialiased(true);
 		paletteImage.setOverlay(new Overlay(roi));
 	}
@@ -392,40 +377,31 @@ public class SigmaPalette extends Thread {
 	/**
 	 * Displays the Sigma wizard in a separate thread.
 	 *
-	 * @param image
-	 *            the 2D/3D image serving data to the wizard
-	 * @param x_min
-	 *            image boundary for choice grid
-	 * @param x_max
-	 *            image boundary for choice grid
-	 * @param y_min
-	 *            image boundary for choice grid
-	 * @param y_max
-	 *            image boundary for choice grid
-	 * @param z_min
-	 *            image boundary for choice grid
-	 * @param z_max
-	 *            image boundary for choice grid
-	 * @param hep
-	 *            the HessianEvalueProcessor generating the preview
-	 * @param sigmaValues
-	 *            the desired range of sigma values for choice grid
-	 * @param defaultMax
-	 *            the default image maximum (setting the multiplier)
-	 * @param sigmasAcross
-	 *            the number of columns in choice grid
-	 * @param sigmasDown
-	 *            the number of rows in choice grid
-	 * @param initial_z
-	 *            the default z-position
+	 * @param image the 2D/3D image serving data to the wizard
+	 * @param x_min image boundary for choice grid
+	 * @param x_max image boundary for choice grid
+	 * @param y_min image boundary for choice grid
+	 * @param y_max image boundary for choice grid
+	 * @param z_min image boundary for choice grid
+	 * @param z_max image boundary for choice grid
+	 * @param hep the HessianEvalueProcessor generating the preview
+	 * @param sigmaValues the desired range of sigma values for choice grid
+	 * @param defaultMax the default image maximum (setting the multiplier)
+	 * @param sigmasAcross the number of columns in choice grid
+	 * @param sigmasDown the number of rows in choice grid
+	 * @param initial_z the default z-position
 	 */
-	public void makePalette(final ImagePlus image, final int x_min, final int x_max, final int y_min, final int y_max,
-			final int z_min, final int z_max, final HessianEvalueProcessor hep, final double[] sigmaValues,
-			final double defaultMax, final int sigmasAcross, final int sigmasDown, final int initial_z) {
+	public void makePalette(final ImagePlus image, final int x_min,
+		final int x_max, final int y_min, final int y_max, final int z_min,
+		final int z_max, final HessianEvalueProcessor hep,
+		final double[] sigmaValues, final double defaultMax, final int sigmasAcross,
+		final int sigmasDown, final int initial_z)
+	{
 
 		if (sigmaValues.length > sigmasAcross * sigmasDown) {
-			throw new IllegalArgumentException("A " + sigmasAcross + "x" + sigmasDown
-					+ " layout is not large enough for " + sigmaValues + " + 1 images");
+			throw new IllegalArgumentException("A " + sigmasAcross + "x" +
+				sigmasDown + " layout is not large enough for " + sigmaValues +
+				" + 1 images");
 		}
 
 		this.image = image;
@@ -445,8 +421,7 @@ public class SigmaPalette extends Thread {
 	}
 
 	private void dismiss() {
-		if (listener != null)
-			listener.sigmaPaletteCanceled();
+		if (listener != null) listener.sigmaPaletteCanceled();
 		paletteWindow.dispose();
 	}
 
@@ -457,24 +432,27 @@ public class SigmaPalette extends Thread {
 		paletteWindow.dispose();
 	}
 
-	private void copyIntoPalette(final ImagePlus smallImage, final ImagePlus paletteImage, final int offsetX,
-			final int offsetY) {
+	private void copyIntoPalette(final ImagePlus smallImage,
+		final ImagePlus paletteImage, final int offsetX, final int offsetY)
+	{
 		final int largerWidth = paletteImage.getWidth();
 		final int depth = paletteImage.getStackSize();
-		if (depth != smallImage.getStackSize())
-			throw new IllegalArgumentException("In copyIntoPalette(), depths don't match");
+		if (depth != smallImage.getStackSize()) throw new IllegalArgumentException(
+			"In copyIntoPalette(), depths don't match");
 		final int smallWidth = smallImage.getWidth();
 		final int smallHeight = smallImage.getHeight();
 		final ImageStack paletteStack = paletteImage.getStack();
 		final ImageStack smallStack = smallImage.getStack();
 		// Make sure the minimum and maximum are sensible in the small stack:
 		for (int z = 0; z < depth; ++z) {
-			final float[] smallPixels = (float[]) smallStack.getProcessor(z + 1).getPixels();
-			final float[] palettePixels = (float[]) paletteStack.getProcessor(z + 1).getPixels();
+			final float[] smallPixels = (float[]) smallStack.getProcessor(z + 1)
+				.getPixels();
+			final float[] palettePixels = (float[]) paletteStack.getProcessor(z + 1)
+				.getPixels();
 			for (int y = 0; y < smallHeight; ++y) {
 				final int smallIndex = y * smallWidth;
-				System.arraycopy(smallPixels, smallIndex, palettePixels, (offsetY + y) * largerWidth + offsetX,
-						smallWidth);
+				System.arraycopy(smallPixels, smallIndex, palettePixels, (offsetY + y) *
+					largerWidth + offsetX, smallWidth);
 			}
 		}
 	}
@@ -482,7 +460,8 @@ public class SigmaPalette extends Thread {
 	@Override
 	public void run() {
 
-		final ImagePlus cropped = ThreePaneCrop.performCrop(image, x_min, x_max, y_min, y_max, z_min, z_max, false);
+		final ImagePlus cropped = ThreePaneCrop.performCrop(image, x_min, x_max,
+			y_min, y_max, z_min, z_max, false);
 
 		croppedWidth = (x_max - x_min) + 1;
 		croppedHeight = (y_max - y_min) + 1;
@@ -499,11 +478,13 @@ public class SigmaPalette extends Thread {
 		paletteImage = new ImagePlus("Pick Sigma and Multiplier", newStack);
 		setMax(defaultMax);
 
-		paletteCanvas = new PaletteCanvas(paletteImage, croppedWidth, croppedHeight, sigmasAcross, sigmasDown);
-		paletteWindow = new PaletteStackWindow(paletteImage, paletteCanvas, defaultMax);
+		paletteCanvas = new PaletteCanvas(paletteImage, croppedWidth, croppedHeight,
+			sigmasAcross, sigmasDown);
+		paletteWindow = new PaletteStackWindow(paletteImage, paletteCanvas,
+			defaultMax);
 		paletteCanvas.addKeyListener(new KeyListener());
 		paletteCanvas.requestFocusInWindow(); // required to trigger keylistener
-												// events
+		// events
 		paletteImage.setZ(initial_z - z_min + 1);
 		setOverlayLabel(0, new int[] { 0, 0 });
 

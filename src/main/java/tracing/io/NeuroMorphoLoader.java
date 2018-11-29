@@ -28,9 +28,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 
+import net.imagej.ImageJ;
+
 import org.json.JSONObject;
 
-import net.imagej.ImageJ;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -41,7 +42,7 @@ import tracing.Tree;
 
 /**
  * Importer for retrieving SWC data from neuromorpho.org.
- * 
+ *
  * @author Tiago Ferreira
  */
 public class NeuroMorphoLoader implements RemoteSWCLoader {
@@ -50,7 +51,6 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 	private final static String NEURON_BASE_URL = BASE_URL + "neuron/name/";
 	private String lastKnownStatus;
 
-
 	private JSONObject getJSon(final String url, final String anchor) {
 		Response response = null;
 		final OkHttpClient client = new OkHttpClient();
@@ -58,16 +58,15 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 		String resStr = null;
 		try {
 			response = client.newCall(request).execute();
-			if (!response.isSuccessful())
-				return null;
+			if (!response.isSuccessful()) return null;
 			resStr = response.body().string().toString();
-		} catch (final IOException e) {
+		}
+		catch (final IOException e) {
 			SNT.error("Unexpected response from " + url + anchor, e);
-		} finally {
-			if (response != null)
-				response.close();
-			else
-				return null;
+		}
+		finally {
+			if (response != null) response.close();
+			else return null;
 		}
 		return (resStr == null) ? null : new JSONObject(resStr);
 	}
@@ -80,8 +79,7 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 	@Override
 	public boolean isDatabaseAvailable() {
 		final JSONObject jObject = getJSon(BASE_URL, "health");
-		if (jObject == null)
-			return false;
+		if (jObject == null) return false;
 		lastKnownStatus = (String) jObject.get("status");
 		return "UP".equals(lastKnownStatus);
 	}
@@ -91,14 +89,13 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 	 * cell ID.
 	 *
 	 * @param cellId the ID of the cell to be retrieved
-	 * @return the reconstruction URL, or null if cell ID was not found or could not
-	 *         be retrieved
+	 * @return the reconstruction URL, or null if cell ID was not found or could
+	 *         not be retrieved
 	 */
 	@Override
 	public String getReconstructionURL(final String cellId) {
 		final JSONObject json = getJSon(NEURON_BASE_URL, cellId);
-		if (json == null)
-			return null;
+		if (json == null) return null;
 		final StringBuilder sb = new StringBuilder();
 		sb.append("http://neuromorpho.org/dableFiles/");
 		final String archive = (String) json.get("archive");
@@ -110,12 +107,12 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 	}
 
 	/**
-	 * Gets the SWC data ('CNG version') associated with the specified cell ID as a
-	 * reader
+	 * Gets the SWC data ('CNG version') associated with the specified cell ID as
+	 * a reader
 	 *
 	 * @param cellId the ID of the cell to be retrieved
-	 * @return the the character stream containing the data, or null if cell ID was
-	 *         not found or could not be retrieved
+	 * @return the the character stream containing the data, or null if cell ID
+	 *         was not found or could not be retrieved
 	 */
 	@Override
 	public BufferedReader getReader(final String cellId) {
@@ -123,7 +120,8 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 			final URL url = new URL(getReconstructionURL(cellId));
 			final InputStream is = url.openStream();
 			return new BufferedReader(new InputStreamReader(is));
-		} catch (IOException e) {
+		}
+		catch (final IOException e) {
 			return null;
 		}
 	}
@@ -132,8 +130,8 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 	 * Gets the collection of Paths for the specified cell ID
 	 *
 	 * @param cellId the ID of the cell to be retrieved
-	 * @return the data ('CNG version') for the specified cell as a {@link Tree}, or
-	 *         null if data could not be retrieved
+	 * @return the data ('CNG version') for the specified cell as a {@link Tree},
+	 *         or null if data could not be retrieved
 	 */
 	@Override
 	public Tree getTree(final String cellId) {
@@ -160,7 +158,8 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 		final PathAndFillManager pafm = new PathAndFillManager();
 		final NeuroMorphoLoader loader = new NeuroMorphoLoader();
 
-		System.out.println("Neuromorpho available: " + loader.isDatabaseAvailable());
+		System.out.println("Neuromorpho available: " + loader
+			.isDatabaseAvailable());
 		System.out.println("# Getting neuron " + cellId);
 		final String urlPath = loader.getReconstructionURL(cellId);
 		System.out.println("URL :" + urlPath);

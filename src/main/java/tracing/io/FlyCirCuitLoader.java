@@ -35,12 +35,13 @@ import tracing.Tree;
 /**
  * Absurdly simple importer for retrieving SWC data from
  * <a href="http://www.flycircuit.tw">FlyCircuit</a>.
- * 
+ *
  * @author Tiago Ferreira
  */
 public class FlyCirCuitLoader implements RemoteSWCLoader {
 
-	private static final String BASE_URL = "http://www.flycircuit.tw/download/swc/";
+	private static final String BASE_URL =
+		"http://www.flycircuit.tw/download/swc/";
 
 	/**
 	 * Checks whether a connection to the FlyCircuit database can be established.
@@ -57,10 +58,13 @@ public class FlyCirCuitLoader implements RemoteSWCLoader {
 			connection.setRequestMethod("GET");
 			connection.setConnectTimeout(5000);
 			connection.connect();
-			isOnline = connection.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN;
-		} catch (final IOException ignored) {
+			isOnline = connection
+				.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN;
+		}
+		catch (final IOException ignored) {
 			// do nothing
-		} finally {
+		}
+		finally {
 			connection.disconnect();
 		}
 		return isOnline;
@@ -76,8 +80,7 @@ public class FlyCirCuitLoader implements RemoteSWCLoader {
 	public String getReconstructionURL(final String cellId) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(BASE_URL).append(cellId.replaceAll(" ", "%20"));
-		if (!cellId.endsWith(".swc"))
-			sb.append(".swc");
+		if (!cellId.endsWith(".swc")) sb.append(".swc");
 		return sb.toString();
 	}
 
@@ -85,8 +88,8 @@ public class FlyCirCuitLoader implements RemoteSWCLoader {
 	 * Gets the SWC data associated with the specified cell ID as a reader
 	 *
 	 * @param cellId the ID of the cell to be retrieved
-	 * @return the character stream containing the data, or null if cell ID was not
-	 *         found or could not be retrieved
+	 * @return the character stream containing the data, or null if cell ID was
+	 *         not found or could not be retrieved
 	 */
 	@Override
 	public BufferedReader getReader(final String cellId) {
@@ -94,7 +97,8 @@ public class FlyCirCuitLoader implements RemoteSWCLoader {
 			final URL url = new URL(getReconstructionURL(cellId));
 			final InputStream is = url.openStream();
 			return new BufferedReader(new InputStreamReader(is));
-		} catch (final IOException e) {
+		}
+		catch (final IOException e) {
 			return null;
 		}
 	}

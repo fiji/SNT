@@ -42,18 +42,21 @@ import tracing.SNT;
 
 /**
  * Creates icons from Font Awesome Glyphs: High-quality icons that render well
- * at any screen resolution. Based on code from <a href="http://icedtea.classpath.org/people/neugens/SwingUIPatterns/file/tip/src/main/java/org/icedtea/ui/patterns/swing/images/FontAwesomeIcon.java">Mario Torre</a> 
- * (GPL-2) and <a href="https://github.com/griffon-plugins/griffon-fontawesome-plugin/blob/master/subprojects/griffon-fontawesome-javafx/src/main/java/griffon/javafx/support/fontawesome/FontAwesomeIcon.java">
+ * at any screen resolution. Based on code from <a href=
+ * "http://icedtea.classpath.org/people/neugens/SwingUIPatterns/file/tip/src/main/java/org/icedtea/ui/patterns/swing/images/FontAwesomeIcon.java">Mario
+ * Torre</a> (GPL-2) and <a href=
+ * "https://github.com/griffon-plugins/griffon-fontawesome-plugin/blob/master/subprojects/griffon-fontawesome-javafx/src/main/java/griffon/javafx/support/fontawesome/FontAwesomeIcon.java">
  * Andres Almiray</a> (Apache-2.0), with tweaks and updates for font awesome
  * 5.0.
  *
  * @author Tiago Ferreira
- *
  */
 public class FADerivedIcon implements Icon {
 
-	private static final String AWESOME_REGULAR = "META-INF/resources/webjars/font-awesome/5.3.1/webfonts/fa-regular-400.ttf";
-	private static final String AWESOME_SOLID = "META-INF/resources/webjars/font-awesome/5.3.1/webfonts/fa-solid-900.ttf";
+	private static final String AWESOME_REGULAR =
+		"META-INF/resources/webjars/font-awesome/5.3.1/webfonts/fa-regular-400.ttf";
+	private static final String AWESOME_SOLID =
+		"META-INF/resources/webjars/font-awesome/5.3.1/webfonts/fa-solid-900.ttf";
 	private static final int DEF_SIZE = UIManager.getFont("Label.font").getSize();
 	private final Font font;
 	private final float size;
@@ -62,14 +65,17 @@ public class FADerivedIcon implements Icon {
 	private BufferedImage buffer;
 
 	/**
-	 * Creates a new icon from a Font Awesome glyph. The icon's size is set from the
-	 * System's default font.
+	 * Creates a new icon from a Font Awesome glyph. The icon's size is set from
+	 * the System's default font.
 	 *
-	 * @param iconID the icon's unicode ID, as per https://fontawesome.com/cheatsheet
-	 * @param color  the icon's color
-	 * @param solid  whether the 'solid' or 'regular' icons should be used
+	 * @param iconID the icon's unicode ID, as per
+	 *          https://fontawesome.com/cheatsheet
+	 * @param color the icon's color
+	 * @param solid whether the 'solid' or 'regular' icons should be used
 	 */
-	public FADerivedIcon(final char iconID, final Color color, final boolean solid) {
+	public FADerivedIcon(final char iconID, final Color color,
+		final boolean solid)
+	{
 		this(iconID, DEF_SIZE, color, solid);
 	}
 
@@ -78,16 +84,20 @@ public class FADerivedIcon implements Icon {
 	 * default font.
 	 *
 	 * @param iconID the icon's unicode ID, as per
-	 *               https://fontawesome.com/cheatsheet
-	 * @param solid  whether the 'solid' or 'regular' icons should be used
+	 *          https://fontawesome.com/cheatsheet
+	 * @param solid whether the 'solid' or 'regular' icons should be used
 	 * @return the menu icon
 	 */
-	public static FADerivedIcon getMenuIcon(final char iconID, final boolean solid) {
-		return new FADerivedIcon(iconID, UIManager.getFont("MenuItem.font").getSize() * 0.8f,
-				UIManager.getColor("MenuItem.foreground"), solid);
+	public static FADerivedIcon getMenuIcon(final char iconID,
+		final boolean solid)
+	{
+		return new FADerivedIcon(iconID, UIManager.getFont("MenuItem.font")
+			.getSize() * 0.8f, UIManager.getColor("MenuItem.foreground"), solid);
 	}
 
-	protected FADerivedIcon(final char iconID, final float size, final Paint color, final boolean solid) {
+	protected FADerivedIcon(final char iconID, final float size,
+		final Paint color, final boolean solid)
+	{
 		this.iconID = iconID;
 		this.size = size;
 		font = getFont(solid);
@@ -98,9 +108,10 @@ public class FADerivedIcon implements Icon {
 		Font font;
 		try {
 			final InputStream is = Thread.currentThread().getContextClassLoader()
-					.getResourceAsStream((solid) ? AWESOME_SOLID : AWESOME_REGULAR);
+				.getResourceAsStream((solid) ? AWESOME_SOLID : AWESOME_REGULAR);
 			font = Font.createFont(Font.TRUETYPE_FONT, is);
-		} catch (FontFormatException | IOException ex) {
+		}
+		catch (FontFormatException | IOException ex) {
 			font = UIManager.getFont("Label.font"); // desperate fallback
 			SNT.error("Could not load fonts", ex);
 		}
@@ -108,14 +119,19 @@ public class FADerivedIcon implements Icon {
 	}
 
 	@Override
-	public synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
+	public synchronized void paintIcon(final Component c, final Graphics g,
+		final int x, final int y)
+	{
 
 		if (buffer == null) {
-			buffer = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+			buffer = new BufferedImage(getIconWidth(), getIconHeight(),
+				BufferedImage.TYPE_INT_ARGB);
 
 			final Graphics2D graphics = (Graphics2D) buffer.getGraphics();
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-			graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				RenderingHints.VALUE_ANTIALIAS_ON);
+			graphics.setRenderingHint(RenderingHints.KEY_RENDERING,
+				RenderingHints.VALUE_RENDER_QUALITY);
 
 			graphics.setFont(font);
 			graphics.setPaint(color);
@@ -134,7 +150,7 @@ public class FADerivedIcon implements Icon {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see javax.swing.Icon#getIconHeight()
 	 */
 	@Override
@@ -144,7 +160,7 @@ public class FADerivedIcon implements Icon {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see javax.swing.Icon#getIconWidth()
 	 */
 	@Override

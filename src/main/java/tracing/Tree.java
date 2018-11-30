@@ -370,7 +370,7 @@ public class Tree {
 			case Z_AXIS:
 				tree.parallelStream().forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
-						final PointInImage pim = p.getPointInImage(node);
+						final PointInImage pim = p.getNode(node);
 						final double x = pim.x * cos - pim.y * sin;
 						final double y = pim.y * cos + pim.x * sin;
 						p.moveNode(node, new PointInImage(x, y, pim.z));
@@ -380,7 +380,7 @@ public class Tree {
 			case Y_AXIS:
 				tree.parallelStream().forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
-						final PointInImage pim = p.getPointInImage(node);
+						final PointInImage pim = p.getNode(node);
 						final double x = pim.x * cos - pim.z * sin;
 						final double z = pim.z * cos + pim.x * sin;
 						p.moveNode(node, new PointInImage(x, pim.y, z));
@@ -390,7 +390,7 @@ public class Tree {
 			case X_AXIS:
 				tree.parallelStream().forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
-						final PointInImage pim = p.getPointInImage(node);
+						final PointInImage pim = p.getNode(node);
 						final double y = pim.y * cos - pim.z * sin;
 						final double z = pim.z * cos + pim.y * sin;
 						p.moveNode(node, new PointInImage(pim.x, y, z));

@@ -181,7 +181,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 			final Path dup = new Path(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth,
 				cal.getUnit());
 			for (int i = 0; i < pathToPlot.size(); i++) {
-				final PointInImage pim = pathToPlot.getPointInImage(i);
+				final PointInImage pim = pathToPlot.getNode(i);
 				dup.addPointDouble(pim.x, pim.y, pim.z);
 			}
 			dup.setSWCType(pathToPlot.getSWCType());

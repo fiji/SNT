@@ -125,7 +125,7 @@ public class Path implements Comparable<Path> {
 	protected double[] tangents_y;
 	protected double[] tangents_z;
 	// numeric properties of nodes (e.g., pixel intensities)
-	private double[] values;
+	private double[] nodeValues;
 	// NB: id should be assigned by PathAndFillManager
 	private int id = -1;
 	// NB: The leagacy 3D viewer requires always a unique name
@@ -514,14 +514,23 @@ public class Path implements Comparable<Path> {
 		p[2] = precise_z_positions[i];
 	}
 
-	public PointInImage getPointInImage(final int node) {
-		if ((node < 0) || node >= size()) {
+
+	/**
+	 * @deprecated Use {@link #getNode(int)} instead
+	 */
+	public PointInImage getPointInImage(final int index) {
+		return getNode(index);
+	}
+
+	public PointInImage getNode(final int index) {
+		if ((index < 0) || index >= size()) {
 			throw new IllegalArgumentException(
-				"getPointInImage() was asked for an out-of-range point: " + node);
+				"getNode() was asked for an out-of-range point: " + index);
 		}
-		final PointInImage result = new PointInImage(precise_x_positions[node],
-			precise_y_positions[node], precise_z_positions[node]);
+		final PointInImage result = new PointInImage(precise_x_positions[index],
+			precise_y_positions[index], precise_z_positions[index]);
 		result.onPath = this;
+		if (nodeValues != null) result.v = nodeValues[index];
 		return result;
 	}
 
@@ -590,13 +599,13 @@ public class Path implements Comparable<Path> {
 		if (index < 0 || index >= points) throw new IllegalArgumentException(
 			"removeNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
-		final PointInImage p = getPointInImage(index);
+		final PointInImage p = getNode(index);
 		precise_x_positions = ArrayUtils.remove(precise_x_positions, index);
 		precise_y_positions = ArrayUtils.remove(precise_y_positions, index);
 		precise_z_positions = ArrayUtils.remove(precise_z_positions, index);
 		points -= 1;
-		if (p.equals(startJoinsPoint)) startJoinsPoint = getPointInImage(0);
-		if (p.equals(endJoinsPoint) && points > 0) endJoinsPoint = getPointInImage(
+		if (p.equals(startJoinsPoint)) startJoinsPoint = getNode(0);
+		if (p.equals(endJoinsPoint) && points > 0) endJoinsPoint = getNode(
 			points - 1);
 	}
 
@@ -1151,7 +1160,8 @@ public class Path implements Comparable<Path> {
 	 * Gets the node color.
 	 *
 	 * @param pos the node position
-	 * @return the node color, or null if
+	 * @return the node color, or null if no color nodes have been assigned to
+	 *         this path
 	 */
 	public Color getNodeColor(final int pos) {
 		return (nodeColors == null) ? null : nodeColors[pos];
@@ -1168,21 +1178,57 @@ public class Path implements Comparable<Path> {
 		nodeColors[pos] = color;
 	}
 
+	/**
+	 * Assigns the "value" property to this node.
+	 *
+	 * @param value the node value
+	 * @param pos the node position
+	 * @return the node value, or null if no values have been assigned to this
+	 *         path * @see PointInImage#v
+	 * @see PathProfiler#assignValues()
+	 */
 	public void setValue(final double value, final int pos) {
-		if (values == null) values = new double[size()];
-		values[pos] = value;
+		if (nodeValues == null) nodeValues = new double[size()];
+		nodeValues[pos] = value;
 	}
 
+	/**
+	 * Returns the "value" property to this node.
+	 *
+	 * @param value the node value
+	 * @param pos the node position * @see PointInImage#v
+	 * @see PathProfiler#assignValues()
+	 */
 	public double getValue(final int pos) {
-		return (values == null) ? null : values[pos];
+		return (nodeValues == null) ? null : nodeValues[pos];
 	}
 
-	public void setValues(final double[] values) {
+	/**
+	 * Gets the path "values", the array containing the numeric property assigned
+	 * to path nodes, typically voxel intensities.
+	 *
+	 * @return the values of this path nodes, or null if nodes have not been
+	 *         assigned a "value".
+	 * @see PointInImage#v
+	 * @see PathProfiler#assignValues()
+	 */
+	public void setNodeValues(final double[] values) {
 		if (values != null && values.length != size()) {
 			throw new IllegalArgumentException(
 				"values array must have as many elements as nodes");
 		}
-		this.values = (values == null) ? null : values.clone();
+		this.nodeValues = (values == null) ? null : values.clone();
+	}
+
+	/**
+	 * Assesses whether the nodes of this path have been assigned an array of
+	 * values
+	 *
+	 * @return true, if successful
+	 * @see #getNodeValues()
+	 */
+	public boolean hasNodeValues() {
+		return nodeValues != null;
 	}
 
 	/**

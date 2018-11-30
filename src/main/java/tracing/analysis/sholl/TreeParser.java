@@ -164,7 +164,7 @@ public class TreeParser implements Parser {
 		for (final Path p : tree.list()) {
 			if (!p.isPrimary()) continue;
 			if (swcType < 0 || p.getSWCType() == swcType) {
-				points.add(p.getPointInImage(0));
+				points.add(p.getNode(0));
 				continue;
 			}
 		}
@@ -245,8 +245,8 @@ public class TreeParser implements Parser {
 		tree.list().stream().forEach(p -> {
 			if (!running) return;
 			for (int i = 0; i < p.size() - 1; ++i) {
-				final PointInImage pim1 = p.getPointInImage(i);
-				final PointInImage pim2 = p.getPointInImage(i + 1);
+				final PointInImage pim1 = p.getNode(i);
+				final PointInImage pim2 = p.getNode(i + 1);
 				final double distanceSquaredFirst = pim1.distanceSquaredTo(center);
 				final double distanceSquaredSecond = pim2.distanceSquaredTo(center);
 				shollPointsList.add(new ShollPoint(distanceSquaredFirst,

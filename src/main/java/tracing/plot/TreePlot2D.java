@@ -110,7 +110,7 @@ public class TreePlot2D extends TreeColorMapper {
 			final List<Double> xc = new ArrayList<>();
 			final List<Double> yc = new ArrayList<>();
 			for (int node = 0; node < p.size(); node++) {
-				final PointInImage pim = p.getPointInImage(node);
+				final PointInImage pim = p.getNode(node);
 				xc.add(pim.x);
 				yc.add(pim.y);
 			}
@@ -129,7 +129,7 @@ public class TreePlot2D extends TreeColorMapper {
 			final XYSeries series = plot.addXYSeries();
 			final List<Double> xc = new ArrayList<>();
 			final List<Double> yc = new ArrayList<>();
-			final PointInImage pim = p.getPointInImage(node);
+			final PointInImage pim = p.getNode(node);
 			xc.add(pim.x);
 			yc.add(pim.y);
 			series.setValues(xc, yc);

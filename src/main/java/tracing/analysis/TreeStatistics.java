@@ -183,7 +183,7 @@ public class TreeStatistics extends TreeAnalyzer {
 				for (final Path p : tree.list()) {
 					if (p.size() < 2) continue;
 					for (int i = 1; i < p.size(); i += 1) {
-						stat.addValue(p.getPointInImage(i).distanceTo(p.getPointInImage(i -
+						stat.addValue(p.getNode(i).distanceTo(p.getNode(i -
 							1)));
 					}
 				}
@@ -192,8 +192,8 @@ public class TreeStatistics extends TreeAnalyzer {
 				for (final Path p : tree.list()) {
 					if (p.size() < 2) continue;
 					for (int i = 1; i < p.size(); i += 1) {
-						stat.addValue(p.getPointInImage(i).distanceSquaredTo(p
-							.getPointInImage(i - 1)));
+						stat.addValue(p.getNode(i).distanceSquaredTo(p
+							.getNode(i - 1)));
 					}
 				}
 				break;
@@ -222,21 +222,27 @@ public class TreeStatistics extends TreeAnalyzer {
 			case TreeAnalyzer.X_COORDINATES:
 				for (final Path p : tree.list()) {
 					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getPointInImage(i).x);
+						stat.addValue(p.getNode(i).x);
 					}
 				}
 				break;
 			case TreeAnalyzer.Y_COORDINATES:
 				for (final Path p : tree.list()) {
 					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getPointInImage(i).y);
+						stat.addValue(p.getNode(i).y);
+					}
+				}
+			case TreeAnalyzer.INTENSITIES:
+				for (final Path p : tree.list()) {
+					for (int i = 0; i < p.size(); i++) {
+						stat.addValue(p.getNode(i).v);
 					}
 				}
 				break;
 			case TreeAnalyzer.Z_COORDINATES:
 				for (final Path p : tree.list()) {
 					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getPointInImage(i).z);
+						stat.addValue(p.getNode(i).z);
 					}
 				}
 				break;

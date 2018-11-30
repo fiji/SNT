@@ -1886,7 +1886,7 @@ public class TreePlot3D {
 				// Stash soma coordinates
 				if (Path.SWC_SOMA == p.getSWCType()) {
 					for (int i = 0; i < p.size(); i++) {
-						final PointInImage pim = p.getPointInImage(i);
+						final PointInImage pim = p.getNode(i);
 						pim.v = p.getNodeRadius(i);
 						somaPoints.add(pim);
 					}
@@ -1902,7 +1902,7 @@ public class TreePlot3D {
 				// Assemble arbor(s)
 				final LineStrip line = new LineStrip(p.size());
 				for (int i = 0; i < p.size(); ++i) {
-					final PointInImage pim = p.getPointInImage(i);
+					final PointInImage pim = p.getNode(i);
 					final Coord3d coord = new Coord3d(pim.x, pim.y, pim.z);
 					final Color color = fromAWTColor(p.hasNodeColors() ? p.getNodeColor(i)
 						: p.getColor());

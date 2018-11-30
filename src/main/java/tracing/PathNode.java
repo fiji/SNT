@@ -85,7 +85,7 @@ public class PathNode {
 		this.path = path;
 		this.canvas = canvas;
 		color = path.getNodeColor(index);
-		setXYcoordinates(path.getPointInImage(index));
+		setXYcoordinates(path.getNode(index));
 
 		// Define which type of node we're dealing with
 		if (path.size() == 1) {

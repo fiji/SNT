@@ -74,7 +74,7 @@ public class RoiConverter extends TreeAnalyzer {
 			}
 			else { // Single Point Path
 				final HashSet<PointInImage> pim = new HashSet<>();
-				pim.add(p.getPointInImage(0));
+				pim.add(p.getNode(0));
 				convertPoints(pim, overlay, getColor(p), "SPP");
 			}
 		}

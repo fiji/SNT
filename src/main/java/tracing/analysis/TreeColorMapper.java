@@ -239,13 +239,13 @@ public class TreeColorMapper extends ColorMapper {
 				double value;
 				switch (measurement) {
 					case X_COORDINATES:
-						value = p.getPointInImage(node).x;
+						value = p.getNode(node).x;
 						break;
 					case Y_COORDINATES:
-						value = p.getPointInImage(node).y;
+						value = p.getNode(node).y;
 						break;
 					case Z_COORDINATES:
-						value = p.getPointInImage(node).z;
+						value = p.getNode(node).z;
 						break;
 					case NODE_RADIUS:
 						value = p.getNodeRadius(node);
@@ -274,14 +274,14 @@ public class TreeColorMapper extends ColorMapper {
 		// 1st pass: Calculate distances for primary paths.
 		for (final Path p : paths) {
 			if (p.isPrimary()) {
-				float dx = (float) p.getPointInImage(0).distanceTo(root);
-				p.setValue(dx, 0);
+				double dx = p.getNode(0).distanceTo(root);
+				p.setNodeValue(dx, 0);
 				for (int i = 1; i < p.size(); ++i) {
-					final float dxPrev = p.getValue(i - 1);
-					final PointInImage prev = p.getPointInImage(i - 1);
-					final PointInImage curr = p.getPointInImage(i);
-					dx = (float) curr.distanceTo(prev) + dxPrev;
-					p.setValue(dx, i);
+					final double dxPrev = p.getNodeValue(i - 1);
+					final PointInImage prev = p.getNode(i - 1);
+					final PointInImage curr = p.getNode(i);
+					dx = curr.distanceTo(prev) + dxPrev;
+					p.setNodeValue(dx, i);
 					if (setLimits) {
 						if (dx > max) max = dx;
 						if (dx < min) min = dx;
@@ -293,16 +293,15 @@ public class TreeColorMapper extends ColorMapper {
 		// 2nd pass: Calculate distances for remaining paths
 		for (final Path p : paths) {
 			if (p.isPrimary()) continue;
-			final PointInImage pim = p.getPointInImage(0);
-			float dx = p.getStartJoins().getValue(p.getStartJoins().getNodeIndex(
-				pim)); // very inneficient
-			p.setValue(dx, 0);
+			final PointInImage pim = p.getNode(0);
+			double dx = p.getStartJoins().getNodeValue(p.getStartJoins().getNodeIndex(pim)); // very inefficient
+			p.setNodeValue(dx, 0);
 			for (int i = 1; i < p.size(); ++i) {
-				final float dxPrev = p.getValue(i - 1);
-				final PointInImage prev = p.getPointInImage(i - 1);
-				final PointInImage curr = p.getPointInImage(i);
-				dx = (float) curr.distanceTo(prev) + dxPrev;
-				p.setValue(dx, i);
+				final double dxPrev = p.getNodeValue(i - 1);
+				final PointInImage prev = p.getNode(i - 1);
+				final PointInImage curr = p.getNode(i);
+				dx = curr.distanceTo(prev) + dxPrev;
+				p.setNodeValue(dx, i);
 				if (setLimits) {
 					if (dx > max) max = dx;
 					if (dx < min) min = dx;
@@ -316,8 +315,8 @@ public class TreeColorMapper extends ColorMapper {
 		SNT.log("Range of mapped distances: " + min + "-" + max);
 		for (final Path p : paths) {
 			for (int node = 0; node < p.size(); node++) {
-				// if (p.isPrimary()) System.out.println(p.getValue(node));
-				p.setNodeColor(getColor(p.getValue(node)), node);
+				// if (p.isPrimary()) System.out.println(p.getNodeValue(node));
+				p.setNodeColor(getColor(p.getNodeValue(node)), node);
 			}
 		}
 
@@ -354,7 +353,7 @@ public class TreeColorMapper extends ColorMapper {
 			final double entryRadiusSqed = entry.radiusSquared();
 			for (final Path p : paths) {
 				for (int node = 0; node < p.size(); node++) {
-					final double dx = center.distanceSquaredTo(p.getPointInImage(node));
+					final double dx = center.distanceSquaredTo(p.getNode(node));
 					if (dx >= entryRadiusSqed && dx < entryRadiusSqed + stepSizeSq) {
 						p.setNodeColor(getColor(entry.count), node);
 					}

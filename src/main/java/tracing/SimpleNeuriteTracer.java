@@ -1173,7 +1173,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			final int eNode = editingPath.indexNearestToCanvasPosition2D(x, y,
 				xy_tracer_canvas.nodeDiameter());
 			if (eNode != -1) {
-				pim = editingPath.getPointInImage(eNode);
+				pim = editingPath.getNode(eNode);
 				editingPath.setEditableNode(eNode);
 			}
 		}

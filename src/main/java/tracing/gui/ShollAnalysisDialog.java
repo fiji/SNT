@@ -1082,8 +1082,8 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	{
 
 		for (int i = 0; i < p.size() - 1; ++i) {
-			final PointInImage pim1 = p.getPointInImage(i);
-			final PointInImage pim2 = p.getPointInImage(i + 1);
+			final PointInImage pim1 = p.getNode(i);
+			final PointInImage pim2 = p.getNode(i + 1);
 			final double xdiff_first = pim1.x - x_start;
 			final double ydiff_first = pim1.y - y_start;
 			final double zdiff_first = pim1.z - z_start;

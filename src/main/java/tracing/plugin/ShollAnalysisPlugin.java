@@ -129,14 +129,14 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 
 		switch (centerChoice) {
 			case START_FIRST_PRIMARY:
-				shollCenter = primaryPaths[0].getPointInImage(0);
+				shollCenter = primaryPaths[0].getNode(0);
 				break;
 			case CENTER_OF_SOMA:
 				final ArrayList<PointInImage> somaPoints = new ArrayList<>();
 				for (final Path p : primaryPaths) {
 					if (p.getSWCType() == Path.SWC_SOMA) {
 						for (int i = 0; i < p.size(); i++)
-							somaPoints.add(p.getPointInImage(i));
+							somaPoints.add(p.getNode(i));
 					}
 					double sumx = 0, sumy = 0, sumz = 0;
 					for (final PointInImage sp : somaPoints) {
@@ -148,7 +148,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 						.size(), sumy / somaPoints.size(), sumz / somaPoints.size(), sumx +
 							sumy + sumz);
 					if (np != null && np.getPath() != null) shollCenter = np.getPath()
-						.getPointInImage((np.getPath().size() - 1) / 2);
+						.getNode((np.getPath().size() - 1) / 2);
 				}
 				break;
 			case START_FIRST_AXON:
@@ -252,7 +252,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		final int swcType)
 	{
 		for (final Path p : paths) {
-			if (p.getSWCType() == swcType) return p.getPointInImage(0);
+			if (p.getSWCType() == swcType) return p.getNode(0);
 		}
 		return null;
 	}

@@ -440,7 +440,7 @@ public class TreeAnalyzer extends ContextCommand {
 		tips = new HashSet<>();
 		for (final Path p : tree.list()) {
 			IntStream.of(0, p.size() - 1).forEach(i -> {
-				tips.add(p.getPointInImage(i)); // duplicated points (as in single-point
+				tips.add(p.getNode(i)); // duplicated points (as in single-point
 																				// paths) will not be added
 			});
 		}

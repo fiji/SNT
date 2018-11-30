@@ -125,7 +125,7 @@ public class Path implements Comparable<Path> {
 	protected double[] tangents_y;
 	protected double[] tangents_z;
 	// numeric properties of nodes (e.g., pixel intensities)
-	private float[] values;
+	private double[] values;
 	// NB: id should be assigned by PathAndFillManager
 	private int id = -1;
 	// NB: The leagacy 3D viewer requires always a unique name
@@ -1168,13 +1168,21 @@ public class Path implements Comparable<Path> {
 		nodeColors[pos] = color;
 	}
 
-	public void setValue(final float value, final int pos) {
-		if (values == null) values = new float[size()];
+	public void setValue(final double value, final int pos) {
+		if (values == null) values = new double[size()];
 		values[pos] = value;
 	}
 
-	public float getValue(final int pos) {
+	public double getValue(final int pos) {
 		return (values == null) ? null : values[pos];
+	}
+
+	public void setValues(final double[] values) {
+		if (values != null && values.length != size()) {
+			throw new IllegalArgumentException(
+				"values array must have as many elements as nodes");
+		}
+		this.values = (values == null) ? null : values.clone();
 	}
 
 	/**
@@ -1186,6 +1194,18 @@ public class Path implements Comparable<Path> {
 	 */
 	public Color getColor() {
 		return color;
+	}
+
+	/**
+	 * Gets the color of this Path
+	 *
+	 * @return the color, or null if no color has been assigned to this Path
+	 * @see #hasCustomColor
+	 * @see #hasNodeColors()
+	 */
+	public ColorRGB getColorRGB() {
+			return (color == null) ? null : new ColorRGB(color.getRed(), color
+				.getGreen(), color.getBlue());
 	}
 
 	/**

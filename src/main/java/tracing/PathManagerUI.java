@@ -97,6 +97,7 @@ import org.scijava.display.DisplayService;
 import org.scijava.prefs.PrefService;
 
 import ij.ImagePlus;
+import tracing.analysis.PathProfiler;
 import tracing.analysis.TreeAnalyzer;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
@@ -283,6 +284,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		advanced.add(jmi);
 		advanced.addSeparator();
 		jmi = new JMenuItem(MultiPathActionListener.CONVERT_TO_ROI_CMD);
+		jmi.addActionListener(multiPathListener);
+		advanced.add(jmi);
+		jmi = new JMenuItem(MultiPathActionListener.PLOT_PROFILE_CMD);
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.CONVERT_TO_SKEL_CMD);
@@ -1656,6 +1660,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		private final static String HISTOGRAM_CMD = "Distribution Analysis...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
 		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";
+		private final static String PLOT_PROFILE_CMD = "Plot Profile";
+
 
 		private final static String TAG_LENGTH_PATTERN =
 			" ?\\[L:\\d+\\.?\\d+\\s?.+\\w+\\]";
@@ -1694,6 +1700,13 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				refreshManager(true, true);
 				return;
 
+			}
+			else if (PLOT_PROFILE_CMD.equals(cmd)) {
+				final Tree tree = new Tree(selectedPaths);
+				PathProfiler profiler = new PathProfiler(tree, plugin.getImagePlus());
+				profiler.setContext(plugin.getContext());
+				profiler.run();
+				return;
 			}
 			else if (MEASURE_CMD.equals(cmd)) {
 				try {

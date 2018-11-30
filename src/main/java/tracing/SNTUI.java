@@ -1509,7 +1509,7 @@ public class SNTUI extends JDialog {
 				recViewerFrame.addWindowListener(new WindowAdapter() {
 
 					@Override
-					public void windowClosed(final WindowEvent e) {
+					public void windowClosing(final WindowEvent e) {
 						openRefreshRecViewerButton.setEnabled(true);
 						recViewer = null;
 						recViewerFrame = null;

@@ -79,7 +79,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 	private TreePlot3D recViewer;
 
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
-	private final boolean importDir = false;
+	private boolean importDir = false;
 
 	@SuppressWarnings("unused")
 	private void init() {

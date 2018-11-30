@@ -54,13 +54,13 @@ public class CompareFilesCmd extends ContextCommand {
 	private File file1;
 
 	@Parameter(label = "Color")
-	private final ColorRGB color1 = Colors.GREEN;
+	private ColorRGB color1 = Colors.GREEN;
 
 	@Parameter(label = "File 2", required = true)
 	private File file2;
 
 	@Parameter(label = "Color")
-	private final ColorRGB color2 = Colors.MAGENTA;
+	private ColorRGB color2 = Colors.MAGENTA;
 
 	@Parameter(label = "File Comparison", type = ItemIO.OUTPUT)
 	private DefaultGenericTable report;

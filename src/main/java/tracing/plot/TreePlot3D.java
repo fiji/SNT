@@ -1366,7 +1366,7 @@ public class TreePlot3D {
 				}
 			});
 			measureMenu.add(mi);
-			mi = new JMenuItem("Distributions...", IconFactory.getMenuIcon(
+			mi = new JMenuItem("Distribution Analysis...", IconFactory.getMenuIcon(
 				GLYPH.CHART));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees(true);
@@ -1378,7 +1378,6 @@ public class TreePlot3D {
 				});
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("tree", mergedTree);
-				inputs.put("title", mergedTree.getLabel());
 				runCmd(DistributionCmd.class, inputs, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);

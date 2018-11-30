@@ -93,7 +93,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	@Parameter(required = false, persist = false, label = "Preview",
 		callback = "updatePlot",
 		description = "NB: UI may become sluggish while previewing large reconstructions...")
-	private final boolean preview = true;
+	private boolean preview = true;
 
 	@Parameter(required = false, persist = false,
 		visibility = ItemVisibility.MESSAGE)

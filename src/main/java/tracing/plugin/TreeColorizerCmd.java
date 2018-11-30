@@ -91,10 +91,10 @@ public class TreeColorizerCmd extends DynamicCommand {
 	private ColorTable colorTable;
 
 	@Parameter(required = false, label = "Show in Reconstruction Viewer")
-	private final boolean showInRecViewer = true;
+	private boolean showInRecViewer = true;
 
 	@Parameter(required = false, label = "Create 2D plot")
-	private final boolean showPlot = false;
+	private boolean showPlot = false;
 
 	@Parameter(required = false, label = "Remove Existing Color Coding",
 		callback = "removeColorCoding")

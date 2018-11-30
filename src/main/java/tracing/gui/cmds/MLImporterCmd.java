@@ -81,7 +81,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	private ColorRGB commonColor;
 
 	@Parameter(required = false, persist = true, label = "Load brain mesh")
-	private final boolean meshViewer = false;
+	private boolean meshViewer = false;
 
 	@Parameter(required = false, persist = true, label = "Replace existing paths")
 	private boolean clearExisting;

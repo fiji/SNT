@@ -648,14 +648,17 @@ public class SNTUI extends JDialog {
 			"There are unsaved paths. Do you really want to quit?";
 		if (pmUI.measurementsUnsaved()) msg =
 			"There are unsaved measurements. Do you really want to quit?";
-		if (!guiUtils.getConfirmation(msg, "Really quit?")) return;
+		if (!guiUtils.getConfirmation(msg, "Really Quit?")) return;
+		abortCurrentOperation();
 		plugin.cancelSearch(true);
 		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
 		plugin.prefs.savePluginPrefs(true);
 		pmUI.dispose();
 		pmUI.closeTable();
 		fmUI.dispose();
+		if (recViewer != null) recViewer.dispose();
 		dispose();
+		//NB: If visible Reconstruction Plotter will remain open
 		plugin.closeAndResetAllPanes();
 		SNT.setPlugin(null);
 	}

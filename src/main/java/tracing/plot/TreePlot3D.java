@@ -1023,16 +1023,18 @@ public class TreePlot3D {
 
 				@Override
 				public void windowClosing(final WindowEvent e) {
-					if (isSNTInstance()) sntService.getUI().setReconstructionViewer(null);
-					ViewerFrame.this.remove(canvas);
-					ViewerFrame.this.chart.dispose();
-					ViewerFrame.this.chart = null;
-					if (ViewerFrame.this.manager != null) ViewerFrame.this.manager
-						.dispose();
-					ViewerFrame.this.dispose();
+					getOuter().dispose();
 				}
 			});
 			setVisible(true);
+		}
+
+		public void disposeFrame() {
+			ViewerFrame.this.remove(canvas);
+			ViewerFrame.this.chart.dispose();
+			ViewerFrame.this.chart = null;
+			if (ViewerFrame.this.manager != null) ViewerFrame.this.manager.dispose();
+			ViewerFrame.this.dispose();
 		}
 
 		/* (non-Javadoc)
@@ -1834,6 +1836,14 @@ public class TreePlot3D {
 
 	private TreePlot3D getOuter() {
 		return this;
+	}
+
+	/**
+	 * Closes and releases all the resources used by this viewer.
+	 */
+	public void dispose() {
+		if (isSNTInstance()) sntService.getUI().setReconstructionViewer(null);
+		frame.disposeFrame();
 	}
 
 	private class ShapeTree extends Shape {

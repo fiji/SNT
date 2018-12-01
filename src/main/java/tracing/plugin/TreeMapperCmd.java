@@ -43,7 +43,6 @@ import org.scijava.prefs.PrefService;
 import org.scijava.widget.Button;
 
 import tracing.Path;
-import tracing.PathManagerUI;
 import tracing.SNT;
 import tracing.SNTService;
 import tracing.Tree;
@@ -58,9 +57,9 @@ import tracing.plot.TreePlot3D;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label = "Tree Color Coder",
+@Plugin(type = Command.class, visible = false, label = "Color Mapper",
 	initializer = "init")
-public class TreeColorizerCmd extends DynamicCommand {
+public class TreeMapperCmd extends DynamicCommand {
 
 	@Parameter
 	private SNTService sntService;
@@ -90,10 +89,10 @@ public class TreeColorizerCmd extends DynamicCommand {
 	@Parameter(required = false, label = "<HTML>&nbsp;")
 	private ColorTable colorTable;
 
-	@Parameter(required = false, label = "Show in Reconstruction Viewer")
+	@Parameter(required = false, label = "Rec. Viewer Color Map")
 	private boolean showInRecViewer = true;
 
-	@Parameter(required = false, label = "Create 2D plot")
+	@Parameter(required = false, label = "Rec. Plotter Color Map")
 	private boolean showPlot = false;
 
 	@Parameter(required = false, label = "Remove Existing Color Coding",
@@ -106,11 +105,9 @@ public class TreeColorizerCmd extends DynamicCommand {
 	private Map<String, URL> luts;
 	private TreePlot2D plot;
 
-	private PathManagerUI manager;
-	private TreePlot3D recViewer;
-
 	@Override
 	public void run() {
+		if (!sntService.isActive()) cancel("SNT not running?");
 		if (tree == null || tree.isEmpty()) cancel("<HTML>Invalid input tree");
 		statusService.showStatus("Applying Color Code...");
 		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
@@ -132,23 +129,11 @@ public class TreeColorizerCmd extends DynamicCommand {
 			plot.showPlot();
 		}
 		if (showInRecViewer) {
-			SNT.log("Displaying in Reconstruction Viewer...");
-			final boolean newInstance = recViewer == null;
-			final boolean sntActive = sntService.isActive();
-			recViewer = (sntActive) ? sntService.getReconstructionViewer()
-				: new TreePlot3D(getContext());
-			recViewer.addColorBarLegend(colorTable, (float) minMax[0],
-				(float) minMax[1]);
-			if (sntActive) {
-				recViewer.syncPathManagerList();
-			}
-			else if (newInstance) {
-				recViewer.add(tree);
-			}
-			recViewer.show();
+			final TreePlot3D recViewer = sntService.getReconstructionViewer();
+			recViewer.addColorBarLegend(colorTable, (float) minMax[0], (float) minMax[1]);
+			recViewer.syncPathManagerList();
 		}
 		SNT.log("Finished...");
-		if (manager != null) manager.update();
 		statusService.clearStatus();
 	}
 
@@ -157,9 +142,6 @@ public class TreeColorizerCmd extends DynamicCommand {
 		if (lutChoice == null) lutChoice = prefService.get(getClass(), "lutChoice",
 			"mpl-viridis.lut");
 		setLUTs();
-		if (!sntService.isActive()) return;
-		manager = sntService.getUI().getPathManager();
-		recViewer = sntService.getUI().getReconstructionViewer(false);
 	}
 
 	private void setLUTs() {
@@ -200,7 +182,6 @@ public class TreeColorizerCmd extends DynamicCommand {
 			p.setColor(null);
 			p.setNodeColors(null);
 		}
-		if (manager != null) manager.update();
 		statusService.showStatus("Color code removed...");
 	}
 
@@ -211,7 +192,7 @@ public class TreeColorizerCmd extends DynamicCommand {
 		final Map<String, Object> input = new HashMap<>();
 		final Tree tree = new Tree(SNT.randomPaths());
 		input.put("tree", tree);
-		ij.command().run(TreeColorizerCmd.class, true, input);
+		ij.command().run(TreeMapperCmd.class, true, input);
 	}
 
 }

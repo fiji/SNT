@@ -41,7 +41,7 @@ import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.ShollTracingsCmd;
 import tracing.plugin.SkeletonizerCmd;
 import tracing.plugin.StrahlerCmd;
-import tracing.plugin.TreeColorizerCmd;
+import tracing.plugin.TreeMapperCmd;
 
 /**
  * Command for resetting SNT Preferences.
@@ -105,7 +105,7 @@ public class ResetPrefsCmd extends ContextCommand {
 		prefService.clear(ShollTracingsCmd.class);
 		prefService.clear(SkeletonizerCmd.class);
 		prefService.clear(StrahlerCmd.class);
-		prefService.clear(TreeColorizerCmd.class);
+		prefService.clear(TreeMapperCmd.class);
 
 		// Legacy (IJ1-based) preferences
 		SNTPrefs.clearAll();

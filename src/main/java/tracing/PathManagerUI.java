@@ -109,7 +109,7 @@ import tracing.gui.cmds.PathFitterCmd;
 import tracing.gui.cmds.SWCTypeOptionsCmd;
 import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.SkeletonizerCmd;
-import tracing.plugin.TreeColorizerCmd;
+import tracing.plugin.TreeMapperCmd;
 import tracing.util.SWCColor;
 import tracing.util.SWCPoint;
 
@@ -1741,7 +1741,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				input.put("tree", new Tree(selectedPaths));
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
-				cmdService.run(TreeColorizerCmd.class, true, input);
+				cmdService.run(TreeMapperCmd.class, true, input);
 				return;
 
 			}

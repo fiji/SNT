@@ -44,6 +44,7 @@ import ij.measure.Calibration;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import ij3d.Pipe;
+import tracing.analysis.PathProfiler;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
@@ -1183,23 +1184,22 @@ public class Path implements Comparable<Path> {
 	 *
 	 * @param value the node value
 	 * @param pos the node position
-	 * @return the node value, or null if no values have been assigned to this
-	 *         path * @see PointInImage#v
 	 * @see PathProfiler#assignValues()
 	 */
-	public void setValue(final double value, final int pos) {
+	public void setNodeValue(final double value, final int pos) {
 		if (nodeValues == null) nodeValues = new double[size()];
 		nodeValues[pos] = value;
 	}
 
 	/**
-	 * Returns the "value" property to this node.
+	 * Returns the "value" property of this node.
 	 *
-	 * @param value the node value
-	 * @param pos the node position * @see PointInImage#v
+	 * @param pos the node position
+	 * @return the value property of this node
 	 * @see PathProfiler#assignValues()
+	 * @see PointInImage#v
 	 */
-	public double getValue(final int pos) {
+	public double getNodeValue(final int pos) {
 		return (nodeValues == null) ? null : nodeValues[pos];
 	}
 
@@ -1207,8 +1207,7 @@ public class Path implements Comparable<Path> {
 	 * Gets the path "values", the array containing the numeric property assigned
 	 * to path nodes, typically voxel intensities.
 	 *
-	 * @return the values of this path nodes, or null if nodes have not been
-	 *         assigned a "value".
+	 * @param values the new node values
 	 * @see PointInImage#v
 	 * @see PathProfiler#assignValues()
 	 */
@@ -1225,7 +1224,6 @@ public class Path implements Comparable<Path> {
 	 * values
 	 *
 	 * @return true, if successful
-	 * @see #getNodeValues()
 	 */
 	public boolean hasNodeValues() {
 		return nodeValues != null;
@@ -1328,9 +1326,9 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Checks if is fitted version of another path.
+	 * Checks if this Path is a fitted version of another path.
 	 *
-	 * @return true, if is fitted version of another path
+	 * @return true, if it is a fitted version of another path
 	 */
 	public boolean isFittedVersionOfAnotherPath() {
 		return fittedVersionOf != null;

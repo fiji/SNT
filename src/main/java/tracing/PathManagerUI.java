@@ -1571,11 +1571,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			// Process nothing without a single path selection
 			final Collection<Path> selectedPaths = getSelectedPaths(false);
 			if (selectedPaths.size() != 1) {
-				displayTmpMsg("You must have exactly one path selected.");
+				guiUtils.error("You must have exactly one path selected.");
 				return;
 			}
 			final Path p = selectedPaths.iterator().next();
-
 			if (e.getActionCommand().equals(RENAME_CMD)) {
 				final String s = guiUtils.getString(
 					"Rename this path to (clear to reset name):", "Rename Path", p
@@ -1702,10 +1701,15 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (PLOT_PROFILE_CMD.equals(cmd)) {
-				final Tree tree = new Tree(selectedPaths);
-				PathProfiler profiler = new PathProfiler(tree, plugin.getImagePlus());
-				profiler.setContext(plugin.getContext());
-				profiler.run();
+				if (analysisModeError()) return;
+				SwingUtilities.invokeLater(() -> {
+					final Tree tree = new Tree(selectedPaths);
+					final PathProfiler profiler = new PathProfiler(tree, plugin.getImagePlus());
+					profiler.getPlot().show(); // IJ1 plot, arguably more suitable for profile data
+					// NB: to use Scijava plotService instead:
+					//	profiler.setContext(plugin.getContext());
+					//	profiler.run();
+				});
 				return;
 			}
 			else if (MEASURE_CMD.equals(cmd)) {

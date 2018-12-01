@@ -1948,7 +1948,7 @@ public class TreePlot3D {
 			final Color color = fromAWTColor(SWCColor.average(somaColors));
 			switch (somaPoints.size()) {
 				case 0:
-					SNT.log(tree.getLabel() + ": No soma attribute");
+					//SNT.log(tree.getLabel() + ": No soma attribute");
 					somaSubShape = null;
 					return;
 				case 1:

@@ -29,7 +29,6 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 
-import tracing.SNT;
 import tracing.SNTService;
 import tracing.SNTUI;
 import tracing.SimpleNeuriteTracer;
@@ -61,7 +60,6 @@ public class CommonDynamicCmd extends DynamicCommand {
 		else {
 			ui.showStatus(statusMsg, temporaryMsg);
 		}
-		SNT.log("Rebuilding canvases...");
 	}
 
 	protected void error(final String msg) {

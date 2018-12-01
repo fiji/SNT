@@ -366,6 +366,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void rebuildDisplayCanvases() throws IllegalArgumentException {
 		initialize(getSinglePane(), 1, 1);
 		showInitializedCanvases();
+		updateAllViewers();
 	}
 
 	private void showInitializedCanvases() {

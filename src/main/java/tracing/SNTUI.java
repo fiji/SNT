@@ -1867,7 +1867,7 @@ public class SNTUI extends JDialog {
 		loadLabelsMenuItem.addActionListener(listener);
 		importSubmenu.add(loadLabelsMenuItem);
 		importSubmenu.addSeparator();
-		final JMenu remoteSubmenu = new JMenu("Remote Reconstructions");
+		final JMenu remoteSubmenu = new JMenu("Remote Databases");
 		remoteSubmenu.setIcon(IconFactory.getMenuIcon(GLYPH.DATABASE));
 		final JMenuItem importFlyCircuit = new JMenuItem("FlyCircuit...");
 		remoteSubmenu.add(importFlyCircuit);
@@ -2949,9 +2949,9 @@ public class SNTUI extends JDialog {
 			}
 			else if (source == plotMenuItem && !noPathsError()) {
 				final Map<String, Object> input = new HashMap<>();
-				input.put("tree", new Tree(pathAndFillManager.getPathsFiltered()));
-				input.put("title", (plugin.getImagePlus() == null) ? "All Paths"
-					: plugin.getImagePlus().getTitle());
+				final Tree tree = new Tree(pathAndFillManager.getPathsFiltered());
+				tree.setLabel("SNT Plotter");
+				input.put("tree", tree);
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
 				cmdService.run(PlotterCmd.class, true, input);
@@ -3082,7 +3082,7 @@ public class SNTUI extends JDialog {
 
 		private final Class<? extends Command> cmd;
 		private final boolean analysisModeCmd;
-		final HashMap<String, Object> inputs;
+		private final HashMap<String, Object> inputs;
 
 		public CmdRunner(final Class<? extends Command> cmd,
 			final boolean analysisModeCmd)
@@ -3102,6 +3102,11 @@ public class SNTUI extends JDialog {
 
 		@Override
 		public Object doInBackground() {
+			if (getCurrentState() == SNTUI.EDITING_MODE) {
+				guiUtils.error("Please finish editing " + plugin.getEditingPath()
+					.getName() + " before running this command.");
+				return null;
+			}
 			if (analysisModeCmd && getCurrentState() != SNTUI.ANALYSIS_MODE) {
 				if (guiUtils.getConfirmation(
 					"Activate Analysis Mode and import external reconstructions?",

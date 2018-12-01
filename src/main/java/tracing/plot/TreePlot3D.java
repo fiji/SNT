@@ -1023,6 +1023,7 @@ public class TreePlot3D {
 
 				@Override
 				public void windowClosing(final WindowEvent e) {
+					if (isSNTInstance()) sntService.getUI().setReconstructionViewer(null);
 					ViewerFrame.this.remove(canvas);
 					ViewerFrame.this.chart.dispose();
 					ViewerFrame.this.chart = null;

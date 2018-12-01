@@ -202,7 +202,7 @@ public class SNTUI extends JDialog {
 	/* Reconstruction Viewer */
 	protected TreePlot3D recViewer;
 	protected Frame recViewerFrame;
-	private JButton openRefreshRecViewerButton;
+	private JButton openRecViewer;
 
 	protected final GuiListener listener;
 
@@ -1497,8 +1497,8 @@ public class SNTUI extends JDialog {
 	}
 
 	private JPanel reconstructionViewerPanel() {
-		openRefreshRecViewerButton = new JButton("Open Reconstruction Viewer");
-		openRefreshRecViewerButton.addActionListener(e -> {
+		openRecViewer = new JButton("Open Reconstruction Viewer");
+		openRecViewer.addActionListener(e -> {
 			// if (noPathsError()) return;
 			if (recViewer == null) {
 				getReconstructionViewer(true);
@@ -1510,7 +1510,7 @@ public class SNTUI extends JDialog {
 
 					@Override
 					public void windowClosing(final WindowEvent e) {
-						openRefreshRecViewerButton.setEnabled(true);
+						openRecViewer.setEnabled(true);
 						recViewer = null;
 						recViewerFrame = null;
 					}
@@ -1523,7 +1523,7 @@ public class SNTUI extends JDialog {
 		final GridBagConstraints gdb = new GridBagConstraints();
 		gdb.fill = GridBagConstraints.HORIZONTAL;
 		gdb.weightx = 0.5;
-		panel.add(openRefreshRecViewerButton, gdb);
+		panel.add(openRecViewer, gdb);
 		return panel;
 	}
 
@@ -2524,10 +2524,15 @@ public class SNTUI extends JDialog {
 	public TreePlot3D getReconstructionViewer(final boolean initializeIfNull) {
 		if (initializeIfNull && recViewer == null) {
 			recViewer = new TreePlot3D(plugin.getContext());
-			if (openRefreshRecViewerButton != null) openRefreshRecViewerButton
-				.setEnabled(false);
+			recViewer.show();
+			setReconstructionViewer(recViewer);
 		}
 		return recViewer;
+	}
+
+	public void setReconstructionViewer(final TreePlot3D recViewer) {
+			this.recViewer = recViewer;
+			openRecViewer.setEnabled(recViewer==null);
 	}
 
 	protected void reset() {

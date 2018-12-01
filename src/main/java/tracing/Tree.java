@@ -75,11 +75,25 @@ public class Tree {
 	 * Instantiates a new Tree from a set of paths.
 	 *
 	 * @param paths the Collection of paths forming this tree. Null not allowed.
+	 *          Note that when a Path has been fitted and
+	 *          {@link Path#getUseFitted()} is true, its fitted 'flavor' is used.
 	 */
 	public Tree(final Collection<Path> paths) {
 		if (paths == null) throw new IllegalArgumentException(
 			"Cannot instantiate a new tree from a null collection");
-		tree = new ArrayList<>(paths);
+		tree = new ArrayList<>(paths.size());
+		for (final Path p : paths) {
+			if (p == null) continue;
+			Path pathToAdd;
+			// If fitted flavor of path exists use it instead
+			if (p.getUseFitted() && p.getFitted() != null) {
+				pathToAdd = p.getFitted();
+			}
+			else {
+				pathToAdd = p;
+			}
+			tree.add(pathToAdd);
+		}
 	}
 
 	/**

@@ -60,17 +60,31 @@ import tracing.util.PointInImage;
 public class TreeColorMapper extends ColorMapper {
 
 	/* For convenience keep references to TreeAnalyzer fields */
+
+	/** Flag for {@value #BRANCH_ORDER} mapping. */
 	public static final String BRANCH_ORDER = TreeAnalyzer.BRANCH_ORDER;
+	/** Flag for {@value #LENGTH} mapping. */
 	public static final String LENGTH = TreeAnalyzer.LENGTH;
+	/** Flag for {@value #N_BRANCH_POINTS} mapping. */
 	public static final String N_BRANCH_POINTS = TreeAnalyzer.N_BRANCH_POINTS;
+	/** Flag for {@value #N_NODES} mapping. */
 	public static final String N_NODES = TreeAnalyzer.N_NODES;
+	/** Flag for {@value #MEAN_RADIUS} mapping. */
 	public static final String MEAN_RADIUS = TreeAnalyzer.MEAN_RADIUS;
+	/** Flag for {@value #NODE_RADIUS} mapping. */
 	public static final String NODE_RADIUS = TreeAnalyzer.NODE_RADIUS;
+	/** Flag for {@value #X_COORDINATES} mapping. */
 	public static final String X_COORDINATES = TreeAnalyzer.X_COORDINATES;
+	/** Flag for {@value #Y_COORDINATES} mapping. */
 	public static final String Y_COORDINATES = TreeAnalyzer.Y_COORDINATES;
+	/** Flag for {@value #Z_COORDINATES} mapping. */
 	public static final String Z_COORDINATES = TreeAnalyzer.Z_COORDINATES;
+	/** See {@link TreeAnalyzer#VALUES}. */
+	public static final String VALUES = TreeAnalyzer.VALUES;
+	/** Flag for {@value #PATH_DISTANCE} mapping. */
 	public static final String PATH_DISTANCE = "Path distance to soma";
-	public static final String FIRST_TAG = "Tags/Filename";
+	/** Flag for {@value #TAG_FILENAME} mapping. */
+	public static final String TAG_FILENAME = "Tags/Filename";
 	private static final String INTERNAL_COUNTER = "Id";
 
 	public static final String[] COMMON_MEASUREMENTS = { //
@@ -152,7 +166,7 @@ public class TreeColorMapper extends ColorMapper {
 			case N_NODES:
 			case N_BRANCH_POINTS:
 			case INTERNAL_COUNTER:
-			case FIRST_TAG:
+			case TAG_FILENAME:
 				mapToPathProperty(cMeasurement, colorTable);
 				break;
 			case X_COORDINATES:
@@ -202,7 +216,7 @@ public class TreeColorMapper extends ColorMapper {
 				for (final Path p : paths)
 					mappedPaths.add(new MappedPath(p, (double) internalCounter));
 				break;
-			case FIRST_TAG:
+			case TAG_FILENAME:
 				integerScale = true;
 				final List<MappedTaggedPath> mappedTaggedPaths = new ArrayList<>();
 				final TreeSet<String> tags = new TreeSet<>();

@@ -232,12 +232,15 @@ public class TreeStatistics extends TreeAnalyzer {
 						stat.addValue(p.getNode(i).y);
 					}
 				}
-			case TreeAnalyzer.INTENSITIES:
+			case TreeAnalyzer.VALUES:
 				for (final Path p : tree.list()) {
+					if (!p.hasNodeValues()) continue;
 					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getNode(i).v);
+						stat.addValue(p.getNodeValue(i));
 					}
 				}
+				if (stat.getN() == 0)
+					throw new IllegalArgumentException("Tree has no values assigned");
 				break;
 			case TreeAnalyzer.Z_COORDINATES:
 				for (final Path p : tree.list()) {
@@ -289,6 +292,11 @@ public class TreeStatistics extends TreeAnalyzer {
 			if (sStatistics != null) sStatistics.addValue(value);
 			else dStatistics.addValue(value);
 		}
+
+		private long getN() {
+			return (sStatistics != null) ? sStatistics.getN() : dStatistics.getN();
+		}
+
 	}
 
 	/* IDE debug method */

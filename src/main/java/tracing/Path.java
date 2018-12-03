@@ -503,10 +503,9 @@ public class Path implements Comparable<Path> {
 		return points;
 	}
 
-	public void getPointDouble(final int i, final double[] p) {
-
+	protected void getPointDouble(final int i, final double[] p) {
 		if ((i < 0) || i >= size()) {
-			throw new RuntimeException(
+			throw new IndexOutOfBoundsException(
 				"BUG: getPointDouble was asked for an out-of-range point: " + i);
 		}
 
@@ -515,23 +514,22 @@ public class Path implements Comparable<Path> {
 		p[2] = precise_z_positions[i];
 	}
 
-
 	/**
-	 * @deprecated Use {@link #getNode(int)} instead
+	 * Gets the node at the specified position.
+	 *
+	 * @param pos the position index (0-based)
+	 * @return the node
+	 * @throws IndexOutOfBoundsException if position is out-of-range
 	 */
-	public PointInImage getPointInImage(final int index) {
-		return getNode(index);
-	}
-
-	public PointInImage getNode(final int index) {
-		if ((index < 0) || index >= size()) {
-			throw new IllegalArgumentException(
-				"getNode() was asked for an out-of-range point: " + index);
+	public PointInImage getNode(final int pos) throws IndexOutOfBoundsException {
+		if ((pos < 0) || pos >= size()) {
+			throw new IndexOutOfBoundsException(
+				"getNode() was asked for an out-of-range point: " + pos);
 		}
-		final PointInImage result = new PointInImage(precise_x_positions[index],
-			precise_y_positions[index], precise_z_positions[index]);
+		final PointInImage result = new PointInImage(precise_x_positions[pos],
+			precise_y_positions[pos], precise_z_positions[pos]);
 		result.onPath = this;
-		if (nodeValues != null) result.v = nodeValues[index];
+		if (nodeValues != null) result.v = nodeValues[pos];
 		return result;
 	}
 
@@ -1204,7 +1202,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Gets the path "values", the array containing the numeric property assigned
+	 * Sets the path "values", the array containing the numeric property assigned
 	 * to path nodes, typically voxel intensities.
 	 *
 	 * @param values the new node values
@@ -1224,6 +1222,8 @@ public class Path implements Comparable<Path> {
 	 * values
 	 *
 	 * @return true, if successful
+	 * @see PointInImage#v
+	 * @see PathProfiler#assignValues()
 	 */
 	public boolean hasNodeValues() {
 		return nodeValues != null;

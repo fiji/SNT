@@ -56,18 +56,50 @@ public class TreeAnalyzer extends ContextCommand {
 	@Parameter
 	protected DisplayService displayService;
 
+	/** Flag for {@value #BRANCH_ORDER} analysis. */
 	public static final String BRANCH_ORDER = "Branch order";
+
+	/** Flag for {@value #INTER_NODE_DISTANCE} analysis. */
 	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
+
+	/** Flag for {@value #INTER_NODE_DISTANCE_SQUARED} analysis. */
 	public static final String INTER_NODE_DISTANCE_SQUARED =
 		"Inter-node distance (squared)";
+
+	/** Flag for {@value #LENGTH} analysis. */
 	public static final String LENGTH = "Length";
+
+	/** Flag for {@value #N_BRANCH_POINTS} analysis. */
 	public static final String N_BRANCH_POINTS = "No. of branch points";
+
+	/** Flag for {@value #N_NODES} analysis. */
 	public static final String N_NODES = "No. of nodes";
+
+	/** Flag for {@value #NODE_RADIUS} analysis. */
 	public static final String NODE_RADIUS = "Node radius";
+
+	/** Flag for {@value #MEAN_RADIUS} analysis. */
 	public static final String MEAN_RADIUS = "Path mean radius";
+
+	/** Flag for {@value #X_COORDINATES} analysis. */
 	public static final String X_COORDINATES = "X coordinates";
+
+	/** Flag for {@value #Y_COORDINATES} analysis. */
 	public static final String Y_COORDINATES = "Y coordinates";
+
+	/** Flag for {@value #Z_COORDINATES} analysis. */
 	public static final String Z_COORDINATES = "Z coordinates";
+
+	/**
+	 * Flag for analysis of {@value #VALUES}, an optional numeric property that
+	 * can be assigned to Path nodes (typically voxel intensities, assigned via
+	 * {@link PathProfiler}. Note that an {@link IllegalArgumentException} is
+	 * triggered if no values have been assigned to the tree being analyzed.
+	 * 
+	 * @see Path#hasNodeValues()
+	 * @see PathProfiler#assignValues()
+	 */
+	public static final String VALUES = "Node values";
 
 	protected Tree tree;
 	private Tree unfilteredTree;
@@ -85,8 +117,8 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Instantiates a new Tree analyzer.
 	 *
 	 * @param tree Collection of Paths to be analyzed. Note that null Paths are
-	 *          discarded. Also, when a Path has been fitted and its
-	 *          {@link Path#getUseFitted()} is true, its fitted flavor is used.
+	 *          discarded. Also, when a Path has been fitted and
+	 *          {@link Path#getUseFitted()} is true, its fitted 'flavor' is used.
 	 * @see #getParsedTree()
 	 */
 	public TreeAnalyzer(final Tree tree) {

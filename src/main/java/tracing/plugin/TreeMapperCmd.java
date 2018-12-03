@@ -80,7 +80,7 @@ public class TreeMapperCmd extends DynamicCommand {
 		TreeColorMapper.MEAN_RADIUS, //
 		TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES,
 		TreeColorMapper.Y_COORDINATES, //
-		TreeColorMapper.Z_COORDINATES, TreeColorMapper.FIRST_TAG })
+		TreeColorMapper.Z_COORDINATES, TreeColorMapper.TAG_FILENAME })
 	private String measurementChoice;
 
 	@Parameter(label = "LUT", callback = "lutChoiceChanged")

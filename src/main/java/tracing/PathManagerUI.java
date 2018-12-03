@@ -1659,8 +1659,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		private final static String HISTOGRAM_CMD = "Distribution Analysis...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
 		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";
-		private final static String PLOT_PROFILE_CMD = "Plot Profile";
-
+		private final static String PLOT_PROFILE_CMD = "Path Profile";
 
 		private final static String TAG_LENGTH_PATTERN =
 			" ?\\[L:\\d+\\.?\\d+\\s?.+\\w+\\]";
@@ -1743,6 +1742,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			else if (COLORIZE_PATH_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
+				input.put("setValuesFromSNTService", !plugin.analysisMode);
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
 				cmdService.run(TreeMapperCmd.class, true, input);
@@ -1754,6 +1754,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				final Tree tree = new Tree(selectedPaths);
 				tree.setLabel(getDescription(selectedPaths));
 				input.put("tree", tree);
+				input.put("setValuesFromSNTService", !plugin.analysisMode);
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
 				cmdService.run(DistributionCmd.class, true, input);

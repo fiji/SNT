@@ -1966,14 +1966,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Retrieves the pixel data currently loaded as an image. The sole purpose of
-	 * this method is is to bridge SNT with other legacy classes that cannot deal
-	 * with multidimensional images.
+	 * Retrieves the pixel data currently loaded in memory as an image. The main
+	 * purpose of this method is to bridge SNT with other legacy classes that
+	 * cannot deal with multidimensional images.
 	 *
 	 * @return the loaded data corresponding to the C,T position currently being
 	 *         traced. This image is always a single channel image.
 	 */
-	protected ImagePlus getLoadedDataAsImp() {
+	public ImagePlus getLoadedDataAsImp() {
 		final ImageStack stack = new ImageStack(xy.getWidth(), xy.getHeight());
 		switch (imageType) {
 			case ImagePlus.GRAY8:

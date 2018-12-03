@@ -27,12 +27,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.imagej.ImageJ;
 import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable;
 
+import org.scijava.ItemVisibility;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
@@ -46,6 +48,8 @@ import tracing.Path;
 import tracing.SNT;
 import tracing.SNTService;
 import tracing.Tree;
+import tracing.analysis.PathProfiler;
+import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeColorMapper;
 import tracing.plot.TreePlot2D;
 import tracing.plot.TreePlot3D;
@@ -73,14 +77,7 @@ public class TreeMapperCmd extends DynamicCommand {
 	@Parameter
 	private StatusService statusService;
 
-	@Parameter(required = true, label = "Color by", choices = { //
-		TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH,
-		TreeColorMapper.N_BRANCH_POINTS, //
-		TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE,
-		TreeColorMapper.MEAN_RADIUS, //
-		TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES,
-		TreeColorMapper.Y_COORDINATES, //
-		TreeColorMapper.Z_COORDINATES, TreeColorMapper.TAG_FILENAME })
+	@Parameter(required = true, label = "Color by")
 	private String measurementChoice;
 
 	@Parameter(label = "LUT", callback = "lutChoiceChanged")
@@ -102,6 +99,9 @@ public class TreeMapperCmd extends DynamicCommand {
 	@Parameter(required = true)
 	private Tree tree;
 
+	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
+	private boolean setValuesFromSNTService;
+
 	private Map<String, URL> luts;
 	private TreePlot2D plot;
 
@@ -112,6 +112,14 @@ public class TreeMapperCmd extends DynamicCommand {
 		statusService.showStatus("Applying Color Code...");
 		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
 		final TreeColorMapper colorizer = new TreeColorMapper(context());
+		if (setValuesFromSNTService && TreeColorMapper.VALUES.equals(
+			measurementChoice))
+		{
+			SNT.log("Assigning values...");
+			final PathProfiler profiler = new PathProfiler(tree, sntService
+				.getPlugin().getLoadedDataAsImp());
+			profiler.assignValues();
+		}
 		colorizer.setMinMax(Double.NaN, Double.NaN);
 		try {
 			colorizer.map(tree, measurementChoice, colorTable);
@@ -139,6 +147,17 @@ public class TreeMapperCmd extends DynamicCommand {
 
 	@SuppressWarnings("unused")
 	private void init() {
+		final MutableModuleItem<String> measurementChoiceInput = getInfo()
+			.getMutableInput("measurementChoice", String.class);
+		final List<String> choices = new ArrayList<>();
+		Collections.addAll(choices, TreeAnalyzer.COMMON_MEASUREMENTS); 
+		choices.add(TreeColorMapper.TAG_FILENAME);
+		if (setValuesFromSNTService) choices.add(TreeColorMapper.VALUES);
+		Collections.sort(choices);
+		measurementChoiceInput.setChoices(choices);
+		measurementChoiceInput.setValue(this, prefService.get(getClass(),
+			"measurementChoice", TreeColorMapper.BRANCH_ORDER));
+		resolveInput("setValuesFromSNTService");
 		if (lutChoice == null) lutChoice = prefService.get(getClass(), "lutChoice",
 			"mpl-viridis.lut");
 		setLUTs();

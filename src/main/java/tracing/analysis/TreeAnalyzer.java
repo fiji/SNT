@@ -99,8 +99,16 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see Path#hasNodeValues()
 	 * @see PathProfiler#assignValues()
 	 */
-	public static final String VALUES = "Node values";
+	public static final String VALUES = "Node intensity values";
 
+	public static final String[] COMMON_MEASUREMENTS = { //
+		TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH,
+		TreeColorMapper.N_BRANCH_POINTS, //
+		TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE,
+		TreeColorMapper.MEAN_RADIUS, //
+		TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES,
+		TreeColorMapper.Y_COORDINATES, //
+		TreeColorMapper.Z_COORDINATES };
 	protected Tree tree;
 	private Tree unfilteredTree;
 	private HashSet<Path> primaries;

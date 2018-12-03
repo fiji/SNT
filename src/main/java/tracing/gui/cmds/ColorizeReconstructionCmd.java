@@ -41,6 +41,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import tracing.analysis.MultiTreeColorMapper;
+import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeColorMapper;
 import tracing.gui.GuiUtils;
 import tracing.plot.TreePlot3D;
@@ -138,7 +139,7 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 		}
 		else if (treeMappingLabels != null) {
 			// Color code single trees
-			mChoices = Arrays.asList(TreeColorMapper.COMMON_MEASUREMENTS);
+			mChoices = Arrays.asList(TreeAnalyzer.COMMON_MEASUREMENTS);
 		}
 		else if (multiTreeMappingLabels != null) {
 			mChoices = Arrays.asList(MultiTreeColorMapper.PROPERTIES);

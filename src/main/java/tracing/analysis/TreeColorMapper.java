@@ -87,14 +87,6 @@ public class TreeColorMapper extends ColorMapper {
 	public static final String TAG_FILENAME = "Tags/Filename";
 	private static final String INTERNAL_COUNTER = "Id";
 
-	public static final String[] COMMON_MEASUREMENTS = { //
-		TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH,
-		TreeColorMapper.N_BRANCH_POINTS, //
-		TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE,
-		TreeColorMapper.MEAN_RADIUS, //
-		TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES,
-		TreeColorMapper.Y_COORDINATES, //
-		TreeColorMapper.Z_COORDINATES };
 
 	@Parameter
 	private LUTService lutService;
@@ -173,6 +165,7 @@ public class TreeColorMapper extends ColorMapper {
 			case Y_COORDINATES:
 			case Z_COORDINATES:
 			case NODE_RADIUS:
+			case VALUES:
 				mapToNodeProperty(cMeasurement, colorTable);
 				break;
 			default:
@@ -263,6 +256,9 @@ public class TreeColorMapper extends ColorMapper {
 						break;
 					case NODE_RADIUS:
 						value = p.getNodeRadius(node);
+						break;
+					case VALUES:
+						value = p.getNodeValue(node);
 						break;
 					default:
 						throw new IllegalArgumentException("Unknow parameter");

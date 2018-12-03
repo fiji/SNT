@@ -41,6 +41,7 @@ import org.scijava.service.Service;
 import ij.ImagePlus;
 import ij.plugin.ZProjector;
 import ij.process.ColorProcessor;
+import tracing.analysis.PathProfiler;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeStatistics;
 import tracing.hyperpanes.MultiDThreePanes;
@@ -86,6 +87,23 @@ public class SNTService extends AbstractService implements ImageJService {
 	}
 
 	/**
+	 * Assigns pixel intensities at each Path node, storing them as Path
+	 * values. Assigned intensities are those of the channel and time point
+	 * currently being traced.
+	 *
+	 * @param selectedPathsOnly If true, only selected paths will be assigned
+	 *          values, otherwise voxel intensities will be assigned to all paths
+	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @see PathProfiler
+	 * @see Path#setNodeValues(double[])
+	 */
+	public void assignValues(final boolean selectedPathsOnly) {
+		final PathProfiler profiler = new PathProfiler(getTree(selectedPathsOnly),
+			getPlugin().getLoadedDataAsImp());
+		profiler.assignValues();
+	}
+
+	/**
 	 * Returns a reference to the active {@link SimpleNeuriteTracer} plugin.
 	 *
 	 * @return the {@link SimpleNeuriteTracer} instance
@@ -101,6 +119,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *
 	 * @return the paths currently selected, or null if no selection exists
 	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @see #getTree(boolean)
 	 */
 	public Collection<Path> getSelectedPaths() {
 		accessActiveInstance();
@@ -112,6 +131,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *
 	 * @return all the listed paths, or null if the Path Manager is empty
 	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @see #getTree(boolean)
 	 */
 	public List<Path> getPaths() {
 		accessActiveInstance();

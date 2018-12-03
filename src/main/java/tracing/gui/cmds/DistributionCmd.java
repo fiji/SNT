@@ -22,18 +22,26 @@
 
 package tracing.gui.cmds;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.imagej.ImageJ;
 
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
+import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.prefs.PrefService;
 
 import tracing.SNT;
 import tracing.Tree;
+import tracing.analysis.PathProfiler;
 import tracing.analysis.TreeAnalyzer;
+import tracing.analysis.TreeColorMapper;
 import tracing.analysis.TreeStatistics;
 import tracing.gui.GuiUtils;
 
@@ -44,22 +52,45 @@ import tracing.gui.GuiUtils;
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false,
-	label = "Distribution of Morphometric Traits")
-public class DistributionCmd implements Command {
+	label = "Distribution Analysis", initializer = "init")
+public class DistributionCmd extends CommonDynamicCmd {
 
-	@Parameter(required = true, label = "Measurement", choices = {
-		TreeAnalyzer.BRANCH_ORDER, TreeAnalyzer.INTER_NODE_DISTANCE,
-		TreeAnalyzer.LENGTH, TreeAnalyzer.N_BRANCH_POINTS, TreeAnalyzer.N_NODES,
-		TreeAnalyzer.NODE_RADIUS, TreeAnalyzer.MEAN_RADIUS,
-		TreeAnalyzer.X_COORDINATES, TreeAnalyzer.Y_COORDINATES,
-		TreeAnalyzer.Z_COORDINATES })
+	@Parameter
+	private PrefService prefService;
+
+	@Parameter(required = true, label = "Measurement")
 	private String measurementChoice;
 
 	@Parameter(required = true)
 	private Tree tree;
 
+	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
+	private boolean setValuesFromSNTService;
+
+	@SuppressWarnings("unused")
+	private void init() {
+		final MutableModuleItem<String> measurementChoiceInput = getInfo()
+			.getMutableInput("measurementChoice", String.class);
+		final List<String> choices = new ArrayList<>();
+		Collections.addAll(choices, TreeAnalyzer.COMMON_MEASUREMENTS); 
+		if (setValuesFromSNTService) choices.add(TreeAnalyzer.VALUES);
+		Collections.sort(choices);
+		measurementChoiceInput.setChoices(choices);
+		measurementChoiceInput.setValue(this, prefService.get(getClass(),
+			"measurementChoice", TreeAnalyzer.BRANCH_ORDER));
+		resolveInput("setValuesFromSNTService");
+	}
+
 	@Override
 	public void run() {
+		if (setValuesFromSNTService && TreeColorMapper.VALUES.equals(
+			measurementChoice))
+		{
+			SNT.log("Assigning values...");
+			final PathProfiler profiler = new PathProfiler(tree, sntService
+				.getPlugin().getLoadedDataAsImp());
+			profiler.assignValues();
+		}
 		final TreeStatistics treeStats = new TreeStatistics(tree);
 		treeStats.getHistogram(measurementChoice).setVisible(true);
 	}

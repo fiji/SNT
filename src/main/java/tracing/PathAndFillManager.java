@@ -2794,6 +2794,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * paths" option is set.)
 	 */
 
+	@SuppressWarnings("deprecation")
 	protected void update3DViewerContents() {
 		if (plugin != null && !plugin.use3DViewer) return;
 		final boolean showOnlySelectedPaths = plugin.isOnlySelectedPathsVisible();

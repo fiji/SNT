@@ -256,6 +256,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @throws IllegalArgumentException if view is not a recognized option
 	 * @return the snapshot capture of the canvas as an RGB image
 	 */
+	@SuppressWarnings("deprecation")
 	public ImagePlus captureView(final String view) {
 		accessActiveInstance();
 		if (view == null || view.trim().isEmpty())

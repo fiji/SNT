@@ -30,8 +30,6 @@ import java.awt.Window;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1825,13 +1823,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return pathUnfinished && (currentPath.size() == 0);
 	}
 
-	public static String getStackTrace() {
-		final StringWriter sw = new StringWriter();
-		new Exception("Dummy Exception for Stack Trace").printStackTrace(
-			new PrintWriter(sw));
-		return sw.toString();
-	}
-
 	protected void startSholl(final PointInImage centerScaled) {
 		setZPositionAllPanes((int) Math.round(centerScaled.x), (int) Math.round(
 			centerScaled.y), (int) Math.round(centerScaled.z));
@@ -2285,7 +2276,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * used and whether the path should be displayed at all - it shouldn't if the
 	 * "Show only selected paths" option is set.
 	 */
-
+	@Deprecated
 	public void update3DViewerContents() {
 		if (use3DViewer && univ != null) {
 			new Thread(() -> {
@@ -2295,11 +2286,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Gets the instance of the legacy 3D viewer universe.
+	 * Gets the instance of the legacy 3D viewer universe. Note that the legacy 3D
+	 * viewer is now deprecated.
 	 *
 	 * @return the a reference to the 3DUniverse or null if no universe has been
 	 *         set
 	 */
+	@Deprecated
 	public Image3DUniverse get3DUniverse() {
 		return univ;
 	}
@@ -2315,6 +2308,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
+	@Deprecated
 	public void updateImageContent(final int resamplingFactor) {
 		if (univ == null || xy == null) return;
 
@@ -2366,6 +2360,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	/*
 	 * FIXME: this can be very slow ... Perhaps do it in a separate thread?
 	 */
+	@Deprecated
 	public void setColorImage(final ImagePlus newColorImage) {
 		colorImage = newColorImage;
 		update3DViewerContents();
@@ -2373,11 +2368,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	private int paths3DDisplay = 1;
 
+	@Deprecated
 	public void setPaths3DDisplay(final int paths3DDisplay) {
 		this.paths3DDisplay = paths3DDisplay;
 		update3DViewerContents();
 	}
 
+	@Deprecated
 	public int getPaths3DDisplay() {
 		return this.paths3DDisplay;
 	}
@@ -2440,7 +2437,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * @param c the Component to which the Listener should be attached
 	 * @param firstKeyListener the first key listener
 	 */
-	public static void setAsFirstKeyListener(final Component c,
+	private static void setAsFirstKeyListener(final Component c,
 		final QueueJumpingKeyListener firstKeyListener)
 	{
 		final KeyListener[] oldKeyListeners = c.getKeyListeners();

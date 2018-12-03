@@ -1189,6 +1189,7 @@ public class SNTUI extends JDialog {
 		return miscPanel;
 	}
 
+	@SuppressWarnings("deprecation")
 	private JPanel legacy3DViewerPanel() {
 
 		final String VIEWER_NONE = "None";
@@ -1812,6 +1813,7 @@ public class SNTUI extends JDialog {
 			: "Not a valid file path");
 	}
 
+	@SuppressWarnings("deprecation")
 	private JMenuBar createMenuBar() {
 		final JMenuBar menuBar = new JMenuBar();
 		final JMenu fileMenu = new JMenu("File");

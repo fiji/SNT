@@ -71,19 +71,19 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 		description = "Rotation angle in degrees", min = "0", max = "360",
 		stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE,
 		callback = "currentXangleChanged")
-	private int angleX = 0;
+	private double angleX = 0;
 
 	@Parameter(required = false, label = "Y rotation",
 		description = "Rotation angle in degrees", min = "0", max = "360",
 		stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE,
 		callback = "currentYangleChanged")
-	private int angleY = 0;
+	private double angleY = 0;
 
 	@Parameter(required = false, label = "Z rotation",
 		description = "Rotation angle in degrees", min = "0", max = "360",
 		stepSize = "10", style = NumberWidget.SCROLL_BAR_STYLE,
 		callback = "currentZangleChanged")
-	private int angleZ = 0;
+	private double angleZ = 0;
 
 	@Parameter(required = false, persist = false, label = "Actions", choices = {
 		ACTION_NONE, ACTION_FLIP_H, ACTION_FLIP_V, ACTION_RESET, ACTION_SNAPSHOT },
@@ -231,21 +231,21 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	@SuppressWarnings("unused")
 	private void currentXangleChanged() {
 		plottingTree.rotate(Tree.X_AXIS, angleX - previousXangle);
-		previousXangle = angleX;
+		previousXangle = (int)angleX;
 		updatePlot();
 	}
 
 	@SuppressWarnings("unused")
 	private void currentYangleChanged() {
 		plottingTree.rotate(Tree.Y_AXIS, angleY - previousYangle);
-		previousYangle = angleY;
+		previousYangle = (int)angleY;
 		updatePlot();
 	}
 
 	@SuppressWarnings("unused")
 	private void currentZangleChanged() {
 		plottingTree.rotate(Tree.Z_AXIS, angleZ - previousZangle);
-		previousZangle = angleZ;
+		previousZangle = (int)angleZ;
 		updatePlot();
 	}
 
@@ -269,15 +269,15 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 				actionChoice = ACTION_NONE;
 				return;
 			case ACTION_FLIP_V:
-				angleX = getBoundedAngle(180 + angleX);
+				angleX = getBoundedAngle(180 + (int)angleX);
 				plottingTree.rotate(Tree.X_AXIS, angleX);
-				previousXangle = angleX;
+				previousXangle = (int)angleX;
 				updatePlot();
 				break;
 			case ACTION_FLIP_H:
-				angleY = getBoundedAngle(180 + angleY);
+				angleY = getBoundedAngle(180 + (int)angleY);
 				plottingTree.rotate(Tree.Y_AXIS, angleY);
-				previousYangle = angleY;
+				previousYangle = (int)angleY;
 				updatePlot();
 				break;
 			default:

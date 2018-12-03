@@ -284,6 +284,7 @@ public class TreeColorMapper extends ColorMapper {
 			min = Float.MAX_VALUE;
 			max = 0f;
 		}
+		SNT.log("Node values will be wiped after distance calculations");
 
 		// 1st pass: Calculate distances for primary paths.
 		for (final Path p : paths) {
@@ -333,6 +334,10 @@ public class TreeColorMapper extends ColorMapper {
 				p.setNodeColor(getColor(p.getNodeValue(node)), node);
 			}
 		}
+
+		// Wipe node values so that computed distances don't
+		// get mistakenly interpreted as pixel intensities
+		paths.stream().forEach(p -> p.setNodeValues(null));
 
 	}
 

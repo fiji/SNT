@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>23.2.0</version>
+		<version>24.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -109,7 +109,8 @@
 
 		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
 		<releaseProfiles>deploy-to-imagej</releaseProfiles>
-		<Sholl_Analysis.version>3.7.4-SNAPSHOT</Sholl_Analysis.version>
+		<Sholl_Analysis.version>3.7.4</Sholl_Analysis.version>
+		<imagej.app.directory>${env.HOME}/Fiji-neuroanatomy-upload.app</imagej.app.directory>
 	</properties>
 
 	<repositories>
@@ -219,7 +220,7 @@
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>okhttp</artifactId>
-			<version>3.11.0</version>
+			<version>3.12.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>
@@ -229,7 +230,7 @@
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>font-awesome</artifactId>
-			<version>5.3.1</version>
+			<version>5.5.0</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>

@@ -54,9 +54,9 @@ import tracing.SNT;
 public class FADerivedIcon implements Icon {
 
 	private static final String AWESOME_REGULAR =
-		"META-INF/resources/webjars/font-awesome/5.3.1/webfonts/fa-regular-400.ttf";
+		"META-INF/resources/webjars/font-awesome/5.5.0/webfonts/fa-regular-400.ttf";
 	private static final String AWESOME_SOLID =
-		"META-INF/resources/webjars/font-awesome/5.3.1/webfonts/fa-solid-900.ttf";
+		"META-INF/resources/webjars/font-awesome/5.5.0/webfonts/fa-solid-900.ttf";
 	private static final int DEF_SIZE = UIManager.getFont("Label.font").getSize();
 	private final Font font;
 	private final float size;

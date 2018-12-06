@@ -84,7 +84,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import net.imagej.Dataset;
-import net.imagej.table.DefaultGenericTable;
+import org.scijava.table.DefaultGenericTable;
 
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;

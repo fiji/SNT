@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.stream.IntStream;
 
-import net.imagej.table.DefaultGenericTable;
+import org.scijava.table.DefaultGenericTable;
 
 import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;

@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.List;
 
 import net.imagej.ImageJService;
-import net.imagej.table.DefaultGenericTable;
+import org.scijava.table.DefaultGenericTable;
 
 import org.scijava.Priority;
 import org.scijava.log.LogService;

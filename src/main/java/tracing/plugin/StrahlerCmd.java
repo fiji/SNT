@@ -33,7 +33,7 @@ import java.util.stream.IntStream;
 import net.imagej.plot.CategoryChart;
 import net.imagej.plot.LineSeries;
 import net.imagej.plot.PlotService;
-import net.imagej.table.DefaultGenericTable;
+import org.scijava.table.DefaultGenericTable;
 
 import org.scijava.plugin.Parameter;
 import org.scijava.ui.UIService;

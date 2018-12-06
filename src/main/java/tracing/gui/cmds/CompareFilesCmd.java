@@ -25,7 +25,7 @@ package tracing.gui.cmds;
 import java.io.File;
 
 import net.imagej.ImageJ;
-import net.imagej.table.DefaultGenericTable;
+import org.scijava.table.DefaultGenericTable;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;

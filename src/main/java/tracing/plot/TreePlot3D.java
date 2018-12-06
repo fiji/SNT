@@ -80,7 +80,7 @@ import javax.swing.WindowConstants;
 
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
-import net.imagej.table.DefaultGenericTable;
+import org.scijava.table.DefaultGenericTable;
 import net.imglib2.display.ColorTable;
 
 import org.jzy3d.bridge.awt.FrameAWT;

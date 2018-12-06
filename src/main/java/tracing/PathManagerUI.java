@@ -88,7 +88,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import net.imagej.ImageJ;
-import net.imagej.table.DefaultGenericTable;
+import org.scijava.table.DefaultGenericTable;
 
 import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;

@@ -39,6 +39,7 @@ import org.scijava.command.Command;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.prefs.PrefService;
 
 import tracing.analysis.MultiTreeColorMapper;
 import tracing.analysis.TreeAnalyzer;
@@ -57,6 +58,9 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 
 	@Parameter
 	private LUTService lutService;
+
+	@Parameter
+	private PrefService prefService;
 
 	@Parameter(required = true, label = "Measurement", choices = { //
 		TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH,
@@ -114,7 +118,10 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 		final MutableModuleItem<String> input = getInfo().getMutableInput(
 			"lutChoice", String.class);
 		input.setChoices(luTChoices);
-		lutChoice = input.getDefaultValue();
+
+		// we want the LUT ramp to update when the dialog is shown. For this
+		// to happen it seems we've to load the  persisted LUT choice now
+		lutChoice = prefService.get(getClass(), "lutChoice", "mpl-viridis.lut");
 		if (lutChoice == null || lutChoice.isEmpty()) lutChoice = luTChoices.get(0);
 		lutChoiceChanged();
 
@@ -139,7 +146,10 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 		}
 		else if (treeMappingLabels != null) {
 			// Color code single trees
-			mChoices = Arrays.asList(TreeAnalyzer.COMMON_MEASUREMENTS);
+			mChoices = new ArrayList<>();
+			mChoices.addAll(Arrays.asList(TreeAnalyzer.COMMON_MEASUREMENTS));
+			mChoices.add(TreeColorMapper.PATH_DISTANCE);
+			Collections.sort(mChoices);
 		}
 		else if (multiTreeMappingLabels != null) {
 			mChoices = Arrays.asList(MultiTreeColorMapper.PROPERTIES);

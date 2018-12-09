@@ -102,11 +102,13 @@ public class TreeAnalyzer extends ContextCommand {
 	public static final String VALUES = "Node intensity values";
 
 	public static final String[] COMMON_MEASUREMENTS = { //
-		TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH,
+		TreeColorMapper.BRANCH_ORDER, //
+		TreeColorMapper.LENGTH, //
 		TreeColorMapper.N_BRANCH_POINTS, //
-		TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE,
+		TreeColorMapper.N_NODES, //
 		TreeColorMapper.MEAN_RADIUS, //
-		TreeColorMapper.NODE_RADIUS, TreeColorMapper.X_COORDINATES,
+		TreeColorMapper.NODE_RADIUS, //
+		TreeColorMapper.X_COORDINATES, //
 		TreeColorMapper.Y_COORDINATES, //
 		TreeColorMapper.Z_COORDINATES };
 	protected Tree tree;

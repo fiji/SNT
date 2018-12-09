@@ -151,6 +151,7 @@ public class TreeMapperCmd extends DynamicCommand {
 			.getMutableInput("measurementChoice", String.class);
 		final List<String> choices = new ArrayList<>();
 		Collections.addAll(choices, TreeAnalyzer.COMMON_MEASUREMENTS); 
+		choices.add(TreeColorMapper.PATH_DISTANCE);
 		choices.add(TreeColorMapper.TAG_FILENAME);
 		if (setValuesFromSNTService) choices.add(TreeColorMapper.VALUES);
 		Collections.sort(choices);

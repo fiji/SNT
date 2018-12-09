@@ -64,7 +64,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 	 * Mapping property (dummy): Each Tree in the collection is assigned an
 	 * incremental LUT entry
 	 */
-	public static final String ID = "Cell/Id";
+	public static final String ID = "Cell/id";
 
 	public static final String[] PROPERTIES = { //
 		ID, TOTAL_LENGTH, TOTAL_N_BRANCH_POINTS, TOTAL_N_TIPS, ROOT_NUMBER//
@@ -118,7 +118,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 					mt.value = internalCounter++;
 					break;
 				default:
-					throw new IllegalArgumentException("Unknown parameter");
+					throw new IllegalArgumentException("Unknown parameter: "+ cMeasurement);
 			}
 		}
 		assignMinMax();

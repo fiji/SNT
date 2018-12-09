@@ -126,8 +126,6 @@ import tracing.plugin.StrahlerCmd;
 @SuppressWarnings("serial")
 public class SNTUI extends JDialog {
 
-	public static final boolean verbose = SNT.isDebugMode();
-
 	/* Deprecated stuff to be removed soon */
 	@Deprecated
 	private final String noColorImageString = "[None]";
@@ -1466,10 +1464,6 @@ public class SNTUI extends JDialog {
 		c.fill = GridBagConstraints.NONE;
 		p.add(applyActionChoice, c);
 		return p;
-	}
-
-	public void runCmd(final Class<? extends Command> cmdClass) {
-		(new CmdRunner(cmdClass, false)).execute();
 	}
 
 	private void addSpacer(final JPanel panel, final GridBagConstraints c) {

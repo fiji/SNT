@@ -147,7 +147,7 @@ public class Fill {
 
 	// FIXME: the next two should just be one method, really:
 
-	public String getSourcePathsStringMachine() {
+	protected String getSourcePathsStringMachine() {
 
 		final StringBuffer result = new StringBuffer("");
 
@@ -163,7 +163,7 @@ public class Fill {
 		return result.toString();
 	}
 
-	public String getSourcePathsStringHuman() {
+	protected String getSourcePathsStringHuman() {
 
 		final StringBuffer result = new StringBuffer("");
 		final Path[] sortedSourcePaths = sourcePaths.toArray(new Path[] {});

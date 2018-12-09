@@ -1414,7 +1414,8 @@ public class TreePlot3D {
 			if (plottedTrees.size() == 1) return plottedTrees.values().iterator()
 				.next().tree;
 			final List<String> keys = getSelectedTrees(false);
-			if (keys == null || keys.isEmpty() || keys.size() > 1) {
+			if (keys == null) return null;
+			if (keys.isEmpty() || keys.size() > 1) {
 				guiUtils.error(
 					"This command requires a single recontruction to be selected.");
 				return null;
@@ -1536,16 +1537,9 @@ public class TreePlot3D {
 				final ColorRGB[] colors = SWCColor.getDistinctColors(keys.size());
 				final int[] counter = new int[] { 0 };
 				plottedTrees.forEach((k, shapeTree) -> {
-					final Shape shape = shapeTree.get();
-					if (keys.contains(k)) {
-						for (int i = 0; i < shape.size(); i++) {
-							if (shape.get(i) instanceof LineStrip) {
-								((LineStrip) shape.get(i)).setColor(fromColorRGB(
-									colors[counter[0]]));
-							}
-						}
-						counter[0]++;
-					}
+					shapeTree.setArborColor(colors[counter[0]]);
+					shapeTree.setSomaColor(colors[counter[0]]);
+					counter[0]++;
 				});
 			});
 			recMenu.add(mi);
@@ -1701,7 +1695,10 @@ public class TreePlot3D {
 			legendMenu.setIcon(IconFactory.getMenuIcon(GLYPH.COLOR2));
 			JMenuItem mi = new JMenuItem("Add...");
 			mi.addActionListener(e -> {
-				runCmd(ColorizeReconstructionCmd.class, null, CmdWorker.DO_NOTHING);
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("treeMappingLabels", null);
+				inputs.put("multiTreeMappingLabels", null);
+				runCmd(ColorizeReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			legendMenu.add(mi);
 			mi = new JMenuItem("Remove Last");

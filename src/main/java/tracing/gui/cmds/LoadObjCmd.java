@@ -57,10 +57,10 @@ public class LoadObjCmd extends ContextCommand {
 		description = "Path to OBJ file, or directory containing multiple OBJ files")
 	private File file;
 
-	@Parameter(label = "Transparency (%)", required = false, min = "0",
+	@Parameter(label = "Transparency (%)", required = false, min = "0.5",
 		max = "100", style = NumberWidget.SCROLL_BAR_STYLE,
 		description = "Transparency of imported mesh")
-	private int transparency;
+	private double transparency;
 
 	@Parameter(label = "Color", required = false,
 		description = "Rendering color of imported mesh(es)")
@@ -127,7 +127,8 @@ public class LoadObjCmd extends ContextCommand {
 		return "<HTML><body><div style='width:" + 500 + ";'> " + msg +
 			" Note that the import of complex meshes is currently " +
 			"not supported. If you think the specified file(s) are " +
-			"valid, you should try to simplify them using, e.g., MeshLab.";
+			"valid, you could try to simplify them using, e.g., MeshLab " +
+			"(http://www.meshlab.net/).";
 	}
 
 	/* IDE debug method **/

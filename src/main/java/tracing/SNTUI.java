@@ -897,7 +897,7 @@ public class SNTUI extends JDialog {
 		channelSpinner.setEnabled(hasChannels);
 		frameSpinner.setEnabled(hasFrames);
 		applyPositionButton.addActionListener(e -> {
-			if (getState() == IMAGE_CLOSED || getState() == ANALYSIS_MODE) {
+			if (plugin.getImagePlus() == null) {
 				guiUtils.error("Tracing image is not available.");
 				return;
 			}
@@ -960,6 +960,7 @@ public class SNTUI extends JDialog {
 		final String bLabel = (plugin.getSinglePane()) ? "Display" : "Rebuild";
 		final JButton refreshPanesButton = new JButton(bLabel + " ZY/XZ Views");
 		refreshPanesButton.addActionListener(e -> {
+			if (noPathsError()) return;
 			if (!plugin.analysisMode && getState() == IMAGE_CLOSED) {
 				guiUtils.error("Tracing image is not available.");
 				return;
@@ -987,6 +988,7 @@ public class SNTUI extends JDialog {
 			final JButton rebuildCanvasButton = new JButton("Resize Canvas");
 			buttonPanel.add(rebuildCanvasButton);
 			rebuildCanvasButton.addActionListener(e -> {
+				if (noPathsError()) return;
 				showStatus("Resizing Canvas...", false);
 				plugin.rebuildDisplayCanvases();
 				showStatus("Canvas rebuilt...", true);

@@ -43,6 +43,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 import org.scijava.widget.FileWidget;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.plugin.CompositeConverter;
@@ -251,13 +252,18 @@ public class SNTLoaderCmd extends DynamicCommand {
 				return;
 			}
 			try {
-				final Dataset ds = datasetIOService.open(imageFile.getAbsolutePath());
-				// displayService.createDisplay(ds); // does not work well in legacy
-				// mode
-				sourceImp = convertService.convert(ds, ImagePlus.class);
-				displayService.createDisplay(sourceImp.getTitle(), sourceImp);
+
+//				final Dataset ds = datasetIOService.open(imageFile.getAbsolutePath());
+//				sourceImp = convertService.convert(ds, ImagePlus.class);
+//				displayService.createDisplay(sourceImp.getTitle(), sourceImp);
+
+				// FIXME: In some cases the code above seems to open images as virtual
+				// stacks which causes all sort of problems later on. We'll fallback
+				// to IJ1 until this issue is fixed
+				sourceImp = IJ.openImage(imageFile.getAbsolutePath());
+				sourceImp.show();
 			}
-			catch (final IOException exc) {
+			catch (final Exception exc) {
 				cancel("Could not open\n" + imageFile.getAbsolutePath());
 				return;
 			}

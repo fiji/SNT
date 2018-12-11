@@ -21,7 +21,7 @@ from collections import defaultdict
 from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
 from tracing.io import MLJSONLoader, NeuroMorphoLoader
 from tracing.util import PointInImage
-from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorizer, 
+from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
 from tracing.plot import(TreePlot2D, TreePlot3D)
 

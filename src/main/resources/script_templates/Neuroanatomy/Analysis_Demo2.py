@@ -6,7 +6,7 @@
 # @SNTService snt
 # @StatusService status
 # @UIService ui
-
+# @PlotService plotService
 
 '''
 file:       Analysis_Demo2.py
@@ -18,10 +18,8 @@ info:
 import math
 from collections import defaultdict
 
-from ij.gui import Plot
-
 from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
-from tracing.io import MLJSONLoader
+from tracing.io import MLJSONLoader, NeuroMorphoLoader
 from tracing.util import PointInImage
 from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorizer, 
     TreeStatistics)
@@ -46,52 +44,70 @@ def run():
         d_stats = TreeStatistics(tree)
 
         # NB: SummaryStatistics should be more performant than DescriptiveStatistics
-        ssummary = d_stats.getSummaryStats(TreeStatistics.INTER_NODE_DISTANCE)
-        print("The average inter-node distance is %d" % ssummary.getMean())
+        # http://javadoc.scijava.org/Fiji/tracing/analysis/TreeStatistics.html
+        metric = TreeStatistics.INTER_NODE_DISTANCE # same as "inter-node distance"
+        summary_stats = d_stats.getSummaryStats(metric)
+        d_stats.getHistogram(metric).show()
+        print("The average inter-node distance is %d" % summary_stats.getMean())
+        
 
         dsummary = d_stats.getDescriptiveStats(TreeStatistics.INTER_NODE_DISTANCE)
         print("The average inter-node distance is %d" % dsummary.getMean())
-        
-        # We can calculate the approximated volume of a tracing
+
+        # We can get the volume of a compartment by
+        # approximating the volume of each path, and summing to total.
+        # For info on the assumptions made in the volume calculation, see lines 2094-2108 at
+        # https://github.com/fiji/Simple_Neurite_Tracer/blob/scijava/src/main/java/tracing/Path.java
         compartment_volume = 0
-        manager = PathAndFillManager()
         for path in tree.list():
-            manager.addPath(path)
             compartment_volume += path.getApproximatedVolume()
-
-        bb = manager.getBoundingBox(True)
-        bb_dim = bb.getDimensions(False)
-        bb_volume = bb_dim[0] * bb_dim[1] * bb_dim[2]
-        print("Volume of bounding box containing all nodes is %d" % bb_volume)
         print("Approximate volume of tracing is %d cubic microns" % compartment_volume)
-        print("Tracing uses %d percent of space given by bounding box" % ((compartment_volume/bb_volume)*100))
 
-        # We can look at how mean burke taper changes with branch order
-        order_dict = defaultdict(list)
-        for path in tree.list():
-            Da = path.getNodeRadius(0) * 2
-            Db = path.getNodeRadius(path.size()-1) * 2
-            path_length = path.getLength()
-            try:
-                burke_taper = (Da - Db) / path_length
-                order_dict[path.getOrder()].append(burke_taper)
-            # appears to be finding length 0 paths
-            except ZeroDivisionError:
-                continue
-        l = []
+        # Let's find the dimensions of the minimum bounding box containing all existing nodes.
+        # https://github.com/fiji/Simple_Neurite_Tracer/blob/scijava/src/main/java/tracing/util/BoundingBox.java
+        bb = tree.getBoundingBox(True)
+        bb_dim = bb.getDimensions(False)
+        print("Dimensions of the bounding box containing all nodes (in micrometers): {} x {} x {}".format(*bb_dim))
         
-        for item in order_dict.items():
-            mean_taper = sum(item[1])/len(item[1])
-            l.append((item[0], mean_taper))
+
+    # To load a neuron from NeuroMorpho.org, use NeuroMorphoLoader.
+    # We choose a reconstruction with traced node radii.
+    # http://neuromorpho.org/neuron_info.jsp?neuron_name=Adol-20100419cell1
+    # https://github.com/fiji/Simple_Neurite_Tracer/blob/scijava/src/main/java/tracing/io/NeuroMorphoLoader.java
+    nm_loader = NeuroMorphoLoader()
+    if nm_loader.isDatabaseAvailable():
+        nm_tree = nm_loader.getTree("Adol-20100419cell1")
+        
+        # Like before, we can get stats using TreeStatistics and
+        # plot them conveniently.
+        if nm_tree is not None:
+            nm_stats = TreeStatistics(nm_tree)
+            nm_metric = TreeStatistics.MEAN_RADIUS
+            nm_stats.getHistogram(nm_metric).show()
+
+            # To build plots manually, use the PlotService script parameter.
+            # https://github.com/maarzt/imagej-plot-service
+            # For example, we can see how neurite radius 
+            # changes with centrifugal branch order.
+            # For simplicity, we'll only consider the mean node radius of each path.
+            order_dict = defaultdict(list)
+            for p in nm_tree.list():
+                r = p.getMeanRadius()
+                order_dict[p.getOrder()].append(r)
+            l = []
+            for item in order_dict.items(): # average the mean path radius over each branch order
+                mean_radius = sum(item[1])/len(item[1])
+                l.append((item[0], mean_radius))
             
-        l = sorted(l, key = lambda x:x[0])
-        xs, ys = zip(*l)
-        plot = Plot('Mean Burke taper vs. Branch Order', 'branch order', 'mean taper')
-        plot.add('x', xs, ys)
-        plot.show()
-        
-        # We may also calculate the longest path from root to endpoint
-        # TODO
+            l = sorted(l, key = lambda x:x[0])
+            xs, ys = zip(*l)
+            
+            plot = plotService.newXYPlot()
+            plot.setTitle("Mean path radius vs Branch Order")
+            series = plot.addXYSeries()
+            series.setLabel("circle")
+            series.setValues(xs, ys)
+            ui.show(plot)
 
 
 run()

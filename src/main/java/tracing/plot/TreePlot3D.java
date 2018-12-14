@@ -2005,9 +2005,8 @@ public class TreePlot3D {
 
 		public void rebuildShape() {
 			if (isDisplayed()) {
+				clear();
 				assembleShape();
-				chart.removeDrawable(this, viewUpdatesEnabled);
-				chart.add(this, viewUpdatesEnabled);
 			}
 		}
 

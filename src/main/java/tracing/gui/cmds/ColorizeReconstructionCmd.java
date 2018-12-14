@@ -48,7 +48,7 @@ import tracing.gui.GuiUtils;
 import tracing.plot.TreePlot3D;
 
 /**
- * Implements Reconstruction Viewer's 'Add Color Legend' command
+ * Implements Reconstruction Viewer's 'Color coding' commands.
  *
  * @author Tiago Ferreira
  */
@@ -122,7 +122,7 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 		// we want the LUT ramp to update when the dialog is shown. For this
 		// to happen it seems we've to load the  persisted LUT choice now
 		lutChoice = prefService.get(getClass(), "lutChoice", "mpl-viridis.lut");
-		if (lutChoice == null || lutChoice.isEmpty()) lutChoice = luTChoices.get(0);
+		if (lutChoice == null || lutChoice.isEmpty() || !luTChoices.contains(lutChoice)) lutChoice = luTChoices.get(0);
 		lutChoiceChanged();
 
 		List<String> mChoices = null;
@@ -143,6 +143,8 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 			final MutableModuleItem<Float> maxInput = getInfo().getMutableInput("max",
 				Float.class);
 			maxInput.setDescription("");
+			resolveInput("treeMappingLabels");
+			resolveInput("multiTreeMappingLabels");
 		}
 		else if (treeMappingLabels != null) {
 			// Color code single trees
@@ -150,9 +152,11 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 			mChoices.addAll(Arrays.asList(TreeAnalyzer.COMMON_MEASUREMENTS));
 			mChoices.add(TreeColorMapper.PATH_DISTANCE);
 			Collections.sort(mChoices);
+			resolveInput("multiTreeMappingLabels");
 		}
 		else if (multiTreeMappingLabels != null) {
 			mChoices = Arrays.asList(MultiTreeColorMapper.PROPERTIES);
+			resolveInput("treeMappingLabels");
 		}
 		if (mChoices == null) {
 			throw new IllegalArgumentException(
@@ -199,7 +203,7 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 						colorTable);
 					if (minMax[0] < limits[0]) limits[0] = minMax[0];
 					if (minMax[1] > limits[1]) limits[1] = minMax[1];
-				} ;
+				}
 			}
 			else if (multiTreeMappingLabels != null) {
 				// Color group of trees

@@ -141,7 +141,7 @@ import tracing.analysis.TreeStatistics;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.IconFactory.GLYPH;
-import tracing.gui.cmds.ColorizeReconstructionCmd;
+import tracing.gui.cmds.ColorMapReconstructionCmd;
 import tracing.gui.cmds.DistributionCmd;
 import tracing.gui.cmds.LoadObjCmd;
 import tracing.gui.cmds.LoadReconstructionCmd;
@@ -709,7 +709,7 @@ public class TreePlot3D {
 	 *          {@link ColorTables#ICE}), or any other known to LutService
 	 * @return the double[] the limits (min and max) of the mapped values
 	 */
-	public double[] colorize(final Collection<String> treeLabels,
+	public double[] colorCode(final Collection<String> treeLabels,
 		final String measurement, final ColorTable colorTable)
 	{
 		final List<ShapeTree> shapeTrees = new ArrayList<>();
@@ -750,7 +750,7 @@ public class TreePlot3D {
 	 *          {@link ColorTables#ICE}), or any other known to LutService
 	 * @return the double[] the limits (min and max) of the mapped values
 	 */
-	public double[] colorize(final String treeLabel, final String measurement,
+	public double[] colorCode(final String treeLabel, final String measurement,
 		final ColorTable colorTable)
 	{
 		final ShapeTree treeShape = plottedTrees.get(treeLabel);
@@ -1517,7 +1517,7 @@ public class TreePlot3D {
 				if (keys == null) return;
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("treeMappingLabels", keys);
-				runCmd(ColorizeReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
+				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			recMenu.add(mi);
 			mi = new JMenuItem("Color Coding (Group of Cells)...");
@@ -1526,7 +1526,7 @@ public class TreePlot3D {
 				if (keys == null) return;
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("multiTreeMappingLabels", keys);
-				runCmd(ColorizeReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
+				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			recMenu.add(mi);
 			mi = new JMenuItem("Color Each Cell Uniquely...");
@@ -1698,7 +1698,7 @@ public class TreePlot3D {
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("treeMappingLabels", null);
 				inputs.put("multiTreeMappingLabels", null);
-				runCmd(ColorizeReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
+				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			legendMenu.add(mi);
 			mi = new JMenuItem("Remove Last");

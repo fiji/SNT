@@ -54,7 +54,7 @@ import tracing.plot.TreePlot3D;
  */
 @Plugin(type = Command.class, visible = false, label = "Tree Color Coder",
 	initializer = "init")
-public class ColorizeReconstructionCmd extends CommonDynamicCmd {
+public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 
 	@Parameter
 	private LUTService lutService;
@@ -122,7 +122,8 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 		// we want the LUT ramp to update when the dialog is shown. For this
 		// to happen it seems we've to load the  persisted LUT choice now
 		lutChoice = prefService.get(getClass(), "lutChoice", "mpl-viridis.lut");
-		if (lutChoice == null || lutChoice.isEmpty() || !luTChoices.contains(lutChoice)) lutChoice = luTChoices.get(0);
+		if (lutChoice == null || lutChoice.isEmpty() || !luTChoices.contains(
+			lutChoice)) lutChoice = luTChoices.get(0);
 		lutChoiceChanged();
 
 		List<String> mChoices = null;
@@ -199,7 +200,7 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 				limits[0] = Double.MAX_VALUE;
 				limits[1] = Double.MIN_VALUE;
 				for (final String l : treeMappingLabels) {
-					final double[] minMax = recViewer.colorize(l, measurementChoice,
+					final double[] minMax = recViewer.colorCode(l, measurementChoice,
 						colorTable);
 					if (minMax[0] < limits[0]) limits[0] = minMax[0];
 					if (minMax[1] > limits[1]) limits[1] = minMax[1];
@@ -207,7 +208,7 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 			}
 			else if (multiTreeMappingLabels != null) {
 				// Color group of trees
-				limits = recViewer.colorize(multiTreeMappingLabels, measurementChoice,
+				limits = recViewer.colorCode(multiTreeMappingLabels, measurementChoice,
 					colorTable);
 			}
 			recViewer.setViewUpdatesEnabled(true);
@@ -227,7 +228,7 @@ public class ColorizeReconstructionCmd extends CommonDynamicCmd {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		ij.command().run(ColorizeReconstructionCmd.class, true);
+		ij.command().run(ColorMapReconstructionCmd.class, true);
 	}
 
 }

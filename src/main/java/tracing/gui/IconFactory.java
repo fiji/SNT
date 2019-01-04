@@ -74,11 +74,13 @@ public class IconFactory {
 			POINTER('\uf245', true), //
 			PLUS('\uf0fe', false), //
 			QUESTION('\uf128', true), //
+			REDO('\uf01e', true), //
 			ROCKET('\uf135', true), //
 			RULER('\uf546', true), //
 			SAVE('\uf0c7', false), //
 			SLIDERS('\uf1de', true), //
 			SORT('\uf15d', true), //
+			SUN('\uf185', true), //
 			SYNC('\uf2f1', true), //
 			TABLE('\uf0ce', true), //
 			TAG('\uf02b', true), //
@@ -87,6 +89,7 @@ public class IconFactory {
 			TRASH('\uf2ed', false), //
 			TREE('\uf1bb', true), //
 			UNLINK('\uf127', true), //
+			WIDTH('\uf337', true), //
 			WINDOWS('\uf2d2', false);
 
 		private final char id;

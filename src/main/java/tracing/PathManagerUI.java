@@ -104,6 +104,7 @@ import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.SNTSearchableBar;
 import tracing.gui.SwingSafeResult;
+import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.cmds.DistributionCmd;
 import tracing.gui.cmds.PathFitterCmd;
 import tracing.gui.cmds.SWCTypeOptionsCmd;
@@ -257,7 +258,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		jmi.addActionListener(singlePathListener);
 		fitMenu.add(jmi);
 		fitMenu.addSeparator();
-		jmi = new JMenuItem(MultiPathActionListener.RESET_FITS);
+		jmi = new JMenuItem(MultiPathActionListener.RESET_FITS, IconFactory.getMenuIcon(
+			GLYPH.BROOM));
 		jmi.addActionListener(multiPathListener);
 		fitMenu.add(jmi);
 

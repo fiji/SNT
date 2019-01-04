@@ -1110,7 +1110,7 @@ public class TreePlot3D {
 		private JPanel buttonPanel() {
 			final boolean includeAnalysisCmds = !isSNTInstance();
 			final JPanel buttonPanel = new JPanel(new GridLayout(1,
-				(includeAnalysisCmds) ? 4 : 5));
+				(includeAnalysisCmds) ? 5 : 6));
 			buttonPanel.setBorder(null);
 			// do not allow panel to resize vertically
 			buttonPanel.setMaximumSize(new Dimension(buttonPanel
@@ -1123,6 +1123,7 @@ public class TreePlot3D {
 			if (includeAnalysisCmds) buttonPanel.add(menuButton(GLYPH.CALCULATOR,
 				measureMenu(), "Analyze/Measure"));
 			buttonPanel.add(menuButton(GLYPH.SLIDERS, optionsMenu(), "Customize"));
+			buttonPanel.add(menuButton(GLYPH.TOOL, settingsMenu(), "Settings"));
 			return buttonPanel;
 		}
 
@@ -1154,7 +1155,7 @@ public class TreePlot3D {
 				displayMsg("Zoomed to " + sb.toString());
 			});
 			reloadMenu.add(mi);
-			mi = new JMenuItem("Reload Scene");
+			mi = new JMenuItem("Reload Scene", IconFactory.getMenuBarIcon(GLYPH.REDO));
 			mi.setMnemonic('r');
 			mi.addActionListener(e -> {
 				if (!sceneIsOK() && guiUtils.getConfirmation(
@@ -1167,7 +1168,7 @@ public class TreePlot3D {
 				}
 			});
 			reloadMenu.add(mi);
-			reloadMenu.addSeparator();
+
 			mi = new JMenuItem("Rebuild Scene...");
 			mi.addActionListener(e -> {
 				if (guiUtils.getConfirmation("Rebuild 3D Scene Completely?",
@@ -1178,6 +1179,7 @@ public class TreePlot3D {
 			});
 			reloadMenu.add(mi);
 			reloadMenu.addSeparator();
+
 			mi = new JMenuItem("Sync Path Manager Changes");
 			mi.setMnemonic('s');
 			mi.addActionListener(e -> {
@@ -1440,7 +1442,7 @@ public class TreePlot3D {
 			optionsMenu.add(legendMenu());
 
 			// Mesh customizations
-			JMenuItem mi = new JMenuItem("Color...", IconFactory.getMenuIcon(
+			JMenuItem mi = new JMenuItem("Assign Color...", IconFactory.getMenuIcon(
 				GLYPH.COLOR));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedMeshes(true);
@@ -1457,7 +1459,7 @@ public class TreePlot3D {
 			});
 			meshMenu.add(mi);
 			mi = new JMenuItem("Transparency...", IconFactory.getMenuIcon(
-				GLYPH.FILL));
+				GLYPH.SUN));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedMeshes(true);
 				if (keys == null) return;
@@ -1478,7 +1480,7 @@ public class TreePlot3D {
 			meshMenu.add(mi);
 
 			// Tree customizations
-			mi = new JMenuItem("Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
+			mi = new JMenuItem("Assign Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees(true);
 				if (keys == null || !okToApplyColor(keys)) return;
@@ -1558,33 +1560,21 @@ public class TreePlot3D {
 				runCmd(TranslateReconstructionsCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			recMenu.add(mi);
-
-			mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.BROOM));
-			mi.addActionListener(e -> {
-				if (guiUtils.getConfirmation(
-					"Remove all items from scene? This action cannot be undone.",
-					"Wipe Scene?"))
-				{
-					getOuter().removeAll();
-					removeAllOBJs();
-					removeColorLegends(false);
-				}
-			});
-			optionsMenu.add(mi);
-			// Misc options
-			optionsMenu.addSeparator();
-			optionsMenu.add(settingsMenu());
-			optionsMenu.addSeparator();
-			mi = new JMenuItem("Keyboard Operations...", IconFactory.getMenuIcon(
-				GLYPH.KEYBOARD));
-			mi.addActionListener(e -> keyController.showHelp(true));
-			optionsMenu.add(mi);
 			return optionsMenu;
 		}
 
-		private JMenu settingsMenu() {
-			final JMenu settingsMenu = new JMenu("Options");
-			settingsMenu.setIcon(IconFactory.getMenuIcon(GLYPH.TOOL));
+		private JPopupMenu settingsMenu() {
+			final JPopupMenu settingsMenu = new JPopupMenu();
+			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode");
+			jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
+			jcbmi.setMnemonic('d');
+			jcbmi.addItemListener(e -> {
+				keyController.setEnableDebugMode(jcbmi.isSelected());
+				if (isSNTInstance()) {
+					sntService.getPlugin().getUI().setEnableDebugMode(jcbmi.isSelected());
+				}
+			});
+			settingsMenu.add(jcbmi);
 			JMenuItem mi = new JMenuItem("Screenshot Directory...", IconFactory
 				.getMenuIcon(GLYPH.CAMERA));
 			mi.addActionListener(e -> {
@@ -1600,23 +1590,31 @@ public class TreePlot3D {
 			});
 			settingsMenu.add(mi);
 			settingsMenu.addSeparator();
-			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode");
-			jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
-			jcbmi.setMnemonic('d');
-			jcbmi.addItemListener(e -> {
-				keyController.setEnableDebugMode(jcbmi.isSelected());
-				if (isSNTInstance()) {
-					sntService.getPlugin().getUI().setEnableDebugMode(jcbmi.isSelected());
-				}
-			});
-			settingsMenu.add(jcbmi);
-			settingsMenu.addSeparator();
+
 			mi = new JMenuItem("Reset Preferences...", IconFactory.getMenuIcon(
 				GLYPH.WINDOWS));
 			mi.addActionListener(e -> {
 				if (guiUtils.getConfirmation("Reset Preferences?", "Reset?")) prefs
 					.reset();
 			});
+			settingsMenu.add(mi);
+			mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.BROOM));
+			mi.addActionListener(e -> {
+				if (guiUtils.getConfirmation(
+					"Remove all items from scene? This action cannot be undone.",
+					"Wipe Scene?"))
+				{
+					getOuter().removeAll();
+					removeAllOBJs();
+					removeColorLegends(false);
+				}
+			});
+			settingsMenu.add(mi);
+			settingsMenu.addSeparator();
+
+			mi = new JMenuItem("Keyboard Operations...", IconFactory.getMenuIcon(
+				GLYPH.KEYBOARD));
+			mi.addActionListener(e -> keyController.showHelp(true));
 			settingsMenu.add(mi);
 			return settingsMenu;
 		}

@@ -80,7 +80,6 @@ import javax.swing.WindowConstants;
 
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
-import org.scijava.table.DefaultGenericTable;
 import net.imglib2.display.ColorTable;
 
 import org.jzy3d.bridge.awt.FrameAWT;
@@ -119,12 +118,15 @@ import org.jzy3d.plot3d.rendering.view.annotation.CameraEyeOverlayAnnotation;
 import org.jzy3d.plot3d.rendering.view.modes.CameraMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewBoundMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewPositionMode;
+import org.jzy3d.plot3d.transform.Transform;
+import org.jzy3d.plot3d.transform.Translate;
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.plugin.Parameter;
+import org.scijava.table.DefaultGenericTable;
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
@@ -147,11 +149,13 @@ import tracing.gui.cmds.LoadObjCmd;
 import tracing.gui.cmds.LoadReconstructionCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.RemoteSWCImporterCmd;
+import tracing.gui.cmds.TranslateReconstructionsCmd;
 import tracing.io.FlyCirCuitLoader;
 import tracing.io.NeuroMorphoLoader;
 import tracing.plugin.ShollTracingsCmd;
 import tracing.plugin.StrahlerCmd;
 import tracing.util.PointInImage;
+import tracing.util.SNTPoint;
 import tracing.util.SWCColor;
 
 /**
@@ -700,8 +704,8 @@ public class TreePlot3D {
 	 * Runs {@link MultiTreeColorMapper} on the specified collection of
 	 * {@link Tree}s.
 	 *
-	 * @param treeLabels the collection of identifier of the Trees (as per
-	 *          {@link #add(Tree)}) to be color mapped
+	 * @param treeLabels the collection of Tree identifiers (as per
+	 *          {@link #add(Tree)}) specifying the Trees to be color mapped
 	 * @param measurement the mapping measurement e.g.,
 	 *          {@link MultiTreeColorMapper#TOTAL_LENGTH}
 	 *          {@link MultiTreeColorMapper#TOTAL_N_TIPS}, etc.
@@ -1486,30 +1490,6 @@ public class TreePlot3D {
 				applyColorToPlottedTrees(keys, c);
 			});
 			recMenu.add(mi);
-			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.PEN));
-			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
-				if (keys == null) return;
-				String msg = "<HTML><body><div style='width:500;'>" +
-					"Please specify a constant thickness to be applied " +
-					"to selected " + keys.size() + " reconstruction(s).";
-				if (isSNTInstance()) {
-					msg += " This value will only affect how Paths are displayed " +
-						"in the Reconstruction Viewer.";
-				}
-				final Double thickness = guiUtils.getDouble(msg, "Path Thickness",
-					getDefaultThickness());
-				if (thickness == null) {
-					return; // user pressed cancel
-				}
-				if (Double.isNaN(thickness) || thickness <= 0) {
-					guiUtils.error("Invalid thickness value.");
-					return;
-				}
-				applyThicknessToPlottedTrees(keys, thickness.floatValue());
-			});
-			recMenu.add(mi);
-			recMenu.addSeparator();
 
 			mi = new JMenuItem("Color Coding (Individual Cells)...");
 			mi.addActionListener(e -> {
@@ -1543,6 +1523,42 @@ public class TreePlot3D {
 				});
 			});
 			recMenu.add(mi);
+			recMenu.addSeparator();
+
+			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.WIDTH));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(true);
+				if (keys == null) return;
+				String msg = "<HTML><body><div style='width:500;'>" +
+					"Please specify a constant thickness to be applied " +
+					"to selected " + keys.size() + " reconstruction(s).";
+				if (isSNTInstance()) {
+					msg += " This value will only affect how Paths are displayed " +
+						"in the Reconstruction Viewer.";
+				}
+				final Double thickness = guiUtils.getDouble(msg, "Path Thickness",
+					getDefaultThickness());
+				if (thickness == null) {
+					return; // user pressed cancel
+				}
+				if (Double.isNaN(thickness) || thickness <= 0) {
+					guiUtils.error("Invalid thickness value.");
+					return;
+				}
+				applyThicknessToPlottedTrees(keys, thickness.floatValue());
+			});
+			recMenu.add(mi);
+
+			mi = new JMenuItem("Translate...", IconFactory.getMenuIcon(GLYPH.MOVE));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(prefs.retrieveAllIfNoneSelected);
+				if (keys == null) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("treeLabels", keys);
+				runCmd(TranslateReconstructionsCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
+			recMenu.add(mi);
+
 			mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.BROOM));
 			mi.addActionListener(e -> {
 				if (guiUtils.getConfirmation(
@@ -1881,6 +1897,11 @@ public class TreePlot3D {
 		public Shape get() {
 			if (components == null || components.isEmpty()) assembleShape();
 			return this;
+		}
+
+		public void translateTo(final Coord3d destination) {
+			final Transform tTransform = new Transform(new Translate(destination));
+			get().applyGeometryTransform(tTransform);
 		}
 
 		private void assembleShape() {
@@ -2671,6 +2692,27 @@ public class TreePlot3D {
 		plottedTrees.forEach((k, shapeTree) -> {
 			if (labels.contains(k)) shapeTree.setThickness(thickness);
 		});
+	}
+
+	/**
+	 * Translates the specified collection of {@link Tree}s.
+	 *
+	 * @param treeLabels the collection of Tree identifiers (as per
+	 *          {@link #add(Tree)}) specifying the Trees to be translated
+	 * @param offset the translation offset
+	 */
+	public void translate(final Collection<String> treeLabels,
+		final SNTPoint offset)
+	{
+		final Coord3d coord = new Coord3d(offset.getX(), offset.getY(), offset
+			.getZ());
+		plottedTrees.forEach((k, shapeTree) -> {
+			if (treeLabels.contains(k)) shapeTree.translateTo(coord);
+		});
+		if (viewUpdatesEnabled) {
+			view.shoot();
+			fitToVisibleObjects();
+		}
 	}
 
 	private void setArborsDisplayed(final Collection<String> labels,

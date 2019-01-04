@@ -68,6 +68,7 @@ public class IconFactory {
 			KEYBOARD('\uf11c', false), //
 			LINK('\uf0c1', true), //
 			LIST('\uf03a', true), //
+			MOVE('\uf0b2', true), //
 			OPTIONS('\uf013', true), //
 			PEN('\uf303', true), //
 			POINTER('\uf245', true), //

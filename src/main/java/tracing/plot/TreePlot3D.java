@@ -1527,7 +1527,7 @@ public class TreePlot3D {
 			recMenu.add(mi);
 			recMenu.addSeparator();
 
-			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.WIDTH));
+			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.DOTCIRCLE));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees(true);
 				if (keys == null) return;
@@ -2436,7 +2436,6 @@ public class TreePlot3D {
 				if (isSameRGB(shapeTree.getSomaColor(), newBackground)) shapeTree
 					.setSomaColor(newForeground);
 				if (isSameRGB(shapeTree.getArborWireFrameColor(), newBackground)) {
-					System.out.println("It is the same color " + newBackground);
 					shapeTree.setArborColor(newForeground);
 					return; // replaces continue in lambda expression;
 				}

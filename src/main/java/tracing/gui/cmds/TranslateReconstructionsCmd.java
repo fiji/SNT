@@ -28,8 +28,10 @@ import net.imagej.ImageJ;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
+import org.scijava.command.Interactive;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.widget.Button;
 
 import tracing.SNT;
 import tracing.Tree;
@@ -44,19 +46,28 @@ import tracing.util.PointInImage;
  */
 @Plugin(type = Command.class, visible = false,
 	label = "Translate Reconstruction(s)", initializer = "init")
-public class TranslateReconstructionsCmd extends CommonDynamicCmd {
+public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
+	Interactive
+{
 
-	@Parameter(required = false, label = "X",
+	@Parameter(label = "X", callback = "preview",
 		description = "X offset in physical units")
 	private double x;
 
-	@Parameter(required = false, label = "Y",
+	@Parameter(label = "Y", callback = "preview",
 		description = "Y offset in physical units")
 	private double y;
 
-	@Parameter(required = false, label = "Z",
+	@Parameter(label = "Z", callback = "preview",
 		description = "Z offset in physical units")
 	private double z;
+
+	@Parameter(persist = false, label = "Preview/Apply", callback = "preview")
+	private boolean preview;
+
+	@Parameter(label = "Reset", callback = "reset",
+		description = "Re-places reconstructions at their loaded position")
+	private Button reset;
 
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
 	private String msg;
@@ -67,14 +78,41 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd {
 	@Parameter(required = false)
 	private List<String> treeLabels;
 
+	private double prevX;
+	private double prevY;
+	private double prevZ;
+
 	@SuppressWarnings("unused")
 	private void init() {
-		if (recViewer != null && recViewer.isSNTInstance()) {
-			msg = "NB: Path Manager paths will remain unchanged";
+		if (recViewer == null) {
+			error("No Reconstruction Viewer specified.");
+			return;
 		}
-		else {
-			msg = " ";
+		if (recViewer.isSNTInstance()) {
+			error("To avoid overwriting data from a tracing session, " +
+				"this command is only available in the standalone viewer.");
+			return;
 		}
+		if (treeLabels == null) {
+			error("No reconstructions were specified.");
+			return;
+		}
+	}
+
+	private void reset() {
+		recViewer.translate(treeLabels, null);
+		x = 0;
+		y = 0;
+		z = 0;
+		prevX = 0;
+		prevY = 0;
+		prevZ = 0;
+		SNT.log("Reconstructions re-placed to loaded locations");
+	}
+
+	@Override
+	public void preview() {
+		if (preview) run();
 	}
 
 	/*
@@ -84,21 +122,11 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd {
 	 */
 	@Override
 	public void run() {
-
-		try {
-			if (recViewer == null) {
-				recViewer = sntService.getReconstructionViewer();
-			}
-			if (treeLabels == null) {
-				error("No reconstructions were specified");
-				return;
-			}
-			recViewer.translate(treeLabels, new PointInImage(x, y, z));
-		}
-		catch (final UnsupportedOperationException | NullPointerException exc) {
-			error("SNT's Reconstruction Viewer is not available");
-		}
-
+		recViewer.translate(treeLabels, new PointInImage(x - prevX, y - prevY, z -
+			prevZ));
+		prevX = x;
+		prevY = y;
+		prevZ = z;
 	}
 
 	/* IDE debug method **/

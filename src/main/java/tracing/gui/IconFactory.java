@@ -52,6 +52,7 @@ public class IconFactory {
 			DANGER('\uf071', true), //
 			DATABASE('\uf1c0', true), //
 			DELETE('\uf55a', true), //
+			DOTCIRCLE('\uf192', true), //
 			DOWNLOAD('\uf019', true), //
 			DRAFT('\uf568', true), //
 			EXPAND('\uf065', true), //

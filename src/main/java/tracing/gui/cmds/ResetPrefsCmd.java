@@ -97,6 +97,7 @@ public class ResetPrefsCmd extends ContextCommand {
 		prefService.clear(SNTLoaderCmd.class);
 		prefService.clear(SWCTypeFilterCmd.class);
 		prefService.clear(SWCTypeOptionsCmd.class);
+		prefService.clear(TranslateReconstructionsCmd.class);
 
 		// tracing.plugin
 		prefService.clear(CallLegacyShollPlugin.class);

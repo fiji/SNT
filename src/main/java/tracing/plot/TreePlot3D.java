@@ -1865,10 +1865,12 @@ public class TreePlot3D {
 		private final Tree tree;
 		private Shape treeSubShape;
 		private AbstractWireframeable somaSubShape;
+		private Coord3d translationReset;
 
 		public ShapeTree(final Tree tree) {
 			super();
 			this.tree = tree;
+			translationReset = new Coord3d(0f,0f,0f);
 		}
 
 		@Override
@@ -1900,6 +1902,12 @@ public class TreePlot3D {
 		public void translateTo(final Coord3d destination) {
 			final Transform tTransform = new Transform(new Translate(destination));
 			get().applyGeometryTransform(tTransform);
+			translationReset.subSelf(destination);
+		}
+
+		public void resetTranslation() {
+			translateTo(translationReset);
+			translationReset = new Coord3d(0f, 0f, 0f);
 		}
 
 		private void assembleShape() {
@@ -2697,16 +2705,24 @@ public class TreePlot3D {
 	 *
 	 * @param treeLabels the collection of Tree identifiers (as per
 	 *          {@link #add(Tree)}) specifying the Trees to be translated
-	 * @param offset the translation offset
+	 * @param offset the translation offset. If null, trees position will be reset
+	 *          to their original location.
 	 */
 	public void translate(final Collection<String> treeLabels,
 		final SNTPoint offset)
 	{
-		final Coord3d coord = new Coord3d(offset.getX(), offset.getY(), offset
-			.getZ());
-		plottedTrees.forEach((k, shapeTree) -> {
-			if (treeLabels.contains(k)) shapeTree.translateTo(coord);
-		});
+		if (offset == null) {
+			plottedTrees.forEach((k, shapeTree) -> {
+				if (treeLabels.contains(k)) shapeTree.resetTranslation();
+			});
+		}
+		else {
+			final Coord3d coord = new Coord3d(offset.getX(), offset.getY(), offset
+				.getZ());
+			plottedTrees.forEach((k, shapeTree) -> {
+				if (treeLabels.contains(k)) shapeTree.translateTo(coord);
+			});
+		}
 		if (viewUpdatesEnabled) {
 			view.shoot();
 			fitToVisibleObjects();

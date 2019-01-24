@@ -155,6 +155,7 @@ import tracing.gui.cmds.DistributionCmd;
 import tracing.gui.cmds.LoadObjCmd;
 import tracing.gui.cmds.LoadReconstructionCmd;
 import tracing.gui.cmds.MLImporterCmd;
+import tracing.gui.cmds.RecViewerPrefsCmd;
 import tracing.gui.cmds.RemoteSWCImporterCmd;
 import tracing.gui.cmds.TranslateReconstructionsCmd;
 import tracing.io.FlyCirCuitLoader;
@@ -232,7 +233,7 @@ public class TreePlot3D {
 	/* Settings */
 	private Color defColor;
 	private float defThickness = DEF_NODE_RADIUS;
-	private String screenshotDir;
+	private final Prefs prefs;
 
 	/* Color Bar */
 	private AWTColorbarLegend cBar;
@@ -264,6 +265,9 @@ public class TreePlot3D {
 	@Parameter
 	private SNTService sntService;
 
+	@Parameter
+	private PrefService prefService;
+
 	/**
 	 * Instantiates TreePlot3D without the 'Controls' dialog ('kiosk mode'). Such
 	 * a plot is more suitable for large datasets and allows for Trees to be added
@@ -273,8 +277,9 @@ public class TreePlot3D {
 		plottedTrees = new TreeMap<>();
 		plottedObjs = new TreeMap<>();
 		initView();
-		setScreenshotDirectory("");
 		uuid = UUID.randomUUID();
+		prefs = new Prefs(this);
+		prefs.setPreferences();
 	}
 
 	/**
@@ -289,6 +294,7 @@ public class TreePlot3D {
 		GuiUtils.setSystemLookAndFeel();
 		initManagerList();
 		context.inject(this);
+		prefs.setPreferences();
 	}
 
 	/**
@@ -878,7 +884,7 @@ public class TreePlot3D {
 		final String file = new SimpleDateFormat("'SNT 'yyyy-MM-dd HH-mm-ss'.png'")
 			.format(new Date());
 		try {
-			final File f = new File(screenshotDir, file);
+			final File f = new File(prefs.getSnapshotDirectory(), file);
 			SNT.log("Saving snapshot to " + f);
 			chart.screenshot(f);
 		}
@@ -1220,29 +1226,136 @@ public class TreePlot3D {
 		}
 	}
 
-	private class Prefs {
+	private static class Prefs {
 
+		/* Pan accuracy control */
+		private enum PAN {
+				LOW(.25f, "Low"), //
+				MEDIUM(.5f, "Medium"), //
+				HIGH(1f, "High"), //
+				HIGHEST(2.5f, "Highest");
+
+			private static final float DEF_PAN_STEP = 1f;
+			private final float step;
+			private final String description;
+
+			// the lowest the step the more responsive the pan
+			PAN(final float step, final String description) {
+				this.step = step;
+				this.description = description;
+			}
+		}
+
+		/* Zoom control */
+		private static final float[] ZOOM_STEPS = new float[] { .01f, .05f, .1f,
+			.2f };
+		private static final float DEF_ZOOM_STEP = ZOOM_STEPS[1];
+
+		/* Rotation control */
+		private static final double[] ROTATION_STEPS = new double[] { Math.PI / 180,
+			Math.PI / 36, Math.PI / 18, Math.PI / 6 }; // 1, 5, 10, 30 degrees
+		private static final double DEF_ROTATION_STEP = ROTATION_STEPS[1];
+
+		/* GUI */
 		private static final boolean DEF_NAG_USER_ON_RETRIEVE_ALL = true;
 		private static final boolean DEF_RETRIEVE_ALL_IF_NONE_SELECTED = true;
-
 		public boolean nagUserOnRetrieveAll;
 		public boolean retrieveAllIfNoneSelected;
 
-		public Prefs() {
-			init();
+		private final TreePlot3D tp;
+		private final KeyController kc;
+		private final MouseController mc;
+		private String storedSensitivity;
+
+		public Prefs(final TreePlot3D tp) {
+			this.tp = tp;
+			kc = tp.keyController;
+			mc = tp.mouseController;
 		}
 
-		private void init() {
+		private void setPreferences() {
 			nagUserOnRetrieveAll = DEF_NAG_USER_ON_RETRIEVE_ALL;
 			retrieveAllIfNoneSelected = DEF_RETRIEVE_ALL_IF_NONE_SELECTED;
+			if (tp.prefService == null) {
+				kc.zoomStep = DEF_ZOOM_STEP;
+				kc.rotationStep = DEF_ROTATION_STEP;
+				mc.panStep = PAN.DEF_PAN_STEP;
+			}
+			else {
+				kc.zoomStep = getZoomStep();
+				kc.rotationStep = getRotationStep();
+				mc.panStep = getPanStep();
+				storedSensitivity = null;
+			}
 		}
 
-		public void reset() {
-			init();
-			setScreenshotDirectory("");
-			if (keyController != null) {
-				keyController.setEnableDebugMode(false);
-				keyController.resetView();
+		private String getSnapshotDirectory() {
+			if (tp.prefService == null) return RecViewerPrefsCmd.DEF_SNAPSHOT_DIR;
+			return tp.prefService.get(RecViewerPrefsCmd.class, "snapshotDir",
+				RecViewerPrefsCmd.DEF_SNAPSHOT_DIR);
+		}
+
+		private double getSnapshotRotationAngle() {
+			return tp.prefService.getDouble(RecViewerPrefsCmd.class, "rotationAngle",
+				RecViewerPrefsCmd.DEF_ROTATION_ANGLE);
+		}
+
+		private int getSnapshotRotationSteps() {
+			final int fps = tp.prefService.getInt(RecViewerPrefsCmd.class,
+				"rotationFPS", RecViewerPrefsCmd.DEF_ROTATION_FPS);
+			final double duration = tp.prefService.getDouble(RecViewerPrefsCmd.class,
+				"rotationDuration", RecViewerPrefsCmd.DEF_ROTATION_DURATION);
+			return (int) Math.round(fps * duration);
+		}
+
+		private String getControlsSensitivity() {
+			return (storedSensitivity == null) ? tp.prefService.get(
+				RecViewerPrefsCmd.class, "sensitivity",
+				RecViewerPrefsCmd.DEF_CONTROLS_SENSITIVY) : storedSensitivity;
+		}
+
+		private float getPanStep() {
+			switch (getControlsSensitivity()) {
+				case "Highest":
+					return PAN.HIGHEST.step;
+				case "Hight":
+					return PAN.HIGH.step;
+				case "Medium":
+					return PAN.MEDIUM.step;
+				case "Low":
+					return PAN.LOW.step;
+				default:
+					return PAN.DEF_PAN_STEP;
+			}
+		}
+
+		private float getZoomStep() {
+			switch (getControlsSensitivity()) {
+				case "Highest":
+					return ZOOM_STEPS[0];
+				case "Hight":
+					return ZOOM_STEPS[1];
+				case "Medium":
+					return ZOOM_STEPS[2];
+				case "Low":
+					return ZOOM_STEPS[3];
+				default:
+					return DEF_ZOOM_STEP;
+			}
+		}
+
+		private double getRotationStep() {
+			switch (getControlsSensitivity()) {
+				case "Highest":
+					return ROTATION_STEPS[0];
+				case "Hight":
+					return ROTATION_STEPS[1];
+				case "Medium":
+					return ROTATION_STEPS[2];
+				case "Low":
+					return ROTATION_STEPS[3];
+				default:
+					return DEF_ROTATION_STEP;
 			}
 		}
 
@@ -1253,7 +1366,6 @@ public class TreePlot3D {
 		private static final long serialVersionUID = 1L;
 		private final GuiUtils guiUtils;
 		private final Searchable searchable;
-		private final Prefs prefs;
 		private DefaultGenericTable table;
 
 		public ManagerPanel(final GuiUtils guiUtils) {
@@ -1272,7 +1384,6 @@ public class TreePlot3D {
 			add(scrollPane);
 			scrollPane.revalidate();
 			add(buttonPanel());
-			prefs = new Prefs();
 		}
 
 		private JPanel buttonPanel() {
@@ -2316,8 +2427,7 @@ public class TreePlot3D {
 
 	private class MouseController extends AWTCameraMouseController {
 
-		private final float PAN_FACTOR = 1f; // lower values mean more responsive
-																					// pan
+		private float panStep = Prefs.PAN.MEDIUM.step;
 		private boolean panDone;
 		private Coord3d prevMouse3d;
 
@@ -2353,22 +2463,9 @@ public class TreePlot3D {
 		}
 
 		public void snapToNextView() {
-			final ViewPositionMode[] modes = { ViewPositionMode.FREE,
-				ViewPositionMode.PROFILE, ViewPositionMode.TOP };
-			final String[] descriptions = { "Unconstrained", "Side Constrained",
-				"Top Constrained" };
-			final ViewPositionMode currentView = chart.getViewMode();
-			int nextViewIdx = 0;
-			for (int i = 0; i < modes.length; i++) {
-				if (modes[i] == currentView) {
-					nextViewIdx = i + 1;
-					break;
-				}
-			}
-			if (nextViewIdx == modes.length) nextViewIdx = 0;
 			stopThreadController();
-			chart.setViewMode(modes[nextViewIdx]);
-			displayMsg("View Mode: " + descriptions[nextViewIdx]);
+			((AChart)chart).setViewMode(currentView.next());
+			displayMsg("View Mode: " + currentView.description);
 		}
 
 		/*
@@ -2397,7 +2494,7 @@ public class TreePlot3D {
 		@Override
 		public void mouseWheelMoved(final MouseWheelEvent e) {
 			stopThreadController();
-			final float factor = 1 + (e.getWheelRotation() / 10.0f);
+			final float factor = 1 + e.getWheelRotation() * keyController.zoomStep;
 			zoom(factor);
 			prevMouse3d = view.projectMouse(e.getX(), getY(e));
 		}
@@ -2439,8 +2536,8 @@ public class TreePlot3D {
 		KeyListener
 	{
 
-		private static final float STEP = 0.1f;
-		private OverlayAnnotation overlayAnnotation;
+		private float zoomStep;
+		private double rotationStep;
 
 		public KeyController(final Chart chart) {
 			register(chart);
@@ -2486,11 +2583,11 @@ public class TreePlot3D {
 					break;
 				case '+':
 				case '=':
-					mouseController.zoom(0.9f);
+					mouseController.zoom(1f - zoomStep);
 					break;
 				case '-':
 				case '_':
-					mouseController.zoom(1.1f);
+					mouseController.zoom(1f + zoomStep);
 					break;
 				default:
 					switch (e.getKeyCode()) {
@@ -2498,21 +2595,27 @@ public class TreePlot3D {
 							showHelp(true);
 							break;
 						case KeyEvent.VK_DOWN:
-							mouseController.rotateLive(new Coord2d(0f, -STEP));
+							mouseController.rotateLive(new Coord2d(0f, -rotationStep));
 							break;
 						case KeyEvent.VK_UP:
-							mouseController.rotateLive(new Coord2d(0f, STEP));
+							mouseController.rotateLive(new Coord2d(0f, rotationStep));
 							break;
 						case KeyEvent.VK_LEFT:
-							mouseController.rotateLive(new Coord2d(-STEP, 0));
+							mouseController.rotateLive(new Coord2d(-rotationStep, 0));
 							break;
 						case KeyEvent.VK_RIGHT:
-							mouseController.rotateLive(new Coord2d(STEP, 0));
+							mouseController.rotateLive(new Coord2d(rotationStep, 0));
 							break;
 						default:
 							break;
 					}
 			}
+		}
+
+		private void saveScreenshot() {
+			getOuter().saveScreenshot();
+			displayMsg("Snapshot saved to " + FileUtils.limitPath(
+				prefs.getSnapshotDirectory(), 50));
 		}
 
 		private void resetView() {

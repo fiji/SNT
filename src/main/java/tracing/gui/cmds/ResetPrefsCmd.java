@@ -92,6 +92,7 @@ public class ResetPrefsCmd extends ContextCommand {
 		prefService.clear(MultiSWCImporterCmd.class);
 		prefService.clear(PathFitterCmd.class);
 		prefService.clear(ReconstructionViewerCmd.class);
+		prefService.clear(RecViewerPrefsCmd.class);
 		prefService.clear(RemoteSWCImporterCmd.class);
 		prefService.clear(ShowCorrespondencesCmd.class);
 		prefService.clear(SNTLoaderCmd.class);

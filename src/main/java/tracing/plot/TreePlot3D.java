@@ -123,12 +123,16 @@ import org.jzy3d.plot3d.rendering.view.modes.ViewBoundMode;
 import org.jzy3d.plot3d.rendering.view.modes.ViewPositionMode;
 import org.jzy3d.plot3d.transform.Transform;
 import org.jzy3d.plot3d.transform.Translate;
+import org.jzy3d.plot3d.transform.squarifier.XYSquarifier;
+import org.jzy3d.plot3d.transform.squarifier.XZSquarifier;
+import org.jzy3d.plot3d.transform.squarifier.ZYSquarifier;
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.plugin.Parameter;
+import org.scijava.prefs.PrefService;
 import org.scijava.table.DefaultGenericTable;
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.util.ColorRGB;
@@ -316,10 +320,32 @@ public class TreePlot3D {
 		chart.getCanvas().addKeyController(keyController);
 		chart.getCanvas().addMouseController(mouseController);
 		chart.setAxeDisplayed(false);
-		view.getCamera().setViewportMode(ViewportMode.STRETCH_TO_FILL);
+		squarify("none", false);
 		currentView = ViewMode.DEFAULT;
 		gUtils = new GuiUtils((Component) chart.getCanvas());
 		return true;
+	}
+
+	private void squarify(final String axes, final boolean enable) {
+		final String parsedAxes = (enable) ? axes.toLowerCase() : "none";
+		switch (parsedAxes) {
+			case "xy":
+				view.setSquarifier(new XYSquarifier());
+				view.setSquared(true);
+				return;
+			case "zy":
+				view.setSquarifier(new ZYSquarifier());
+				view.setSquared(true);
+				return;
+			case "xz":
+				view.setSquarifier(new XZSquarifier());
+				view.setSquared(true);
+				return;
+			default:
+				view.setSquarifier(null);
+				view.setSquared(false);
+				return;
+		}
 	}
 
 	private void rebuild() {

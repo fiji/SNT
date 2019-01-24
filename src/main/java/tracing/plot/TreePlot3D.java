@@ -361,15 +361,22 @@ public class TreePlot3D {
 	private void rebuild() {
 		SNT.log("Rebuilding scene...");
 		try {
+			// remember settings so that they can be restored
 			final boolean lighModeOn = !isDarkModeOn();
+			final float currentZoomStep = keyController.zoomStep;
+			final double currentRotationStep = keyController.rotationStep;
+			final float currentPanStep = mouseController.panStep;
 			chart.stopAnimator();
 			chart.dispose();
 			chart = null;
 			initView();
+			keyController.zoomStep = currentZoomStep;
+			keyController.rotationStep = currentRotationStep;
+			mouseController.panStep = currentPanStep;
+			if (lighModeOn) keyController.toggleDarkMode();
 			addAllObjects();
 			updateView();
-			if (lighModeOn) keyController.toggleDarkMode();
-			if (managerList != null) managerList.selectAll();
+			//if (managerList != null) managerList.selectAll();
 		}
 		catch (final GLException exc) {
 			SNT.error("Rebuild Error", exc);

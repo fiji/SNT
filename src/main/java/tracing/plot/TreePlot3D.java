@@ -71,6 +71,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -1542,20 +1543,19 @@ public class TreePlot3D {
 		private JPanel buttonPanel() {
 			final boolean includeAnalysisCmds = !isSNTInstance();
 			final JPanel buttonPanel = new JPanel(new GridLayout(1,
-				(includeAnalysisCmds) ? 5 : 6));
+				(includeAnalysisCmds) ? 4 : 5));
 			buttonPanel.setBorder(null);
 			// do not allow panel to resize vertically
 			buttonPanel.setMaximumSize(new Dimension(buttonPanel
 				.getMaximumSize().width, (int) buttonPanel.getPreferredSize()
 					.getHeight()));
-			buttonPanel.add(menuButton(GLYPH.SYNC, reloadMenu(), "Reload Commands"));
+			buttonPanel.add(menuButton(GLYPH.MASKS, sceneMenu(), "Scene Controls"));
 			buttonPanel.add(menuButton(GLYPH.TREE, treesMenu(),
-				"Add/Remove Reconstructions"));
-			buttonPanel.add(menuButton(GLYPH.CUBE, meshMenu(), "Add/Remove Meshes"));
+				"Add, Customize or Remove Reconstructions"));
+			buttonPanel.add(menuButton(GLYPH.CUBE, meshMenu(), "Add, Customize or Remove Meshes"));
 			if (includeAnalysisCmds) buttonPanel.add(menuButton(GLYPH.CALCULATOR,
-				measureMenu(), "Analyze/Measure"));
-			buttonPanel.add(menuButton(GLYPH.SLIDERS, optionsMenu(), "Customize"));
-			buttonPanel.add(menuButton(GLYPH.TOOL, settingsMenu(), "Settings"));
+				measureMenu(), "Analyze & Measure"));
+			buttonPanel.add(menuButton(GLYPH.TOOL, toolsMenu(), "Tools & Utilities"));
 			return buttonPanel;
 		}
 
@@ -1569,14 +1569,14 @@ public class TreePlot3D {
 			return button;
 		}
 
-		private JPopupMenu reloadMenu() {
-			final JPopupMenu reloadMenu = new JPopupMenu();
-			JMenuItem mi = new JMenuItem("Fit View to Visible Objects", IconFactory
+		private JPopupMenu sceneMenu() {
+			final JPopupMenu sceneMenu = new JPopupMenu();
+			JMenuItem mi = new JMenuItem("Fit to Visible Objects", IconFactory
 				.getMenuIcon(GLYPH.EXPAND));
 			mi.setMnemonic('f');
 			mi.addActionListener(e -> {
 				fitToVisibleObjects();
-				final BoundingBox3d bounds = chart.view().getBounds();
+				final BoundingBox3d bounds = chart.view().getScene().getGraph().getBounds();
 				final StringBuilder sb = new StringBuilder();
 				sb.append("X: ").append(String.format("%.2f", bounds.getXmin())).append(
 					"-").append(String.format("%.2f", bounds.getXmax()));
@@ -1586,8 +1586,20 @@ public class TreePlot3D {
 					.append("-").append(String.format("%.2f", bounds.getZmax()));
 				displayMsg("Zoomed to " + sb.toString());
 			});
-			reloadMenu.add(mi);
-			mi = new JMenuItem("Reload Scene", IconFactory.getMenuBarIcon(GLYPH.REDO));
+			sceneMenu.add(mi);
+
+			// Aspect-ratio controls
+			final JMenuItem jcbmiFill = new JCheckBoxMenuItem("Stretch-to-Fill");
+			jcbmiFill.setIcon(IconFactory.getMenuIcon(GLYPH.EXPAND_ARROWS));
+			jcbmiFill.addItemListener(e -> {
+				final ViewportMode mode = (jcbmiFill.isSelected()) ? ViewportMode.STRETCH_TO_FILL : ViewportMode.RECTANGLE_NO_STRETCH;
+				view.getCamera().setViewportMode(mode);
+			});
+			sceneMenu.add(jcbmiFill);
+			sceneMenu.add(squarifyMenu());
+			sceneMenu.addSeparator();
+
+			mi = new JMenuItem("Reload Scene", IconFactory.getMenuIcon(GLYPH.REDO));
 			mi.setMnemonic('r');
 			mi.addActionListener(e -> {
 				if (!sceneIsOK() && guiUtils.getConfirmation(
@@ -1599,9 +1611,9 @@ public class TreePlot3D {
 					displayMsg("Scene reloaded");
 				}
 			});
-			reloadMenu.add(mi);
+			sceneMenu.add(mi);
 
-			mi = new JMenuItem("Rebuild Scene...");
+			mi = new JMenuItem("Rebuild Scene...", IconFactory.getMenuIcon(GLYPH.RECYCLE));
 			mi.addActionListener(e -> {
 				if (guiUtils.getConfirmation("Rebuild 3D Scene Completely?",
 					"Force Rebuild"))
@@ -1609,10 +1621,24 @@ public class TreePlot3D {
 					rebuild();
 				}
 			});
-			reloadMenu.add(mi);
-			reloadMenu.addSeparator();
+			sceneMenu.add(mi);
 
-			mi = new JMenuItem("Sync Path Manager Changes");
+			mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.BROOM));
+			mi.addActionListener(e -> {
+				if (guiUtils.getConfirmation(
+					"Remove all items from scene? This action cannot be undone.",
+					"Wipe Scene?"))
+				{
+					getOuter().removeAll();
+					removeAllOBJs();
+					removeColorLegends(false);
+				}
+			});
+			sceneMenu.add(mi);
+			sceneMenu.addSeparator();
+
+			mi = new JMenuItem("Sync Path Manager Changes", IconFactory.getMenuIcon(
+				GLYPH.SYNC));
 			mi.setMnemonic('s');
 			mi.addActionListener(e -> {
 				try {
@@ -1624,8 +1650,22 @@ public class TreePlot3D {
 				}
 			});
 			mi.setEnabled(isSNTInstance());
-			reloadMenu.add(mi);
-			return reloadMenu;
+			sceneMenu.add(mi);
+			return sceneMenu;
+		}
+
+		private JMenu squarifyMenu() {
+			final JMenu menu = new JMenu("Impose Isotropic Scale");
+			menu.setIcon(IconFactory.getMenuIcon(GLYPH.EQUALS));
+			final ButtonGroup cGroup = new ButtonGroup();
+			final String[] axes = new String[] { "XY", "ZY", "XZ", "None"};
+			for (final String axis : axes) {
+				final JMenuItem jcbmi = new JCheckBoxMenuItem(axis, axis.startsWith("None"));
+				cGroup.add(jcbmi);
+				jcbmi.addItemListener(e -> squarify(axis, jcbmi.isSelected()));
+				menu.add(jcbmi);
+			}
+			return menu;
 		}
 
 		private JPopupMenu popupMenu() {
@@ -1833,7 +1873,7 @@ public class TreePlot3D {
 				runCmd(ShollTracingsCmd.class, input, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);
-			mi = new JMenuItem("Strahler Analysis", IconFactory.getButtonIcon(
+			mi = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(
 				GLYPH.BRANCH_CODE));
 			mi.addActionListener(e -> {
 				final Tree tree = getSingleSelectionTree();
@@ -1861,17 +1901,10 @@ public class TreePlot3D {
 			return plottedTrees.get(keys.get(0)).tree;
 		}
 
-		private JPopupMenu optionsMenu() {
-			final JPopupMenu optionsMenu = new JPopupMenu();
-			final JMenu recMenu = new JMenu("Trees");
-			recMenu.setMnemonic('t');
-			recMenu.setIcon(IconFactory.getMenuIcon(GLYPH.TREE));
-			optionsMenu.add(recMenu);
-			final JMenu meshMenu = new JMenu("Meshes");
-			meshMenu.setMnemonic('m');
+		private JMenu customizeMeshesMenu() {
+			final JMenu meshMenu = new JMenu("Customize");
+			meshMenu.setMnemonic('c');
 			meshMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CUBE));
-			optionsMenu.add(meshMenu);
-			optionsMenu.add(legendMenu());
 
 			// Mesh customizations
 			JMenuItem mi = new JMenuItem("Assign Color...", IconFactory.getMenuIcon(
@@ -1891,7 +1924,7 @@ public class TreePlot3D {
 			});
 			meshMenu.add(mi);
 			mi = new JMenuItem("Transparency...", IconFactory.getMenuIcon(
-				GLYPH.SUN));
+				GLYPH.ADJUST));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedMeshes(true);
 				if (keys == null) return;
@@ -1910,9 +1943,15 @@ public class TreePlot3D {
 				}
 			});
 			meshMenu.add(mi);
+			return meshMenu;
+		}
 
-			// Tree customizations
-			mi = new JMenuItem("Assign Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
+		private JMenu customizeTreesMenu() {
+			final JMenu menu = new JMenu("Customize");
+			menu.setMnemonic('c');
+			menu.setIcon(IconFactory.getMenuIcon(GLYPH.TREE));
+
+			JMenuItem mi = new JMenuItem("Assign Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees(true);
 				if (keys == null || !okToApplyColor(keys)) return;
@@ -1923,7 +1962,7 @@ public class TreePlot3D {
 				}
 				applyColorToPlottedTrees(keys, c);
 			});
-			recMenu.add(mi);
+			menu.add(mi);
 
 			mi = new JMenuItem("Color Coding (Individual Cells)...");
 			mi.addActionListener(e -> {
@@ -1933,7 +1972,7 @@ public class TreePlot3D {
 				inputs.put("treeMappingLabels", keys);
 				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
-			recMenu.add(mi);
+			menu.add(mi);
 			mi = new JMenuItem("Color Coding (Group of Cells)...");
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees(true);
@@ -1942,7 +1981,7 @@ public class TreePlot3D {
 				inputs.put("multiTreeMappingLabels", keys);
 				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
-			recMenu.add(mi);
+			menu.add(mi);
 			mi = new JMenuItem("Color Each Cell Uniquely...");
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees(true);
@@ -1956,8 +1995,8 @@ public class TreePlot3D {
 					counter[0]++;
 				});
 			});
-			recMenu.add(mi);
-			recMenu.addSeparator();
+			menu.add(mi);
+			menu.addSeparator();
 
 			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.DOTCIRCLE));
 			mi.addActionListener(e -> {
@@ -1979,9 +2018,9 @@ public class TreePlot3D {
 					guiUtils.error("Invalid thickness value.");
 					return;
 				}
-				applyThicknessToPlottedTrees(keys, thickness.floatValue());
+				setTreesThickness(keys, thickness.floatValue());
 			});
-			recMenu.add(mi);
+			menu.add(mi);
 
 			mi = new JMenuItem("Translate...", IconFactory.getMenuIcon(GLYPH.MOVE));
 			mi.addActionListener(e -> {
@@ -1991,64 +2030,138 @@ public class TreePlot3D {
 				inputs.put("treeLabels", keys);
 				runCmd(TranslateReconstructionsCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
-			recMenu.add(mi);
-			return optionsMenu;
+			menu.add(mi);
+			return menu;
 		}
 
-		private JPopupMenu settingsMenu() {
+		private JPopupMenu toolsMenu() {
 			final JPopupMenu settingsMenu = new JPopupMenu();
-			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode");
+			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode", SNT.isDebugMode());
 			jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
 			jcbmi.setMnemonic('d');
 			jcbmi.addItemListener(e -> {
-				keyController.setEnableDebugMode(jcbmi.isSelected());
 				if (isSNTInstance()) {
 					sntService.getPlugin().getUI().setEnableDebugMode(jcbmi.isSelected());
+				} else {
+					SNT.setDebugMode(jcbmi.isSelected());
 				}
 			});
 			settingsMenu.add(jcbmi);
-			JMenuItem mi = new JMenuItem("Screenshot Directory...", IconFactory
+			settingsMenu.addSeparator();
+
+			JMenuItem mi = new JMenuItem("Take Snapshot", IconFactory
 				.getMenuIcon(GLYPH.CAMERA));
+			mi.addActionListener(e -> keyController.saveScreenshot());
+			settingsMenu.add(mi);
+			mi = new JMenuItem("Record Rotation", IconFactory
+				.getMenuIcon(GLYPH.VIDEO));
 			mi.addActionListener(e -> {
-				final File oldDir = new File(getScreenshotDirectory());
-				final File newDir = guiUtils.chooseDirectory(
-					"Choose Directory for saving Rec. Viewer's screenshots", oldDir);
-				if (newDir != null) {
-					final String newPath = newDir.getAbsolutePath();
-					setScreenshotDirectory(newPath);
-					displayMsg("Screenshot directory is now " + FileUtils.limitPath(
-						newPath, 50));
-				}
+				SwingUtilities.invokeLater(() -> {
+					displayMsg("Recording rotation...", 0);
+					new RecordWorker().execute();
+				});
 			});
 			settingsMenu.add(mi);
 			settingsMenu.addSeparator();
 
-			mi = new JMenuItem("Reset Preferences...", IconFactory.getMenuIcon(
-				GLYPH.WINDOWS));
-			mi.addActionListener(e -> {
-				if (guiUtils.getConfirmation("Reset Preferences?", "Reset?")) prefs
-					.reset();
-			});
-			settingsMenu.add(mi);
-			mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.BROOM));
-			mi.addActionListener(e -> {
-				if (guiUtils.getConfirmation(
-					"Remove all items from scene? This action cannot be undone.",
-					"Wipe Scene?"))
-				{
-					getOuter().removeAll();
-					removeAllOBJs();
-					removeColorLegends(false);
-				}
-			});
-			settingsMenu.add(mi);
+			settingsMenu.add(legendMenu());
 			settingsMenu.addSeparator();
 
-			mi = new JMenuItem("Keyboard Operations...", IconFactory.getMenuIcon(
+			settingsMenu.add(sensitivityMenu());
+			mi = new JMenuItem("Keyboard Shortcuts...", IconFactory.getMenuIcon(
 				GLYPH.KEYBOARD));
 			mi.addActionListener(e -> keyController.showHelp(true));
 			settingsMenu.add(mi);
+			settingsMenu.addSeparator();
+			mi = new JMenuItem("Preferences...", IconFactory.getMenuIcon(GLYPH.COG));
+			mi.addActionListener(e -> {
+				runCmd(RecViewerPrefsCmd.class, null, CmdWorker.DO_NOTHING, false);
+			});
+			settingsMenu.add(mi);
 			return settingsMenu;
+		}
+
+		private JMenu sensitivityMenu() {
+			final JMenu zoomMenu = new JMenu("Zoom Steps");
+			zoomMenu.setIcon(IconFactory.getMenuIcon(GLYPH.SEARCH));
+			final ButtonGroup zGroup = new ButtonGroup();
+			for (final float step : Prefs.ZOOM_STEPS) {
+				final JMenuItem jcbmi = new JCheckBoxMenuItem(String.format("%.0f",
+					step * 100) + "%");
+				jcbmi.setSelected(step == keyController.zoomStep);
+				jcbmi.addItemListener(e -> keyController.zoomStep = step);
+				zGroup.add(jcbmi);
+				zoomMenu.add(jcbmi);
+			}
+			final JMenu rotationMenu = new JMenu("Rotation Steps");
+			rotationMenu.setIcon(IconFactory.getMenuIcon(GLYPH.UNDO));
+			final ButtonGroup rGroup = new ButtonGroup();
+			for (final double step : Prefs.ROTATION_STEPS) {
+				final JMenuItem jcbmi = new JCheckBoxMenuItem(String.format("%.1f", Math
+					.toDegrees(step)) + "\u00b0");
+				jcbmi.setSelected(step == keyController.rotationStep);
+				jcbmi.addItemListener(e -> keyController.rotationStep = step);
+				rGroup.add(jcbmi);
+				rotationMenu.add(jcbmi);
+			}
+			final JMenu panMenu = new JMenu("Pan Accuracy");
+			panMenu.setIcon(IconFactory.getMenuIcon(GLYPH.HAND));
+			final ButtonGroup pGroup = new ButtonGroup();
+			for (final Prefs.PAN pan : Prefs.PAN.values()) {
+				final JMenuItem jcbmi = new JCheckBoxMenuItem(pan.description);
+				jcbmi.setSelected(pan.step == mouseController.panStep);
+				jcbmi.addItemListener(e -> mouseController.panStep = pan.step);
+				pGroup.add(jcbmi);
+				panMenu.add(jcbmi);
+			}
+			final JMenu sensitivityMenu = new JMenu("Keyboard & Mouse Sensitivity");
+			sensitivityMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CHECK_DOUBLE));
+			sensitivityMenu.add(panMenu);
+			sensitivityMenu.add(rotationMenu);
+			sensitivityMenu.add(zoomMenu);
+			return sensitivityMenu;
+		}
+
+		private class RecordWorker extends SwingWorker<String, Object> {
+
+			private boolean error = false;
+
+			protected String doInBackground() {
+				final File rootDir = new File(prefs.getSnapshotDirectory() +
+					File.separator + "SNTrecordings");
+				if (!rootDir.exists()) rootDir.mkdirs();
+				final int dirId = rootDir.list((current, name) -> new File(current,
+					name).isDirectory() && name.startsWith("recording")).length + 1;
+				final File dir = new File(rootDir + File.separator + "recording" +
+					String.format("%01d", dirId));
+				try {
+					recordRotation(prefs.getSnapshotRotationAngle(), prefs
+						.getSnapshotRotationSteps(), dir);
+					return "Finished. Frames at " + dir.getParent();
+				}
+				catch (final IllegalArgumentException | SecurityException ex) {
+					error = true;
+					return ex.getMessage();
+				}
+			}
+
+			protected void done() {
+				String doneMessage;
+				try {
+					doneMessage = get();
+				}
+				catch (InterruptedException | ExecutionException ex) {
+					error = true;
+					doneMessage = "Unfortunately an exception occured.";
+					if (SNT.isDebugMode())
+						SNT.error("Recording failure", ex);
+				}
+				if (error) {
+					displayMsg("Recording failure...");
+					guiUtils.error(doneMessage);
+				}
+				else displayMsg(doneMessage);
+			}
 		}
 
 		private boolean okToApplyColor(final List<String> labelsOfselectedTrees) {
@@ -2077,7 +2190,6 @@ public class TreePlot3D {
 				runCmd(LoadReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			tracesMenu.add(mi);
-			tracesMenu.addSeparator();
 			final JMenu remoteMenu = new JMenu("Load from Database");
 			remoteMenu.setMnemonic('d');
 			remoteMenu.setDisplayedMnemonicIndex(10);
@@ -2101,6 +2213,8 @@ public class TreePlot3D {
 				runCmd(RemoteSWCImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			remoteMenu.add(mi);
+			tracesMenu.addSeparator();
+			tracesMenu.add(customizeTreesMenu());
 			tracesMenu.addSeparator();
 			mi = new JMenuItem("Remove Selected...", IconFactory.getMenuIcon(
 				GLYPH.DELETE));
@@ -2137,7 +2251,6 @@ public class TreePlot3D {
 		private JMenu legendMenu() {
 			// Legend Menu
 			final JMenu legendMenu = new JMenu("Color Legends");
-			legendMenu.setMnemonic('C');
 			legendMenu.setIcon(IconFactory.getMenuIcon(GLYPH.COLOR2));
 			JMenuItem mi = new JMenuItem("Add...");
 			mi.addActionListener(e -> {
@@ -2189,6 +2302,8 @@ public class TreePlot3D {
 			mi = new JMenuItem("Drosophila: JFRC3");
 			mi.addActionListener(e -> loadRefBrainAction(JFRC3_MESH_LABEL));
 			refMenu.add(mi);
+			meshMenu.addSeparator();
+			meshMenu.add(customizeMeshesMenu());
 			meshMenu.addSeparator();
 			mi = new JMenuItem("Remove Selected...", IconFactory.getMenuIcon(
 				GLYPH.DELETE));
@@ -2673,15 +2788,15 @@ public class TreePlot3D {
 		 */
 		@Override
 		public void mousePressed(final MouseEvent e) {
-			if (e.isControlDown() && AWTMouseUtilities.isLeftDown(e)) {
+			if (e.isControlDown() && AWTMouseUtilities.isLeftDown(e) && !e.isConsumed()) {
 				snapToNextView();
+				e.consume();
+				return;
 			}
-			else {
-				super.mousePressed(e);
-			}
+			super.mousePressed(e);
 			prevMouse3d = view.projectMouse(e.getX(), getY(e));
 		}
-
+	
 		/*
 		 * (non-Javadoc)
 		 *
@@ -2771,8 +2886,6 @@ public class TreePlot3D {
 				case 's':
 				case 'S':
 					saveScreenshot();
-					displayMsg("Screenshot saved to " + FileUtils.limitPath(
-						getScreenshotDirectory(), 50));
 					break;
 				case 'f':
 				case 'F':
@@ -2866,18 +2979,6 @@ public class TreePlot3D {
 			displayMsg("Quality level changed to '" + grades[nextLevelIdx] + "'");
 		}
 
-		private void setEnableDebugMode(final boolean enable) {
-			if (enable) {
-				overlayAnnotation = new OverlayAnnotation(chart.getView());
-				((AWTChart) chart).addRenderer(overlayAnnotation);
-			}
-			else {
-				((AWTChart) chart).removeRenderer(overlayAnnotation);
-				overlayAnnotation = null;
-			}
-			SNT.setDebugMode(enable);
-		}
-
 		private void toggleDarkMode() {
 //			if (chart == null)
 //				return;
@@ -2950,7 +3051,7 @@ public class TreePlot3D {
 			sb.append("    <td>Left-click &amp; drag (or arrow keys)</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Scale</td>");
+			sb.append("    <td>Zoom (Scale)</td>");
 			sb.append("    <td>Scroll (or + / - keys)</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
@@ -2982,7 +3083,7 @@ public class TreePlot3D {
 			sb.append("    <td>Press 'R'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td><u>S</u>creenshot</td>");
+			sb.append("    <td><u>S</u>napshot</td>");
 			sb.append("    <td>Press 'S'</td>");
 			sb.append("  </tr>");
 			if (showInDialog) {
@@ -3185,14 +3286,27 @@ public class TreePlot3D {
 	 * Applies a constant thickness (line width) to a subset of plotted trees.
 	 *
 	 * @param labels the Collection of keys specifying the subset of trees
-	 * @param thickness the thickness
+	 * @param thickness the thickness (line width)
+	 * @see #setTreesThickness(float)
 	 */
-	protected void applyThicknessToPlottedTrees(final List<String> labels,
+	public void setTreesThickness(final Collection<String> labels,
 		final float thickness)
 	{
 		plottedTrees.forEach((k, shapeTree) -> {
 			if (labels.contains(k)) shapeTree.setThickness(thickness);
 		});
+	}
+
+	/**
+	 * Applies a constant thickness to all plotted trees. Note that by default,
+	 * trees are rendered using their nodes' diameter;
+	 *
+	 * @param thickness the thickness (line width)
+	 * @see #setTreesThickness(String, float)
+	 */
+	public void setTreesThickness(final float thickness) {
+		plottedTrees.values().forEach(shapeTree -> shapeTree.setThickness(
+			thickness));
 	}
 
 	/**

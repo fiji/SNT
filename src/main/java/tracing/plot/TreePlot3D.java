@@ -26,12 +26,14 @@ import com.jidesoft.swing.CheckBoxList;
 import com.jidesoft.swing.ListSearchable;
 import com.jidesoft.swing.Searchable;
 import com.jogamp.common.nio.Buffers;
+import com.jogamp.opengl.FPSCounter;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GLAnimatorControl;
 import com.jogamp.opengl.GLException;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -43,6 +45,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -1063,6 +1067,7 @@ public class TreePlot3D {
 			super(new AChartComponentFactory(), quality, DEFAULT_WINDOWING_TOOLKIT,
 				org.jzy3d.chart.Settings.getInstance().getGLCapabilities());
 			currentView = ViewMode.DEFAULT;
+			addRenderer(overlayAnnotation = new OverlayAnnotation(getView()));
 		}
 
 		// see super.setViewMode(mode);
@@ -2699,8 +2704,7 @@ public class TreePlot3D {
 			view.setBackgroundColor(newBackground);
 			view.getAxe().getLayout().setGridColor(newForeground);
 			view.getAxe().getLayout().setMainColor(newForeground);
-			if (overlayAnnotation != null) overlayAnnotation.setForegroundColor(
-				newForeground);
+			((AChart)chart).overlayAnnotation.setForegroundColor(newForeground);
 
 			// Apply foreground color to trees with background color
 			plottedTrees.values().forEach(shapeTree -> {
@@ -2808,18 +2812,36 @@ public class TreePlot3D {
 
 	private class OverlayAnnotation extends CameraEyeOverlayAnnotation {
 
-		private java.awt.Color color;
 		private final GLAnimatorControl control;
+		private java.awt.Color color;
+		private String label;
+		private Font labelFont;
+		private java.awt.Color labelColor;
+		private float labelX = 2;
+		private float labelY = 0;
 
 		public OverlayAnnotation(final View view) {
 			super(view);
-			control = ((IScreenCanvas) chart.getCanvas()).getAnimator();
-			control.setUpdateFPSFrames(120, null);
-			setForegroundColor(view.getAxe().getLayout().getMainColor());
+			control = ((IScreenCanvas) view.getCanvas()).getAnimator();
+			control.setUpdateFPSFrames(FPSCounter.DEFAULT_FRAMES_PER_INTERVAL, null);
 		}
 
 		private void setForegroundColor(final Color c) {
 			color = new java.awt.Color(c.r, c.g, c.b);
+		}
+
+		public void setFont(final Font font, final float angle) {
+			if (angle == 0) {
+				this.labelFont = font;
+				return;
+			}
+			final AffineTransform affineTransform = new AffineTransform();
+			affineTransform.rotate(Math.toRadians(angle), 0, 0);
+			labelFont = font.deriveFont(affineTransform);
+		}
+
+		public void setLabelColor(final java.awt.Color labelColor) {
+			this.labelColor = labelColor;
 		}
 
 		@Override
@@ -2832,10 +2854,21 @@ public class TreePlot3D {
 			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
 				RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 			g2d.setColor(color);
-			g2d.drawString("View: " + view.getCamera().getEye(), 20, 20);
-			g2d.drawString("FOV: " + view.getCamera().getRenderingSphereRadius(), 20,
-				40);
-			g2d.drawString(control.getLastFPS() + " FPS", 20, 60);
+			if (SNT.isDebugMode()) {
+				int lineHeight = g.getFontMetrics().getHeight();
+				g2d.drawString("View: " + view.getCamera().getEye(), 20, lineHeight);
+				g2d.drawString("FOV: " + view.getCamera().getRenderingSphereRadius(),
+					20,lineHeight += lineHeight);
+				g2d.drawString(control.getLastFPS() + " FPS", 20, lineHeight += lineHeight);
+			}
+			if (label == null || label.isEmpty()) return;
+			if (labelColor != null) g2d.setColor(labelColor);
+			if (labelFont != null) g2d.setFont(labelFont);
+			final int lineHeight = g2d.getFontMetrics().getHeight();
+			float ypos = labelY; //(labelY < lineHeight) ? lineHeight : labelY;
+			for (final String line : label.split("\n")) {
+				g2d.drawString(line, labelX, ypos += lineHeight);
+			}
 		}
 	}
 

@@ -39,6 +39,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -396,6 +398,48 @@ public class TreePlot3D {
 		if (!sceneIsOK()) rebuild();
 	}
 
+	/**
+	 * Rotates the scene.
+	 *
+	 * @param degrees the angle, in degrees
+	 * @throws IllegalArgumentException if current view mode does not allow
+	 *           rotations
+	 */
+	public void rotate(final float degrees) throws IllegalArgumentException {
+		if (currentView == ViewMode.TOP) {
+			throw new IllegalArgumentException("Rotations not allowed under " +
+				ViewMode.TOP.description);
+		}
+		mouseController.rotate(new Coord2d(-Math.toRadians(degrees), 0),
+			viewUpdatesEnabled);
+	}
+
+	/**
+	 * Records an animated rotation of the scene as a sequence of images.
+	 *
+	 * @param angle the rotation angle (e.g., 360 for a full rotation)
+	 * @param frames the number of frames in the animated sequence
+	 * @param destinationDirectory the directory where the image sequence will be
+	 *          stored.
+	 * @throws IllegalArgumentException if no view exists, or current view is
+	 *           constrained and does not allow 360 degrees rotation
+	 * @throws SecurityException if it was not possible to save files to
+	 *           {@code destinationDirectory}
+	 */
+	public void recordRotation(final double angle, final int frames, final File destinationDirectory) throws IllegalArgumentException,
+		SecurityException
+	{
+		if (!chartExists()) {
+			throw new IllegalArgumentException("Viewer is not visible");
+		}
+		if (chart.getViewMode() == ViewPositionMode.TOP) {
+			throw new IllegalArgumentException(
+				"Current constrained view does not allow scene to be rotated.");
+		}
+		mouseController.stopThreadController();
+		mouseController.recordRotation(angle, frames, destinationDirectory);
+	}
+
 	private boolean isDarkModeOn() {
 		return view.getBackgroundColor() == Color.BLACK;
 	}
@@ -546,10 +590,18 @@ public class TreePlot3D {
 	 * @return the frame containing the plot.
 	 */
 	public Frame show() {
+		return show(-1, -1);
+	}
+
+	public Frame show(final int width, final int height) {
 		final boolean viewInitialized = initView();
 		if (!viewInitialized && frame != null) {
 			updateView();
 			frame.setVisible(true);
+			if (width > 0 || height > 0) {
+				frame.setLocation(0, 0);
+				frame.setSize(width, height);
+			}
 			return frame;
 		}
 		else if (viewInitialized) {
@@ -560,7 +612,9 @@ public class TreePlot3D {
 				chart.add(drawableVBO, viewUpdatesEnabled);
 			});
 		}
-		frame = new ViewerFrame(chart, managerList != null);
+		frame = (width < 0 || height < 0) ? 
+			new ViewerFrame(chart, managerList != null)
+			: 	new ViewerFrame(chart, width, height, false, managerList != null);
 		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
 	}
@@ -834,6 +888,28 @@ public class TreePlot3D {
 	}
 
 	/**
+	 * Sets a manual bounding box for the scene. The bounding box determines the
+	 * zoom and framing of the scene. Current view point is logged to the Console
+	 * when interacting with the Reconstruction Viewer in debug mode.
+	 *
+	 * @param xMin the X coordinate of the box origin
+	 * @param xMax the X coordinate of the box origin opposite
+	 * @param yMin the Y coordinate of the box origin
+	 * @param yMax the Y coordinate of the box origin opposite
+	 * @param zMin the Z coordinate of the box origin
+	 * @param zMax the X coordinate of the box origin opposite
+	 */
+	public void setBounds(double xMin, double xMax, double yMin, double yMax,
+		double zMin, double zMax)
+	{
+		final BoundingBox3d bBox = new BoundingBox3d((float)xMin, (float)xMax,
+			(float)yMin, (float)yMax, (float)zMin,
+		(float)zMax);
+		chart.view().setBoundManual(bBox);
+		if (viewUpdatesEnabled) chart.view().shoot();
+	}
+
+	/**
 	 * Runs {@link TreeColorMapper} on the specified {@link Tree}.
 	 *
 	 * @param treeLabel the identifier of the Tree (as per {@link #add(Tree)})to
@@ -854,29 +930,49 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Sets the screenshot directory.
+	 * Renders the scene from a specified camera angle.
 	 *
-	 * @param screenshotDir the absolute file path of the screenshot saving
-	 *          directory. Set it to {@code null} to have screenshots saved in the
-	 *          default directory: the Desktop folder of the user's home directory
+	 * @param viewPoint the view mode, e.g., {@link ViewMode#DEFAULT},
+	 *          {@link ViewMode#SIDE} , etc.
 	 */
-	public void setScreenshotDirectory(final String screenshotDir) {
-		if (screenshotDir == null || screenshotDir.isEmpty()) {
-			this.screenshotDir = System.getProperty("user.home") + File.separator +
-				"Desktop";
+	public void setViewMode(final ViewMode viewMode) {
+		if (!chartExists()) {
+			throw new IllegalArgumentException("View was not initialized?");
 		}
-		else {
-			this.screenshotDir = screenshotDir;
-		}
+		((AChart) chart).setViewMode(viewMode);
 	}
 
 	/**
-	 * Gets the screenshot directory.
-	 *
-	 * @return the screenshot directory
+	 * Renders the scene from a specified camera angle using polar coordinates
+	 * relative to the the center of the scene. Only X and Y dimensions are
+	 * required, as the distance to center will be computed automatically. Current
+	 * view point is logged to the Console when interacting with the
+	 * Reconstruction Viewer in debug mode.
+	 * 
+	 * @param r the radial coordinate
+	 * @param t he angle coordinate (radians)
 	 */
-	public String getScreenshotDirectory() {
-		return screenshotDir;
+	public void setViewPoint(final float r, final float t) {
+		if (!chartExists()) {
+			throw new IllegalArgumentException("View was not initialized?");
+		}
+		chart.getView().setViewPoint(new Coord3d(r, t, Float.NaN));
+		if (viewUpdatesEnabled) chart.getView().shoot();
+	}
+
+	public void setLabel(final String label) {
+		((AChart)chart).overlayAnnotation.label = label;
+	}
+
+	public void setLabelLocation(final float x, final float y) {
+		((AChart)chart).overlayAnnotation.labelX = x;
+		((AChart)chart).overlayAnnotation.labelY = y;
+	}
+
+	public void setFont(final Font font, final float angle, final ColorRGB color) {
+		((AChart)chart).overlayAnnotation.setFont(font, angle);
+		((AChart)chart).overlayAnnotation.setLabelColor(new java.awt.Color(color.getRed(), color
+			.getGreen(), color.getBlue(), color.getAlpha()));
 	}
 
 	/**
@@ -1132,6 +1228,36 @@ public class TreePlot3D {
 			//setBoundMode(ViewBoundMode.AUTO_FIT);
 		}
 
+		@Override
+		public void setViewPoint(Coord3d polar, boolean updateView) {
+//			viewpoint = polar;
+//			viewpoint.y = viewpoint.y < -PI_div2 ? -PI_div2 : viewpoint.y;
+//			viewpoint.y = viewpoint.y > PI_div2 ? PI_div2 : viewpoint.y;
+//			if (updateView) shoot();
+//			fireViewPointChangedEvent(new ViewPointChangedEvent(this, polar));
+			super.setViewPoint(polar, updateView);
+			if (SNT.isDebugMode()) {
+				final StringBuilder sb = new StringBuilder("setViewPoint(");
+				sb.append(viewpoint.x).append(", ");
+				sb.append(viewpoint.y).append(");");
+				SNT.log(sb.toString());
+			}
+		}
+
+		@Override
+		public void setBoundManual(final BoundingBox3d bounds) {
+			super.setBoundManual(bounds);
+			if (SNT.isDebugMode()) {
+				final StringBuilder sb = new StringBuilder("setBounds(");
+				sb.append(bounds.getXmin()).append(", ");
+				sb.append(bounds.getXmax()).append(", ");
+				sb.append(bounds.getYmin()).append(", ");
+				sb.append(bounds.getYmax()).append(", ");
+				sb.append(bounds.getZmin()).append(", ");
+				sb.append(bounds.getZmax()).append(");");
+				SNT.log(sb.toString());
+			}
+		}
 
 		@Override
 		protected Coord3d computeCameraEyeTop(final Coord3d viewpoint,
@@ -1150,6 +1276,9 @@ public class TreePlot3D {
 	private class ViewerFrame extends FrameAWT implements IFrame {
 
 		private static final long serialVersionUID = 1L;
+		private static final int DEF_WIDTH = 800;
+		private static final int DEF_HEIGHT = 600;
+
 		private Chart chart;
 		private Component canvas;
 		private JDialog manager;
@@ -1162,14 +1291,26 @@ public class TreePlot3D {
 		 *          should be made visible
 		 */
 		public ViewerFrame(final Chart chart, final boolean includeManager) {
+			this(chart, DEF_WIDTH, DEF_HEIGHT, true, includeManager);
+		}
+
+		public ViewerFrame(final Chart chart, final int width, final int height, final boolean center, final boolean includeManager) {
 			final String title = (isSNTInstance()) ? " (SNT)" : "";
-			initialize(chart, new Rectangle(800, 600), "Reconstruction Viewer" +
+			initialize(chart, new Rectangle(width, height), "Reconstruction Viewer" +
 				title);
+			if (!center) setLocation(0,0);
 			if (includeManager) {
 				manager = getManager();
 				managerList.selectAll();
 				manager.setVisible(true);
 			}
+			addComponentListener(new ComponentAdapter() {
+		    public void componentResized(ComponentEvent componentEvent) {
+		        if (SNT.isDebugMode()) {
+		        	SNT.log("Frame resized("+ getWidth() + ", " + getHeight()  +");");
+		        }
+		    }
+		});
 			toFront();
 		}
 
@@ -2451,14 +2592,58 @@ public class TreePlot3D {
 			return -e.getY() + chart.getCanvas().getRendererHeight();
 		}
 
+		private boolean recordRotation(final double endAngle, final int nSteps,
+			final File dir)
+		{
+
+			if (!dir.exists()) dir.mkdirs();
+			final double inc = Math.toRadians(endAngle) / nSteps;
+			int step = 0;
+			boolean status = true;
+
+			// Make canvas dimensions divisible by 2 as most video encoders will
+			// request it. Also, do not allow it to resize during the recording
+			if (frame != null) {
+				final int w = frame.canvas.getWidth() - (frame.canvas.getWidth() % 2);
+				final int h = frame.canvas.getHeight() - (frame.canvas.getHeight() % 2);
+				frame.canvas.setSize(w, h);
+				frame.setResizable(false);
+			}
+
+			while (step++ < nSteps) {
+				try {
+					final File f = new File(dir, String.format("%05d.png", step));
+					rotate(new Coord2d(inc, 0d), false);
+					chart.screenshot(f);
+				}
+				catch (final IOException e) {
+					status = false;
+				}
+				finally {
+					if (frame != null) frame.setResizable(true);
+				}
+			}
+			return status;
+		}
+
 		private void rotateLive(final Coord2d move) {
+			if (currentView == ViewMode.TOP) {
+				displayMsg("Rotation disabled in constrained view");
+				return;
+			}
 			rotate(move, true);
+		}
+
+		@Override
+		protected void rotate(final Coord2d move, boolean updateView){
+			// make method visible
+			super.rotate(move, updateView);
 		}
 
 		/* see AWTMousePickingPan2dController */
 		public void pan(final Coord3d from, final Coord3d to) {
 			final BoundingBox3d viewBounds = view.getBounds();
-			final Coord3d offset = to.sub(from).div(-PAN_FACTOR);
+			final Coord3d offset = to.sub(from).div(-panStep);
 			final BoundingBox3d newBounds = viewBounds.shift(offset);
 			view.setBoundManual(newBounds);
 			view.shoot();

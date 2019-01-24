@@ -399,6 +399,18 @@ public class Viewer3D {
 	}
 
 	/**
+	 * Enables/disables debug mode
+	 *
+	 * @param enable true to enable debug mode, otherwise false
+	 */
+	public void setEnableDebugMode(final boolean enable) {
+		if (frame != null && frame.managerPanel != null) {
+			frame.managerPanel.debugCheckBox.setSelected(enable);
+		}
+		SNT.setDebugMode(enable);
+	}
+
+	/**
 	 * Rotates the scene.
 	 *
 	 * @param degrees the angle, in degrees
@@ -1286,6 +1298,7 @@ public class Viewer3D {
 		private Chart chart;
 		private Component canvas;
 		private JDialog manager;
+		private ManagerPanel managerPanel;
 
 		/**
 		 * Instantiates a new viewer frame.
@@ -1334,8 +1347,8 @@ public class Viewer3D {
 			// dialog.setLocationRelativeTo(this);
 			final java.awt.Point parentLoc = getLocation();
 			dialog.setLocation(parentLoc.x + getWidth() + 5, parentLoc.y);
-			final JPanel panel = new ManagerPanel(new GuiUtils(dialog));
-			dialog.setContentPane(panel);
+			managerPanel = new ManagerPanel(new GuiUtils(dialog));
+			dialog.setContentPane(managerPanel);
 			dialog.pack();
 			return dialog;
 		}
@@ -1524,6 +1537,7 @@ public class Viewer3D {
 		private final GuiUtils guiUtils;
 		private final Searchable searchable;
 		private DefaultGenericTable table;
+		private JCheckBoxMenuItem debugCheckBox;
 
 		public ManagerPanel(final GuiUtils guiUtils) {
 			super();
@@ -2040,7 +2054,7 @@ public class Viewer3D {
 		private JPopupMenu toolsMenu() {
 			final JPopupMenu settingsMenu = new JPopupMenu();
 			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode", SNT.isDebugMode());
-			jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
+			jcbmi.setEnabled(!isSNTInstance());jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
 			jcbmi.setMnemonic('d');
 			jcbmi.addItemListener(e -> {
 				if (isSNTInstance()) {
@@ -3362,6 +3376,10 @@ public class Viewer3D {
 		plottedTrees.forEach((k, shapeTree) -> {
 			if (labels.contains(k)) setSomaDisplayed(k, displayed);
 		});
+	}
+
+	public void setSomasDisplayed(final boolean displayed) {
+		plottedTrees.values().forEach(shapeTree -> shapeTree.setSomaDisplayed(displayed));
 	}
 
 	private void setSomaDisplayed(final String treeLabel,

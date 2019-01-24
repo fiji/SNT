@@ -26,7 +26,6 @@ import java.util.List;
 
 import net.imagej.ImageJ;
 
-import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.Interactive;
 import org.scijava.plugin.Parameter;
@@ -69,9 +68,6 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 		description = "Re-places reconstructions at their loaded position")
 	private Button reset;
 
-	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
-	private String msg;
-
 	@Parameter(required = false)
 	private Viewer3D recViewer;
 
@@ -99,6 +95,7 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void reset() {
 		recViewer.translate(treeLabels, null);
 		x = 0;
@@ -107,7 +104,7 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 		prevX = 0;
 		prevY = 0;
 		prevZ = 0;
-		SNT.log("Reconstructions re-placed to loaded locations");
+		SNT.log("Reconstruction(s) re-placed at loaded location(s)");
 	}
 
 	@Override

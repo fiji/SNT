@@ -481,7 +481,12 @@ public class SNTUI extends JDialog {
 	 */
 	public void setEnableDebugMode(final boolean enable) {
 		debugCheckBox.setSelected(enable);
-		SNT.setDebugMode(enable);
+		if (getReconstructionViewer(false) == null) {
+			SNT.setDebugMode(enable);
+		} else {
+			// will call SNT.setDebugMode(enable);
+			getReconstructionViewer(false).setEnableDebugMode(enable);
+		}
 	}
 
 	private void updateStatusText(final String newStatus,

@@ -2,18 +2,18 @@
  * #%L
  * Fiji distribution of ImageJ for the life sciences.
  * %%
- * Copyright (C) 2010 - 2018 Fiji developers.
+ * Copyright (C) 2010 - 2019 Fiji developers.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
@@ -438,7 +438,7 @@ public class Viewer3D {
 	 * @throws SecurityException if it was not possible to save files to
 	 *           {@code destinationDirectory}
 	 */
-	public void recordRotation(final double angle, final int frames, final File destinationDirectory) throws IllegalArgumentException,
+	public void recordRotation(final float angle, final int frames, final File destinationDirectory) throws IllegalArgumentException,
 		SecurityException
 	{
 		if (!chartExists()) {
@@ -915,12 +915,11 @@ public class Viewer3D {
 	 * @param zMin the Z coordinate of the box origin
 	 * @param zMax the X coordinate of the box origin opposite
 	 */
-	public void setBounds(double xMin, double xMax, double yMin, double yMax,
-		double zMin, double zMax)
+	public void setBounds(float xMin, float xMax, float yMin, float yMax,
+		float zMin, float zMax)
 	{
-		final BoundingBox3d bBox = new BoundingBox3d((float)xMin, (float)xMax,
-			(float)yMin, (float)yMax, (float)zMin,
-		(float)zMax);
+		final BoundingBox3d bBox = new BoundingBox3d(xMin, xMax, yMin, yMax, zMin,
+			zMax);
 		chart.view().setBoundManual(bBox);
 		if (viewUpdatesEnabled) chart.view().shoot();
 	}
@@ -1265,12 +1264,12 @@ public class Viewer3D {
 			super.setBoundManual(bounds);
 			if (SNT.isDebugMode()) {
 				final StringBuilder sb = new StringBuilder("setBounds(");
-				sb.append(bounds.getXmin()).append(", ");
-				sb.append(bounds.getXmax()).append(", ");
-				sb.append(bounds.getYmin()).append(", ");
-				sb.append(bounds.getYmax()).append(", ");
-				sb.append(bounds.getZmin()).append(", ");
-				sb.append(bounds.getZmax()).append(");");
+				sb.append(bounds.getXmin()).append("f, ");
+				sb.append(bounds.getXmax()).append("f, ");
+				sb.append(bounds.getYmin()).append("f, ");
+				sb.append(bounds.getYmax()).append("f, ");
+				sb.append(bounds.getZmin()).append("f, ");
+				sb.append(bounds.getZmax()).append("f);");
 				SNT.log(sb.toString());
 			}
 		}

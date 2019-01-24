@@ -46,8 +46,8 @@ import tracing.gui.GuiUtils;
 public class RecViewerPrefsCmd extends ContextCommand {
 
 	public static String DEF_SNAPSHOT_DIR = System.getProperty("user.home") +
-		File.separator + "Desktop" + File.separator + "SNT3";
-	public static double DEF_ROTATION_ANGLE = 360d;
+		File.separator + "Desktop" + File.separator + "SNTsnapshots";
+	public static float DEF_ROTATION_ANGLE = 360f;
 	public static double DEF_ROTATION_DURATION = 12;
 	public static int DEF_ROTATION_FPS = 30;
 	public static String DEF_CONTROLS_SENSITIVY = "High";

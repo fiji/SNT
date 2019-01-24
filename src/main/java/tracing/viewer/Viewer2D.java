@@ -77,7 +77,7 @@ public class Viewer2D extends TreeColorMapper {
 	private ColorRGB defaultColor = new ColorRGB("black");
 
 	/**
-	 * Instantiates an empty tree plot.
+	 * Instantiates an empty 2D viewer.
 	 *
 	 * @param context the SciJava application context providing the services
 	 *          required by the class
@@ -165,7 +165,7 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	/**
-	 * Adds a color bar legend (LUT ramp) to the plot. Does nothing if no
+	 * Adds a color bar legend (LUT ramp) to the viewer. Does nothing if no
 	 * measurement mapping occurred successfully. Note that when performing
 	 * mapping to different measurements, the legend reflects only the last mapped
 	 * measurement.
@@ -199,7 +199,7 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	/**
-	 * Appends a tree to the plot using default options.
+	 * Appends a tree to the viewer using default options.
 	 *
 	 * @param tree the Collection of paths to be plotted
 	 */
@@ -221,7 +221,7 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	/**
-	 * Appends a tree to the plot.
+	 * Appends a tree to the viewer.
 	 *
 	 * @param tree the Collection of paths to be plotted
 	 * @param color the color to render the Tree
@@ -234,7 +234,7 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	/**
-	 * Appends a tree to the plot rendered after the specified measurement.
+	 * Appends a tree to the viewer rendered after the specified measurement.
 	 *
 	 * @param tree the tree to be plotted
 	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
@@ -255,7 +255,7 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	/**
-	 * Appends a tree to the plot rendered after the specified measurement.
+	 * Appends a tree to the viewer rendered after the specified measurement.
 	 * Mapping bounds are automatically determined.
 	 *
 	 * @param tree the tree to be plotted
@@ -270,7 +270,7 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	/**
-	 * Appends a tree to the plot rendered after the specified measurement.
+	 * Appends a tree to the viewer rendered after the specified measurement.
 	 *
 	 * @param tree the tree to be plotted
 	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
@@ -288,9 +288,9 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	/**
-	 * Gets the current plot as a {@link JFreeChart} object
+	 * Gets the current viewer as a {@link JFreeChart} object
 	 *
-	 * @return the converted plot
+	 * @return the converted viewer
 	 */
 	public JFreeChart getChart() {
 		if (plot == null) plot = plotService.newXYPlot();

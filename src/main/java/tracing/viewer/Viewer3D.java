@@ -276,7 +276,7 @@ public class Viewer3D {
 
 	/**
 	 * Instantiates Viewer3D without the 'Controls' dialog ('kiosk mode'). Such
-	 * a plot is more suitable for large datasets and allows for {@link Tree}s to
+	 * a viewer is more suitable for large datasets and allows for {@link Tree}s to
 	 * be added concurrently.
 	 */
 	public Viewer3D() {
@@ -290,7 +290,7 @@ public class Viewer3D {
 
 	/**
 	 * Instantiates an interactive Viewer3D with GUI Controls to import, manage
-	 * and customize the plot scene.
+	 * and customize the Viewer's scene.
 	 *
 	 * @param context the SciJava application context providing the services
 	 *          required by the class
@@ -389,8 +389,8 @@ public class Viewer3D {
 
 	/**
 	 * Checks if all drawables in the 3D scene are being rendered properly,
-	 * rebuilding the entire scene if not. Useful to "hard-reset" the plot, e.g.,
-	 * to ensure all meshes are redraw.
+	 * rebuilding the entire scene if not. Useful to "hard-reset" the viewer, e.g.,
+	 * to ensure all meshes are redrawn.
 	 *
 	 * @see #updateView()
 	 */
@@ -514,7 +514,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Adds a tree to this plot. Note that calling {@link #updateView()} may be
+	 * Adds a tree to this viewer. Note that calling {@link #updateView()} may be
 	 * required to ensure that the current View's bounding box includes the added
 	 * Tree.
 	 *
@@ -550,7 +550,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Updates the plot's view, ensuring all objects are rendered within axes
+	 * Updates the scene, ensuring all objects are rendered within axes
 	 * dimensions.
 	 * 
 	 * @see #rebuild()
@@ -655,7 +655,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Returns the Collection of Trees in this plot.
+	 * Returns the Collection of Trees in this viewer.
 	 *
 	 * @return the plotted Trees (keys being the Tree identifier as per
 	 *         {@link #add(Tree)})
@@ -669,7 +669,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Returns the Collection of OBJ meshes imported into this plot.
+	 * Returns the Collection of OBJ meshes imported into this viewer.
 	 *
 	 * @return the plotted Meshes (keys being the filename of the imported OBJ
 	 *         file as per {@link #loadOBJ(String, ColorRGB, double)}
@@ -713,7 +713,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Removes all loaded OBJ meshes from current plot
+	 * Removes all loaded OBJ meshes from current viewer
 	 */
 	public void removeAllOBJs() {
 		final Iterator<Entry<String, RemountableDrawableVBO>> it = plottedObjs
@@ -728,7 +728,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Removes all the Trees from current plot
+	 * Removes all the Trees from current viewer
 	 */
 	public void removeAll() {
 		final Iterator<Entry<String, ShapeTree>> it = plottedTrees.entrySet()
@@ -991,7 +991,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Saves a screenshot of current plot as a PNG image. Image is saved using an
+	 * Saves a snapshot of current scene as a PNG image. Image is saved using an
 	 * unique time stamp as a file name in the directory specified by
 	 * {@link #getScreenshotDirectory()}
 	 *
@@ -999,7 +999,7 @@ public class Viewer3D {
 	 * @throws IllegalArgumentException if Viewer is not available, i.e.,
 	 *           {@link #getView()} is null
 	 */
-	public boolean saveScreenshot() throws IllegalArgumentException {
+	public boolean saveSnapshot() throws IllegalArgumentException {
 		if (!chartExists()) {
 			throw new IllegalArgumentException("Viewer is not visible");
 		}
@@ -1151,10 +1151,10 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Returns this plot's {@link View} holding {@link Scene}, {@link LightSet},
+	 * Returns this viewer's {@link View} holding {@link Scene}, {@link LightSet},
 	 * {@link ICanvas}, etc.
 	 *
-	 * @return this plot's View, or null if it was disposed after {@link #show()}
+	 * @return this viewer's View, or null if it was disposed after {@link #show()}
 	 *         has been called
 	 */
 	public View getView() {
@@ -1464,8 +1464,8 @@ public class Viewer3D {
 				RecViewerPrefsCmd.DEF_SNAPSHOT_DIR);
 		}
 
-		private double getSnapshotRotationAngle() {
-			return tp.prefService.getDouble(RecViewerPrefsCmd.class, "rotationAngle",
+		private float getSnapshotRotationAngle() {
+			return tp.prefService.getFloat(RecViewerPrefsCmd.class, "rotationAngle",
 				RecViewerPrefsCmd.DEF_ROTATION_ANGLE);
 		}
 
@@ -2939,7 +2939,7 @@ public class Viewer3D {
 		}
 
 		private void saveScreenshot() {
-			getOuter().saveScreenshot();
+			getOuter().saveSnapshot();
 			displayMsg("Snapshot saved to " + FileUtils.limitPath(
 				prefs.getSnapshotDirectory(), 50));
 		}

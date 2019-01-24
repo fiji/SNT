@@ -89,6 +89,8 @@ import org.jzy3d.chart.controllers.ControllerType;
 import org.jzy3d.chart.controllers.camera.AbstractCameraController;
 import org.jzy3d.chart.controllers.mouse.AWTMouseUtilities;
 import org.jzy3d.chart.controllers.mouse.camera.AWTCameraMouseController;
+import org.jzy3d.chart.factories.AWTChartComponentFactory;
+import org.jzy3d.chart.factories.IChartComponentFactory;
 import org.jzy3d.chart.factories.IFrame;
 import org.jzy3d.colors.Color;
 import org.jzy3d.colors.ISingleColorable;
@@ -112,6 +114,7 @@ import org.jzy3d.plot3d.rendering.canvas.Quality;
 import org.jzy3d.plot3d.rendering.legends.colorbars.AWTColorbarLegend;
 import org.jzy3d.plot3d.rendering.lights.LightSet;
 import org.jzy3d.plot3d.rendering.scene.Scene;
+import org.jzy3d.plot3d.rendering.view.AWTView;
 import org.jzy3d.plot3d.rendering.view.View;
 import org.jzy3d.plot3d.rendering.view.ViewportMode;
 import org.jzy3d.plot3d.rendering.view.annotation.CameraEyeOverlayAnnotation;
@@ -166,6 +169,49 @@ import tracing.util.SWCColor;
  */
 public class TreePlot3D {
 
+	public enum ViewMode {
+			/**
+			 * No enforcement of view point: let the user freely turn around the scene
+			 * (see {@link TreePlot3D#setView(ViewPoint)})
+			 */
+			DEFAULT("Default"), //
+			/**
+			 * Enforce a lateral view point of the scene (see
+			 * {@link TreePlot3D#setView(ViewPoint)})
+			 */
+			SIDE("Side Constrained"), //
+			/**
+			 * Enforce a top view point of the scene with disabled rotation. (see
+			 * {@link TreePlot3D#setView(ViewPoint)})
+			 */
+			TOP("Top Constrained"),
+			/**
+			 * Enforce an 'overview (two-point perspective) view point of the scene
+			 * (see {@link TreePlot3D#setView(ViewPoint)})
+			 */
+			PERSPECTIVE("Perspective");
+
+		private String description;
+
+		public ViewMode next() {
+			switch (this) {
+				case DEFAULT:
+					return TOP;
+				case TOP:
+					return SIDE;
+				case SIDE:
+					return PERSPECTIVE;
+				default:
+					return DEFAULT;
+			}
+		}
+
+		ViewMode(final String description) {
+			this.description = description;
+		}
+
+	}
+
 	private final static String ALLEN_MESH_LABEL = "MouseBrainAllen.obj";
 	private final static String JFRC2_MESH_LABEL = "JFRCtemplate2010.obj";
 	private final static String JFRC3_MESH_LABEL = "JFRCtemplate2013.obj";
@@ -200,6 +246,7 @@ public class TreePlot3D {
 	private MouseController mouseController;
 	private boolean viewUpdatesEnabled = true;
 	private final UUID uuid;
+	private ViewMode currentView;
 
 	@Parameter
 	private Context context;
@@ -258,7 +305,7 @@ public class TreePlot3D {
 	/* returns true if chart was initialized */
 	private boolean initView() {
 		if (chartExists()) return false;
-		chart = new AWTChart(Quality.Nicest); // There does not seem to be a swing
+		chart = new AChart(Quality.Nicest); // There does not seem to be a swing
 																					// implementation of
 		// ICameraMouseController so we are stuck with AWT
 		chart.black();
@@ -270,6 +317,7 @@ public class TreePlot3D {
 		chart.getCanvas().addMouseController(mouseController);
 		chart.setAxeDisplayed(false);
 		view.getCamera().setViewportMode(ViewportMode.STRETCH_TO_FILL);
+		currentView = ViewMode.DEFAULT;
 		gUtils = new GuiUtils((Component) chart.getCanvas());
 		return true;
 	}
@@ -957,6 +1005,100 @@ public class TreePlot3D {
 	 */
 	public View getView() {
 		return (chart == null) ? null : view;
+	}
+
+	/** ChartComponentFactory adopting {@link AView} */
+	private class AChartComponentFactory extends AWTChartComponentFactory {
+
+		@Override
+		public View newView(final Scene scene, final ICanvas canvas,
+			final Quality quality)
+		{
+			return new AView(getFactory(), scene, canvas, quality);
+		}
+	}
+
+	/** AWTChart adopting {@link AView} */
+	private class AChart extends AWTChart {
+
+		private final Coord3d TOP_VIEW = new Coord3d(Math.PI / 2, 0.5, 3000);
+		private final Coord3d PERSPECTIVE_VIEW = new Coord3d(Math.PI / 2, 0.5, 3000);
+
+		private Coord3d previousViewPointPerspective;
+		private OverlayAnnotation overlayAnnotation;
+
+		public AChart(final Quality quality) {
+			super(new AChartComponentFactory(), quality, DEFAULT_WINDOWING_TOOLKIT,
+				org.jzy3d.chart.Settings.getInstance().getGLCapabilities());
+			currentView = ViewMode.DEFAULT;
+		}
+
+		// see super.setViewMode(mode);
+		public void setViewMode(ViewMode view) {
+			// Store current view mode and view point in memory
+			if (currentView == ViewMode.DEFAULT) previousViewPointFree = getView()
+				.getViewPoint();
+			else if (currentView == ViewMode.TOP) previousViewPointTop = getView()
+				.getViewPoint();
+			else if (currentView == ViewMode.SIDE) previousViewPointProfile = getView()
+				.getViewPoint();
+			else if (currentView == ViewMode.PERSPECTIVE) previousViewPointPerspective =
+				getView().getViewPoint();
+
+			// Set new view mode and former view point
+			getView().setViewPositionMode(null);
+			if (view == ViewMode.DEFAULT) {
+				getView().setViewPositionMode(ViewPositionMode.FREE);
+				getView().setViewPoint(previousViewPointFree == null ? View.DEFAULT_VIEW
+					.clone() : previousViewPointFree);
+			}
+			else if (view == ViewMode.TOP) {
+				getView().setViewPositionMode(ViewPositionMode.TOP);
+				getView().setViewPoint(previousViewPointTop == null ? TOP_VIEW.clone()
+					: previousViewPointTop);
+			}
+			else if (view == ViewMode.SIDE) {
+				getView().setViewPositionMode(ViewPositionMode.PROFILE);
+				getView().setViewPoint(previousViewPointProfile == null
+					? View.DEFAULT_VIEW.clone() : previousViewPointProfile);
+			}
+			else if (view == ViewMode.PERSPECTIVE) {
+				getView().setViewPositionMode(ViewPositionMode.FREE);
+				getView().setViewPoint(previousViewPointPerspective == null
+					? PERSPECTIVE_VIEW.clone() : previousViewPointPerspective);
+			}
+			getView().shoot();
+			currentView = view;
+		}
+
+	}
+
+	/**
+	 * Adapted AWTView so that top/side views better match to coronal/sagitlal
+	 * ones
+	 */
+	private class AView extends AWTView {
+
+		public AView(final IChartComponentFactory factory, final Scene scene,
+			final ICanvas canvas, final Quality quality)
+		{
+			super(factory, scene, canvas, quality);
+			//super.DISPLAY_AXE_WHOLE_BOUNDS = true;
+			//super.MAINTAIN_ALL_OBJECTS_IN_VIEW = true;
+			//setBoundMode(ViewBoundMode.AUTO_FIT);
+		}
+
+
+		@Override
+		protected Coord3d computeCameraEyeTop(final Coord3d viewpoint,
+			final Coord3d target)
+		{
+			Coord3d eye = viewpoint;
+			eye.x = -(float) Math.PI / 2; // on x
+			eye.y = -(float) Math.PI / 2; // on bottom
+			eye = eye.cartesian().add(target);
+			return eye;
+		}
 	}
 
 	// NB: MouseContoller does not seem to work with FrameSWing so we are stuck

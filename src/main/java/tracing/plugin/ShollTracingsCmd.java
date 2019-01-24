@@ -34,7 +34,7 @@ import java.util.concurrent.Future;
 
 import net.imagej.ImageJ;
 import net.imagej.lut.LUTService;
-import net.imagej.table.DefaultGenericTable;
+import org.scijava.table.DefaultGenericTable;
 import net.imglib2.display.ColorTable;
 
 import org.scijava.Cancelable;

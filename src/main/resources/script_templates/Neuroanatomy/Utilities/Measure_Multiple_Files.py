@@ -19,7 +19,7 @@ info:       Bulk measurements of SWC files using SNT
 import os, sys
 from tracing import Tree
 from tracing.analysis import TreeAnalyzer
-from net.imagej.table import DefaultGenericTable
+from org.scijava.table import DefaultGenericTable
 
 
 

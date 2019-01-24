@@ -38,7 +38,7 @@ import org.scijava.util.Colors;
 import tracing.Tree;
 import tracing.analysis.TreeStatistics;
 import tracing.gui.GuiUtils;
-import tracing.plot.TreePlot3D;
+import tracing.viewer.Viewer3D;
 
 /**
  * Command for opening two SWC/traces files in a dedicated Reconstruction
@@ -75,7 +75,7 @@ public class CompareFilesCmd extends ContextCommand {
 		try {
 			final Tree tree1 = new Tree(file1.getAbsolutePath());
 			final Tree tree2 = new Tree(file2.getAbsolutePath());
-			final TreePlot3D plot3d = new TreePlot3D();
+			final Viewer3D plot3d = new Viewer3D();
 			tree1.setColor(color1);
 			// plot3d.setDefaultColor(color1);
 			plot3d.add(tree1);

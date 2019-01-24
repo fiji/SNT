@@ -37,7 +37,7 @@ import org.scijava.widget.NumberWidget;
 
 import tracing.SNTService;
 import tracing.gui.GuiUtils;
-import tracing.plot.TreePlot3D;
+import tracing.viewer.Viewer3D;
 
 /**
  * Command for loading an OBJ file in Reconstruction Viewer
@@ -67,7 +67,7 @@ public class LoadObjCmd extends ContextCommand {
 	private ColorRGB color;
 
 	@Parameter(required = false)
-	private TreePlot3D recViewer;
+	private Viewer3D recViewer;
 
 	/*
 	 * (non-Javadoc)

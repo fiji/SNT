@@ -44,7 +44,7 @@ import tracing.PathAndFillManager;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.MLJSONLoader;
-import tracing.plot.TreePlot3D;
+import tracing.viewer.Viewer3D;
 
 /**
  * Command for importing MouseLight reconstructions
@@ -100,7 +100,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 
 	@Parameter(persist = false, required = false,
 		visibility = ItemVisibility.INVISIBLE)
-	private TreePlot3D recViewer;
+	private Viewer3D recViewer;
 
 	private PathAndFillManager pafm;
 

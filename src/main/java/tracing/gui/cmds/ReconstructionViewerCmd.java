@@ -29,7 +29,7 @@ import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Plugin;
 
 import tracing.gui.GuiUtils;
-import tracing.plot.TreePlot3D;
+import tracing.viewer.Viewer3D;
 
 /**
  * Command for starting Reconstruction Viewer as a 'stand-alone' program
@@ -47,7 +47,7 @@ public class ReconstructionViewerCmd extends ContextCommand {
 	 */
 	@Override
 	public void run() {
-		final TreePlot3D viewer = new TreePlot3D(getContext());
+		final Viewer3D viewer = new Viewer3D(getContext());
 		viewer.show();
 	}
 

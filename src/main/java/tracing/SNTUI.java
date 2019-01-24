@@ -119,9 +119,9 @@ import tracing.gui.cmds.ShowCorrespondencesCmd;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.io.FlyCirCuitLoader;
 import tracing.io.NeuroMorphoLoader;
-import tracing.plot.TreePlot3D;
 import tracing.plugin.PlotterCmd;
 import tracing.plugin.StrahlerCmd;
+import tracing.viewer.Viewer3D;
 
 @SuppressWarnings("serial")
 public class SNTUI extends JDialog {
@@ -198,7 +198,7 @@ public class SNTUI extends JDialog {
 	private FillManagerUI fmUI;
 
 	/* Reconstruction Viewer */
-	protected TreePlot3D recViewer;
+	protected Viewer3D recViewer;
 	protected Frame recViewerFrame;
 	private JButton openRecViewer;
 
@@ -2522,16 +2522,16 @@ public class SNTUI extends JDialog {
 	 *          been initialized
 	 * @return the reconstruction viewer
 	 */
-	public TreePlot3D getReconstructionViewer(final boolean initializeIfNull) {
+	public Viewer3D getReconstructionViewer(final boolean initializeIfNull) {
 		if (initializeIfNull && recViewer == null) {
-			recViewer = new TreePlot3D(plugin.getContext());
+			recViewer = new Viewer3D(plugin.getContext());
 			recViewer.show();
 			setReconstructionViewer(recViewer);
 		}
 		return recViewer;
 	}
 
-	public void setReconstructionViewer(final TreePlot3D recViewer) {
+	public void setReconstructionViewer(final Viewer3D recViewer) {
 			this.recViewer = recViewer;
 			openRecViewer.setEnabled(recViewer==null);
 	}

@@ -21,9 +21,9 @@
  */
 
 /**
- * Classes for plotting reconstructions
+ * Classes for rendering reconstructions
  *
  * @author Tiago Ferreira
  */
 
-package tracing.plot;
+package tracing.viewer;

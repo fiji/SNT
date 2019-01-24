@@ -26,7 +26,7 @@ from tracing.io import MLJSONLoader
 from tracing.util import PointInImage
 from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
-from tracing.plot import(TreePlot2D, TreePlot3D)
+from tracing.viewer import(TreePlot2D, TreePlot3D)
 
 
 def run():

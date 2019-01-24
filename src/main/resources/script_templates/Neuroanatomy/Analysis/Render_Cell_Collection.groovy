@@ -8,7 +8,7 @@ import groovy.time.TimeDuration
 
 import tracing.Tree
 import tracing.analysis.MultiTreeColorMapper
-import tracing.plot.TreePlot3D
+import tracing.viewer.Viewer3D
 
 /**
  * Exemplifies how to quickly render large collections of cells from

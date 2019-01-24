@@ -45,7 +45,7 @@ import tracing.analysis.MultiTreeColorMapper;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeColorMapper;
 import tracing.gui.GuiUtils;
-import tracing.plot.TreePlot3D;
+import tracing.viewer.Viewer3D;
 
 /**
  * Implements Reconstruction Viewer's 'Color coding' commands.
@@ -87,7 +87,7 @@ public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 	private ColorTable colorTable;
 
 	@Parameter(required = false)
-	private TreePlot3D recViewer;
+	private Viewer3D recViewer;
 
 	@Parameter(required = false)
 	private List<String> multiTreeMappingLabels;

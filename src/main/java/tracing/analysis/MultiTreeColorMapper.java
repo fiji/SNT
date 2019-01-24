@@ -32,7 +32,7 @@ import net.imglib2.display.ColorTable;
 
 import tracing.SNT;
 import tracing.Tree;
-import tracing.plot.TreePlot3D;
+import tracing.viewer.Viewer3D;
 
 /**
  * Class for color coding groups of {@link Tree}s.
@@ -160,7 +160,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 		}
 		final MultiTreeColorMapper mapper = new MultiTreeColorMapper(trees);
 		mapper.map(MultiTreeColorMapper.TOTAL_LENGTH, ColorTables.ICE);
-		final TreePlot3D viewer = new TreePlot3D();
+		final Viewer3D viewer = new Viewer3D();
 		for (final Tree tree : trees)
 			viewer.add(tree);
 		final double[] limits = mapper.getMinMax();

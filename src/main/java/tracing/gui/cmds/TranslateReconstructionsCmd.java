@@ -36,8 +36,8 @@ import org.scijava.widget.Button;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
-import tracing.plot.TreePlot3D;
 import tracing.util.PointInImage;
+import tracing.viewer.Viewer3D;
 
 /**
  * Implements Reconstruction Viewer's 'Translate...' command.
@@ -73,7 +73,7 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 	private String msg;
 
 	@Parameter(required = false)
-	private TreePlot3D recViewer;
+	private Viewer3D recViewer;
 
 	@Parameter(required = false)
 	private List<String> treeLabels;
@@ -136,7 +136,7 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 		ij.ui().showUI();
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		SNT.setDebugMode(true);
-		final TreePlot3D jzy3D = new TreePlot3D(ij.context());
+		final Viewer3D jzy3D = new Viewer3D(ij.context());
 		jzy3D.add(tree);
 		jzy3D.loadMouseRefBrain();
 		jzy3D.show();

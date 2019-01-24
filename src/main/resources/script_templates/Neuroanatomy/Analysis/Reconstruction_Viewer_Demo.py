@@ -13,7 +13,7 @@ info:       Exemplifies how to render a remote file in a stand-alone
 from tracing import Tree
 from tracing.io import MLJSONLoader
 from tracing.analysis import TreeColorMapper
-from tracing.plot import TreePlot3D
+from tracing.viewer import TreePlot3D
 
 def run():
 

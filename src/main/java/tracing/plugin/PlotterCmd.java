@@ -49,13 +49,13 @@ import tracing.Path;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.gui.cmds.CommonDynamicCmd;
-import tracing.plot.TreePlot2D;
 import tracing.util.PointInImage;
 import tracing.util.SWCColor;
+import tracing.viewer.Viewer2D;
 
 /**
  * Implements Reconstruction Plotter, a command wrapper for interactively
- * plotting trees using {@link TreePlot2D}
+ * plotting trees using {@link Viewer2D}
  *
  * @author Tiago Ferreira
  */
@@ -110,7 +110,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	private static final ColorRGB DEF_COLOR = new ColorRGB("black");
 	private static final String BUSY_MSG = "Rendering. Please wait...";
 
-	private TreePlot2D plot;
+	private Viewer2D plot;
 	private JFreeChart chart;
 	private ChartFrame frame;
 	private Tree plottingTree;
@@ -199,7 +199,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	}
 
 	private void buildPlot() {
-		plot = new TreePlot2D(context());
+		plot = new Viewer2D(context());
 		plot.setDefaultColor(DEF_COLOR);
 		plot.addTree(plottingTree);
 	}

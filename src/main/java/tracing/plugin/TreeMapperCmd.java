@@ -51,13 +51,13 @@ import tracing.Tree;
 import tracing.analysis.PathProfiler;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeColorMapper;
-import tracing.plot.TreePlot2D;
-import tracing.plot.TreePlot3D;
+import tracing.viewer.Viewer2D;
+import tracing.viewer.Viewer3D;
 
 /**
  * Command for color coding trees according to their properties using
- * {@link TreeColorMapper} with options to display result in {@link TreePlot2D}
- * and {@link TreePlot3D}
+ * {@link TreeColorMapper} with options to display result in {@link Viewer2D}
+ * and {@link Viewer3D}
  *
  * @author Tiago Ferreira
  */
@@ -103,7 +103,7 @@ public class TreeMapperCmd extends DynamicCommand {
 	private boolean setValuesFromSNTService;
 
 	private Map<String, URL> luts;
-	private TreePlot2D plot;
+	private Viewer2D plot;
 
 	@Override
 	public void run() {
@@ -131,13 +131,13 @@ public class TreeMapperCmd extends DynamicCommand {
 		final double[] minMax = colorizer.getMinMax();
 		if (showPlot) {
 			SNT.log("Creating 2D plot...");
-			plot = new TreePlot2D(context());
+			plot = new Viewer2D(context());
 			plot.addTree(tree);
 			plot.addColorBarLegend(colorTable, minMax[0], minMax[1]);
 			plot.showPlot();
 		}
 		if (showInRecViewer) {
-			final TreePlot3D recViewer = sntService.getReconstructionViewer();
+			final Viewer3D recViewer = sntService.getReconstructionViewer();
 			recViewer.addColorBarLegend(colorTable, (float) minMax[0], (float) minMax[1]);
 			recViewer.syncPathManagerList();
 		}

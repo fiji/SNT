@@ -42,8 +42,8 @@ import org.scijava.widget.FileWidget;
 
 import tracing.SNT;
 import tracing.Tree;
-import tracing.plot.TreePlot3D;
 import tracing.util.SWCColor;
+import tracing.viewer.Viewer3D;
 
 /**
  * Command for loading Reconstruction files in Reconstruction Viewer. Loaded
@@ -76,7 +76,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 	private String msg;
 
 	@Parameter(required = false)
-	private TreePlot3D recViewer;
+	private Viewer3D recViewer;
 
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
 	private boolean importDir = false;

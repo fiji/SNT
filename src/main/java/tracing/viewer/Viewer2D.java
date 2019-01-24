@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.plot;
+package tracing.viewer;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -63,7 +63,7 @@ import tracing.util.PointInImage;
  *
  * @author Tiago Ferreira
  */
-public class TreePlot2D extends TreeColorMapper {
+public class Viewer2D extends TreeColorMapper {
 
 	@Parameter
 	private PlotService plotService;
@@ -82,7 +82,7 @@ public class TreePlot2D extends TreeColorMapper {
 	 * @param context the SciJava application context providing the services
 	 *          required by the class
 	 */
-	public TreePlot2D(final Context context) {
+	public Viewer2D(final Context context) {
 		super(context);
 	}
 
@@ -371,7 +371,7 @@ public class TreePlot2D extends TreeColorMapper {
 	public static void main(final String... args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		final TreePlot2D pplot = new TreePlot2D(ij.context());
+		final Viewer2D pplot = new Viewer2D(ij.context());
 		final List<Tree> trees = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			final Tree tree = new Tree(SNT.randomPaths());

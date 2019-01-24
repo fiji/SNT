@@ -49,8 +49,8 @@ import tracing.Path;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.analysis.sholl.TreeParser;
-import tracing.plot.TreePlot2D;
 import tracing.util.PointInImage;
+import tracing.viewer.Viewer2D;
 
 /**
  * Class for color coding {@link Tree}s.
@@ -466,7 +466,7 @@ public class TreeColorMapper extends ColorMapper {
 			tree.rotate(Tree.Z_AXIS, i * 20);
 			trees.add(tree);
 		}
-		final TreePlot2D plot = new TreePlot2D(ij.context());
+		final Viewer2D plot = new Viewer2D(ij.context());
 		plot.addTrees(trees, "Ice.lut");
 		plot.addColorBarLegend();
 		plot.showPlot();

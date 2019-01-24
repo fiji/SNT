@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.plot;
+package tracing.viewer;
 
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;

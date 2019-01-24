@@ -46,7 +46,7 @@ import tracing.gui.GuiUtils;
 import tracing.io.FlyCirCuitLoader;
 import tracing.io.NeuroMorphoLoader;
 import tracing.io.RemoteSWCLoader;
-import tracing.plot.TreePlot3D;
+import tracing.viewer.Viewer3D;
 
 /**
  * Command for importing SWC reconstructions from remote databases
@@ -84,7 +84,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 
 	@Parameter(persist = false, required = false,
 		visibility = ItemVisibility.INVISIBLE)
-	private TreePlot3D recViewer;
+	private Viewer3D recViewer;
 
 	@Parameter(persist = false, required = true,
 		visibility = ItemVisibility.INVISIBLE)
@@ -161,11 +161,11 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 //			recViewer.loadDrosoRefBrain("FCWB");
 //		}
 		if (standAloneViewer) {
-			recViewer.setViewUpdatesEnabled(false);
+			recViewer.setSceneUpdatesEnabled(false);
 			result.forEach(tree -> {
 				if (tree != null && !tree.isEmpty()) recViewer.add(tree);
 			});
-			recViewer.setViewUpdatesEnabled(true);
+			recViewer.setSceneUpdatesEnabled(true);
 		}
 		else if (snt != null) {
 			SNT.log("Rebuilding canvases...");

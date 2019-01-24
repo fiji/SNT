@@ -20,7 +20,7 @@
  * #L%
  */
 
-package tracing.plot;
+package tracing.viewer;
 
 import com.jidesoft.swing.CheckBoxList;
 import com.jidesoft.swing.ListSearchable;
@@ -178,27 +178,27 @@ import tracing.util.SWCColor;
  *
  * @author Tiago Ferreira
  */
-public class TreePlot3D {
+public class Viewer3D {
 
 	public enum ViewMode {
 			/**
 			 * No enforcement of view point: let the user freely turn around the scene
-			 * (see {@link TreePlot3D#setView(ViewPoint)})
+			 * (see {@link Viewer3D#setView(ViewPoint)})
 			 */
 			DEFAULT("Default"), //
 			/**
 			 * Enforce a lateral view point of the scene (see
-			 * {@link TreePlot3D#setView(ViewPoint)})
+			 * {@link Viewer3D#setView(ViewPoint)})
 			 */
 			SIDE("Side Constrained"), //
 			/**
 			 * Enforce a top view point of the scene with disabled rotation. (see
-			 * {@link TreePlot3D#setView(ViewPoint)})
+			 * {@link Viewer3D#setView(ViewPoint)})
 			 */
 			TOP("Top Constrained"),
 			/**
 			 * Enforce an 'overview (two-point perspective) view point of the scene
-			 * (see {@link TreePlot3D#setView(ViewPoint)})
+			 * (see {@link Viewer3D#setView(ViewPoint)})
 			 */
 			PERSPECTIVE("Perspective");
 
@@ -275,11 +275,11 @@ public class TreePlot3D {
 	private PrefService prefService;
 
 	/**
-	 * Instantiates TreePlot3D without the 'Controls' dialog ('kiosk mode'). Such
+	 * Instantiates Viewer3D without the 'Controls' dialog ('kiosk mode'). Such
 	 * a plot is more suitable for large datasets and allows for {@link Tree}s to
 	 * be added concurrently.
 	 */
-	public TreePlot3D() {
+	public Viewer3D() {
 		plottedTrees = new TreeMap<>();
 		plottedObjs = new TreeMap<>();
 		initView();
@@ -289,13 +289,13 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Instantiates an interactive TreePlot3D with GUI Controls to import, manage
+	 * Instantiates an interactive Viewer3D with GUI Controls to import, manage
 	 * and customize the plot scene.
 	 *
 	 * @param context the SciJava application context providing the services
 	 *          required by the class
 	 */
-	public TreePlot3D(final Context context) {
+	public Viewer3D(final Context context) {
 		this();
 		GuiUtils.setSystemLookAndFeel();
 		initManagerList();
@@ -1419,12 +1419,12 @@ public class TreePlot3D {
 		public boolean nagUserOnRetrieveAll;
 		public boolean retrieveAllIfNoneSelected;
 
-		private final TreePlot3D tp;
+		private final Viewer3D tp;
 		private final KeyController kc;
 		private final MouseController mc;
 		private String storedSensitivity;
 
-		public Prefs(final TreePlot3D tp) {
+		public Prefs(final Viewer3D tp) {
 			this.tp = tp;
 			kc = tp.keyController;
 			mc = tp.mouseController;
@@ -2232,9 +2232,9 @@ public class TreePlot3D {
 				{
 					return;
 				}
-				getOuter().setViewUpdatesEnabled(false);
+				getOuter().setSceneUpdatesEnabled(false);
 				keys.stream().forEach(k -> getOuter().remove(k));
-				getOuter().setViewUpdatesEnabled(true);
+				getOuter().setSceneUpdatesEnabled(true);
 				getOuter().updateView();
 			});
 			tracesMenu.add(mi);
@@ -2321,9 +2321,9 @@ public class TreePlot3D {
 				{
 					return;
 				}
-				getOuter().setViewUpdatesEnabled(false);
+				getOuter().setSceneUpdatesEnabled(false);
 				keys.stream().forEach(k -> getOuter().removeOBJ(k));
-				getOuter().setViewUpdatesEnabled(true);
+				getOuter().setSceneUpdatesEnabled(true);
 				getOuter().updateView();
 			});
 			meshMenu.add(mi);
@@ -2395,7 +2395,7 @@ public class TreePlot3D {
 		}
 	}
 
-	private TreePlot3D getOuter() {
+	private Viewer3D getOuter() {
 		return this;
 	}
 
@@ -3301,7 +3301,7 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Applies a constant thickness to all plotted trees. Note that by default,
+	 * Applies a constant thickness to all rendered trees. Note that by default,
 	 * trees are rendered using their nodes' diameter;
 	 *
 	 * @param thickness the thickness (line width)
@@ -3444,7 +3444,7 @@ public class TreePlot3D {
 		if (o == this) return true;
 		if (o == null) return false;
 		if (getClass() != o.getClass()) return false;
-		return uuid.equals(((TreePlot3D) o).uuid);
+		return uuid.equals(((Viewer3D) o).uuid);
 	}
 
 	/* IDE debug method */

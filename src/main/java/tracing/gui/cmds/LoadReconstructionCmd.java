@@ -145,13 +145,18 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 			" is no longer available");
 
 		if (file.isFile()) {
-			final Tree tree = new Tree(file.getAbsolutePath());
-			tree.setColor(color);
-			if (tree.isEmpty()) cancel(
-				"No Paths could be extracted from file. Invalid path?");
-			recViewer.add(tree);
-			recViewer.validate();
-			return;
+			try {
+				final Tree tree = new Tree(file.getAbsolutePath());
+				tree.setColor(color);
+				if (tree.isEmpty()) cancel(
+					"No Paths could be extracted from file. Invalid path?");
+				recViewer.add(tree);
+				recViewer.validate();
+				return;
+			}
+			catch (final IllegalArgumentException ex) {
+				cancel(ex.getMessage());
+			}
 		}
 
 		if (file.isDirectory()) {

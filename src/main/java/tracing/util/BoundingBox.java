@@ -160,7 +160,7 @@ public class BoundingBox {
 		else if (sanitizedUnit.equals("um") || sanitizedUnit.equals("micron") ||
 			sanitizedUnit.equals("microns"))
 		{
-			spacingUnit = GuiUtils.micrometre();
+			spacingUnit = GuiUtils.micrometer();
 		}
 		else {
 			spacingUnit = unit;

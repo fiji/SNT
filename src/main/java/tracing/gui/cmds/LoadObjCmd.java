@@ -101,7 +101,7 @@ public class LoadObjCmd extends ContextCommand {
 		if (file.isDirectory()) {
 			final File[] files = file.listFiles((FilenameFilter) (dir, name) -> name
 				.toLowerCase().endsWith("obj"));
-			recViewer.setViewUpdatesEnabled(false);
+			recViewer.setSceneUpdatesEnabled(false);
 			int failures = 0;
 			for (final File file : files) {
 				try {
@@ -114,7 +114,7 @@ public class LoadObjCmd extends ContextCommand {
 			if (failures == files.length) {
 				cancel(getExitMsg("No files imported. Invalid Directory?"));
 			}
-			recViewer.setViewUpdatesEnabled(true);
+			recViewer.setSceneUpdatesEnabled(true);
 			recViewer.validate();
 			final String msg = "" + (files.length - failures) + "/" + files.length +
 				" files successfully imported.";

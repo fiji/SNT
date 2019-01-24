@@ -155,7 +155,7 @@ public class GuiUtils {
 			popup.setMaximumSize(parent.getSize());
 		}
 		popup.setFocusable(false);
-		popup.setTransient(true);
+		popup.setTransient(timeOut > 0);
 		popup.setMovable(false);
 		popup.setDefaultMoveOperation(JidePopup.HIDE_ON_MOVED);
 		popup.setEnsureInOneScreen(true);
@@ -164,7 +164,7 @@ public class GuiUtils {
 
 	}
 
-	public void setTmpMsgTimeOut(final int mseconds) {
+	public void setTmpMsgTimeOut(final int mseconds) { // 0: no timeout, always visible
 		timeOut = mseconds;
 	}
 
@@ -617,8 +617,54 @@ public class GuiUtils {
 		}
 	}
 
-	public static String micrometre() {
-		return String.valueOf('\u00B5') + 'm';
+	public static String micrometer() {
+		return "\u00B5m";
+	}
+
+	/**
+	 * Returns a more human readable representation of a length in micrometers.
+	 * <p>
+	 * E.g., scaledMicrometer(1000,1) >> "1.0mm"
+	 * </p>
+	 *
+	 * @param umLength the length in micrometers
+	 * @param digits the number of output decimals
+	 * @return the scaled unit
+	 */
+	public static String scaledMicrometer(final double umLength,
+		final int digits)
+	{
+		String symbol = "";
+		double length = 0;
+		if (umLength < 0.0001) {
+			length = umLength * 10000;
+			symbol = "\u00C5";
+		}
+		if (umLength < 1) {
+			length = umLength * 1000;
+			symbol = "nm";
+		}
+		else if (umLength < 1000) {
+			length = umLength;
+			symbol = micrometer();
+		}
+		else if (umLength > 1000 && umLength < 10000) {
+			length = umLength / 1000;
+			symbol = "mm";
+		}
+		else if (umLength > 10000 && umLength < 1000000) {
+			length = umLength / 10000;
+			symbol = "cm";
+		}
+		else if (umLength > 1000000) {
+			length = umLength / 1000000;
+			symbol = "m";
+		}
+		else if (umLength > 1000000000) {
+			length = umLength / 1000000000;
+			symbol = "km";
+		}
+		return SNT.formatDouble(length, digits) + symbol;
 	}
 
 	public static void errorPrompt(final String msg) {

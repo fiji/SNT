@@ -48,7 +48,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -277,8 +276,8 @@ public class TreePlot3D {
 
 	/**
 	 * Instantiates TreePlot3D without the 'Controls' dialog ('kiosk mode'). Such
-	 * a plot is more suitable for large datasets and allows for Trees to be added
-	 * concurrently,
+	 * a plot is more suitable for large datasets and allows for {@link Tree}s to
+	 * be added concurrently.
 	 */
 	public TreePlot3D() {
 		plottedTrees = new TreeMap<>();
@@ -305,13 +304,13 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Sets whether Plot's View should update (refresh) every time a new
+	 * Sets whether the scene should update (refresh) every time a new
 	 * reconstruction (or mesh) is added/removed from the scene. Should be set to
 	 * false when performing bulk operations;
 	 *
-	 * @param enabled Whether view updates should be enabled
+	 * @param enabled Whether scene updates should be enabled
 	 */
-	public void setViewUpdatesEnabled(final boolean enabled) {
+	public void setSceneUpdatesEnabled(final boolean enabled) {
 		viewUpdatesEnabled = enabled;
 	}
 
@@ -583,17 +582,26 @@ public class TreePlot3D {
 	}
 
 	/**
-	 * Shows this TreePlot and returns a reference to its frame. If the frame has
-	 * been made displayable, this will simply make the frame visible. Should only
-	 * be called once all objects have been added to the Plot. If this is an
-	 * interactive Viewer, the 'Controls' dialog is also displayed.
+	 * Displays the Viewer and returns a reference to its frame. If the frame has
+	 * been made displayable, this will simply make the frame visible. Tipically,
+	 * it should only be called once all objects have been added to the scene. If
+	 * this is an interactive viewer, the 'Controls' dialog is also displayed.
 	 *
-	 * @return the frame containing the plot.
+	 * @return the frame containing the viewer.
 	 */
 	public Frame show() {
 		return show(-1, -1);
 	}
 
+	/**
+	 * Displays the viewer under specified dimensions. Useful when generating
+	 * scene animations programmatically.
+	 * 
+	 * @param width the width of the frame
+	 * @param height the height of the frame
+	 * @return the frame containing the viewer.
+	 * @see #show()
+	 */
 	public Frame show(final int width, final int height) {
 		final boolean viewInitialized = initView();
 		if (!viewInitialized && frame != null) {
@@ -618,11 +626,6 @@ public class TreePlot3D {
 			: 	new ViewerFrame(chart, width, height, false, managerList != null);
 		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
-	}
-
-	@Deprecated
-	public Frame show(final boolean showManager) {
-		return show();
 	}
 
 	private void displayMsg(final String msg) {
@@ -946,12 +949,12 @@ public class TreePlot3D {
 	/**
 	 * Renders the scene from a specified camera angle using polar coordinates
 	 * relative to the the center of the scene. Only X and Y dimensions are
-	 * required, as the distance to center will be computed automatically. Current
+	 * required, as the distance to center is automatically computed. Current
 	 * view point is logged to the Console when interacting with the
 	 * Reconstruction Viewer in debug mode.
 	 * 
 	 * @param r the radial coordinate
-	 * @param t he angle coordinate (radians)
+	 * @param t the angle coordinate (in radians)
 	 */
 	public void setViewPoint(final float r, final float t) {
 		if (!chartExists()) {

@@ -165,7 +165,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 				return (lcName.endsWith("swc") || lcName.endsWith("traces") || lcName
 					.endsWith("json"));
 			});
-			recViewer.setViewUpdatesEnabled(false);
+			recViewer.setSceneUpdatesEnabled(false);
 			int failures = 0;
 			final ColorRGB[] colors = (colorChoice.contains("unique")) ? SWCColor
 				.getDistinctColors(files.length) : null;
@@ -184,7 +184,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 			if (failures == files.length) {
 				error("No files imported. Invalid Directory?");
 			}
-			recViewer.setViewUpdatesEnabled(true);
+			recViewer.setSceneUpdatesEnabled(true);
 			recViewer.validate();
 			final String msg = "" + (files.length - failures) + "/" + files.length +
 				" files successfully imported.";

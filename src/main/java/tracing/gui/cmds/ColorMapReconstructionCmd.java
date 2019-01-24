@@ -193,7 +193,7 @@ public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 				return;
 			}
 
-			recViewer.setViewUpdatesEnabled(false);
+			recViewer.setSceneUpdatesEnabled(false);
 			double[] limits = { 0d, 0d };
 			if (treeMappingLabels != null) {
 				// Color code single trees
@@ -211,7 +211,7 @@ public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 				limits = recViewer.colorCode(multiTreeMappingLabels, measurementChoice,
 					colorTable);
 			}
-			recViewer.setViewUpdatesEnabled(true);
+			recViewer.setSceneUpdatesEnabled(true);
 			if (!validMin) min = (float) limits[0];
 			if (!validMax) max = (float) limits[1];
 			recViewer.addColorBarLegend(colorTable, min, max);

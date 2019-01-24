@@ -165,12 +165,12 @@ public class MLImporterCmd extends CommonDynamicCmd {
 
 		if (recViewer != null) {
 			// A 'stand-alone' Reconstruction Viewer was specified
-			recViewer.setViewUpdatesEnabled(false);
+			recViewer.setSceneUpdatesEnabled(false);
 			result.forEach((id, tree) -> {
 				if (tree != null) recViewer.add(tree);
 			});
 			if (meshViewer) recViewer.loadMouseRefBrain();
-			recViewer.setViewUpdatesEnabled(true);
+			recViewer.setSceneUpdatesEnabled(true);
 			recViewer.validate();
 		}
 		else if (meshViewer) {
@@ -180,11 +180,11 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			// feature or a logical flaw in the way Path Manager and
 			// Reconstruction Viewer synchronize
 			recViewer = sntService.getReconstructionViewer();
-			recViewer.setViewUpdatesEnabled(false);
+			recViewer.setSceneUpdatesEnabled(false);
 			recViewer.loadMouseRefBrain();
 			recViewer.syncPathManagerList();
 			recViewer.show();
-			recViewer.setViewUpdatesEnabled(true);
+			recViewer.setSceneUpdatesEnabled(true);
 		}
 
 		if (failures > 0) {

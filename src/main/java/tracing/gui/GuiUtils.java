@@ -624,7 +624,7 @@ public class GuiUtils {
 	/**
 	 * Returns a more human readable representation of a length in micrometers.
 	 * <p>
-	 * E.g., scaledMicrometer(1000,1) >> "1.0mm"
+	 * E.g., scaledMicrometer(0.01,1) returns "1.0nm"
 	 * </p>
 	 *
 	 * @param umLength the length in micrometers

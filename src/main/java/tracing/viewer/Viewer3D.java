@@ -118,7 +118,6 @@ import org.jzy3d.plot3d.rendering.canvas.ICanvas;
 import org.jzy3d.plot3d.rendering.canvas.IScreenCanvas;
 import org.jzy3d.plot3d.rendering.canvas.Quality;
 import org.jzy3d.plot3d.rendering.legends.colorbars.AWTColorbarLegend;
-import org.jzy3d.plot3d.rendering.lights.LightSet;
 import org.jzy3d.plot3d.rendering.scene.Scene;
 import org.jzy3d.plot3d.rendering.view.AWTView;
 import org.jzy3d.plot3d.rendering.view.View;
@@ -173,38 +172,38 @@ import tracing.util.SNTPoint;
 import tracing.util.SWCColor;
 
 /**
- * Implements the SNT Reconstruction Viewer. Relies heavily on the
+ * Implements SNT's Reconstruction Viewer. Relies heavily on the
  * {@code org.jzy3d} package.
  *
  * @author Tiago Ferreira
  */
 public class Viewer3D {
 
+	/**
+	 * Presets of a scene's view point.
+	 */
 	public enum ViewMode {
 			/**
-			 * No enforcement of view point: let the user freely turn around the scene
-			 * (see {@link Viewer3D#setView(ViewPoint)})
+			 * No enforcement of view point: let the user freely turn around the
+			 * scene.
 			 */
 			DEFAULT("Default"), //
 			/**
-			 * Enforce a lateral view point of the scene (see
-			 * {@link Viewer3D#setView(ViewPoint)})
+			 * Enforce a lateral view point of the scene.
 			 */
 			SIDE("Side Constrained"), //
 			/**
-			 * Enforce a top view point of the scene with disabled rotation. (see
-			 * {@link Viewer3D#setView(ViewPoint)})
+			 * Enforce a top view point of the scene with disabled rotation.
 			 */
 			TOP("Top Constrained"),
 			/**
-			 * Enforce an 'overview (two-point perspective) view point of the scene
-			 * (see {@link Viewer3D#setView(ViewPoint)})
+			 * Enforce an 'overview (two-point perspective) view point of the scene.
 			 */
 			PERSPECTIVE("Perspective");
 
 		private String description;
 
-		public ViewMode next() {
+		private ViewMode next() {
 			switch (this) {
 				case DEFAULT:
 					return TOP;
@@ -519,7 +518,7 @@ public class Viewer3D {
 	 * Tree.
 	 *
 	 * @param tree the {@link Tree} to be added. The Tree's label will be used as
-	 *          identifier. It is expected to be unique when plotting multiple
+	 *          identifier. It is expected to be unique when rendering multiple
 	 *          Trees, if not (or no label exists) a unique label will be
 	 *          generated.
 	 * @see Tree#getLabel()
@@ -656,10 +655,10 @@ public class Viewer3D {
 	/**
 	 * Returns the Collection of Trees in this viewer.
 	 *
-	 * @return the plotted Trees (keys being the Tree identifier as per
+	 * @return the rendered Trees (keys being the Tree identifier as per
 	 *         {@link #add(Tree)})
 	 */
-	public Map<String, Shape> getTrees() {
+	private Map<String, Shape> getTrees() {
 		final Map<String, Shape> map = new HashMap<>();
 		plottedTrees.forEach((k, shapeTree) -> {
 			map.put(k, shapeTree.get());
@@ -670,10 +669,10 @@ public class Viewer3D {
 	/**
 	 * Returns the Collection of OBJ meshes imported into this viewer.
 	 *
-	 * @return the plotted Meshes (keys being the filename of the imported OBJ
+	 * @return the rendered Meshes (keys being the filename of the imported OBJ
 	 *         file as per {@link #loadOBJ(String, ColorRGB, double)}
 	 */
-	public Map<String, DrawableVBO> getOBJs() {
+	private Map<String, DrawableVBO> getOBJs() {
 		final Map<String, DrawableVBO> newMap = new LinkedHashMap<>();
 		plottedObjs.forEach((k, drawable) -> {
 			newMap.put(k, drawable);
@@ -846,7 +845,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Toggles the visibility of a plotted Tree or a loaded OBJ mesh.
+	 * Toggles the visibility of a rendered Tree or a loaded OBJ mesh.
 	 *
 	 * @param treeOrObjLabel the unique identifier of the Tree (as per
 	 *          {@link #add(Tree)}), or the filename of the loaded OBJ
@@ -946,7 +945,7 @@ public class Viewer3D {
 	/**
 	 * Renders the scene from a specified camera angle.
 	 *
-	 * @param viewPoint the view mode, e.g., {@link ViewMode#DEFAULT},
+	 * @param viewMode the view mode, e.g., {@link ViewMode#DEFAULT},
 	 *          {@link ViewMode#SIDE} , etc.
 	 */
 	public void setViewMode(final ViewMode viewMode) {
@@ -974,15 +973,36 @@ public class Viewer3D {
 		if (viewUpdatesEnabled) chart.getView().shoot();
 	}
 
+	/**
+	 * Adds an annotation label to the scene.
+	 *
+	 * @param label the annotation text
+	 * @see #setFont(Font, float, ColorRGB)
+	 * @see #setLabelLocation(float, float)
+	 */
 	public void setLabel(final String label) {
 		((AChart)chart).overlayAnnotation.label = label;
 	}
 
+	/**
+	 * Sets the location for annotation labels
+	 *
+	 * @param x the x position of the label
+	 * @param y the y position of the label
+	 */
 	public void setLabelLocation(final float x, final float y) {
 		((AChart)chart).overlayAnnotation.labelX = x;
 		((AChart)chart).overlayAnnotation.labelY = y;
 	}
 
+	/**
+	 * Sets the font for label annotations
+	 *
+	 * @param font the font label, e.g.,
+	 *          {@code new Font(Font.SANS_SERIF, Font.ITALIC, 20)}
+	 * @param angle the angle in degrees for rotated labels
+	 * @param color the font color, e.g., {@code org.scijava.util.Colors.ORANGE}
+	 */
 	public void setFont(final Font font, final float angle, final ColorRGB color) {
 		((AChart)chart).overlayAnnotation.setFont(font, angle);
 		((AChart)chart).overlayAnnotation.setLabelColor(new java.awt.Color(color.getRed(), color
@@ -991,12 +1011,11 @@ public class Viewer3D {
 
 	/**
 	 * Saves a snapshot of current scene as a PNG image. Image is saved using an
-	 * unique time stamp as a file name in the directory specified by
-	 * {@link #getScreenshotDirectory()}
+	 * unique time stamp as a file name in the directory specified in the
+	 * preferences dialog or through {@link #setSnapshotDir(String)}
 	 *
 	 * @return true, if successful
-	 * @throws IllegalArgumentException if Viewer is not available, i.e.,
-	 *           {@link #getView()} is null
+	 * @throws IllegalArgumentException if Viewer is not available
 	 */
 	public boolean saveSnapshot() throws IllegalArgumentException {
 		if (!chartExists()) {
@@ -1014,6 +1033,15 @@ public class Viewer3D {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Sets the directory for storing snapshots.
+	 *
+	 * @param path the absolute path to the new snapshot directory.
+	 */
+	public void setSnapshotDir(final String path) {
+		prefs.snapshotDir = path;
 	}
 
 	/**
@@ -1149,16 +1177,16 @@ public class Viewer3D {
 		addItemToManager(label);
 	}
 
-	/**
-	 * Returns this viewer's {@link View} holding {@link Scene}, {@link LightSet},
-	 * {@link ICanvas}, etc.
-	 *
-	 * @return this viewer's View, or null if it was disposed after {@link #show()}
-	 *         has been called
-	 */
-	public View getView() {
-		return (chart == null) ? null : view;
-	}
+//	/**
+//	 * Returns this viewer's {@link View} holding {@link Scene}, {@link LightSet},
+//	 * {@link ICanvas}, etc.
+//	 *
+//	 * @return this viewer's View, or null if it was disposed after {@link #show()}
+//	 *         has been called
+//	 */
+//	public View getView() {
+//		return (chart == null) ? null : view;
+//	}
 
 	/** ChartComponentFactory adopting {@link AView} */
 	private class AChartComponentFactory extends AWTChartComponentFactory {
@@ -1228,7 +1256,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Adapted AWTView so that top/side views better match to coronal/sagitlal
+	 * Adapted AWTView so that top/side views better match to coronal/sagittal
 	 * ones
 	 */
 	private class AView extends AWTView {
@@ -1797,12 +1825,12 @@ public class Viewer3D {
 			managerList.setSelectedObjects(selectedKeys.toArray());
 		}
 
-		protected List<String> getSelectedTrees(final boolean promptForAllIfNone) {
+		private List<String> getSelectedTrees(final boolean promptForAllIfNone) {
 			return getSelectedKeys(plottedTrees, "reconstructions",
 				promptForAllIfNone);
 		}
 
-		protected List<String> getSelectedMeshes(final boolean promptForAllIfNone) {
+		private List<String> getSelectedMeshes(final boolean promptForAllIfNone) {
 			return getSelectedKeys(plottedObjs, "meshes", promptForAllIfNone);
 		}
 
@@ -2159,6 +2187,7 @@ public class Viewer3D {
 				}
 			}
 
+			@Override
 			protected void done() {
 				String doneMessage;
 				try {
@@ -3369,7 +3398,7 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Applies a constant thickness (line width) to a subset of plotted trees.
+	 * Applies a constant thickness (line width) to a subset of rendered trees.
 	 *
 	 * @param labels the Collection of keys specifying the subset of trees
 	 * @param thickness the thickness (line width)
@@ -3385,10 +3414,10 @@ public class Viewer3D {
 
 	/**
 	 * Applies a constant thickness to all rendered trees. Note that by default,
-	 * trees are rendered using their nodes' diameter;
+	 * trees are rendered using their nodes' diameter.
 	 *
 	 * @param thickness the thickness (line width)
-	 * @see #setTreesThickness(String, float)
+	 * @see #setTreesThickness(Collection, float)
 	 */
 	public void setTreesThickness(final float thickness) {
 		plottedTrees.values().forEach(shapeTree -> shapeTree.setThickness(
@@ -3439,6 +3468,13 @@ public class Viewer3D {
 		if (shapeTree != null) shapeTree.setArborDisplayed(displayed);
 	}
 
+	/**
+	 * Toggles the visibility of somas for subset of trees.
+	 *
+	 * @param labels the Collection of keys specifying the subset of trees to be
+	 *          affected
+	 * @param displayed whether soma should be displayed
+	 */
 	public void setSomasDisplayed(final Collection<String> labels,
 		final boolean displayed)
 	{
@@ -3447,6 +3483,11 @@ public class Viewer3D {
 		});
 	}
 
+	/**
+	 * Toggles the visibility of somas for all trees in the scene.
+	 *
+	 * @param displayed whether soma should be displayed
+	 */
 	public void setSomasDisplayed(final boolean displayed) {
 		plottedTrees.values().forEach(shapeTree -> shapeTree.setSomaDisplayed(displayed));
 	}
@@ -3459,12 +3500,12 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Applies a color to a subset of plotted trees.
+	 * Applies a color to a subset of rendered trees.
 	 *
 	 * @param labels the Collection of keys specifying the subset of trees
 	 * @param color the color
 	 */
-	protected void applyColorToPlottedTrees(final List<String> labels,
+	private void applyColorToPlottedTrees(final List<String> labels,
 		final ColorRGB color)
 	{
 		plottedTrees.forEach((k, shapeTree) -> {
@@ -3475,7 +3516,7 @@ public class Viewer3D {
 		});
 	}
 
-	protected boolean treesContainColoredNodes(final List<String> labels) {
+	private boolean treesContainColoredNodes(final List<String> labels) {
 		Color refColor = null;
 		for (final Map.Entry<String, ShapeTree> entry : plottedTrees.entrySet()) {
 			if (labels.contains(entry.getKey())) {
@@ -3505,20 +3546,9 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Applies a constant color to plotted meshes.
-	 *
-	 * @param color the color
-	 */
-	protected void applyColorToPlottedObjs(final Color color) {
-		plottedObjs.values().forEach(drawable -> {
-			drawable.setColor(color);
-		});
-	}
-
-	/**
 	 * Checks whether this instance is SNT's Reconstruction Viewer.
 	 *
-	 * @return true, if SNT instance, false oyherwise
+	 * @return true, if SNT instance, false otherwise
 	 */
 	public boolean isSNTInstance() {
 		return sntService != null && sntService.isActive() && sntService
@@ -3544,13 +3574,14 @@ public class Viewer3D {
 		colorizer.map(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();
 		SNT.setDebugMode(true);
-		final TreePlot3D jzy3D = new TreePlot3D(ij.context());
+		final Viewer3D jzy3D = new Viewer3D(ij.context());
 		jzy3D.addColorBarLegend(ColorTables.ICE, (float) bounds[0],
 			(float) bounds[1]);
 		jzy3D.add(tree);
 		jzy3D.loadMouseRefBrain();
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
+		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);
 	}
 
 }

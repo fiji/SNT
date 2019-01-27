@@ -21,7 +21,7 @@
  */
 
 /**
- * Classes for Sholl analysis of {@link tracing.Tree Tree}s.
+ * Sholl analysis of {@link tracing.Tree Tree}s.
  *
  * @author Tiago Ferreira
  */

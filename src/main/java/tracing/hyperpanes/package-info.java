@@ -21,8 +21,8 @@
  */
 
 /**
- * Classes implementing SNT's XY, ZY, and XZ views. Derived from VIB-lib stacks
- * package for hyperstack and IJ2 support.
+ * Classes implementing SNT's XY, ZY, and XZ canvases. Derived from VIB-lib
+ * stacks package for hyperstack and IJ2 support.
  *
  * @author Tiago Ferreira
  */

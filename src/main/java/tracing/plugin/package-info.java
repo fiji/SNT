@@ -21,7 +21,7 @@
  */
 
 /**
- * Classes implementing SNT addons (IJ2 commands)
+ * SNT add-ons as IJ2 commands
  *
  * @author Tiago Ferreira
  */

@@ -21,7 +21,7 @@
  */
 
 /**
- * Classes for rendering reconstructions
+ * Visualization of reconstructions
  *
  * @author Tiago Ferreira
  */

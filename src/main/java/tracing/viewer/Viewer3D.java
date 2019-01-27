@@ -3204,8 +3204,8 @@ public class Viewer3D {
 	 */
 	private class OBJFileLoaderPlus implements IGLLoader<DrawableVBO> {
 
-		protected URL url;
-		protected OBJFile obj;
+		private URL url;
+		private OBJFilePlus obj;
 
 		public OBJFileLoaderPlus(final URL url) {
 			this.url = url;
@@ -3219,7 +3219,7 @@ public class Viewer3D {
 		}
 
 		public boolean compileModel() {
-			obj = new OBJFile();
+			obj = new OBJFilePlus();
 			SNT.log("Loading OBJ file '" + url + "'");
 			if (!obj.loadModelFromURL(url)) {
 				SNT.log("Loading failed. Invalid file?");
@@ -3249,6 +3249,46 @@ public class Viewer3D {
 			drawable.doLoadArrayFloatBuffer(gl, vertexSize, vertices);
 			drawable.doLoadElementIntBuffer(gl, indexSize, indices);
 			drawable.doSetBoundingBox(bounds);
+		}
+	}
+
+	private class OBJFilePlus extends OBJFile {
+
+		/* (non-Javadoc)
+		 * @see org.jzy3d.io.obj.OBJFile#parseObjVertex(java.lang.String, float[])
+		 * This is so that we can import files listing 4-component vertices [x, y, z, w]
+		 */
+		@Override
+		public void parseObjVertex(String line, final float[] val) {
+			switch (line.charAt(1)) {
+				case ' ':
+					// logger.info(line);
+
+					line = line.substring(line.indexOf(" ") + 1);
+					// vertex, 3 or 4 components
+					val[0] = Float.valueOf(line.substring(0, line.indexOf(" ")));
+					line = line.substring(line.indexOf(" ") + 1);
+					val[1] = Float.valueOf(line.substring(0, line.indexOf(" ")));
+					line = line.substring(line.indexOf(" ") + 1);
+					val[2] = Float.valueOf(line.split(" ")[0]);
+					positions_.add(val[0]);
+					positions_.add(val[1]);
+					positions_.add(val[2]);
+					break;
+
+				case 'n':
+					// normal, 3 components
+					line = line.substring(line.indexOf(" ") + 1);
+					val[0] = Float.valueOf(line.substring(0, line.indexOf(" ")));
+					line = line.substring(line.indexOf(" ") + 1);
+					val[1] = Float.valueOf(line.substring(0, line.indexOf(" ")));
+					line = line.substring(line.indexOf(" ") + 1);
+					val[2] = Float.valueOf(line);
+					normals_.add(val[0]);
+					normals_.add(val[1]);
+					normals_.add(val[2]);
+					break;
+			}
 		}
 	}
 

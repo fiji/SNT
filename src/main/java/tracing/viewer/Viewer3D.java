@@ -1006,7 +1006,7 @@ public class Viewer3D {
 		final String file = new SimpleDateFormat("'SNT 'yyyy-MM-dd HH-mm-ss'.png'")
 			.format(new Date());
 		try {
-			final File f = new File(prefs.getSnapshotDirectory(), file);
+			final File f = new File(prefs.snapshotDir, file);
 			SNT.log("Saving snapshot to " + f);
 			chart.screenshot(f);
 		}
@@ -1435,6 +1435,7 @@ public class Viewer3D {
 		private final KeyController kc;
 		private final MouseController mc;
 		private String storedSensitivity;
+		private String snapshotDir;
 
 		public Prefs(final Viewer3D tp) {
 			this.tp = tp;
@@ -1445,6 +1446,7 @@ public class Viewer3D {
 		private void setPreferences() {
 			nagUserOnRetrieveAll = DEF_NAG_USER_ON_RETRIEVE_ALL;
 			retrieveAllIfNoneSelected = DEF_RETRIEVE_ALL_IF_NONE_SELECTED;
+			setSnapshotDirectory();
 			if (tp.prefService == null) {
 				kc.zoomStep = DEF_ZOOM_STEP;
 				kc.rotationStep = DEF_ROTATION_STEP;
@@ -1458,10 +1460,12 @@ public class Viewer3D {
 			}
 		}
 
-		private String getSnapshotDirectory() {
-			if (tp.prefService == null) return RecViewerPrefsCmd.DEF_SNAPSHOT_DIR;
-			return tp.prefService.get(RecViewerPrefsCmd.class, "snapshotDir",
+		private void setSnapshotDirectory() {
+			snapshotDir = (tp.prefService == null) ? RecViewerPrefsCmd.DEF_SNAPSHOT_DIR
+			: tp.prefService.get(RecViewerPrefsCmd.class, "snapshotDir",
 				RecViewerPrefsCmd.DEF_SNAPSHOT_DIR);
+			final File dir = new File(snapshotDir);
+			if (!dir.exists() || !dir.isDirectory()) dir.mkdirs();
 		}
 
 		private float getSnapshotRotationAngle() {
@@ -2091,7 +2095,7 @@ public class Viewer3D {
 			settingsMenu.addSeparator();
 			mi = new JMenuItem("Preferences...", IconFactory.getMenuIcon(GLYPH.COG));
 			mi.addActionListener(e -> {
-				runCmd(RecViewerPrefsCmd.class, null, CmdWorker.DO_NOTHING, false);
+				runCmd(RecViewerPrefsCmd.class, null, CmdWorker.RELOAD_PREFS, false);
 			});
 			settingsMenu.add(mi);
 			return settingsMenu;
@@ -2142,8 +2146,9 @@ public class Viewer3D {
 
 			private boolean error = false;
 
+			@Override
 			protected String doInBackground() {
-				final File rootDir = new File(prefs.getSnapshotDirectory() +
+				final File rootDir = new File(prefs.snapshotDir +
 					File.separator + "SNTrecordings");
 				if (!rootDir.exists()) rootDir.mkdirs();
 				final int dirId = rootDir.list((current, name) -> new File(current,
@@ -2651,6 +2656,8 @@ public class Viewer3D {
 
 		private static final int DO_NOTHING = 0;
 		private static final int VALIDATE_SCENE = 1;
+		private static final int RELOAD_PREFS = 2;
+
 
 		private final Class<? extends Command> cmd;
 		private final Map<String, Object> inputs;
@@ -2697,6 +2704,8 @@ public class Viewer3D {
 						case VALIDATE_SCENE:
 							validate();
 							break;
+						case RELOAD_PREFS:
+							prefs.setPreferences();
 						case DO_NOTHING:
 						default:
 							break;
@@ -2941,7 +2950,7 @@ public class Viewer3D {
 		private void saveScreenshot() {
 			getOuter().saveSnapshot();
 			displayMsg("Snapshot saved to " + FileUtils.limitPath(
-				prefs.getSnapshotDirectory(), 50));
+				prefs.snapshotDir, 50));
 		}
 
 		private void resetView() {

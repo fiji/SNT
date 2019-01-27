@@ -52,8 +52,10 @@ public class RecViewerPrefsCmd extends ContextCommand {
 	public static int DEF_ROTATION_FPS = 30;
 	public static String DEF_CONTROLS_SENSITIVY = "High";
 
-	@Parameter(label = "<HTML><b>I. Snapshot Recordings:", required = false,
-		visibility = ItemVisibility.MESSAGE)
+	@Parameter(
+		label = "<HTML><b>I. Snapshot Recordings" +
+			"&emsp;&emsp;&emsp;",
+		required = false, visibility = ItemVisibility.MESSAGE)
 	private String HEADER1;
 
 	@Parameter(label = "Save Directory", style = "directory",
@@ -85,11 +87,9 @@ public class RecViewerPrefsCmd extends ContextCommand {
 	private String HEADER2;
 
 	@Parameter(label = "Default sensitivity", required = false,
-		callback = "sensitivityChanged",
 		description = "The default (startup) sensivity for panning, zooming and rotating using hotkeys",
 		choices = { "Low", "Medium", "High", "Highest" })
 	private String sensitivity;
-	private String storedSensitivity;
 
 	@Parameter(label = "<HTML>&nbsp;", required = false,
 		visibility = ItemVisibility.MESSAGE)
@@ -106,8 +106,6 @@ public class RecViewerPrefsCmd extends ContextCommand {
 		if (rotationFPS == 0) rotationFPS = DEF_ROTATION_FPS;
 		if (sensitivity == null) sensitivity =
 			DEF_CONTROLS_SENSITIVY;
-		storedSensitivity = sensitivity;
-		sensitivityChanged();
 	}
 
 	@SuppressWarnings("unused")
@@ -132,10 +130,6 @@ public class RecViewerPrefsCmd extends ContextCommand {
 		}
 	}
 
-	private void sensitivityChanged() {
-		msg2 = (storedSensitivity.equals(sensitivity))
-			? "<HTML>&nbsp;" : "<HTML>New settings active after restart...";
-	}
 
 	/*
 	 * (non-Javadoc)

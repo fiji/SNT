@@ -550,15 +550,14 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Updates the scene, ensuring all objects are rendered within axes
-	 * dimensions.
+	 * Updates the scene bounds to ensure all visible objects are displayed.
 	 * 
 	 * @see #rebuild()
 	 */
 	public void updateView() {
 		if (view != null) {
 			view.shoot(); // !? without forceRepaint() dimensions are not updated
-			view.lookToBox(view.getScene().getGraph().getBounds());
+			fitToVisibleObjects(false);
 		}
 	}
 
@@ -1243,26 +1242,20 @@ public class Viewer3D {
 			//setBoundMode(ViewBoundMode.AUTO_FIT);
 		}
 
-		@Override
-		public void setViewPoint(Coord3d polar, boolean updateView) {
-//			viewpoint = polar;
-//			viewpoint.y = viewpoint.y < -PI_div2 ? -PI_div2 : viewpoint.y;
-//			viewpoint.y = viewpoint.y > PI_div2 ? PI_div2 : viewpoint.y;
-//			if (updateView) shoot();
-//			fireViewPointChangedEvent(new ViewPointChangedEvent(this, polar));
-			super.setViewPoint(polar, updateView);
+		private void logViewPoint() {
 			if (SNT.isDebugMode()) {
 				final StringBuilder sb = new StringBuilder("setViewPoint(");
-				sb.append(viewpoint.x).append(", ");
-				sb.append(viewpoint.y).append(");");
+				sb.append(viewpoint.x).append("f, ");
+				sb.append(viewpoint.y).append("f);");
 				SNT.log(sb.toString());
 			}
 		}
-
-		@Override
-		public void setBoundManual(final BoundingBox3d bounds) {
+	
+		public void setBoundManual(final BoundingBox3d bounds,
+			boolean logInDebugMode)
+		{
 			super.setBoundManual(bounds);
-			if (SNT.isDebugMode()) {
+			if (logInDebugMode && SNT.isDebugMode()) {
 				final StringBuilder sb = new StringBuilder("setBounds(");
 				sb.append(bounds.getXmin()).append("f, ");
 				sb.append(bounds.getXmax()).append("f, ");
@@ -1595,7 +1588,7 @@ public class Viewer3D {
 				.getMenuIcon(GLYPH.EXPAND));
 			mi.setMnemonic('f');
 			mi.addActionListener(e -> {
-				fitToVisibleObjects();
+				fitToVisibleObjects(true);
 				final BoundingBox3d bounds = chart.view().getScene().getGraph().getBounds();
 				final StringBuilder sb = new StringBuilder();
 				sb.append("X: ").append(String.format("%.2f", bounds.getXmin())).append(
@@ -2766,6 +2759,22 @@ public class Viewer3D {
 			return status;
 		}
 
+		@Override
+		public boolean handleSlaveThread(final MouseEvent e) {
+			if (AWTMouseUtilities.isDoubleClick(e)) {
+				if (currentView == ViewMode.TOP) {
+					displayMsg("Rotation disabled in constrained view");
+					return true;
+				}
+				if (threadController != null) {
+					threadController.start();
+					return true;
+				}
+			}
+			if (threadController != null) threadController.stop();
+			return false;
+		}
+
 		private void rotateLive(final Coord2d move) {
 			if (currentView == ViewMode.TOP) {
 				displayMsg("Rotation disabled in constrained view");
@@ -2785,16 +2794,18 @@ public class Viewer3D {
 			final BoundingBox3d viewBounds = view.getBounds();
 			final Coord3d offset = to.sub(from).div(-panStep);
 			final BoundingBox3d newBounds = viewBounds.shift(offset);
-			view.setBoundManual(newBounds);
+			((AView)view).setBoundManual(newBounds, true);
 			view.shoot();
 			fireControllerEvent(ControllerType.PAN, offset);
 		}
 
 		public void zoom(final float factor) {
 			final BoundingBox3d viewBounds = view.getBounds();
-			final BoundingBox3d newBounds = viewBounds.scale(new Coord3d(factor,
-				factor, factor));
-			view.setBoundManual(newBounds);
+			BoundingBox3d newBounds = viewBounds.scale(new Coord3d(factor, factor,
+				factor));
+			newBounds = newBounds.shift((viewBounds.getCenter().sub(newBounds
+				.getCenter())));
+			((AView) view).setBoundManual(newBounds, true);
 			view.shoot();
 			fireControllerEvent(ControllerType.ZOOM, factor);
 		}
@@ -2851,6 +2862,7 @@ public class Viewer3D {
 			if (AWTMouseUtilities.isLeftDown(e)) {
 				final Coord2d move = mouse.sub(prevMouse).div(100);
 				rotate(move);
+				((AView)view).logViewPoint();
 			}
 
 			// Pan on right-click
@@ -2914,7 +2926,7 @@ public class Viewer3D {
 					break;
 				case 'f':
 				case 'F':
-					fitToVisibleObjects();
+					fitToVisibleObjects(true);
 					break;
 				case '+':
 				case '=':
@@ -3174,10 +3186,11 @@ public class Viewer3D {
 			g2d.setColor(color);
 			if (SNT.isDebugMode()) {
 				int lineHeight = g.getFontMetrics().getHeight();
-				g2d.drawString("View: " + view.getCamera().getEye(), 20, lineHeight);
+				g2d.drawString("Camera: " + view.getCamera().getEye(), 20, lineHeight);
 				g2d.drawString("FOV: " + view.getCamera().getRenderingSphereRadius(),
-					20,lineHeight += lineHeight);
-				g2d.drawString(control.getLastFPS() + " FPS", 20, lineHeight += lineHeight);
+					20, lineHeight += lineHeight);
+				g2d.drawString(control.getLastFPS() + " FPS", 20, lineHeight +=
+					lineHeight);
 			}
 			if (label == null || label.isEmpty()) return;
 			if (labelColor != null) g2d.setColor(labelColor);
@@ -3312,7 +3325,7 @@ public class Viewer3D {
 		this.defThickness = thickness;
 	}
 
-	protected synchronized void fitToVisibleObjects()
+	private synchronized void fitToVisibleObjects(final boolean beGreedy)
 		throws NullPointerException
 	{
 		final List<AbstractDrawable> all = chart.getView().getScene().getGraph()
@@ -3325,7 +3338,15 @@ public class Viewer3D {
 				bounds.add(d.getBounds());
 			}
 		});
-		if (!bounds.isPoint()) chart.view().lookToBox(bounds);
+		if (bounds.isPoint()) return;
+		if (beGreedy) {
+			BoundingBox3d zoomedBox = bounds.scale(new Coord3d(.85f, .85f, .85f));
+			zoomedBox = zoomedBox.shift((bounds.getCenter().sub(zoomedBox.getCenter())));
+			chart.view().lookToBox(zoomedBox);
+		}
+		else {
+			chart.view().lookToBox(bounds);
+		}
 	}
 
 	/**
@@ -3399,7 +3420,7 @@ public class Viewer3D {
 		}
 		if (viewUpdatesEnabled) {
 			view.shoot();
-			fitToVisibleObjects();
+			fitToVisibleObjects(true);
 		}
 	}
 

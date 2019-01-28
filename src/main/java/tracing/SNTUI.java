@@ -84,12 +84,12 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import net.imagej.Dataset;
-import org.scijava.table.DefaultGenericTable;
 
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
-import org.scijava.util.ClassUtils;
+import org.scijava.table.DefaultGenericTable;
 import org.scijava.util.ColorRGB;
+import org.scijava.util.Types;
 
 import ij.IJ;
 import ij.ImageListener;
@@ -102,7 +102,7 @@ import ij3d.Content;
 import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
 import ij3d.ImageWindow3D;
-import sholl.Sholl_Analysis;
+import sholl.ShollUtils;
 import tracing.analysis.TreeAnalyzer;
 import tracing.event.SNTEvent;
 import tracing.gui.ColorChooserButton;
@@ -1674,7 +1674,7 @@ public class SNTUI extends JDialog {
 				else if (filteredImgParserChoice.getSelectedIndex() == 1) { // Tubular
 																																		// Geodesics
 
-					if (ClassUtils.loadClass(
+					if (Types.load(
 						"FijiITKInterface.TubularGeodesics") == null)
 					{
 						guiUtils.error(
@@ -2460,13 +2460,13 @@ public class SNTUI extends JDialog {
 			final Thread newThread = new Thread(() -> {
 				if (noPathsError()) return;
 				final String modKey = GuiUtils.modKey() + "+Shift";
-				final String url1 = Sholl_Analysis.URL + "#Analysis_of_Traced_Cells";
+				final String url1 = ShollUtils.URL + "#Analysis_of_Traced_Cells";
 				final String url2 =
 					"https://imagej.net/Simple_Neurite_Tracer:_Sholl_analysis";
 				final StringBuilder sb = new StringBuilder();
 				sb.append("<html>");
 				sb.append("<div WIDTH=500>");
-				sb.append("To initiate <a href='").append(Sholl_Analysis.URL).append(
+				sb.append("To initiate <a href='").append(ShollUtils.URL).append(
 					"'>Sholl Analysis</a>, ");
 				sb.append("you must select a focal point. You can do it coarsely by ");
 				sb.append(

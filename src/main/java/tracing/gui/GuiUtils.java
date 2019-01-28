@@ -685,6 +685,7 @@ public class GuiUtils {
 	}
 
 	/** HACK Font too big on ubuntu: https://stackoverflow.com/a/31345102 */
+	@SuppressWarnings("unused")
 	private static void checkGTKLookAndFeel() throws Exception {
 		final LookAndFeel look = UIManager.getLookAndFeel();
 		if (!look.getID().equals("GTK")) return;

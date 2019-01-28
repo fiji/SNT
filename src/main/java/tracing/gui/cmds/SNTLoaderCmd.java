@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.display.ImageDisplayService;
 import net.imagej.legacy.LegacyService;
@@ -212,6 +211,8 @@ public class SNTLoaderCmd extends DynamicCommand {
 		}
 	}
 
+	
+	@SuppressWarnings("unused")
 	private void resetPrefs() {
 		// There have been lots of reports of bugs caused simplify by persisting
 		// experimental preferences. We'll wipe everything until this version is

@@ -22,7 +22,7 @@ from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
 from tracing.util import PointInImage
 from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
-from tracing.viewer import(TreePlot2D, TreePlot3D)
+from tracing.viewer import(Viewer2D, Viewer3D)
 
 def run():
 
@@ -122,8 +122,8 @@ def run():
 
     # Remaining analysis classes can be access using the same scripting
     # pattern. E.g., to plot paths colored by rotation angle:
-    # http://javadoc.scijava.org/Fiji/tracing/plot/TreePlot2D.html
-    plot = TreePlot2D(context)
+    # http://javadoc.scijava.org/Fiji/tracing/plot/Viewer2D.html
+    plot = Viewer2D(context)
     plot.addTree(tree, "y coordinates", "Ice.lut")
     plot.addColorBarLegend()
     plot.setTitle("Scripted Paths Rotation Plot")

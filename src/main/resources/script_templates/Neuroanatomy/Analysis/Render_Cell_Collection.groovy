@@ -54,7 +54,7 @@ colorMapper = new MultiTreeColorMapper(trees)
 colorMapper.map(MultiTreeColorMapper.TOTAL_LENGTH, colorTable)
 
 // Initialize a non-interactive Reconstruction Viewer
-viewer = (trees.size > 100) ? new TreePlot3D() : new TreePlot3D(ij.context())
+viewer = (trees.size > 100) ? new Viewer3D() : new Viewer3D(ij.context())
 
 // Plot all trees
 trees.forEach({

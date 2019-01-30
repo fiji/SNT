@@ -13,7 +13,7 @@ info:       Exemplifies how to render a remote file in a stand-alone
 from tracing import Tree
 from tracing.io import MLJSONLoader
 from tracing.analysis import TreeColorMapper
-from tracing.viewer import TreePlot3D
+from tracing.viewer import Viewer3D
 
 def run():
 
@@ -38,7 +38,7 @@ def run():
 
     # Visualize tree in Reconstruction Viewer
     print("... Done. Preparing Reconstruction Viewer...")
-    viewer = TreePlot3D(context) # Initialize viewer with GUI controls
+    viewer = Viewer3D(context) # Initialize viewer with GUI controls
     viewer.add(tree)
     bounds = mapper.getMinMax()
     viewer.addColorBarLegend(color_table, bounds[0], bounds[1])

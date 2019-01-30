@@ -46,9 +46,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.swing.ImageIcon;
@@ -286,13 +289,15 @@ public class GuiUtils {
 		final Number defaultValue)
 	{
 		try {
-			return Double.parseDouble((String) getObj(promptMsg, promptTitle,
+			final NumberFormat nf = NumberFormat.getInstance(Locale.getDefault());
+			final Number number = nf.parse((String) getObj(promptMsg, promptTitle,
 				defaultValue));
+			return number.doubleValue();
 		}
 		catch (final NullPointerException ignored) {
 			return null; // user pressed cancel
 		}
-		catch (final NumberFormatException ignored) {
+		catch (final ParseException ignored) {
 			return Double.NaN; // invalid user input
 		}
 	}
@@ -594,10 +599,12 @@ public class GuiUtils {
 
 	public static double extractDouble(final JTextField textfield) {
 		try {
-			return Double.parseDouble(textfield.getText());
+			final NumberFormat nf = NumberFormat.getInstance(Locale.getDefault());
+			final Number number = nf.parse(textfield.getText());
+			return number.doubleValue();
 		}
-		catch (final NullPointerException | NumberFormatException ignored) {
-			return Double.NaN;
+		catch (final NullPointerException | ParseException ignored) {
+			return Double.NaN; // invalid user input
 		}
 	}
 

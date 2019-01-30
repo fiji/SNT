@@ -109,7 +109,7 @@
 
 		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
 		<releaseProfiles>deploy-to-imagej</releaseProfiles>
-		<Sholl_Analysis.version>3.7.4</Sholl_Analysis.version>
+		<Sholl_Analysis.version>4.0.0-SNAPSHOT</Sholl_Analysis.version>
 		<imagej.app.directory>${env.HOME}/Fiji-neuroanatomy-upload.app</imagej.app.directory>
 	</properties>
 

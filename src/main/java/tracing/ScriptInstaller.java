@@ -79,7 +79,8 @@ class ScriptInstaller implements MenuKeyListener {
 		if (map != null) {
 			map.forEach((k, v) -> {
 				try {
-					scripts.add(new ScriptInfo(context, v, k));
+					if (!k.toLowerCase().contains("boilerplate"))
+						scripts.add(new ScriptInfo(context, v, k));
 				}
 				catch (final IOException ignored) {
 					// just skip file

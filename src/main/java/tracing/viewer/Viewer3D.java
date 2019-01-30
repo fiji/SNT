@@ -1615,13 +1615,11 @@ public class Viewer3D {
 				(includeAnalysisCmds) ? 4 : 5));
 			buttonPanel.setBorder(null);
 			// do not allow panel to resize vertically
-			buttonPanel.setMaximumSize(new Dimension(buttonPanel
-				.getMaximumSize().width, (int) buttonPanel.getPreferredSize()
-					.getHeight()));
+			setFixedHeightToPanel(buttonPanel);
 			buttonPanel.add(menuButton(GLYPH.MASKS, sceneMenu(), "Scene Controls"));
 			buttonPanel.add(menuButton(GLYPH.TREE, treesMenu(),
-				"Add, Customize or Remove Reconstructions"));
-			buttonPanel.add(menuButton(GLYPH.CUBE, meshMenu(), "Add, Customize or Remove Meshes"));
+				"Manage & Customize Neuronal Arbors"));
+			buttonPanel.add(menuButton(GLYPH.CUBE, meshMenu(), "Manage & Customize 3D Meshes"));
 			if (includeAnalysisCmds) buttonPanel.add(menuButton(GLYPH.CALCULATOR,
 				measureMenu(), "Analyze & Measure"));
 			buttonPanel.add(menuButton(GLYPH.TOOL, toolsMenu(), "Tools & Utilities"));
@@ -2359,7 +2357,7 @@ public class Viewer3D {
 		private JPopupMenu meshMenu() {
 			final JPopupMenu meshMenu = new JPopupMenu();
 			JMenuItem mi = new JMenuItem("Import OBJ File(s)...", IconFactory
-				.getMenuIcon(GLYPH.GLOBE));
+				.getMenuIcon(GLYPH.IMPORT));
 			mi.addActionListener(e -> runCmd(LoadObjCmd.class, null,
 				CmdWorker.DO_NOTHING));
 			meshMenu.add(mi);

@@ -105,6 +105,7 @@ import tracing.gui.IconFactory;
 import tracing.gui.SNTSearchableBar;
 import tracing.gui.SwingSafeResult;
 import tracing.gui.IconFactory.GLYPH;
+import tracing.gui.PathManagerUISearchableBar;
 import tracing.gui.cmds.DistributionCmd;
 import tracing.gui.cmds.PathFitterCmd;
 import tracing.gui.cmds.SWCTypeOptionsCmd;
@@ -363,8 +364,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		});
 
 		// Search Bar TreeSearchable
-		final SearchableBar sBar = new SNTSearchableBar(this);
-		add(sBar, BorderLayout.PAGE_END);
+		add(new PathManagerUISearchableBar(this), BorderLayout.PAGE_END);
 		pack();
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE); // prevent
 																																		// closing
@@ -981,10 +981,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			setRowHeight(getPreferredRowSize());
 
 			searchable = new TreeSearchable(this);
-			searchable.setCaseSensitive(false);
-			searchable.setFromStart(false);
 			searchable.setWildcardEnabled(true);
-			searchable.setRepeats(true);
 		}
 
 		public boolean isExpanded(final Object[] path) {

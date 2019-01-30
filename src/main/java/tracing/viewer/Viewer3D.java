@@ -25,6 +25,7 @@ package tracing.viewer;
 import com.jidesoft.swing.CheckBoxList;
 import com.jidesoft.swing.ListSearchable;
 import com.jidesoft.swing.Searchable;
+import com.jidesoft.swing.SearchableBar;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.FPSCounter;
 import com.jogamp.opengl.GL;
@@ -32,7 +33,9 @@ import com.jogamp.opengl.GLAnimatorControl;
 import com.jogamp.opengl.GLException;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -155,6 +158,7 @@ import tracing.analysis.TreeStatistics;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.IconFactory.GLYPH;
+import tracing.gui.SNTSearchableBar;
 import tracing.gui.cmds.ColorMapReconstructionCmd;
 import tracing.gui.cmds.DistributionCmd;
 import tracing.gui.cmds.LoadObjCmd;
@@ -1559,25 +1563,50 @@ public class Viewer3D {
 
 		private static final long serialVersionUID = 1L;
 		private final GuiUtils guiUtils;
-		private final Searchable searchable;
 		private DefaultGenericTable table;
 		private JCheckBoxMenuItem debugCheckBox;
+		private JPanel barPanel;
+		private SNTSearchableBar searchableBar;
 
 		public ManagerPanel(final GuiUtils guiUtils) {
 			super();
 			this.guiUtils = guiUtils;
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+			searchableBar = new SNTSearchableBar(new ListSearchable(managerList));
+			searchableBar.setStatusLabelPlaceholder(String.format(
+				"%d Item(s) listed", managerModel.size()));
+			searchableBar.setVisibleButtons(SearchableBar.SHOW_CLOSE |
+				SearchableBar.SHOW_NAVIGATION | SearchableBar.SHOW_HIGHLIGHTS |
+				SearchableBar.SHOW_MATCHCASE | SearchableBar.SHOW_STATUS);
+			barPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			setFixedHeightToPanel(barPanel);
+			barPanel.add(searchableBar);
+			barPanel.setVisible(false);
+			searchableBar.setInstaller(new SearchableBar.Installer() {
+
+				@Override
+				public void openSearchBar(final SearchableBar searchableBar) {
+					final Container dialog = getRootPane().getParent();
+					dialog.setSize(searchableBar.getWidth(), dialog.getHeight());
+					barPanel.setVisible(true);
+					searchableBar.focusSearchField();
+				}
+
+				@Override
+				public void closeSearchBar(final SearchableBar searchableBar) {
+					final Container dialog = getRootPane().getParent();
+					barPanel.setVisible(false);
+					dialog.setSize(getPreferredSize().width, dialog.getHeight());
+				}
+			});
 			final JScrollPane scrollPane = new JScrollPane(managerList);
-			searchable = new ListSearchable(managerList);
-			searchable.setCaseSensitive(false);
-			searchable.setFromStart(false);
-			searchable.setSearchLabel("Find");
 			managerList.setComponentPopupMenu(popupMenu());
 			scrollPane.setWheelScrollingEnabled(true);
 			scrollPane.setBorder(null);
 			scrollPane.setViewportView(managerList);
 			add(scrollPane);
 			scrollPane.revalidate();
+			add(barPanel);
 			add(buttonPanel());
 		}
 
@@ -1598,6 +1627,13 @@ public class Viewer3D {
 				measureMenu(), "Analyze & Measure"));
 			buttonPanel.add(menuButton(GLYPH.TOOL, toolsMenu(), "Tools & Utilities"));
 			return buttonPanel;
+		}
+
+		private void setFixedHeightToPanel(final JPanel panel) {
+			// do not allow panel to resize vertically
+			panel.setMaximumSize(new Dimension(panel
+				.getMaximumSize().width, (int) panel.getPreferredSize()
+					.getHeight()));
 		}
 
 		private JButton menuButton(final GLYPH glyph, final JPopupMenu menu,
@@ -1784,9 +1820,9 @@ public class Viewer3D {
 			final JMenuItem find = new JMenuItem("Find...", IconFactory.getMenuIcon(
 				GLYPH.BINOCULARS));
 			find.addActionListener(e -> {
-				managerList.clearSelection();
-				managerList.requestFocusInWindow();
-				searchable.showPopup("");
+					//managerList.clearSelection();
+					searchableBar.getInstaller().openSearchBar(searchableBar);
+					searchableBar.focusSearchField();
 			});
 
 			final JPopupMenu pMenu = new JPopupMenu();

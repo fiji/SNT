@@ -28,8 +28,6 @@ import javax.swing.AbstractButton;
 import javax.swing.Icon;
 import javax.swing.UIManager;
 
-import tracing.gui.IconFactory.GLYPH;
-
 /**
  * A factory for {@link FADerivedIcon}s presets.
  *

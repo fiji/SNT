@@ -23,7 +23,6 @@
 package tracing;
 
 import com.jidesoft.swing.Searchable;
-import com.jidesoft.swing.SearchableBar;
 import com.jidesoft.swing.TreeSearchable;
 
 import java.awt.BorderLayout;
@@ -88,13 +87,13 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import net.imagej.ImageJ;
-import org.scijava.table.DefaultGenericTable;
 
 import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.prefs.PrefService;
+import org.scijava.table.DefaultGenericTable;
 
 import ij.ImagePlus;
 import tracing.analysis.PathProfiler;
@@ -102,10 +101,9 @@ import tracing.analysis.TreeAnalyzer;
 import tracing.gui.ColorMenu;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
-import tracing.gui.SNTSearchableBar;
-import tracing.gui.SwingSafeResult;
 import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.PathManagerUISearchableBar;
+import tracing.gui.SwingSafeResult;
 import tracing.gui.cmds.DistributionCmd;
 import tracing.gui.cmds.PathFitterCmd;
 import tracing.gui.cmds.SWCTypeOptionsCmd;

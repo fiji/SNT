@@ -24,7 +24,6 @@ package tracing.viewer;
 
 import com.jidesoft.swing.CheckBoxList;
 import com.jidesoft.swing.ListSearchable;
-import com.jidesoft.swing.Searchable;
 import com.jidesoft.swing.SearchableBar;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.FPSCounter;

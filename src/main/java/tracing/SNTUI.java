@@ -117,7 +117,7 @@ import tracing.gui.cmds.RemoteSWCImporterCmd;
 import tracing.gui.cmds.ResetPrefsCmd;
 import tracing.gui.cmds.ShowCorrespondencesCmd;
 import tracing.hyperpanes.MultiDThreePanes;
-import tracing.io.FlyCirCuitLoader;
+import tracing.io.FlyCircuitLoader;
 import tracing.io.NeuroMorphoLoader;
 import tracing.plugin.PlotterCmd;
 import tracing.plugin.StrahlerCmd;
@@ -1876,7 +1876,7 @@ public class SNTUI extends JDialog {
 		remoteSubmenu.add(importFlyCircuit);
 		importFlyCircuit.addActionListener(e -> {
 			final HashMap<String, Object> inputs = new HashMap<>();
-			inputs.put("loader", new FlyCirCuitLoader());
+			inputs.put("loader", new FlyCircuitLoader());
 			(new CmdRunner(RemoteSWCImporterCmd.class, inputs, true)).execute();
 		});
 		final JMenuItem importMouselight = new JMenuItem("MouseLight...");

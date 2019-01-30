@@ -18,7 +18,7 @@ info:
 import math
 
 from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
-from tracing.io import MLJSONLoader
+from tracing.io import MouseLightLoader
 from tracing.util import PointInImage
 from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorizer, 
     TreeStatistics)
@@ -27,7 +27,7 @@ from tracing.viewer import(Viewer2D, Viewer3D)
 def run():
 
     # Import some data from the MouseLight database in 'headless' mode
-    loader = MLJSONLoader("AA0100") # one of the largest cells in the database
+    loader = MouseLightLoader("AA0100") # one of the largest cells in the database
     if not loader.isDatabaseAvailable():
         ui.showDialog("Could not connect to ML database", "Error")
         return

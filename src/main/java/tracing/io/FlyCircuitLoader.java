@@ -38,7 +38,7 @@ import tracing.Tree;
  *
  * @author Tiago Ferreira
  */
-public class FlyCirCuitLoader implements RemoteSWCLoader {
+public class FlyCircuitLoader implements RemoteSWCLoader {
 
 	private static final String BASE_URL =
 		"http://www.flycircuit.tw/download/swc/";
@@ -129,7 +129,7 @@ public class FlyCirCuitLoader implements RemoteSWCLoader {
 	 */
 	public static void main(final String... args) {
 		final String cellId = "VGlut-F-400787";
-		final FlyCirCuitLoader loader = new FlyCirCuitLoader();
+		final FlyCircuitLoader loader = new FlyCircuitLoader();
 		final Tree tree = loader.getTree(cellId);
 
 		System.out.println("# Getting neuron " + cellId);

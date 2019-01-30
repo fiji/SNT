@@ -166,7 +166,7 @@ import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.RecViewerPrefsCmd;
 import tracing.gui.cmds.RemoteSWCImporterCmd;
 import tracing.gui.cmds.TranslateReconstructionsCmd;
-import tracing.io.FlyCirCuitLoader;
+import tracing.io.FlyCircuitLoader;
 import tracing.io.NeuroMorphoLoader;
 import tracing.plugin.ShollTracingsCmd;
 import tracing.plugin.StrahlerCmd;
@@ -2274,7 +2274,7 @@ public class Viewer3D {
 			mi = new JMenuItem("FlyCircuit...", 'f');
 			mi.addActionListener(e -> {
 				final Map<String, Object> inputs = new HashMap<>();
-				inputs.put("loader", new FlyCirCuitLoader());
+				inputs.put("loader", new FlyCircuitLoader());
 				runCmd(RemoteSWCImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			remoteMenu.add(mi);

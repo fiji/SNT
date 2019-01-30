@@ -73,7 +73,7 @@ import ij.measure.Calibration;
 import ij3d.Content;
 import ij3d.UniverseListener;
 import tracing.gui.GuiUtils;
-import tracing.io.MLJSONLoader;
+import tracing.io.MouseLightLoader;
 import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
 import tracing.util.SNTPoint;
@@ -2133,7 +2133,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	{
 		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
 		for (final String id : ids) {
-			final MLJSONLoader loader = new MLJSONLoader(id);
+			final MouseLightLoader loader = new MouseLightLoader(id);
 			map.put(id, (loader.idExists()) ? loader.getNodes(compartment) : null);
 		}
 		final Map<String, Tree> result = importMap(map, color);

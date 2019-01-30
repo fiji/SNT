@@ -57,7 +57,7 @@ import tracing.util.SWCPoint;
  *
  * @author Tiago Ferreira
  */
-public class MLJSONLoader {
+public class MouseLightLoader {
 
 	/** The Constant AXON. */
 	public static final String AXON = "axon";
@@ -115,7 +115,7 @@ public class MLJSONLoader {
 	 * @param id the neuron id (e.g., "AA0001") or DOI (e.g.,
 	 *          "10.25378/janelia.5527672") of the neuron to be loaded
 	 */
-	public MLJSONLoader(final String id) {
+	public MouseLightLoader(final String id) {
 		this.publicID = id;
 	}
 
@@ -324,7 +324,7 @@ public class MLJSONLoader {
 	 *           not possible
 	 */
 	public TreeSet<SWCPoint> getAxonNodes() throws IllegalArgumentException {
-		return getNodesInternal(MLJSONLoader.AXON);
+		return getNodesInternal(MouseLightLoader.AXON);
 	}
 
 	/**
@@ -335,7 +335,7 @@ public class MLJSONLoader {
 	 *           not possible
 	 */
 	public TreeSet<SWCPoint> getDendriteNodes() throws IllegalArgumentException {
-		return getNodesInternal(MLJSONLoader.DENDRITE);
+		return getNodesInternal(MouseLightLoader.DENDRITE);
 	}
 
 	/**
@@ -459,7 +459,7 @@ public class MLJSONLoader {
 	public static void main(final String... args) {
 		System.out.println("# Retrieving neuron");
 		final String id = "10.25378/janelia.5527672"; // 10.25378/janelia.5527672";
-		final MLJSONLoader loader = new MLJSONLoader(id);
+		final MouseLightLoader loader = new MouseLightLoader(id);
 		try (PrintWriter out = new PrintWriter("/home/tferr/Desktop/" + id
 			.replaceAll("/", "-") + ".swc"))
 		{

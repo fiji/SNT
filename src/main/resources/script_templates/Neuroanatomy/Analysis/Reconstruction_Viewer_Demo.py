@@ -11,7 +11,7 @@ info:       Exemplifies how to render a remote file in a stand-alone
             Reconstruction Viewer
 '''
 from tracing import Tree
-from tracing.io import MLJSONLoader
+from tracing.io import MouseLightLoader
 from tracing.analysis import TreeColorMapper
 from tracing.viewer import Viewer3D
 
@@ -19,7 +19,7 @@ def run():
 
     # Import some data from the MouseLight database
     print("    Retriving ML neuron...")
-    loader = MLJSONLoader("AA0100") # one of the largest cells in the database
+    loader = MouseLightLoader("AA0100") # one of the largest cells in the database
     if not loader.isDatabaseAvailable():
         ui.showDialog("Could not connect to ML database", "Error")
         return

@@ -43,13 +43,13 @@ import org.scijava.widget.Button;
 import tracing.PathAndFillManager;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
-import tracing.io.MLJSONLoader;
+import tracing.io.MouseLightLoader;
 import tracing.viewer.Viewer3D;
 
 /**
  * Command for importing MouseLight reconstructions
  *
- * @see MLJSONLoader
+ * @see MouseLightLoader
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false,
@@ -121,7 +121,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			error("Invalid query. No reconstructions retrieved.");
 			return;
 		}
-		if (!MLJSONLoader.isDatabaseAvailable()) {
+		if (!MouseLightLoader.isDatabaseAvailable()) {
 			error(getPingMsg(false));
 			return;
 		}
@@ -221,20 +221,20 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	}
 
 	/**
-	 * Extracts a valid {@link MLJSONLoader} compartment flag from input choice
+	 * Extracts a valid {@link MouseLightLoader} compartment flag from input choice
 	 *
 	 * @param choice the input choice
-	 * @return a valid {@link MLJSONLoader} flag
+	 * @return a valid {@link MouseLightLoader} flag
 	 */
 	private String getCompartment(final String choice) {
 		if (choice == null) return null;
 		switch (choice) {
 			case CHOICE_AXONS:
-				return MLJSONLoader.AXON;
+				return MouseLightLoader.AXON;
 			case CHOICE_DENDRITES:
-				return MLJSONLoader.DENDRITE;
+				return MouseLightLoader.DENDRITE;
 			case CHOICE_SOMA:
-				return MLJSONLoader.SOMA;
+				return MouseLightLoader.SOMA;
 			default:
 				return "all";
 		}
@@ -273,7 +273,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 
 	@SuppressWarnings("unused")
 	private void pingServer() {
-		pingMsg = getPingMsg(MLJSONLoader.isDatabaseAvailable());
+		pingMsg = getPingMsg(MouseLightLoader.isDatabaseAvailable());
 	}
 
 	private String getPingMsg(final boolean pingResponse) {

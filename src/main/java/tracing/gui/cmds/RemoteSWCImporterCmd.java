@@ -43,7 +43,7 @@ import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
-import tracing.io.FlyCirCuitLoader;
+import tracing.io.FlyCircuitLoader;
 import tracing.io.NeuroMorphoLoader;
 import tracing.io.RemoteSWCLoader;
 import tracing.viewer.Viewer3D;
@@ -52,7 +52,7 @@ import tracing.viewer.Viewer3D;
  * Command for importing SWC reconstructions from remote databases
  *
  * @see NeuroMorphoLoader
- * @see FlyCirCuitLoader
+ * @see FlyCircuitLoader
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, initializer = "init")
@@ -157,7 +157,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			}
 		}
 
-//		if (loadMesh && loader instanceof FlyCirCuitLoader) {
+//		if (loadMesh && loader instanceof FlyCircuitLoader) {
 //			recViewer.loadDrosoRefBrain("FCWB");
 //		}
 		if (standAloneViewer) {
@@ -225,7 +225,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			database = "NeuroMorpho.org";
 //			resolveInput("loadMesh");
 		}
-		else if (loader instanceof FlyCirCuitLoader) {
+		else if (loader instanceof FlyCircuitLoader) {
 			placeholderQuery = "VGlut-F-400787";
 			database = "FlyCircuit.tw";
 		}

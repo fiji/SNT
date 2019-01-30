@@ -22,7 +22,7 @@ info:       Exemplifies how to programatically interact with a running instance
 import math
 
 from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
-from tracing.io import MLJSONLoader
+from tracing.io import MouseLightLoader
 from tracing.util import PointInImage
 from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
@@ -41,7 +41,7 @@ def run():
         return
 
     # Let's import some data from the MouseLight database
-    loader = MLJSONLoader("AA0001")
+    loader = MouseLightLoader("AA0001")
     if not loader.isDatabaseAvailable():
         ui.showDialog("Could not connect to ML database", "Error")
         return
@@ -56,7 +56,7 @@ def run():
     # All the 'raw data' in the MouseLight database is stored as JSONObjects.
     # If needed, these could be access as follows:
     # http://stleary.github.io/JSON-java/index.html
-    axon = loader.getCompartment("axon")  # MLJSONLoader.AXON
+    axon = loader.getCompartment("axon")  # MouseLightLoader.AXON
 
     # But we can import reconstructions directly using PathAndFillManager,
     # SNT's work horse for management of Paths and ints importMLNeurons

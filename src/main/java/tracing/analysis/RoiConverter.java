@@ -24,6 +24,7 @@ package tracing.analysis;
 
 import java.awt.Color;
 import java.util.HashSet;
+import java.util.Set;
 
 import ij.ImagePlus;
 import ij.gui.Overlay;
@@ -226,7 +227,7 @@ public class RoiConverter extends TreeAnalyzer {
 	}
 
 	/* this will aggregate all points into a single multipoint ROI */
-	private void convertPoints(final HashSet<PointInImage> points,
+	private void convertPoints(final Set<PointInImage> points,
 		final Overlay overlay, final Color color, final String id)
 	{
 		if (points.isEmpty()) return;

@@ -600,6 +600,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	private static final String[] normalizationParameters = { null,
 		"not-normalized", "normalized" };
 
+	@Deprecated
 	public static class ShollResults {
 
 		private final double[] squaredRangeStarts;
@@ -1060,6 +1061,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 	}
 
+	@Deprecated
 	public static class ShollPoint implements Comparable<ShollPoint> {
 
 		private final boolean nearer;

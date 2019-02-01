@@ -50,9 +50,9 @@ import tracing.SNT;
 import util.Limits;
 
 /**
- * This class implements SNT's v3 'Sigma wizard'. It relies heavily on java.awt
- * because it extends IJ1's StackWindow. It was ported from
- * {@link features.SigmaPalette} now deprecated.
+ * Implements SNT 'Sigma wizard'. It relies heavily on java.awt because it
+ * extends IJ1's StackWindow. It was ported from {@link features.SigmaPalette}
+ * now deprecated.
  */
 public class SigmaPalette extends Thread {
 

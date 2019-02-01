@@ -102,6 +102,7 @@ import org.scijava.util.PlatformUtils;
 
 import tracing.SNT;
 
+/** Misc. utilities for SNT GUI. */
 public class GuiUtils {
 
 	final private Component parent;
@@ -395,8 +396,8 @@ public class GuiUtils {
 		for (int i = 0; i < options.length; i++) {
 			panel.add(checkboxes[i] = new JCheckBox(options[i], defaults[i]));
 		}
-		final int result = JOptionPane.showConfirmDialog(parent, new Object[] {msg, panel}, title,
-			JOptionPane.OK_CANCEL_OPTION);
+		final int result = JOptionPane.showConfirmDialog(parent, new Object[] { msg,
+			panel }, title, JOptionPane.OK_CANCEL_OPTION);
 		if (result == JOptionPane.CANCEL_OPTION) return null;
 		final boolean[] answers = new boolean[options.length];
 		for (int i = 0; i < options.length; i++) {

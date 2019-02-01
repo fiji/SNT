@@ -30,7 +30,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 /**
- * This class generates a JButton holding a color chooser. It is based on
+ * Creates a JButton holding a color chooser. It is based on
  * https://stackoverflow.com/a/30433662 released under cc-by-sa
  */
 public class ColorChooserButton extends JButton {
@@ -47,7 +47,7 @@ public class ColorChooserButton extends JButton {
 		this(c, label, 1d);
 	}
 
-	public ColorChooserButton(final Color c, final String label,
+	private ColorChooserButton(final Color c, final String label,
 		final double scaleFactor)
 	{
 		this(c, label, scaleFactor, SwingConstants.LEFT);
@@ -87,7 +87,7 @@ public class ColorChooserButton extends JButton {
 		return current;
 	}
 
-	public void setSelectedColor(final Color newColor) {
+	private void setSelectedColor(final Color newColor) {
 		setSelectedColor(newColor, true);
 	}
 
@@ -102,11 +102,6 @@ public class ColorChooserButton extends JButton {
 
 	public void addColorChangedListener(final ColorChangedListener listener) {
 		this.listener = listener;
-	}
-
-	public interface ColorChangedListener2 {
-
-		public void colorChanged(Color newColor);
 	}
 
 	public static void main(final String[] args) {

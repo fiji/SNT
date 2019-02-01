@@ -136,6 +136,15 @@ public class IconFactory {
 
 	}
 
+	/**
+	 * Creates a new icon from a Font Awesome glyph. The icon's size is set from
+	 * the System's default font.
+	 *
+	 * @param entry the glyph defining the icon's unicode ID
+	 * @param size the icon's size
+	 * @param color the icon's color
+	 * @return the icon
+	 */
 	public static Icon getIcon(final GLYPH entry, final float size,
 		final Color color)
 	{

@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.scijava.table.DefaultGenericTable;
@@ -441,7 +442,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 *
 	 * @return the set of primary paths
 	 */
-	public HashSet<Path> getPrimaryPaths() {
+	public Set<Path> getPrimaryPaths() {
 		primaries = new HashSet<>();
 		for (final Path p : tree.list()) {
 			if (p.isPrimary()) primaries.add(p);
@@ -455,7 +456,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @return the set containing Paths associated with terminal points
 	 * @see #restrictToOrder(int...)
 	 */
-	public HashSet<Path> getTerminalPaths() {
+	public Set<Path> getTerminalPaths() {
 		if (tips == null) getTips();
 		terminals = new HashSet<>();
 		for (final PointInImage tip : tips) {
@@ -476,7 +477,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 *
 	 * @return the set of tip points
 	 */
-	public HashSet<PointInImage> getTips() {
+	public Set<PointInImage> getTips() {
 
 		// retrieve all start/end points
 		tips = new HashSet<>();
@@ -499,7 +500,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 *
 	 * @return the branch points positions
 	 */
-	public HashSet<PointInImage> getBranchPoints() {
+	public Set<PointInImage> getBranchPoints() {
 		joints = new HashSet<>();
 		for (final Path p : tree.list()) {
 			joints.addAll(p.findJoinedPoints());

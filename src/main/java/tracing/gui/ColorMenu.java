@@ -53,9 +53,8 @@ import tracing.Path;
 import tracing.util.SWCColor;
 
 /**
- * This class generates a simplified color widget holding both predetermined
- * colors, user-defined ones and defaults for SWC types. It is based on Gerald
- * Bauer's code released under GPL2
+ * Generates a simplified color widget holding both predetermined colors and
+ * user-defined ones. It is based on Gerald Bauer's code released under GPL2
  * (http://www.java2s.com/Code/Java/Swing-JFC/ColorMenu.htm)
  */
 public class ColorMenu extends JMenu {
@@ -195,7 +194,8 @@ public class ColorMenu extends JMenu {
 		}
 	}
 
-	public Color getCurrentColorForSWCType(final int swcType) {
+	@SuppressWarnings("unused")
+	private Color getCurrentColorForSWCType(final int swcType) {
 		for (final Map.Entry<SWCColor, ColorPane> entry : _colorPanes.entrySet()) {
 			if (entry.getKey().type() == swcType) return entry.getKey().color();
 		}

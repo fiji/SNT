@@ -42,6 +42,9 @@ import javax.swing.JTextField;
 
 import ij.Prefs; //TODO: Use SNT.Prefs
 
+/**
+ * Implements a dialog for importing SWC files into SNT with advanced options.
+ */
 @SuppressWarnings("serial")
 public class SWCImportOptionsDialog extends JDialog implements ActionListener,
 	ItemListener

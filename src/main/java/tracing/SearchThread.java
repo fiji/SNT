@@ -238,8 +238,10 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	}
 
 	/**
-	 * Override this method if you want to find out when a point was first
-	 * discovered:
+	 * This method can be overridden if one needs to find out when a point was
+	 * first discovered.
+	 *
+	 * @param n the search node
 	 */
 	protected void addingNode(final SearchNode n) {}
 

@@ -1097,8 +1097,7 @@ public class Viewer3D {
 	 * Loads the surface meshes for the Allen Mouse Brain Atlas (CCF). It will
 	 * simply make the mesh visible if has already been loaded.
 	 *
-	 * @throws IllegalArgumentException if Viewer is not available, i.e.,
-	 *           {@link #getView()} is null
+	 * @throws IllegalArgumentException if Viewer is not available
 	 */
 	public void loadMouseRefBrain() throws IllegalArgumentException {
 		loadRefBrain(ALLEN_MESH_LABEL);
@@ -1115,7 +1114,7 @@ public class Viewer3D {
 	 *          Either "JFRC2" (AKA JFRC2010), "JFRC3" (AKA JFRC2013), or "FCWB"
 	 *          (FlyCircuit Whole Brain Template)
 	 * @throws IllegalArgumentException if templateBrain is not recognized, or
-	 *           Viewer is not available, i.e., {@link #getView()} is null
+	 *           Viewer is not available
 	 */
 	public void loadDrosoRefBrain(final String templateBrain)
 		throws IllegalArgumentException

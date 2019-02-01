@@ -22,7 +22,6 @@
 
 package tracing.gui;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontFormatException;
@@ -57,43 +56,12 @@ public class FADerivedIcon implements Icon {
 		"META-INF/resources/webjars/font-awesome/5.5.0/webfonts/fa-regular-400.ttf";
 	private static final String AWESOME_SOLID =
 		"META-INF/resources/webjars/font-awesome/5.5.0/webfonts/fa-solid-900.ttf";
-	private static final int DEF_SIZE = UIManager.getFont("Label.font").getSize();
 	private final Font font;
 	private final float size;
 	private final Paint color;
 	private final char iconID;
 	private BufferedImage buffer;
 
-	/**
-	 * Creates a new icon from a Font Awesome glyph. The icon's size is set from
-	 * the System's default font.
-	 *
-	 * @param iconID the icon's unicode ID, as per
-	 *          https://fontawesome.com/cheatsheet
-	 * @param color the icon's color
-	 * @param solid whether the 'solid' or 'regular' icons should be used
-	 */
-	public FADerivedIcon(final char iconID, final Color color,
-		final boolean solid)
-	{
-		this(iconID, DEF_SIZE, color, solid);
-	}
-
-	/**
-	 * Creates a new menu icon from a Font Awesome glyph resized from the System's
-	 * default font.
-	 *
-	 * @param iconID the icon's unicode ID, as per
-	 *          https://fontawesome.com/cheatsheet
-	 * @param solid whether the 'solid' or 'regular' icons should be used
-	 * @return the menu icon
-	 */
-	public static FADerivedIcon getMenuIcon(final char iconID,
-		final boolean solid)
-	{
-		return new FADerivedIcon(iconID, UIManager.getFont("MenuItem.font")
-			.getSize() * 0.8f, UIManager.getColor("MenuItem.foreground"), solid);
-	}
 
 	protected FADerivedIcon(final char iconID, final float size,
 		final Paint color, final boolean solid)

@@ -28,9 +28,11 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 
 import org.scijava.Context;
@@ -176,7 +178,10 @@ public class SNT {
 			pattern += "0";
 		final double absValue = Math.abs(value);
 		if (absValue < 0.01 || absValue >= 1000) pattern += "E0";
-		return new DecimalFormat(pattern).format(value);
+		final NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
+		final DecimalFormat df = (DecimalFormat)nf;
+		df.applyPattern(pattern);
+		return df.format(value);
 	}
 
 	/**

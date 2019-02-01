@@ -289,7 +289,7 @@ public class GuiUtils {
 		final Number defaultValue)
 	{
 		try {
-			final NumberFormat nf = NumberFormat.getInstance(Locale.getDefault());
+			final NumberFormat nf = NumberFormat.getInstance(Locale.US);
 			final Number number = nf.parse((String) getObj(promptMsg, promptTitle,
 				defaultValue));
 			return number.doubleValue();
@@ -599,7 +599,7 @@ public class GuiUtils {
 
 	public static double extractDouble(final JTextField textfield) {
 		try {
-			final NumberFormat nf = NumberFormat.getInstance(Locale.getDefault());
+			final NumberFormat nf = NumberFormat.getInstance(Locale.US);
 			final Number number = nf.parse(textfield.getText());
 			return number.doubleValue();
 		}

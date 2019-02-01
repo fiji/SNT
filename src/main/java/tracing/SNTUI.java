@@ -388,13 +388,13 @@ public class SNTUI extends JDialog {
 			tab3.add(largeMsg(msg3), c3);
 
 			if (plugin.analysisMode) {
-				tabbedPane.setIconAt(0, IconFactory.getMenuIcon(GLYPH.TOOL));
-				tabbedPane.setIconAt(1, IconFactory.getMenuIcon(GLYPH.CUBE));
+				tabbedPane.setIconAt(0, IconFactory.getTabbedPaneIcon(GLYPH.TOOL));
+				tabbedPane.setIconAt(1, IconFactory.getTabbedPaneIcon(GLYPH.CUBE));
 			}
 			else {
-				tabbedPane.setIconAt(0, IconFactory.getMenuIcon(GLYPH.HOME));
-				tabbedPane.setIconAt(1, IconFactory.getMenuIcon(GLYPH.TOOL));
-				tabbedPane.setIconAt(2, IconFactory.getMenuIcon(GLYPH.CUBE));
+				tabbedPane.setIconAt(0, IconFactory.getTabbedPaneIcon(GLYPH.HOME));
+				tabbedPane.setIconAt(1, IconFactory.getTabbedPaneIcon(GLYPH.TOOL));
+				tabbedPane.setIconAt(2, IconFactory.getTabbedPaneIcon(GLYPH.CUBE));
 			}
 		}
 

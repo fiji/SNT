@@ -167,14 +167,14 @@ public class IconFactory {
 			.getSize() * 1.4f, UIManager.getColor("Button.foreground"), entry.solid);
 	}
 
-	public static Icon getMenuBarIcon(final GLYPH entry) {
-		return new FADerivedIcon(entry.id, UIManager.getFont("MenuBar.font")
-			.getSize() * 0.8f, UIManager.getColor("MenuBar.foreground"), entry.solid);
+	public static Icon getTabbedPaneIcon(final GLYPH entry) {
+		return new FADerivedIcon(entry.id, UIManager.getFont("TabbedPane.font")
+			.getSize(), UIManager.getColor("TabbedPane.foreground"), entry.solid);
 	}
 
 	public static Icon getMenuIcon(final GLYPH entry) {
 		return new FADerivedIcon(entry.id, UIManager.getFont("MenuItem.font")
-			.getSize() * 0.8f, UIManager.getColor("MenuItem.foreground"),
+			.getSize() * 0.9f, UIManager.getColor("MenuItem.foreground"),
 			entry.solid);
 	}
 

@@ -233,6 +233,7 @@ public class SNTUI extends JDialog {
 	protected boolean confirmTemporarySegments = true;
 	protected boolean finishOnDoubleConfimation = true;
 	protected boolean discardOnDoubleCancellation = true;
+	protected boolean askUserConfirmation = true;
 
 	/**
 	 * Instantiates SNT's main UI and associated {@link PathManagerUI} and
@@ -907,7 +908,7 @@ public class SNTUI extends JDialog {
 			final int newC = (int) channelSpinner.getValue();
 			final int newT = (int) frameSpinner.getValue();
 			final boolean reload = newC == plugin.channel && newT == plugin.frame;
-			if (!reload && !guiUtils.getConfirmation(
+			if (!reload && askUserConfirmation && !guiUtils.getConfirmation(
 				"You are currently tracing position C=" + plugin.channel + ", T=" +
 					plugin.frame + ". Start tracing C=" + newC + ", T=" + newT + "?",
 				"Change Hyperstack Position?"))
@@ -915,6 +916,8 @@ public class SNTUI extends JDialog {
 				return;
 			}
 			plugin.reloadImage(newC, newT);
+			if (!reload) plugin.getImagePlus().setPosition(newC, plugin.getImagePlus()
+				.getZ(), newT);
 			preprocess.setSelected(false);
 			plugin.showMIPOverlays(0);
 			showStatus(reload ? "Image reloaded into memory..." : null, true);
@@ -1170,6 +1173,8 @@ public class SNTUI extends JDialog {
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
 		final JCheckBox winLocCheckBox = new JCheckBox("Remember window locations",
 			plugin.prefs.isSaveWinLocations());
+		winLocCheckBox.setToolTipText(
+			"Whether GUI positioning should be preserved across restarts");
 		winLocCheckBox.addItemListener(e -> plugin.prefs.setSaveWinLocations(e
 			.getStateChange() == ItemEvent.SELECTED));
 		miscPanel.add(winLocCheckBox, gdb);
@@ -1179,6 +1184,14 @@ public class SNTUI extends JDialog {
 		compressedXMLCheckBox.addItemListener(e -> plugin.useCompressedXML = (e
 			.getStateChange() == ItemEvent.SELECTED));
 		miscPanel.add(compressedXMLCheckBox, gdb);
+		++gdb.gridy;
+		final JCheckBox askUserConfirmationCheckBox = new JCheckBox(
+			"Skip confirmation dialogs", !askUserConfirmation);
+		askUserConfirmationCheckBox.setToolTipText(
+			"Whether \"Are you sure?\" prompts should precede major operations");
+		askUserConfirmationCheckBox.addItemListener(e -> askUserConfirmation = e
+			.getStateChange() == ItemEvent.DESELECTED);
+		miscPanel.add(askUserConfirmationCheckBox, gdb);
 		++gdb.gridy;
 		debugCheckBox = new JCheckBox("Debug mode", SNT.isDebugMode());
 		debugCheckBox.addItemListener(e -> SNT.setDebugMode(e

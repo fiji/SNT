@@ -305,8 +305,8 @@ public class SNTLoaderCmd extends DynamicCommand {
 	private boolean validateImageDimensions() {
 		final int[] dims = sourceImp.getDimensions();
 		if (dims[4] > 1 && dims[3] == 1 && new GuiUtils().getConfirmation(
-			"It appears that image has " + dims[4] + " timepoints but only 1 slice",
-			"Swap Z,T Dimensions?"))
+			"It appears that image has " + dims[4] + " timepoints but only 1 Z-slice. " +
+				"Swap Z,T Dimensions?", "Swap Z,T Dimensions?"))
 		{
 			sourceImp.setDimensions(dims[2], dims[4], dims[3]);
 		}

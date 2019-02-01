@@ -31,6 +31,7 @@ import java.awt.Dialog.ModalityType;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Toolkit;
@@ -384,7 +385,24 @@ public class GuiUtils {
 		final JDialog dialog = optionPane.createDialog(title);
 		if (parent != null) dialog.setLocationRelativeTo(parent);
 		return dialog;
+	}
 
+	public boolean[] getOptions(final String msg, final String[] options,
+		final boolean[] defaults, String title)
+	{
+		final JPanel panel = new JPanel(new GridLayout(options.length, 1));
+		final JCheckBox[] checkboxes = new JCheckBox[options.length];
+		for (int i = 0; i < options.length; i++) {
+			panel.add(checkboxes[i] = new JCheckBox(options[i], defaults[i]));
+		}
+		final int result = JOptionPane.showConfirmDialog(parent, new Object[] {msg, panel}, title,
+			JOptionPane.OK_CANCEL_OPTION);
+		if (result == JOptionPane.CANCEL_OPTION) return null;
+		final boolean[] answers = new boolean[options.length];
+		for (int i = 0; i < options.length; i++) {
+			answers[i] = checkboxes[i].isSelected();
+		}
+		return answers;
 	}
 
 	private int centeredDialog(final String msg, final String title,

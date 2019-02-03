@@ -138,6 +138,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	private final JPopupMenu popup;
 	private final JMenu swcTypeMenu;
 	private final JMenu morphoTagsMenu;
+	private final JMenu imageTagsMenu;
 	private ButtonGroup swcTypeButtonGroup;
 	private final ColorMenu colorMenu;
 	private final JMenuItem fitVolumeMenuItem;
@@ -220,7 +221,23 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		colorMenu.addActionListener(multiPathListener);
 		tagsMenu.add(colorMenu);
 
+		imageTagsMenu = new JMenu("Image Metadata");
+		imageTagsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.IMAGE));
+		final JCheckBoxMenuItem tagChannelCbmi = new JCheckBoxMenuItem(
+			MultiPathActionListener.CHANNEL_TAG_CMD, false);
+		tagChannelCbmi.addItemListener(multiPathListener);
+		imageTagsMenu.add(tagChannelCbmi);
+		final JCheckBoxMenuItem tagFrameCbmi = new JCheckBoxMenuItem(
+			MultiPathActionListener.FRAME_TAG_CMD, false);
+		tagFrameCbmi.addItemListener(multiPathListener);
+		imageTagsMenu.add(tagFrameCbmi);
+		jmi = new JMenuItem(MultiPathActionListener.SLICE_LABEL_TAG_CMD);
+		jmi.addActionListener(multiPathListener);
+		imageTagsMenu.add(jmi);
+		tagsMenu.add(imageTagsMenu);
+
 		morphoTagsMenu = new JMenu("Morphology");
+		morphoTagsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.RULER));
 		final JCheckBoxMenuItem tagOrderCbmi = new JCheckBoxMenuItem(
 			MultiPathActionListener.ORDER_TAG_CMD, false);
 		tagOrderCbmi.addItemListener(multiPathListener);
@@ -234,11 +251,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		tagRadiusCbmi.addItemListener(multiPathListener);
 		morphoTagsMenu.add(tagRadiusCbmi);
 		tagsMenu.add(morphoTagsMenu);
+		tagsMenu.addSeparator();
 
-		jmi = new JMenuItem(MultiPathActionListener.METADATA_TAG_CMD);
-		jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.IMAGE));
-		jmi.addActionListener(multiPathListener);
-		tagsMenu.add(jmi);
 		jmi = new JMenuItem(MultiPathActionListener.CUSTOM_TAG_CMD);
 		jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.PEN));
 		jmi.addActionListener(multiPathListener);
@@ -1638,7 +1652,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		private final static String LENGTH_TAG_CMD = "Length";
 		private final static String MEAN_RADIUS_TAG_CMD = "Mean Radius";
 		private final static String ORDER_TAG_CMD = "Branch Order";
-		private final static String METADATA_TAG_CMD = "Image Data...";
+		private final static String CHANNEL_TAG_CMD = "Traced Channel";
+		private final static String FRAME_TAG_CMD = "Traced Frame";
+		private final static String SLICE_LABEL_TAG_CMD = "Slice Labels";
 
 		private final static String REMOVE_ALL_TAGS_CMD = "Remove All Tags...";
 		private static final String FILL_OUT_CMD = "Fill Out...";
@@ -1657,8 +1673,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		private final static String TAG_RADIUS_PATTERN =
 			" ?\\[MR:\\d+\\.?\\d+\\s?.+\\w+\\]";
 		private final static String TAG_ORDER_PATTERN = " ?\\[Order \\d+\\]";
-		private final static String TAG_CHANNEL_PATTERN = " ?\\[C \\d+\\]";
-		private final static String TAG_FRAME_PATTERN = " ?\\[T \\d+\\]";
+		private final static String TAG_CHANNEL_PATTERN = " ?\\[C:\\d+\\]";
+		private final static String TAG_FRAME_PATTERN = " ?\\[T:\\d+\\]";
 		private final static String TAG_CUSTOM_PATTERN = " ?\\{.*\\}"; // anything
 																																		// flanked
 																																		// by curly
@@ -1779,38 +1795,32 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				return;
 
 			}
-			if (METADATA_TAG_CMD.equals(cmd)) {
+			if (SLICE_LABEL_TAG_CMD.equals(cmd)) {
 
-				final String[] options = { "Active channel", "Active frame",
-					"Frame label" };
-				final boolean[] defaults = { false, false, true };
-				final boolean[] result = guiUtils.getOptions(
-					"Generate tags from the following properties:", options, defaults,
-					"Image-based Tags");
-				if (result == null) return; // user pressed cancel
-
-				if (result[0]) {
-					for (final Path p : selectedPaths)
-						p.setName(p.getName() + "[C " + plugin.channel + "]");
-				}
-				if (result[1]) {
-					for (final Path p : selectedPaths)
-						p.setName(p.getName() + "[T " + plugin.frame + "]");
-				}
-				if (result[2]) {
-					String label = plugin.getImagePlus().getStack().getShortSliceLabel(
-						plugin.getImagePlus().getCurrentSlice());
-					if (label == null || label.isEmpty()) {
-						guiUtils.error("Current frame contains no label.");
-						return;
-					}
-					label = label.replace("[", "(");
-					label = label.replace("]", ")");
-					for (final Path p : selectedPaths) {
+				int errorCounter = 0;
+				for (final Path p : selectedPaths) {
+					try {
+						String label = plugin.getImagePlus().getStack().getShortSliceLabel(
+							plugin.getImagePlus().getStackIndex(p.getChannel(), 1, p
+								.getFrame()));
+						if (label == null || label.isEmpty()) {
+							errorCounter++;
+							continue;
+						}
+						label = label.replace("[", "(");
+						label = label.replace("]", ")");
 						p.setName(p.getName() + "{" + label + "}");
+					}
+					catch (IllegalArgumentException | IndexOutOfBoundsException ignored) {
+						errorCounter++;
+						continue;
 					}
 				}
 				refreshManager(false, false);
+				if (errorCounter > 0) {
+					guiUtils.error("It was not possible to retrieve labels from " +
+						errorCounter + "/" + n + " paths.");
+				}
 				return;
 			}
 
@@ -1891,10 +1901,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				removeTags(selectedPaths, TAG_LENGTH_PATTERN);
 				removeTags(selectedPaths, TAG_RADIUS_PATTERN);
 				resetPathsColor(selectedPaths); // will call refreshManager
-				for (int i = 0; i < morphoTagsMenu.getItemCount(); i++) {
-					final JMenuItem c = morphoTagsMenu.getItem(i);
-					if (c != null) c.setSelected(false);
-				}
+				resetMenu(morphoTagsMenu);
+				resetMenu(imageTagsMenu);
 				return;
 			}
 			else if (MERGE_CMD.equals(cmd)) {
@@ -2070,6 +2078,13 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			}
 		}
 
+		private void resetMenu(final JMenu menu) {
+			for (int i = 0; i < menu.getItemCount(); i++) {
+				final JMenuItem c = menu.getItem(i);
+				if (c != null) c.setSelected(false);
+			}
+		}
+
 		private boolean allPathNamesContain(final Collection<Path> selectedPaths,
 			final String string)
 		{
@@ -2142,20 +2157,39 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			else if (ORDER_TAG_CMD.equals(cmd)) {
 				if (jcbmi.isSelected()) {
 					for (final Path p : selectedPaths) {
-						final String orderTag = " [Order " + p.getOrder() + "]";
-						p.setName(p.getName() + orderTag);
+						p.setName(p.getName() + " [Order " + p.getOrder() + "]");
 					}
 				}
 				else {
 					removeTags(selectedPaths, TAG_ORDER_PATTERN);
 				}
 			}
-
+			else if (CHANNEL_TAG_CMD.equals(cmd)) {
+				if (jcbmi.isSelected()) {
+					for (final Path p : selectedPaths) {
+						p.setName(p.getName() + " [C:" + p.getChannel() + "]");
+					}
+				}
+				else {
+					removeTags(selectedPaths, TAG_CHANNEL_PATTERN);
+				}
+			}
+			else if (FRAME_TAG_CMD.equals(cmd)) {
+				if (jcbmi.isSelected()) {
+					for (final Path p : selectedPaths) {
+						p.setName(p.getName() + " [T:" + p.getFrame() + "]");
+					}
+				}
+				else {
+					removeTags(selectedPaths, TAG_FRAME_PATTERN);
+				}
+			}
 			// update GUI
 			jcbmi.setSelected(jcbmi.isSelected());
 			refreshManager(false, false);
 			return;
 		}
+
 	}
 
 	private boolean analysisModeError() {

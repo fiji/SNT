@@ -36,6 +36,7 @@ import tracing.hyperpanes.PaneOwner;
 public class TracerCanvas extends MultiDThreePanesCanvas {
 
 	protected PathAndFillManager pathAndFillManager;
+
 	protected boolean just_near_slices = false;
 	protected int eitherSide;
 	private final ArrayList<SearchInterface> searchThreads = new ArrayList<>();
@@ -85,9 +86,6 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 		}
 
 		final SimpleNeuriteTracer plugin = pathAndFillManager.getPlugin();
-
-		final boolean showOnlySelectedPaths = plugin.isOnlySelectedPathsVisible();
-
 		final Color selectedColor = plugin.selectedColor;
 		final Color deselectedColor = plugin.deselectedColor;
 
@@ -110,7 +108,12 @@ public class TracerCanvas extends MultiDThreePanesCanvas {
 				}
 
 				final boolean isSelected = pathAndFillManager.isSelected(drawPath);
-				if (!isSelected && showOnlySelectedPaths) continue;
+				if (!isSelected && plugin.isOnlySelectedPathsVisible()) continue;
+				if (plugin.showOnlyActiveCTposPaths && (imp.getC() != drawPath
+					.getChannel() || imp.getT() != drawPath.getFrame()))
+				{
+					continue;
+				}
 
 				final boolean customColor = (drawPath.hasCustomColor &&
 					plugin.displayCustomPathColors);

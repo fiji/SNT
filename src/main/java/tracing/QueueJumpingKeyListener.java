@@ -178,17 +178,23 @@ class QueueJumpingKeyListener implements KeyListener {
 		}
 
 		// Hotkeys common to all modes
-		else if (keyChar == 'a' || keyChar == 'A') {
-			// IJ1 built-in: Select All
+		else if (keyChar == '1') {
+			// IJ1 built-in: Select First Lane
 			tracerPlugin.getUI().togglePathsChoice();
 			e.consume();
 		}
 
-		else if (keyChar == 'z' || keyChar == 'Z') {
-			// IJ1 built-in: Undo
+		else if (keyChar == '2') {
+			// IJ1 built-in: Select Next Lane
 			tracerPlugin.getUI().togglePartsChoice();
 			e.consume();
 		}
+		else if (keyChar == '3') {
+			// IJ1 built-in: Plot Lanes
+			tracerPlugin.getUI().toggleChannelAndFrameChoice();
+			e.consume();
+		}
+
 
 		// Keystrokes exclusive to edit mode (NB: Currently these only work
 		// with InteractiveCanvas). We'll skip hasty keystrokes to avoid

@@ -55,7 +55,6 @@ import java.util.stream.IntStream;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
@@ -67,7 +66,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
@@ -136,11 +134,10 @@ public class SNTUI extends JDialog {
 
 	/* UI */
 	private JComboBox<String> filterChoice;
-	private JRadioButton showPathsSelected;
-	private JRadioButton showPathsAll;
-	protected JRadioButton showPartsNearby;
-	protected JRadioButton showPartsAll;
+	private JCheckBox showPathsSelected;
+	protected JCheckBox showPartsNearby;
 	protected JCheckBox useSnapWindow;
+	protected JCheckBox onlyActiveCTposition;
 	protected JSpinner snapWindowXYsizeSpinner;
 	protected JSpinner snapWindowZsizeSpinner;
 	protected JSpinner nearbyFieldSpinner;
@@ -287,7 +284,7 @@ public class SNTUI extends JDialog {
 				++c1.gridy;
 				tab1.add(filteredImagePanel(), c1);
 				++c1.gridy;
-				GuiUtils.addSeparator(tab1, "Path Rendering:", true, c1);
+				GuiUtils.addSeparator(tab1, "Filters for Visibility of Paths:", true, c1);
 				++c1.gridy;
 				tab1.add(renderingPanel(), c1);
 				++c1.gridy;
@@ -1603,7 +1600,7 @@ public class SNTUI extends JDialog {
 		filteredImgParserChoice.addItem("ITK: Tubular Geodesics");
 		filteredImgInitButton = GuiUtils.smallButton("Initialize...");
 		filteredImgActivateCheckbox = new JCheckBox(hotKeyLabel(
-			"Trace using filtered Image", "I"));
+			"Trace on filtered Image", "I"));
 		filteredImgActivateCheckbox.addActionListener(e -> enableFilteredImgTracing(
 			filteredImgActivateCheckbox.isSelected()));
 
@@ -1992,39 +1989,19 @@ public class SNTUI extends JDialog {
 
 	private JPanel renderingPanel() {
 
-		final JPanel col1 = new JPanel();
-		col1.setLayout(new BoxLayout(col1, BoxLayout.Y_AXIS));
-		showPathsAll = new JRadioButton(hotKeyLabel("All", "A"),
-			!plugin.showOnlySelectedPaths);
-		showPathsAll.addItemListener(listener);
-		showPathsSelected = new JRadioButton("Selected",
+		showPathsSelected = new JCheckBox(hotKeyLabel(
+			"1. Only selected paths (hide unselected)", "1"),
 			plugin.showOnlySelectedPaths);
 		showPathsSelected.addItemListener(listener);
 
-		final ButtonGroup col1Group = new ButtonGroup();
-		col1Group.add(showPathsAll);
-		col1Group.add(showPathsSelected);
-		col1.add(showPathsAll);
-		col1.add(showPathsSelected);
+		final JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		row1.add(showPathsSelected);
 
-		final JPanel col2 = new JPanel();
-		col2.setLayout(new BoxLayout(col2, BoxLayout.Y_AXIS));
-		final ButtonGroup col2Group = new ButtonGroup();
-		showPartsAll = new JRadioButton(hotKeyLabel("Z-stack projection", "Z"));
-		col2Group.add(showPartsAll);
-		final JPanel row1Panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		row1Panel.add(showPartsAll);
-		showPartsAll.setSelected(true);
-		showPartsAll.setEnabled(isStackAvailable());
-		showPartsAll.addItemListener(listener);
-
-		showPartsNearby = new JRadioButton("Up to");
-		col2Group.add(showPartsNearby);
+		showPartsNearby = new JCheckBox(hotKeyLabel("2. Only nodes within ", "2"));
 		showPartsNearby.setEnabled(isStackAvailable());
 		showPartsNearby.addItemListener(listener);
-		final JPanel nearbyPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0,
-			0));
-		nearbyPanel.add(showPartsNearby);
+		final JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		row2.add(showPartsNearby);
 		nearbyFieldSpinner = GuiUtils.integerSpinner(plugin.depth == 1 ? 1 : 2, 1,
 			plugin.depth, 1);
 		nearbyFieldSpinner.setEnabled(isStackAvailable());
@@ -2033,20 +2010,21 @@ public class SNTUI extends JDialog {
 			plugin.justDisplayNearSlices(true, (int) nearbyFieldSpinner.getValue());
 		});
 
-		nearbyPanel.add(nearbyFieldSpinner);
-		nearbyPanel.add(GuiUtils.leftAlignedLabel(" nearby slices",
-			isStackAvailable()));
-		col2.add(row1Panel);
-		col2.add(nearbyPanel);
+		row2.add(nearbyFieldSpinner);
+		row2.add(GuiUtils.leftAlignedLabel(" nearby Z-slices", isStackAvailable()));
 
-		final JPanel viewOptionsPanel = new JPanel(new GridBagLayout());
-		final GridBagConstraints gdb = new GridBagConstraints();
-		gdb.weightx = 0.5;
-		viewOptionsPanel.add(col1, gdb);
-		gdb.gridx = 1;
-		viewOptionsPanel.add(col2, gdb);
+		final JPanel row3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		onlyActiveCTposition = new JCheckBox(hotKeyLabel(
+			"3. Only paths from active channel/frame", "3"));
+		row3.add(onlyActiveCTposition);
+		onlyActiveCTposition.addItemListener(listener);
 
-		return viewOptionsPanel;
+		final JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.add(row1);
+		panel.add(row2);
+		panel.add(row3);
+		return panel;
 	}
 
 	private JPanel colorOptionsPanel() {
@@ -2679,8 +2657,7 @@ public class SNTUI extends JDialog {
 
 	protected void togglePathsChoice() {
 		assert SwingUtilities.isEventDispatchThread();
-		if (showPathsAll.isSelected()) showPathsSelected.setSelected(true);
-		else showPathsAll.setSelected(true);
+		showPathsSelected.setSelected(!showPathsSelected.isSelected());
 	}
 
 	protected void enableFilteredImgTracing(final boolean enable) {
@@ -2734,8 +2711,12 @@ public class SNTUI extends JDialog {
 
 	protected void togglePartsChoice() {
 		assert SwingUtilities.isEventDispatchThread();
-		if (showPartsNearby.isSelected()) showPartsAll.setSelected(true);
-		else showPartsNearby.setSelected(true);
+		showPartsNearby.setSelected(!showPartsNearby.isSelected());
+	}
+
+	protected void toggleChannelAndFrameChoice() {
+		assert SwingUtilities.isEventDispatchThread();
+		onlyActiveCTposition.setSelected(!onlyActiveCTposition.isSelected());
 	}
 
 	private String hotKeyLabel(final String text, final String key) {
@@ -2811,18 +2792,13 @@ public class SNTUI extends JDialog {
 				plugin.justDisplayNearSlices(showPartsNearby.isSelected(),
 					(int) nearbyFieldSpinner.getValue());
 			}
-			else if (source == showPartsAll) {
-				plugin.justDisplayNearSlices(!showPartsAll.isSelected(),
-					(int) nearbyFieldSpinner.getValue());
-			}
 			else if (source == useSnapWindow) {
 				plugin.enableSnapCursor(useSnapWindow.isSelected());
 			}
 			else if (source == showPathsSelected) {
 				plugin.setShowOnlySelectedPaths(showPathsSelected.isSelected());
-			}
-			else if (source == showPathsAll) {
-				plugin.setShowOnlySelectedPaths(!showPathsAll.isSelected());
+			} else if (source == onlyActiveCTposition) {
+				plugin.setShowOnlyActiveCTposPaths(onlyActiveCTposition.isSelected(), true);
 			}
 		}
 

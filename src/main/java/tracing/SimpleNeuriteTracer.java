@@ -153,6 +153,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	volatile protected boolean snapCursor;
 	volatile protected boolean unsavedPaths = false;
 	protected volatile boolean showOnlySelectedPaths;
+	protected volatile boolean showOnlyActiveCTposPaths;
 
 	/*
 	 * Just for convenience, keep casted references to the superclass's
@@ -369,7 +370,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	private void showInitializedCanvases() {
 		if (getUI() != null) {
-			getUI().showPartsAll.setEnabled(!is2D());
 			getUI().showPartsNearby.setEnabled(!is2D());
 			getUI().nearbyFieldSpinner.setEnabled(!is2D());
 		}
@@ -2184,6 +2184,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final boolean updateGUI)
 	{
 		this.showOnlySelectedPaths = showOnlySelectedPaths;
+		if (updateGUI) {
+			updateAllViewers();
+		}
+	}
+
+	protected void setShowOnlyActiveCTposPaths(final boolean showOnlyActiveCTposPaths,
+		final boolean updateGUI)
+	{
+		this.showOnlyActiveCTposPaths = showOnlyActiveCTposPaths;
 		if (updateGUI) {
 			updateAllViewers();
 		}

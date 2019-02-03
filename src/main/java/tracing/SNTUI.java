@@ -964,11 +964,12 @@ public class SNTUI extends JDialog {
 		final JButton refreshPanesButton = new JButton(bLabel + " ZY/XZ Views");
 		refreshPanesButton.addActionListener(e -> {
 			if (noPathsError()) return;
-			if (!plugin.analysisMode && getState() == IMAGE_CLOSED) {
+			if (!plugin.analysisMode && plugin.getImagePlus() == null) {
 				guiUtils.error("Tracing image is not available.");
 				return;
 			}
 			showStatus("Rebuilding ZY/XZ views...", false);
+			changeState(LOADING);
 			if (plugin.analysisMode && (plugin.getImagePlus() == null || !plugin
 				.getImagePlus().isVisible()))
 			{
@@ -980,6 +981,7 @@ public class SNTUI extends JDialog {
 				return;
 			}
 			plugin.rebuildZYXZpanes();
+			changeState(WAITING_TO_START_PATH);
 			showStatus("ZY/XZ views reloaded...", true);
 			refreshPanesButton.setText("Rebuild ZY/XZ views");
 			arrangeCanvases();
@@ -2740,8 +2742,11 @@ public class SNTUI extends JDialog {
 		@Override
 		public void imageClosed(final ImagePlus imp) {
 			// updateColorImageChoice(); //FIXME
-			if (plugin.getImagePlus() == imp && getState() != SNTUI.ANALYSIS_MODE)
+			if (plugin.getImagePlus() == imp && getState() != ANALYSIS_MODE &&
+				getState() != LOADING)
+			{
 				changeState(SNTUI.IMAGE_CLOSED);
+			}
 		}
 
 		/* (non-Javadoc)

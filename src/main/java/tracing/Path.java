@@ -142,6 +142,9 @@ public class Path implements Comparable<Path> {
 	// the display offset for this Path in a tracing canvas
 	protected PointInCanvas canvasOffset = new PointInCanvas(0, 0, 0);
 
+	// the channel and frame associated with this Path (1-based indices)
+	private final int[] ctPosition;
+
 	/* Spatial calibration definitions */
 	protected double x_spacing;
 	protected double y_spacing;
@@ -210,6 +213,7 @@ public class Path implements Comparable<Path> {
 		precise_z_positions = new double[maxPoints];
 		somehowJoins = new ArrayList<>();
 		children = new ArrayList<>();
+		ctPosition = new int[] {1, 1};
 	}
 
 	/* (non-Javadoc)
@@ -1372,7 +1376,38 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Gets the fitted version ('flavor') of this Path
+	 * Gets the hyperstack channel associated with this Path.
+	 *
+	 * @return the channel position of this path (1-based index). Note that if the
+	 *         channel associated with a path is not known, it is assumed to be 1;
+	 */
+	public int getChannel() {
+		return ctPosition[0];
+	}
+
+	/**
+	 * Gets the hyperstack frame position associated with this Path.
+	 *
+	 * @return the frame position of this path (1-based index). Note that if the
+	 *         frame associated with a path is not known, it is assumed to be 1;
+	 */
+	public int getFrame() {
+		return ctPosition[1];
+	}
+
+	/**
+	 * Sets the hyperstack position of this Path
+	 *
+	 * @param channel the channel (one-based index)
+	 * @param frame the frame (one-based index)
+	 */
+	public void setCTposition(final int channel, final int frame) {
+		ctPosition[0] = channel;
+		ctPosition[1] = frame;
+	}
+
+	/**
+	 * Gets the fitted version ('flavor') of this Path.
 	 *
 	 * @return the fitted version, or null if this Path has not been fitted
 	 */

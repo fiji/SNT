@@ -221,6 +221,7 @@ public class PathFitter implements Callable<Path> {
 
 		fitted = new Path(path.x_spacing, path.y_spacing, path.z_spacing,
 			path.spacing_units);
+		fitted.setCTposition(path.getChannel(), path.getFrame());
 		fitted.setName("Fitted Path [" + path.getID() + "]");
 		fitted.setColor(path.getColor());
 		fitted.setSWCType(path.getSWCType());

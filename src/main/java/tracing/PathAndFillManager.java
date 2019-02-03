@@ -1019,6 +1019,10 @@ public class PathAndFillManager extends DefaultHandler implements
 			pw.println(
 				"  <!ATTLIST path           color             CDATA           #IMPLIED>");
 			pw.println(
+				"  <!ATTLIST path           channel           CDATA           #IMPLIED>");
+			pw.println(
+					"  <!ATTLIST path         frame             CDATA           #IMPLIED>");
+			pw.println(
 				"  <!ATTLIST point          x                 CDATA           #REQUIRED>"); // deprecated
 			pw.println(
 				"  <!ATTLIST point          y                 CDATA           #REQUIRED>"); // deprecated
@@ -1080,6 +1084,9 @@ public class PathAndFillManager extends DefaultHandler implements
 				pw.print("  <path id=\"" + p.getID() + "\"");
 				pw.print(" swctype=\"" + p.getSWCType() + "\"");
 				pw.print(" color=\"" + SNT.getColorString(p.getColor()) + "\"");
+				pw.print(" channel=\"" + p.getChannel() + "\"");
+				pw.print(" frame=\"" + p.getFrame() + "\"");
+
 				String startsString = "";
 				String endsString = "";
 				if (p.startJoins != null) {
@@ -1247,11 +1254,12 @@ public class PathAndFillManager extends DefaultHandler implements
 
 			final String swcTypeString = attributes.getValue("swctype");
 			final String colorString = attributes.getValue("color");
+			final String channelString = attributes.getValue("channel");
+			final String frameString = attributes.getValue("frame");
 			final String useFittedString = attributes.getValue("usefitted");
 			final String fittedIDString = attributes.getValue("fitted");
 			final String fittedVersionOfIDString = attributes.getValue(
 				"fittedversionof");
-
 			final String startsonString = attributes.getValue("startson");
 			final String startsindexString = attributes.getValue("startsindex");
 			final String startsxString = attributes.getValue("startsx");
@@ -1262,7 +1270,6 @@ public class PathAndFillManager extends DefaultHandler implements
 			final String endsxString = attributes.getValue("endsx");
 			final String endsyString = attributes.getValue("endsy");
 			final String endszString = attributes.getValue("endsz");
-
 			final String nameString = attributes.getValue("name");
 			final String primaryString = attributes.getValue("primary");
 
@@ -1303,10 +1310,9 @@ public class PathAndFillManager extends DefaultHandler implements
 					"If endson is specified for a path, then endsindex or ends[xyz] must also be specified.");
 			}
 
-			int startson, endson, endsindex;
-
 			current_path = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 
+			int startson, endson, endsindex;
 			Integer startsOnInteger = null;
 			Integer startsIndexInteger = null;
 			PointInImage startJoinPoint = null;
@@ -1339,6 +1345,10 @@ public class PathAndFillManager extends DefaultHandler implements
 
 				if (colorString != null) {
 					current_path.setColor(SNT.getColor(colorString));
+				}
+				if (channelString != null && frameString != null) {
+					current_path.setCTposition(Integer.parseInt(channelString), Integer
+						.parseInt(frameString));
 				}
 
 				if (startsonString == null) {

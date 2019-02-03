@@ -185,6 +185,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 				dup.addPointDouble(pim.x, pim.y, pim.z);
 			}
 			dup.setSWCType(pathToPlot.getSWCType());
+			dup.setCTposition(pathToPlot.getChannel(), pathToPlot.getFrame());
 			plottingTree.add(dup);
 			snapshotTree.add(pathToPlot);
 		}

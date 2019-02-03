@@ -1771,6 +1771,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		lastStartPointSet = true;
 
 		final Path path = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
+		path.setCTposition(channel, frame);
 		path.setName("New Path");
 
 		Color ballColor;

@@ -58,6 +58,7 @@ public class ManualTracerThread extends Thread implements SearchInterface {
 	public void run() {
 		result = new Path(plugin.x_spacing, plugin.y_spacing, plugin.z_spacing,
 			plugin.spacing_units);
+		result.setCTposition(plugin.channel, plugin.frame);
 		result.addPointDouble(start_x, start_y, start_z);
 		result.addPointDouble(goal_x, goal_y, goal_z);
 		threadStatus = SearchThread.SUCCESS;

@@ -759,13 +759,19 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		final Collection<Path> selectedPaths = getSelectedPaths(true);
 		final int selectionCount = tree.getSelectionCount();
 		if (selectionCount == 1) {
-			updateCmdsOneSelected(selectedPaths.iterator().next());
+			final Path p = selectedPaths.iterator().next();
+			updateHyperstackPosition(p);
+			updateCmdsOneSelected(p);
 		}
 		else {
 			updateCmdsManyOrNoneSelected(selectedPaths);
 		}
 		pathAndFillManager.setSelected((selectionCount == 0) ? null : selectedPaths,
 			this);
+	}
+
+	private void updateHyperstackPosition(final Path p) {
+		plugin.getImagePlus().setPosition(p.getChannel(), plugin.getImagePlus().getZ(), p.getFrame());
 	}
 
 	private void displayTmpMsg(final String msg) {
@@ -840,13 +846,13 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				if (source == this || !pathAndFillManager.enableUIupdates) return;
 				final TreePath[] noTreePaths = {};
 				tree.setSelectionPaths(noTreePaths);
-				setSelectedPaths(tree, tree.getModel(), root, selectedPaths);
+				setSelectedPaths(tree, tree.getModel(), root, selectedPaths, selectedPaths.size()==1);
 			}
 		});
 	}
 
 	private void setSelectedPaths(final HelpfulJTree tree, final TreeModel model,
-		final MutableTreeNode node, final HashSet<Path> set)
+		final MutableTreeNode node, final HashSet<Path> set, final boolean updateCTpositon)
 	{
 		assert SwingUtilities.isEventDispatchThread();
 		final int count = model.getChildCount(node);
@@ -856,8 +862,11 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			final Path p = (Path) child.getUserObject();
 			if (set.contains(p)) {
 				tree.setSelected(child.getPath());
+				if (updateCTpositon && plugin != null) {
+					updateHyperstackPosition(p);
+				}
 			}
-			if (!model.isLeaf(child)) setSelectedPaths(tree, model, child, set);
+			if (!model.isLeaf(child)) setSelectedPaths(tree, model, child, set, updateCTpositon);
 		}
 	}
 
@@ -919,7 +928,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			}
 			else setExpandedPaths(tree, model, root, expandedPathsBefore, justAdded);
 
-			setSelectedPaths(tree, model, root, selectedPathsBefore);
+			setSelectedPaths(tree, model, root, selectedPathsBefore, false);
 		});
 	}
 

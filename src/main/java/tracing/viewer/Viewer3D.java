@@ -108,6 +108,7 @@ import org.jzy3d.maths.BoundingBox3d;
 import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.maths.Rectangle;
+import org.jzy3d.plot3d.builder.Builder;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
 import org.jzy3d.plot3d.primitives.AbstractWireframeable;
 import org.jzy3d.plot3d.primitives.LineStrip;
@@ -152,6 +153,7 @@ import tracing.SNT;
 import tracing.SNTService;
 import tracing.Tree;
 import tracing.analysis.MultiTreeColorMapper;
+import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeColorMapper;
 import tracing.analysis.TreeStatistics;
 import tracing.gui.GuiUtils;
@@ -534,6 +536,49 @@ public class Viewer3D {
 		plottedTrees.put(label, shapeTree);
 		addItemToManager(label);
 		chart.add(shapeTree.get(), viewUpdatesEnabled);
+	}
+
+	/**
+	 * Computes a Delaunay surface from a collection of points and adds it to the
+	 * scene using default options.
+	 * 
+	 * @param points the collection of points defining the triangulated surface
+	 * @see #addSurface(Collection, ColorRGB, double)
+	 */
+	public void addSurface(final Collection<? extends SNTPoint> points) {
+		addSurface(points, null, 50);
+	}
+
+	/**
+	 * Computes a Delaunay surface from a collection of points and adds it to the
+	 * scene.
+	 *
+	 * @param points the collection of points defining the triangulated surface
+	 * @param color the color to render the surface
+	 * @param transparencyPercent the color transparency (in percentage)
+	 * @see #addSurface(Collection)
+	 */
+	public void addSurface(final Collection<? extends SNTPoint> points,
+		final ColorRGB color, final double transparencyPercent)
+	{
+		Color c = (color == null) ? Color.WHITE: fromColorRGB(color);
+		c = c.alphaSelf((float) (1 -transparencyPercent / 100));
+		addSurface(points, c);
+	}
+
+	private void addSurface(final Collection<? extends SNTPoint> points,
+		final Color surfaceColor)
+	{
+		final List<Coord3d> coordinates = new ArrayList<>();
+		for (final SNTPoint point : points) {
+			coordinates.add(new Coord3d(point.getX(), point.getY(), point.getZ()));
+		}
+		final Shape surface = Builder.buildDelaunay(coordinates);
+		surface.setFaceDisplayed(true);
+		surface.setWireframeDisplayed(true);
+		surface.setColor(surfaceColor);
+		surface.setWireframeColor(Utils.contrastColor(surfaceColor));
+		chart.add(surface, viewUpdatesEnabled);
 	}
 
 	private void addItemToManager(final String label) {
@@ -1705,6 +1750,8 @@ public class Viewer3D {
 					getOuter().removeAll();
 					removeAllOBJs();
 					removeColorLegends(false);
+					// Ensure nothing else remains (e.g., a Delaunay surface)
+					chart.getScene().getGraph().getAll().clear();
 				}
 			});
 			sceneMenu.add(mi);
@@ -2625,7 +2672,7 @@ public class Viewer3D {
 		private <T extends AbstractWireframeable & ISingleColorable> void
 			setWireFrame(final T t, final float r, final Color color)
 		{
-			t.setColor(contrastColor(color).alphaSelf(0.4f));
+			t.setColor(Utils.contrastColor(color).alphaSelf(0.4f));
 			t.setWireframeColor(color.alphaSelf(0.8f));
 			t.setWireframeWidth(Math.max(1f, r / SOMA_SLICES / 3));
 			t.setWireframeDisplayed(true);
@@ -2699,11 +2746,14 @@ public class Viewer3D {
 			return colorizer.getMinMax();
 		}
 
-		private Color contrastColor(final Color color) {
+	}
+
+	private static class Utils {
+
+		private static Color contrastColor(final Color color) {
 			final float factor = 0.75f;
 			return new Color(factor - color.r, factor - color.g, factor - color.b);
 		}
-
 	}
 
 	private class CmdWorker extends SwingWorker<Boolean, Object> {
@@ -3611,6 +3661,8 @@ public class Viewer3D {
 			(float) bounds[1]);
 		jzy3D.add(tree);
 		jzy3D.loadMouseRefBrain();
+		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
+		jzy3D.addSurface((Collection<? extends SNTPoint>)analyzer.getTips());
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);

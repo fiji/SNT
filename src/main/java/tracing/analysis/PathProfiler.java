@@ -81,6 +81,7 @@ public class PathProfiler extends ContextCommand {
 
 	private final Tree tree;
 	private final ImageStack stack;
+	private final ImagePlus imp;
 	private final BoundingBox impBox;
 	private boolean valuesAssignedToTree;
 	private boolean nodeIndices = false;
@@ -98,6 +99,7 @@ public class PathProfiler extends ContextCommand {
 		if (imp == null || tree == null) throw new IllegalArgumentException(
 			"Null image");
 		this.tree = tree;
+		this.imp = imp;
 		this.stack = imp.getImageStack();
 		impBox = getImpBoundingBox(imp);
 	}
@@ -176,10 +178,12 @@ public class PathProfiler extends ContextCommand {
 	 */
 	public void assignValues(final Path p) {
 		final double[] values = new double[p.size()];
+		final int c = p.getChannel();
+		final int f = p.getFrame();
 		for (int i = 0; i < p.size(); i++) {
 			try {
-				values[i] = stack.getVoxel(p.getXUnscaled(i), p.getYUnscaled(i), p
-					.getZUnscaled(i) + 1);
+				final int zPos = imp.getStackIndex(c, p.getZUnscaled(i) + 1, f);
+				values[i] = stack.getVoxel(p.getXUnscaled(i), p.getYUnscaled(i), zPos);
 			}
 			catch (final IndexOutOfBoundsException exc) {
 				values[i] = Float.NaN;

@@ -108,7 +108,7 @@ public class TreeMapperCmd extends DynamicCommand {
 	@Override
 	public void run() {
 		if (!sntService.isActive()) cancel("SNT not running?");
-		if (tree == null || tree.isEmpty()) cancel("<HTML>Invalid input tree");
+		if (tree == null || tree.isEmpty()) cancel("Invalid input tree");
 		statusService.showStatus("Applying Color Code...");
 		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
 		final TreeColorMapper colorizer = new TreeColorMapper(context());
@@ -125,7 +125,7 @@ public class TreeMapperCmd extends DynamicCommand {
 			colorizer.map(tree, measurementChoice, colorTable);
 		}
 		catch (final IllegalArgumentException exc) {
-			cancel("<HTML>" + exc.getMessage());
+			cancel(exc.getMessage());
 			return;
 		}
 		final double[] minMax = colorizer.getMinMax();

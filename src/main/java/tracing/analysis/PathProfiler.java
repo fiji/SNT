@@ -121,7 +121,7 @@ public class PathProfiler extends ContextCommand {
 	@Override
 	public void run() {
 		if (tree.size() == 0) {
-			cancel("<HTML>No path(s) to profile");
+			cancel("No path(s) to profile");
 			return;
 		}
 		statusService.showStatus("Measuring Paths...");

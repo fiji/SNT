@@ -69,7 +69,7 @@ public class StrahlerCmd extends TreeAnalyzer {
 	@Override
 	public void run() {
 		if (tree == null || tree.isEmpty()) {
-			cancel("<HTML>No Paths to Measure");
+			cancel("No Paths to Measure");
 			return;
 		}
 		statusService.showStatus("Measuring Paths...");

@@ -72,7 +72,7 @@ public class ShowCorrespondencesCmd extends ContextCommand {
 				.getARGB()), distance);
 		}
 		catch (final UnsupportedOperationException | NullPointerException exc) {
-			cancel("<HTML>SNT's Legacy Viewer is not open");
+			cancel("SNT's Legacy Viewer is not open");
 		}
 	}
 

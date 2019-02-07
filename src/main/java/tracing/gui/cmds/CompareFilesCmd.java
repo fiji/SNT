@@ -87,7 +87,7 @@ public class CompareFilesCmd extends ContextCommand {
 
 		}
 		catch (final IllegalArgumentException ex) {
-			cancel("<HTML>An error occured: " + ex.getMessage());
+			cancel("An error occurred: " + ex.getMessage());
 		}
 	}
 

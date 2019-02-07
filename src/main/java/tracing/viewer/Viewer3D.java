@@ -174,7 +174,7 @@ import tracing.plugin.ShollTracingsCmd;
 import tracing.plugin.StrahlerCmd;
 import tracing.util.PointInImage;
 import tracing.util.SNTPoint;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 
 /**
  * Implements SNT's Reconstruction Viewer. Relies heavily on the
@@ -2107,7 +2107,7 @@ public class Viewer3D {
 				final List<String> keys = getSelectedTrees(true);
 				if (keys == null || !okToApplyColor(keys)) return;
 
-				final ColorRGB[] colors = SWCColor.getDistinctColors(keys.size());
+				final ColorRGB[] colors = SNTColor.getDistinctColors(keys.size());
 				final int[] counter = new int[] { 0 };
 				plottedTrees.forEach((k, shapeTree) -> {
 					shapeTree.setArborColor(colors[counter[0]]);
@@ -2638,7 +2638,7 @@ public class Viewer3D {
 		private void assembleSoma(final List<PointInImage> somaPoints,
 			final List<java.awt.Color> somaColors)
 		{
-			final Color color = fromAWTColor(SWCColor.average(somaColors));
+			final Color color = fromAWTColor(SNTColor.average(somaColors));
 			switch (somaPoints.size()) {
 				case 0:
 					//SNT.log(tree.getLabel() + ": No soma attribute");

@@ -50,7 +50,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
 
 import tracing.Path;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 
 /**
  * Generates a simplified color widget holding both predetermined colors and
@@ -60,7 +60,7 @@ import tracing.util.SWCColor;
 public class ColorMenu extends JMenu {
 
 	private static final long serialVersionUID = 1L;
-	private final Map<SWCColor, ColorPane> _colorPanes;
+	private final Map<SNTColor, ColorPane> _colorPanes;
 	private ColorPane _selectedColorPane;
 	private final Border _activeBorder;
 	private final Border _selectedBorder;
@@ -112,9 +112,9 @@ public class ColorMenu extends JMenu {
 		colors.add(null);
 
 		for (final Color color : colors) {
-			final ColorPane colorPane = new ColorPane(new SWCColor(color), false);
+			final ColorPane colorPane = new ColorPane(new SNTColor(color), false);
 			defaultPanel.add(colorPane);
-			_colorPanes.put(new SWCColor(color), colorPane);
+			_colorPanes.put(new SNTColor(color), colorPane);
 		}
 		add(defaultPanel);
 
@@ -124,7 +124,7 @@ public class ColorMenu extends JMenu {
 				addSeparator("SWC Type Colors (Righ-click to change):");
 				final JPanel swcPanel = getGridPanel(1, 7);
 				for (final int type : Path.getSWCtypes()) {
-					final SWCColor swcColor = new SWCColor(Path.getSWCcolor(type), type);
+					final SNTColor swcColor = new SNTColor(Path.getSWCcolor(type), type);
 					final ColorPane swcColorPane = new ColorPane(swcColor, true);
 					swcPanel.add(swcColorPane);
 					_colorPanes.put(swcColor, swcColorPane);
@@ -138,10 +138,10 @@ public class ColorMenu extends JMenu {
 		for (int i = 0; i < 7; i++) {
 			final Color uniquePlaceHolderColor = new Color(getBackground().getRed(),
 				getBackground().getGreen(), getBackground().getBlue(), 255 - i - 1);
-			final ColorPane customColorPane = new ColorPane(new SWCColor(
+			final ColorPane customColorPane = new ColorPane(new SNTColor(
 				uniquePlaceHolderColor), true);
 			customPanel.add(customColorPane);
-			_colorPanes.put(new SWCColor(uniquePlaceHolderColor), customColorPane);
+			_colorPanes.put(new SNTColor(uniquePlaceHolderColor), customColorPane);
 		}
 		addSeparator("Custom... (Righ-click to change):");
 		add(customPanel);
@@ -169,10 +169,10 @@ public class ColorMenu extends JMenu {
 	}
 
 	public void selectColor(final Color c) {
-		selectSWCColor(new SWCColor(c));
+		selectSWCColor(new SNTColor(c));
 	}
 
-	public void selectSWCColor(final SWCColor c) {
+	public void selectSWCColor(final SNTColor c) {
 		final Object obj = _colorPanes.get(c);
 		if (obj == null) {
 			selectNone();
@@ -183,20 +183,20 @@ public class ColorMenu extends JMenu {
 		_selectedColorPane.setSelected(true);
 	}
 
-	public SWCColor getSelectedSWCColor() {
+	public SNTColor getSelectedSWCColor() {
 		if (_selectedColorPane == null) return null;
 		return _selectedColorPane.swcColor;
 	}
 
 	public void selectNone() {
-		for (final Map.Entry<SWCColor, ColorPane> entry : _colorPanes.entrySet()) {
+		for (final Map.Entry<SNTColor, ColorPane> entry : _colorPanes.entrySet()) {
 			entry.getValue().setSelected(false);
 		}
 	}
 
 	@SuppressWarnings("unused")
 	private Color getCurrentColorForSWCType(final int swcType) {
-		for (final Map.Entry<SWCColor, ColorPane> entry : _colorPanes.entrySet()) {
+		for (final Map.Entry<SNTColor, ColorPane> entry : _colorPanes.entrySet()) {
 			if (entry.getKey().type() == swcType) return entry.getKey().color();
 		}
 		return null;
@@ -210,11 +210,11 @@ public class ColorMenu extends JMenu {
 	private class ColorPane extends JPanel implements MouseListener {
 
 		private static final long serialVersionUID = 1L;
-		private SWCColor swcColor;
+		private SNTColor swcColor;
 		private boolean isSelectected;
 		private final boolean isCustomizable;
 
-		public ColorPane(final SWCColor sColor, final boolean customizable) {
+		public ColorPane(final SNTColor sColor, final boolean customizable) {
 			swcColor = sColor;
 			isCustomizable = customizable;
 			setPanelSWCColor(swcColor);
@@ -224,7 +224,7 @@ public class ColorMenu extends JMenu {
 			setPreferredSize(new Dimension(size, size));
 		}
 
-		private void setPanelSWCColor(final SWCColor sColor) {
+		private void setPanelSWCColor(final SNTColor sColor) {
 			swcColor = sColor;
 			if (sColor.color() == null) {
 				setBackground(getBackground().brighter());
@@ -258,7 +258,7 @@ public class ColorMenu extends JMenu {
 				final Graphics2D g2 = (Graphics2D) g;
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 					RenderingHints.VALUE_ANTIALIAS_ON);
-				g2.setColor(Color.RED); // SWCColor.contrastColor(getBackground()));
+				g2.setColor(Color.RED); // SNTColor.contrastColor(getBackground()));
 				g2.setStroke(new BasicStroke(2));
 				g2.drawLine(3, 3, getWidth() - 4, getHeight() - 4);
 			}

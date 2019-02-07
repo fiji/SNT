@@ -32,7 +32,7 @@ import java.awt.geom.Line2D;
 
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInImage;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 
 /**
  * Convenience class used to render {@link Path} nodes (vertices) in an
@@ -211,7 +211,7 @@ public class PathNode {
 			g.draw(new Line2D.Double(x, y - offset - length, x, y - offset));
 			g.draw(new Line2D.Double(x, y + offset + length, x, y + offset));
 			g.draw(node);
-			g.setColor(SWCColor.alphaColor(color, 20));
+			g.setColor(SNTColor.alphaColor(color, 20));
 			g.fill(node);
 			g.setStroke(stroke);
 
@@ -222,12 +222,12 @@ public class PathNode {
 				// opaque border and more opaque fill
 				g.setColor(color);
 				g.draw(node);
-				g.setColor(SWCColor.alphaColor(color, 80));
+				g.setColor(SNTColor.alphaColor(color, 80));
 				g.fill(node);
 			}
 			else {
 				// semi-border and more transparent fill
-				g.setColor(SWCColor.alphaColor(color, 50));
+				g.setColor(SNTColor.alphaColor(color, 50));
 				g.fill(node);
 			}
 

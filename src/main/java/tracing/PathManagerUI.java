@@ -110,7 +110,7 @@ import tracing.gui.cmds.SWCTypeOptionsCmd;
 import tracing.plugin.ROIExporterCmd;
 import tracing.plugin.SkeletonizerCmd;
 import tracing.plugin.TreeMapperCmd;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 import tracing.util.SWCPoint;
 
 /**
@@ -677,7 +677,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				? "<html>Path has never been fitted:<br>Fit will be computed for the first time"
 				: "<html>Path has already been fitted:\nCached properties will be aplied");
 		}
-		colorMenu.selectSWCColor(new SWCColor(p.getColor(), p.getSWCType()));
+		colorMenu.selectSWCColor(new SNTColor(p.getColor(), p.getSWCType()));
 		selectSWCTypeMenuEntry(p.getSWCType());
 	}
 
@@ -713,7 +713,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 		final int type = firstPath.getSWCType();
 		if (allWithSWCType(selectedPaths, type)) {
-			colorMenu.selectSWCColor(new SWCColor(firstColor, type));
+			colorMenu.selectSWCColor(new SNTColor(firstColor, type));
 			selectSWCTypeMenuEntry(type);
 		}
 		else {
@@ -1701,7 +1701,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			// Case 1: Non-destructive commands that do not require confirmation
 			if (COLORS_MENU.equals(cmd)) {
-				final SWCColor swcColor = colorMenu.getSelectedSWCColor();
+				final SNTColor swcColor = colorMenu.getSelectedSWCColor();
 				for (final Path p : selectedPaths)
 					p.setColor(swcColor.color());
 				refreshManager(true, true);

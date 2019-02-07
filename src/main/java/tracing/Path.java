@@ -48,7 +48,7 @@ import tracing.analysis.PathProfiler;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 
 /**
  * This class represents a traced segment - Path - in a reconstruction. It has
@@ -1045,7 +1045,7 @@ public class Path implements Comparable<Path> {
 			final PathNode pn = new PathNode(this, i, canvas);
 			final boolean outOfDepthBounds = (either_side >= 0) && (Math.abs(
 				slice_of_point - slice) > either_side);
-			g2.setColor(SWCColor.alphaColor(c, (outOfDepthBounds) ? 50 : 100));
+			g2.setColor(SNTColor.alphaColor(c, (outOfDepthBounds) ? 50 : 100));
 
 			// If there was a previous point in this path, draw a line from there to
 			// here:

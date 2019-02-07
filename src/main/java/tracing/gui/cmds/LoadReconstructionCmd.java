@@ -42,7 +42,7 @@ import org.scijava.widget.FileWidget;
 
 import tracing.SNT;
 import tracing.Tree;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 import tracing.viewer.Viewer3D;
 
 /**
@@ -167,7 +167,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 			});
 			recViewer.setSceneUpdatesEnabled(false);
 			int failures = 0;
-			final ColorRGB[] colors = (colorChoice.contains("unique")) ? SWCColor
+			final ColorRGB[] colors = (colorChoice.contains("unique")) ? SNTColor
 				.getDistinctColors(files.length) : null;
 			int idx = 0;
 			for (final File file : files) {

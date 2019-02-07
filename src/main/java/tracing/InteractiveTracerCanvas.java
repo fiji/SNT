@@ -47,7 +47,7 @@ import tracing.gui.GuiUtils;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 
 public class InteractiveTracerCanvas extends TracerCanvas {
 
@@ -219,7 +219,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	public void setFillTransparent(final boolean transparent) {
 		this.fillTransparent = transparent;
-		if (transparent && fillColor != null) setFillColor(SWCColor.alphaColor(
+		if (transparent && fillColor != null) setFillColor(SNTColor.alphaColor(
 			fillColor, 50));
 	}
 
@@ -591,7 +591,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	public Color getFillColor() {
 		if (fillColor == null) fillColor = new Color(0, 128, 0);
-		if (fillTransparent) fillColor = SWCColor.alphaColor(fillColor, 50);
+		if (fillTransparent) fillColor = SNTColor.alphaColor(fillColor, 50);
 		return fillColor;
 	}
 

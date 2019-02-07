@@ -53,7 +53,7 @@ import tracing.Path;
 import tracing.Tree;
 import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 
 /**
  * Command to retrieve Profile plots (plots of voxel intensities values along a
@@ -269,7 +269,7 @@ public class PathProfiler extends ContextCommand {
 			}
 		}
 		else {
-			final ColorRGB[] colorsRGB = SWCColor.getDistinctColors(tree.size());
+			final ColorRGB[] colorsRGB = SNTColor.getDistinctColors(tree.size());
 			for (int i = 0; i < tree.size(); i++) {
 				colors[i] = new Color(colorsRGB[i].getARGB());
 			}
@@ -287,7 +287,7 @@ public class PathProfiler extends ContextCommand {
 			}
 		}
 		else {
-			colors = SWCColor.getDistinctColors(tree.size());
+			colors = SNTColor.getDistinctColors(tree.size());
 		}
 		return colors;
 	}

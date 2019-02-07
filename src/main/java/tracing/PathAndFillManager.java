@@ -77,7 +77,7 @@ import tracing.io.MouseLightLoader;
 import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
 import tracing.util.SNTPoint;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 import tracing.util.SWCPoint;
 import util.Bresenham3D;
 import util.XMLFunctions;
@@ -1841,7 +1841,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 *         file was not successfully imported an empty Tree will be generated
 	 * @see Tree#isEmpty()
 	 * @see Tree#getLabel()
-	 * @see SWCColor#getDistinctColors(int)
+	 * @see SNTColor#getDistinctColors(int)
 	 */
 	public List<Tree> importSWCs(final Map<String, String> swcs,
 		final ColorRGB color)
@@ -1849,7 +1849,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		final List<Tree> result = new ArrayList<>();
 		final ColorRGB[] colors;
 		if (color == null) {
-			colors = SWCColor.getDistinctColors(swcs.size());
+			colors = SNTColor.getDistinctColors(swcs.size());
 		}
 		else {
 			colors = new ColorRGB[swcs.size()];
@@ -2136,7 +2136,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 *          each ID will assigned unique colors
 	 * @return the map mapping imported ids to imported Trees. A null Tree will be
 	 *         assigned if a morphology could not be imported
-	 * @see SWCColor#getDistinctColors(int)
+	 * @see SNTColor#getDistinctColors(int)
 	 */
 	public Map<String, Tree> importMLNeurons(final Collection<String> ids,
 		final String compartment, final ColorRGB color)
@@ -2163,7 +2163,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		final Map<String, Tree> result = new HashMap<>();
 		final ColorRGB[] colors;
 		if (color == null) {
-			colors = SWCColor.getDistinctColors(map.size());
+			colors = SNTColor.getDistinctColors(map.size());
 		}
 		else {
 			colors = new ColorRGB[map.size()];

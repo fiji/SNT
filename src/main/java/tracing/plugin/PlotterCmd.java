@@ -50,7 +50,7 @@ import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.gui.cmds.CommonDynamicCmd;
 import tracing.util.PointInImage;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 import tracing.viewer.Viewer2D;
 
 /**
@@ -139,7 +139,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 				return;
 			}
 			tree = new Tree();
-			final ColorRGB[] colors = SWCColor.getDistinctColors(files.size());
+			final ColorRGB[] colors = SNTColor.getDistinctColors(files.size());
 			int counter = 0;
 			for (final File f : files) {
 				try {

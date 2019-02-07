@@ -29,36 +29,39 @@ import java.util.Collection;
 import org.scijava.util.ColorRGB;
 
 /**
- * A simple class that associates an AWT Color to a SWC type integer tag.
+ * A simple class for handling Colors including the ability to map an AWT Color
+ * to a SWC type integer tag.
+ * 
+ * @author Tiago Ferreira
  */
-public class SWCColor {
+public class SNTColor {
 
 	protected static final int SWC_TYPE_IGNORED = -1;
 	private Color color;
 	private int swcType;
 
 	/**
-	 * Instantiates a new SWC color.
+	 * Instantiates a new SNT color.
 	 *
 	 * @param color the AWT color
-	 * @param swcType the SWC type integer flag
+	 * @param swcType the SWC type integer flag to be associated with color
 	 */
-	public SWCColor(final Color color, final int swcType) {
+	public SNTColor(final Color color, final int swcType) {
 		this.color = color;
 		this.swcType = swcType;
 	}
 
 	/**
-	 * Instantiates a new SWC color without SWC type association
+	 * Instantiates a new SNT color without SWC type association
 	 *
 	 * @param color the AWT color
 	 */
-	public SWCColor(final Color color) {
+	public SNTColor(final Color color) {
 		this(color, SWC_TYPE_IGNORED);
 	}
 
 	/**
-	 * Retrieves the Color
+	 * Retrieves the AWT color
 	 *
 	 * @return the AWT color
 	 */
@@ -67,7 +70,7 @@ public class SWCColor {
 	}
 
 	/**
-	 * Retrieves the
+	 * Retrieves the SWC type
 	 *
 	 * @return the SWC type integer flag
 	 */
@@ -129,10 +132,10 @@ public class SWCColor {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof SWCColor)) {
+		if (!(obj instanceof SNTColor)) {
 			return false;
 		}
-		final SWCColor other = (SWCColor) obj;
+		final SNTColor other = (SNTColor) obj;
 		if (color == null) {
 			if (other.color != null) {
 				return false;
@@ -178,9 +181,15 @@ public class SWCColor {
 		return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
 	}
 
+	/**
+	 * Averages a collection of colors
+	 *
+	 * @param colors the colors to be averaged
+	 * @return the averaged color. Note that an average will never be accurate
+	 *         because the RGB space is not linear
+	 */
 	public static Color average(final Collection<Color> colors) {
 		if (colors == null || colors.isEmpty()) return null;
-		// this will never be accurate because the RGB space is not linear
 		int tR = 0;
 		int tG = 0;
 		int tB = 0;
@@ -197,7 +206,7 @@ public class SWCColor {
 	}
 
 	/**
-	 * Adds an alpha component to a AWT colot.
+	 * Adds an alpha component to a AWT color.
 	 *
 	 * @param c the input color
 	 * @param percent alpha value in percentage

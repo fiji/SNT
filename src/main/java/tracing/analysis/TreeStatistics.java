@@ -42,7 +42,7 @@ import org.jfree.data.statistics.HistogramType;
 import tracing.Path;
 import tracing.SNT;
 import tracing.Tree;
-import tracing.util.SWCColor;
+import tracing.util.SNTColor;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of a
@@ -121,14 +121,14 @@ public class TreeStatistics extends TreeAnalyzer {
 			"Rel. Frequency", dataset);
 
 		// Customize plot
-		final Color bColor = Color.WHITE; // SWCColor.alphaColor(Color.WHITE, 100);
+		final Color bColor = Color.WHITE; // SNTColor.alphaColor(Color.WHITE, 100);
 		final XYPlot plot = chart.getXYPlot();
 		plot.setBackgroundPaint(bColor);
 		final XYBarRenderer bar_renderer = (XYBarRenderer) plot.getRenderer();
 		bar_renderer.setBarPainter(new StandardXYBarPainter());
 		bar_renderer.setDrawBarOutline(true);
 		bar_renderer.setSeriesOutlinePaint(0, Color.DARK_GRAY);
-		bar_renderer.setSeriesPaint(0, SWCColor.alphaColor(Color.LIGHT_GRAY, 50));
+		bar_renderer.setSeriesPaint(0, SNTColor.alphaColor(Color.LIGHT_GRAY, 50));
 		bar_renderer.setShadowVisible(false);
 		chart.setBackgroundPaint(bColor);
 		chart.setAntiAlias(true);

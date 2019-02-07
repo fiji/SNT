@@ -23,6 +23,6 @@ from tracing.analysis import (RoiConverter, MultiTreeColorMapper, TreeAnalyzer,
 from tracing.analysis.sholl import TreeParser
 from tracing.io import (FlyCircuitLoader, MouseLightLoader, NeuroMorphoLoader)
 from tracing.plugin import (SkeletonizerCmd, StrahlerCmd)
-from tracing.util import (BoundingBox, PointInImage, SWCColor, SWCPoint)
+from tracing.util import (BoundingBox, PointInImage, SNTColor, SWCPoint)
 from tracing.viewer import (Viewer2D, Viewer3D)
 

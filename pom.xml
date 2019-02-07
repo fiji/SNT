@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>24.0.0</version>
+		<version>25.0.0</version>
 		<relativePath />
 	</parent>
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>3.1.12-SNAPSHOT</version>
+	<version>3.1.20-SNAPSHOT</version>
 
 	<name>Simple Neurite Tracer</name>
 	<description>The ImageJ framework for semi-automated tracing of neurons and other tube-like structures.</description>

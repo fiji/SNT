@@ -424,26 +424,31 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		final JMenuItem jmi = new JMenuItem("Options...");
 		jmi.addActionListener(e -> {
 
-			class GetOptions extends SwingWorker<Object, Object> {
+			class GetOptions extends SwingWorker<Boolean, Object> {
 
 				@Override
-				public Object doInBackground() {
+				public Boolean doInBackground() {
 					try {
 						final CommandService cmdService = plugin.getContext().getService(
 							CommandService.class);
 						final CommandModule cm = cmdService.run(SWCTypeOptionsCmd.class,
 							true).get();
-						if (cm.isCanceled()) return null;
+						return !cm.isCanceled();
 					}
-					catch (InterruptedException | ExecutionException e1) {
+					catch (final InterruptedException | ExecutionException e1) {
 						e1.printStackTrace();
 					}
-					return null;
+					return false;
 				}
 
 				@Override
 				protected void done() {
-					assembleSWCtypeMenu(true);
+					try {
+						assembleSWCtypeMenu(get());
+					}
+					catch (final InterruptedException | ExecutionException exc) {
+						exc.printStackTrace();
+					}
 				}
 			}
 			(new GetOptions()).execute();

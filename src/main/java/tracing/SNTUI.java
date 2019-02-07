@@ -31,6 +31,7 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -288,7 +289,7 @@ public class SNTUI extends JDialog {
 				++c1.gridy;
 				tab1.add(renderingPanel(), c1);
 				++c1.gridy;
-				GuiUtils.addSeparator(tab1, "Path Labelling:", true, c1);
+				GuiUtils.addSeparator(tab1, "Default Path Colors:", true, c1);
 				++c1.gridy;
 				tab1.add(colorOptionsPanel(), c1);
 				++c1.gridy;
@@ -1992,7 +1993,7 @@ public class SNTUI extends JDialog {
 	private JPanel renderingPanel() {
 
 		showPathsSelected = new JCheckBox(hotKeyLabel(
-			"1. Only selected paths (hide unselected)", "1"),
+			"1. Only selected paths (hide deselected)", "1"),
 			plugin.showOnlySelectedPaths);
 		showPathsSelected.addItemListener(listener);
 
@@ -2030,40 +2031,34 @@ public class SNTUI extends JDialog {
 	}
 
 	private JPanel colorOptionsPanel() {
-		final JPanel colorOptionsPanel = new JPanel();
-		colorOptionsPanel.setLayout(new GridBagLayout());
+		final JPanel colorOptionsPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints cop_f = GuiUtils.defaultGbc();
-
-		final JPanel colorButtonPanel = new JPanel();
+		final JPanel colorButtonPanel = new JPanel(new GridLayout(1, 2));
 		final ColorChooserButton colorChooser1 = new ColorChooserButton(
-			plugin.selectedColor, "Selected Paths");
+			plugin.selectedColor, "Selected");
 		colorChooser1.setName("Color for Selected Paths");
 		colorChooser1.addColorChangedListener(newColor -> plugin.setSelectedColor(
 			newColor));
 		final ColorChooserButton colorChooser2 = new ColorChooserButton(
-			plugin.deselectedColor, "Deselected Paths");
+			plugin.deselectedColor, "Deselected");
 		colorChooser2.setName("Color for Deselected Paths");
 		colorChooser2.addColorChangedListener(newColor -> plugin.setDeselectedColor(
 			newColor));
 		colorButtonPanel.add(colorChooser1);
 		colorButtonPanel.add(colorChooser2);
-
-		final JComboBox<String> pathsColorChoice = new JComboBox<>();
-		pathsColorChoice.addItem("Default colors");
-		pathsColorChoice.addItem("Path Manager colors (if any)");
-		pathsColorChoice.setSelectedIndex(plugin.displayCustomPathColors ? 1 : 0);
-		pathsColorChoice.addActionListener(e -> {
-			plugin.displayCustomPathColors = !"Default colors".equals(pathsColorChoice
-				.getSelectedItem());
-			colorChooser1.setEnabled(!plugin.displayCustomPathColors);
-			colorChooser2.setEnabled(!plugin.displayCustomPathColors);
-			plugin.updateAllViewers();
-		});
-		++cop_f.gridy;
-		colorOptionsPanel.add(pathsColorChoice, cop_f);
-
 		++cop_f.gridy;
 		colorOptionsPanel.add(colorButtonPanel, cop_f);
+		++cop_f.gridy;
+		final JCheckBox jcheckbox = new JCheckBox(
+			"Enforce default colors (ignore color tags)");
+		jcheckbox.addActionListener(e -> {
+			plugin.displayCustomPathColors = !jcheckbox.isSelected();
+			// colorChooser1.setEnabled(!plugin.displayCustomPathColors);
+			// colorChooser2.setEnabled(!plugin.displayCustomPathColors);
+			plugin.updateAllViewers();
+		});
+		colorOptionsPanel.add(jcheckbox, cop_f);
+
 		return colorOptionsPanel;
 	}
 

@@ -1,67 +1,82 @@
+# -*- coding: utf-8 -*-
+"""
+This python script demonstrates how to integrate functionality from
+Simple Neurite Tracer with various python libraries through pyimagej.
+It requires that the latest version of SNT is installed in your
+ImageJ/Fiji environment.
+
+Python dependencies:
+- pyimagej
+- numpy
+- scipy
+"""
+
 import imagej
 import numpy as np
-import ast
 from scipy.spatial import ConvexHull
 
-ij = imagej.init(r'C:\Users\cam\Desktop\Fiji.app', headless=False)
+# replace with path to your local ImageJ or Fiji installation
+ij = imagej.init(r'C:\Users\cam\Desktop\fiji-win64\Fiji.app', headless=False)
+from jnius import autoclass, cast
 
-plugin = "Simple Neurite Tracer..."
-args = {'image': 'None. Run SNT in Analysis Mode'}
-ij.py.run_plugin(plugin)
-
-script = """
-# @Context context
-# @LegacyService ls
-# @DatasetService ds
-# @DisplayService display
-# @LogService log
-# @SNTService snt
-# @StatusService status
-# @UIService ui
-# @output String dendrite_tip_list
-# @output String axon_tip_list
-
-
-from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
-from tracing.io import MLJSONLoader
-from tracing.util import PointInImage
-from tracing.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
-    TreeStatistics)
-from tracing.viewer import(Viewer2D, Viewer3D)
+# import relevant Java classes
+HashSet = autoclass('java.util.HashSet')
+PointInImage = autoclass('tracing.util.PointInImage')
+MouseLightLoader = autoclass('tracing.io.MouseLightLoader')
+Tree = autoclass('tracing.Tree')
+TreeAnalyzer = autoclass('tracing.analysis.TreeAnalyzer')
+Color = autoclass('org.scijava.util.Colors')
+Viewer = autoclass('tracing.viewer.Viewer3D')
 
 
 def run():
-
-    # Import some data from the MouseLight database in 'headless' mode
-    loader = MLJSONLoader("AA0100") # one of the largest cells in the database
+    # fetch swc from MouseLight database by ID
+    loader = MouseLightLoader('AA0265')
     if not loader.isDatabaseAvailable():
-        ui.showDialog("Could not connect to ML database", "Error")
+        print("Could not connect to ML database", "Error")
         return
     if not loader.idExists():
-        ui.showDialog("Somewhow the specified id was not found", "Error")
+        print("Somewhow the specified id was not found", "Error")
         return
 
-    d_tree = loader.getTree('dendrites', None)  # compartment, color
-    a_tree = loader.getTree('axon', None)
-       
-    dendrite_tip_positions = TreeAnalyzer(d_tree).getTips()
-    dendrite_tip_list = [[tip.x, tip.y, tip.z] for tip in dendrite_tip_positions]
-    
-    axon_tip_positions = TreeAnalyzer(a_tree).getTips()
-    axon_tip_list = [[tip.x, tip.y, tip.z] for tip in axon_tip_positions]
-    
-    return axon_tip_list, dendrite_tip_list
-    
-axon_tip_list, dendrite_tip_list = run()
-"""
+    tree = loader.getTree('axon', None)
+    analyzer = TreeAnalyzer(tree)
 
-language_extension = 'py'
-result = ij.py.run_script(language_extension, script)
-dendrite_tip_list = ast.literal_eval(result.getOutput('dendrite_tip_list'))
-axon_tip_list = ast.literal_eval(result.getOutput('axon_tip_list'))
+    # extract the axonal end points from the tree as a java HashSet
+    tips_java_set = analyzer.getTips()
+    tips_iterator = tips_java_set.iterator()
 
-print(len(axon_tip_list))
-print(len(dendrite_tip_list))
-d_hull = ConvexHull(dendrite_tip_list)
-print("The volume of the convex hull encapsulating \
-all dendritic end points is ~{} cubic micrometers".format(int(d_hull.volume**(1/3))))
+    # convert to python list
+    tips_list = []
+    while tips_iterator.hasNext():
+        n = tips_iterator.next()
+        tips_list.append([n.x, n.y, n.z])
+
+    assert len(tips_list) == tips_java_set.size()
+
+    # Find the convex hull of the end points
+    X = np.asarray(tips_list)
+    hull = ConvexHull(X)
+    print("The volume of the convex hull encapsulating all axonal end points is {} cubic microns".format(
+        round(hull.volume, 2)))
+    print("The area of the hull is {} square microns".format(round(hull.area, 2)))
+
+    verts = X[hull.vertices]
+
+    # construct new java Hashset containing the hull vertices
+    verts_set = HashSet()
+    for v in list(verts):
+        verts_set.add(PointInImage(v[0], v[1], v[2]))
+
+    # Visualize the result using SNT Viewer3D
+    viewer = Viewer()
+    #viewer.setDefaultColor(Color.GREEN)
+    viewer.add(tree)
+    viewer.addSurface(verts_set, Color.CORAL, 50)
+    viewer.show()
+
+
+run()
+
+# HACK TO KEEP VIEWER WINDOW OPEN, PRESS <ENTER> TO QUIT
+input()

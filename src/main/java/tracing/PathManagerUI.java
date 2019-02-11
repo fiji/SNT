@@ -1747,6 +1747,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			else if (CONVERT_TO_ROI_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
+				input.put("imp", plugin.getImagePlus());
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
 				cmdService.run(ROIExporterCmd.class, true, input);

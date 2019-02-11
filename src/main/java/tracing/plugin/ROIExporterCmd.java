@@ -35,6 +35,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.ui.DialogPrompt;
 import org.scijava.ui.UIService;
 
+import ij.ImagePlus;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
@@ -80,6 +81,9 @@ public class ROIExporterCmd implements Command {
 	@Parameter(required = true)
 	private Tree tree;
 
+	@Parameter(required = false)
+	private ImagePlus imp;
+
 	private Overlay overlay;
 	private RoiConverter converter;
 	private boolean warningsExist = false;
@@ -90,7 +94,7 @@ public class ROIExporterCmd implements Command {
 	@Override
 	public void run() {
 
-		converter = new RoiConverter(tree);
+		converter = new RoiConverter(tree, imp);
 		if (converter.getParsedTree().isEmpty()) {
 			warnUser("None of the input paths could be converted to ROIs.");
 			return;

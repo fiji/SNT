@@ -54,12 +54,37 @@ public class RoiConverter extends TreeAnalyzer {
 	/** SNT's XZ view */
 	public static final int XZ_PLANE = MultiDThreePanes.XZ_PLANE;
 
-	private int width = -1; // flag to use mean path diameter
+	private float width = -1f; // -1: use mean path diameter
 	private int exportPlane = XY_PLANE;
 	private boolean useSWCcolors;
+	private final ImagePlus imp;
+	private final boolean hyperstack;
+	private boolean twoD;
 
+	/**
+	 * Instantiates a new Converter. Since an image has not been specified, C,Z,T
+	 * positions may not be properly for converted nodes.
+	 *
+	 * @param tree the Tree to be converted
+	 */
 	public RoiConverter(final Tree tree) {
 		super(tree);
+		imp = null;
+		hyperstack = false;
+	}
+
+	/**
+	 * Instantiates a new Converter.
+	 *
+	 * @param tree the Tree to be converted
+	 * @param imp the image associated with the Tree, used to properly assign C,T
+	 *          positions of converted nodes
+	 */
+	public RoiConverter(final Tree tree, final ImagePlus imp) {
+		super(tree);
+		this.imp = imp;
+		hyperstack = imp.isHyperStack();
+		twoD = imp.getNSlices() == 1;
 	}
 
 	/**
@@ -151,12 +176,12 @@ public class RoiConverter extends TreeAnalyzer {
 
 		final String basename = path.getName();
 		final Color color = getColor(path);
-		final double stroke = (width == -1) ? path.getMeanRadius() * 2 : width;
-
+		final float stroke = (width < 0f) ? (float) path.getMeanRadius() * 2 : width;
+		//if (stroke == 0f) stroke = 1f;
 		FloatPolygon polygon = new FloatPolygon();
 		int current_roi_slice = Integer.MIN_VALUE;
 		int roi_identifier = 1;
-
+		final int[] roi_pos = new int[] { path.getChannel(), 1, path.getFrame() };
 		for (int i = 0; i < path.size(); ++i) {
 
 			double x = Integer.MIN_VALUE;
@@ -167,17 +192,17 @@ public class RoiConverter extends TreeAnalyzer {
 				case XY_PLANE:
 					x = path.getXUnscaledDouble(i);
 					y = path.getYUnscaledDouble(i);
-					slice_of_point = path.getZUnscaled(i);
+					slice_of_point = path.getZUnscaled(i) + 1;
 					break;
 				case XZ_PLANE:
 					x = path.getXUnscaledDouble(i);
 					y = path.getZUnscaledDouble(i);
-					slice_of_point = path.getYUnscaled(i);
+					slice_of_point = path.getYUnscaled(i) + 1;
 					break;
 				case ZY_PLANE:
 					x = path.getZUnscaledDouble(i);
 					y = path.getYUnscaledDouble(i);
-					slice_of_point = path.getXUnscaled(i);
+					slice_of_point = path.getXUnscaled(i) + 1;
 					break;
 				default:
 					throw new IllegalArgumentException("exportPlane is not valid");
@@ -187,24 +212,26 @@ public class RoiConverter extends TreeAnalyzer {
 				polygon.addPoint(x, y);
 			}
 			else {
-				addPolyLineToOverlay(polygon, current_roi_slice, basename,
+				roi_pos[1] = current_roi_slice;
+				addPolyLineToOverlay(polygon, roi_pos, basename,
 					roi_identifier++, color, stroke, overlay);
 				polygon = new FloatPolygon(); // reset ROI
 				polygon.addPoint(x, y);
 			}
 			current_roi_slice = slice_of_point;
+			roi_pos[1] = current_roi_slice;
 
 		}
 
 		// Create ROI from any remaining points
-		addPolyLineToOverlay(polygon, current_roi_slice, basename, roi_identifier,
-			color, stroke, overlay);
+		addPolyLineToOverlay(polygon, roi_pos, basename, roi_identifier, color, stroke,
+			overlay);
 
 	}
 
-	private void addPolyLineToOverlay(final FloatPolygon p, final int z_position,
-		final String basename, final int roi_id, final Color color,
-		final double strokeWidth, final Overlay overlay)
+	private void addPolyLineToOverlay(final FloatPolygon p,
+		final int[] impPosition, final String basename, final int roi_id,
+		final Color color, final float strokeWidth, final Overlay overlay)
 	{
 		final String sPlane = getExportPlaneAsString();
 		if (p.npoints > 0) {
@@ -219,10 +246,19 @@ public class RoiConverter extends TreeAnalyzer {
 			// polyline.fitSplineForStraightening();
 			polyline.setStrokeColor(color);
 			polyline.setStrokeWidth(strokeWidth);
-			polyline.setName(String.format("%s-%s-%04d-Z%d", basename, sPlane, roi_id,
-				z_position));
-			polyline.setPosition(0, z_position, 0);
+			polyline.setName(String.format("%s-%s-%04d", basename, sPlane, roi_id));
+			setPosition(polyline, impPosition);
 			overlay.add(polyline);
+		}
+	}
+
+	private void setPosition(final Roi roi, final int[] positions) {
+		if (hyperstack) {
+			roi.setPosition(positions[0], positions[1], positions[2]);
+		} else if (!twoD) {
+			roi.setPosition(positions[1]);
+		} else {
+			roi.setPosition(0);
 		}
 	}
 
@@ -231,15 +267,7 @@ public class RoiConverter extends TreeAnalyzer {
 		final Overlay overlay, final Color color, final String id)
 	{
 		if (points.isEmpty()) return;
-		final ImagePlus boundsImp = tree.getImpContainer(exportPlane); // NB: this
-																																		// image is
-																																		// just
-																																		// required
-																																		// to
-		// assign Z -positions to points. It is
-		// an overhead and not required for 2D
-		// images
-		final SNTPointRoi roi = new SNTPointRoi(boundsImp);
+		final SNTPointRoi roi = new SNTPointRoi();
 		final String sPlane = getExportPlaneAsString();
 		for (final PointInImage p : points) {
 			final Path path = p.onPath;
@@ -248,8 +276,9 @@ public class RoiConverter extends TreeAnalyzer {
 				continue;
 			}
 			final double[] coordinates = PathNode.unScale(p, exportPlane);
-			final int slice = (int) Math.round(coordinates[2]);
-			roi.addPoint(coordinates[0], coordinates[1], slice);
+			final int[] pos = new int[] { path.getChannel(), (int) Math.round(
+				coordinates[2] + 1), path.getFrame() };
+			roi.addPoint(coordinates[0], coordinates[1], pos);
 		}
 		roi.setStrokeColor(color);
 		roi.setName(String.format("%s-roi-%s", id, sPlane));
@@ -272,19 +301,25 @@ public class RoiConverter extends TreeAnalyzer {
 	 * to activate the corresponding image z-slice. This class makes it easier to
 	 * do so.
 	 */
-	private static class SNTPointRoi extends PointRoi {
+	private class SNTPointRoi extends PointRoi {
 
 		private static final long serialVersionUID = 1L;
-		private final ImagePlus imp;
 
-		public SNTPointRoi(final ImagePlus imp) {
+		public SNTPointRoi() {
 			super(0, 0);
 			deletePoint(0);
-			this.imp = imp;
+			imp = RoiConverter.this.imp;
+			if (imp == null) {
+				// HACK: this image is just required to assign positions
+				// to points. It is an overhead and not required for 2D images
+				// We should change the IJ1 API so that position can be assigned
+				// without an image
+				imp = tree.getImpContainer(exportPlane);
+			}
 		}
 
-		public void addPoint(final double ox, final double oy, final int slice) {
-			imp.setPositionWithoutUpdate(1, slice, 1);
+		public void addPoint(final double ox, final double oy, final int[] position) {
+			imp.setPositionWithoutUpdate(position[0], position[1], position[2]);
 			super.addPoint(imp, ox, oy);
 		}
 	}

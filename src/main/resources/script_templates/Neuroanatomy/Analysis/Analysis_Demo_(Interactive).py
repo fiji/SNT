@@ -16,7 +16,7 @@ info:       Exemplifies how to programatically interact with a running instance
             of SNT to analyze traced data. Because of all the GUI updates, this
             approach is _significantly slower_ than analyzing reconstructions
             retrieved directly from the loader.
-            Do check Analysis_Demo_(Headless).py for comparison
+            Do check Analysis_Demo.py for comparison
 '''
 
 import math

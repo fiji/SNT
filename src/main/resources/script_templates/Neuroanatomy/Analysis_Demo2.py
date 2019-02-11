@@ -11,9 +11,9 @@
 '''
 file:       Analysis_Demo2.py
 author:     Tiago Ferreira, Cameron Arshadi
-version:    20180928
-info:       A jython demo of how one could script Simple Neurite Tracer to perform automated analysis
-            on neuron reconstructions fetched from online databases such as MouseLight, NeuroMorpho.org and FlyCircuit
+version:    20190210
+info:       A Jython demo of how SNT can analyze neuron reconstructions fetched
+            from online databases such as MouseLight, NeuroMorpho or FlyCircuit
 '''
 
 import math
@@ -53,9 +53,9 @@ def run():
         dsummary = d_stats.getDescriptiveStats(TreeStatistics.INTER_NODE_DISTANCE)
         print("The average inter-node distance is %d" % dsummary.getMean())
 
-        # We can get the volume of a compartment by
-        # approximating the volume of each path, and summing to total.
-        # For info on the assumptions made in the volume calculation, see lines 2094-2108 at
+        # We can get the volume of a compartment by approximating the volume of
+        # each path, and summing to total. For info on the assumptions made in
+        # the volume calculation, see #getApproximatedVolume() at
         # https://github.com/fiji/Simple_Neurite_Tracer/blob/scijava/src/main/java/tracing/Path.java
         compartment_volume = 0
         for path in tree.list():
@@ -103,7 +103,7 @@ def run():
             plot = plotService.newXYPlot()
             plot.setTitle("Mean path radius vs Branch Order")
             series = plot.addXYSeries()
-            series.setLabel("circle")
+            series.setLabel("Adol-20100419cell1")
             series.setValues(xs, ys)
             ui.show(plot)
 

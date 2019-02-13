@@ -593,7 +593,7 @@ public class Viewer3D {
 	}
 
 	private boolean deleteItemFromManager(final String label) {
-		return managerModel.removeElement(label);
+		return managerModel != null && managerModel.removeElement(label);
 	}
 
 	/**
@@ -767,7 +767,7 @@ public class Viewer3D {
 		while (it.hasNext()) {
 			final Map.Entry<String, RemountableDrawableVBO> entry = it.next();
 			chart.getScene().getGraph().remove(entry.getValue(), false);
-			managerModel.removeElement(entry.getKey());
+			deleteItemFromManager(entry.getKey());
 			it.remove();
 		}
 		if (viewUpdatesEnabled) chart.render();
@@ -782,7 +782,7 @@ public class Viewer3D {
 		while (it.hasNext()) {
 			final Map.Entry<String, ShapeTree> entry = it.next();
 			chart.getScene().getGraph().remove(entry.getValue().get(), false);
-			managerModel.removeElement(entry.getKey());
+			deleteItemFromManager(entry.getKey());
 			it.remove();
 		}
 		if (viewUpdatesEnabled) chart.render();

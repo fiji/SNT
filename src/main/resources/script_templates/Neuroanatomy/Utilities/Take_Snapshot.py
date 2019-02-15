@@ -1,6 +1,7 @@
 # @String(value="<HTML>This script creates an illustration of a tracing canvas.<br>N.B.: Paths can also be exported as vector graphics<br>through the <i>Plot Traces...</i> command.",visibility="MESSAGE") msg
 # @String(label="Tracing Canvas", choices={"XY", "ZY", "XZ", "3D"}, style="radioButtonHorizontal") view
-# @Double(label="Paths offset",description="In pixels. Positive values move paths SE. Negative NW", value=20) offset
+# @double(label="Paths offset",description="In pixels. Positive values move paths SE. Negative NW", value=20) offset
+# @boolean(label="Max Intensity Projection",description="If current image is a stack, compute Max Intensity Projection") mip
 # @LegacyService ls
 # @SNTService snt
 # @UIService ui
@@ -38,7 +39,7 @@ def run():
 
     try:
         # Retrieve 'snapshot'
-        snap = snt.captureView(view)
+        snap = snt.captureView(view, mip)
  
         # Restore offsets, display 'snapshot' and add a scale bar to it
         if offset != 0:

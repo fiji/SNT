@@ -257,7 +257,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @return the snapshot capture of the canvas as an RGB image
 	 */
 	@SuppressWarnings("deprecation")
-	public ImagePlus captureView(final String view) {
+	public ImagePlus captureView(final String view, final boolean project) {
 		accessActiveInstance();
 		if (view == null || view.trim().isEmpty())
 			throw new IllegalArgumentException("Invalid view");
@@ -273,10 +273,9 @@ public class SNTService extends AbstractService implements ImageJService {
 		if (imp == null) throw new IllegalArgumentException(
 			"view is not available");
 
-		final ImagePlus proj = ZProjector.run(imp, "max").flatten(); // overlay will
-																																	// be flatten
-																																	// but not
-																																	// active ROI
+		final ImagePlus proj = ZProjector.run(imp, "max", (project) ? 1 : imp
+			.getZ(), (project) ? imp.getNSlices() : imp.getZ()).flatten();
+		// NB: overlay will be flatten but not active ROI
 		final TracerCanvas canvas = new TracerCanvas(proj, plugin, viewPlane, plugin
 			.getPathAndFillManager());
 		final BufferedImage bi = new BufferedImage(proj.getWidth(), proj

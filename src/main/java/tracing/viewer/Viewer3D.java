@@ -25,9 +25,7 @@ package tracing.viewer;
 import com.jidesoft.swing.CheckBoxList;
 import com.jidesoft.swing.ListSearchable;
 import com.jidesoft.swing.SearchableBar;
-import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.FPSCounter;
-import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GLAnimatorControl;
 import com.jogamp.opengl.GLException;
 
@@ -53,10 +51,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.JarURLConnection;
 import java.net.URL;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,8 +99,6 @@ import org.jzy3d.chart.factories.IFrame;
 import org.jzy3d.colors.Color;
 import org.jzy3d.colors.ColorMapper;
 import org.jzy3d.colors.ISingleColorable;
-import org.jzy3d.io.IGLLoader;
-import org.jzy3d.io.obj.OBJFile;
 import org.jzy3d.maths.BoundingBox3d;
 import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
@@ -184,6 +177,7 @@ import tracing.plugin.StrahlerCmd;
 import tracing.util.PointInImage;
 import tracing.util.SNTColor;
 import tracing.util.SNTPoint;
+import tracing.viewer.OBJMesh.RemountableDrawableVBO;
 
 /**
  * Implements SNT's Reconstruction Viewer. Relies heavily on the
@@ -743,10 +737,10 @@ public class Viewer3D {
 	 * @return the rendered Meshes (keys being the filename of the imported OBJ
 	 *         file as per {@link #loadOBJ(String, ColorRGB, double)}
 	 */
-	private Map<String, DrawableVBO> getOBJs() {
-		final Map<String, DrawableVBO> newMap = new LinkedHashMap<>();
+	private Map<String, OBJMesh> getOBJs() {
+		final Map<String, OBJMesh> newMap = new LinkedHashMap<>();
 		plottedObjs.forEach((k, drawable) -> {
-			newMap.put(k, drawable);
+			newMap.put(k, drawable.objMesh);
 		});
 		return newMap;
 	}
@@ -1128,37 +1122,20 @@ public class Viewer3D {
 	 * @throws IllegalArgumentException if filePath is invalid or file does not
 	 *           contain a compilable mesh
 	 */
-	public void loadOBJ(final String filePath, final ColorRGB color,
+	public OBJMesh loadOBJ(final String filePath, final ColorRGB color,
 		final double transparencyPercent) throws IllegalArgumentException
 	{
-		if (filePath == null || filePath.isEmpty()) {
-			throw new IllegalArgumentException("Invalid file path");
-		}
-		final ColorRGB inputColor = (color == null) ? Colors.WHITE : color;
-		final Color c = new Color(inputColor.getRed(), inputColor.getGreen(),
-			inputColor.getBlue(), (int) Math.round((100 - transparencyPercent) * 255 /
-				100));
-		SNT.log("Retrieving " + filePath);
-		final URL url;
-		try {
-			// see https://stackoverflow.com/a/402771
-			if (filePath.startsWith("jar")) {
-				final URL jarUrl = new URL(filePath);
-				final JarURLConnection connection = (JarURLConnection) jarUrl
-					.openConnection();
-				url = connection.getJarFileURL();
-			}
-			else if (!filePath.startsWith("http")) {
-				url = (new File(filePath)).toURI().toURL();
-			}
-			else {
-				url = new URL(filePath);
-			}
-		}
-		catch (final ClassCastException | IOException e) {
-			throw new IllegalArgumentException("Invalid path: " + filePath);
-		}
-		loadOBJ(url, c);
+		final OBJMesh objMesh = new OBJMesh(filePath);
+		objMesh.setColor(color, transparencyPercent);
+		return loadOBJMesh(objMesh);
+	}
+
+	private OBJMesh loadOBJMesh(final OBJMesh objMesh) {
+		chart.add(objMesh.drawable, false); // GLException if true
+		final String label = getUniqueLabel(plottedObjs, "Mesh", objMesh.getLabel());
+		plottedObjs.put(label, objMesh.drawable);
+		addItemToManager(label);
+		return objMesh;
 	}
 
 	/**
@@ -1167,8 +1144,8 @@ public class Viewer3D {
 	 *
 	 * @throws IllegalArgumentException if Viewer is not available
 	 */
-	public void loadMouseRefBrain() throws IllegalArgumentException {
-		loadRefBrain(ALLEN_MESH_LABEL);
+	public OBJMesh loadMouseRefBrain() throws IllegalArgumentException {
+		return loadRefBrain(ALLEN_MESH_LABEL);
 	}
 
 	/**
@@ -1181,10 +1158,11 @@ public class Viewer3D {
 	 * @param templateBrain the template brain to be loaded (case-insensitive).
 	 *          Either "JFRC2" (AKA JFRC2010), "JFRC3" (AKA JFRC2013), or "FCWB"
 	 *          (FlyCircuit Whole Brain Template)
+	 * @return 
 	 * @throws IllegalArgumentException if templateBrain is not recognized, or
 	 *           Viewer is not available
 	 */
-	public void loadDrosoRefBrain(final String templateBrain)
+	public OBJMesh loadDrosoRefBrain(final String templateBrain)
 		throws IllegalArgumentException
 	{
 		final String inputType = (templateBrain == null) ? null : templateBrain
@@ -1193,33 +1171,32 @@ public class Viewer3D {
 			case "jfrc2":
 			case "jfrc2010":
 			case "jfrctemplate2010":
-				loadRefBrain(JFRC2_MESH_LABEL);
-				break;
+				return loadRefBrain(JFRC2_MESH_LABEL);
 			case "jfrc3":
 			case "jfrc2013":
 			case "jfrctemplate2013":
-				loadRefBrain(JFRC3_MESH_LABEL);
-				break;
+				return loadRefBrain(JFRC3_MESH_LABEL);
 			case "fcwb":
 			case "flycircuit":
-				loadRefBrain(FCWB_MESH_LABEL);
-				break;
+				return loadRefBrain(FCWB_MESH_LABEL);
 			default:
 				throw new IllegalArgumentException("Invalid argument");
 		}
 	}
 
-	private void loadRefBrain(final String label)
+	private OBJMesh loadRefBrain(final String label)
 		throws IllegalArgumentException
 	{
-		if (getOBJs().keySet().contains(label)) {
+		if (plottedObjs.keySet().contains(label)) {
 			setVisible(label, true);
-			return;
+			return plottedObjs.get(label).objMesh;
 		}
 		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
 		final URL url = loader.getResource("meshes/" + label);
 		if (url == null) throw new IllegalArgumentException(label + " not found");
-		loadOBJ(url, getNonUserDefColor());
+		final OBJMesh objMesh = new OBJMesh(url);
+		objMesh.drawable.setColor(getNonUserDefColor());
+		return loadOBJMesh(objMesh);
 	}
 
 	private Color getNonUserDefColor() {
@@ -1228,23 +1205,6 @@ public class Viewer3D {
 
 	private Color getDefColor() {
 		return (defColor == null) ? getNonUserDefColor() : defColor;
-	}
-
-	private void loadOBJ(final URL url, final Color color)
-		throws IllegalArgumentException
-	{
-		final OBJFileLoaderPlus loader = new OBJFileLoaderPlus(url);
-		if (!loader.compileModel()) {
-			throw new IllegalArgumentException(
-				"Mesh could not be compiled. Invalid file?");
-		}
-		final RemountableDrawableVBO drawable = new RemountableDrawableVBO(loader);
-		// drawable.setQuality(chart.getQuality());
-		drawable.setColor(color);
-		chart.add(drawable, false); // GLException if true
-		final String label = loader.getLabel();
-		plottedObjs.put(label, drawable);
-		addItemToManager(label);
 	}
 
 //	/**
@@ -3444,117 +3404,6 @@ public class Viewer3D {
 	}
 
 	/**
-	 * This is just to make {@link DrawableVBO#hasMountedOnce()} accessible,
-	 * allowing to force the re-loading of meshes during an interactive session
-	 */
-	private class RemountableDrawableVBO extends DrawableVBO {
-
-		public RemountableDrawableVBO(final IGLLoader<DrawableVBO> loader) {
-			super(loader);
-		}
-
-		public void unmount() {
-			super.hasMountedOnce = false;
-		}
-
-	}
-
-	/**
-	 * This is a shameless version of {@link #OBJFileLoader} with extra methods
-	 * that allow to check if OBJFile is valid before converting it into a
-	 * Drawable #
-	 */
-	private class OBJFileLoaderPlus implements IGLLoader<DrawableVBO> {
-
-		private URL url;
-		private OBJFilePlus obj;
-
-		public OBJFileLoaderPlus(final URL url) {
-			this.url = url;
-			if (url == null) throw new IllegalArgumentException("Null URL");
-		}
-
-		public String getLabel() {
-			String label = url.toString();
-			label = label.substring(label.lastIndexOf("/") + 1);
-			return getUniqueLabel(plottedObjs, "Mesh", label);
-		}
-
-		public boolean compileModel() {
-			obj = new OBJFilePlus();
-			SNT.log("Loading OBJ file '" + url + "'");
-			if (!obj.loadModelFromURL(url)) {
-				SNT.log("Loading failed. Invalid file?");
-				return false;
-			}
-			obj.compileModel();
-			SNT.log(String.format("Meshed compiled: %d vertices and %d triangles", obj
-				.getPositionCount(), (obj.getIndexCount() / 3)));
-			return obj.getPositionCount() > 0;
-		}
-
-		@Override
-		public void load(final GL gl, final DrawableVBO drawable) {
-			final int size = obj.getIndexCount();
-			final int indexSize = size * Buffers.SIZEOF_INT;
-			final int vertexSize = obj.getCompiledVertexCount() *
-				Buffers.SIZEOF_FLOAT;
-			final int byteOffset = obj.getCompiledVertexSize() * Buffers.SIZEOF_FLOAT;
-			final int normalOffset = obj.getCompiledNormalOffset() *
-				Buffers.SIZEOF_FLOAT;
-			final int dimensions = obj.getPositionSize();
-			final int pointer = 0;
-			final FloatBuffer vertices = obj.getCompiledVertices();
-			final IntBuffer indices = obj.getCompiledIndices();
-			final BoundingBox3d bounds = obj.computeBoundingBox();
-			drawable.doConfigure(pointer, size, byteOffset, normalOffset, dimensions);
-			drawable.doLoadArrayFloatBuffer(gl, vertexSize, vertices);
-			drawable.doLoadElementIntBuffer(gl, indexSize, indices);
-			drawable.doSetBoundingBox(bounds);
-		}
-	}
-
-	private class OBJFilePlus extends OBJFile {
-
-		/* (non-Javadoc)
-		 * @see org.jzy3d.io.obj.OBJFile#parseObjVertex(java.lang.String, float[])
-		 * This is so that we can import files listing 4-component vertices [x, y, z, w]
-		 */
-		@Override
-		public void parseObjVertex(String line, final float[] val) {
-			switch (line.charAt(1)) {
-				case ' ':
-					// logger.info(line);
-
-					line = line.substring(line.indexOf(" ") + 1);
-					// vertex, 3 or 4 components
-					val[0] = Float.valueOf(line.substring(0, line.indexOf(" ")));
-					line = line.substring(line.indexOf(" ") + 1);
-					val[1] = Float.valueOf(line.substring(0, line.indexOf(" ")));
-					line = line.substring(line.indexOf(" ") + 1);
-					val[2] = Float.valueOf(line.split(" ")[0]);
-					positions_.add(val[0]);
-					positions_.add(val[1]);
-					positions_.add(val[2]);
-					break;
-
-				case 'n':
-					// normal, 3 components
-					line = line.substring(line.indexOf(" ") + 1);
-					val[0] = Float.valueOf(line.substring(0, line.indexOf(" ")));
-					line = line.substring(line.indexOf(" ") + 1);
-					val[1] = Float.valueOf(line.substring(0, line.indexOf(" ")));
-					line = line.substring(line.indexOf(" ") + 1);
-					val[2] = Float.valueOf(line);
-					normals_.add(val[0]);
-					normals_.add(val[1]);
-					normals_.add(val[2]);
-					break;
-			}
-		}
-	}
-
-	/**
 	 * Sets the line thickness for rendering {@link Tree}s that have no specified
 	 * radius.
 	 *
@@ -3789,12 +3638,14 @@ public class Viewer3D {
 		jzy3D.addColorBarLegend(ColorTables.ICE, (float) bounds[0],
 			(float) bounds[1], new Font("Arial", Font.PLAIN, 24), 3, 4);
 		jzy3D.add(tree);
-		jzy3D.loadMouseRefBrain();
+		final OBJMesh brainMesh = jzy3D.loadMouseRefBrain();
+		brainMesh.setBoundingBoxColor(Colors.RED);
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
 		jzy3D.addSurface(analyzer.getTips());
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);
+		jzy3D.updateColorBarLegend(-8, 88);
 	}
 
 }

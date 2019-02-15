@@ -31,8 +31,6 @@ import org.jzy3d.colors.ColorMapper;
 class ColorTableMapper extends ColorMapper {
 
 	private final ColorTable colorTable;
-	private double min;
-	private double max;
 
 	public ColorTableMapper(final ColorTable colorTable, final double min,
 		final double max)

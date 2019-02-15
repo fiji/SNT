@@ -50,6 +50,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -101,6 +102,7 @@ import org.jzy3d.chart.factories.AWTChartComponentFactory;
 import org.jzy3d.chart.factories.IChartComponentFactory;
 import org.jzy3d.chart.factories.IFrame;
 import org.jzy3d.colors.Color;
+import org.jzy3d.colors.ColorMapper;
 import org.jzy3d.colors.ISingleColorable;
 import org.jzy3d.io.IGLLoader;
 import org.jzy3d.io.obj.OBJFile;
@@ -108,6 +110,7 @@ import org.jzy3d.maths.BoundingBox3d;
 import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.maths.Rectangle;
+import org.jzy3d.plot2d.primitive.AWTColorbarImageGenerator;
 import org.jzy3d.plot3d.builder.Builder;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
 import org.jzy3d.plot3d.primitives.AbstractWireframeable;
@@ -116,6 +119,12 @@ import org.jzy3d.plot3d.primitives.Point;
 import org.jzy3d.plot3d.primitives.Shape;
 import org.jzy3d.plot3d.primitives.Sphere;
 import org.jzy3d.plot3d.primitives.Tube;
+import org.jzy3d.plot3d.primitives.axes.layout.providers.ITickProvider;
+import org.jzy3d.plot3d.primitives.axes.layout.providers.RegularTickProvider;
+import org.jzy3d.plot3d.primitives.axes.layout.providers.SmartTickProvider;
+import org.jzy3d.plot3d.primitives.axes.layout.renderers.FixedDecimalTickRenderer;
+import org.jzy3d.plot3d.primitives.axes.layout.renderers.ITickRenderer;
+import org.jzy3d.plot3d.primitives.axes.layout.renderers.ScientificNotationTickRenderer;
 import org.jzy3d.plot3d.primitives.vbo.drawable.DrawableVBO;
 import org.jzy3d.plot3d.rendering.canvas.ICanvas;
 import org.jzy3d.plot3d.rendering.canvas.IScreenCanvas;
@@ -173,8 +182,8 @@ import tracing.io.NeuroMorphoLoader;
 import tracing.plugin.ShollTracingsCmd;
 import tracing.plugin.StrahlerCmd;
 import tracing.util.PointInImage;
-import tracing.util.SNTPoint;
 import tracing.util.SNTColor;
+import tracing.util.SNTPoint;
 
 /**
  * Implements SNT's Reconstruction Viewer. Relies heavily on the
@@ -246,8 +255,7 @@ public class Viewer3D {
 	private final Prefs prefs;
 
 	/* Color Bar */
-	private AWTColorbarLegend cBar;
-	private Shape cBarShape;
+	private ColorLegend cBar;
 
 	/* Manager */
 	private CheckBoxList managerList;
@@ -461,9 +469,9 @@ public class Viewer3D {
 	}
 
 	private void addAllObjects() {
-		if (cBarShape != null && cBar != null) {
-			chart.add(cBarShape, false);
-			setColorbarColors(isDarkModeOn());
+		if (cBar != null) {
+			cBar.updateColors();
+			chart.add(cBar.get(), false);
 		}
 		plottedObjs.forEach((k, drawableVBO) -> {
 			drawableVBO.unmount();
@@ -609,34 +617,49 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Adds a color bar legend (LUT ramp).
+	 * Adds a color bar legend (LUT ramp) using default settings.
 	 *
 	 * @param colorTable the color table
 	 * @param min the minimum value in the color table
 	 * @param max the maximum value in the color table
 	 */
-	public void addColorBarLegend(final ColorTable colorTable, final float min,
-		final float max)
+	public void addColorBarLegend(final ColorTable colorTable, final double min,
+		final double max)
 	{
-		cBarShape = new Shape();
-		cBarShape.setColorMapper(new ColorTableMapper(colorTable, min, max));
-		cBar = new AWTColorbarLegend(cBarShape, view.getAxe().getLayout());
-		setColorbarColors(view.getBackgroundColor() == Color.BLACK);
-		// cbar.setMinimumSize(new Dimension(100, 600));
-		cBarShape.setLegend(cBar);
-		chart.add(cBarShape, viewUpdatesEnabled);
+		cBar = new ColorLegend(new ColorTableMapper(colorTable, min, max));
+		chart.add(cBar.get(), viewUpdatesEnabled);
 	}
 
-	private void setColorbarColors(final boolean darkMode) {
-		if (cBar == null) return;
-		if (darkMode) {
-			cBar.setBackground(Color.BLACK);
-			cBar.setForeground(Color.WHITE);
-		}
-		else {
-			cBar.setBackground(Color.WHITE);
-			cBar.setForeground(Color.BLACK);
-		}
+	/**
+	 * Updates the existing color bar legend to new properties. Does nothing if no
+	 * legend exists.
+	 *
+	 * @param min the minimum value in the color table
+	 * @param max the maximum value in the color table
+	 */
+	public void updateColorBarLegend(final double min, final double max)
+	{
+		if (cBar != null) cBar.update(min, max);
+	}
+
+	/**
+	 * Adds a color bar legend (LUT ramp).
+	 *
+	 * @param colorTable the color table
+	 * @param min the minimum value in the color table
+	 * @param max the maximum value in the color table
+	 * @param font the font the legend font.
+	 * @param steps the number of ticks in the legend. Tick placement is computed
+	 *          automatically if negative.
+	 * @param precision the number of decimal places of tick labels. scientific
+	 *          notation is used if negative.
+	 */
+	public void addColorBarLegend(final ColorTable colorTable, final double min,
+		final double max, final Font font, final int steps, final int precision)
+	{
+		cBar = new ColorLegend(new ColorTableMapper(colorTable, min, max), font,
+			steps, precision);
+		chart.add(cBar.get(), viewUpdatesEnabled);
 	}
 
 	/**
@@ -1300,6 +1323,114 @@ public class Viewer3D {
 			currentView = view;
 		}
 
+	}
+
+
+	/** AWTColorbarLegend with customizable font/ticks/decimals, etc. */
+	private class ColorLegend extends AWTColorbarLegend {
+
+		private final Shape shape;
+		private final Font font;
+
+		public ColorLegend(final ColorTableMapper mapper, final Font font,
+			final int steps, final int precision)
+		{
+			super(new Shape(), chart);
+			shape = (Shape) drawable;
+			this.font = font;
+			shape.setColorMapper(mapper);
+			shape.setLegend(this);
+			updateColors();
+			provider = (steps < 0) ? new SmartTickProvider(5)
+				: new RegularTickProvider(steps);
+			renderer = (precision < 0) ? new ScientificNotationTickRenderer(-1 *
+				precision) : new FixedDecimalTickRenderer(precision);
+			if (imageGenerator == null) init();
+			imageGenerator.setFont(font);
+		}
+
+		public ColorLegend(final ColorTableMapper mapper) {
+			this(mapper, new Font(Font.SANS_SERIF, Font.PLAIN, 12), 5, 2);
+		}
+
+		public void update(final double min, final double max) {
+			shape.getColorMapper().setMin(min);
+			shape.getColorMapper().setMax(max);
+			((ColorbarImageGenerator) imageGenerator).setMin(min);
+			((ColorbarImageGenerator) imageGenerator).setMax(max);
+		}
+
+		public Shape get() {
+			return shape;
+		}
+
+		private void init() {
+			initImageGenerator(shape, provider, renderer);
+		}
+
+		private void updateColors() {
+			setBackground(view.getBackgroundColor());
+			setForeground(view.getBackgroundColor().negative());
+		}
+
+		@Override
+		public void initImageGenerator(final AbstractDrawable parent,
+			final ITickProvider provider, final ITickRenderer renderer)
+		{
+			if (shape != null) imageGenerator = new ColorbarImageGenerator(shape
+				.getColorMapper(), provider, renderer, font.getSize());
+		}
+
+	}
+
+	private class ColorbarImageGenerator extends AWTColorbarImageGenerator {
+
+		public ColorbarImageGenerator(final ColorMapper mapper,
+			final ITickProvider provider, final ITickRenderer renderer,
+			final int textSize)
+		{
+			super(mapper, provider, renderer);
+			this.textSize = textSize;
+		}
+
+		@Override
+		public BufferedImage toImage(final int width, final int height,
+			final int barWidth)
+		{
+			if (barWidth > width) return null;
+			BufferedImage image = new BufferedImage(width, height,
+				BufferedImage.TYPE_INT_ARGB);
+			Graphics2D graphic = image.createGraphics();
+			configureText(graphic);
+			final int maxWidth = graphic.getFontMetrics().stringWidth(renderer.format(
+				max)) + barWidth + 1;
+			// do we have enough space to display labels?
+			if (maxWidth > width) {
+				graphic.dispose();
+				image.flush();
+				image = new BufferedImage(maxWidth, height,
+					BufferedImage.TYPE_INT_ARGB);
+				graphic = image.createGraphics();
+				configureText(graphic);
+			}
+			graphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				RenderingHints.VALUE_ANTIALIAS_ON);
+			graphic.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+				RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+			drawBackground(width, height, graphic);
+			drawBarColors(height, barWidth, graphic);
+			drawBarContour(height, barWidth, graphic);
+			drawTextAnnotations(height, barWidth, graphic);
+			return image;
+		}
+
+		private void setMin(final double min) {
+			this.min = min;
+		}
+
+		private void setMax(final double max) {
+			this.max = max;
+		}
 	}
 
 	/**
@@ -2489,7 +2620,6 @@ public class Viewer3D {
 				}
 			}
 			cBar = null;
-			cBarShape = null;
 		}
 
 		private void runCmd(final Class<? extends Command> cmdClass,
@@ -3135,17 +3265,16 @@ public class Viewer3D {
 			if (view.getBackgroundColor() == Color.BLACK) {
 				newForeground = Color.BLACK;
 				newBackground = Color.WHITE;
-				setColorbarColors(false);
 			}
 			else {
 				newForeground = Color.WHITE;
 				newBackground = Color.BLACK;
-				setColorbarColors(true);
 			}
 			view.setBackgroundColor(newBackground);
 			view.getAxe().getLayout().setGridColor(newForeground);
 			view.getAxe().getLayout().setMainColor(newForeground);
 			((AChart)chart).overlayAnnotation.setForegroundColor(newForeground);
+			if (cBar != null) cBar.updateColors();
 
 			// Apply foreground color to trees with background color
 			plottedTrees.values().forEach(shapeTree -> {
@@ -3658,11 +3787,11 @@ public class Viewer3D {
 		SNT.setDebugMode(true);
 		final Viewer3D jzy3D = new Viewer3D(ij.context());
 		jzy3D.addColorBarLegend(ColorTables.ICE, (float) bounds[0],
-			(float) bounds[1]);
+			(float) bounds[1], new Font("Arial", Font.PLAIN, 24), 3, 4);
 		jzy3D.add(tree);
 		jzy3D.loadMouseRefBrain();
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-		jzy3D.addSurface((Collection<? extends SNTPoint>)analyzer.getTips());
+		jzy3D.addSurface(analyzer.getTips());
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);

@@ -124,8 +124,8 @@ public class OBJMesh {
 	/**
 	 * Determines whether the mesh bounding box should be displayed.
 	 * 
-	 * @param color the color of the mesh bounding box. If null, no bounding box
-	 *          is displayed
+	 * @param boundingBoxColor the color of the mesh bounding box. If null, no
+	 *          bounding box is displayed
 	 */
 	public void setBoundingBoxColor(final ColorRGB boundingBoxColor) {
 		final Color c = (boundingBoxColor == null) ? null : new Color(

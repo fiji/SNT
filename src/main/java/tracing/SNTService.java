@@ -252,9 +252,11 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @param view A case-insensitive string specifying the canvas to be captured.
 	 *          Either "xy" (or "main"), "xz", "zy" or "3d" (for legacy's 3D
 	 *          Viewer).
+	 * @param project whether the snapshot of 3D image stacks should include its
+	 *          projection (MIP), or just the current plane
+	 * @return the snapshot capture of the canvas as an RGB image
 	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
 	 * @throws IllegalArgumentException if view is not a recognized option
-	 * @return the snapshot capture of the canvas as an RGB image
 	 */
 	@SuppressWarnings("deprecation")
 	public ImagePlus captureView(final String view, final boolean project) {

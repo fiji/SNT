@@ -1119,6 +1119,7 @@ public class Viewer3D {
 	 *          {@link #setVisible(String, boolean)})
 	 * @param color the color to render the imported file
 	 * @param transparencyPercent the color transparency (in percentage)
+	 * @return the loaded OBJ mesh
 	 * @throws IllegalArgumentException if filePath is invalid or file does not
 	 *           contain a compilable mesh
 	 */
@@ -1142,6 +1143,7 @@ public class Viewer3D {
 	 * Loads the surface meshes for the Allen Mouse Brain Atlas (CCF). It will
 	 * simply make the mesh visible if has already been loaded.
 	 *
+	 * @return a reference to the loaded mesh
 	 * @throws IllegalArgumentException if Viewer is not available
 	 */
 	public OBJMesh loadMouseRefBrain() throws IllegalArgumentException {
@@ -1158,7 +1160,7 @@ public class Viewer3D {
 	 * @param templateBrain the template brain to be loaded (case-insensitive).
 	 *          Either "JFRC2" (AKA JFRC2010), "JFRC3" (AKA JFRC2013), or "FCWB"
 	 *          (FlyCircuit Whole Brain Template)
-	 * @return 
+	 * @return a reference to the loaded mesh
 	 * @throws IllegalArgumentException if templateBrain is not recognized, or
 	 *           Viewer is not available
 	 */

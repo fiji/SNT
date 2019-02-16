@@ -1946,7 +1946,6 @@ public class SNTUI extends JDialog {
 		final JMenu scriptUtilsMenu = installer.getUtilScriptsMenu();
 		scriptUtilsMenu.setText("Utility Scripts");
 		scriptUtilsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.PLUS));
-		scriptUtilsMenu.addSeparator();
 		analysisMenu.add(scriptUtilsMenu);
 
 		final JCheckBoxMenuItem xyCanvasMenuItem = new JCheckBoxMenuItem(

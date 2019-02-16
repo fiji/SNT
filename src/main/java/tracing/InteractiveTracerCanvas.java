@@ -50,7 +50,7 @@ import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 import tracing.util.SNTColor;
 
-public class InteractiveTracerCanvas extends TracerCanvas {
+class InteractiveTracerCanvas extends TracerCanvas {
 
 	private static final long serialVersionUID = 1L;
 	private final SimpleNeuriteTracer tracerPlugin;
@@ -444,13 +444,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 			case SNTUI.IMAGE_CLOSED:
 				return; // Do nothing
 			case SNTUI.EDITING_MODE:
-
-				if (e.isPopupTrigger() || impossibleEdit(true)) return;
-				update(getGraphics());
+				impossibleEdit(true);
 				break;
-
 			case SNTUI.WAITING_FOR_SIGMA_POINT:
-
 				tracerPlugin.launchPaletteAround(myOffScreenX(e.getX()), myOffScreenY(e
 					.getY()), imp.getZ() - 1);
 				restoreDefaultCursor();

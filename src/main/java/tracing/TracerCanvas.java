@@ -33,7 +33,7 @@ import tracing.hyperpanes.MultiDThreePanesCanvas;
 import tracing.hyperpanes.PaneOwner;
 
 @SuppressWarnings("serial")
-public class TracerCanvas extends MultiDThreePanesCanvas {
+class TracerCanvas extends MultiDThreePanesCanvas {
 
 	protected PathAndFillManager pathAndFillManager;
 

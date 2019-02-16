@@ -23,6 +23,7 @@
 package tracing;
 
 import java.awt.Color;
+import java.awt.Event;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -398,32 +399,30 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		if (tracerPlugin.autoCanvasActivation) imp.getWindow().toFront();
 	}
 
-	@Override
-	public void mousePressed(final MouseEvent me) {// Mac/Linux
+	/* See ImageCanvas#handlePopupMenu(me); */
+	private boolean isPopupTrigger(final MouseEvent me) {
+		return (me.isPopupTrigger() || (!PlatformUtils.isMac() && (me
+			.getModifiers() & Event.META_MASK) != 0));
+	}
 
-		if (me.isPopupTrigger()) {
+	@Override
+	public void mousePressed(final MouseEvent me) {
+		if (isPopupTrigger(me)) {
 			showPopupMenu(me.getX(), me.getY());
 			me.consume();
 			return;
 		}
-
-		final boolean ready = tracerPlugin.isUIready();
-		if (tracerPlugin.panMode || isEventsDisabled() || !ready) {
+		if (tracerPlugin.panMode || isEventsDisabled() || !tracerPlugin
+			.isUIready())
+		{
 			super.mousePressed(me);
 			return;
 		}
 	}
 
 	@Override
-	public void mouseReleased(final MouseEvent me) { // Windows
-		final boolean ready = tracerPlugin.isUIready();
-		if (ready && me.isPopupTrigger()) {
-			showPopupMenu(me.getX(), me.getY());
-			me.consume();
-			return;
-		}
-
-		if (tracerPlugin.panMode || isEventsDisabled() || !ready) {
+	public void mouseReleased(final MouseEvent me) {
+		if (tracerPlugin.panMode || isEventsDisabled()) {
 			super.mouseReleased(me);
 			return;
 		}
@@ -432,8 +431,9 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 	@Override
 	public void mouseClicked(final MouseEvent e) {
 
-		if (isEventsDisabled() || !tracerPlugin.isUIready()) {
-			super.mouseClicked(e);
+		if (pMenu.isShowing() || tracerPlugin.panMode || isEventsDisabled() ||
+			isPopupTrigger(e))
+		{
 			return;
 		}
 

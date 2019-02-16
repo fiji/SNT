@@ -197,10 +197,12 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	}
 
 	private JMenuItem helpOnConnecting() {
-		final String msg =
-			"To connect two paths in Edit mode: select the source node " +
-				"on the first path, then activate the second path and select the " +
-				"destination node on it. Link the two through the 'Connect To' menu entry.";
+		final String msg = "<HTML>To connect two paths in <i>Edit Mode</i>:<ol>" +
+			"  <li>Select the source node on the 1st path</li>" +
+			"  <li>Activate the 2nd path by pressing 'G'. Select the destination node on it</li>" +
+			"  <li>Link the two through the appropriate <i>Connect To</i> menu entry</li>" +
+			"</ol>" +
+			"To ensure no loops exist, one of the nodes must be a start or an end node.";
 		return helpItem(msg);
 	}
 

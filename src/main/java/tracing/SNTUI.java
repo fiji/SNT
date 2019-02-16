@@ -2103,7 +2103,7 @@ public class SNTUI extends JDialog {
 			plugin.isAstarEnabled());
 		aStarCheckBox.addActionListener(e -> {
 			final boolean enable = aStarCheckBox.isSelected();
-			if (!enable && !guiUtils.getConfirmation(
+			if (!enable && askUserConfirmation && !guiUtils.getConfirmation(
 				"Disable computation of paths? All segmentation tasks will be disabled.",
 				"Enable Manual Tracing?"))
 			{

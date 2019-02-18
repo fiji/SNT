@@ -24,5 +24,6 @@ from tracing.analysis.sholl import TreeParser
 from tracing.io import (FlyCircuitLoader, MouseLightLoader, NeuroMorphoLoader)
 from tracing.plugin import (SkeletonizerCmd, StrahlerCmd)
 from tracing.util import (BoundingBox, PointInImage, SNTColor, SWCPoint)
-from tracing.viewer import (Viewer2D, Viewer3D)
+from tracing.viewer import (OBJMesh, Viewer2D, Viewer3D)
+from tracing.viewer.Viewer3D import ViewMode
 

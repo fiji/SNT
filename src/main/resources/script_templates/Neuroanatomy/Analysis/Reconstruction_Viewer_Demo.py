@@ -6,14 +6,16 @@
 '''
 file:       Reconstruction_Viewer_Demo.py
 author:     Tiago Ferreira
-version:    20181010
+version:    20190218
 info:       Exemplifies how to render a remote file in a stand-alone
             Reconstruction Viewer
 '''
 from tracing import Tree
 from tracing.io import MouseLightLoader
 from tracing.analysis import TreeColorMapper
-from tracing.viewer import Viewer3D
+from tracing.viewer import OBJMesh, Viewer3D
+from tracing.viewer.Viewer3D import ViewMode
+from org.scijava.util import Colors
 
 def run():
 
@@ -42,7 +44,9 @@ def run():
     viewer.add(tree)
     bounds = mapper.getMinMax()
     viewer.addColorBarLegend(color_table, bounds[0], bounds[1])
-    viewer.loadMouseRefBrain()
+    brain = viewer.loadMouseRefBrain()
+    brain.setBoundingBoxColor(Colors.GREEN)
+    viewer.setViewMode(ViewMode.SIDE)
     viewer.show()
     viewer.setAnimationEnabled(True)
     print("... Done. With Viewer active, Press 'H' or 'F1' for help")

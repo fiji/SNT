@@ -899,7 +899,7 @@ public class SNTUI extends JDialog {
 		channelSpinner.setEnabled(hasChannels);
 		frameSpinner.setEnabled(hasFrames);
 		applyPositionButton.addActionListener(e -> {
-			if (plugin.getImagePlus() == null) {
+			if (plugin.getImagePlus() == null || plugin.getImagePlus().getProcessor() == null) {
 				guiUtils.error("Tracing image is not available.");
 				return;
 			}
@@ -913,11 +913,14 @@ public class SNTUI extends JDialog {
 			{
 				return;
 			}
+			abortCurrentOperation();
+			changeState(LOADING);
 			plugin.reloadImage(newC, newT);
 			if (!reload) plugin.getImagePlus().setPosition(newC, plugin.getImagePlus()
 				.getZ(), newT);
 			preprocess.setSelected(false);
 			plugin.showMIPOverlays(0);
+			changeState(WAITING_TO_START_PATH);
 			showStatus(reload ? "Image reloaded into memory..." : null, true);
 		});
 		positionPanel.add(applyPositionButton);

@@ -2532,7 +2532,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		// }
 
 		final int[] snapped_p = pointsAtMaximum.get(pointsAtMaximum.size() / 2);
-		if (window_center[2] != snapped_p[2]) xy.setSlice(snapped_p[2] + 1);
+		if (window_center[2] != snapped_p[2]) xy.setZ(snapped_p[2] + 1);
 		point[0] = snapped_p[0];
 		point[1] = snapped_p[1];
 		point[2] = snapped_p[2];

@@ -612,9 +612,8 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		private final static String NODE_MOVE =
 			"Move Active Node to Cursor Position  [M]";
 		private final static String NODE_MOVE_Z =
-			"Bring Active Node to Current Z-plane  [B]";
-		private final String START_SHOLL = "Sholl Analysis at Nearest Node  [" +
-			GuiUtils.modKey() + "+Shift+A]";
+			"  Bring Active Node to Current Z-plane  [B]";
+		private final String START_SHOLL = "Sholl Analysis at Nearest Node  [Alt+Shift+A]";
 
 		@Override
 		public void itemStateChanged(final ItemEvent e) {

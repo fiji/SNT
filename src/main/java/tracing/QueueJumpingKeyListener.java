@@ -23,6 +23,7 @@
 package tracing;
 
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -45,6 +46,7 @@ import tracing.gui.GuiUtils;
 
 class QueueJumpingKeyListener implements KeyListener {
 
+	private static final int CTRL_CMD_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 	private final SimpleNeuriteTracer tracerPlugin;
 	private final InteractiveTracerCanvas canvas;
 	private final Image3DUniverse univ;
@@ -132,7 +134,15 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 			return;
 		}
-		else if (Arrays.stream(W_KEYS).anyMatch(i -> i == keyCode)) {
+
+		// Exceptions above aside, do not intercept white-listed keystrokes,
+		// combinations that include the OS shortcut key, action keys, or
+		// numpad keys (so that users can still access IJ built-in shortcuts
+		// and/or custom shortcuts for their macros)
+		else if (Arrays.stream(W_KEYS).anyMatch(i -> i == keyCode) || (e
+			.getModifiers() & CTRL_CMD_MASK) != 0 || e.isActionKey() || e
+				.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD)
+		{
 			waiveKeyPress(e);
 			return;
 		}
@@ -140,15 +150,13 @@ class QueueJumpingKeyListener implements KeyListener {
 		final char keyChar = e.getKeyChar();
 		final int modifiers = e.getModifiersEx();
 		final boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
-		final boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
 		final boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
 		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT
 			: keyCode == KeyEvent.VK_CONTROL;
 
 		// SNT Hotkeys that do not override defaults
-		if (shift_down && (control_down || alt_down) &&
-			(keyCode == KeyEvent.VK_A))
+		if (shift_down && alt_down && keyCode == KeyEvent.VK_A)
 		{
 			startShollAnalysis();
 			e.consume();
@@ -170,13 +178,6 @@ class QueueJumpingKeyListener implements KeyListener {
 			e.consume();
 		}
 
-		// Exceptions above aside, do not intercept any other
-		// keystrokes that include a modifier key
-		else if (shift_down || control_down || alt_down) {
-			waiveKeyPress(e);
-			return;
-		}
-
 		// Hotkeys common to all modes
 		else if (keyChar == '1') {
 			// IJ1 built-in: Select First Lane
@@ -194,7 +195,6 @@ class QueueJumpingKeyListener implements KeyListener {
 			tracerPlugin.getUI().toggleChannelAndFrameChoice();
 			e.consume();
 		}
-
 
 		// Keystrokes exclusive to edit mode (NB: Currently these only work
 		// with InteractiveCanvas). We'll skip hasty keystrokes to avoid
@@ -275,11 +275,6 @@ class QueueJumpingKeyListener implements KeyListener {
 				tracerPlugin.toogleSnapCursor();
 				e.consume();
 			}
-		}
-		else if (e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD || e
-			.isActionKey())
-		{
-			waiveKeyPress(e);
 		}
 
 		// Uncomment below to pass on any other key press to existing listeners

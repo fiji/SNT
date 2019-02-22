@@ -2449,7 +2449,7 @@ public class SNTUI extends JDialog {
 		mi.addActionListener(e -> {
 			final Thread newThread = new Thread(() -> {
 				if (noPathsError()) return;
-				final String modKey = GuiUtils.modKey() + "+Shift";
+				final String modKey = "Alt+Shift";
 				final String url1 = ShollUtils.URL + "#Analysis_of_Traced_Cells";
 				final String url2 =
 					"https://imagej.net/Simple_Neurite_Tracer:_Sholl_analysis";

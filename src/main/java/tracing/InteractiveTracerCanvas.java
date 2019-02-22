@@ -72,6 +72,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	private GuiUtils guiUtils;
 	protected static String EDIT_MODE_LABEL = "Edit Mode";
 	protected static String PAUSE_MODE_LABEL = "SNT Paused";
+	protected static String TRACING_PAUSED_LABEL = "Tracing Paused";
 
 	protected InteractiveTracerCanvas(final ImagePlus imp,
 		final SimpleNeuriteTracer plugin, final int plane,

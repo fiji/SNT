@@ -145,6 +145,7 @@ public class SNTUI extends JDialog {
 	private JButton showOrHidePathList;
 	private JButton showOrHideFillList = new JButton(); // must be initialized
 	private JPanel hessianPanel;
+	private JPanel aStarPanel;
 	private JCheckBox preprocess;
 	private JButton displayFiltered;
 	private JMenuItem loadTracesMenuItem;
@@ -271,7 +272,7 @@ public class SNTUI extends JDialog {
 
 		{ // Main tab
 			final GridBagConstraints c1 = GuiUtils.defaultGbc();
-			if (!plugin.analysisMode) {
+			{
 				final JPanel tab1 = getTab();
 				// c.insets.left = MARGIN * 2;
 				c1.anchor = GridBagConstraints.NORTHEAST;
@@ -279,9 +280,9 @@ public class SNTUI extends JDialog {
 				++c1.gridy;
 				tab1.add(snappingPanel(), c1);
 				++c1.gridy;
-				GuiUtils.addSeparator(tab1, "Auto-tracing:", true, c1);
+				tab1.add(aStarPanel(), c1);
 				++c1.gridy;
-				tab1.add(autoTracingPanel(), c1);
+				tab1.add(hessianPanel(), c1);
 				++c1.gridy;
 				tab1.add(filteredImagePanel(), c1);
 				++c1.gridy;
@@ -309,20 +310,10 @@ public class SNTUI extends JDialog {
 			// c2.insets.left = MARGIN * 2;
 			c2.anchor = GridBagConstraints.NORTHEAST;
 			c2.gridwidth = GridBagConstraints.REMAINDER;
-			if (!plugin.analysisMode) {
+			{
 				GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
 				++c2.gridy;
 				tab2.add(sourcePanel(), c2);
-				++c2.gridy;
-			}
-			else {
-				GuiUtils.addSeparator(tab2, "Path Rendering:", false, c2);
-				++c2.gridy;
-				tab2.add(renderingPanel(), c2);
-				++c2.gridy;
-				GuiUtils.addSeparator(tab2, "Path Labelling:", true, c2);
-				++c2.gridy;
-				tab2.add(colorOptionsPanel(), c2);
 				++c2.gridy;
 			}
 
@@ -330,7 +321,7 @@ public class SNTUI extends JDialog {
 			++c2.gridy;
 			tab2.add(viewsPanel(), c2);
 			++c2.gridy;
-			if (!plugin.analysisMode) {
+			{
 				GuiUtils.addSeparator(tab2, "Temporary Paths:", true, c2);
 				++c2.gridy;
 				tab2.add(tracingPanel(), c2);
@@ -385,11 +376,7 @@ public class SNTUI extends JDialog {
 					"for both images and meshes. It is not yet available in SNT.";
 			tab3.add(largeMsg(msg3), c3);
 
-			if (plugin.analysisMode) {
-				tabbedPane.setIconAt(0, IconFactory.getTabbedPaneIcon(GLYPH.TOOL));
-				tabbedPane.setIconAt(1, IconFactory.getTabbedPaneIcon(GLYPH.CUBE));
-			}
-			else {
+			{
 				tabbedPane.setIconAt(0, IconFactory.getTabbedPaneIcon(GLYPH.HOME));
 				tabbedPane.setIconAt(1, IconFactory.getTabbedPaneIcon(GLYPH.TOOL));
 				tabbedPane.setIconAt(2, IconFactory.getTabbedPaneIcon(GLYPH.CUBE));
@@ -707,16 +694,15 @@ public class SNTUI extends JDialog {
 			switch (newState) {
 
 				case WAITING_TO_START_PATH:
-				case ANALYSIS_MODE:
-
 					keepSegment.setEnabled(false);
 					junkSegment.setEnabled(false);
 					completePath.setEnabled(false);
-					abortButton.setEnabled(!plugin.analysisMode);
+					abortButton.setEnabled(true);
 					abortButton.setText(ABORT_BUTTON_LABEL_DEF);
 
 					pmUI.valueChanged(null); // Fake a selection change in the path tree:
 					showPartsNearby.setEnabled(isStackAvailable());
+					GuiUtils.enableComponents(aStarPanel, true);
 					setEnableAutoTracingComponents(plugin.isAstarEnabled());
 					fmUI.setEnabledWhileNotFilling();
 					loadLabelsMenuItem.setEnabled(true);
@@ -730,20 +716,37 @@ public class SNTUI extends JDialog {
 					sendToTrakEM2.setEnabled(plugin.anyListeners());
 					quitMenuItem.setEnabled(true);
 					showPathsSelected.setEnabled(true);
+					updateStatusText("Click somewhere to start a new path...");
+					showOrHideFillList.setEnabled(true);
+					break;
 
-					if (plugin.analysisMode) {
-						currentState = ANALYSIS_MODE;
-						updateStatusText("Analysis mode. Tracing disabled...");
-						if (plugin.getXYCanvas() != null) {
-							plugin.setDrawCrosshairsAllPanes(false);
-							plugin.setCanvasLabelAllPanes("Display Canvas");
-							plugin.setDrawCrosshairsAllPanes(false);
-						}
-					}
-					else {
-						updateStatusText("Click somewhere to start a new path...");
-						showOrHideFillList.setEnabled(true); // null in "Analysis Mode"
-					}
+				case ANALYSIS_MODE:
+
+					keepSegment.setEnabled(false);
+					junkSegment.setEnabled(false);
+					completePath.setEnabled(false);
+					abortButton.setEnabled(true);
+					abortButton.setText(ABORT_BUTTON_LABEL_EXIT);
+
+					pmUI.valueChanged(null); // Fake a selection change in the path tree:
+					showPartsNearby.setEnabled(isStackAvailable());
+					GuiUtils.enableComponents(aStarPanel, false);
+					setEnableAutoTracingComponents(false);
+					fmUI.setEnabledWhileNotFilling();
+					setFillListVisible(false);
+					loadLabelsMenuItem.setEnabled(true);
+					saveMenuItem.setEnabled(true);
+					loadTracesMenuItem.setEnabled(true);
+					loadSWCMenuItem.setEnabled(true);
+
+					exportCSVMenuItem.setEnabled(true);
+					exportAllSWCMenuItem.setEnabled(true);
+					measureMenuItem.setEnabled(true);
+					sendToTrakEM2.setEnabled(plugin.anyListeners());
+					quitMenuItem.setEnabled(true);
+					showPathsSelected.setEnabled(true);
+					setEnableAutoTracingComponents(false);
+					updateStatusText("Tracing functions paused...");
 					break;
 
 				case PARTIAL_PATH:
@@ -933,23 +936,22 @@ public class SNTUI extends JDialog {
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
 		gdb.gridwidth = 1;
 
-		if (!plugin.analysisMode) {
-			final JPanel mipPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,
-				0));
-			final JCheckBox mipOverlayCheckBox = new JCheckBox("Overlay MIP(s) at");
-			mipOverlayCheckBox.setEnabled(!plugin.is2D());
-			mipPanel.add(mipOverlayCheckBox);
-			final JSpinner mipSpinner = GuiUtils.integerSpinner(20, 10, 80, 1);
-			mipSpinner.setEnabled(!plugin.is2D());
-			mipSpinner.addChangeListener(e -> mipOverlayCheckBox.setSelected(false));
-			mipPanel.add(mipSpinner);
-			mipPanel.add(GuiUtils.leftAlignedLabel(" % opacity", !plugin.is2D()));
-			mipOverlayCheckBox.addActionListener(e -> plugin.showMIPOverlays(
-				(mipOverlayCheckBox.isSelected()) ? (int) mipSpinner.getValue() * 0.01
-					: 0));
-			viewsPanel.add(mipPanel, gdb);
-			++gdb.gridy;
-		}
+		final JPanel mipPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,
+			0));
+		final JCheckBox mipOverlayCheckBox = new JCheckBox("Overlay MIP(s) at");
+		mipOverlayCheckBox.setEnabled(!plugin.is2D());
+		mipPanel.add(mipOverlayCheckBox);
+		final JSpinner mipSpinner = GuiUtils.integerSpinner(20, 10, 80, 1);
+		mipSpinner.setEnabled(!plugin.is2D());
+		mipSpinner.addChangeListener(e -> mipOverlayCheckBox.setSelected(false));
+		mipPanel.add(mipSpinner);
+		mipPanel.add(GuiUtils.leftAlignedLabel(" % opacity", !plugin.is2D()));
+		mipOverlayCheckBox.addActionListener(e -> plugin.showMIPOverlays(
+			(mipOverlayCheckBox.isSelected()) ? (int) mipSpinner.getValue() * 0.01
+				: 0));
+		viewsPanel.add(mipPanel, gdb);
+		++gdb.gridy;
+
 		final JCheckBox diametersCheckBox = new JCheckBox(
 			"Draw diameters in XY view", plugin.getDrawDiametersXY());
 		diametersCheckBox.addItemListener(e -> plugin.setDrawDiametersXY(e
@@ -1007,6 +1009,11 @@ public class SNTUI extends JDialog {
 		gdb.fill = GridBagConstraints.NONE;
 		viewsPanel.add(buttonPanel, gdb);
 		return viewsPanel;
+	}
+
+	private boolean imageAvailable() {
+		return plugin.getImagePlus() != null && plugin.getImagePlus()
+			.getProcessor() != null;
 	}
 
 	private JPanel tracingPanel() {
@@ -2115,9 +2122,11 @@ public class SNTUI extends JDialog {
 			plugin.enableAstar(enable);
 			setEnableAutoTracingComponents(enable);
 		});
-		autoTracePanel.add(aStarCheckBox, atp_c);
-		++atp_c.gridy;
+		aStarPanel.add(aStarCheckBox, gc);
+		return aStarPanel;
+	}
 
+	private JPanel hessianPanel() {
 		hessianPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints hc = GuiUtils.defaultGbc();
 		preprocess = new JCheckBox();
@@ -2142,8 +2151,7 @@ public class SNTUI extends JDialog {
 		sigmaWizard.addActionListener(listener);
 		sigmaPanel.add(sigmaWizard);
 		hessianPanel.add(sigmaPanel, hc);
-		autoTracePanel.add(hessianPanel, atp_c);
-		return autoTracePanel;
+		return hessianPanel;
 	}
 
 	private JPanel hideWindowsPanel() {
@@ -2603,14 +2611,13 @@ public class SNTUI extends JDialog {
 			case (LOADING):
 			case (SAVING):
 			case (IMAGE_CLOSED):
-			case (ANALYSIS_MODE):
 				showStatus("Instruction ignored: No task to be aborted", true);
 				break; // none of these states needs to be aborted
 			default:
 				SNT.error("BUG: Wrong state for aborting operation...");
 				break;
 		}
-		changeState(WAITING_TO_START_PATH);
+		changeState((plugin.analysisMode) ? ANALYSIS_MODE : WAITING_TO_START_PATH);
 	}
 
 	private String getState(final int state) {

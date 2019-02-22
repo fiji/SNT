@@ -402,6 +402,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		zy_tracer_canvas = null;
 	}
 
+	protected boolean usingDisplayCanvas() {
+		return xy != null && "SNT Display Canvas".equals(xy.getInfoProperty());
+	}
+
+	private void setIsDisplayCanvas(final ImagePlus imp) {
+		imp.setProperty("Info", "SNT Display Canvas");
+	}
+
 	private void assembleDisplayCanvases() {
 		if (!analysisMode) {
 			throw new IllegalArgumentException(
@@ -465,6 +473,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		imageType = ImagePlus.GRAY8;
 		xy = NewImage.createByteImage("Display Canvas", width, height, depth,
 			NewImage.FILL_BLACK);
+		setIsDisplayCanvas(xy);
 		xy.setCalibration(box.getCalibration());
 		x_spacing = box.xSpacing;
 		y_spacing = box.ySpacing;
@@ -941,14 +950,34 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			changeUIState(SNTUI.PAUSED);
 			disableEventsAllPanes(true);
 			setDrawCrosshairsAllPanes(false);
-			setCanvasLabelAllPanes(InteractiveTracerCanvas.PAUSE_MODE_LABEL);
+			setCanvasLabelAllPanes(InteractiveTracerCanvas.SNT_PAUSED_LABEL);
 		}
 		else {
 			if (xy != null && xy.isLocked() && !getConfirmation(
 				"Image appears to be locked by other process. Activate SNT nevertheless?",
 				"Image Locked")) return;
-			changeUIState(SNTUI.WAITING_TO_START_PATH);
 			disableEventsAllPanes(false);
+			pauseTracing(analysisMode, false);
+		}
+	}
+
+	protected void pauseTracing(final boolean pause,
+		final boolean validateChange)
+	{
+		if (pause) {
+			if (validateChange && !uiReadyForModeChange()) {
+				guiUtils.error(
+					"Please finish/abort current task before pausing tracing.");
+				return;
+			}
+			analysisMode = true;
+			changeUIState(SNTUI.ANALYSIS_MODE);
+			setDrawCrosshairsAllPanes(false);
+			setCanvasLabelAllPanes(InteractiveTracerCanvas.TRACING_PAUSED_LABEL);
+		}
+		else {
+			analysisMode = false;
+			changeUIState(SNTUI.WAITING_TO_START_PATH);
 			setDrawCrosshairsAllPanes(true);
 			setCanvasLabelAllPanes(null);
 		}

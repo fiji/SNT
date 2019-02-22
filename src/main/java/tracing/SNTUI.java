@@ -1925,7 +1925,7 @@ public class SNTUI extends JDialog {
 		final JMenuItem importMouselight = new JMenuItem("MouseLight...");
 		remoteSubmenu.add(importMouselight);
 		importMouselight.addActionListener(e -> {
-			(new CmdRunner(MLImporterCmd.class, true)).execute();
+			(new CmdRunner(MLImporterCmd.class, null, true)).execute();
 		});
 		final JMenuItem importNeuroMorpho = new JMenuItem("NeuroMorpho...");
 		remoteSubmenu.add(importNeuroMorpho);
@@ -3087,7 +3087,7 @@ public class SNTUI extends JDialog {
 
 		private final Class<? extends Command> cmd;
 		private final boolean analysisModeCmd;
-		private final HashMap<String, Object> inputs;
+		private HashMap<String, Object> inputs;
 
 		public CmdRunner(final Class<? extends Command> cmd,
 			final boolean analysisModeCmd)
@@ -3103,6 +3103,7 @@ public class SNTUI extends JDialog {
 			this.cmd = cmd;
 			this.inputs = inputs;
 			this.analysisModeCmd = analysisModeCmd;
+			if (inputs == null) this.inputs = new HashMap<>();
 			this.inputs.put("rebuildCanvas", plugin.usingDisplayCanvas());
 		}
 
@@ -3123,6 +3124,7 @@ public class SNTUI extends JDialog {
 					"No. Use Current Image"))
 			{
 				plugin.analysisMode = true;
+				if (inputs == null) inputs = new HashMap<>();
 				inputs.put("rebuildCanvas", true);
 			}
 			try {

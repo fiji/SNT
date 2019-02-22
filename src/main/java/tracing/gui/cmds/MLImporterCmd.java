@@ -41,6 +41,8 @@ import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
 import tracing.PathAndFillManager;
+import tracing.SNT;
+import tracing.SNTUI;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.MouseLightLoader;
@@ -102,6 +104,10 @@ public class MLImporterCmd extends CommonDynamicCmd {
 		visibility = ItemVisibility.INVISIBLE)
 	private Viewer3D recViewer;
 
+	@Parameter(persist = false, required = true,
+		visibility = ItemVisibility.INVISIBLE)
+	private boolean rebuildCanvas;
+
 	private PathAndFillManager pafm;
 
 	/*
@@ -158,9 +164,13 @@ public class MLImporterCmd extends CommonDynamicCmd {
 				recViewer.removeAll();
 			}
 		}
+
 		if (snt != null) {
-			status("Assembling Canvas(es)...", false);
-			snt.rebuildDisplayCanvases();
+			if (ui != null) snt.getUI().changeState(SNTUI.ANALYSIS_MODE);
+			if (rebuildCanvas) {
+				SNT.log("Rebuilding canvases...");
+				snt.rebuildDisplayCanvases();
+			}
 		}
 
 		if (recViewer != null) {

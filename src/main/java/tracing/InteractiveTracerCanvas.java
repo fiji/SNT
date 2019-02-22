@@ -56,7 +56,8 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	private final SimpleNeuriteTracer tracerPlugin;
 	private JPopupMenu pMenu;
 	private JCheckBoxMenuItem toggleEditModeMenuItem;
-	private JMenuItem togglePauseModeMenuItem;
+	private JCheckBoxMenuItem togglePauseTracingMenuItem;
+	private JCheckBoxMenuItem togglePauseSNTMenuItem;
 	private JMenu deselectedEditingPathsMenu;
 	private double last_x_in_pane_precise = Double.MIN_VALUE;
 	private double last_y_in_pane_precise = Double.MIN_VALUE;
@@ -71,7 +72,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	private Color fillColor;
 	private GuiUtils guiUtils;
 	protected static String EDIT_MODE_LABEL = "Edit Mode";
-	protected static String PAUSE_MODE_LABEL = "SNT Paused";
+	protected static String SNT_PAUSED_LABEL = "SNT Paused";
 	protected static String TRACING_PAUSED_LABEL = "Tracing Paused";
 
 	protected InteractiveTracerCanvas(final ImagePlus imp,
@@ -94,22 +95,23 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		if (!tracerPlugin.analysisMode) pMenu.add(menuItem(listener.FORK_NEAREST,
 			listener));
 		pMenu.addSeparator();
-		togglePauseModeMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_TOOGLE);
-		togglePauseModeMenuItem.addItemListener(listener);
-		pMenu.add(togglePauseModeMenuItem);
-		pMenu.addSeparator();
 		toggleEditModeMenuItem = new JCheckBoxMenuItem(AListener.EDIT_TOOGLE);
 		toggleEditModeMenuItem.addItemListener(listener);
 		pMenu.add(toggleEditModeMenuItem);
-		pMenu.addSeparator();
 		pMenu.add(menuItem(AListener.NODE_RESET, listener));
 		pMenu.add(menuItem(AListener.NODE_DELETE, listener));
 		pMenu.add(menuItem(AListener.NODE_INSERT, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE, listener));
 		pMenu.add(menuItem(AListener.NODE_MOVE_Z, listener));
-		pMenu.addSeparator();
-		deselectedEditingPathsMenu = new JMenu("Connect To");
+		deselectedEditingPathsMenu = new JMenu("  Connect To");
 		pMenu.add(deselectedEditingPathsMenu);
+		pMenu.addSeparator();
+		togglePauseSNTMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_SNT_TOOGLE);
+		togglePauseSNTMenuItem.addItemListener(listener);
+		pMenu.add(togglePauseSNTMenuItem);
+		togglePauseTracingMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_TRACING_TOOGLE);
+		togglePauseTracingMenuItem.addItemListener(listener);
+		pMenu.add(togglePauseTracingMenuItem);
 		pMenu.addSeparator();
 		pMenu.add(menuItem(listener.START_SHOLL, listener));
 	}
@@ -122,22 +124,32 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		toggleEditModeMenuItem.setText((activePath != null) ? "Edit " + activePath
 			.getName() : AListener.EDIT_TOOGLE);
 		final boolean bp = uiReadyForModeChange(SNTUI.PAUSED);
-		togglePauseModeMenuItem.setEnabled(bp);
-		togglePauseModeMenuItem.setSelected(bp && tracerPlugin
+		togglePauseSNTMenuItem.setEnabled(bp);
+		togglePauseSNTMenuItem.setSelected(bp && tracerPlugin
 			.getUIState() == SNTUI.PAUSED);
-
+		togglePauseTracingMenuItem.setEnabled(!togglePauseSNTMenuItem.isSelected());
+		togglePauseTracingMenuItem.setEnabled(bp);
+		togglePauseTracingMenuItem.setSelected(tracerPlugin.analysisMode);
 		// Disable editing commands
 		for (final MenuElement me : pMenu.getSubElements()) {
 			if (me instanceof JMenuItem) {
 				final JMenuItem mItem = ((JMenuItem) me);
 				final String cmd = mItem.getActionCommand();
 
+				if (togglePauseSNTMenuItem.isSelected() && !cmd.equals(
+					AListener.PAUSE_SNT_TOOGLE))
+				{
+					mItem.setEnabled(false);
+				}
 				// commands only enabled in "Edit Mode"
-				if (cmd.equals(AListener.NODE_RESET) || cmd.equals(
+				else if (cmd.equals(AListener.NODE_RESET) || cmd.equals(
 					AListener.NODE_DELETE) || cmd.equals(AListener.NODE_INSERT) || cmd
 						.equals(AListener.NODE_MOVE) || cmd.equals(AListener.NODE_MOVE_Z))
 				{
 					mItem.setEnabled(be && editMode);
+				}
+				else {
+					mItem.setEnabled(true);
 				}
 
 			}
@@ -155,7 +167,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		final Path source = tracerPlugin.getEditingPath();
 		final boolean startJoins = (source.getEditableNodeIndex() <= source.size() /
 			2);
-		deselectedEditingPathsMenu.setText("Connect To (" + (startJoins ? "Start"
+		deselectedEditingPathsMenu.setText("  Connect To (" + (startJoins ? "Start"
 			: "End") + " Join)");
 		int count = 0;
 		for (final Path p : pathAndFillManager.getPaths()) {
@@ -603,15 +615,16 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			.modKey() + "+Shift+Click]";
 		public static final String SELECT_NEAREST =
 			"Select Nearest Path  [G, Shift+G]";
-		public static final String PAUSE_TOOGLE = "Pause Tracing";
+		public static final String PAUSE_SNT_TOOGLE = "Pause SNT";
+		public static final String PAUSE_TRACING_TOOGLE = "Pause Tracing";
 		public static final String EDIT_TOOGLE = "Edit Path";
-		private final static String NODE_RESET = "Reset Active Node";
+		private final static String NODE_RESET = "  Reset Active Node";
 		private final static String NODE_DELETE =
-			"Delete Active Node  [D, Backspace]";
+			"  Delete Active Node  [D, Backspace]";
 		private final static String NODE_INSERT =
-			"Insert New Node at Cursor Position  [I, Ins]";
+			"  Insert New Node at Cursor Position  [I, Ins]";
 		private final static String NODE_MOVE =
-			"Move Active Node to Cursor Position  [M]";
+			"  Move Active Node to Cursor Position  [M]";
 		private final static String NODE_MOVE_Z =
 			"  Bring Active Node to Current Z-plane  [B]";
 		private final String START_SHOLL = "Sholl Analysis at Nearest Node  [Alt+Shift+A]";
@@ -621,8 +634,12 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			if (e.getSource().equals(toggleEditModeMenuItem)) {
 				enableEditMode(toggleEditModeMenuItem.getState());
 			}
-			else if (e.getSource().equals(togglePauseModeMenuItem)) tracerPlugin
-				.pause(togglePauseModeMenuItem.isSelected());
+			else if (e.getSource().equals(togglePauseSNTMenuItem)) {
+				tracerPlugin.pause(togglePauseSNTMenuItem.isSelected());
+			}
+			else if (e.getSource().equals(togglePauseTracingMenuItem)) {
+				tracerPlugin.pauseTracing(togglePauseTracingMenuItem.isSelected(), true);
+			}
 		}
 
 		@Override

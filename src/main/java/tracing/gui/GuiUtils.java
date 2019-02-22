@@ -27,7 +27,6 @@ import com.jidesoft.popup.JidePopup;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dialog.ModalityType;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -182,21 +181,27 @@ public class GuiUtils {
 	}
 
 	private int yesNoDialog(final Object[] components, final String title,
-		final String[] buttonLabels) {
+		final String[] buttonLabels)
+	{
 		final JOptionPane optionPane = new JOptionPane(components,
-			JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null, buttonLabels);
-		final JDialog d = optionPane.createDialog(title);
-		d.setModalityType(ModalityType.APPLICATION_MODAL);
-		if (parent != null) {
-			AWTWindows.centerWindow(parent.getBounds(), d);
-			// we could also use d.setLocationRelativeTo(parent);
-		}
+			JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null,
+			buttonLabels);
+		final JDialog d = optionPane.createDialog(parent, title);
 		d.setVisible(true);
 		d.dispose();
 		final Object result = optionPane.getValue();
-		if (result == null || (!(result instanceof Integer)))
+		if (result != null && result instanceof Integer) {
+			return (Integer) result;
+		}
+		else if (result != null && buttonLabels != null &&
+			result instanceof String)
+		{
+			return ((String) result).equals(buttonLabels[0]) ? JOptionPane.YES_OPTION
+				: JOptionPane.NO_OPTION;
+		}
+		else {
 			return SwingDialog.UNKNOWN_OPTION;
-		return (Integer) result;
+		}
 	}
 
 	public boolean getConfirmation(final String msg, final String title) {

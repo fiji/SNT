@@ -378,9 +378,9 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			InputEvent.ALT_DOWN_MASK) != 0) : ((e.getModifiersEx() &
 				InputEvent.CTRL_DOWN_MASK) != 0);
 
-		if (!editMode && !tracerPlugin.analysisMode && tracerPlugin.snapCursor &&
+		if (!editMode && tracerPlugin.snapCursor &&
 			plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down &&
-			!shift_key_down)
+			!shift_key_down && !tracerPlugin.usingDisplayCanvas())
 		{
 			final double[] p = new double[3];
 			tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise,

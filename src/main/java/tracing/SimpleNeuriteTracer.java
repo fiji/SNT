@@ -976,6 +976,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			changeUIState(SNTUI.ANALYSIS_MODE);
 			setDrawCrosshairsAllPanes(false);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.TRACING_PAUSED_LABEL);
+			enableSnapCursor(snapCursor && !usingDisplayCanvas());
 		}
 		else {
 			analysisMode = false;
@@ -2747,12 +2748,20 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		enableSnapCursor(!snapCursor);
 	}
 
+	/**
+	 * Enables SNT's XYZ snap cursor feature. Does nothing when using a display
+	 * canvas.
+	 *
+	 * @param enable whether cursor snapping should be enabled
+	 */
 	public synchronized void enableSnapCursor(final boolean enable) {
-		snapCursor = enable;
+		final boolean displayCanvas = usingDisplayCanvas();
+		snapCursor = enable && displayCanvas;
 		if (isUIready()) {
-			ui.useSnapWindow.setSelected(enable);
-			ui.snapWindowXYsizeSpinner.setEnabled(enable);
-			ui.snapWindowZsizeSpinner.setEnabled(enable && !is2D());
+			ui.useSnapWindow.setSelected(snapCursor);
+			ui.snapWindowXYsizeSpinner.setEnabled(snapCursor);
+			ui.snapWindowZsizeSpinner.setEnabled(snapCursor && !is2D());
+			if (enable && displayCanvas) ui.displayCanvasError();
 		}
 	}
 

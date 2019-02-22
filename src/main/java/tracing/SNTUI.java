@@ -2133,8 +2133,13 @@ public class SNTUI extends JDialog {
 		final JCheckBox aStarCheckBox = new JCheckBox("Enable A* search algorithm",
 			plugin.isAstarEnabled());
 		aStarCheckBox.addActionListener(e -> {
-			final boolean enable = aStarCheckBox.isSelected();
-			if (!enable && askUserConfirmation && !guiUtils.getConfirmation(
+			boolean enable = aStarCheckBox.isSelected();
+			if (enable && plugin.usingDisplayCanvas()) {
+				aStarCheckBox.setSelected(false);
+				displayCanvasError();
+				enable = false;
+			}
+			else if (!enable && askUserConfirmation && !guiUtils.getConfirmation(
 				"Disable computation of paths? All segmentation tasks will be disabled.",
 				"Enable Manual Tracing?"))
 			{
@@ -2754,6 +2759,11 @@ public class SNTUI extends JDialog {
 	private String hotKeyLabel(final String text, final String key) {
 		final String label = text.replaceFirst(key, "<u><b>" + key + "</b></u>");
 		return (text.startsWith("<HTML>")) ? label : "<HTML>" + label;
+	}
+
+	protected void displayCanvasError() {
+		guiUtils.error("This option requires a non-display canvas with " +
+			"valid image data.");
 	}
 
 	private class GuiListener implements ActionListener, ItemListener,

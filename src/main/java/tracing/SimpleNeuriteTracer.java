@@ -418,13 +418,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		nullifyCanvases();
 		if (pathAndFillManager.size() == 0) {
 			// not enough information to proceed. Assemble a dummy canvas instead
-			hideXYcanvas = true;
 			xy = NewImage.createByteImage("Display Canvas", 1, 1, 1,
 				NewImage.FILL_BLACK);
 			setFieldsFromImage(xy);
 			return;
 		}
-		hideXYcanvas = false;
 		BoundingBox box = pathAndFillManager.getBoundingBox(false);
 		if (Double.isNaN(box.getDiagonal())) box = pathAndFillManager
 			.getBoundingBox(true);
@@ -516,6 +514,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setSinglePane(singlePane);
 		final Overlay sourceImageOverlay = xy.getOverlay();
 		super.initialize(xy, frame);
+		if (xy.isVisible() && usingDisplayCanvas() && pathAndFillManager
+			.size() == 0) xy.hide();
 		xy.setOverlay(sourceImageOverlay);
 
 		xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;

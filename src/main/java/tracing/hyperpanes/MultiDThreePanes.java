@@ -60,7 +60,6 @@ public class MultiDThreePanes implements PaneOwner {
 	protected StackWindow xy_window;
 	protected StackWindow xz_window;
 	protected StackWindow zy_window;
-	protected boolean hideXYcanvas;
 	protected boolean single_pane;
 	protected boolean singleSlice;
 
@@ -676,7 +675,6 @@ public class MultiDThreePanes implements PaneOwner {
 			zy_window = new StackWindow(zy, zy_canvas);
 			zy_canvas.requestFocusInWindow();
 		}
-		if (hideXYcanvas) xy.hide();
 
 	}
 

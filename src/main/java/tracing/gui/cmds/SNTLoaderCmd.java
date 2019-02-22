@@ -74,7 +74,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 	@Parameter
 	private UIService uiService;
 
-	private static final String IMAGE_NONE = "None. Run SNT in Analysis Mode";
+	private static final String IMAGE_NONE = "None. Use a display canvas";
 	private static final String IMAGE_FILE = "Image from path specified below";
 	private static final String UI_SIMPLE = "Memory saving: Only XY view";
 	private static final String UI_DEFAULT = "Default: XY, ZY and XZ views";

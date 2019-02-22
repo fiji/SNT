@@ -365,6 +365,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void rebuildDisplayCanvases() throws IllegalArgumentException {
 		initialize(getSinglePane(), 1, 1);
 		showInitializedCanvases();
+		pauseTracing(true, false);
 		updateAllViewers();
 	}
 
@@ -699,7 +700,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void changeUIState(final int newState) {
-		ui.changeState(newState);
+		if (ui != null) ui.changeState(newState);
 	}
 
 	public int getUIState() {

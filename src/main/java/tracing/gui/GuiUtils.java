@@ -173,13 +173,18 @@ public class GuiUtils {
 		timeOut = mseconds;
 	}
 
-	public int yesNoDialog(final String msg, final String title) {
-		return yesNoDialog(new Object[] { getLabel(msg) }, title);
+	public int yesNoDialog(final String msg, final String title, final String yesButtonLabel, final String noButtonLabel) {
+		return yesNoDialog(new Object[] { getLabel(msg) }, title, new String[] {yesButtonLabel, noButtonLabel});
 	}
 
-	private int yesNoDialog(final Object[] components, final String title) {
+	public int yesNoDialog(final String msg, final String title) {
+		return yesNoDialog(new Object[] { getLabel(msg) }, title, null);
+	}
+
+	private int yesNoDialog(final Object[] components, final String title,
+		final String[] buttonLabels) {
 		final JOptionPane optionPane = new JOptionPane(components,
-			JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+			JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null, buttonLabels);
 		final JDialog d = optionPane.createDialog(title);
 		d.setModalityType(ModalityType.APPLICATION_MODAL);
 		if (parent != null) {
@@ -198,6 +203,10 @@ public class GuiUtils {
 		return (yesNoDialog(msg, title) == JOptionPane.YES_OPTION);
 	}
 
+	public boolean getConfirmation(final String msg, final String title, final String yesLabel, final String noLabel) {
+		return (yesNoDialog(msg, title, yesLabel, noLabel) == JOptionPane.YES_OPTION);
+	}
+
 	public boolean[] getPersistentConfirmation(final String msg,
 		final String title)
 	{
@@ -205,7 +214,7 @@ public class GuiUtils {
 		checkbox.setText(getWrappedText(checkbox,
 			"Remember my choice and do not prompt me again"));
 		final Object[] params = { getLabel(msg), checkbox };
-		final boolean result = yesNoDialog(params, title) == JOptionPane.YES_OPTION;
+		final boolean result = yesNoDialog(params, title, null) == JOptionPane.YES_OPTION;
 		return new boolean[] { result, checkbox.isSelected() };
 	}
 

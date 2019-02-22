@@ -3124,6 +3124,7 @@ public class SNTUI extends JDialog {
 			this.cmd = cmd;
 			this.inputs = inputs;
 			this.analysisModeCmd = analysisModeCmd;
+			this.inputs.put("rebuildCanvas", plugin.usingDisplayCanvas());
 		}
 
 		@Override
@@ -3133,16 +3134,17 @@ public class SNTUI extends JDialog {
 					.getName() + " before running this command.");
 				return null;
 			}
-			if (analysisModeCmd && getCurrentState() != SNTUI.ANALYSIS_MODE) {
-				if (guiUtils.getConfirmation(
-					"Activate Analysis Mode and import external reconstructions?",
-					"Confirm Import"))
-				{
-					SNTUI.reloadUI(plugin.getUI(), true);
-				}
-				else {
-					return null;
-				}
+			if (analysisModeCmd && !plugin.usingDisplayCanvas() && !plugin
+				.getImagePlus().changes && guiUtils.getConfirmation(
+					"<HTML><div WIDTH=500>" +
+						"Coordinates of external reconstructions <i>may</i> fall outside the boundaries " +
+						"of current image. Would you like to close active image and use a display canvas " +
+						"with computed dimensions containing all the nodes of the imported file?",
+					"Change to Display Canvas?", "Yes. Use Display Canvas",
+					"No. Use Current Image"))
+			{
+				plugin.analysisMode = true;
+				inputs.put("rebuildCanvas", true);
 			}
 			try {
 				final CommandService cmdService = plugin.getContext().getService(

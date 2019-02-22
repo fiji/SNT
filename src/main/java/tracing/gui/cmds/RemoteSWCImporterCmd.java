@@ -41,6 +41,7 @@ import org.scijava.widget.Button;
 
 import tracing.PathAndFillManager;
 import tracing.SNT;
+import tracing.SNTUI;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.FlyCircuitLoader;
@@ -89,6 +90,10 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 	@Parameter(persist = false, required = true,
 		visibility = ItemVisibility.INVISIBLE)
 	private RemoteSWCLoader loader;
+
+	@Parameter(persist = false, required = true,
+		visibility = ItemVisibility.INVISIBLE)
+	private boolean rebuildCanvas;
 
 	private PathAndFillManager pafm;
 	private String placeholderQuery;
@@ -168,8 +173,11 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			recViewer.setSceneUpdatesEnabled(true);
 		}
 		else if (snt != null) {
-			SNT.log("Rebuilding canvases...");
-			snt.rebuildDisplayCanvases();
+			if (snt.getUI() != null) snt.getUI().changeState(SNTUI.ANALYSIS_MODE);
+			if (rebuildCanvas) {
+				SNT.log("Rebuilding canvases...");
+				snt.rebuildDisplayCanvases();
+			}
 			if (recViewer != null) recViewer.syncPathManagerList();
 		}
 

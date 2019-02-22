@@ -3073,37 +3073,6 @@ public class SNTUI extends JDialog {
 		}
 	}
 
-	/**
-	 * Reloads (rebuilds) an existing UI.
-	 *
-	 * @param ui the SNTUI instance to be reloaded
-	 * @param analysisMode if true, UI is reloaded in "Analysis Mode", otherwise
-	 *          in "Tracing Mode"
-	 */
-	public static void reloadUI(SNTUI ui, final boolean analysisMode) {
-		final SimpleNeuriteTracer plugin = ui.plugin;
-		plugin.analysisMode = analysisMode;
-		if (analysisMode) {
-			plugin.enableAstar(false);
-			plugin.enableSnapCursor(false);
-			if (ui.getFillManager() != null && ui.getFillManager().isVisible()) ui
-				.getFillManager().dispose();
-		}
-		else {
-			plugin.prefs.loadPluginPrefs();
-		}
-		final Point locMain = ui.getLocation(null);
-		final Point locManager = ui.getPathManager().getLocation(null);
-		final boolean managerVisible = ui.getPathManager().isVisible();
-		ui.dispose();
-		ui = new SNTUI(plugin, ui.getPathManager(), ui.getFillManager());
-		plugin.ui = ui; // re-assign ui
-		ui.setLocation(locMain);
-		ui.getPathManager().setLocation(locManager);
-		ui.setVisible(true);
-		ui.getPathManager().setVisible(managerVisible);
-	}
-
 	private class CmdRunner extends SwingWorker<Object, Object> {
 
 		private final Class<? extends Command> cmd;

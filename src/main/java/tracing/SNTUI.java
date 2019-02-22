@@ -830,11 +830,12 @@ public class SNTUI extends JDialog {
 					break;
 
 				case PAUSED:
-					updateStatusText("SNT is paused. Tracing functions disabled...");
+					updateStatusText("SNT is paused. Core functions disabled...");
 					disableEverything();
 					keepSegment.setEnabled(false);
 					junkSegment.setEnabled(false);
 					abortButton.setEnabled(true);
+					abortButton.setText(ABORT_BUTTON_LABEL_EXIT);
 					completePath.setEnabled(false);
 					showPartsNearby.setEnabled(isStackAvailable());
 					setEnableAutoTracingComponents(false);
@@ -902,7 +903,13 @@ public class SNTUI extends JDialog {
 		channelSpinner.setEnabled(hasChannels);
 		frameSpinner.setEnabled(hasFrames);
 		applyPositionButton.addActionListener(e -> {
-			if (plugin.getImagePlus() == null || plugin.getImagePlus().getProcessor() == null) {
+			if (plugin.usingDisplayCanvas()) {
+				guiUtils.error("Display canvas has no data to be reloaded.");
+				return;
+			}
+			else if (plugin.getImagePlus() == null || plugin.getImagePlus()
+				.getProcessor() == null)
+			{
 				guiUtils.error("Tracing image is not available.");
 				return;
 			}
@@ -984,6 +991,7 @@ public class SNTUI extends JDialog {
 			if (plugin.is2D()) {
 				guiUtils.error(plugin.getImagePlus().getTitle() +
 					" has no depth. Cannot generate side views!");
+				changeState(WAITING_TO_START_PATH);
 				return;
 			}
 			plugin.rebuildZYXZpanes();
@@ -995,16 +1003,28 @@ public class SNTUI extends JDialog {
 		final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 2,
 			0));
 		buttonPanel.add(refreshPanesButton);
-		if (plugin.analysisMode) {
+		{
 			final JButton rebuildCanvasButton = new JButton("Resize Canvas");
 			buttonPanel.add(rebuildCanvasButton);
 			rebuildCanvasButton.addActionListener(e -> {
-				if (noPathsError()) return;
-				showStatus("Resizing Canvas...", false);
-				plugin.rebuildDisplayCanvases();
-				showStatus("Canvas rebuilt...", true);
+				if (plugin.usingDisplayCanvas() ||
+					(plugin.analysisMode && !imageAvailable()))
+				{
+					if (noPathsError()) return;
+					showStatus("Resizing Canvas...", false);
+					plugin.rebuildDisplayCanvases();
+					showStatus("Canvas rebuilt...", true);
+				}
+				else if (!imageAvailable()) {
+					guiUtils.error("Tracing image is not available");
+					return;
+				}
+				else {
+					guiUtils.error(
+						"Command currently only available for Display Canvas(es)");
+					return;
+				}
 			});
-
 		}
 		gdb.fill = GridBagConstraints.NONE;
 		viewsPanel.add(buttonPanel, gdb);
@@ -2105,9 +2125,11 @@ public class SNTUI extends JDialog {
 		return container;
 	}
 
-	private JPanel autoTracingPanel() {
-		final JPanel autoTracePanel = new JPanel(new GridBagLayout());
-		final GridBagConstraints atp_c = GuiUtils.defaultGbc();
+	private JPanel aStarPanel() {
+		aStarPanel = new JPanel(new GridBagLayout());
+		final GridBagConstraints gc = GuiUtils.defaultGbc();
+		GuiUtils.addSeparator(aStarPanel, "Auto-Tracing:", true, gc);
+		++gc.gridy;
 		final JCheckBox aStarCheckBox = new JCheckBox("Enable A* search algorithm",
 			plugin.isAstarEnabled());
 		aStarCheckBox.addActionListener(e -> {
@@ -2202,8 +2224,8 @@ public class SNTUI extends JDialog {
 			}
 
 			final String defaultText;
-			if (plugin.analysisMode) {
-				defaultText = "Analysis Mode... ";// + plugin.getImagePlus().getTitle();
+			if (plugin.usingDisplayCanvas()) {
+				defaultText = "Display canvas... ";// + plugin.getImagePlus().getTitle();
 			}
 			else {
 				defaultText = "Tracing " + plugin.getImagePlus().getShortTitle() +
@@ -2293,7 +2315,7 @@ public class SNTUI extends JDialog {
 		// fw.setLocation(bounds.x + getWidth(), screenHeight - fw.getHeight());
 	}
 
-	private void arrangeCanvases() {
+	protected void arrangeCanvases() {
 
 		final StackWindow xy_window = plugin.getWindow(MultiDThreePanes.XY_PLANE);
 		if (xy_window == null) {
@@ -2586,8 +2608,12 @@ public class SNTUI extends JDialog {
 				pmUI.cancelFit(true);
 				break;
 			case (PAUSED):
-				showStatus("Exited from 'Pause Mode'...", true);
+				showStatus("SNT is now active...", true);
 				plugin.pause(false);
+				break;
+			case (ANALYSIS_MODE):
+				showStatus("Tracing is now active...", true);
+				plugin.pauseTracing(false, false);
 				break;
 			case (EDITING_MODE):
 				showStatus("Exited from 'Edit Mode'...", true);

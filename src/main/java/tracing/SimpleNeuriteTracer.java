@@ -373,6 +373,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			getUI().showPartsNearby.setEnabled(!is2D());
 			getUI().nearbyFieldSpinner.setEnabled(!is2D());
 		}
+		if (getUI() != null) getUI().arrangeCanvases();
 		xy.show();
 		if (zy != null) zy.show();
 		if (xz != null) xz.show();
@@ -421,6 +422,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			xy = NewImage.createByteImage("Display Canvas", 1, 1, 1,
 				NewImage.FILL_BLACK);
 			setFieldsFromImage(xy);
+			setIsDisplayCanvas(xy);
 			return;
 		}
 		BoundingBox box = pathAndFillManager.getBoundingBox(false);
@@ -543,8 +545,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void reloadImage(final int channel, final int frame) {
-		if (slices_data_b == null && slices_data_s == null && slices_data_f == null)
-			throw new IllegalArgumentException("SNT has not yet been initialized");
+		if (getImagePlus() == null || getImagePlus().getProcessor() == null)
+			throw new IllegalArgumentException("No image has yet been loaded.");
 		if (frame < 1 || channel < 1 || frame > getImagePlus().getNFrames() ||
 			channel > getImagePlus().getNChannels())
 			throw new IllegalArgumentException("Invalid position: C=" + channel +
@@ -2218,8 +2220,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
-	protected void setShowOnlyActiveCTposPaths(final boolean showOnlyActiveCTposPaths,
-		final boolean updateGUI)
+	protected void setShowOnlyActiveCTposPaths(
+		final boolean showOnlyActiveCTposPaths, final boolean updateGUI)
 	{
 		this.showOnlyActiveCTposPaths = showOnlyActiveCTposPaths;
 		if (updateGUI) {

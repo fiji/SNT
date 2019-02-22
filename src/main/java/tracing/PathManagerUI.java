@@ -1624,7 +1624,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (e.getActionCommand().equals(EXPLORE_FIT_CMD)) {
-				if (analysisModeError()) return;
+				if (displayCanvasError()) return;
 				if (plugin.getImagePlus() == null) {
 					displayTmpMsg(
 						"Tracing image is not available. Fit cannot be computed.");
@@ -1714,7 +1714,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (PLOT_PROFILE_CMD.equals(cmd)) {
-				if (analysisModeError()) return;
+				if (displayCanvasError()) return;
 				SwingUtilities.invokeLater(() -> {
 					final Tree tree = new Tree(selectedPaths);
 					final PathProfiler profiler = new PathProfiler(tree, plugin.getImagePlus());
@@ -1846,7 +1846,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (FILL_OUT_CMD.equals(cmd)) {
-				if (analysisModeError()) return;
+				if (displayCanvasError()) return;
 				plugin.startFillingPaths(new HashSet<>(selectedPaths));
 				return;
 
@@ -1984,7 +1984,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (RESET_FITS.equals(cmd)) {
-				if (analysisModeError()) return;
 				if (!guiUtils.getConfirmation("Discard existing fits?",
 					"Confirm Discard?")) return;
 				for (final Path p : selectedPaths) {
@@ -1997,7 +1996,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			}
 			else if (e.getSource().equals(fitVolumeMenuItem)) {
 
-				if (analysisModeError()) return;
+				if (displayCanvasError()) return;
 
 				// this MenuItem is a toggle: check if it is set for 'unfitting'
 				if (fitVolumeMenuItem.getText().contains("Un-fit")) {
@@ -2198,10 +2197,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 	}
 
-	private boolean analysisModeError() {
-		if (plugin.analysisMode) guiUtils.error(
-			"This command is not available in \"Analysis Mode\".");
-		return plugin.analysisMode;
+	private boolean displayCanvasError() {
+		final boolean displayCanvas = plugin.usingDisplayCanvas();
+		if (displayCanvas) guiUtils.error(
+			"It does not make sense to run this command on a display canvas, " +
+				"because display canvases contain no image data.");
+		return displayCanvas;
 	}
 
 	public static String extractTagsFromPath(final Path p) {

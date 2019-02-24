@@ -300,7 +300,8 @@ public class MultiDThreePanes implements PaneOwner {
 		if (xy == null) throw new IllegalArgumentException(
 			"reload() called withou initialization");
 		if (xy.getNSlices() == 1) return;
-		initialize(single_pane = false, frame);
+		single_pane = false;
+		initialize(frame);
 		repaintAllPanes();
 	}
 
@@ -314,20 +315,20 @@ public class MultiDThreePanes implements PaneOwner {
 
 	public void initialize(final ImagePlus imagePlus, final int frame) {
 		xy = imagePlus;
-		initialize(single_pane, frame);
+		initialize(frame);
 	}
 
-	private void initialize(final boolean singlePane, final int frame) {
+	private void initialize(final int frame) {
 		if (frame > xy.getNFrames()) throw new IllegalArgumentException(
 			"Invalid frame: " + frame);
 
 		final boolean rgb_panes = xy.getNChannels() > 1 || xy.isComposite();
+		final boolean dummyCanvas = xy.getWidth() == 1 && xy.getHeight() == 1;
 		final int width = xy.getWidth();
 		final int height = xy.getHeight();
 		final int stackSize = xy.getNSlices();
 		int type;
-		original_xy_canvas = (xy.getWindow() == null) ? null : xy.getWindow()
-			.getCanvas();
+		original_xy_canvas = xy.getCanvas();
 
 		ImagePlus xyMonoChannel;
 
@@ -348,8 +349,8 @@ public class MultiDThreePanes implements PaneOwner {
 
 		// FIXME: should we save the LUT for other image types?
 		if (type == ImagePlus.COLOR_256) cm = xy_stack.getColorModel();
-
-		if (!singlePane) {
+		single_pane = single_pane || dummyCanvas;
+		if (!single_pane) {
 			final String title = (xy.getNFrames() > 0) ? "[T" + frame + "] " + xy
 				.getShortTitle() : xy.getShortTitle();
 			final int zy_width = stackSize;
@@ -659,15 +660,17 @@ public class MultiDThreePanes implements PaneOwner {
 			xz.setStack(xz_stack);
 			xz.setTitle("XZ " + title);
 			showStatus(0, 0, "Generating ZY planes...");
-
 		}
 
 		xy_canvas = createCanvas(xy, XY_PLANE);
-		xy_window = new StackWindow(xy, xy_canvas);
-		// Ensure keylisteners have focus
-		xy_canvas.requestFocusInWindow();
+		if (dummyCanvas) {
+			xy_window = null;
+		} else {
+			xy_window = new StackWindow(xy, xy_canvas); // will be showed
+			xy_canvas.requestFocusInWindow(); // Ensure keylisteners have focus
+		}
 
-		if (!singlePane) {
+		if (!single_pane) {
 			xz_canvas = createCanvas(xz, XZ_PLANE);
 			xz_window = new StackWindow(xz, xz_canvas);
 			xz_canvas.requestFocusInWindow();

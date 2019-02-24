@@ -138,7 +138,7 @@ public class SNTUI extends JDialog {
 	private JCheckBox showPathsSelected;
 	protected JCheckBox showPartsNearby;
 	protected JCheckBox useSnapWindow;
-	protected JCheckBox onlyActiveCTposition;
+	private JCheckBox onlyActiveCTposition;
 	protected JSpinner snapWindowXYsizeSpinner;
 	protected JSpinner snapWindowZsizeSpinner;
 	protected JSpinner nearbyFieldSpinner;

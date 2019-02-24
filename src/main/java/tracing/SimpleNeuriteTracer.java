@@ -373,8 +373,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (getUI() != null) {
 			getUI().showPartsNearby.setEnabled(!is2D());
 			getUI().nearbyFieldSpinner.setEnabled(!is2D());
+			getUI().arrangeCanvases();
 		}
-		if (getUI() != null) getUI().arrangeCanvases();
 		xy.show();
 		if (zy != null) zy.show();
 		if (xz != null) xz.show();
@@ -497,15 +497,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 *
 	 * @param singlePane if true only the XY view will be generated, if false XY,
 	 *          ZY, XZ views are created
-	 * @param channel the channel to be traced. Ignored when running in 'Analysis
-	 *          mode'
-	 * @param frame the frame to be traced. Ignored when running in 'Analysis
-	 *          mode'
+	 * @param channel the channel to be traced. Ignored when no valid image data
+	 *          exists.
+	 * @param frame the frame to be traced. Ignored when no valid image data
+	 *          exists.
 	 */
 	public void initialize(final boolean singlePane, final int channel,
 		final int frame)
 	{
-		if (analysisMode) {
+		if (!accessToValidImageData()) {
 			this.channel = 1;
 			this.frame = 1;
 			assembleDisplayCanvases();
@@ -518,8 +518,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setSinglePane(singlePane);
 		final Overlay sourceImageOverlay = xy.getOverlay();
 		super.initialize(xy, frame);
-		if (xy.isVisible() && usingDisplayCanvas() && pathAndFillManager
-			.size() == 0) xy.hide();
 		xy.setOverlay(sourceImageOverlay);
 
 		xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;
@@ -2484,14 +2482,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	private static void setAsFirstKeyListener(final Component c,
 		final QueueJumpingKeyListener firstKeyListener)
 	{
+		if (c == null) return;
 		final KeyListener[] oldKeyListeners = c.getKeyListeners();
 		for (final KeyListener kl : oldKeyListeners) {
 			c.removeKeyListener(kl);
 		}
 		firstKeyListener.addOtherKeyListeners(oldKeyListeners);
 		c.addKeyListener(firstKeyListener);
-		if (c.getParent() != null) setAsFirstKeyListener(c.getParent(),
-			firstKeyListener);
+		setAsFirstKeyListener(c.getParent(), firstKeyListener);
 	}
 
 	public synchronized void findSnappingPointInXYview(final double x_in_pane,

@@ -226,7 +226,7 @@ public class SNTUI extends JDialog {
 	public static final int PAUSED = 15;
 	/** The flag specifying 'analysis' mode */
 	public static final int ANALYSIS_MODE = 16;
-	static final int IMAGE_CLOSED = -1;
+
 
 	// TODO: Internal preferences: should be migrated to SNTPrefs
 	protected boolean confirmTemporarySegments = true;
@@ -843,14 +843,6 @@ public class SNTUI extends JDialog {
 					showOrHideFillList.setEnabled(false);
 					break;
 
-				case IMAGE_CLOSED:
-					if (plugin.analysisMode) return;
-					updateStatusText("Tracing image is no longer available...");
-					disableImageDependentComponents();
-					plugin.discardFill(false);
-					quitMenuItem.setEnabled(true);
-					return;
-
 				default:
 					SNT.error("BUG: switching to an unknown state");
 					return;
@@ -903,14 +895,8 @@ public class SNTUI extends JDialog {
 		channelSpinner.setEnabled(hasChannels);
 		frameSpinner.setEnabled(hasFrames);
 		applyPositionButton.addActionListener(e -> {
-			if (plugin.usingDisplayCanvas()) {
-				guiUtils.error("Display canvas has no data to be reloaded.");
-				return;
-			}
-			else if (plugin.getImagePlus() == null || plugin.getImagePlus()
-				.getProcessor() == null)
-			{
-				guiUtils.error("Tracing image is not available.");
+			if (!plugin.accessToValidImageData()) {
+				guiUtils.error("There is no valid image data to be loaded.");
 				return;
 			}
 			final int newC = (int) channelSpinner.getValue();
@@ -976,16 +962,15 @@ public class SNTUI extends JDialog {
 		final String bLabel = (plugin.getSinglePane()) ? "Display" : "Rebuild";
 		final JButton refreshPanesButton = new JButton(bLabel + " ZY/XZ Views");
 		refreshPanesButton.addActionListener(e -> {
-			if (noPathsError()) return;
-			if (!plugin.analysisMode && plugin.getImagePlus() == null) {
-				guiUtils.error("Tracing image is not available.");
+			final boolean noImageData = !plugin.accessToValidImageData();
+			if (noImageData && pathAndFillManager.size() == 0) {
+				uncomputableCanvasError();
 				return;
 			}
 			showStatus("Rebuilding ZY/XZ views...", false);
 			changeState(LOADING);
-			if (plugin.analysisMode && (plugin.getImagePlus() == null || !plugin
-				.getImagePlus().isVisible()))
-			{
+			if (noImageData) {
+				plugin.setSinglePane(false);
 				plugin.rebuildDisplayCanvases();
 			}
 			if (plugin.is2D()) {
@@ -1007,17 +992,17 @@ public class SNTUI extends JDialog {
 			final JButton rebuildCanvasButton = new JButton("Resize Canvas");
 			buttonPanel.add(rebuildCanvasButton);
 			rebuildCanvasButton.addActionListener(e -> {
-				if (plugin.usingDisplayCanvas() ||
-					(plugin.analysisMode && !imageAvailable()))
-				{
-					if (noPathsError()) return;
+				final boolean noImageData = !plugin.accessToValidImageData();
+				if (noImageData && pathAndFillManager.size() == 0) {
+					uncomputableCanvasError();
+					return;
+				}
+				if (noImageData) {
+					changeState(LOADING);
 					showStatus("Resizing Canvas...", false);
 					plugin.rebuildDisplayCanvases();
 					showStatus("Canvas rebuilt...", true);
-				}
-				else if (!imageAvailable()) {
-					guiUtils.error("Tracing image is not available");
-					return;
+					changeState(WAITING_TO_START_PATH);
 				}
 				else {
 					guiUtils.error(
@@ -1031,9 +1016,9 @@ public class SNTUI extends JDialog {
 		return viewsPanel;
 	}
 
-	private boolean imageAvailable() {
-		return plugin.getImagePlus() != null && plugin.getImagePlus()
-			.getProcessor() != null;
+	private void uncomputableCanvasError() {
+		guiUtils.error(
+				"Image data is not available and no paths exist to compute a display canvas");
 	}
 
 	private JPanel tracingPanel() {
@@ -2134,9 +2119,9 @@ public class SNTUI extends JDialog {
 			plugin.isAstarEnabled());
 		aStarCheckBox.addActionListener(e -> {
 			boolean enable = aStarCheckBox.isSelected();
-			if (enable && plugin.usingDisplayCanvas()) {
+			if (enable && !plugin.accessToValidImageData()) {
 				aStarCheckBox.setSelected(false);
-				displayCanvasError();
+				noValidImageDataError();
 				enable = false;
 			}
 			else if (!enable && askUserConfirmation && !guiUtils.getConfirmation(
@@ -2683,8 +2668,6 @@ public class SNTUI extends JDialog {
 				return "EDITING_MODE";
 			case PAUSED:
 				return "PAUSED";
-			case IMAGE_CLOSED:
-				return "IMAGE_CLOSED";
 			case ANALYSIS_MODE:
 				return "ANALYSIS_MODE";
 			default:
@@ -2761,9 +2744,8 @@ public class SNTUI extends JDialog {
 		return (text.startsWith("<HTML>")) ? label : "<HTML>" + label;
 	}
 
-	protected void displayCanvasError() {
-		guiUtils.error("This option requires a non-display canvas with " +
-			"valid image data.");
+	protected void noValidImageDataError() {
+		guiUtils.error("This option requires valid image data to be loaded.");
 	}
 
 	private class GuiListener implements ActionListener, ItemListener,
@@ -2781,11 +2763,8 @@ public class SNTUI extends JDialog {
 		/* ImageListener */
 		@Override
 		public void imageClosed(final ImagePlus imp) {
-			// updateColorImageChoice(); //FIXME
-			if (plugin.getImagePlus() == imp && getState() != ANALYSIS_MODE &&
-				getState() != LOADING)
-			{
-				changeState(SNTUI.IMAGE_CLOSED);
+			if (plugin.getImagePlus() == imp && plugin.accessToValidImageData()) {
+				plugin.pauseTracing(true, false);
 			}
 		}
 
@@ -3104,7 +3083,7 @@ public class SNTUI extends JDialog {
 			this.inputs = inputs;
 			this.analysisModeCmd = analysisModeCmd;
 			if (inputs == null) this.inputs = new HashMap<>();
-			this.inputs.put("rebuildCanvas", plugin.usingDisplayCanvas());
+			this.inputs.put("rebuildCanvas", !plugin.accessToValidImageData());
 		}
 
 		@Override
@@ -3114,7 +3093,7 @@ public class SNTUI extends JDialog {
 					.getName() + " before running this command.");
 				return null;
 			}
-			if (analysisModeCmd && !plugin.usingDisplayCanvas() && !plugin
+			if (analysisModeCmd && !plugin.accessToValidImageData() && !plugin
 				.getImagePlus().changes && guiUtils.getConfirmation(
 					"<HTML><div WIDTH=500>" +
 						"Coordinates of external reconstructions <i>may</i> fall outside the boundaries " +

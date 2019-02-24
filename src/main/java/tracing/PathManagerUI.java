@@ -1624,7 +1624,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (e.getActionCommand().equals(EXPLORE_FIT_CMD)) {
-				if (displayCanvasError()) return;
+				if (noValidImageDataError()) return;
 				if (plugin.getImagePlus() == null) {
 					displayTmpMsg(
 						"Tracing image is not available. Fit cannot be computed.");
@@ -1714,7 +1714,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (PLOT_PROFILE_CMD.equals(cmd)) {
-				if (displayCanvasError()) return;
+				if (noValidImageDataError()) return;
 				SwingUtilities.invokeLater(() -> {
 					final Tree tree = new Tree(selectedPaths);
 					final PathProfiler profiler = new PathProfiler(tree, plugin.getImagePlus());
@@ -1846,7 +1846,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (FILL_OUT_CMD.equals(cmd)) {
-				if (displayCanvasError()) return;
+				if (noValidImageDataError()) return;
 				plugin.startFillingPaths(new HashSet<>(selectedPaths));
 				return;
 
@@ -1996,8 +1996,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			}
 			else if (e.getSource().equals(fitVolumeMenuItem)) {
 
-				if (displayCanvasError()) return;
-
 				// this MenuItem is a toggle: check if it is set for 'unfitting'
 				if (fitVolumeMenuItem.getText().contains("Un-fit")) {
 					for (final Path p : selectedPaths)
@@ -2006,9 +2004,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					return;
 				}
 
-				final int currentState = plugin.getUI().getState();
-				final boolean imagenotAvailable = currentState == SNTUI.IMAGE_CLOSED ||
-					currentState == SNTUI.ANALYSIS_MODE;
+				final boolean imagenotAvailable = !plugin.accessToValidImageData();
 				final ArrayList<PathFitter> pathsToFit = new ArrayList<>();
 				int skippedFits = 0;
 
@@ -2056,9 +2052,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 								fitPaths(pathsToFit, userOptions[0], userOptions[1]); // call
 																																			// refreshManager
 								if (finalSkippedFits > 0) {
-									guiUtils.centeredMsg("Since image is not available, " +
+									guiUtils.centeredMsg("Since no image data is available, " +
 										finalSkippedFits + "/" + selectedPaths.size() +
-										" fits could not be computed", "Image Not Available");
+										" fits could not be computed", "Valid Image Data Unavailable");
 								}
 							}
 							catch (final NullPointerException | InterruptedException
@@ -2197,12 +2193,11 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 	}
 
-	private boolean displayCanvasError() {
-		final boolean displayCanvas = plugin.usingDisplayCanvas();
-		if (displayCanvas) guiUtils.error(
-			"It does not make sense to run this command on a display canvas, " +
-				"because display canvases contain no image data.");
-		return displayCanvas;
+	private boolean noValidImageDataError() {
+		final boolean invalidImage = !plugin.accessToValidImageData();
+		if (invalidImage) guiUtils.error(
+			"There is currently no valid image data to process.");
+		return invalidImage;
 	}
 
 	public static String extractTagsFromPath(final Path p) {

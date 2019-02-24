@@ -380,7 +380,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (xz != null) xz.show();
 	}
 
-	private void nullifyCanvases() {
+	protected void nullifyCanvases() {
 		if (xy != null) {
 			xy.close();
 			xy = null;
@@ -404,8 +404,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		zy_tracer_canvas = null;
 	}
 
-	protected boolean usingDisplayCanvas() {
-		return xy != null && "SNT Display Canvas".equals(xy.getInfoProperty());
+	protected boolean accessToValidImageData() {
+		return xy != null &&  xy.getProcessor() != null &&
+			!"SNT Display Canvas".equals(xy.getInfoProperty());
 	}
 
 	private void setIsDisplayCanvas(final ImagePlus imp) {
@@ -956,7 +957,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.SNT_PAUSED_LABEL);
 		}
 		else {
-			if (xy != null && xy.isLocked() && !getConfirmation(
+			if (xy != null && xy.isLocked() && ui != null && !getConfirmation(
 				"Image appears to be locked by other process. Activate SNT nevertheless?",
 				"Image Locked")) return;
 			disableEventsAllPanes(false);
@@ -977,7 +978,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			changeUIState(SNTUI.ANALYSIS_MODE);
 			setDrawCrosshairsAllPanes(false);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.TRACING_PAUSED_LABEL);
-			enableSnapCursor(snapCursor && !usingDisplayCanvas());
+			enableSnapCursor(snapCursor && !accessToValidImageData());
 		}
 		else {
 			analysisMode = false;
@@ -2750,19 +2751,19 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Enables SNT's XYZ snap cursor feature. Does nothing when using a display
-	 * canvas.
+	 * Enables SNT's XYZ snap cursor feature. Does nothing if no image data is
+	 * available
 	 *
 	 * @param enable whether cursor snapping should be enabled
 	 */
 	public synchronized void enableSnapCursor(final boolean enable) {
-		final boolean displayCanvas = usingDisplayCanvas();
-		snapCursor = enable && displayCanvas;
+		final boolean validImage = accessToValidImageData();
+		snapCursor = enable && validImage;
 		if (isUIready()) {
 			ui.useSnapWindow.setSelected(snapCursor);
 			ui.snapWindowXYsizeSpinner.setEnabled(snapCursor);
 			ui.snapWindowZsizeSpinner.setEnabled(snapCursor && !is2D());
-			if (enable && displayCanvas) ui.displayCanvasError();
+			if (enable && !validImage) ui.noValidImageDataError();
 		}
 	}
 

@@ -380,7 +380,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 
 		if (!editMode && tracerPlugin.snapCursor &&
 			plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down &&
-			!shift_key_down && !tracerPlugin.usingDisplayCanvas())
+			!shift_key_down && tracerPlugin.accessToValidImageData())
 		{
 			final double[] p = new double[3];
 			tracerPlugin.findSnappingPointInXYview(last_x_in_pane_precise,
@@ -456,7 +456,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 
 			case SNTUI.LOADING:
 			case SNTUI.SAVING:
-			case SNTUI.IMAGE_CLOSED:
+			case SNTUI.ANALYSIS_MODE:
 				return; // Do nothing
 			case SNTUI.EDITING_MODE:
 				impossibleEdit(true);
@@ -472,7 +472,6 @@ class InteractiveTracerCanvas extends TracerCanvas {
 				break;
 
 			default:
-				if (tracerPlugin.analysisMode) return;
 				final boolean join = PlatformUtils.isMac() ? e.isAltDown() : e
 					.isControlDown();
 				if (tracerPlugin.snapCursor && !join && !e.isShiftDown()) {

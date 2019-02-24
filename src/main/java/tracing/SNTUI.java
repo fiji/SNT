@@ -689,11 +689,14 @@ public class SNTUI extends JDialog {
 	 */
 	public void changeState(final int newState) {
 
-		currentState = newState;
 		SwingUtilities.invokeLater(() -> {
 			switch (newState) {
 
 				case WAITING_TO_START_PATH:
+					if (plugin.analysisMode || !plugin.accessToValidImageData()) {
+						changeState(ANALYSIS_MODE);
+						return;
+					}
 					keepSegment.setEnabled(false);
 					junkSegment.setEnabled(false);
 					completePath.setEnabled(false);
@@ -847,7 +850,7 @@ public class SNTUI extends JDialog {
 					SNT.error("BUG: switching to an unknown state");
 					return;
 			}
-
+			currentState = newState;
 			SNT.log("UI state: " + getState(currentState));
 			plugin.updateAllViewers();
 		});
@@ -2591,24 +2594,29 @@ public class SNTUI extends JDialog {
 				break;
 			case (FILLING_PATHS):
 				showStatus("Filling out cancelled...", true);
-				plugin.discardFill(); // will change status
-				break;
+				plugin.discardFill(); // will change UI state
+				return;
 			case (FITTING_PATHS):
 				showStatus("Fitting cancelled...", true);
-				pmUI.cancelFit(true);
-				break;
+				pmUI.cancelFit(true); // will change UI state
+				return;
 			case (PAUSED):
 				showStatus("SNT is now active...", true);
-				plugin.pause(false);
-				break;
+				if (plugin.getImagePlus()!=null) plugin.getImagePlus().unlock();
+				plugin.pause(false);  // will change UI state
+				return;
 			case (ANALYSIS_MODE):
+				if (!plugin.accessToValidImageData()) {
+					showStatus("All tasks terminated", true);
+					return;
+				}
 				showStatus("Tracing is now active...", true);
-				plugin.pauseTracing(false, false);
-				break;
+				plugin.pauseTracing(false, false);  // will change UI state
+				return;
 			case (EDITING_MODE):
 				showStatus("Exited from 'Edit Mode'...", true);
-				plugin.enableEditMode(false);
-				break;
+				plugin.enableEditMode(false);  // will change UI state
+				return;
 			case (WAITING_FOR_SIGMA_CHOICE):
 				showStatus("Close the sigma palette to abort sigma input...", true);
 				return; // do nothing: Currently we have no control over the sigma
@@ -2624,16 +2632,10 @@ public class SNTUI extends JDialog {
 				if (plugin.temporaryPath != null) plugin.cancelTemporary();
 				showStatus("All tasks terminated", true);
 				return;
-			case (LOADING):
-			case (SAVING):
-			case (IMAGE_CLOSED):
-				showStatus("Instruction ignored: No task to be aborted", true);
-				break; // none of these states needs to be aborted
 			default:
-				SNT.error("BUG: Wrong state for aborting operation...");
 				break;
 		}
-		changeState((plugin.analysisMode) ? ANALYSIS_MODE : WAITING_TO_START_PATH);
+		changeState(WAITING_TO_START_PATH);
 	}
 
 	private String getState(final int state) {

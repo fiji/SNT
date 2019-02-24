@@ -163,13 +163,8 @@ public class SNTUI extends JDialog {
 	private JLabel statusBarText;
 	private JButton keepSegment;
 	private JButton junkSegment;
-	protected JButton abortButton;
 	private JButton completePath;
 	private JCheckBox debugCheckBox;
-	private final String ABORT_BUTTON_LABEL_DEF = hotKeyLabel(hotKeyLabel(
-		"Cancel/Esc", "C"), "Esc");
-	private final String ABORT_BUTTON_LABEL_EXIT = hotKeyLabel(
-		"&nbsp;&nbsp;Exit/Esc&nbsp;&nbsp;", "Esc");
 
 	// UI controls for loading 'filtered image'
 	private JPanel filteredImgPanel;
@@ -670,7 +665,6 @@ public class SNTUI extends JDialog {
 	private void disableEverything() {
 		assert SwingUtilities.isEventDispatchThread();
 		disableImageDependentComponents();
-		abortButton.setEnabled(getState() != ANALYSIS_MODE);
 		loadTracesMenuItem.setEnabled(false);
 		loadSWCMenuItem.setEnabled(false);
 		exportCSVMenuItem.setEnabled(false);
@@ -700,8 +694,6 @@ public class SNTUI extends JDialog {
 					keepSegment.setEnabled(false);
 					junkSegment.setEnabled(false);
 					completePath.setEnabled(false);
-					abortButton.setEnabled(true);
-					abortButton.setText(ABORT_BUTTON_LABEL_DEF);
 
 					pmUI.valueChanged(null); // Fake a selection change in the path tree:
 					showPartsNearby.setEnabled(isStackAvailable());
@@ -728,15 +720,13 @@ public class SNTUI extends JDialog {
 					keepSegment.setEnabled(false);
 					junkSegment.setEnabled(false);
 					completePath.setEnabled(false);
-					abortButton.setEnabled(true);
-					abortButton.setText(ABORT_BUTTON_LABEL_EXIT);
-
 					pmUI.valueChanged(null); // Fake a selection change in the path tree:
 					showPartsNearby.setEnabled(isStackAvailable());
 					GuiUtils.enableComponents(aStarPanel, false);
 					setEnableAutoTracingComponents(false);
+					plugin.discardFill(false);
 					fmUI.setEnabledWhileNotFilling();
-					setFillListVisible(false);
+					//setFillListVisible(false);
 					loadLabelsMenuItem.setEnabled(true);
 					saveMenuItem.setEnabled(true);
 					loadTracesMenuItem.setEnabled(true);
@@ -749,7 +739,7 @@ public class SNTUI extends JDialog {
 					quitMenuItem.setEnabled(true);
 					showPathsSelected.setEnabled(true);
 					setEnableAutoTracingComponents(false);
-					updateStatusText("Tracing functions paused...");
+					updateStatusText("Tracing functions disabled...");
 					break;
 
 				case PARTIAL_PATH:
@@ -783,7 +773,6 @@ public class SNTUI extends JDialog {
 
 				case FITTING_PATHS:
 					updateStatusText("Fitting volumes around selected paths...");
-					abortButton.setEnabled(true);
 					break;
 
 				case CALCULATING_GAUSSIAN:
@@ -818,7 +807,6 @@ public class SNTUI extends JDialog {
 
 				case EDITING_MODE:
 					if (noPathsError()) return;
-					abortButton.setText(ABORT_BUTTON_LABEL_EXIT);
 					plugin.setCanvasLabelAllPanes(
 						InteractiveTracerCanvas.EDIT_MODE_LABEL);
 					updateStatusText("Editing Mode. Tracing functions disabled...");
@@ -837,8 +825,6 @@ public class SNTUI extends JDialog {
 					disableEverything();
 					keepSegment.setEnabled(false);
 					junkSegment.setEnabled(false);
-					abortButton.setEnabled(true);
-					abortButton.setText(ABORT_BUTTON_LABEL_EXIT);
 					completePath.setEnabled(false);
 					showPartsNearby.setEnabled(isStackAvailable());
 					setEnableAutoTracingComponents(false);
@@ -983,10 +969,10 @@ public class SNTUI extends JDialog {
 				return;
 			}
 			plugin.rebuildZYXZpanes();
+			arrangeCanvases();
 			changeState(WAITING_TO_START_PATH);
 			showStatus("ZY/XZ views reloaded...", true);
 			refreshPanesButton.setText("Rebuild ZY/XZ views");
-			arrangeCanvases();
 		});
 		final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 2,
 			0));
@@ -1588,8 +1574,9 @@ public class SNTUI extends JDialog {
 		gbc.gridx = 2;
 		statusChoicesPanel.add(completePath, gbc);
 		gbc.gridx = 3;
-		abortButton = GuiUtils.smallButton(ABORT_BUTTON_LABEL_DEF);
-		abortButton.addActionListener(listener);
+		final JButton abortButton = GuiUtils.smallButton(hotKeyLabel(hotKeyLabel(
+			"Cancel/Esc", "C"), "Esc"));
+		abortButton.addActionListener(e -> abortCurrentOperation());
 		gbc.gridx = 4;
 		gbc.ipadx = 0;
 		statusChoicesPanel.add(abortButton, gbc);
@@ -2217,8 +2204,8 @@ public class SNTUI extends JDialog {
 			}
 
 			final String defaultText;
-			if (plugin.usingDisplayCanvas()) {
-				defaultText = "Display canvas... ";// + plugin.getImagePlus().getTitle();
+			if (!plugin.accessToValidImageData()) {
+				defaultText = "Image data unavailable...";
 			}
 			else {
 				defaultText = "Tracing " + plugin.getImagePlus().getShortTitle() +
@@ -2985,10 +2972,6 @@ public class SNTUI extends JDialog {
 					return;
 				}
 
-			}
-			else if (source == abortButton) {
-
-				abortCurrentOperation();
 			}
 			else if (source == keepSegment) {
 

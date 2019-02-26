@@ -97,7 +97,7 @@ public class PathProfiler extends ContextCommand {
 	 */
 	public PathProfiler(final Tree tree, final ImagePlus imp) {
 		if (imp == null || tree == null) throw new IllegalArgumentException(
-			"Null image");
+			"Image and Tree cannot be null");
 		this.tree = tree;
 		this.imp = imp;
 		this.stack = imp.getImageStack();
@@ -188,8 +188,8 @@ public class PathProfiler extends ContextCommand {
 			catch (final IndexOutOfBoundsException exc) {
 				values[i] = Float.NaN;
 			}
-			p.setNodeValues(values);
 		}
+		p.setNodeValues(values);
 	}
 
 	private Map<String, double[]> getValuesAsArray(final Path p) {

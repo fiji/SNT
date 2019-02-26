@@ -1671,7 +1671,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		private final static String HISTOGRAM_CMD = "Distribution Analysis...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
 		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";
-		private final static String PLOT_PROFILE_CMD = "Path Profile";
+		private final static String PLOT_PROFILE_CMD = "Plot Profile";
 
 		private final static String TAG_LENGTH_PATTERN =
 			" ?\\[L:\\d+\\.?\\d+\\s?.+\\w+\\]";
@@ -1714,14 +1714,20 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (PLOT_PROFILE_CMD.equals(cmd)) {
-				if (noValidImageDataError()) return;
 				SwingUtilities.invokeLater(() -> {
+					final ImagePlus imp = plugin.getImagePlus();
+					if (noValidImageDataError()) return;
+					if (imp != null && imp.getStack().isVirtual()) {
+						guiUtils.error("Unfortunately virtual stacks cannot be profiled.");
+							return;
+					}
 					final Tree tree = new Tree(selectedPaths);
-					final PathProfiler profiler = new PathProfiler(tree, plugin.getImagePlus());
+					final PathProfiler profiler = new PathProfiler(tree, imp);
+					profiler.setNodeIndicesAsDistances(false);
 					profiler.getPlot().show(); // IJ1 plot, arguably more suitable for profile data
 					// NB: to use Scijava plotService instead:
-					//	profiler.setContext(plugin.getContext());
-					//	profiler.run();
+					//profiler.setContext(plugin.getContext());
+					//profiler.run();
 				});
 				return;
 			}

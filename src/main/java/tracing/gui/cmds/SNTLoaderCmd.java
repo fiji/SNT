@@ -239,11 +239,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 				}
 			}
 
-			final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(
-				getContext(), pathAndFillManager);
-			sntInstance.initialize((uiChoice.equals(UI_SIMPLE) && pathAndFillManager
-				.size() > 0), 1, 1);
-			sntInstance.startUI();
+			initPlugin(new SimpleNeuriteTracer(getContext(), pathAndFillManager));
 			return;
 		}
 
@@ -293,11 +289,31 @@ public class SNTLoaderCmd extends DynamicCommand {
 
 		final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(
 			getContext(), sourceImp);
-		sntInstance.initialize(uiChoice.equals(UI_SIMPLE), channel, sourceImp
-			.getFrame());
-		sntInstance.startUI();
 		sntInstance.loadTracings(tracesFile);
+		initPlugin(sntInstance);
 
+	}
+
+	private void initPlugin(final SimpleNeuriteTracer snt)
+	{
+		try {
+			final int frame = (sourceImp == null) ? 1 : sourceImp.getFrame();
+			snt.initialize(uiChoice.equals(UI_SIMPLE), channel, frame);
+			snt.startUI();
+		}
+		catch (final OutOfMemoryError error) {
+			final StringBuilder sb = new StringBuilder(
+				"Out of Memory: There is not enough RAM to load SNT under current options.\n");
+			sb.append("Please allocate more memory to IJ or ");
+			if (uiChoice.equals(UI_SIMPLE)) {
+				sb.append("choose a smaller ").append((sourceImp == null) ? "file."
+					: "image.");
+			}
+			else {
+				sb.append("select the \"").append(UI_SIMPLE).append("\" interface.");
+			}
+			cancel(sb.toString());
+		}
 	}
 
 	// this exists only to address issue #25 and avoid the propagation

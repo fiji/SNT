@@ -970,23 +970,43 @@ public class SNTUI extends JDialog {
 				uncomputableCanvasError();
 				return;
 			}
-			showStatus("Rebuilding ZY/XZ views...", false);
-			changeState(LOADING);
-			if (noImageData) {
-				plugin.setSinglePane(false);
-				plugin.rebuildDisplayCanvases();
+			if (plugin.getImagePlus() == null)
+			{
+				guiUtils.error(
+					"There is no loaded image. Please load one or create a display canvas.",
+					"No Canvas Exist");
+				return;
 			}
 			if (plugin.is2D()) {
 				guiUtils.error(plugin.getImagePlus().getTitle() +
 					" has no depth. Cannot generate side views!");
-				changeState(WAITING_TO_START_PATH);
 				return;
 			}
-			plugin.rebuildZYXZpanes();
-			arrangeCanvases();
-			changeState(WAITING_TO_START_PATH);
-			showStatus("ZY/XZ views reloaded...", true);
-			refreshPanesButton.setText("Rebuild ZY/XZ views");
+			showStatus("Rebuilding ZY/XZ views...", false);
+			changeState(LOADING);
+			try {
+				plugin.setSinglePane(false);
+				plugin.rebuildZYXZpanes();
+				arrangeCanvases();
+				showStatus("ZY/XZ views reloaded...", true);
+				refreshPanesButton.setText("Rebuild ZY/XZ views");
+			}
+			catch (final Throwable t) {
+				if (t instanceof OutOfMemoryError) {
+					guiUtils.error(
+						"Out of Memory: There is not enough RAM to load side views!");
+				}
+				else {
+					guiUtils.error("An error occured. See Console for details");
+					t.printStackTrace();
+				}
+				plugin.setSinglePane(true);
+				if (noImageData) plugin.rebuildDisplayCanvases();
+				showStatus("Out of memory error...", true);
+			}
+			finally {
+				resetState();
+			}
 		});
 
 		rebuildCanvasButton = new JButton();

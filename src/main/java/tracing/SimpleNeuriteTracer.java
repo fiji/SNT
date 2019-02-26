@@ -646,7 +646,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (file != null && file.exists()) {
 			if (isUIready()) ui.changeState(SNTUI.LOADING);
 			pathAndFillManager.loadGuessingType(file.getAbsolutePath());
-			if (isUIready()) ui.changeState(SNTUI.WAITING_TO_START_PATH);
+			if (isUIready()) ui.resetState();
 		}
 	}
 
@@ -2774,10 +2774,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final boolean validImage = accessToValidImageData();
 		snapCursor = enable && validImage;
 		if (isUIready()) {
+			if (enable && !validImage) ui.noValidImageDataError();
 			ui.useSnapWindow.setSelected(snapCursor);
 			ui.snapWindowXYsizeSpinner.setEnabled(snapCursor);
 			ui.snapWindowZsizeSpinner.setEnabled(snapCursor && !is2D());
-			if (enable && !validImage) ui.noValidImageDataError();
 		}
 	}
 

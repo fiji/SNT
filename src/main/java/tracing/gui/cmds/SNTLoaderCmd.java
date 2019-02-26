@@ -121,12 +121,12 @@ public class SNTLoaderCmd extends DynamicCommand {
 		final MutableModuleItem<String> imageChoiceInput = getInfo()
 			.getMutableInput("imageChoice", String.class);
 		if (sourceImp == null) {
-			imageChoiceInput.setChoices(Arrays.asList(new String[] { IMAGE_FILE,
-				IMAGE_NONE }));
+			imageChoiceInput.setChoices(Arrays.asList(new String[] { IMAGE_NONE,
+				IMAGE_FILE }));
 		}
 		else {
 			imageChoiceInput.setChoices(Arrays.asList(new String[] { sourceImp
-				.getTitle(), IMAGE_FILE, IMAGE_NONE }));
+				.getTitle(), IMAGE_NONE, IMAGE_FILE}));
 			imageChoiceInput.setValue(this, sourceImp.getTitle());
 			adjustChannelInput();
 		}
@@ -265,7 +265,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 				sourceImp.show();
 			}
 			catch (final Exception exc) {
-				cancel("Could not open\n" + imageFile.getAbsolutePath());
+				cancel("Could not open image:\n" + imageFile.getAbsolutePath());
 				return;
 			}
 

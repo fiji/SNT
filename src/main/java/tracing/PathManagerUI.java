@@ -626,7 +626,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		if (fitWorker != null) {
 			synchronized (fitWorker) {
 				fitWorker.cancel(true);
-				if (updateUIState) plugin.changeUIState(SNTUI.WAITING_TO_START_PATH);
+				if (updateUIState) plugin.getUI().resetState();
 				fitWorker = null;
 			}
 		}

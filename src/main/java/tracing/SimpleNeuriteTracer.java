@@ -752,7 +752,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (filler != null) {
 			synchronized (filler) {
 				filler.requestStop();
-				if (updateState) ui.changeState(SNTUI.WAITING_TO_START_PATH);
+				if (updateState) ui.resetState();
 				filler = null;
 			}
 		}
@@ -934,8 +934,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			if (isUIready() && !getUI().nearbySlices()) getUI().togglePartsChoice();
 		}
 		else {
-			changeUIState(SNTUI.WAITING_TO_START_PATH);
-			setCanvasLabelAllPanes(null);
+			if (ui != null) ui.resetState();
 		}
 		if (enable && pathAndFillManager.getSelectedPaths().size() == 1) {
 			editingPath = getSelectedPaths().iterator().next();

@@ -441,7 +441,6 @@ public class SNTUI extends JDialog {
 				});
 			}
 		}
-		changeState(WAITING_TO_START_PATH);
 	}
 
 	/**
@@ -695,10 +694,10 @@ public class SNTUI extends JDialog {
 			switch (newState) {
 
 				case WAITING_TO_START_PATH:
-					if (plugin.analysisMode || !plugin.accessToValidImageData()) {
-						changeState(ANALYSIS_MODE);
-						return;
-					}
+//					if (plugin.analysisMode || !plugin.accessToValidImageData()) {
+//						changeState(ANALYSIS_MODE);
+//						return;
+//					}
 					keepSegment.setEnabled(false);
 					junkSegment.setEnabled(false);
 					completePath.setEnabled(false);
@@ -1813,7 +1812,7 @@ public class SNTUI extends JDialog {
 
 			@Override
 			protected void done() {
-				changeState(WAITING_TO_START_PATH);
+				resetState();
 				updateFilteredImgFields();
 			}
 		};
@@ -2257,6 +2256,7 @@ public class SNTUI extends JDialog {
 			if (plugin.prefs.isSaveWinLocations()) arrangeDialogs();
 			final StackWindow impWindow = plugin.getWindow(MultiDThreePanes.XY_PLANE);
 			if (impWindow != null) arrangeCanvases();
+			resetState();
 			setVisible(true);
 			pathAndFillManager.resetListeners(null, true); // update Path lists
 			setPathListVisible(true, false);
@@ -2562,8 +2562,8 @@ public class SNTUI extends JDialog {
 
 	protected void reset() {
 		abortCurrentOperation();
+		resetState();
 		showStatus("Resetting", true);
-		changeState(WAITING_TO_START_PATH);
 	}
 
 	protected void abortCurrentOperation() {// FIXME: MOVE TO Simple NeuriteTracer

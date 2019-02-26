@@ -169,12 +169,9 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	public void repaintAllPanes() {
-		if (xy_canvas == null) return;
-		xy_canvas.repaint();
-		if (!single_pane) {
-			xz_canvas.repaint();
-			zy_canvas.repaint();
-		}
+		if (xy_canvas != null) xy_canvas.repaint();
+		if (xz_canvas != null) xz_canvas.repaint();
+		if (zy_canvas != null) zy_canvas.repaint();
 	}
 
 	public void disableEventsAllPanes(final boolean disable) {
@@ -210,11 +207,9 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	public void setDrawCrosshairsAllPanes(final boolean drawCrosshairs) {
-		xy_canvas.setDrawCrosshairs(drawCrosshairs);
-		if (!single_pane) {
-			xz_canvas.setDrawCrosshairs(drawCrosshairs);
-			zy_canvas.setDrawCrosshairs(drawCrosshairs);
-		}
+		if (xy_canvas != null) xy_canvas.setDrawCrosshairs(drawCrosshairs);
+		if (xz_canvas != null) xz_canvas.setDrawCrosshairs(drawCrosshairs);
+		if (zy_canvas != null) zy_canvas.setDrawCrosshairs(drawCrosshairs);
 	}
 
 	protected void setLockCursorAllPanes(final boolean lockCursor) {
@@ -226,11 +221,9 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	public void setCanvasLabelAllPanes(final String label) {
-		xy_canvas.setCanvasLabel(label);
-		if (!single_pane) {
-			xz_canvas.setCanvasLabel(label);
-			zy_canvas.setCanvasLabel(label);
-		}
+		if (xy_canvas != null) xy_canvas.setCanvasLabel(label);
+		if (xz_canvas != null) xz_canvas.setCanvasLabel(label);
+		if (zy_canvas != null) zy_canvas.setCanvasLabel(label);
 	}
 
 	public void setAnnotationsColorAllPanes(final Color newColor) {

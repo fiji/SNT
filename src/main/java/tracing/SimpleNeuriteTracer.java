@@ -391,16 +391,19 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (xz != null) xz.show();
 	}
 
-	protected void nullifyCanvases() {
+	private void nullifyCanvases() {
 		if (xy != null) {
+			xy.changes = false;
 			xy.close();
 			xy = null;
 		}
 		if (zy != null) {
+			zy.changes = false;
 			zy.close();
 			zy = null;
 		}
 		if (xz != null) {
+			xz.changes = false;
 			xz.close();
 			xz = null;
 		}

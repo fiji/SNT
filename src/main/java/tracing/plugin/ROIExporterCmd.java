@@ -94,15 +94,19 @@ public class ROIExporterCmd implements Command {
 	@Override
 	public void run() {
 
-		converter = new RoiConverter(tree, imp);
+		converter = (imp == null ) ? new RoiConverter(tree) : new RoiConverter(tree, imp);
 		if (converter.getParsedTree().isEmpty()) {
 			warnUser("None of the input paths could be converted to ROIs.");
 			return;
 		}
 
-		final int skippedPaths = tree.size() - converter.getParsedTree().size();
 		logService.info("Converting paths to ROIs...");
 		statusService.showStatus("Converting paths to ROIs...");
+		if (imp == null) {
+			warn("Since no valid image data exists C,Z,T positions of ROIs may not ne set properly.");
+			warn("If Path(s) are associated with a multi-dimensional image, you may need to load it before conversion");
+		}
+		final int skippedPaths = tree.size() - converter.getParsedTree().size();
 		if (skippedPaths > 0) warn("" + skippedPaths +
 			" were rejected and will not be converted");
 

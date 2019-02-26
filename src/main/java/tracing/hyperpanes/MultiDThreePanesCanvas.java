@@ -34,11 +34,15 @@ import java.awt.geom.Rectangle2D;
 import org.scijava.vecmath.Point2d;
 
 import ij.ImagePlus;
+import ij.Prefs;
 import ij.gui.ImageCanvas;
+
 
 public class MultiDThreePanesCanvas extends ImageCanvas {
 
 	private static final long serialVersionUID = 1L;
+	private static final double SCALE_FACTOR = Prefs.getDouble("gui.scale", 1d); //TODO: Replace w/ Prefs.getGuiScale(); when IJ1.52k in POM
+
 	protected PaneOwner owner;
 	protected int plane;
 	private double current_x, current_y, current_z;
@@ -146,8 +150,9 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	}
 
 	private Font getScaledFont() {
-		final double size = Math.max(9, Math.min(18 * magnification, 30));
-		final Font font = new Font("SansSerif", Font.PLAIN, 18).deriveFont(
+		final double size = SCALE_FACTOR * Math.max(9, Math.min(13 *
+			magnification, 30));
+		final Font font = new Font("SansSerif", Font.PLAIN, 13).deriveFont(
 			(float) size);
 		return font;
 	}

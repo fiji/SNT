@@ -49,9 +49,8 @@ def run():
         ui.showDialog("Somewhow the specified id was not found", "Error")
         return
 
-    # Reload UI in 'Analysis Mode' if running in 'Tracing Mode'
-    if snt.getUI().getCurrentState() != SNTUI.ANALYSIS_MODE:
-        SNTUI.reloadUI(snt.getUI(), True)
+    # Pause tracing functions
+    snt.getUI().changeState(SNTUI.ANALYSIS_MODE)
 
     # All the 'raw data' in the MouseLight database is stored as JSONObjects.
     # If needed, these could be access as follows:

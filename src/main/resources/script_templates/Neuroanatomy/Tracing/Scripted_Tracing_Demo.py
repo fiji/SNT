@@ -33,9 +33,8 @@ def run():
     if not snt.isUIReady():
         ui.showDialog("Demo cannot run in current state: UI not ready", "Error")
         return
-    if snt.getUI().getCurrentState() == SNTUI.ANALYSIS_MODE:
-        ui.showDialog("Demo cannot run in 'Analysis Mode'.", "Error")
-        return
+    # Ensure tracing functions are not paused
+    snt.getUI().changeState(SNTUI.WAITING_TO_START_PATH)
 
     # For basic functionality we can call SNTService directly: E.g.:
     # http://javadoc.scijava.org/Fiji/tracing/SNTService.html
@@ -67,6 +66,12 @@ def run():
     # tur-off the A* Search algorithm
     plugin.enableAstar(False)
     imp = plugin.getImagePlus()
+
+    # Create a placeholder display canvas if no image currently exists
+    if imp is None:
+        plugin.rebuildDisplayCanvases()
+        imp = plugin.getImagePlus()
+
     dim = imp.getDimensions()
     sx = imp.getCalibration().getX(dim[0]) / 2
     sy = imp.getCalibration().getY(dim[1]) / 2
@@ -90,7 +95,7 @@ def run():
 
     # Cool. It worked! We can also compute paths from a list of points. Let's
     # create a bunch of child paths, e.g., by rotating the parent path above
-    fork_point = p.getPointInImage(0)  # 0-based index
+    fork_point = p.getNode(0)  # 0-based index
     for deg_angle in range(10,  360, 10):
         angle = math.radians(deg_angle)
         rot_x = sx + math.cos(angle) * (ex - sx) - math.sin(angle) * (ey - sy)
@@ -140,4 +145,5 @@ def run():
 
 
 run()
+
 

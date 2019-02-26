@@ -2257,11 +2257,25 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 *          {@link MultiDThreePanes#XZ_PLANE} or
 	 *          {@link MultiDThreePanes#ZY_PLANE}.
 	 * @return the image associate with the specified view, or null if the view is
-	 *         not being displayed
+	 *         not available
 	 */
 	public ImagePlus getImagePlus(final int pane) {
-		final StackWindow win = getWindow(pane);
-		return (win == null) ? null : win.getImagePlus();
+		ImagePlus imp = null;
+		switch (pane) {
+			case XY_PLANE:
+				if (xy != null && isDummy()) return null;
+				imp = xy;
+				break;
+			case XZ_PLANE:
+				imp = xz;
+				break;
+			case ZY_PLANE:
+				imp = zy;
+				break;
+			default:
+				break;
+		}
+		return (imp == null || imp.getProcessor() == null) ? null : imp;
 	}
 
 	@Override

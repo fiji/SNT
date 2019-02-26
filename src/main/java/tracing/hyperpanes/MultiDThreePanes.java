@@ -311,12 +311,15 @@ public class MultiDThreePanes implements PaneOwner {
 		initialize(frame);
 	}
 
+	protected boolean isDummy() {
+		return xy.getWidth() == 1 && xy.getHeight() == 1;
+	}
+
 	private void initialize(final int frame) {
 		if (frame > xy.getNFrames()) throw new IllegalArgumentException(
 			"Invalid frame: " + frame);
 
 		final boolean rgb_panes = xy.getNChannels() > 1 || xy.isComposite();
-		final boolean dummyCanvas = xy.getWidth() == 1 && xy.getHeight() == 1;
 		final int width = xy.getWidth();
 		final int height = xy.getHeight();
 		final int stackSize = xy.getNSlices();
@@ -342,7 +345,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 		// FIXME: should we save the LUT for other image types?
 		if (type == ImagePlus.COLOR_256) cm = xy_stack.getColorModel();
-		single_pane = single_pane || dummyCanvas;
+		single_pane = single_pane || isDummy();
 		if (!single_pane) {
 			final String title = (xy.getNFrames() > 0) ? "[T" + frame + "] " + xy
 				.getShortTitle() : xy.getShortTitle();
@@ -656,7 +659,7 @@ public class MultiDThreePanes implements PaneOwner {
 		}
 
 		xy_canvas = createCanvas(xy, XY_PLANE);
-		if (dummyCanvas) {
+		if (isDummy()) {
 			xy_window = null;
 		} else {
 			xy_window = new StackWindow(xy, xy_canvas); // will be showed

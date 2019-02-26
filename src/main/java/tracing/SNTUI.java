@@ -164,6 +164,7 @@ public class SNTUI extends JDialog {
 	private JButton keepSegment;
 	private JButton junkSegment;
 	private JButton completePath;
+	private JButton rebuildCanvasButton;
 	private JCheckBox debugCheckBox;
 
 	// UI controls for loading 'filtered image'
@@ -675,6 +676,13 @@ public class SNTUI extends JDialog {
 		quitMenuItem.setEnabled(false);
 	}
 
+	private void updateRebuildCanvasButton() {
+		final ImagePlus imp = plugin.getImagePlus();
+		final String label = (imp== null || !imp.isVisible()) ? "Create Canvas"
+			: "Resize Canvas";
+		rebuildCanvasButton.setText(label);
+	}
+
 	/**
 	 * Changes this UI to a new state.
 	 *
@@ -713,6 +721,7 @@ public class SNTUI extends JDialog {
 					showPathsSelected.setEnabled(true);
 					updateStatusText("Click somewhere to start a new path...");
 					showOrHideFillList.setEnabled(true);
+					updateRebuildCanvasButton();
 					break;
 
 				case ANALYSIS_MODE:
@@ -739,6 +748,7 @@ public class SNTUI extends JDialog {
 					quitMenuItem.setEnabled(true);
 					showPathsSelected.setEnabled(true);
 					setEnableAutoTracingComponents(false);
+					updateRebuildCanvasButton();
 					updateStatusText("Tracing functions disabled...");
 					break;
 
@@ -978,32 +988,37 @@ public class SNTUI extends JDialog {
 			showStatus("ZY/XZ views reloaded...", true);
 			refreshPanesButton.setText("Rebuild ZY/XZ views");
 		});
+
+		rebuildCanvasButton = new JButton();
+		updateRebuildCanvasButton();
+		rebuildCanvasButton.addActionListener(e -> {
+			final boolean noImageData = !plugin.accessToValidImageData();
+			if (noImageData && pathAndFillManager.size() == 0) {
+				uncomputableCanvasError();
+				return;
+			}
+			if (noImageData) {
+				changeState(LOADING);
+				showStatus("Resizing Canvas...", false);
+				if (plugin.getImagePlus(MultiDThreePanes.XZ_PLANE) == null && plugin
+					.getImagePlus(MultiDThreePanes.ZY_PLANE) == null)
+				{
+					plugin.setSinglePane(true);
+				}
+				plugin.rebuildDisplayCanvases(); // will change UI state
+				showStatus("Canvas rebuilt...", true);
+			}
+			else {
+				guiUtils.error(
+					"Command currently only available for Display Canvas(es).");
+				return;
+			}
+		});
+
 		final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 2,
 			0));
+		buttonPanel.add(rebuildCanvasButton);
 		buttonPanel.add(refreshPanesButton);
-		{
-			final JButton rebuildCanvasButton = new JButton("Resize Canvas");
-			buttonPanel.add(rebuildCanvasButton);
-			rebuildCanvasButton.addActionListener(e -> {
-				final boolean noImageData = !plugin.accessToValidImageData();
-				if (noImageData && pathAndFillManager.size() == 0) {
-					uncomputableCanvasError();
-					return;
-				}
-				if (noImageData) {
-					changeState(LOADING);
-					showStatus("Resizing Canvas...", false);
-					plugin.rebuildDisplayCanvases();
-					showStatus("Canvas rebuilt...", true);
-					changeState(WAITING_TO_START_PATH);
-				}
-				else {
-					guiUtils.error(
-						"Command currently only available for Display Canvas(es)");
-					return;
-				}
-			});
-		}
 		gdb.fill = GridBagConstraints.NONE;
 		viewsPanel.add(buttonPanel, gdb);
 		return viewsPanel;
@@ -2756,8 +2771,11 @@ public class SNTUI extends JDialog {
 		/* ImageListener */
 		@Override
 		public void imageClosed(final ImagePlus imp) {
-			if (plugin.getImagePlus() == imp && plugin.accessToValidImageData()) {
+			if (imp != plugin.getImagePlus()) return;
+			if (plugin.accessToValidImageData()) {
 				plugin.pauseTracing(true, false);
+			} else {
+				updateRebuildCanvasButton();
 			}
 		}
 

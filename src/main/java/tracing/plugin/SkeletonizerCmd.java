@@ -42,7 +42,6 @@ import ij.process.ImageProcessor;
 import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
 import sc.fiji.skeletonize3D.Skeletonize3D_;
 import tracing.SNTService;
-import tracing.SNTUI;
 import tracing.SimpleNeuriteTracer;
 import tracing.Tree;
 
@@ -92,16 +91,14 @@ public class SkeletonizerCmd implements Command {
 			error("No active instance of SimpleNeuriteTracer was found.");
 			return;
 		}
-		final boolean twoDdisplayCanvas = plugin
-			.getUIState() == SNTUI.ANALYSIS_MODE && plugin.getImagePlus()
-				.getNSlices() == 1 && tree.is3D();
+		final ImagePlus imp = plugin.getImagePlus();
+		final boolean twoDdisplayCanvas =  imp != null && imp.getNSlices() == 1 && tree.is3D();
 		if (twoDdisplayCanvas) {
 			error(
 				"Paths have a depth component but are being displayed on a 2D canvas.");
 			return;
 		}
-		final Roi roi = (plugin.getImagePlus() == null) ? null : plugin
-			.getImagePlus().getRoi();
+		final Roi roi = (imp == null) ? null : imp.getRoi();
 		boolean restrictByRoi = !roiChoice.equals("None");
 		final boolean validAreaRoi = (roi == null || !roi.isArea());
 		if (restrictByRoi && validAreaRoi) {

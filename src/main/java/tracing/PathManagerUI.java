@@ -790,7 +790,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	}
 
 	private void updateHyperstackPosition(final Path p) {
-		plugin.getImagePlus().setPosition(p.getChannel(), plugin.getImagePlus().getZ(), p.getFrame());
+		final ImagePlus imp = plugin.getImagePlus();
+		if (imp != null) imp.setPosition(p.getChannel(), imp.getZ(), p.getFrame());
 	}
 
 	private void displayTmpMsg(final String msg) {

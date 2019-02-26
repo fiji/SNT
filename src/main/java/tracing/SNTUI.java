@@ -876,17 +876,18 @@ public class SNTUI extends JDialog {
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
 		gdb.gridwidth = 1;
 
-		final boolean hasChannels = plugin.getImagePlus().getNChannels() > 1;
-		final boolean hasFrames = plugin.getImagePlus().getNFrames() > 1;
+		final ImagePlus imp = plugin.getImagePlus();
+		final boolean hasChannels = imp != null && imp.getNChannels() > 1;
+		final boolean hasFrames = imp != null && imp.getNFrames() > 1;
 		final JPanel positionPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,
 			4, 0));
 		positionPanel.add(GuiUtils.leftAlignedLabel("Channel", hasChannels));
 		final JSpinner channelSpinner = GuiUtils.integerSpinner(plugin.channel, 1,
-			plugin.getImagePlus().getNChannels(), 1);
+			(hasChannels) ? imp.getNChannels() : 1, 1);
 		positionPanel.add(channelSpinner);
 		positionPanel.add(GuiUtils.leftAlignedLabel(" Frame", hasFrames));
 		final JSpinner frameSpinner = GuiUtils.integerSpinner(plugin.frame, 1,
-			plugin.getImagePlus().getNFrames(), 1);
+			(hasFrames) ? imp.getNFrames() : 1, 1);
 		positionPanel.add(frameSpinner);
 		final JButton applyPositionButton = new JButton("Reload");
 		final ChangeListener spinnerListener = e -> applyPositionButton.setText(

@@ -107,9 +107,7 @@ class ClarifyingKeyListener implements KeyListener, ContainerListener {
 			if (win.isShowing()) win.toFront();
 		}
 
-		else if (e.isShiftDown() && (e.isControlDown() || e.isAltDown()) &&
-			(keyCode == KeyEvent.VK_A))
-		{
+		else if (e.isShiftDown() && e.isAltDown() && (keyCode == KeyEvent.VK_A)) {
 			new GuiUtils(e.getComponent().getParent()).error(
 				"You seem to be trying to start Sholl analysis, but the focus is on the wrong window.\n" +
 					"Bring the tracing image to the foreground and try again.");

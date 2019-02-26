@@ -843,6 +843,10 @@ public class SNTUI extends JDialog {
 
 	}
 
+	protected void resetState() {
+		plugin.pauseTracing(!plugin.accessToValidImageData() || plugin.analysisMode, false); // will set UI state
+	}
+
 	/**
 	 * Gets the current UI state.
 	 *
@@ -905,7 +909,7 @@ public class SNTUI extends JDialog {
 				.getZ(), newT);
 			preprocess.setSelected(false);
 			plugin.showMIPOverlays(0);
-			changeState(WAITING_TO_START_PATH);
+			resetState();
 			showStatus(reload ? "Image reloaded into memory..." : null, true);
 		});
 		positionPanel.add(applyPositionButton);
@@ -1007,7 +1011,7 @@ public class SNTUI extends JDialog {
 
 	private void uncomputableCanvasError() {
 		guiUtils.error(
-				"Image data is not available and no paths exist to compute a display canvas");
+				"Image data is not available and no paths exist to compute a display canvas.");
 	}
 
 	private JPanel tracingPanel() {
@@ -1064,21 +1068,21 @@ public class SNTUI extends JDialog {
 			: canvas.nodeDiameter(), 0, 100, 1, 0);
 		nodeSpinner.addChangeListener(e -> {
 			final double value = (double) (nodeSpinner.getValue());
-			plugin.xy_tracer_canvas.setNodeDiameter(value);
+			canvas.setNodeDiameter(value);
 			if (!plugin.getSinglePane()) {
-				plugin.xz_tracer_canvas.setNodeDiameter(value);
-				plugin.zy_tracer_canvas.setNodeDiameter(value);
+				plugin.getXZCanvas().setNodeDiameter(value);
+				plugin.getZYCanvas().setNodeDiameter(value);
 			}
 			plugin.updateAllViewers();
 		});
 		final JButton defaultsButton = new JButton("Default");
 		defaultsButton.addActionListener(e -> {
-			plugin.xy_tracer_canvas.setNodeDiameter(-1);
+			plugin.getXYCanvas().setNodeDiameter(-1);
 			if (!plugin.getSinglePane()) {
-				plugin.xz_tracer_canvas.setNodeDiameter(-1);
-				plugin.zy_tracer_canvas.setNodeDiameter(-1);
+				plugin.getXZCanvas().setNodeDiameter(-1);
+				plugin.getZYCanvas().setNodeDiameter(-1);
 			}
-			nodeSpinner.setValue(plugin.xy_tracer_canvas.nodeDiameter());
+			nodeSpinner.setValue(plugin.getXYCanvas().nodeDiameter());
 			showStatus("Node scale reset", true);
 		});
 
@@ -1786,7 +1790,7 @@ public class SNTUI extends JDialog {
 				catch (final OutOfMemoryError e3) {
 					plugin.filteredData = null;
 					guiUtils.error(
-						"It seems you there is not enough memory to proceed. See Console for details");
+						"It seems there is not enough memory to proceed. See Console for details");
 					e3.printStackTrace();
 				}
 				return null;
@@ -2589,7 +2593,7 @@ public class SNTUI extends JDialog {
 				return;
 			case (PAUSED):
 				showStatus("SNT is now active...", true);
-				if (plugin.getImagePlus()!=null) plugin.getImagePlus().unlock();
+				if (plugin.getImagePlus() != null) plugin.getImagePlus().unlock();
 				plugin.pause(false);  // will change UI state
 				return;
 			case (ANALYSIS_MODE):

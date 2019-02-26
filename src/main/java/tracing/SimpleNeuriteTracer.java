@@ -159,9 +159,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * Just for convenience, keep casted references to the superclass's
 	 * InteractiveTracerCanvas objects:
 	 */
-	protected InteractiveTracerCanvas xy_tracer_canvas;
-	protected InteractiveTracerCanvas xz_tracer_canvas;
-	protected InteractiveTracerCanvas zy_tracer_canvas;
+	private InteractiveTracerCanvas xy_tracer_canvas;
+	private InteractiveTracerCanvas xz_tracer_canvas;
+	private InteractiveTracerCanvas zy_tracer_canvas;
 
 	/* Image properties */
 	protected int width, height, depth;
@@ -180,6 +180,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected float[][] slices_data_f;
 	volatile protected float stackMax = Float.MIN_VALUE;
 	volatile protected float stackMin = Float.MAX_VALUE;
+
+	/* Curvatures */
+	private volatile boolean hessianEnabled = false;
+	private ComputeCurvatures hessian = null;
+	/*
+	 * This variable just stores the sigma which the current 'hessian'
+	 * ComputeCurvatures was / is being calculated (or -1 if 'hessian' is null) ...
+	 */
+	private volatile double hessianSigma = -1;
 
 	/* tracing threads */
 	private TracerThread currentSearchThread = null;
@@ -351,18 +360,20 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Rebuilds display canvases, i.e., the placeholder canvases used in 'Analysis
-	 * Mode' (a single-canvas is rebuilt if only the XY view is active).
+	 * Rebuilds display canvases, i.e., the placeholder canvases used when no
+	 * valid image data exists (a single-canvas is rebuilt if only the XY view is
+	 * active).
 	 * <p>
 	 * Useful when multiple files are imported and imported paths 'fall off' the
 	 * dimensions of current canvas(es). If there is not enough memory to
 	 * accommodate enlarged dimensions, the resulting canvas will be a 2D image.
 	 * </p>
 	 *
-	 * @throws IllegalArgumentException if SimpleNeuriteTracer is not running in
-	 *           'Analysis Mode'
+	 * @throws IllegalArgumentException if valid image data exists
 	 */
 	public void rebuildDisplayCanvases() throws IllegalArgumentException {
+		if (accessToValidImageData()) throw new IllegalArgumentException(
+			"Attempting to rebuild canvas(es) when valid data exists");
 		initialize(getSinglePane(), 1, 1);
 		showInitializedCanvases();
 		pauseTracing(true, false);
@@ -405,8 +416,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected boolean accessToValidImageData() {
-		return xy != null &&  xy.getProcessor() != null &&
-			!"SNT Display Canvas".equals(xy.getInfoProperty());
+		return getImagePlus() != null && !"SNT Display Canvas".equals(xy
+			.getInfoProperty());
 	}
 
 	private void setIsDisplayCanvas(final ImagePlus imp) {
@@ -414,10 +425,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	private void assembleDisplayCanvases() {
-		if (!analysisMode) {
-			throw new IllegalArgumentException(
-				"Display Canvases are only available in 'Analysis Mode'");
-		}
 		nullifyCanvases();
 		if (pathAndFillManager.size() == 0) {
 			// not enough information to proceed. Assemble a dummy canvas instead
@@ -648,20 +655,21 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return pathAndFillManager;
 	}
 
-	public InteractiveTracerCanvas getXYCanvas() {
+	protected InteractiveTracerCanvas getXYCanvas() {
 		return xy_tracer_canvas;
 	}
 
-	public InteractiveTracerCanvas getZYCanvas() {
-		return zy_tracer_canvas;
-	}
-
-	public InteractiveTracerCanvas getXZCanvas() {
+	protected InteractiveTracerCanvas getXZCanvas() {
 		return xz_tracer_canvas;
 	}
 
+	protected InteractiveTracerCanvas getZYCanvas() {
+		return zy_tracer_canvas;
+	}
+
 	public ImagePlus getImagePlus() {
-		return xy;
+		//return (isDummy()) ? xy : getImagePlus(XY_PLANE);
+		return getImagePlus(XY_PLANE);
 	}
 
 	protected double getImpDiagonalLength(final boolean scaled,
@@ -2034,14 +2042,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		imp.copyScale(xy);
 		return imp;
 	}
-
-	volatile boolean hessianEnabled = false;
-	ComputeCurvatures hessian = null;
-	/*
-	 * This variable just stores the sigma which the current 'hessian'
-	 * ComputeCurvatures was / is being calculated (or -1 if 'hessian' is null) ...
-	 */
-	volatile double hessianSigma = -1;
 
 	public void startHessian() {
 		if (hessian == null) {

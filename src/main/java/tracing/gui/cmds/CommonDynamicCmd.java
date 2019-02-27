@@ -65,6 +65,7 @@ public class CommonDynamicCmd extends DynamicCommand {
 	protected void error(final String msg) {
 		if (snt != null) {
 			snt.error(msg);
+			cancel();
 		}
 		else {
 			cancel(msg);

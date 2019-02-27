@@ -24,6 +24,7 @@ package tracing;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
@@ -109,9 +110,11 @@ import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.SigmaPalette;
+import tracing.gui.cmds.ChooseDatasetCmd;
 import tracing.gui.cmds.CompareFilesCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
+import tracing.gui.cmds.OpenDatasetCmd;
 import tracing.gui.cmds.RemoteSWCImporterCmd;
 import tracing.gui.cmds.ResetPrefsCmd;
 import tracing.gui.cmds.ShowCorrespondencesCmd;
@@ -1904,6 +1907,22 @@ public class SNTUI extends JDialog {
 			return;
 		});
 		fileMenu.add(saveTable);
+
+		// Options to replace image data
+		final JMenu changeImpMenu = new JMenu("Choose Tracing Image");
+		changeImpMenu.setIcon(IconFactory.getMenuIcon(GLYPH.FILE_IMAGE));
+		final JMenuItem fromList = new JMenuItem("From Open Image...");
+		fromList.addActionListener(e -> {
+			(new CmdRunner(ChooseDatasetCmd.class, false)).execute();
+		});
+		changeImpMenu.add(fromList);
+		final JMenuItem fromFile = new JMenuItem("From Imported File...");
+		fromFile.addActionListener(e -> {
+			(new CmdRunner(OpenDatasetCmd.class, false)).execute();
+		});
+		changeImpMenu.add(fromFile);
+		fileMenu.addSeparator();
+		fileMenu.add(changeImpMenu);
 
 		sendToTrakEM2 = new JMenuItem("Send to TrakEM2");
 		sendToTrakEM2.addActionListener(e -> plugin.notifyListeners(new SNTEvent(

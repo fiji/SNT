@@ -375,20 +375,18 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (accessToValidImageData()) throw new IllegalArgumentException(
 			"Attempting to rebuild canvas(es) when valid data exists");
 		initialize(getSinglePane(), 1, 1);
-		showInitializedCanvases();
+		updateUIFromInitializedImp(xy.isVisible());
 		pauseTracing(true, false);
 		updateAllViewers();
 	}
 
-	private void showInitializedCanvases() {
-		if (getUI() != null) {
-			getUI().showPartsNearby.setEnabled(!is2D());
-			getUI().nearbyFieldSpinner.setEnabled(!is2D());
-			getUI().arrangeCanvases();
+	private void updateUIFromInitializedImp(final boolean showImp) {
+		if (getUI() != null) getUI().inputImageChanged();
+		if (showImp) {
+			xy.show();
+			if (zy != null) zy.show();
+			if (xz != null) xz.show();
 		}
-		xy.show();
-		if (zy != null) zy.show();
-		if (xz != null) xz.show();
 	}
 
 	private void nullifyCanvases() {
@@ -494,12 +492,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	@Override
-	public void initialize(final ImagePlus imp, final int frame) {
+	public void initialize(final ImagePlus imp) {
 		nullifyCanvases();
 		xy = imp;
 		setFieldsFromImage(imp);
-		initialize(getSinglePane(), channel, frame);
-		if (imp.isVisible()) showInitializedCanvases();
+		initialize(getSinglePane(), channel = imp.getC(), frame = imp.getT());
+		updateUIFromInitializedImp(imp.isVisible());
 	}
 
 	/**

@@ -306,6 +306,10 @@ public class MultiDThreePanes implements PaneOwner {
 		this.single_pane = single_pane || singleSlice;
 	}
 
+	public void initialize(final ImagePlus imagePlus) {
+		initialize(imagePlus, imagePlus.getFrame());
+	}
+
 	public void initialize(final ImagePlus imagePlus, final int frame) {
 		xy = imagePlus;
 		initialize(frame);

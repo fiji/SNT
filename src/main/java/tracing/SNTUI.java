@@ -167,6 +167,9 @@ public class SNTUI extends JDialog {
 	private JButton rebuildCanvasButton;
 	private JCheckBox debugCheckBox;
 
+	// UI controls for CT data source
+	private JPanel sourcePanel;
+
 	// UI controls for loading 'filtered image'
 	private JPanel filteredImgPanel;
 	private JTextField filteredImgPathField;
@@ -309,7 +312,7 @@ public class SNTUI extends JDialog {
 			{
 				GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
 				++c2.gridy;
-				tab2.add(sourcePanel(), c2);
+				tab2.add(sourcePanel = sourcePanel(plugin.getImagePlus()), c2);
 				++c2.gridy;
 			}
 
@@ -870,13 +873,11 @@ public class SNTUI extends JDialog {
 		return plugin != null && !plugin.is2D();
 	}
 
-	private JPanel sourcePanel() { // User inputs for multidimensional images
-
+	/* User inputs for multidimensional images */
+	private JPanel sourcePanel(final ImagePlus imp) {
 		final JPanel sourcePanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
 		gdb.gridwidth = 1;
-
-		final ImagePlus imp = plugin.getImagePlus();
 		final boolean hasChannels = imp != null && imp.getNChannels() > 1;
 		final boolean hasFrames = imp != null && imp.getNFrames() > 1;
 		final JPanel positionPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,
@@ -987,7 +988,7 @@ public class SNTUI extends JDialog {
 			try {
 				plugin.setSinglePane(false);
 				plugin.rebuildZYXZpanes();
-				arrangeCanvases();
+				arrangeCanvases(false);
 				showStatus("ZY/XZ views reloaded...", true);
 				refreshPanesButton.setText("Rebuild ZY/XZ views");
 			}
@@ -2028,7 +2029,7 @@ public class SNTUI extends JDialog {
 		viewMenu.addSeparator();
 		final JMenuItem arrangeWindowsMenuItem = new JMenuItem("Arrange Views");
 		arrangeWindowsMenuItem.setIcon(IconFactory.getMenuIcon(GLYPH.WINDOWS));
-		arrangeWindowsMenuItem.addActionListener(e -> arrangeCanvases());
+		arrangeWindowsMenuItem.addActionListener(e -> arrangeCanvases(true));
 		viewMenu.add(arrangeWindowsMenuItem);
 		return menuBar;
 	}
@@ -2275,13 +2276,13 @@ public class SNTUI extends JDialog {
 	protected void displayOnStarting() {
 		SwingUtilities.invokeLater(() -> {
 			if (plugin.prefs.isSaveWinLocations()) arrangeDialogs();
-			final StackWindow impWindow = plugin.getWindow(MultiDThreePanes.XY_PLANE);
-			if (impWindow != null) arrangeCanvases();
+			arrangeCanvases(false);
 			resetState();
 			setVisible(true);
 			pathAndFillManager.resetListeners(null, true); // update Path lists
 			setPathListVisible(true, false);
 			setFillListVisible(false);
+			final StackWindow impWindow = plugin.getWindow(MultiDThreePanes.XY_PLANE);
 			if (impWindow != null) impWindow.toFront();
 		});
 	}
@@ -2335,11 +2336,11 @@ public class SNTUI extends JDialog {
 		// fw.setLocation(bounds.x + getWidth(), screenHeight - fw.getHeight());
 	}
 
-	protected void arrangeCanvases() {
+	private void arrangeCanvases(final boolean displayErrorOnFailure) {
 
 		final StackWindow xy_window = plugin.getWindow(MultiDThreePanes.XY_PLANE);
 		if (xy_window == null) {
-			guiUtils.error("XY view is not available");
+			if (displayErrorOnFailure) guiUtils.error("XY view is not available");
 			return;
 		}
 		final GraphicsConfiguration xy_config = xy_window
@@ -2585,6 +2586,23 @@ public class SNTUI extends JDialog {
 		abortCurrentOperation();
 		resetState();
 		showStatus("Resetting", true);
+	}
+
+	protected void inputImageChanged() {
+		final ImagePlus imp = plugin.getImagePlus();
+		showPartsNearby.setEnabled(imp != null && !plugin.is2D());
+		nearbyFieldSpinner.setEnabled(imp != null && !plugin.is2D());
+		final JPanel newSourcePanel = sourcePanel(imp);
+		final GridBagLayout layout = (GridBagLayout) newSourcePanel.getLayout();
+		for (int i = 0; i < sourcePanel.getComponentCount(); i++) {
+			sourcePanel.remove(i);
+			final Component component = newSourcePanel.getComponent(i);
+			sourcePanel.add(component, layout.getConstraints(component));
+		}
+		revalidate();
+		repaint();
+		resetState();
+		arrangeCanvases(false);
 	}
 
 	protected void abortCurrentOperation() {// FIXME: MOVE TO Simple NeuriteTracer
@@ -3110,8 +3128,10 @@ public class SNTUI extends JDialog {
 			this.cmd = cmd;
 			this.inputs = inputs;
 			this.analysisModeCmd = analysisModeCmd;
-			if (inputs == null) this.inputs = new HashMap<>();
-			this.inputs.put("rebuildCanvas", !plugin.accessToValidImageData());
+			if (analysisModeCmd) {
+				if (inputs == null) this.inputs = new HashMap<>();
+				this.inputs.put("rebuildCanvas", !plugin.accessToValidImageData());
+			}
 		}
 
 		@Override

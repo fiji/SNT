@@ -188,7 +188,10 @@ public class SNTLoaderCmd extends DynamicCommand {
 	}
 
 	private void sourceImageChanged() {
-		if (imageFile == null || !imageFile.exists()) return;
+		if (imageFile == null || !imageFile.exists()) {
+			imageChoice = IMAGE_NONE;
+			return;
+		}
 		if (IMAGE_NONE.equals(imageChoice)) imageChoice = IMAGE_FILE;
 		for (final String ext : new String[] { "traces", "swc" }) {
 			final File candidate = SNT.findClosestPair(imageFile, ext);
@@ -227,7 +230,10 @@ public class SNTLoaderCmd extends DynamicCommand {
 	public void run() {
 
 	//	resetPrefs();
-		if (IMAGE_NONE.equals(imageChoice)) {
+		final boolean noImg = IMAGE_NONE.equals(imageChoice) || (IMAGE_FILE.equals(
+			imageChoice) && imageFile == null);
+
+		if (noImg) {
 			final PathAndFillManager pathAndFillManager = new PathAndFillManager();
 			if (tracesFile != null && tracesFile.exists()) {
 				pathAndFillManager.setHeadless(true);
@@ -244,10 +250,6 @@ public class SNTLoaderCmd extends DynamicCommand {
 		}
 
 		else if (IMAGE_FILE.equals(imageChoice)) {
-			if (imageFile == null || !imageFile.exists()) {
-				cancel("Specified image file is not valid.");
-				return;
-			}
 			try {
 
 //				final Dataset ds = datasetIOService.open(imageFile.getAbsolutePath());
@@ -267,7 +269,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 
 		}
 		else if (sourceImp == null) { // frontmost image does not exist
-			cancel("An image is required but none was found");
+			cancel("An image is required but none was found.");
 			return;
 		}
 

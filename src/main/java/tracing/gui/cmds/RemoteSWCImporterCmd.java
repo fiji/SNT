@@ -173,7 +173,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			recViewer.setSceneUpdatesEnabled(true);
 		}
 		else if (snt != null) {
-			if (snt.getUI() != null) snt.getUI().changeState(SNTUI.ANALYSIS_MODE);
+			if (snt.getUI() != null) snt.getUI().changeState(SNTUI.TRACING_PAUSED);
 			if (rebuildCanvas) {
 				SNT.log("Rebuilding canvases...");
 				snt.rebuildDisplayCanvases();

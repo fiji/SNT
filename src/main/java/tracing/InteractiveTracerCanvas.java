@@ -118,15 +118,15 @@ class InteractiveTracerCanvas extends TracerCanvas {
 
 	private void showPopupMenu(final int x, final int y) {
 		final Path activePath = tracerPlugin.getSingleSelectedPath();
-		final boolean be = uiReadyForModeChange(SNTUI.EDITING_MODE);
+		final boolean be = uiReadyForModeChange(SNTUI.EDITING);
 		toggleEditModeMenuItem.setEnabled(be);
 		toggleEditModeMenuItem.setState(be && editMode);
 		toggleEditModeMenuItem.setText((activePath != null) ? "Edit " + activePath
 			.getName() : AListener.EDIT_TOOGLE);
-		final boolean bp = uiReadyForModeChange(SNTUI.PAUSED);
+		final boolean bp = uiReadyForModeChange(SNTUI.SNT_PAUSED);
 		togglePauseSNTMenuItem.setEnabled(bp);
 		togglePauseSNTMenuItem.setSelected(bp && tracerPlugin
-			.getUIState() == SNTUI.PAUSED);
+			.getUIState() == SNTUI.SNT_PAUSED);
 		togglePauseTracingMenuItem.setEnabled(!togglePauseSNTMenuItem.isSelected());
 		togglePauseTracingMenuItem.setEnabled(bp);
 		togglePauseTracingMenuItem.setSelected(tracerPlugin.tracingHalted);
@@ -456,9 +456,9 @@ class InteractiveTracerCanvas extends TracerCanvas {
 
 			case SNTUI.LOADING:
 			case SNTUI.SAVING:
-			case SNTUI.ANALYSIS_MODE:
+			case SNTUI.TRACING_PAUSED:
 				return; // Do nothing
-			case SNTUI.EDITING_MODE:
+			case SNTUI.EDITING:
 				impossibleEdit(true);
 				break;
 			case SNTUI.WAITING_FOR_SIGMA_POINT:

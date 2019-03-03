@@ -166,7 +166,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 		}
 
 		if (snt != null) {
-			if (ui != null) snt.getUI().changeState(SNTUI.ANALYSIS_MODE);
+			if (ui != null) snt.getUI().changeState(SNTUI.TRACING_PAUSED);
 			if (rebuildCanvas) {
 				SNT.log("Rebuilding canvases...");
 				snt.rebuildDisplayCanvases();

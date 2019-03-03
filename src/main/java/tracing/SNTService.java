@@ -233,7 +233,7 @@ public class SNTService extends AbstractService implements ImageJService {
 		final SNTUI gui = getUI();
 		final int state = gui.getState();
 		return plugin.isUIready() && (state == SNTUI.WAITING_TO_START_PATH ||
-			state == SNTUI.EDITING_MODE || state == SNTUI.ANALYSIS_MODE);
+			state == SNTUI.EDITING || state == SNTUI.TRACING_PAUSED);
 	}
 
 	/**

@@ -50,7 +50,7 @@ def run():
         return
 
     # Pause tracing functions
-    snt.getUI().changeState(SNTUI.ANALYSIS_MODE)
+    snt.getUI().changeState(SNTUI.TRACING_PAUSED)
 
     # All the 'raw data' in the MouseLight database is stored as JSONObjects.
     # If needed, these could be access as follows:

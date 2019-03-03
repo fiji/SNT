@@ -207,7 +207,10 @@ public class SNTUI extends JDialog {
 	protected final GuiListener listener;
 
 	/* These are the states that the UI can be in: */
-	/** The flag specifying 'ready-to-trace' mode */
+	/**
+	 * Flag specifying that image data is available and the UI is not waiting on any
+	 * pending operations, thus 'ready to trace'
+	 */
 	public static final int WAITING_TO_START_PATH = 0;
 	static final int PARTIAL_PATH = 1;
 	static final int SEARCHING = 2;
@@ -220,15 +223,23 @@ public class SNTUI extends JDialog {
 	static final int WAITING_FOR_SIGMA_CHOICE = 9;
 	static final int SAVING = 10;
 	static final int LOADING = 11;
-	/** The flag specifying 'fitting' mode */
+	/** Flag specifying UI is currently waiting for fitting operations to conclued */
 	public static final int FITTING_PATHS = 12;
 	static final int LOADING_FILTERED_IMAGE = 13;
-	/** The flag specifying 'editing' mode */
-	public static final int EDITING_MODE = 14;
-	/** The flag specifying 'paused' mode */
-	public static final int PAUSED = 15;
-	/** The flag specifying 'analysis' mode */
-	public static final int ANALYSIS_MODE = 16;
+	/** Flag specifying UI is currently waiting for user to edit a selected Path */
+	public static final int EDITING = 14;
+	/**
+	 * Flag specifying all SNT are temporarily disabled (all user interactions are
+	 * waived back to ImageJ)
+	 */
+	public static final int SNT_PAUSED = 15;
+	/**
+	 * Flag specifying tracing functions are (currently) disabled. Tracing is
+	 * disabled when the user chooses so or when no valid image data is available
+	 * (e.g., when no image has been loaded and a placeholder display canvas is
+	 * being used)
+	 */
+	public static final int TRACING_PAUSED = 16;
 
 
 	// TODO: Internal preferences: should be migrated to SNTPrefs
@@ -389,7 +400,7 @@ public class SNTUI extends JDialog {
 		tabbedPane.addChangeListener(e -> {
 			if (tabbedPane.getSelectedIndex() == 1 &&
 				getCurrentState() > WAITING_TO_START_PATH &&
-				getCurrentState() < EDITING_MODE)
+				getCurrentState() < EDITING)
 			{
 				tabbedPane.setSelectedIndex(0);
 				guiUtils.blinkingError(statusText,
@@ -458,7 +469,7 @@ public class SNTUI extends JDialog {
 	 */
 	public int getCurrentState() {
 		if (plugin.tracingHalted && currentState == WAITING_TO_START_PATH)
-			currentState = ANALYSIS_MODE;
+			currentState = TRACING_PAUSED;
 		return currentState;
 	}
 
@@ -693,7 +704,7 @@ public class SNTUI extends JDialog {
 	 * Changes this UI to a new state.
 	 *
 	 * @param newState the new state, e.g., {@link SNTUI#WAITING_TO_START_PATH},
-	 *          {@link SNTUI#ANALYSIS_MODE}, etc.
+	 *          {@link SNTUI#TRACING_PAUSED}, etc.
 	 */
 	public void changeState(final int newState) {
 
@@ -730,7 +741,7 @@ public class SNTUI extends JDialog {
 					updateRebuildCanvasButton();
 					break;
 
-				case ANALYSIS_MODE:
+				case TRACING_PAUSED:
 
 					keepSegment.setEnabled(false);
 					junkSegment.setEnabled(false);
@@ -821,7 +832,7 @@ public class SNTUI extends JDialog {
 					disableEverything();
 					break;
 
-				case EDITING_MODE:
+				case EDITING:
 					if (noPathsError()) return;
 					plugin.setCanvasLabelAllPanes(
 						InteractiveTracerCanvas.EDIT_MODE_LABEL);
@@ -836,7 +847,7 @@ public class SNTUI extends JDialog {
 					showOrHideFillList.setEnabled(false);
 					break;
 
-				case PAUSED:
+				case SNT_PAUSED:
 					updateStatusText("SNT is paused. Core functions disabled...");
 					disableEverything();
 					keepSegment.setEnabled(false);
@@ -867,7 +878,7 @@ public class SNTUI extends JDialog {
 	 * Gets the current UI state.
 	 *
 	 * @return the current state, e.g., {@link SNTUI#WAITING_TO_START_PATH},
-	 *         {@link SNTUI#ANALYSIS_MODE}, etc.
+	 *         {@link SNTUI#TRACING_PAUSED}, etc.
 	 */
 	public int getState() {
 		return currentState;
@@ -2675,12 +2686,12 @@ public class SNTUI extends JDialog {
 				showStatus("Fitting cancelled...", true);
 				pmUI.cancelFit(true); // will change UI state
 				return;
-			case (PAUSED):
+			case (SNT_PAUSED):
 				showStatus("SNT is now active...", true);
 				if (plugin.getImagePlus() != null) plugin.getImagePlus().unlock();
 				plugin.pause(false);  // will change UI state
 				return;
-			case (ANALYSIS_MODE):
+			case (TRACING_PAUSED):
 				if (!plugin.accessToValidImageData()) {
 					showStatus("All tasks terminated", true);
 					return;
@@ -2688,7 +2699,7 @@ public class SNTUI extends JDialog {
 				showStatus("Tracing is now active...", true);
 				plugin.pauseTracing(false, false);  // will change UI state
 				return;
-			case (EDITING_MODE):
+			case (EDITING):
 				showStatus("Exited from 'Edit Mode'...", true);
 				plugin.enableEditMode(false);  // will change UI state
 				return;
@@ -2741,11 +2752,11 @@ public class SNTUI extends JDialog {
 				return "LOADING";
 			case FITTING_PATHS:
 				return "FITTING_PATHS";
-			case EDITING_MODE:
+			case EDITING:
 				return "EDITING_MODE";
-			case PAUSED:
+			case SNT_PAUSED:
 				return "PAUSED";
-			case ANALYSIS_MODE:
+			case TRACING_PAUSED:
 				return "ANALYSIS_MODE";
 			default:
 				return "UNKNOWN";
@@ -3173,7 +3184,7 @@ public class SNTUI extends JDialog {
 
 		@Override
 		public Object doInBackground() {
-			if (getCurrentState() == SNTUI.EDITING_MODE) {
+			if (getCurrentState() == SNTUI.EDITING) {
 				guiUtils.error("Please finish editing " + plugin.getEditingPath()
 					.getName() + " before running this command.");
 				return null;

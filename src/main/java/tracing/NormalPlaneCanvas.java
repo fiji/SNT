@@ -182,7 +182,7 @@ class NormalPlaneCanvas extends TracerCanvas {
 
 	private boolean syncWithTracingCanvas() {
 		return (tracerPlugin.isUIready() && tracerPlugin
-			.getUIState() == SNTUI.EDITING_MODE);
+			.getUIState() == SNTUI.EDITING);
 	}
 
 	protected void showImage() {

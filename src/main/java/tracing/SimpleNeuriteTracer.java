@@ -872,7 +872,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	protected boolean uiReadyForModeChange() {
 		return isUIready() && (getUIState() == SNTUI.WAITING_TO_START_PATH ||
-			getUIState() == SNTUI.ANALYSIS_MODE);
+			getUIState() == SNTUI.TRACING_PAUSED);
 	}
 
 	// if (uiReadyForModeChange(SNTUI.ANALYSIS_MODE)) {
@@ -935,7 +935,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	protected void enableEditMode(final boolean enable) {
 		if (enable) {
-			changeUIState(SNTUI.EDITING_MODE);
+			changeUIState(SNTUI.EDITING);
 			if (isUIready() && !getUI().nearbySlices()) getUI().togglePartsChoice();
 		}
 		else {
@@ -964,7 +964,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				guiUtils.error("Please finish/abort current task before pausing SNT.");
 				return;
 			}
-			changeUIState(SNTUI.PAUSED);
+			changeUIState(SNTUI.SNT_PAUSED);
 			disableEventsAllPanes(true);
 			setDrawCrosshairsAllPanes(false);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.SNT_PAUSED_LABEL);
@@ -988,7 +988,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				return;
 			}
 			tracingHalted = true;
-			changeUIState(SNTUI.ANALYSIS_MODE);
+			changeUIState(SNTUI.TRACING_PAUSED);
 			setDrawCrosshairsAllPanes(false);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.TRACING_PAUSED_LABEL);
 			enableSnapCursor(snapCursor && !accessToValidImageData());
@@ -1002,7 +1002,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected boolean isEditModeEnabled() {
-		return isUIready() && SNTUI.EDITING_MODE == getUIState();
+		return isUIready() && SNTUI.EDITING == getUIState();
 	}
 
 	@Deprecated

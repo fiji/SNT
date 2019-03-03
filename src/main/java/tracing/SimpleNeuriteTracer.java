@@ -414,6 +414,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		xy_tracer_canvas = null;
 		xz_tracer_canvas = null;
 		zy_tracer_canvas = null;
+		slices_data_b = null;
+		slices_data_s = null;
+		slices_data_f = null;
+		hessian = null;
 	}
 
 	protected boolean accessToValidImageData() {
@@ -533,7 +537,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		zy_tracer_canvas = (InteractiveTracerCanvas) zy_canvas;
 		addListener(xy_tracer_canvas);
 
-		if (!analysisMode) loadData();
+		if (accessToValidImageData()) loadData();
 
 		if (!single_pane) {
 			final double min = xy.getDisplayRangeMin();
@@ -630,6 +634,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				statusService.showProgress(0, 0);
 				break;
 		}
+		hessian = null; // ensure it will be reloaded
 		updateLut();
 	}
 
@@ -1998,14 +2003,16 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Retrieves the pixel data currently loaded in memory as an image. The main
-	 * purpose of this method is to bridge SNT with other legacy classes that
-	 * cannot deal with multidimensional images.
+	 * Retrieves the pixel data currently loaded in memory as an ImagePlus object.
+	 * Returned image is always a single channel image. The main purpose of this
+	 * method is to bridge SNT with other legacy classes that cannot deal with
+	 * multidimensional images.
 	 *
 	 * @return the loaded data corresponding to the C,T position currently being
-	 *         traced. This image is always a single channel image.
+	 *         traced, or null if no image data has been loaded into memory.
 	 */
 	public ImagePlus getLoadedDataAsImp() {
+		if (!inputImageLoaded()) return null;
 		final ImageStack stack = new ImageStack(xy.getWidth(), xy.getHeight());
 		switch (imageType) {
 			case ImagePlus.GRAY8:
@@ -2093,6 +2100,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 */
 	public boolean filteredImageLoaded() {
 		return filteredData != null;
+	}
+
+	protected boolean inputImageLoaded() {
+		return slices_data_b != null || slices_data_s != null || slices_data_f != null;
 	}
 
 	protected boolean isTracingOnFilteredImageAvailable() {
@@ -2847,7 +2858,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 		// Restore main view
 		final Overlay overlay = (xy == null) ? null : xy.getOverlay();
-		if (overlay == null && analysisMode && xy != null) {
+		if (overlay == null && !accessToValidImageData()) {
 			xy.close();
 			return;
 		}

@@ -92,7 +92,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		// components?
 		final AListener listener = new AListener();
 		pMenu.add(menuItem(AListener.SELECT_NEAREST, listener));
-		if (!tracerPlugin.analysisMode) pMenu.add(menuItem(listener.FORK_NEAREST,
+		if (!tracerPlugin.tracingHalted) pMenu.add(menuItem(listener.FORK_NEAREST,
 			listener));
 		pMenu.addSeparator();
 		toggleEditModeMenuItem = new JCheckBoxMenuItem(AListener.EDIT_TOOGLE);
@@ -129,7 +129,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			.getUIState() == SNTUI.PAUSED);
 		togglePauseTracingMenuItem.setEnabled(!togglePauseSNTMenuItem.isSelected());
 		togglePauseTracingMenuItem.setEnabled(bp);
-		togglePauseTracingMenuItem.setSelected(tracerPlugin.analysisMode);
+		togglePauseTracingMenuItem.setSelected(tracerPlugin.tracingHalted);
 		// Disable editing commands
 		for (final MenuElement me : pMenu.getSubElements()) {
 			if (me instanceof JMenuItem) {
@@ -252,7 +252,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 
 	private boolean uiReadyForModeChange(final int mode) {
 		if (!tracerPlugin.isUIready()) return false;
-		return tracerPlugin.analysisMode || tracerPlugin
+		return tracerPlugin.tracingHalted || tracerPlugin
 			.getUIState() == SNTUI.WAITING_TO_START_PATH || tracerPlugin
 				.getUIState() == mode;
 	}

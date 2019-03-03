@@ -226,7 +226,7 @@ class QueueJumpingKeyListener implements KeyListener {
 
 		// Keystrokes exclusive to tracing mode
 		else if (canvas != null && !canvas.isEditMode() &&
-			!tracerPlugin.analysisMode)
+			!tracerPlugin.tracingHalted)
 		{
 
 			if (keyChar == 'y' || keyChar == 'Y') {

@@ -1764,7 +1764,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			else if (COLORIZE_PATH_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
 				input.put("tree", new Tree(selectedPaths));
-				input.put("setValuesFromSNTService", !plugin.analysisMode);
+				input.put("setValuesFromSNTService", !plugin.tracingHalted);
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
 				cmdService.run(TreeMapperCmd.class, true, input);
@@ -1776,7 +1776,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				final Tree tree = new Tree(selectedPaths);
 				tree.setLabel(getDescription(selectedPaths));
 				input.put("tree", tree);
-				input.put("setValuesFromSNTService", !plugin.analysisMode);
+				input.put("setValuesFromSNTService", !plugin.tracingHalted);
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
 				cmdService.run(DistributionCmd.class, true, input);

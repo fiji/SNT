@@ -239,7 +239,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	/* GUI */
 	protected SNTUI ui;
-	protected boolean analysisMode = false; // Analysis mode?
+	protected volatile boolean tracingHalted = false; // Tracing functions paused?
 
 	// This should only be assigned to when synchronized on this object
 	// (FIXME: check that that is true)
@@ -266,7 +266,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		context.inject(this);
 		SNT.setPlugin(this);
 		pathAndFillManager = new PathAndFillManager(this);
-		analysisMode = true;
+		tracingHalted = true;
 		enableAstar(false);
 	}
 
@@ -330,7 +330,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		// now load preferences and disable auto-tracing features
 		prefs.loadPluginPrefs();
-		analysisMode = true;
+		tracingHalted = true;
 		enableAstar(false);
 		enableSnapCursor(false);
 		pathAndFillManager.setHeadless(false);
@@ -972,7 +972,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				"Image appears to be locked by other process. Activate SNT nevertheless?",
 				"Image Locked")) return;
 			disableEventsAllPanes(false);
-			pauseTracing(analysisMode, false);
+			pauseTracing(tracingHalted, false);
 		}
 	}
 
@@ -985,14 +985,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 					"Please finish/abort current task before pausing tracing.");
 				return;
 			}
-			analysisMode = true;
+			tracingHalted = true;
 			changeUIState(SNTUI.ANALYSIS_MODE);
 			setDrawCrosshairsAllPanes(false);
 			setCanvasLabelAllPanes(InteractiveTracerCanvas.TRACING_PAUSED_LABEL);
 			enableSnapCursor(snapCursor && !accessToValidImageData());
 		}
 		else {
-			analysisMode = false;
+			tracingHalted = false;
 			changeUIState(SNTUI.WAITING_TO_START_PATH);
 			setDrawCrosshairsAllPanes(true);
 			setCanvasLabelAllPanes(null);

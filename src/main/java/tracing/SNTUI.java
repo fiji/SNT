@@ -456,7 +456,7 @@ public class SNTUI extends JDialog {
 	 *         {@link SNTUI#WAITING_FOR_SIGMA_POINT}, etc.
 	 */
 	public int getCurrentState() {
-		if (plugin.analysisMode && currentState == WAITING_TO_START_PATH)
+		if (plugin.tracingHalted && currentState == WAITING_TO_START_PATH)
 			currentState = ANALYSIS_MODE;
 		return currentState;
 	}
@@ -859,7 +859,7 @@ public class SNTUI extends JDialog {
 	}
 
 	protected void resetState() {
-		plugin.pauseTracing(!plugin.accessToValidImageData() || plugin.analysisMode, false); // will set UI state
+		plugin.pauseTracing(!plugin.accessToValidImageData() || plugin.tracingHalted, false); // will set UI state
 	}
 
 	/**
@@ -1272,7 +1272,7 @@ public class SNTUI extends JDialog {
 
 		final LinkedHashMap<String, Image3DUniverse> hm = new LinkedHashMap<>();
 		hm.put(VIEWER_NONE, null);
-		if (!plugin.analysisMode && !plugin.is2D()) {
+		if (!plugin.tracingHalted && !plugin.is2D()) {
 			hm.put(VIEWER_WITH_IMAGE, null);
 		}
 		hm.put(VIEWER_EMPTY, null);
@@ -3169,7 +3169,7 @@ public class SNTUI extends JDialog {
 					"Change to Display Canvas?", "Yes. Use Display Canvas",
 					"No. Use Current Image"))
 			{
-				plugin.analysisMode = true;
+				plugin.tracingHalted = true;
 				if (inputs == null) inputs = new HashMap<>();
 				inputs.put("rebuildCanvas", true);
 			}

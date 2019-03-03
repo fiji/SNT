@@ -150,6 +150,7 @@ public class SNTUI extends JDialog {
 	private JPanel hessianPanel;
 	private JPanel aStarPanel;
 	private JCheckBox preprocess;
+	private JCheckBox aStarCheckBox;
 	private JButton displayFiltered;
 	private JMenuItem loadTracesMenuItem;
 	private JMenuItem loadSWCMenuItem;
@@ -683,8 +684,8 @@ public class SNTUI extends JDialog {
 
 	private void updateRebuildCanvasButton() {
 		final ImagePlus imp = plugin.getImagePlus();
-		final String label = (imp== null || !imp.isVisible()) ? "Create Canvas"
-			: "Resize Canvas";
+		final String label = (imp == null || !imp.isVisible() || imp.getProcessor() == null) ? "Create Canvas"
+				: "Resize Canvas";
 		rebuildCanvasButton.setText(label);
 	}
 
@@ -908,27 +909,31 @@ public class SNTUI extends JDialog {
 			}
 			final int newC = (int) channelSpinner.getValue();
 			final int newT = (int) frameSpinner.getValue();
-			final boolean reload = newC == plugin.channel && newT == plugin.frame;
-			if (!reload && askUserConfirmation && !guiUtils.getConfirmation(
-				"You are currently tracing position C=" + plugin.channel + ", T=" +
-					plugin.frame + ". Start tracing C=" + newC + ", T=" + newT + "?",
-				"Change Hyperstack Position?"))
-			{
-				return;
-			}
-			abortCurrentOperation();
-			changeState(LOADING);
-			plugin.reloadImage(newC, newT);
-			if (!reload) plugin.getImagePlus().setPosition(newC, plugin.getImagePlus()
-				.getZ(), newT);
-			preprocess.setSelected(false);
-			plugin.showMIPOverlays(0);
-			resetState();
-			showStatus(reload ? "Image reloaded into memory..." : null, true);
+			loadImagefromGUI(newC, newT);
 		});
 		positionPanel.add(applyPositionButton);
 		sourcePanel.add(positionPanel, gdb);
 		return sourcePanel;
+	}
+
+	private void loadImagefromGUI(final int newC, final int newT) {
+		final boolean reload = newC == plugin.channel && newT == plugin.frame;
+		if (!reload && askUserConfirmation && !guiUtils.getConfirmation(
+			"You are currently tracing position C=" + plugin.channel + ", T=" +
+				plugin.frame + ". Start tracing C=" + newC + ", T=" + newT + "?",
+			"Change Hyperstack Position?"))
+		{
+			return;
+		}
+		abortCurrentOperation();
+		changeState(LOADING);
+		plugin.reloadImage(newC, newT);
+		if (!reload) plugin.getImagePlus().setPosition(newC, plugin.getImagePlus()
+			.getZ(), newT);
+		preprocess.setSelected(false);
+		plugin.showMIPOverlays(0);
+		resetState();
+		showStatus(reload ? "Image reloaded into memory..." : null, true);
 	}
 
 	private JPanel viewsPanel() {
@@ -2164,23 +2169,26 @@ public class SNTUI extends JDialog {
 		final GridBagConstraints gc = GuiUtils.defaultGbc();
 		GuiUtils.addSeparator(aStarPanel, "Auto-Tracing:", true, gc);
 		++gc.gridy;
-		final JCheckBox aStarCheckBox = new JCheckBox("Enable A* search algorithm",
+		aStarCheckBox = new JCheckBox("Enable A* search algorithm",
 			plugin.isAstarEnabled());
 		aStarCheckBox.addActionListener(e -> {
 			boolean enable = aStarCheckBox.isSelected();
-			if (enable && !plugin.accessToValidImageData()) {
-				aStarCheckBox.setSelected(false);
-				noValidImageDataError();
-				enable = false;
-			}
-			else if (!enable && askUserConfirmation && !guiUtils.getConfirmation(
+			if (!enable && askUserConfirmation && !guiUtils.getConfirmation(
 				"Disable computation of paths? All segmentation tasks will be disabled.",
 				"Enable Manual Tracing?"))
 			{
 				aStarCheckBox.setSelected(true);
 				return;
 			}
-			plugin.enableAstar(enable);
+			if (enable && !plugin.accessToValidImageData()) {
+				aStarCheckBox.setSelected(false);
+				noValidImageDataError();
+				enable = false;
+			}
+			else if (enable && !plugin.inputImageLoaded()) {
+				loadImagefromGUI(plugin.channel, plugin.frame);
+			}
+			enableAStarGUI(enable);
 			setEnableAutoTracingComponents(enable);
 		});
 		aStarPanel.add(aStarCheckBox, gc);
@@ -2620,6 +2628,9 @@ public class SNTUI extends JDialog {
 		}
 		revalidate();
 		repaint();
+		final boolean validImage = plugin.accessToValidImageData();
+		enableAStarGUI(validImage);
+		plugin.enableSnapCursor(validImage);
 		resetState();
 		arrangeCanvases(false);
 	}
@@ -2793,6 +2804,13 @@ public class SNTUI extends JDialog {
 		plugin.enableHessian(enable);
 		preprocess.setSelected(enable); // will not trigger ActionEvent
 		showStatus("Hessisan " + ((enable) ? "enabled" : "disabled"), true);
+	}
+
+	protected void enableAStarGUI(final boolean enable) {
+		SwingUtilities.invokeLater(() -> {
+			aStarCheckBox.setSelected(enable);
+			showStatus("A* " + ((enable) ? "enabled" : "disabled"), true);
+		});
 	}
 
 	protected void togglePartsChoice() {

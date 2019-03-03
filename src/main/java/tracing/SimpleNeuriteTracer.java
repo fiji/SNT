@@ -500,7 +500,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		nullifyCanvases();
 		xy = imp;
 		setFieldsFromImage(imp);
+		changeUIState(SNTUI.LOADING);
 		initialize(getSinglePane(), channel = imp.getC(), frame = imp.getT());
+		tracingHalted = !inputImageLoaded();
 		updateUIFromInitializedImp(imp.isVisible());
 	}
 
@@ -529,7 +531,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		setSinglePane(singlePane);
 		final Overlay sourceImageOverlay = xy.getOverlay();
-		super.initialize(xy, frame);
+		initialize(xy, frame);
 		xy.setOverlay(sourceImageOverlay);
 
 		xy_tracer_canvas = (InteractiveTracerCanvas) xy_canvas;
@@ -2804,6 +2806,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 */
 	public void enableAstar(final boolean enable) {
 		manualOverride = !enable;
+		if (ui != null) ui.enableAStarGUI(enable);
 	}
 
 	/**

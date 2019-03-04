@@ -2199,8 +2199,7 @@ public class SNTUI extends JDialog {
 			else if (enable && !plugin.inputImageLoaded()) {
 				loadImagefromGUI(plugin.channel, plugin.frame);
 			}
-			enableAStarGUI(enable);
-			setEnableAutoTracingComponents(enable);
+			plugin.enableAstar(true);
 		});
 		aStarPanel.add(aStarCheckBox, gc);
 		return aStarPanel;
@@ -2640,7 +2639,7 @@ public class SNTUI extends JDialog {
 		revalidate();
 		repaint();
 		final boolean validImage = plugin.accessToValidImageData();
-		enableAStarGUI(validImage);
+		plugin.enableAstar(validImage);
 		plugin.enableSnapCursor(validImage);
 		resetState();
 		arrangeCanvases(false);
@@ -2817,9 +2816,11 @@ public class SNTUI extends JDialog {
 		showStatus("Hessisan " + ((enable) ? "enabled" : "disabled"), true);
 	}
 
+	/** Should only be called by {@link SimpleNeuriteTracer#enableAstar(boolean)} */
 	protected void enableAStarGUI(final boolean enable) {
 		SwingUtilities.invokeLater(() -> {
 			aStarCheckBox.setSelected(enable);
+			setEnableAutoTracingComponents(enable);
 			showStatus("A* " + ((enable) ? "enabled" : "disabled"), true);
 		});
 	}

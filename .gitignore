@@ -3,6 +3,11 @@
 /.project
 /.settings/
 
+# IntelliJ #
+*.iml
+*.iws
+*.ipr
+
 # Maven #
 /target/
 /doc/
@@ -10,4 +15,7 @@
 
 # Misc #
 .checksums
+
+# Binaries #
 *.jar
+*.class

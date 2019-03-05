@@ -270,7 +270,7 @@ class QueueJumpingKeyListener implements KeyListener {
 				canvas.clickAtMaxPoint();
 				e.consume();
 			}
-			else if (keyChar == 's' || keyChar == 's') {
+			else if (keyChar == 's' || keyChar == 'S') {
 				// IJ1 built-in: Save
 				tracerPlugin.toggleSnapCursor();
 				e.consume();

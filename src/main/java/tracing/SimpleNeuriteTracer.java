@@ -324,8 +324,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		// Inherit spacing from PathAndFillManager{
 		final BoundingBox box = pathAndFillManager.getBoundingBox(false);
 		x_spacing = box.xSpacing;
-		y_spacing = box.xSpacing;
-		z_spacing = box.xSpacing;
+		y_spacing = box.ySpacing;
+		z_spacing = box.zSpacing;
 		spacing_units = box.getUnit();
 
 		// now load preferences and disable auto-tracing features

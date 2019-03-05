@@ -1645,7 +1645,7 @@ public class Viewer3D {
 		private String getControlsSensitivity() {
 			return (storedSensitivity == null) ? tp.prefService.get(
 				RecViewerPrefsCmd.class, "sensitivity",
-				RecViewerPrefsCmd.DEF_CONTROLS_SENSITIVY) : storedSensitivity;
+				RecViewerPrefsCmd.DEF_CONTROLS_SENSITIVITY) : storedSensitivity;
 		}
 
 		private float getPanStep() {
@@ -2713,7 +2713,7 @@ public class Viewer3D {
 
 			// Group all lines into a Composite. BY default the composite
 			// will have no wireframe color, to allow colors for Paths/
-			// nodes to be reveleade. Once a wireframe color is explicit
+			// nodes to be revealed. Once a wireframe color is explicit
 			// set it will be applied to all the paths in the composite
 			if (!lines.isEmpty()) {
 				treeSubShape = new Shape();

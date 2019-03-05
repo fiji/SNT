@@ -50,7 +50,7 @@ public class RecViewerPrefsCmd extends ContextCommand {
 	public static float DEF_ROTATION_ANGLE = 360f;
 	public static double DEF_ROTATION_DURATION = 12;
 	public static int DEF_ROTATION_FPS = 30;
-	public static String DEF_CONTROLS_SENSITIVY = "High";
+	public static String DEF_CONTROLS_SENSITIVITY = "High";
 
 	@Parameter(
 		label = "<HTML><b>I. Snapshot Recordings" +
@@ -105,7 +105,7 @@ public class RecViewerPrefsCmd extends ContextCommand {
 		if (rotationDuration == 0) rotationDuration = DEF_ROTATION_DURATION;
 		if (rotationFPS == 0) rotationFPS = DEF_ROTATION_FPS;
 		if (sensitivity == null) sensitivity =
-			DEF_CONTROLS_SENSITIVY;
+				DEF_CONTROLS_SENSITIVITY;
 	}
 
 	@SuppressWarnings("unused")

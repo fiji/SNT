@@ -2493,38 +2493,38 @@ public class SNTUI extends JDialog {
 	private JMenu helpMenu() {
 		final JMenu helpMenu = new JMenu("Help");
 		final String URL = "http://imagej.net/Simple_Neurite_Tracer";
-		JMenuItem mi = menuItemTrigerringURL("Main documentation page", URL);
+		JMenuItem mi = menuItemTriggeringURL("Main documentation page", URL);
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTrigerringURL("Tutorials", URL + "#Tutorials");
+		mi = menuItemTriggeringURL("Tutorials", URL + "#Tutorials");
 		helpMenu.add(mi);
-		mi = menuItemTrigerringURL("Basic instructions", URL +
+		mi = menuItemTriggeringURL("Basic instructions", URL +
 			":_Basic_Instructions");
 		helpMenu.add(mi);
-		mi = menuItemTrigerringURL("Step-by-step instructions", URL +
+		mi = menuItemTriggeringURL("Step-by-step instructions", URL +
 			":_Step-By-Step_Instructions");
 		helpMenu.add(mi);
-		mi = menuItemTrigerringURL("Filling out processes", URL +
+		mi = menuItemTriggeringURL("Filling out processes", URL +
 			":_Basic_Instructions#Filling_Out_Neurons");
 		helpMenu.add(mi);
-		mi = menuItemTrigerringURL("3D interaction", URL + ":_3D_Interaction");
+		mi = menuItemTriggeringURL("3D interaction", URL + ":_3D_Interaction");
 		helpMenu.add(mi);
-		mi = menuItemTrigerringURL("Tubular Geodesics", URL +
+		mi = menuItemTriggeringURL("Tubular Geodesics", URL +
 			":_Tubular_Geodesics");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTrigerringURL("List of shortcuts", URL + ":_Key_Shortcuts");
+		mi = menuItemTriggeringURL("List of shortcuts", URL + ":_Key_Shortcuts");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.KEYBOARD));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		// mi = menuItemTrigerringURL("Sholl analysis walkthrough", URL +
+		// mi = menuItemTriggeringURL("Sholl analysis walkthrough", URL +
 		// ":_Sholl_analysis");
 		// helpMenu.add(mi);
 		// helpMenu.addSeparator();
-		mi = menuItemTrigerringURL("Ask a question", "http://forum.imagej.net");
+		mi = menuItemTriggeringURL("Ask a question", "http://forum.imagej.net");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTrigerringURL("Citing SNT...", URL +
+		mi = menuItemTriggeringURL("Citing SNT...", URL +
 			"#Citing_Simple_Neurite_Tracer");
 		helpMenu.add(mi);
 		return helpMenu;
@@ -2571,8 +2571,8 @@ public class SNTUI extends JDialog {
 		return mi;
 	}
 
-	private JMenuItem menuItemTrigerringURL(final String label,
-		final String URL)
+	private JMenuItem menuItemTriggeringURL(final String label,
+	                                        final String URL)
 	{
 		final JMenuItem mi = new JMenuItem(label);
 		mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", URL));

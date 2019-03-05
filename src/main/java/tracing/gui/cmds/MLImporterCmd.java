@@ -260,7 +260,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			// to the SNT UI
 			final MutableModuleItem<Boolean> meshViewerInput = getInfo()
 				.getMutableInput("meshViewer", Boolean.class);
-			meshViewerInput.setLabel("Load Allen Brain countour");
+			meshViewerInput.setLabel("Load Allen Brain contour");
 			final MutableModuleItem<Boolean> clearExistingInput = getInfo()
 				.getMutableInput("clearExisting", Boolean.class);
 			clearExistingInput.setLabel("Clear existing reconstructions");

@@ -83,7 +83,7 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 			final int start = i * 4;
 			realResult.addPointDouble(points[start], points[start + 1], points[start +
 				2]);
-			realResult.radiuses[i] = points[start + 3];
+			realResult.radii[i] = points[start + 3];
 			// System.out.println("point "+i+" is "+points[start]+",
 			// "+points[start+1]+", "+points[start+2]+", "+points[start+3]);
 		}

@@ -70,7 +70,7 @@ def run():
         analyzer.setTable(table, ("SWC Measurements: %s" % input_dir))
 
         # Analyze the data grouping measurements by compartment (e.g., axon,
-        # dentrite). See TreeAnalyzer's API for more sophisticated analysis
+        # dendrite). See TreeAnalyzer's API for more sophisticated analysis
         analyzer.summarize(True) # Split results by compartment?
 
         # Update table before parsing next file

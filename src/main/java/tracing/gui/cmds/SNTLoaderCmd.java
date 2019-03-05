@@ -334,8 +334,8 @@ public class SNTLoaderCmd extends DynamicCommand {
 		{
 			return new GuiUtils().getConfirmation("Spatial calibration of " +
 				sourceImp.getTitle() +
-				" appears to be unset or innacurate. Continue nevertheless?",
-				"Innacurate Spatial Calibration?");
+				" appears to be unset or inaccurate. Continue nevertheless?",
+				"Inaccurate Spatial Calibration?");
 		}
 		return true;
 	}

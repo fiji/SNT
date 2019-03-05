@@ -20,13 +20,13 @@ from org.scijava.util import Colors
 def run():
 
     # Import some data from the MouseLight database
-    print("    Retriving ML neuron...")
+    print("    Retrieving ML neuron...")
     loader = MouseLightLoader("AA0100") # one of the largest cells in the database
     if not loader.isDatabaseAvailable():
         ui.showDialog("Could not connect to ML database", "Error")
         return
     if not loader.idExists():
-        ui.showDialog("Somewhow the specified id was not found", "Error")
+        ui.showDialog("Somehow the specified id was not found", "Error")
         return
 
     print("... Done. Assembling Tree...")

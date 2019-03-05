@@ -121,7 +121,7 @@ public class Path implements Comparable<Path> {
 	protected double[] precise_y_positions;
 	protected double[] precise_z_positions;
 	// radii and tangents
-	protected double[] radiuses;
+	protected double[] radii;
 	protected double[] tangents_x;
 	protected double[] tangents_y;
 	protected double[] tangents_z;
@@ -356,12 +356,12 @@ public class Path implements Comparable<Path> {
 
 	protected void createCircles() {
 		if (tangents_x != null || tangents_y != null || tangents_z != null ||
-			radiuses != null) throw new IllegalArgumentException(
+			radii != null) throw new IllegalArgumentException(
 				"Trying to create circles data arrays when at least one is already there");
 		tangents_x = new double[maxPoints];
 		tangents_y = new double[maxPoints];
 		tangents_z = new double[maxPoints];
-		radiuses = new double[maxPoints];
+		radii = new double[maxPoints];
 	}
 
 	protected void setIsPrimary(final boolean primary) {
@@ -781,8 +781,8 @@ public class Path implements Comparable<Path> {
 	 * result.startJoinsIndex = startJoinsIndex; result.endJoins = endJoins;
 	 * result.endJoinsIndex = endJoinsIndex;
 	 *
-	 * if( radiuses != null ) { this.radiuses = new double[radiuses.length];
-	 * System.arraycopy( radiuses, 0, result.radiuses, 0, radiuses.length ); } if(
+	 * if( radii != null ) { this.radii = new double[radii.length];
+	 * System.arraycopy( radii, 0, result.radii, 0, radii.length ); } if(
 	 * tangents_x != null ) { this.tangents_x = new double[tangents_x.length];
 	 * System.arraycopy( tangents_x, 0, result.tangents_x, 0, tangents_x.length ); }
 	 * if( tangents_y != null ) { this.tangents_y = new double[tangents_y.length];
@@ -835,11 +835,11 @@ public class Path implements Comparable<Path> {
 			System.arraycopy(tangents_x, 0, new_tangents_x, 0, points);
 			System.arraycopy(tangents_y, 0, new_tangents_y, 0, points);
 			System.arraycopy(tangents_z, 0, new_tangents_z, 0, points);
-			System.arraycopy(radiuses, 0, new_radiuses, 0, points);
+			System.arraycopy(radii, 0, new_radiuses, 0, points);
 			tangents_x = new_tangents_x;
 			tangents_y = new_tangents_y;
 			tangents_z = new_tangents_z;
-			radiuses = new_radiuses;
+			radii = new_radiuses;
 		}
 		maxPoints = newMaxPoints;
 	}
@@ -859,7 +859,7 @@ public class Path implements Comparable<Path> {
 			createCircles();
 			final double defaultRadius = getMinimumSeparation() * 2;
 			for (int i = 0; i < points; ++i)
-				radiuses[i] = defaultRadius;
+				radii[i] = defaultRadius;
 		}
 
 		if (maxPoints < (points + other.points)) {
@@ -892,7 +892,7 @@ public class Path implements Comparable<Path> {
 			points, other.points - toSkip);
 
 		if (hasRadii()) {
-			System.arraycopy(other.radiuses, toSkip, radiuses, points, other.points -
+			System.arraycopy(other.radii, toSkip, radii, points, other.points -
 				toSkip);
 		}
 
@@ -1087,7 +1087,7 @@ public class Path implements Comparable<Path> {
 				final double normalized_cross_x = cross_x / sizeInPlane;
 				final double normalized_cross_y = cross_y / sizeInPlane;
 				final double zdiff = Math.abs((slice - slice_of_point) * z_spacing);
-				final double realRadius = radiuses[i];
+				final double realRadius = radii[i];
 
 				if (either_side < 0 || zdiff <= realRadius) {
 
@@ -1550,7 +1550,7 @@ public class Path implements Comparable<Path> {
 	 * @see #hasRadii()
 	 */
 	public double getMeanRadius() {
-		return (hasRadii()) ? StatUtils.mean(radiuses) : 0;
+		return (hasRadii()) ? StatUtils.mean(radii) : 0;
 	}
 
 	/**
@@ -1561,12 +1561,12 @@ public class Path implements Comparable<Path> {
 	 *         defined thickness
 	 */
 	public double getNodeRadius(final int pos) {
-		if (radiuses == null) return 0;
+		if (radii == null) return 0;
 		if ((pos < 0) || pos >= size()) {
 			throw new IllegalArgumentException(
 				"getNodeRadius() was asked for an out-of-range point: " + pos);
 		}
-		return radiuses[pos];
+		return radii[pos];
 	}
 
 	/**
@@ -1576,7 +1576,7 @@ public class Path implements Comparable<Path> {
 	 *         list of radii
 	 */
 	public boolean hasRadii() {
-		return radiuses != null;
+		return radii != null;
 	}
 
 	protected void setFittedCircles(final int nPoints, final double[] tangents_x,
@@ -1590,7 +1590,7 @@ public class Path implements Comparable<Path> {
 		this.tangents_y = tangents_y.clone();
 		this.tangents_z = tangents_z.clone();
 
-		this.radiuses = radiuses.clone();
+		this.radii = radiuses.clone();
 
 		this.precise_x_positions = optimized_x.clone();
 		this.precise_y_positions = optimized_y.clone();
@@ -1913,7 +1913,7 @@ public class Path implements Comparable<Path> {
 		for (int i = 0; i < points; ++i) {
 			final List<Point3f> discMesh = customnode.MeshMaker.createDisc(
 				precise_x_positions[i], precise_y_positions[i], precise_z_positions[i],
-				tangents_x[i], tangents_y[i], tangents_z[i], radiuses[i], 8);
+				tangents_x[i], tangents_y[i], tangents_z[i], radii[i], 8);
 			final int pointsInDiscMesh = discMesh.size();
 			for (int j = 0; j < pointsInDiscMesh; ++j)
 				meshColors.add(originalColors[i]);
@@ -1985,7 +1985,7 @@ public class Path implements Comparable<Path> {
 					x_points_d[added] = precise_x_positions[i];
 					y_points_d[added] = precise_y_positions[i];
 					z_points_d[added] = precise_z_positions[i];
-					radiuses_d[added] = radiuses[i];
+					radiuses_d[added] = radii[i];
 					lastIndexAdded = i;
 					++added;
 				}
@@ -2157,8 +2157,8 @@ public class Path implements Comparable<Path> {
 			final double ydiff = precise_y_positions[i + 1] - precise_y_positions[i];
 			final double zdiff = precise_z_positions[i + 1] - precise_z_positions[i];
 			final double h = Math.sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
-			final double r1 = radiuses[i];
-			final double r2 = radiuses[i + 1];
+			final double r1 = radii[i];
+			final double r2 = radii[i + 1];
 			// See http://en.wikipedia.org/wiki/Frustum
 			final double partVolume = (Math.PI * h * (r1 * r1 + r2 * r2 + r1 * r2)) /
 				3.0;
@@ -2320,7 +2320,7 @@ public class Path implements Comparable<Path> {
 				double[] new_radiuses = null;
 				if (hasRadii()) {
 					new_radiuses = new double[maxPoints];
-					System.arraycopy(radiuses, 0, new_radiuses, 0, start);
+					System.arraycopy(radii, 0, new_radiuses, 0, start);
 					for (int i = 0; i < downsampledLength; ++i) {
 						final SimplePoint sp = downsampled.get(i);
 						// Find a first and last index in the original radius
@@ -2349,12 +2349,12 @@ public class Path implements Comparable<Path> {
 							lastRadiusIndex = (sp.originalIndex + spNext.originalIndex) / 2;
 						}
 						for (int j = firstRadiusIndex; j <= lastRadiusIndex; ++j) {
-							total += radiuses[j];
+							total += radii[j];
 							++n;
 						}
 						new_radiuses[start + i] = total / n;
 					}
-					System.arraycopy(radiuses, end, new_radiuses, (start +
+					System.arraycopy(radii, end, new_radiuses, (start +
 						downsampledLength) - 1, points - end);
 				}
 
@@ -2363,7 +2363,7 @@ public class Path implements Comparable<Path> {
 				precise_x_positions = new_x_points;
 				precise_y_positions = new_y_points;
 				precise_z_positions = new_z_points;
-				radiuses = new_radiuses;
+				radii = new_radiuses;
 				if (hasRadii()) {
 					setGuessedTangents(2);
 				}
@@ -2381,14 +2381,14 @@ public class Path implements Comparable<Path> {
 	 */
 	public void setRadius(final double r) {
 		if (Double.isNaN(r) || r == 0d) {
-			radiuses = null;
+			radii = null;
 		}
 		else {
-			if (radiuses == null) {
+			if (radii == null) {
 				createCircles();
 				setGuessedTangents(2);
 			}
-			Arrays.fill(radiuses, r);
+			Arrays.fill(radii, r);
 		}
 	}
 
@@ -2401,18 +2401,18 @@ public class Path implements Comparable<Path> {
 	 */
 	public void setRadii(final double[] radii) {
 		if (radii == null || radii.length == 0) {
-			radiuses = null;
+			this.radii = null;
 		}
 		else if (radii != null && radii.length != size()) {
 			throw new IllegalArgumentException(
 				"radii array must have as many elements as nodes");
 		}
 		else {
-			if (radiuses == null) {
+			if (this.radii == null) {
 				createCircles();
 				setGuessedTangents(2);
 			}
-			System.arraycopy(radii, 0, radiuses, 0, size());
+			System.arraycopy(radii, 0, this.radii, 0, size());
 		}
 	}
 

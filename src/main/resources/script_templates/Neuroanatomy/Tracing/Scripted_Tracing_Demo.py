@@ -12,7 +12,7 @@
 file:       Scripted_Tracing_Demo.py
 author:     Tiago Ferreira
 version:    20180820
-info:       Exemplifies how to programatically interact with a running
+info:       Exemplifies how to programmatically interact with a running
             instance of SNT to perform auto-tracing tasks.
 '''
 

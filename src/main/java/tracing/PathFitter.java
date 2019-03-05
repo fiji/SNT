@@ -399,18 +399,18 @@ public class PathFitter implements Callable<Path> {
 
 		if (!fitRadii && !showDetailedFittingResults) {
 			fitted.setFittedCircles(totalPoints, path.tangents_x, path.tangents_y,
-				path.tangents_z, path.radiuses, //
+				path.tangents_z, path.radii, //
 				optimized_x, optimized_y, optimized_z);
 			SNT.log("Done (radius fitting skipped)");
 		}
 
 		/*
-		 * Now at each point along the path we calculate the mode of the radiuses in the
+		 * Now at each point along the path we calculate the mode of the radii in the
 		 * nearby region:
 		 */
 		final int modeEitherSide = 4;
-		final double[] modeRadiusesUnscaled = new double[totalPoints];
-		final double[] modeRadiuses = new double[totalPoints];
+		final double[] modeRadiiUnscaled = new double[totalPoints];
+		final double[] modeRadii = new double[totalPoints];
 		final double[] valuesForMode = new double[modeEitherSide * 2 + 1];
 
 		for (int i = 0; i < totalPoints; ++i) {
@@ -427,9 +427,9 @@ public class PathFitter implements Callable<Path> {
 				++c;
 			}
 			Arrays.sort(valuesForMode);
-			modeRadiusesUnscaled[i] = valuesForMode[modeEitherSide];
-			modeRadiuses[i] = scaleInNormalPlane * modeRadiusesUnscaled[i];
-			valid[i] = moved[i] < modeRadiusesUnscaled[i];
+			modeRadiiUnscaled[i] = valuesForMode[modeEitherSide];
+			modeRadii[i] = scaleInNormalPlane * modeRadiiUnscaled[i];
+			valid[i] = moved[i] < modeRadiiUnscaled[i];
 		}
 
 		// Calculate the angle between the vectors from the point to the one on
@@ -543,8 +543,8 @@ public class PathFitter implements Callable<Path> {
 					optimized_z[i] = path.precise_z_positions[i];
 					rsUnscaled[i] = 1;
 					rs[i] = scaleInNormalPlane;
-					modeRadiusesUnscaled[i] = 1;
-					modeRadiuses[i] = scaleInNormalPlane;
+					modeRadiiUnscaled[i] = 1;
+					modeRadii[i] = scaleInNormalPlane;
 					centre_x_positionsUnscaled[i] = sideSearch / 2.0;
 					centre_y_positionsUnscaled[i] = sideSearch / 2.0;
 				}
@@ -585,7 +585,7 @@ public class PathFitter implements Callable<Path> {
 				fitted_ts_x[added] = (fitRadii) ? ts_x[i] : path.tangents_x[i];
 				fitted_ts_y[added] = (fitRadii) ? ts_y[i] : path.tangents_y[i];
 				fitted_ts_z[added] = (fitRadii) ? ts_z[i] : path.tangents_z[i];
-				fitted_rs[added] = (fitRadii) ? rs[i] : path.radiuses[i];
+				fitted_rs[added] = (fitRadii) ? rs[i] : path.radii[i];
 			}
 			++added;
 		}
@@ -611,7 +611,7 @@ public class PathFitter implements Callable<Path> {
 			else {
 				final NormalPlaneCanvas normalCanvas = new NormalPlaneCanvas(imp,
 					plugin, centre_x_positionsUnscaled, centre_y_positionsUnscaled,
-					rsUnscaled, scores, modeRadiusesUnscaled, angles, valid, fitted);
+					rsUnscaled, scores, modeRadiiUnscaled, angles, valid, fitted);
 				normalCanvas.showImage();
 			}
 		}

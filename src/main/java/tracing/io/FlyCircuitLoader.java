@@ -135,7 +135,7 @@ public class FlyCircuitLoader implements RemoteSWCLoader {
 		System.out.println("# Getting neuron " + cellId);
 		System.out.println("FlyCircuit available: " + loader.isDatabaseAvailable());
 		System.out.println("URL :" + loader.getReconstructionURL(cellId));
-		System.out.println("Successul import: " + (tree != null));
+		System.out.println("Successful import: " + (tree != null));
 		System.out.println(cellId + " contains  " + tree.size() + " paths");
 		System.out.println("# All done");
 	}

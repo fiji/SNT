@@ -126,13 +126,13 @@ public class MultiDThreePanesCanvas extends ImageCanvas {
 	@Override
 	public void zoomIn(final int sx, final int sy) {
 		super.zoomIn(sx, sy);
-		owner.zoomEventOccured(true, offScreenX(sx), offScreenY(sy), plane);
+		owner.zoomEventOccurred(true, offScreenX(sx), offScreenY(sy), plane);
 	}
 
 	@Override
 	public void zoomOut(final int sx, final int sy) {
 		super.zoomOut(sx, sy);
-		owner.zoomEventOccured(false, offScreenX(sx), offScreenY(sy), plane);
+		owner.zoomEventOccurred(false, offScreenX(sx), offScreenY(sy), plane);
 	}
 
 	protected void drawCrosshairs(final Graphics2D g, final double x_on_screen,

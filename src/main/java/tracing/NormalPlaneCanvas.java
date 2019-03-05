@@ -53,8 +53,8 @@ class NormalPlaneCanvas extends TracerCanvas {
 
 	private final double[] centre_x_positions;
 	private final double[] centre_y_positions;
-	private final double[] radiuses;
-	private final double[] modeRadiuses;
+	private final double[] radii;
+	private final double[] modeRadii;
 	private final double[] scores;
 	private final boolean[] valid;
 	private final double[] angles;
@@ -64,10 +64,10 @@ class NormalPlaneCanvas extends TracerCanvas {
 	private final HashMap<Integer, Integer> indexToValidIndex = new HashMap<>();
 
 	protected NormalPlaneCanvas(final ImagePlus imp,
-		final SimpleNeuriteTracer plugin, final double[] centre_x_positions,
-		final double[] centre_y_positions, final double[] radiuses,
-		final double[] scores, final double[] modeRadiuses, final double[] angles,
-		final boolean[] valid, final Path fittedPath)
+	                            final SimpleNeuriteTracer plugin, final double[] centre_x_positions,
+	                            final double[] centre_y_positions, final double[] radii,
+	                            final double[] scores, final double[] modeRadii, final double[] angles,
+	                            final boolean[] valid, final Path fittedPath)
 	{
 		super(imp, plugin, MultiDThreePanes.XY_PLANE, plugin
 			.getPathAndFillManager());
@@ -75,9 +75,9 @@ class NormalPlaneCanvas extends TracerCanvas {
 		tracerPlugin = plugin;
 		this.centre_x_positions = centre_x_positions;
 		this.centre_y_positions = centre_y_positions;
-		this.radiuses = radiuses;
+		this.radii = radii;
 		this.scores = scores;
-		this.modeRadiuses = modeRadiuses;
+		this.modeRadii = modeRadii;
 		this.angles = angles;
 		this.valid = valid;
 		this.fittedPath = fittedPath;
@@ -109,7 +109,7 @@ class NormalPlaneCanvas extends TracerCanvas {
 		// build label
 		final double proportion = (scores[z] - minScore) / (maxScore - minScore);
 		super.setAnnotationsColor(fitColor);
-		setCanvasLabel(String.format("r=%s score=%s", SNT.formatDouble(radiuses[z],
+		setCanvasLabel(String.format("r=%s score=%s", SNT.formatDouble(radii[z],
 			2), SNT.formatDouble(proportion, 2)));
 
 		// mark center
@@ -120,11 +120,11 @@ class NormalPlaneCanvas extends TracerCanvas {
 
 		// show diameter
 		final double x_top_left = myScreenXDprecise(centre_x_positions[z] -
-			radiuses[z]);
+			radii[z]);
 		final double y_top_left = myScreenYDprecise(centre_y_positions[z] -
-			radiuses[z]);
+			radii[z]);
 		final double diameter = myScreenXDprecise(centre_x_positions[z] +
-			radiuses[z]) - myScreenXDprecise(centre_x_positions[z] - radiuses[z]);
+			radii[z]) - myScreenXDprecise(centre_x_positions[z] - radii[z]);
 		g.draw(new Ellipse2D.Double(x_top_left, y_top_left, diameter, diameter));
 
 		// report angle
@@ -137,11 +137,11 @@ class NormalPlaneCanvas extends TracerCanvas {
 		// show mode
 		g.setColor(COLOR_MODE);
 		final double modeOvalX = myScreenXDprecise(imp.getWidth() / 2.0 -
-			modeRadiuses[z]);
+			modeRadii[z]);
 		final double modeOvalY = myScreenYDprecise(imp.getHeight() / 2.0 -
-			modeRadiuses[z]);
+			modeRadii[z]);
 		final double modeOvalDiameter = myScreenXDprecise(imp.getWidth() / 2.0 +
-			modeRadiuses[z]) - modeOvalX;
+			modeRadii[z]) - modeOvalX;
 		g.draw(new Ellipse2D.Double(modeOvalX, modeOvalY, modeOvalDiameter,
 			modeOvalDiameter));
 

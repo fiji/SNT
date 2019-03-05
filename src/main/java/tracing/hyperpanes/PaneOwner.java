@@ -26,8 +26,8 @@ public interface PaneOwner {
 
 	public void mouseMovedTo(double x, double y, int plane, boolean shift_down);
 
-	public void zoomEventOccured(boolean zoomInEvent, int x, int y,
-		int sourcePlane);
+	public void zoomEventOccurred(boolean zoomInEvent, int x, int y,
+	                              int sourcePlane);
 
 	public void showStatus(int progress, int maximum, String message);
 

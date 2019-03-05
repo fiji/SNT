@@ -212,7 +212,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			else if (keyCode == KeyEvent.VK_INSERT || keyChar == 'i' ||
 				keyChar == 'I')
 			{
-				canvas.apppendLastCanvasPositionToEditingNode(false);
+				canvas.appendLastCanvasPositionToEditingNode(false);
 			}
 			else if (keyChar == 'm' || keyChar == 'M') {
 				canvas.moveEditingNodeToLastCanvasPosition(false);
@@ -272,7 +272,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			}
 			else if (keyChar == 's' || keyChar == 's') {
 				// IJ1 built-in: Save
-				tracerPlugin.toogleSnapCursor();
+				tracerPlugin.toggleSnapCursor();
 				e.consume();
 			}
 		}

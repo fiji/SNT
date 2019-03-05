@@ -140,8 +140,8 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	@Override
-	public void zoomEventOccured(final boolean in, final int off_screen_x,
-		final int off_screen_y, final int in_plane)
+	public void zoomEventOccurred(final boolean in, final int off_screen_x,
+	                              final int off_screen_y, final int in_plane)
 	{
 		if (single_pane || isZoomAllPanesDisabled()) return; // do nothing with this
 																													// news
@@ -291,7 +291,7 @@ public class MultiDThreePanes implements PaneOwner {
 
 	public synchronized void reloadZYXZpanes(final int frame) {
 		if (xy == null) throw new IllegalArgumentException(
-			"reload() called withou initialization");
+			"reload() called without initialization");
 		if (xy.getNSlices() == 1) return;
 		single_pane = false;
 		initialize(frame);

@@ -653,7 +653,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			final boolean realRadius = pathToUse.hasRadii();
 			for (int i = indexToStartAt; i < pathToUse.size(); ++i) {
 				double radius = 0;
-				if (realRadius) radius = pathToUse.radiuses[i];
+				if (realRadius) radius = pathToUse.radii[i];
 				final SWCPoint swcPoint = new SWCPoint(currentPointID, pathToUse
 					.getSWCType(), pathToUse.precise_x_positions[i],
 					pathToUse.precise_y_positions[i], pathToUse.precise_z_positions[i],
@@ -673,7 +673,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					previousPointID = firstSWCPoint.id;
 				}
 				double radius = 0;
-				if (realRadius) radius = pathToUse.radiuses[i];
+				if (realRadius) radius = pathToUse.radii[i];
 				final SWCPoint swcPoint = new SWCPoint(currentPointID, pathToUse
 					.getSWCType(), pathToUse.precise_x_positions[i],
 					pathToUse.precise_y_positions[i], pathToUse.precise_z_positions[i],
@@ -1149,7 +1149,7 @@ public class PathAndFillManager extends DefaultHandler implements
 						attributes += " tx=\"" + p.tangents_x[i] + "\"";
 						attributes += " ty=\"" + p.tangents_y[i] + "\"";
 						attributes += " tz=\"" + p.tangents_z[i] + "\"";
-						attributes += " r=\"" + p.radiuses[i] + "\"";
+						attributes += " r=\"" + p.radii[i] + "\"";
 					}
 					pw.println("    <point " + attributes + "/>");
 				}
@@ -1484,7 +1484,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					current_path.tangents_x[lastIndex] = Double.parseDouble(tXString);
 					current_path.tangents_y[lastIndex] = Double.parseDouble(tYString);
 					current_path.tangents_z[lastIndex] = Double.parseDouble(tZString);
-					current_path.radiuses[lastIndex] = Double.parseDouble(radiusString);
+					current_path.radii[lastIndex] = Double.parseDouble(radiusString);
 				}
 				else if (radiusString != null || tXString != null || tYString != null ||
 					tZString != null) throw new TracesFileFormatException(
@@ -2058,7 +2058,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				pathStartsAtPointInImage.put(currentPath, beforeStart
 					.getPointInImage());
 				currentPath.addPointDouble(beforeStart.x, beforeStart.y, beforeStart.z);
-				currentPath.radiuses[added] = beforeStart.radius;
+				currentPath.radii[added] = beforeStart.radius;
 				++added;
 
 			}
@@ -2068,7 +2068,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			while (currentPoint != null) {
 				currentPath.addPointDouble(currentPoint.x, currentPoint.y,
 					currentPoint.z);
-				currentPath.radiuses[added] = currentPoint.radius;
+				currentPath.radii[added] = currentPoint.radius;
 				++added;
 				pointToPath.put(currentPoint, currentPath);
 
@@ -2841,7 +2841,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * A base class for all the methods we might want to use to transform paths.
 	 */
 
-	// Note that this will transform fitted Paths but lose the radiuses
+	// Note that this will transform fitted Paths but lose the radii
 
 	public PathAndFillManager transformPaths(final PathTransformer transformation,
 		final ImagePlus templateImage, final ImagePlus modelImage)

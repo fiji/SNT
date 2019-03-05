@@ -2771,7 +2771,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return new GuiUtils(getActiveWindow()).getConfirmation(msg, title);
 	}
 
-	protected void toogleSnapCursor() {
+	protected void toggleSnapCursor() {
 		enableSnapCursor(!snapCursor);
 	}
 

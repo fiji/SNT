@@ -33,7 +33,7 @@ def run():
         ui.showDialog("Could not connect to ML database", "Error")
         return
     if not loader.idExists():
-        ui.showDialog("Somewhow the specified id was not found", "Error")
+        ui.showDialog("Somehow the specified id was not found", "Error")
         return
 
     d_tree = loader.getTree('dendrites', None)  # compartment, color

@@ -23,7 +23,7 @@ def run():
         ui.showDialog("SNT does not seem to be running. Exiting..", "Error")
         return
 
-    # Retrive current Tree (collection of paths) from the plugin
+    # Retrieve current Tree (collection of paths) from the plugin
     include_only_selected_paths = snt.getPlugin().isOnlySelectedPathsVisible()
     tree = snt.getTree(include_only_selected_paths)
 

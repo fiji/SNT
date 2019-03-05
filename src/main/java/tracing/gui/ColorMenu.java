@@ -121,7 +121,7 @@ public class ColorMenu extends JMenu {
 		/* No longer in use: see {@link SWCTypeOptionsCmd}
 		
 				// Build the panel for SWC colors
-				addSeparator("SWC Type Colors (Righ-click to change):");
+				addSeparator("SWC Type Colors (Right-click to change):");
 				final JPanel swcPanel = getGridPanel(1, 7);
 				for (final int type : Path.getSWCtypes()) {
 					final SNTColor swcColor = new SNTColor(Path.getSWCcolor(type), type);
@@ -211,7 +211,7 @@ public class ColorMenu extends JMenu {
 
 		private static final long serialVersionUID = 1L;
 		private SNTColor swcColor;
-		private boolean isSelectected;
+		private boolean isSelected;
 		private final boolean isCustomizable;
 
 		public ColorPane(final SNTColor sColor, final boolean customizable) {
@@ -241,8 +241,8 @@ public class ColorMenu extends JMenu {
 		}
 
 		public void setSelected(final boolean isSelected) {
-			isSelectected = isSelected;
-			if (isSelectected) {
+			this.isSelected = isSelected;
+			if (this.isSelected) {
 				setBorder(_selectedBorder);
 				_selectedColorPane = this;
 			}
@@ -274,7 +274,7 @@ public class ColorMenu extends JMenu {
 
 		@Override
 		public void mouseExited(final MouseEvent ev) {
-			setBorder(isSelectected ? _selectedBorder : _unselectedBorder);
+			setBorder(isSelected ? _selectedBorder : _unselectedBorder);
 		}
 
 		@Override

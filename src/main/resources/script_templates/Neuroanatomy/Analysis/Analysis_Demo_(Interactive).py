@@ -12,7 +12,7 @@
 file:       Analysis_Demo_(Interactive).py
 author:     Tiago Ferreira
 version:    20181126
-info:       Exemplifies how to programatically interact with a running instance
+info:       Exemplifies how to programmatically interact with a running instance
             of SNT to analyze traced data. Because of all the GUI updates, this
             approach is _significantly slower_ than analyzing reconstructions
             retrieved directly from the loader.
@@ -46,7 +46,7 @@ def run():
         ui.showDialog("Could not connect to ML database", "Error")
         return
     if not loader.idExists():
-        ui.showDialog("Somewhow the specified id was not found", "Error")
+        ui.showDialog("Somehow the specified id was not found", "Error")
         return
 
     # Pause tracing functions
@@ -67,7 +67,7 @@ def run():
 
     # Almost all SNT analyses are performed on a Tree, i.e., a collection
     # of Paths. We can immediately retrieve TreeAnalyzer (responsible for
-    # analyzing Trees) or TreeStatistics (responsible for computating
+    # analyzing Trees) or TreeStatistics (responsible for computing
     # descriptive statistics for univariate properties of a Tree) instances
     # from SNTService.
     # These instances can be built from all the Paths currently loaded, or
@@ -85,7 +85,7 @@ def run():
     analyzer.updateAndDisplayTable()
 
     # It is also possible to build the above instances from a Tree. This
-    # is usefule if, e.g, one needs to manipulate Paths in advanced.
+    # is useful if, e.g, one needs to manipulate Paths in advanced.
     # NB: rotation, and scaling of large Trees can be computer intensive
     metric = TreeStatistics.INTER_NODE_DISTANCE # same as "inter-node distance"
     summary_stats = stats.getSummaryStats(metric)

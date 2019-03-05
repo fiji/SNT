@@ -95,7 +95,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		if (!tracerPlugin.tracingHalted) pMenu.add(menuItem(listener.FORK_NEAREST,
 			listener));
 		pMenu.addSeparator();
-		toggleEditModeMenuItem = new JCheckBoxMenuItem(AListener.EDIT_TOOGLE);
+		toggleEditModeMenuItem = new JCheckBoxMenuItem(AListener.EDIT_TOGGLE);
 		toggleEditModeMenuItem.addItemListener(listener);
 		pMenu.add(toggleEditModeMenuItem);
 		pMenu.add(menuItem(AListener.NODE_RESET, listener));
@@ -106,10 +106,10 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		deselectedEditingPathsMenu = new JMenu("  Connect To");
 		pMenu.add(deselectedEditingPathsMenu);
 		pMenu.addSeparator();
-		togglePauseSNTMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_SNT_TOOGLE);
+		togglePauseSNTMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_SNT_TOGGLE);
 		togglePauseSNTMenuItem.addItemListener(listener);
 		pMenu.add(togglePauseSNTMenuItem);
-		togglePauseTracingMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_TRACING_TOOGLE);
+		togglePauseTracingMenuItem = new JCheckBoxMenuItem(AListener.PAUSE_TRACING_TOGGLE);
 		togglePauseTracingMenuItem.addItemListener(listener);
 		pMenu.add(togglePauseTracingMenuItem);
 		pMenu.addSeparator();
@@ -122,7 +122,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		toggleEditModeMenuItem.setEnabled(be);
 		toggleEditModeMenuItem.setState(be && editMode);
 		toggleEditModeMenuItem.setText((activePath != null) ? "Edit " + activePath
-			.getName() : AListener.EDIT_TOOGLE);
+			.getName() : AListener.EDIT_TOGGLE);
 		final boolean bp = uiReadyForModeChange(SNTUI.SNT_PAUSED);
 		togglePauseSNTMenuItem.setEnabled(bp);
 		togglePauseSNTMenuItem.setSelected(bp && tracerPlugin
@@ -137,7 +137,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 				final String cmd = mItem.getActionCommand();
 
 				if (togglePauseSNTMenuItem.isSelected() && !cmd.equals(
-					AListener.PAUSE_SNT_TOOGLE))
+					AListener.PAUSE_SNT_TOGGLE))
 				{
 					mItem.setEnabled(false);
 				}
@@ -614,9 +614,9 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			.modKey() + "+Shift+Click]";
 		public static final String SELECT_NEAREST =
 			"Select Nearest Path  [G, Shift+G]";
-		public static final String PAUSE_SNT_TOOGLE = "Pause SNT";
-		public static final String PAUSE_TRACING_TOOGLE = "Pause Tracing";
-		public static final String EDIT_TOOGLE = "Edit Path";
+		public static final String PAUSE_SNT_TOGGLE = "Pause SNT";
+		public static final String PAUSE_TRACING_TOGGLE = "Pause Tracing";
+		public static final String EDIT_TOGGLE = "Edit Path";
 		private final static String NODE_RESET = "  Reset Active Node";
 		private final static String NODE_DELETE =
 			"  Delete Active Node  [D, Backspace]";
@@ -686,7 +686,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 				deleteEditingNode(true);
 			}
 			else if (e.getActionCommand().equals(NODE_INSERT)) {
-				apppendLastCanvasPositionToEditingNode(true);
+				appendLastCanvasPositionToEditingNode(true);
 			}
 			else if (e.getActionCommand().equals(NODE_MOVE)) {
 				moveEditingNodeToLastCanvasPosition(true);
@@ -735,7 +735,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		}
 	}
 
-	protected void apppendLastCanvasPositionToEditingNode(
+	protected void appendLastCanvasPositionToEditingNode(
 		final boolean warnOnFailure)
 	{
 		if (impossibleEdit(warnOnFailure)) return;

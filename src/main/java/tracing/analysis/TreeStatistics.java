@@ -80,7 +80,7 @@ public class TreeStatistics extends TreeAnalyzer {
 	/**
 	 * Computes the {@link DescriptiveStatistics} for the specified measurement.
 	 *
-	 * @param measurement the measurement ({@link #N_NODES}, {@link #sNODE_RADIUS},
+	 * @param measurement the measurement ({@link #N_NODES}, {@link #NODE_RADIUS},
 	 *          etc.)
 	 * @return the DescriptiveStatistics object.
 	 */

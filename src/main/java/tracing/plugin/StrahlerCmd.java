@@ -131,8 +131,7 @@ public class StrahlerCmd extends TreeAnalyzer {
 		final CategoryChart<Integer> chart = plotService.newCategoryChart(
 			Integer.class);
 		final List<Integer> categories = IntStream.rangeClosed(1, maxBranchOrder)
-			.boxed().collect(Collectors.toList());
-		Collections.sort(categories, Collections.reverseOrder());
+				.boxed().sorted(Collections.reverseOrder()).collect(Collectors.toList());
 		chart.categoryAxis().setManualCategories(categories);
 
 		final LineSeries<Integer> series1 = chart.addLineSeries();

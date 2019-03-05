@@ -808,8 +808,7 @@ public class Viewer3D {
 	@SuppressWarnings("unchecked")
 	private List<String> getLabelsCheckedInManager() {
 		final Object[] values = managerList.getCheckBoxListSelectedValues();
-		final List<String> list = (List<String>) (List<?>) Arrays.asList(values);
-		return list;
+		return (List<String>) (List<?>) Arrays.asList(values);
 	}
 
 	private <T extends AbstractDrawable> boolean allDrawablesRendered(
@@ -3279,7 +3278,7 @@ public class Viewer3D {
 		}
 
 		private void showHelp(final boolean showInDialog) {
-			final StringBuffer sb = new StringBuffer("<HTML>");
+			final StringBuilder sb = new StringBuilder("<HTML>");
 			sb.append("<table>");
 			sb.append("  <tr>");
 			sb.append("    <td>Pan</td>");

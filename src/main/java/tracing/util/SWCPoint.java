@@ -147,7 +147,7 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	 */
 	@Override
 	public int compareTo(final SWCPoint o) {
-		return (id < o.id) ? -1 : ((id > o.id) ? 1 : 0);
+		return Integer.compare(id, o.id);
 	}
 
 	/*

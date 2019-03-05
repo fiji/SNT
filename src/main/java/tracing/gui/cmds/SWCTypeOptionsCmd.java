@@ -187,7 +187,7 @@ public class SWCTypeOptionsCmd extends ContextCommand {
 		for (final Map.Entry<Integer, ColorRGB> entry : maprgb.entrySet()) {
 			final int key = entry.getKey();
 			final ColorRGB color = entry.getValue();
-			map.put(Integer.valueOf(key), getColorFromColorRGB(color));
+			map.put(key, getColorFromColorRGB(color));
 		}
 		return map;
 	}

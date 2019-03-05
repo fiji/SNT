@@ -8,13 +8,13 @@
 # @UIService ui
 
 
-'''
+"""
 file:       Scripted_Tracing_Demo.py
 author:     Tiago Ferreira
 version:    20180820
 info:       Exemplifies how to programmatically interact with a running
             instance of SNT to perform auto-tracing tasks.
-'''
+"""
 
 import math
 
@@ -100,9 +100,7 @@ def run():
         angle = math.radians(deg_angle)
         rot_x = sx + math.cos(angle) * (ex - sx) - math.sin(angle) * (ey - sy)
         rot_y = sy + math.sin(angle) * (ex - sx) + math.cos(angle) * (ey - sy)
-        path_nodes = []
-        path_nodes.append(PointInImage(sx, sy, z))
-        path_nodes.append(PointInImage(rot_x, rot_y, z))
+        path_nodes = [PointInImage(sx, sy, z), PointInImage(rot_x, rot_y, z)]
         child = plugin.autoTrace(path_nodes, fork_point)
         tree.add(child)
 

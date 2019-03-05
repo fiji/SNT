@@ -8,13 +8,13 @@
 # @UIService ui
 # @PlotService plotService
 
-'''
+"""
 file:       Analysis_Demo2.py
 author:     Tiago Ferreira, Cameron Arshadi
 version:    20190210
 info:       A Jython demo of how SNT can analyze neuron reconstructions fetched
             from online databases such as MouseLight, NeuroMorpho or FlyCircuit
-'''
+"""
 
 import math
 from collections import defaultdict

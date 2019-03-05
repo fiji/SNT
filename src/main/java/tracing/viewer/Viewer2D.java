@@ -237,7 +237,7 @@ public class Viewer2D extends TreeColorMapper {
 	 * Appends a tree to the viewer rendered after the specified measurement.
 	 *
 	 * @param tree the tree to be plotted
-	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 * @param measurement the measurement ({@link #BRANCH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param colorTable the color table specifying the color mapping
 	 * @param min the mapping lower bound (i.e., the highest measurement value for
@@ -259,7 +259,7 @@ public class Viewer2D extends TreeColorMapper {
 	 * Mapping bounds are automatically determined.
 	 *
 	 * @param tree the tree to be plotted
-	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 * @param measurement the measurement ({@link #BRANCH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param lut the lookup table specifying the color mapping
 	 */
@@ -273,7 +273,7 @@ public class Viewer2D extends TreeColorMapper {
 	 * Appends a tree to the viewer rendered after the specified measurement.
 	 *
 	 * @param tree the tree to be plotted
-	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 * @param measurement the measurement ({@link #BRANCH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param lut the lookup table specifying the color mapping
 	 * @param min the mapping lower bound (i.e., the highest measurement value for

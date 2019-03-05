@@ -5,12 +5,12 @@
 #@StatusService status
 #@UIService ui
 
-'''
+"""
 file:       Convert_Traces_to_SWC.py
 author:     Tiago Ferreira
 version:    20181128
 info:       Converts all .traces files in a directory into SWC
-'''
+"""
 
 import os, re
 from tracing import PathAndFillManager

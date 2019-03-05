@@ -533,8 +533,7 @@ public class GuiUtils {
 		graphics.setXORMode(Color.DARK_GRAY);
 		graphics.drawRect(0, 0, width - 1, height - 1);
 		image.flush();
-		final ImageIcon icon = new ImageIcon(image);
-		return icon;
+		return new ImageIcon(image);
 	}
 
 	public static int getMenuItemHeight() {
@@ -608,9 +607,9 @@ public class GuiUtils {
 		textfield.setColumns(maxDigits);
 		final NumberFormatter formatter = (NumberFormatter) textfield
 			.getFormatter();
-		String decString = "";
+		StringBuilder decString = new StringBuilder();
 		while (decString.length() <= nDecimals)
-			decString += "0";
+			decString.append("0");
 		final DecimalFormat decimalFormat = new DecimalFormat("0." + decString);
 		formatter.setFormat(decimalFormat);
 		formatter.setAllowsInvalid(false);

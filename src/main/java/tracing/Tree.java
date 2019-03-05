@@ -169,7 +169,6 @@ public class Tree {
 	 *
 	 * @param index index of the element to return
 	 * @return the element at the specified position
-	 * @throws IndexOutOfBoundsException {@inheritDoc}
 	 */
 	public Path get(final int index) {
 		return tree.get(index);
@@ -369,8 +368,8 @@ public class Tree {
 	/**
 	 * Rotates the tree.
 	 *
-	 * @param axis the rotation axis. Either {@link X_AXIS}, {@link Y_AXIS}, or
-	 *          {@link Z_AXIS}
+	 * @param axis the rotation axis. Either {@link #X_AXIS}, {@link #Y_AXIS}, or
+	 *          {@link #Z_AXIS}
 	 * @param angle the rotation angle in degrees
 	 */
 	public void rotate(final int axis, final double angle) {

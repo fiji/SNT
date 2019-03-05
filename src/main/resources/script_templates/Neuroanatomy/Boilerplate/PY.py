@@ -10,12 +10,12 @@
 # @UIService ui
 
 
-'''
-file:       
-author:     
-version:    
-info:       
-'''
+"""
+file:
+author:
+version:
+info:
+"""
 
 from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
 from tracing.analysis import (RoiConverter, MultiTreeColorMapper, TreeAnalyzer,

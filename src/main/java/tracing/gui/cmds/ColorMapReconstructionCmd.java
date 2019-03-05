@@ -149,19 +149,14 @@ public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 		}
 		else if (treeMappingLabels != null) {
 			// Color code single trees
-			mChoices = new ArrayList<>();
-			mChoices.addAll(Arrays.asList(TreeAnalyzer.COMMON_MEASUREMENTS));
+			mChoices = new ArrayList<>(Arrays.asList(TreeAnalyzer.COMMON_MEASUREMENTS));
 			mChoices.add(TreeColorMapper.PATH_DISTANCE);
 			Collections.sort(mChoices);
 			resolveInput("multiTreeMappingLabels");
 		}
-		else if (multiTreeMappingLabels != null) {
+		else {
 			mChoices = Arrays.asList(MultiTreeColorMapper.PROPERTIES);
 			resolveInput("treeMappingLabels");
-		}
-		if (mChoices == null) {
-			throw new IllegalArgumentException(
-				"Unexpected state. Invalid input parameters");
 		}
 		mInput.setChoices(mChoices);
 	}

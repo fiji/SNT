@@ -679,24 +679,25 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			else if (impossibleEdit(true)) return;
 
 			// EDIT Commands below
-			if (e.getActionCommand().equals(NODE_RESET)) {
-				tracerPlugin.getEditingPath().setEditableNode(-1);
-			}
-			else if (e.getActionCommand().equals(NODE_DELETE)) {
-				deleteEditingNode(true);
-			}
-			else if (e.getActionCommand().equals(NODE_INSERT)) {
-				appendLastCanvasPositionToEditingNode(true);
-			}
-			else if (e.getActionCommand().equals(NODE_MOVE)) {
-				moveEditingNodeToLastCanvasPosition(true);
-			}
-			else if (e.getActionCommand().equals(NODE_MOVE_Z)) {
-				assignLastCanvasZPositionToEditNode(true);
-			}
-			else {
-				SNT.error("Unexpectedly got an event from an unknown source: " + e);
-				return;
+			switch (e.getActionCommand()) {
+				case NODE_RESET:
+					tracerPlugin.getEditingPath().setEditableNode(-1);
+					break;
+				case NODE_DELETE:
+					deleteEditingNode(true);
+					break;
+				case NODE_INSERT:
+					appendLastCanvasPositionToEditingNode(true);
+					break;
+				case NODE_MOVE:
+					moveEditingNodeToLastCanvasPosition(true);
+					break;
+				case NODE_MOVE_Z:
+					assignLastCanvasZPositionToEditNode(true);
+					break;
+				default:
+					SNT.error("Unexpectedly got an event from an unknown source: " + e);
+					return;
 			}
 
 		}

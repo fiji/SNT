@@ -9,12 +9,12 @@
 # @UIService uiservice
 
 
-'''
+"""
 file:       Measure_Multiple_Files.py
 author:     Tiago Ferreira
 version:    20180531
 info:       Bulk measurements of SWC files using SNT
-'''
+"""
 
 import os, sys
 from tracing import Tree
@@ -42,7 +42,7 @@ def get_swc_files(directory, filtering_string):
 def run():
 
     d = str(input_dir)
-    files = get_swc_files(d, name_filter);
+    files = get_swc_files(d, name_filter)
     if not files or len(files) == 0:
         uiservice.showDialog("No files matched the specified criteria", "Error")
         return

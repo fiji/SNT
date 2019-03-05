@@ -8,7 +8,7 @@
 # @UIService ui
 
 
-'''
+"""
 file:       Analysis_Demo_(Interactive).py
 author:     Tiago Ferreira
 version:    20181126
@@ -17,7 +17,7 @@ info:       Exemplifies how to programmatically interact with a running instance
             approach is _significantly slower_ than analyzing reconstructions
             retrieved directly from the loader.
             Do check Analysis_Demo.py for comparison
-'''
+"""
 
 import math
 

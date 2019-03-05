@@ -196,8 +196,8 @@ public class SNTUI extends JDialog {
 	private final SimpleNeuriteTracer plugin;
 	private final PathAndFillManager pathAndFillManager;
 	protected final GuiUtils guiUtils;
-	private PathManagerUI pmUI;
-	private FillManagerUI fmUI;
+	private final PathManagerUI pmUI;
+	private final FillManagerUI fmUI;
 
 	/* Reconstruction Viewer */
 	protected Viewer3D recViewer;
@@ -517,8 +517,8 @@ public class SNTUI extends JDialog {
 
 		final int[] wList = WindowManager.getIDList();
 		if (wList != null) {
-			for (int i = 0; i < wList.length; i++) {
-				final ImagePlus imp = WindowManager.getImage(wList[i]);
+			for (int i1 : wList) {
+				final ImagePlus imp = WindowManager.getImage(i1);
 				j++;
 				final String title = imp.getTitle();
 				colorImageChoice.addItem(title);
@@ -2920,7 +2920,7 @@ public class SNTUI extends JDialog {
 			else if (source == showPathsSelected) {
 				plugin.setShowOnlySelectedPaths(showPathsSelected.isSelected());
 			} else if (source == onlyActiveCTposition) {
-				plugin.setShowOnlyActiveCTposPaths(onlyActiveCTposition.isSelected(), true);
+				plugin.setShowOnlyActiveCTposPaths(onlyActiveCTposition.isSelected());
 			}
 		}
 
@@ -3140,17 +3140,16 @@ public class SNTUI extends JDialog {
 			final List<Path> primaryPaths = Arrays.asList(pathAndFillManager
 				.getPathsStructured());
 			final int n = primaryPaths.size();
-			String errorMessage = "";
+			StringBuilder errorMessage = new StringBuilder();
 			for (int i = 0; i < n; ++i) {
 				final File swcFile = pathAndFillManager.getSWCFileForIndex(prefix, i);
-				if (swcFile.exists()) errorMessage += swcFile.getAbsolutePath() + "\n";
+				if (swcFile.exists()) errorMessage.append(swcFile.getAbsolutePath()).append("\n");
 			}
 			if (errorMessage.length() == 0) return true;
 			else {
-				errorMessage = "The following files would be overwritten:\n" +
-					errorMessage;
-				errorMessage += "Continue to save, overwriting these files?";
-				return guiUtils.getConfirmation(errorMessage,
+				errorMessage.insert(0, "The following files would be overwritten:\n");
+				errorMessage.append("Continue to save, overwriting these files?");
+				return guiUtils.getConfirmation(errorMessage.toString(),
 					"Confirm overwriting SWC files?");
 			}
 		}

@@ -3,13 +3,13 @@
 # @LUTService lut
 
 
-'''
+"""
 file:       Reconstruction_Viewer_Demo.py
 author:     Tiago Ferreira
 version:    20190218
 info:       Exemplifies how to render a remote file in a stand-alone
             Reconstruction Viewer
-'''
+"""
 from tracing import Tree
 from tracing.io import MouseLightLoader
 from tracing.analysis import TreeColorMapper

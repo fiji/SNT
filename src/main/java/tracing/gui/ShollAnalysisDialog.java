@@ -454,12 +454,10 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 		else throw new RuntimeException(
 			"BUG: somehow no normalization checkbox was selected");
 
-		final ShollResults results = new ShollResults(pointsToUse, plugin
+		return new ShollResults(pointsToUse, plugin
 			.getImagePlus(), useAllPaths, useAllPaths ? numberOfAllPaths
 				: numberOfSelectedPaths, x_start, y_start, z_start, description, axes,
 			normalization, sampleSeparation, plugin.is2D());
-
-		return results;
 	}
 
 	private JDialog getDialog() {

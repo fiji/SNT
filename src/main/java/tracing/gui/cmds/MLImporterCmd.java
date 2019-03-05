@@ -218,13 +218,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 		final List<String> ids;
 		if (query == null) return null;
 		ids = new LinkedList<>(Arrays.asList(query.split("\\s*(,|\\s)\\s*")));
-		final Iterator<String> it = ids.iterator();
-		while (it.hasNext()) {
-			final String id = it.next();
-			if (!(id.matches(ID_MATCHER) || id.matches(DOI_MATCHER))) {
-				it.remove();
-			}
-		}
+		ids.removeIf(id -> !(id.matches(ID_MATCHER) || id.matches(DOI_MATCHER)));
 		if (ids.isEmpty()) return null;
 		Collections.sort(ids);
 		return ids;

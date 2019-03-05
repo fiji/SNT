@@ -188,7 +188,7 @@ public class OBJMesh {
 	}
 
 	/**
-	 * This is a copy of {@link #OBJFileLoader} with extra methods that allow to
+	 * This is a copy of {@code OBJFileLoader} with extra methods that allow to
 	 * check if OBJFile is valid before converting it into a Drawable #
 	 */
 	private class OBJFileLoaderPlus implements IGLLoader<DrawableVBO> {

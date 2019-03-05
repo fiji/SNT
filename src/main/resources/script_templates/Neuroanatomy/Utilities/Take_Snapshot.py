@@ -6,13 +6,13 @@
 # @SNTService snt
 # @UIService ui
 
-'''
+"""
 file:       Take_Snapshot.py
 author:     Tiago Ferreira
 version:    20180614
 info:       Displays a WYSIWYG image of a tracing canvas. Exemplifies
             how to script SNT using SNTService
-'''
+"""
 
 from tracing import Tree
 
@@ -45,7 +45,7 @@ def run():
         if offset != 0:
             tree.applyCanvasOffset(0,0,0)
         snap.show()
-        ls.runLegacyCommand("ij.plugin.ScaleBar", " width=50 ");
+        ls.runLegacyCommand("ij.plugin.ScaleBar", " width=50 ")
     except:
         ui.showDialog("%s canvas does not seem to be available." % view, "Error")
         return

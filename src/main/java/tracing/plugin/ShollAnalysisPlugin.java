@@ -26,7 +26,6 @@ import java.awt.AWTEvent;
 import java.awt.Checkbox;
 import java.awt.Label;
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
@@ -453,7 +452,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 	 */
 	private String normalizedPath(final String path) {
 		// chase-seibert.github.io/blog/2009/04/10/java-replaceall-fileseparator.html
-		return path.replaceAll("(?<!^)(\\\\|/){2,}", Matcher.quoteReplacement(
+		return path.replaceAll("(?<!^)([\\\\/]){2,}", Matcher.quoteReplacement(
 			File.separator));
 	}
 

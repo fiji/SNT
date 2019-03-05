@@ -77,6 +77,7 @@ public class FADerivedIcon implements Icon {
 		try {
 			final InputStream is = Thread.currentThread().getContextClassLoader()
 				.getResourceAsStream((solid) ? AWESOME_SOLID : AWESOME_REGULAR);
+			assert is != null;
 			font = Font.createFont(Font.TRUETYPE_FONT, is);
 		}
 		catch (FontFormatException | IOException ex) {

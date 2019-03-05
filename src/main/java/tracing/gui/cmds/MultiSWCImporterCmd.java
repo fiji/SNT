@@ -97,7 +97,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 
 		final int lastExistingPathIdx = pafm.size() - 1;
 		final List<Tree> result = pafm.importSWCs(importMap, getColor());
-		final long failures = result.stream().filter(tree -> tree.isEmpty())
+		final long failures = result.stream().filter(Tree::isEmpty)
 			.count();
 		if (failures == result.size()) {
 			snt.error("No reconstructions could be retrieved. Invalid Query?");

@@ -66,7 +66,7 @@ public class TreeStatistics extends TreeAnalyzer {
 	/**
 	 * Computes the {@link SummaryStatistics} for the specified measurement.
 	 *
-	 * @param measurement the measurement ({@link N_NODES}, {@link NODE_RADIUS},
+	 * @param measurement the measurement ({@link #N_NODES}, {@link #NODE_RADIUS},
 	 *          etc.)
 	 * @return the SummaryStatistics object.
 	 */
@@ -80,7 +80,7 @@ public class TreeStatistics extends TreeAnalyzer {
 	/**
 	 * Computes the {@link DescriptiveStatistics} for the specified measurement.
 	 *
-	 * @param measurement the measurement ({@link N_NODES}, {@link NODE_RADIUS},
+	 * @param measurement the measurement ({@link #N_NODES}, {@link #sNODE_RADIUS},
 	 *          etc.)
 	 * @return the DescriptiveStatistics object.
 	 */
@@ -98,7 +98,7 @@ public class TreeStatistics extends TreeAnalyzer {
 	 * Gets the relative frequencies histogram for a univariate measurement. The
 	 * number of bins is determined using the Freedman-Diaconis rule.
 	 *
-	 * @param measurement the measurement ({@link N_NODES}, {@link NODE_RADIUS},
+	 * @param measurement the measurement ({@link #N_NODES}, {@link #NODE_RADIUS},
 	 *          etc.)
 	 * @return the frame holding the histogram
 	 */

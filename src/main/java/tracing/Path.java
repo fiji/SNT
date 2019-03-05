@@ -221,9 +221,7 @@ public class Path implements Comparable<Path> {
 	 */
 	@Override
 	public int compareTo(final Path o) {
-		if (id == o.id) return 0;
-		if (id < o.id) return -1;
-		return 1;
+		return Integer.compare(id, o.id);
 	}
 
 	/**
@@ -302,7 +300,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected static String pathsToIDListString(final ArrayList<Path> a) {
-		final StringBuffer s = new StringBuffer();
+		final StringBuilder s = new StringBuilder();
 		final int n = a.size();
 		for (int i = 0; i < n; ++i) {
 			s.append(a.get(i).getID());
@@ -388,11 +386,11 @@ public class Path implements Comparable<Path> {
 		 * from this's somehowJoins.
 		 */
 		for (final Path other : somehowJoins) {
-			if (other.startJoins != null && other.startJoins == this) {
+			if (other.startJoins == this) {
 				other.startJoins = null;
 				other.startJoinsPoint = null;
 			}
-			if (other.endJoins != null && other.endJoins == this) {
+			if (other.endJoins == this) {
 				other.endJoins = null;
 				other.endJoinsPoint = null;
 			}

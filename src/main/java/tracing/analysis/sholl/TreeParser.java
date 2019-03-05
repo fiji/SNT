@@ -165,7 +165,6 @@ public class TreeParser implements Parser {
 			if (!p.isPrimary()) continue;
 			if (swcType < 0 || p.getSWCType() == swcType) {
 				points.add(p.getNode(0));
-				continue;
 			}
 		}
 		return (points.isEmpty()) ? null : PointInImage.average(points);

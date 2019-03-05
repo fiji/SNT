@@ -44,6 +44,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -477,9 +478,8 @@ public class PathAndFillManager extends DefaultHandler implements
 
 		final TreeSet<Path> pathsLeft = new TreeSet<>();
 
-		for (int i = 0; i < allPaths.size(); ++i) {
-			final Path p = allPaths.get(i);
-			if (!p.isFittedVersionOfAnotherPath()) pathsLeft.add(allPaths.get(i));
+		for (final Path p : allPaths) {
+			if (!p.isFittedVersionOfAnotherPath()) pathsLeft.add(p);
 		}
 
 		/*
@@ -1178,423 +1178,404 @@ public class PathAndFillManager extends DefaultHandler implements
 	{
 
 		if (boundingBox == null) boundingBox = new BoundingBox();
-		if (qName.equals("tracings")) {
+		switch (qName) {
+			case "tracings":
 
-			startJoins = new HashMap<>();
-			startJoinsIndices = new HashMap<>();
-			startJoinsPoints = new HashMap<>();
-			endJoins = new HashMap<>();
-			endJoinsIndices = new HashMap<>();
-			endJoinsPoints = new HashMap<>();
-			useFittedFields = new HashMap<>();
-			fittedFields = new HashMap<>();
-			fittedVersionOfFields = new HashMap<>();
+				startJoins = new HashMap<>();
+				startJoinsIndices = new HashMap<>();
+				startJoinsPoints = new HashMap<>();
+				endJoins = new HashMap<>();
+				endJoinsIndices = new HashMap<>();
+				endJoinsPoints = new HashMap<>();
+				useFittedFields = new HashMap<>();
+				fittedFields = new HashMap<>();
+				fittedVersionOfFields = new HashMap<>();
 
-			sourcePathIDForFills = new ArrayList<>();
-			foundIDs = new HashSet<>();
+				sourcePathIDForFills = new ArrayList<>();
+				foundIDs = new HashSet<>();
 
-			last_fill_id = -1;
+				last_fill_id = -1;
 
-			/*
-			 * We need to remove the old paths and fills before loading the ones:
-			 */
-			SNT.log("Clearing old paths and fills...");
-			clearPathsAndFills();
+				/*
+				 * We need to remove the old paths and fills before loading the ones:
+				 */
+				SNT.log("Clearing old paths and fills...");
+				clearPathsAndFills();
 
-		}
-		else if (qName.equals("imagesize")) {
+				break;
+			case "imagesize":
 
-			try {
-				final int parsed_width = Integer.parseInt(attributes.getValue("width"));
-				final int parsed_height = Integer.parseInt(attributes.getValue(
-					"height"));
-				final int parsed_depth = Integer.parseInt(attributes.getValue("depth"));
-				if (plugin != null && (parsed_width != plugin.width ||
-					parsed_height != plugin.height || parsed_depth != plugin.depth))
-				{
-					SNT.warn(
-						"The image size in the traces file didn't match - it's probably for another image");
-				}
-				boundingBox.setOrigin(new PointInImage(0, 0, 0));
-				boundingBox.setDimensions(parsed_width, parsed_height, parsed_depth);
-			}
-			catch (final NumberFormatException e) {
-				throw new TracesFileFormatException(
-					"There was an invalid attribute to <imagesize/>: " + e);
-			}
-
-		}
-		else if (qName.equals("samplespacing")) {
-
-			try {
-				final String xString = attributes.getValue("x");
-				final String yString = attributes.getValue("y");
-				final String zString = attributes.getValue("z");
-				final String spacingUnits = attributes.getValue("units");
-				boundingBox.setUnit(spacingUnits);
-				boundingBox.xSpacing = Double.parseDouble(xString);
-				boundingBox.ySpacing = Double.parseDouble(yString);
-				boundingBox.zSpacing = Double.parseDouble(zString);
-				if (spacingIsUnset) {
-					x_spacing = boundingBox.xSpacing;
-					y_spacing = boundingBox.ySpacing;
-					z_spacing = boundingBox.zSpacing;
-					spacing_units = spacingUnits;
-					spacingIsUnset = false;
-				}
-			}
-			catch (final NumberFormatException e) {
-				throw new TracesFileFormatException(
-					"There was an invalid attribute to <samplespacing/>: " + e);
-			}
-
-		}
-		else if (qName.equals("path")) {
-
-			final String idString = attributes.getValue("id");
-
-			final String swcTypeString = attributes.getValue("swctype");
-			final String colorString = attributes.getValue("color");
-			final String channelString = attributes.getValue("channel");
-			final String frameString = attributes.getValue("frame");
-			final String useFittedString = attributes.getValue("usefitted");
-			final String fittedIDString = attributes.getValue("fitted");
-			final String fittedVersionOfIDString = attributes.getValue(
-				"fittedversionof");
-			final String startsonString = attributes.getValue("startson");
-			final String startsindexString = attributes.getValue("startsindex");
-			final String startsxString = attributes.getValue("startsx");
-			final String startsyString = attributes.getValue("startsy");
-			final String startszString = attributes.getValue("startsz");
-			final String endsonString = attributes.getValue("endson");
-			final String endsindexString = attributes.getValue("endsindex");
-			final String endsxString = attributes.getValue("endsx");
-			final String endsyString = attributes.getValue("endsy");
-			final String endszString = attributes.getValue("endsz");
-			final String nameString = attributes.getValue("name");
-			final String primaryString = attributes.getValue("primary");
-
-			if (startsxString == null && startsyString == null &&
-				startszString == null)
-			{}
-			else if (startsxString != null && startsyString != null &&
-				startszString != null)
-			{}
-			else {
-				throw new TracesFileFormatException(
-					"If one of starts[xyz] is specified, all of them must be.");
-			}
-
-			if (endsxString == null && endsyString == null && endszString == null) {}
-			else if (endsxString != null && endsyString != null &&
-				endszString != null)
-			{}
-			else {
-				throw new TracesFileFormatException(
-					"If one of ends[xyz] is specified, all of them must be.");
-			}
-
-			final boolean accurateStartProvided = startsxString != null;
-			final boolean accurateEndProvided = endsxString != null;
-
-			if (startsonString != null && (startsindexString == null &&
-				!accurateStartProvided))
-			{
-				throw new TracesFileFormatException(
-					"If startson is specified for a path, then startsindex or starts[xyz] must also be specified.");
-			}
-
-			if (endsonString != null && (endsindexString == null &&
-				!accurateEndProvided))
-			{
-				throw new TracesFileFormatException(
-					"If endson is specified for a path, then endsindex or ends[xyz] must also be specified.");
-			}
-
-			current_path = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
-
-			int startson, endson, endsindex;
-			Integer startsOnInteger = null;
-			Integer startsIndexInteger = null;
-			PointInImage startJoinPoint = null;
-			Integer endsOnInteger = null;
-			Integer endsIndexInteger = null;
-			PointInImage endJoinPoint = null;
-
-			Integer fittedIDInteger = null;
-			Integer fittedVersionOfIDInteger = null;
-
-			if (primaryString != null && primaryString.equals("true")) current_path
-				.setIsPrimary(true);
-
-			int id = -1;
-
-			try {
-
-				id = Integer.parseInt(idString);
-				if (foundIDs.contains(id)) {
-					throw new TracesFileFormatException(
-						"There is more than one path with ID " + id);
-				}
-				current_path.setID(id);
-				if (id > maxUsedID) maxUsedID = id;
-
-				if (swcTypeString != null) {
-					final int swcType = Integer.parseInt(swcTypeString);
-					current_path.setSWCType(swcType, false);
-				}
-
-				if (colorString != null) {
-					current_path.setColor(SNT.getColor(colorString));
-				}
-				if (channelString != null && frameString != null) {
-					current_path.setCTposition(Integer.parseInt(channelString), Integer
-						.parseInt(frameString));
-				}
-
-				if (startsonString == null) {
-					startson = -1;
-				}
-				else {
-					startson = Integer.parseInt(startsonString);
-					startsOnInteger = new Integer(startson);
-
-					if (startsxString == null) {
-						// The index (older file format) was supplied:
-						startsIndexInteger = new Integer(startsindexString);
+				try {
+					final int parsed_width = Integer.parseInt(attributes.getValue("width"));
+					final int parsed_height = Integer.parseInt(attributes.getValue(
+							"height"));
+					final int parsed_depth = Integer.parseInt(attributes.getValue("depth"));
+					if (plugin != null && (parsed_width != plugin.width ||
+							parsed_height != plugin.height || parsed_depth != plugin.depth)) {
+						SNT.warn(
+								"The image size in the traces file didn't match - it's probably for another image");
 					}
-					else {
-						startJoinPoint = new PointInImage(Double.parseDouble(startsxString),
-							Double.parseDouble(startsyString), Double.parseDouble(
-								startszString));
+					boundingBox.setOrigin(new PointInImage(0, 0, 0));
+					boundingBox.setDimensions(parsed_width, parsed_height, parsed_depth);
+				} catch (final NumberFormatException e) {
+					throw new TracesFileFormatException(
+							"There was an invalid attribute to <imagesize/>: " + e);
+				}
+
+				break;
+			case "samplespacing":
+
+				try {
+					final String xString = attributes.getValue("x");
+					final String yString = attributes.getValue("y");
+					final String zString = attributes.getValue("z");
+					final String spacingUnits = attributes.getValue("units");
+					boundingBox.setUnit(spacingUnits);
+					boundingBox.xSpacing = Double.parseDouble(xString);
+					boundingBox.ySpacing = Double.parseDouble(yString);
+					boundingBox.zSpacing = Double.parseDouble(zString);
+					if (spacingIsUnset) {
+						x_spacing = boundingBox.xSpacing;
+						y_spacing = boundingBox.ySpacing;
+						z_spacing = boundingBox.zSpacing;
+						spacing_units = spacingUnits;
+						spacingIsUnset = false;
 					}
-				}
-
-				if (endsonString == null) endson = endsindex = -1;
-				else {
-					endson = Integer.parseInt(endsonString);
-					endsOnInteger = new Integer(endson);
-
-					if (endsxString != null) {
-						endJoinPoint = new PointInImage(Double.parseDouble(endsxString),
-							Double.parseDouble(endsyString), Double.parseDouble(endszString));
-					}
-					else {
-						// The index (older file format) was supplied:
-						endsindex = Integer.parseInt(endsindexString);
-						endsIndexInteger = new Integer(endsindex);
-					}
-				}
-
-				if (fittedVersionOfIDString != null) fittedVersionOfIDInteger =
-					new Integer(Integer.parseInt(fittedVersionOfIDString));
-				if (fittedIDString != null) fittedIDInteger = new Integer(Integer
-					.parseInt(fittedIDString));
-
-			}
-			catch (final NumberFormatException e) {
-				e.printStackTrace();
-				throw new TracesFileFormatException(
-					"There was an invalid attribute in <path/>: " + e);
-			}
-
-			current_path.setName(nameString); // default name if null
-
-			if (startsOnInteger != null) startJoins.put(id, startsOnInteger);
-			if (endsOnInteger != null) endJoins.put(id, endsOnInteger);
-
-			if (startJoinPoint != null) startJoinsPoints.put(id, startJoinPoint);
-			if (endJoinPoint != null) endJoinsPoints.put(id, endJoinPoint);
-
-			if (startsIndexInteger != null) {
-				startJoinsIndices.put(id, startsIndexInteger);
-			}
-			if (endsIndexInteger != null) endJoinsIndices.put(id, endsIndexInteger);
-
-			if (useFittedString == null) useFittedFields.put(id, false);
-			else {
-				if (useFittedString.equals("true")) useFittedFields.put(id, true);
-				else if (useFittedString.equals("false")) useFittedFields.put(id,
-					false);
-				else {
+				} catch (final NumberFormatException e) {
 					throw new TracesFileFormatException(
-						"Unknown value for 'fitted' attribute: '" + useFittedString + "'");
-				}
-			}
-
-			if (fittedIDInteger != null) fittedFields.put(id, fittedIDInteger);
-			if (fittedVersionOfIDInteger != null) fittedVersionOfFields.put(id,
-				fittedVersionOfIDInteger);
-
-		}
-		else if (qName.equals("point")) {
-
-			try {
-
-				double parsed_xd, parsed_yd, parsed_zd;
-
-				final String xdString = attributes.getValue("xd");
-				final String ydString = attributes.getValue("yd");
-				final String zdString = attributes.getValue("zd");
-
-				final String xString = attributes.getValue("x");
-				final String yString = attributes.getValue("y");
-				final String zString = attributes.getValue("z");
-
-				if (xdString != null && ydString != null && zdString != null) {
-					parsed_xd = Double.parseDouble(xdString);
-					parsed_yd = Double.parseDouble(ydString);
-					parsed_zd = Double.parseDouble(zdString);
-				}
-				else if (xdString != null || ydString != null || zdString != null) {
-					throw new TracesFileFormatException(
-						"If one of the attributes xd, yd or zd to the point element is specified, they all must be.");
-				}
-				else if (xString != null && yString != null && zString != null) {
-					parsed_xd = boundingBox.xSpacing * Integer.parseInt(xString);
-					parsed_yd = boundingBox.ySpacing * Integer.parseInt(yString);
-					parsed_zd = boundingBox.zSpacing * Integer.parseInt(zString);
-				}
-				else if (xString != null || yString != null || zString != null) {
-					throw new TracesFileFormatException(
-						"If one of the attributes x, y or z to the point element is specified, they all must be.");
-				}
-				else {
-					throw new TracesFileFormatException(
-						"Each point element must have at least the attributes (x, y and z) or (xd, yd, zd)");
+							"There was an invalid attribute to <samplespacing/>: " + e);
 				}
 
-				current_path.addPointDouble(parsed_xd, parsed_yd, parsed_zd);
+				break;
+			case "path":
 
-				final int lastIndex = current_path.size() - 1;
-				final String radiusString = attributes.getValue("r");
-				final String tXString = attributes.getValue("tx");
-				final String tYString = attributes.getValue("ty");
-				final String tZString = attributes.getValue("tz");
-
-				if (radiusString != null && tXString != null && tYString != null &&
-					tZString != null)
-				{
-					if (lastIndex == 0)
-						// Then we've just started, create the arrays in Path:
-						current_path.createCircles();
-					else if (!current_path.hasRadii())
-						throw new TracesFileFormatException("The point at index " +
-							lastIndex + " had a fitted circle, but none previously did");
-					current_path.tangents_x[lastIndex] = Double.parseDouble(tXString);
-					current_path.tangents_y[lastIndex] = Double.parseDouble(tYString);
-					current_path.tangents_z[lastIndex] = Double.parseDouble(tZString);
-					current_path.radii[lastIndex] = Double.parseDouble(radiusString);
-				}
-				else if (radiusString != null || tXString != null || tYString != null ||
-					tZString != null) throw new TracesFileFormatException(
-						"If one of the r, tx, ty or tz attributes to the point element is specified, they all must be");
-				else {
-					// All circle attributes are null:
-					if (current_path.hasRadii()) throw new TracesFileFormatException(
-						"The point at index " + lastIndex +
-							" had no fitted circle, but all previously did");
-				}
-
-			}
-			catch (final NumberFormatException e) {
-				throw new TracesFileFormatException(
-					"There was an invalid attribute to <imagesize/>");
-			}
-
-		}
-		else if (qName.equals("fill")) {
-
-			try {
-
-				String[] sourcePaths = {};
-				final String fromPathsString = attributes.getValue("frompaths");
-				if (fromPathsString != null) sourcePaths = fromPathsString.split(", *");
-
-				current_fill = new Fill();
-
-				final String metric = attributes.getValue("metric");
-				current_fill.setMetric(metric);
-
-				last_fill_node_id = -1;
-
-				final String fill_id_string = attributes.getValue("id");
-
-				int fill_id = Integer.parseInt(fill_id_string);
-
-				if (fill_id < 0) {
-					throw new TracesFileFormatException(
-						"Can't have a negative id in <fill>");
-				}
-
-				if (fill_id != (last_fill_id + 1)) {
-					SNT.log("Out of order id in <fill> (" + fill_id +
-						" when we were expecting " + (last_fill_id + 1) + ")");
-					fill_id = last_fill_id + 1;
-				}
-
-				final int[] sourcePathIndices = new int[sourcePaths.length];
-
-				for (int i = 0; i < sourcePaths.length; ++i)
-					sourcePathIndices[i] = Integer.parseInt(sourcePaths[i]);
-
-				sourcePathIDForFills.add(sourcePathIndices);
-
-				last_fill_id = fill_id;
-
-				final String thresholdString = attributes.getValue("threshold");
-				final double fillThreshold = Double.parseDouble(thresholdString);
-
-				current_fill.setThreshold(fillThreshold);
-
-			}
-			catch (final NumberFormatException e) {
-				throw new TracesFileFormatException(
-					"There was an invalid attribute to <fill>");
-			}
-
-		}
-		else if (qName.equals("node")) {
-
-			try {
-
-				final String xString = attributes.getValue("x");
-				final String yString = attributes.getValue("y");
-				final String zString = attributes.getValue("z");
 				final String idString = attributes.getValue("id");
-				final String distanceString = attributes.getValue("distance");
-				final String previousString = attributes.getValue("previousid");
 
-				final int parsed_x = Integer.parseInt(xString);
-				final int parsed_y = Integer.parseInt(yString);
-				final int parsed_z = Integer.parseInt(zString);
-				final int parsed_id = Integer.parseInt(idString);
-				final double parsed_distance = Double.parseDouble(distanceString);
-				int parsed_previous;
-				if (previousString == null) parsed_previous = -1;
-				else parsed_previous = Integer.parseInt(previousString);
+				final String swcTypeString = attributes.getValue("swctype");
+				final String colorString = attributes.getValue("color");
+				final String channelString = attributes.getValue("channel");
+				final String frameString = attributes.getValue("frame");
+				final String useFittedString = attributes.getValue("usefitted");
+				final String fittedIDString = attributes.getValue("fitted");
+				final String fittedVersionOfIDString = attributes.getValue(
+						"fittedversionof");
+				final String startsonString = attributes.getValue("startson");
+				final String startsindexString = attributes.getValue("startsindex");
+				final String startsxString = attributes.getValue("startsx");
+				final String startsyString = attributes.getValue("startsy");
+				final String startszString = attributes.getValue("startsz");
+				final String endsonString = attributes.getValue("endson");
+				final String endsindexString = attributes.getValue("endsindex");
+				final String endsxString = attributes.getValue("endsx");
+				final String endsyString = attributes.getValue("endsy");
+				final String endszString = attributes.getValue("endsz");
+				final String nameString = attributes.getValue("name");
+				final String primaryString = attributes.getValue("primary");
 
-				if (parsed_id != (last_fill_node_id + 1)) {
+				if (startsxString == null && startsyString == null &&
+						startszString == null) {
+				} else if (startsxString != null && startsyString != null &&
+						startszString != null) {
+				} else {
 					throw new TracesFileFormatException(
-						"Fill node IDs weren't consecutive integers");
+							"If one of starts[xyz] is specified, all of them must be.");
 				}
 
-				final String openString = attributes.getValue("status");
+				if (endsxString == null && endsyString == null && endszString == null) {
+				} else if (endsxString != null && endsyString != null &&
+						endszString != null) {
+				} else {
+					throw new TracesFileFormatException(
+							"If one of ends[xyz] is specified, all of them must be.");
+				}
 
-				current_fill.add(parsed_x, parsed_y, parsed_z, parsed_distance,
-					parsed_previous, openString.equals("open"));
+				final boolean accurateStartProvided = startsxString != null;
+				final boolean accurateEndProvided = endsxString != null;
 
-				last_fill_node_id = parsed_id;
+				if (startsonString != null && (startsindexString == null &&
+						!accurateStartProvided)) {
+					throw new TracesFileFormatException(
+							"If startson is specified for a path, then startsindex or starts[xyz] must also be specified.");
+				}
 
-			}
-			catch (final NumberFormatException e) {
-				throw new TracesFileFormatException(
-					"There was an invalid attribute to <node/>: " + e);
-			}
+				if (endsonString != null && (endsindexString == null &&
+						!accurateEndProvided)) {
+					throw new TracesFileFormatException(
+							"If endson is specified for a path, then endsindex or ends[xyz] must also be specified.");
+				}
 
-		}
-		else {
-			throw new TracesFileFormatException("Unknown element: '" + qName + "'");
+				current_path = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
+
+				int startson, endson, endsindex;
+				Integer startsOnInteger = null;
+				Integer startsIndexInteger = null;
+				PointInImage startJoinPoint = null;
+				Integer endsOnInteger = null;
+				Integer endsIndexInteger = null;
+				PointInImage endJoinPoint = null;
+
+				Integer fittedIDInteger = null;
+				Integer fittedVersionOfIDInteger = null;
+
+				if (primaryString != null && primaryString.equals("true")) current_path
+						.setIsPrimary(true);
+
+				int id = -1;
+
+				try {
+
+					id = Integer.parseInt(idString);
+					if (foundIDs.contains(id)) {
+						throw new TracesFileFormatException(
+								"There is more than one path with ID " + id);
+					}
+					current_path.setID(id);
+					if (id > maxUsedID) maxUsedID = id;
+
+					if (swcTypeString != null) {
+						final int swcType = Integer.parseInt(swcTypeString);
+						current_path.setSWCType(swcType, false);
+					}
+
+					if (colorString != null) {
+						current_path.setColor(SNT.getColor(colorString));
+					}
+					if (channelString != null && frameString != null) {
+						current_path.setCTposition(Integer.parseInt(channelString), Integer
+								.parseInt(frameString));
+					}
+
+					if (startsonString == null) {
+						startson = -1;
+					} else {
+						startson = Integer.parseInt(startsonString);
+						startsOnInteger = startson;
+
+						if (startsxString == null) {
+							// The index (older file format) was supplied:
+							startsIndexInteger = new Integer(startsindexString);
+						} else {
+							startJoinPoint = new PointInImage(Double.parseDouble(startsxString),
+									Double.parseDouble(startsyString), Double.parseDouble(
+									startszString));
+						}
+					}
+
+					if (endsonString == null) endson = endsindex = -1;
+					else {
+						endson = Integer.parseInt(endsonString);
+						endsOnInteger = endson;
+
+						if (endsxString != null) {
+							endJoinPoint = new PointInImage(Double.parseDouble(endsxString),
+									Double.parseDouble(endsyString), Double.parseDouble(endszString));
+						} else {
+							// The index (older file format) was supplied:
+							endsindex = Integer.parseInt(endsindexString);
+							endsIndexInteger = endsindex;
+						}
+					}
+
+					if (fittedVersionOfIDString != null) fittedVersionOfIDInteger =
+							Integer.parseInt(fittedVersionOfIDString);
+					if (fittedIDString != null) fittedIDInteger = Integer
+							.parseInt(fittedIDString);
+
+				} catch (final NumberFormatException e) {
+					e.printStackTrace();
+					throw new TracesFileFormatException(
+							"There was an invalid attribute in <path/>: " + e);
+				}
+
+				current_path.setName(nameString); // default name if null
+
+
+				if (startsOnInteger != null) startJoins.put(id, startsOnInteger);
+				if (endsOnInteger != null) endJoins.put(id, endsOnInteger);
+
+				if (startJoinPoint != null) startJoinsPoints.put(id, startJoinPoint);
+				if (endJoinPoint != null) endJoinsPoints.put(id, endJoinPoint);
+
+				if (startsIndexInteger != null) {
+					startJoinsIndices.put(id, startsIndexInteger);
+				}
+				if (endsIndexInteger != null) endJoinsIndices.put(id, endsIndexInteger);
+
+				if (useFittedString == null) useFittedFields.put(id, false);
+				else {
+					if (useFittedString.equals("true")) useFittedFields.put(id, true);
+					else if (useFittedString.equals("false")) useFittedFields.put(id,
+							false);
+					else {
+						throw new TracesFileFormatException(
+								"Unknown value for 'fitted' attribute: '" + useFittedString + "'");
+					}
+				}
+
+				if (fittedIDInteger != null) fittedFields.put(id, fittedIDInteger);
+				if (fittedVersionOfIDInteger != null) fittedVersionOfFields.put(id,
+						fittedVersionOfIDInteger);
+
+				break;
+			case "point":
+
+				try {
+
+					double parsed_xd, parsed_yd, parsed_zd;
+
+					final String xdString = attributes.getValue("xd");
+					final String ydString = attributes.getValue("yd");
+					final String zdString = attributes.getValue("zd");
+
+					final String xString = attributes.getValue("x");
+					final String yString = attributes.getValue("y");
+					final String zString = attributes.getValue("z");
+
+					if (xdString != null && ydString != null && zdString != null) {
+						parsed_xd = Double.parseDouble(xdString);
+						parsed_yd = Double.parseDouble(ydString);
+						parsed_zd = Double.parseDouble(zdString);
+					} else if (xdString != null || ydString != null || zdString != null) {
+						throw new TracesFileFormatException(
+								"If one of the attributes xd, yd or zd to the point element is specified, they all must be.");
+					} else if (xString != null && yString != null && zString != null) {
+						parsed_xd = boundingBox.xSpacing * Integer.parseInt(xString);
+						parsed_yd = boundingBox.ySpacing * Integer.parseInt(yString);
+						parsed_zd = boundingBox.zSpacing * Integer.parseInt(zString);
+					} else if (xString != null || yString != null || zString != null) {
+						throw new TracesFileFormatException(
+								"If one of the attributes x, y or z to the point element is specified, they all must be.");
+					} else {
+						throw new TracesFileFormatException(
+								"Each point element must have at least the attributes (x, y and z) or (xd, yd, zd)");
+					}
+
+					current_path.addPointDouble(parsed_xd, parsed_yd, parsed_zd);
+
+					final int lastIndex = current_path.size() - 1;
+					final String radiusString = attributes.getValue("r");
+					final String tXString = attributes.getValue("tx");
+					final String tYString = attributes.getValue("ty");
+					final String tZString = attributes.getValue("tz");
+
+					if (radiusString != null && tXString != null && tYString != null &&
+							tZString != null) {
+						if (lastIndex == 0)
+							// Then we've just started, create the arrays in Path:
+							current_path.createCircles();
+						else if (!current_path.hasRadii())
+							throw new TracesFileFormatException("The point at index " +
+									lastIndex + " had a fitted circle, but none previously did");
+						current_path.tangents_x[lastIndex] = Double.parseDouble(tXString);
+						current_path.tangents_y[lastIndex] = Double.parseDouble(tYString);
+						current_path.tangents_z[lastIndex] = Double.parseDouble(tZString);
+						current_path.radii[lastIndex] = Double.parseDouble(radiusString);
+					} else if (radiusString != null || tXString != null || tYString != null ||
+							tZString != null) throw new TracesFileFormatException(
+							"If one of the r, tx, ty or tz attributes to the point element is specified, they all must be");
+					else {
+						// All circle attributes are null:
+						if (current_path.hasRadii()) throw new TracesFileFormatException(
+								"The point at index " + lastIndex +
+										" had no fitted circle, but all previously did");
+					}
+
+				} catch (final NumberFormatException e) {
+					throw new TracesFileFormatException(
+							"There was an invalid attribute to <imagesize/>");
+				}
+
+				break;
+			case "fill":
+
+				try {
+
+					String[] sourcePaths = {};
+					final String fromPathsString = attributes.getValue("frompaths");
+					if (fromPathsString != null) sourcePaths = fromPathsString.split(", *");
+
+					current_fill = new Fill();
+
+					final String metric = attributes.getValue("metric");
+					current_fill.setMetric(metric);
+
+					last_fill_node_id = -1;
+
+					final String fill_id_string = attributes.getValue("id");
+
+					int fill_id = Integer.parseInt(fill_id_string);
+
+					if (fill_id < 0) {
+						throw new TracesFileFormatException(
+								"Can't have a negative id in <fill>");
+					}
+
+					if (fill_id != (last_fill_id + 1)) {
+						SNT.log("Out of order id in <fill> (" + fill_id +
+								" when we were expecting " + (last_fill_id + 1) + ")");
+						fill_id = last_fill_id + 1;
+					}
+
+					final int[] sourcePathIndices = new int[sourcePaths.length];
+
+					for (int i = 0; i < sourcePaths.length; ++i)
+						sourcePathIndices[i] = Integer.parseInt(sourcePaths[i]);
+
+					sourcePathIDForFills.add(sourcePathIndices);
+
+					last_fill_id = fill_id;
+
+					final String thresholdString = attributes.getValue("threshold");
+					final double fillThreshold = Double.parseDouble(thresholdString);
+
+					current_fill.setThreshold(fillThreshold);
+
+				} catch (final NumberFormatException e) {
+					throw new TracesFileFormatException(
+							"There was an invalid attribute to <fill>");
+				}
+
+				break;
+			case "node":
+
+				try {
+
+					final String xString = attributes.getValue("x");
+					final String yString = attributes.getValue("y");
+					final String zString = attributes.getValue("z");
+					final String nIdString = attributes.getValue("id");
+					final String distanceString = attributes.getValue("distance");
+					final String previousString = attributes.getValue("previousid");
+
+					final int parsed_x = Integer.parseInt(xString);
+					final int parsed_y = Integer.parseInt(yString);
+					final int parsed_z = Integer.parseInt(zString);
+					final int parsed_id = Integer.parseInt(nIdString);
+					final double parsed_distance = Double.parseDouble(distanceString);
+					int parsed_previous;
+					if (previousString == null) parsed_previous = -1;
+					else parsed_previous = Integer.parseInt(previousString);
+
+					if (parsed_id != (last_fill_node_id + 1)) {
+						throw new TracesFileFormatException(
+								"Fill node IDs weren't consecutive integers");
+					}
+
+					final String openString = attributes.getValue("status");
+
+					current_fill.add(parsed_x, parsed_y, parsed_z, parsed_distance,
+							parsed_previous, openString.equals("open"));
+
+					last_fill_node_id = parsed_id;
+
+				} catch (final NumberFormatException e) {
+					throw new TracesFileFormatException(
+							"There was an invalid attribute to <node/>: " + e);
+				}
+
+				break;
+			default:
+				throw new TracesFileFormatException("Unknown element: '" + qName + "'");
 		}
 
 	}
@@ -1620,107 +1601,103 @@ public class PathAndFillManager extends DefaultHandler implements
 		final String qName) throws TracesFileFormatException
 	{
 
-		if (qName.equals("path")) {
+		switch (qName) {
+			case "path":
 
-			allPaths.add(current_path);
+				allPaths.add(current_path);
 
-		}
-		else if (qName.equals("fill")) {
+				break;
+			case "fill":
 
-			allFills.add(current_fill);
+				allFills.add(current_fill);
 
-		}
-		else if (qName.equals("tracings")) {
+				break;
+			case "tracings":
 
-			// Then we've finished...
+				// Then we've finished...
 
-			for (int i = 0; i < allPaths.size(); ++i) {
-				final Path p = allPaths.get(i);
+				for (final Path p : allPaths) {
+					final Integer startID = startJoins.get(p.getID());
+					final Integer startIndexInteger = startJoinsIndices.get(p.getID());
+					PointInImage startJoinPoint = startJoinsPoints.get(p.getID());
+					final Integer endID = endJoins.get(p.getID());
+					final Integer endIndexInteger = endJoinsIndices.get(p.getID());
+					PointInImage endJoinPoint = endJoinsPoints.get(p.getID());
+					final Integer fittedID = fittedFields.get(p.getID());
+					final Integer fittedVersionOfID = fittedVersionOfFields.get(p.getID());
+					final Boolean useFitted = useFittedFields.get(p.getID());
 
-				final Integer startID = startJoins.get(p.getID());
-				final Integer startIndexInteger = startJoinsIndices.get(p.getID());
-				PointInImage startJoinPoint = startJoinsPoints.get(p.getID());
-				final Integer endID = endJoins.get(p.getID());
-				final Integer endIndexInteger = endJoinsIndices.get(p.getID());
-				PointInImage endJoinPoint = endJoinsPoints.get(p.getID());
-				final Integer fittedID = fittedFields.get(p.getID());
-				final Integer fittedVersionOfID = fittedVersionOfFields.get(p.getID());
-				final Boolean useFitted = useFittedFields.get(p.getID());
-
-				if (startID != null) {
-					final Path startPath = getPathFromID(startID);
-					if (startJoinPoint == null) {
-						// Then we have to get it from startIndexInteger:
-						startJoinPoint = startPath.getNode(startIndexInteger
-							.intValue());
+					if (startID != null) {
+						final Path startPath = getPathFromID(startID);
+						if (startJoinPoint == null) {
+							// Then we have to get it from startIndexInteger:
+							startJoinPoint = startPath.getNode(startIndexInteger);
+						}
+						p.setStartJoin(startPath, startJoinPoint);
 					}
-					p.setStartJoin(startPath, startJoinPoint);
-				}
-				if (endID != null) {
-					final Path endPath = getPathFromID(endID);
-					if (endJoinPoint == null) {
-						// Then we have to get it from endIndexInteger:
-						endJoinPoint = endPath.getNode(endIndexInteger.intValue());
+					if (endID != null) {
+						final Path endPath = getPathFromID(endID);
+						if (endJoinPoint == null) {
+							// Then we have to get it from endIndexInteger:
+							endJoinPoint = endPath.getNode(endIndexInteger);
+						}
+						p.setEndJoin(endPath, endJoinPoint);
 					}
-					p.setEndJoin(endPath, endJoinPoint);
+					if (fittedID != null) {
+						final Path fitted = getPathFromID(fittedID);
+						p.fitted = fitted;
+						p.setUseFitted(useFitted);
+					}
+					if (fittedVersionOfID != null) {
+						final Path fittedVersionOf = getPathFromID(fittedVersionOfID);
+						p.fittedVersionOf = fittedVersionOf;
+					}
 				}
-				if (fittedID != null) {
-					final Path fitted = getPathFromID(fittedID);
-					p.fitted = fitted;
-					p.setUseFitted(useFitted.booleanValue());
-				}
-				if (fittedVersionOfID != null) {
-					final Path fittedVersionOf = getPathFromID(fittedVersionOfID);
-					p.fittedVersionOf = fittedVersionOf;
-				}
-			}
 
-			// Do some checks that the fitted and fittedVersionOf fields match
-			// up:
-			for (int i = 0; i < allPaths.size(); ++i) {
-				final Path p = allPaths.get(i);
-				if (p.fitted != null) {
-					if (p.fitted.fittedVersionOf == null)
+				// Do some checks that the fitted and fittedVersionOf fields match
+				// up:
+				for (final Path p : allPaths) {
+					if (p.fitted != null) {
+						if (p.fitted.fittedVersionOf == null)
+							throw new TracesFileFormatException(
+									"Malformed traces file: p.fitted.fittedVersionOf was null");
+						else if (p != p.fitted.fittedVersionOf)
+							throw new TracesFileFormatException(
+									"Malformed traces file: p didn't match p.fitted.fittedVersionOf");
+					} else if (p.fittedVersionOf != null) {
+						if (p.fittedVersionOf.fitted == null)
+							throw new TracesFileFormatException(
+									"Malformed traces file: p.fittedVersionOf.fitted was null");
+						else if (p != p.fittedVersionOf.fitted)
+							throw new TracesFileFormatException(
+									"Malformed traces file: p didn't match p.fittedVersionOf.fitted");
+					}
+					if (p.useFitted && p.fitted == null) {
 						throw new TracesFileFormatException(
-							"Malformed traces file: p.fitted.fittedVersionOf was null");
-					else if (p != p.fitted.fittedVersionOf)
-						throw new TracesFileFormatException(
-							"Malformed traces file: p didn't match p.fitted.fittedVersionOf");
+								"Malformed traces file: p.useFitted was true but p.fitted was null");
+					}
 				}
-				else if (p.fittedVersionOf != null) {
-					if (p.fittedVersionOf.fitted == null)
-						throw new TracesFileFormatException(
-							"Malformed traces file: p.fittedVersionOf.fitted was null");
-					else if (p != p.fittedVersionOf.fitted)
-						throw new TracesFileFormatException(
-							"Malformed traces file: p didn't match p.fittedVersionOf.fitted");
-				}
-				if (p.useFitted && p.fitted == null) {
-					throw new TracesFileFormatException(
-						"Malformed traces file: p.useFitted was true but p.fitted was null");
-				}
-			}
 
-			// Now we're safe to add them all to the 3D Viewer
-			for (int i = 0; i < allPaths.size(); ++i) {
-				final Path p = allPaths.get(i);
-				addTo3DViewer(p);
-			}
-
-			// Now turn the source paths into real paths...
-			for (int i = 0; i < allFills.size(); ++i) {
-				final Fill f = allFills.get(i);
-				final Set<Path> realSourcePaths = new HashSet<>();
-				final int[] sourcePathIDs = sourcePathIDForFills.get(i);
-				for (int j = 0; j < sourcePathIDs.length; ++j) {
-					final Path sourcePath = getPathFromID(sourcePathIDs[j]);
-					if (sourcePath != null) realSourcePaths.add(sourcePath);
+				// Now we're safe to add them all to the 3D Viewer
+				for (final Path p : allPaths) {
+					addTo3DViewer(p);
 				}
-				f.setSourcePaths(realSourcePaths);
-			}
 
-			setSelected(new ArrayList<Path>(), this);
-			resetListeners(null, true);
+				// Now turn the source paths into real paths...
+				for (int i = 0; i < allFills.size(); ++i) {
+					final Fill f = allFills.get(i);
+					final Set<Path> realSourcePaths = new HashSet<>();
+					final int[] sourcePathIDs = sourcePathIDForFills.get(i);
+					for (int sourcePathID : sourcePathIDs) {
+						final Path sourcePath = getPathFromID(sourcePathID);
+						if (sourcePath != null) realSourcePaths.add(sourcePath);
+					}
+					f.setSourcePaths(realSourcePaths);
+				}
+
+				setSelected(new ArrayList<Path>(), this);
+				resetListeners(null, true);
+				break;
 		}
 
 	}
@@ -1740,7 +1717,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		else return null;
 	}
 
-	private boolean load(final InputStream is, final Reader reader) {
+	private boolean load(final InputStream is) {
 
 		try {
 
@@ -1749,8 +1726,8 @@ public class PathAndFillManager extends DefaultHandler implements
 			final SAXParser parser = factory.newSAXParser();
 
 			if (is != null) parser.parse(is, this);
-			else if (reader != null) {
-				final InputSource inputSource = new InputSource(reader);
+			else if (null != null) {
+				final InputSource inputSource = new InputSource((Reader) null);
 				parser.parse(inputSource, this);
 			}
 
@@ -1819,7 +1796,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			try {
 				final URL url = new URL(urlOrFilePath);
 				final InputStream is = url.openStream();
-				return importSWC(new BufferedReader(new InputStreamReader(is)), false);
+				return importSWC(new BufferedReader(new InputStreamReader(is)));
 			}
 			catch (final IOException e) {
 				return false;
@@ -1882,10 +1859,9 @@ public class PathAndFillManager extends DefaultHandler implements
 		return result;
 	}
 
-	private boolean importSWC(final BufferedReader br,
-		final boolean assumeCoordinatesIndexVoxels) throws IOException
+	private boolean importSWC(final BufferedReader br) throws IOException
 	{
-		return importSWC(br, assumeCoordinatesIndexVoxels, 0, 0, 0, 1, 1, 1, false);
+		return importSWC(br, false, 0, 0, 0, 1, 1, 1, false);
 	}
 
 	/**
@@ -1973,12 +1949,12 @@ public class PathAndFillManager extends DefaultHandler implements
 			SNT.error("IO ERROR", exc);
 			return false;
 		}
-		return importNodes(null, nodes, null, true, assumeCoordinatesInVoxels);
+		return importNodes(null, nodes, null, assumeCoordinatesInVoxels);
 	}
 
 	private boolean importNodes(final String descriptor,
-		final TreeSet<SWCPoint> points, final ColorRGB color,
-		final boolean computeImgFields, final boolean assumeCoordinatesInVoxels)
+	                            final TreeSet<SWCPoint> points, final ColorRGB color,
+	                            final boolean assumeCoordinatesInVoxels)
 	{
 
 		final Map<Integer, SWCPoint> idToSWCPoint = new HashMap<>();
@@ -2075,9 +2051,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				if (currentPoint.nextPoints.size() > 0) {
 					final SWCPoint newCurrentPoint = currentPoint.nextPoints.get(0);
 					currentPoint.nextPoints.remove(0);
-					currentPoint.nextPoints.stream().forEach(pointToQueue -> {
-						backtrackTo.add(pointToQueue);
-					});
+					backtrackTo.addAll(currentPoint.nextPoints);
 					currentPoint = newCurrentPoint;
 				}
 				else {
@@ -2112,7 +2086,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		// Infer fields for when an image has not been specified. We'll assume
 		// the image dimensions to be those of the coordinates bounding box.
 		// This allows us to open a SWC file without a source image
-		if (computeImgFields) {
+		if (true) {
 			if (boundingBox == null) boundingBox = new BoundingBox();
 			boundingBox.compute(((TreeSet<? extends SNTPoint>) points).iterator());
 			// If a plugin exists, warn user if its image cannot render the imported
@@ -2180,7 +2154,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				final int firstImportedPathIdx = size();
 				SNT.log("Importing " + k + "...");
 				final boolean success = importNodes(k, points, colors[colorIdx[0]],
-					true, false);
+						false);
 				SNT.log("Successful import: " + success);
 				final Tree tree = new Tree();
 				tree.setLabel(k);
@@ -2311,7 +2285,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		try {
 			SNT.log("Loading gzipped file...");
 			return load(new GZIPInputStream(new BufferedInputStream(
-				new FileInputStream(filename))), null);
+				new FileInputStream(filename))));
 		}
 		catch (final IOException ioe) {
 			error("Could not read file '" + filename +
@@ -2323,7 +2297,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	public boolean loadUncompressedXML(final String filename) {
 		try {
 			SNT.log("Loading uncompressed file...");
-			return load(new BufferedInputStream(new FileInputStream(filename)), null);
+			return load(new BufferedInputStream(new FileInputStream(filename)));
 		}
 		catch (final IOException ioe) {
 			error("Could not read '" + filename + "' (it was expected to be XML)");
@@ -2447,26 +2421,21 @@ public class PathAndFillManager extends DefaultHandler implements
 	{
 
 		PointInImage result = null;
-
 		double minimumDistanceSquared = Double.MAX_VALUE;
 
-		final int paths = allPaths.size();
-
-		for (int s = 0; s < paths; ++s) {
-
-			final Path p = allPaths.get(s);
+		for (final Path p : allPaths) {
 
 			if (!selectedPathsSet.contains(p)) continue;
 
 			if (0 == p.size()) continue;
 
 			final int i = p.indexNearestTo(x * x_spacing, y * y_spacing, z *
-				z_spacing);
+					z_spacing);
 
 			final PointInImage nearestOnPath = p.getNode(i);
 
 			final double distanceSquared = nearestOnPath.distanceSquaredTo(x *
-				x_spacing, y * y_spacing, z * z_spacing);
+					x_spacing, y * y_spacing, z * z_spacing);
 
 			if (distanceSquared < minimumDistanceSquared) {
 				result = nearestOnPath;
@@ -2729,8 +2698,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 		final Path[] primaryPaths = getPathsStructured();
 		final HashSet<Path> h = new HashSet<>();
-		for (int i = 0; i < primaryPaths.length; ++i)
-			h.add(primaryPaths[i]);
+		Collections.addAll(h, primaryPaths);
 
 		final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
 			new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
@@ -2993,13 +2961,12 @@ public class PathAndFillManager extends DefaultHandler implements
 			if (currentPath == null || currentPointIndex == currentPath.size() - 1) {
 				currentPointIndex = 0;
 				/* Move to the next non-empty path: */
-				while (true) {
+				do {
 					++currentPathIndex;
 					if (currentPathIndex == numberOfPaths)
 						throw new java.util.NoSuchElementException();
 					currentPath = allPaths.get(currentPathIndex);
-					if (currentPath.size() > 0 && currentPath.versionInUse()) break;
-				}
+				} while (currentPath.size() <= 0 || !currentPath.versionInUse());
 			}
 			else++currentPointIndex;
 			return currentPath.getNode(currentPointIndex);

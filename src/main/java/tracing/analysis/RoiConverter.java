@@ -137,7 +137,7 @@ public class RoiConverter extends TreeAnalyzer {
 	/**
 	 * Sets the exporting view for segment paths (XY by default).
 	 *
-	 * @param view either {@link XY_PLANE}, {@link XZ_PLANE} or {@link ZY_PLANE}.
+	 * @param view either {@link MultiDThreePanes.XY_PLANE}, {@link MultiDThreePanes.XZ_PLANE} or {@link MultiDThreePanes.ZY_PLANE}.
 	 */
 	public void setView(final int view) {
 		if (view != XY_PLANE && view != ZY_PLANE && view != XZ_PLANE)

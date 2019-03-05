@@ -476,7 +476,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 					.isControlDown();
 				if (tracerPlugin.snapCursor && !join && !e.isShiftDown()) {
 					tracerPlugin.clickForTrace(last_x_in_pane_precise,
-						last_y_in_pane_precise, plane, join);
+						last_y_in_pane_precise, plane, false);
 				}
 				else {
 					tracerPlugin.clickForTrace(myOffScreenXD(e.getX()), myOffScreenYD(e

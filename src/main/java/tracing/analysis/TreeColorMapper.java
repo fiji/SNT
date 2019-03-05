@@ -381,7 +381,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * Colorizes a tree after the specified measurement.
 	 *
 	 * @param tree the tree to be colorized
-	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 * @param measurement the measurement ({@link #BRANCH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param colorTable the color table specifying the color mapping. Null not
 	 *          allowed.
@@ -398,7 +398,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * automatically determined.
 	 *
 	 * @param tree the tree to be plotted
-	 * @param measurement the measurement ({@link BRANCH_ORDER} }{@link LENGTH},
+	 * @param measurement the measurement ({@link #BRANCH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param lut the lookup table specifying the color mapping
 	 */

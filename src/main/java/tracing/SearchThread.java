@@ -432,7 +432,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 						reportThreadStatus();
 						Thread.sleep(4000);
 					}
-					catch (final InterruptedException e) {}
+					catch (final InterruptedException ignored) {}
 				}
 
 				// We only check every thousandth loop for
@@ -757,10 +757,9 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			if (pixel_size < 1) pixel_size = 1;
 
 			if (plane == MultiDThreePanes.XY_PLANE) {
-				final int z = currentSliceInPlane;
 				for (int y = 0; y < height; ++y)
 					for (int x = 0; x < width; ++x) {
-						final SearchNode n = anyNodeUnderThreshold(x, y, z,
+						final SearchNode n = anyNodeUnderThreshold(x, y, currentSliceInPlane,
 							drawingThreshold);
 						if (n == null) continue;
 						final byte status = n.searchStatus;
@@ -770,10 +769,9 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 					}
 			}
 			else if (plane == MultiDThreePanes.XZ_PLANE) {
-				final int y = currentSliceInPlane;
 				for (int z = 0; z < depth; ++z)
 					for (int x = 0; x < width; ++x) {
-						final SearchNode n = anyNodeUnderThreshold(x, y, z,
+						final SearchNode n = anyNodeUnderThreshold(x, currentSliceInPlane, z,
 							drawingThreshold);
 						if (n == null) continue;
 						final byte status = n.searchStatus;
@@ -783,10 +781,9 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 					}
 			}
 			else if (plane == MultiDThreePanes.ZY_PLANE) {
-				final int x = currentSliceInPlane;
 				for (int y = 0; y < height; ++y)
 					for (int z = 0; z < depth; ++z) {
-						final SearchNode n = anyNodeUnderThreshold(x, y, z,
+						final SearchNode n = anyNodeUnderThreshold(currentSliceInPlane, y, z,
 							drawingThreshold);
 						if (n == null) continue;
 						final byte status = n.searchStatus;

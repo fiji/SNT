@@ -25,6 +25,7 @@ package tracing;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -65,9 +66,7 @@ public class Fill {
 
 	public void setSourcePaths(final Path[] newSourcePaths) {
 		sourcePaths = new HashSet<>();
-		for (int i = 0; i < newSourcePaths.length; ++i) {
-			sourcePaths.add(newSourcePaths[i]);
-		}
+		Collections.addAll(sourcePaths, newSourcePaths);
 	}
 
 	public void setSourcePaths(final Set<Path> newSourcePaths) {
@@ -149,7 +148,7 @@ public class Fill {
 
 	protected String getSourcePathsStringMachine() {
 
-		final StringBuffer result = new StringBuffer();
+		final StringBuilder result = new StringBuilder();
 
 		boolean first = true;
 		for (final Path p : sourcePaths) {
@@ -157,7 +156,7 @@ public class Fill {
 				first = false;
 			}
 			else result.append(", ");
-			result.append("" + p.getID());
+			result.append("").append(p.getID());
 		}
 
 		return result.toString();
@@ -165,14 +164,14 @@ public class Fill {
 
 	protected String getSourcePathsStringHuman() {
 
-		final StringBuffer result = new StringBuffer();
+		final StringBuilder result = new StringBuilder();
 		final Path[] sortedSourcePaths = sourcePaths.toArray(new Path[] {});
 		Arrays.sort(sortedSourcePaths);
 
 		for (int j = 0; j < sortedSourcePaths.length; ++j) {
 			final Path p = sortedSourcePaths[j];
 			if (j != 0) result.append(", ");
-			result.append("(" + p.getID() + ")");
+			result.append("(").append(p.getID()).append(")");
 		}
 
 		return result.toString();

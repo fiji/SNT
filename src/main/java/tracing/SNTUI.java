@@ -418,8 +418,6 @@ public class SNTUI extends JDialog {
 		pack();
 		toFront();
 
-		this.pmUI = pmUI;
-		this.fmUI = fmUI;
 		if (pmUI == null) {
 			this.pmUI = new PathManagerUI(plugin);
 			this.pmUI.setLocation(getX() + getWidth(), getY());
@@ -437,6 +435,8 @@ public class SNTUI extends JDialog {
 					}
 				});
 			}
+		} else {
+			this.pmUI = pmUI;
 		}
 		if (fmUI == null) {
 			this.fmUI = new FillManagerUI(plugin);
@@ -458,6 +458,8 @@ public class SNTUI extends JDialog {
 					}
 				});
 			}
+		} else {
+			this.fmUI = fmUI;
 		}
 	}
 
@@ -2920,7 +2922,7 @@ public class SNTUI extends JDialog {
 			else if (source == showPathsSelected) {
 				plugin.setShowOnlySelectedPaths(showPathsSelected.isSelected());
 			} else if (source == onlyActiveCTposition) {
-				plugin.setShowOnlyActiveCTposPaths(onlyActiveCTposition.isSelected());
+				plugin.setShowOnlyActiveCTposPaths(onlyActiveCTposition.isSelected(), true);
 			}
 		}
 

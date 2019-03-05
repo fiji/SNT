@@ -81,9 +81,9 @@ class NormalPlaneCanvas extends TracerCanvas {
 		this.angles = angles;
 		this.valid = valid;
 		this.fittedPath = fittedPath;
-		for (int i = 0; i < scores.length; ++i) {
-			if (scores[i] > maxScore) maxScore = scores[i];
-			if (scores[i] < minScore) minScore = scores[i];
+		for (double score : scores) {
+			if (score > maxScore) maxScore = score;
+			if (score < minScore) minScore = score;
 		}
 		int a = 0;
 		for (int i = 0; i < valid.length; ++i) {
@@ -169,12 +169,12 @@ class NormalPlaneCanvas extends TracerCanvas {
 
 		final Integer fittedIndex = indexToValidIndex.get(z);
 		if (fittedIndex != null) {
-			final int px = fittedPath.getXUnscaled(fittedIndex.intValue());
-			final int py = fittedPath.getYUnscaled(fittedIndex.intValue());
-			final int pz = fittedPath.getZUnscaled(fittedIndex.intValue());
+			final int px = fittedPath.getXUnscaled(fittedIndex);
+			final int py = fittedPath.getYUnscaled(fittedIndex);
+			final int pz = fittedPath.getZUnscaled(fittedIndex);
 			tracerPlugin.setZPositionAllPanes(px, py, pz);
 			last_slice = z;
-			last_editable_node = fittedIndex.intValue();
+			last_editable_node = fittedIndex;
 			fittedPath.setEditableNode(last_editable_node);
 		}
 

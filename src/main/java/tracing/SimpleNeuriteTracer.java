@@ -915,8 +915,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				"Only unfitted paths can be edited.<br>Run \"Un-fit volume\" to proceed");
 			return false;
 		}
-		final boolean editAllowed = uiReady && pathExists && validPath;
-		return editAllowed;
+		return uiReady && pathExists && validPath;
 	}
 
 	protected void setEditingPath(final Path path) {
@@ -2133,8 +2132,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (ds.dimension(Axes.CHANNEL) > 1 || ds.dimension(Axes.TIME) > 1) sBuilder
 			.append("Too many dimensions: C,T images are not supported. ");
 		if (ds.getWidth() != xy.getWidth() || ds.getHeight() != xy.getHeight() || ds
-			.getDepth() != xy.getNSlices()) sBuilder.append(
-				"XYZ Dimensions do not match those of " + xy.getTitle() + ".");
+			.getDepth() != xy.getNSlices()) sBuilder.append("XYZ Dimensions do not match those of ").append(xy.getTitle()).append(".");
 		if (!sBuilder.toString().isEmpty()) throw new IllegalArgumentException(
 			sBuilder.toString());
 
@@ -2610,9 +2608,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			y_in_pane, plane);
 		ArrayList<int[]> pointsAtMaximum = new ArrayList<>();
 		float currentMaximum = -Float.MAX_VALUE;
-		for (int i = 0; i < pointsToConsider.length; ++i) {
+		for (int[] ints : pointsToConsider) {
 			float v = -Float.MAX_VALUE;
-			final int[] p = pointsToConsider[i];
+			final int[] p = ints;
 			final int xyIndex = p[1] * width + p[0];
 			switch (imageType) {
 				case ImagePlus.GRAY8:

@@ -190,11 +190,11 @@ public class GuiUtils {
 		d.setVisible(true);
 		d.dispose();
 		final Object result = optionPane.getValue();
-		if (result != null && result instanceof Integer) {
+		if (result instanceof Integer) {
 			return (Integer) result;
 		}
-		else if (result != null && buttonLabels != null &&
-			result instanceof String)
+		else if (buttonLabels != null &&
+				result instanceof String)
 		{
 			return result.equals(buttonLabels[0]) ? JOptionPane.YES_OPTION
 				: JOptionPane.NO_OPTION;
@@ -436,7 +436,7 @@ public class GuiUtils {
 		}
 		d.setVisible(true);
 		final Object result = optionPane.getValue();
-		if (result == null || (!(result instanceof Integer)))
+		if ((!(result instanceof Integer)))
 			return SwingDialog.UNKNOWN_OPTION;
 		return (Integer) result;
 	}

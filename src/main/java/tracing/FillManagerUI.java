@@ -306,10 +306,10 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		reloadFill.setEnabled(false);
 		fillStatus.setEnabled(true);
 		manualRButton.setEnabled(true);
-		maxThreshold.setEnabled(true && maxRButton.isSelected());
+		maxThreshold.setEnabled(maxRButton.isSelected());
 		currentThreshold.setEnabled(true);
 		fillStatus.setEnabled(true);
-		maxRButton.setEnabled(true && maxRButton.isSelected());
+		maxRButton.setEnabled(maxRButton.isSelected());
 		view3D.setEnabled(true);
 		exportAsCSV.setEnabled(true);
 		transparent.setEnabled(true);
@@ -371,8 +371,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 	public void setFillList(final String[] newList) {
 		SwingUtilities.invokeLater(() -> {
 			listModel.removeAllElements();
-			for (int i = 0; i < newList.length; ++i)
-				listModel.addElement(newList[i]);
+			for (String s : newList) listModel.addElement(s);
 		});
 	}
 

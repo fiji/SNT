@@ -1481,7 +1481,8 @@ public class Viewer3D {
 				manager.setVisible(true);
 			}
 			addComponentListener(new ComponentAdapter() {
-		    public void componentResized(ComponentEvent componentEvent) {
+		    @Override
+			public void componentResized(ComponentEvent componentEvent) {
 		        if (SNT.isDebugMode()) {
 		        	SNT.log("Frame resized("+ getWidth() + ", " + getHeight()  +");");
 		        }

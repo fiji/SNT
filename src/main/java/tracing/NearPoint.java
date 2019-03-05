@@ -95,7 +95,7 @@ public class NearPoint implements Comparable<NearPoint> {
 	public int compareTo(final NearPoint other) {
 		final double d = distanceSquared;
 		final double od = other.distanceSquared;
-		return (d < od) ? -1 : ((d > od) ? 1 : 0);
+		return Double.compare(d, od);
 	}
 
 	@Override
@@ -120,10 +120,10 @@ public class NearPoint implements Comparable<NearPoint> {
 		 * return that:
 		 */
 		if (cachedDistanceToPathNearPoint != null)
-			return cachedDistanceToPathNearPoint.doubleValue();
+			return cachedDistanceToPathNearPoint;
 		final int pathSize = path.size();
 		if (pathSize < 1) {
-			cachedDistanceToPathNearPoint = new Double(-1);
+			cachedDistanceToPathNearPoint = (double) -1;
 			return -1;
 		}
 		if (indexInPath == 0 || indexInPath == (pathSize - 1)) {
@@ -149,12 +149,12 @@ public class NearPoint implements Comparable<NearPoint> {
 			}
 			if (intersection == null) {
 				closestIntersection = null;
-				cachedDistanceToPathNearPoint = new Double(-1);
+				cachedDistanceToPathNearPoint = (double) -1;
 				return -1;
 			}
 			else {
 				closestIntersection = intersection;
-				cachedDistanceToPathNearPoint = new Double(intersection.distance);
+				cachedDistanceToPathNearPoint = intersection.distance;
 				return intersection.distance;
 			}
 		}
@@ -188,7 +188,7 @@ public class NearPoint implements Comparable<NearPoint> {
 				}
 			}
 			if (smallestDistance >= 0) {
-				cachedDistanceToPathNearPoint = new Double(smallestDistance);
+				cachedDistanceToPathNearPoint = smallestDistance;
 				return smallestDistance;
 			}
 			/*
@@ -209,13 +209,12 @@ public class NearPoint implements Comparable<NearPoint> {
 				closestIntersection.y = pathPoint.y;
 				closestIntersection.z = pathPoint.z;
 				closestIntersection.fromPerpendicular = false;
-				cachedDistanceToPathNearPoint = new Double(
-					closestIntersection.distance);
+				cachedDistanceToPathNearPoint = closestIntersection.distance;
 				return closestIntersection.distance;
 			}
 			else {
 				closestIntersection = null;
-				cachedDistanceToPathNearPoint = new Double(-1);
+				cachedDistanceToPathNearPoint = (double) -1;
 				return -1;
 			}
 		}

@@ -19,9 +19,6 @@
  * <http://www.gnu.org/licenses/gpl-3.0.html>.
  * #L%
  */
-/**
- *
- */
 
 package tracing.gui;
 
@@ -255,13 +252,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 					{
 						return; // user pressed cancel or chose nothing
 					}
-					for (final Iterator<Path> iterator = paths.iterator(); iterator
-						.hasNext();)
-					{
-						if (!types.contains(iterator.next().getSWCType())) {
-							iterator.remove();
-						}
-					}
+					paths.removeIf(path -> !types.contains(path.getSWCType()));
 					if (paths.isEmpty()) {
 						guiUtils.error("No Path matches the specified type(s).");
 						return;

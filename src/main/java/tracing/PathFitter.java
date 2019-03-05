@@ -693,7 +693,7 @@ public class PathFitter implements Callable<Path> {
 					constant2 * n2z - c1z) * (constant1 * n1z + constant2 * n2z - c1z) -
 			radius1 * radius1;
 
-		final double a2 = crossx * crossx + crossy * crossy + crossz * crossz;
+		final double a2 = a1;
 		final double b2 = 2 * (crossx * (constant1 * n1x + constant2 * n2x - c2x) +
 			crossy * (constant1 * n1y + constant2 * n2y - c2y) + crossz * (constant1 *
 				n1z + constant2 * n2z - c2z));
@@ -1010,9 +1010,7 @@ public class PathFitter implements Callable<Path> {
 
 		@Override
 		public int compareTo(final CircleAttempt o) {
-			if (min < o.min) return -1;
-			else if (min > o.min) return +1;
-			else return 0;
+			return Double.compare(min, o.min);
 		}
 
 		@Override

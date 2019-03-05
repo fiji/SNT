@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.Future;
@@ -69,8 +70,7 @@ class ScriptInstaller implements MenuKeyListener {
 		context.inject(this);
 		this.ui = ui;
 
-		scripts = new TreeSet<>((o1, o2) -> getScriptLabel(o1).compareTo(
-			getScriptLabel(o2)));
+		scripts = new TreeSet<>(Comparator.comparing(this::getScriptLabel));
 
 		// 1. Include script_templates that are not discovered by ScriptService
 		final File baseDir = appService.getApp().getBaseDirectory();
@@ -118,7 +118,7 @@ class ScriptInstaller implements MenuKeyListener {
 		}
 		else { // jar file
 			try {
-				final StringBuffer stringBuffer = new StringBuffer();
+				final StringBuilder stringBuffer = new StringBuilder();
 				String line = null;
 				while ((line = reader.readLine()) != null) {
 					stringBuffer.append(line).append("\n");

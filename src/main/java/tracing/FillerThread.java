@@ -80,7 +80,7 @@ public class FillerThread extends SearchThread {
 
 		for (final SearchNode current : closed_from_start) {
 			/* if( current.g <= threshold ) { */
-			h.put(current, new Integer(i));
+			h.put(current, i);
 			a.add(current);
 			++i;
 			/* } */
@@ -92,7 +92,7 @@ public class FillerThread extends SearchThread {
 
 		for (final SearchNode current : open_from_start) {
 			/* if( current.g <= threshold ) { */
-			h.put(current, new Integer(i));
+			h.put(current, i);
 			a.add(current);
 			++i;
 			/* } */
@@ -115,7 +115,7 @@ public class FillerThread extends SearchThread {
 			if (previous != null) {
 				final Integer p = h.get(previous);
 				if (p != null) {
-					previousIndex = p.intValue();
+					previousIndex = p;
 				}
 			}
 			fill.add(f.x, f.y, f.z, f.g, previousIndex, i >= openAtOrAbove);

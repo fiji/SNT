@@ -173,14 +173,14 @@ public class SNT {
 	}
 
 	public static String formatDouble(final double value, final int digits) {
-		String pattern = "0.";
+		StringBuilder pattern = new StringBuilder("0.");
 		while (pattern.length() < digits + 2)
-			pattern += "0";
+			pattern.append("0");
 		final double absValue = Math.abs(value);
-		if (absValue < 0.01 || absValue >= 1000) pattern += "E0";
+		if (absValue < 0.01 || absValue >= 1000) pattern.append("E0");
 		final NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
 		final DecimalFormat df = (DecimalFormat)nf;
-		df.applyPattern(pattern);
+		df.applyPattern(pattern.toString());
 		return df.format(value);
 	}
 
@@ -267,8 +267,7 @@ public class SNT {
 		final double pixelHeightDifference = Math.abs(ay - by);
 		if (pixelHeightDifference > epsilon) return false;
 		final double pixelDepthDifference = Math.abs(az - bz);
-		if (pixelDepthDifference > epsilon) return false;
-		return true;
+		return !(pixelDepthDifference > epsilon);
 	}
 
 	protected static String getSanitizedUnit(final String unit) {

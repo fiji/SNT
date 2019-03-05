@@ -657,7 +657,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 				}
 				selectNearestPathToMousePointer(false);
 				tracerPlugin.mouseMovedTo(last_x_in_pane_precise,
-					last_x_in_pane_precise, plane, true, true);
+					last_y_in_pane_precise, plane, true, true);
 				tracerPlugin.clickForTrace(last_x_in_pane_precise,
 					last_y_in_pane_precise, plane, true);
 				return;

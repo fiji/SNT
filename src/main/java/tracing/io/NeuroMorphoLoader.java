@@ -59,7 +59,7 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 		try {
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful()) return null;
-			resStr = response.body().string().toString();
+			resStr = response.body().string();
 		}
 		catch (final IOException e) {
 			SNT.error("Unexpected response from " + url + anchor, e);

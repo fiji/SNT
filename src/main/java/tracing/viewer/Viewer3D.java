@@ -2911,7 +2911,7 @@ public class Viewer3D {
 			catch (final Exception ignored) {
 				// do nothing
 			}
-		};
+		}
 	}
 
 	private class MouseController extends AWTCameraMouseController {

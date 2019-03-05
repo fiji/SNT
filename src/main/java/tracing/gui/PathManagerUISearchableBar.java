@@ -284,7 +284,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 			l.searchableEventFired(new SearchableEvent(getSearchable(),
 				SearchableEvent.SEARCHABLE_MODEL_CHANGE));
 
-	};
+	}
 
 	private void doMorphoFiltering(final String property, final String unit) {
 		final List<Path> filteredPaths = pmui.getPathAndFillManager()

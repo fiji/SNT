@@ -302,7 +302,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected static String pathsToIDListString(final ArrayList<Path> a) {
-		final StringBuffer s = new StringBuffer("");
+		final StringBuffer s = new StringBuffer();
 		final int n = a.size();
 		for (int i = 0; i < n; ++i) {
 			s.append(a.get(i).getID());

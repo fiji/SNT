@@ -398,12 +398,12 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		final String lastDirPath = SNTPrefs.getRecentDirectory();
 		if (lastDirPath != null && !lastDirPath.isEmpty()) {
 			final File lastDir = new File(lastDirPath);
-			final File[] tracing_files = lastDir.listFiles((FileFilter) file -> !file
+			final File[] tracing_files = lastDir.listFiles(file -> !file
 				.isHidden() && tracingsFile(file));
 			if (tracing_files != null && tracing_files.length > 0) {
 				Arrays.sort(tracing_files);
 				tracesPath = tracing_files[0].getAbsolutePath();
-				final File[] image_files = lastDir.listFiles((FileFilter) file -> !file
+				final File[] image_files = lastDir.listFiles(file -> !file
 					.isHidden() && expectedImageFile(file));
 				if (image_files != null && image_files.length > 0) {
 					Arrays.sort(image_files);

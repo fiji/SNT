@@ -23,13 +23,10 @@
 package tracing.gui.cmds;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import net.imagej.ImageJ;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
@@ -40,6 +37,7 @@ import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 import org.scijava.widget.FileWidget;
 
+import net.imagej.ImageJ;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.util.SNTColor;
@@ -160,7 +158,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 		}
 
 		if (file.isDirectory()) {
-			final File[] files = file.listFiles((FilenameFilter) (dir, name) -> {
+			final File[] files = file.listFiles((dir, name) -> {
 				final String lcName = name.toLowerCase();
 				return (lcName.endsWith("swc") || lcName.endsWith("traces") || lcName
 					.endsWith("json"));

@@ -452,7 +452,7 @@ public class TreeColorMapper extends ColorMapper {
 		private MappedTaggedPath(final Path path) {
 			this.path = path;
 			final Matcher matcher = pattern.matcher(path.getName());
-			mappedTag = (matcher.find()) ? matcher.group(1).toString() : "";
+			mappedTag = (matcher.find()) ? matcher.group(1) : "";
 		}
 	}
 

@@ -147,7 +147,7 @@ public class MouseLightLoader {
 				.addHeader("Content-Type", "application/json").addHeader(
 					"Cache-Control", "no-cache").build();
 			final Response response = client.newCall(request).execute();
-			final String resStr = response.body().string().toString();
+			final String resStr = response.body().string();
 			response.close();
 			// Parse response
 			final JSONObject json = new JSONObject(resStr);
@@ -284,7 +284,7 @@ public class MouseLightLoader {
 				.addHeader("Content-Type", "application/json").addHeader(
 					"Cache-Control", "no-cache").build();
 			final Response response = client.newCall(request).execute();
-			final String resStr = response.body().string().toString();
+			final String resStr = response.body().string();
 			response.close();
 			return new JSONObject(resStr);
 		}

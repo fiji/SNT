@@ -36,6 +36,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -340,7 +341,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @return true, if successful
 	 */
 	public synchronized boolean exportAllPathsAsSWC(final String prefix) {
-		final List<Path> primaryPaths = Arrays.asList(getPathsStructured());
+		final Path[] primaryPaths = getPathsStructured();
 		int i = 0;
 		for (final Path primaryPath : primaryPaths) {
 			final File swcFile = getSWCFileForIndex(prefix, i);
@@ -370,7 +371,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 			try {
 				final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
-					new FileOutputStream(swcFile), "UTF-8"));
+					new FileOutputStream(swcFile), StandardCharsets.UTF_8));
 				flushSWCPoints(swcPoints, pw);
 			}
 			catch (final IOException ioe) {
@@ -952,9 +953,9 @@ public class PathAndFillManager extends DefaultHandler implements
 
 		try {
 			if (compress) pw = new PrintWriter(new OutputStreamWriter(
-				new GZIPOutputStream(new FileOutputStream(fileName)), "UTF-8"));
+				new GZIPOutputStream(new FileOutputStream(fileName)), StandardCharsets.UTF_8));
 			else pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(
-				fileName), "UTF-8"));
+				fileName), StandardCharsets.UTF_8));
 
 			pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 			pw.println("<!DOCTYPE tracings [");
@@ -2247,7 +2248,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 			is = new BufferedInputStream(new FileInputStream(filePath));
 			final BufferedReader br = new BufferedReader(new InputStreamReader(is,
-				"UTF-8"));
+					StandardCharsets.UTF_8));
 
 			result = importSWC(br, assumeCoordinatesInVoxels, xOffset, yOffset,
 				zOffset, xScale, yScale, zScale, replaceAllPaths);
@@ -2686,7 +2687,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			"Threshold", "Metric", "Volume", "LengthUnits" };
 
 		final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
-			new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+			new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
 		final int columns = headers.length;
 		for (int c = 0; c < columns; ++c) {
 			SNT.csvQuoteAndPrint(pw, headers[c]);
@@ -2732,7 +2733,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			h.add(primaryPaths[i]);
 
 		final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
-			new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+			new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
 		final int columns = headers.length;
 		for (int c = 0; c < columns; ++c) {
 			SNT.csvQuoteAndPrint(pw, headers[c]);

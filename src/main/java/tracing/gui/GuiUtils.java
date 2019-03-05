@@ -196,7 +196,7 @@ public class GuiUtils {
 		else if (result != null && buttonLabels != null &&
 			result instanceof String)
 		{
-			return ((String) result).equals(buttonLabels[0]) ? JOptionPane.YES_OPTION
+			return result.equals(buttonLabels[0]) ? JOptionPane.YES_OPTION
 				: JOptionPane.NO_OPTION;
 		}
 		else {

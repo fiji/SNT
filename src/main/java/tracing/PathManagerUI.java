@@ -43,6 +43,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -659,7 +660,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 		try {
 			final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
-				new FileOutputStream(saveFile), "UTF-8"));
+				new FileOutputStream(saveFile), StandardCharsets.UTF_8));
 			pathAndFillManager.flushSWCPoints(swcPoints, pw);
 			pw.close();
 		}
@@ -1148,12 +1149,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			final TreePath path = tree.getPathForRow(selRows[0]);
 			final DefaultMutableTreeNode firstNode = (DefaultMutableTreeNode) path
 				.getLastPathComponent();
-			if (firstNode.getChildCount() > 0 && target.getLevel() < firstNode
-				.getLevel())
-			{
-				return false;
-			}
-			return true;
+			return firstNode.getChildCount() <= 0 || target.getLevel() >= firstNode
+					.getLevel();
 		}
 
 		private boolean haveCompleteNode(final JTree tree) {
@@ -1473,7 +1470,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	private void saveTable(final File outputFile) throws IOException {
 		final String sep = ",";
 		final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
-			new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+			new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
 		final int columns = table.getColumnCount();
 		final int rows = table.getRowCount();
 

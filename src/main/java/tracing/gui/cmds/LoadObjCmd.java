@@ -23,7 +23,6 @@
 package tracing.gui.cmds;
 
 import java.io.File;
-import java.io.FilenameFilter;
 
 import net.imagej.ImageJ;
 
@@ -99,7 +98,7 @@ public class LoadObjCmd extends ContextCommand {
 		}
 
 		if (file.isDirectory()) {
-			final File[] files = file.listFiles((FilenameFilter) (dir, name) -> name
+			final File[] files = file.listFiles((dir, name) -> name
 				.toLowerCase().endsWith("obj"));
 			recViewer.setSceneUpdatesEnabled(false);
 			int failures = 0;

@@ -149,7 +149,7 @@ public class Fill {
 
 	protected String getSourcePathsStringMachine() {
 
-		final StringBuffer result = new StringBuffer("");
+		final StringBuffer result = new StringBuffer();
 
 		boolean first = true;
 		for (final Path p : sourcePaths) {
@@ -165,7 +165,7 @@ public class Fill {
 
 	protected String getSourcePathsStringHuman() {
 
-		final StringBuffer result = new StringBuffer("");
+		final StringBuffer result = new StringBuffer();
 		final Path[] sortedSourcePaths = sourcePaths.toArray(new Path[] {});
 		Arrays.sort(sortedSourcePaths);
 

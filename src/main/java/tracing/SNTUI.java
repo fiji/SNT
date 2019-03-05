@@ -677,7 +677,6 @@ public class SNTUI extends JDialog {
 		loadLabelsMenuItem.setEnabled(false);
 		fmUI.setEnabledNone();
 		setEnableAutoTracingComponents(false);
-		// GuiUtils.enableComponents(colorPanel, false);
 	}
 
 	private void disableEverything() {
@@ -3219,7 +3218,7 @@ public class SNTUI extends JDialog {
 		@Override
 		protected void done() {
 			showStatus("Command completed...", true);
-		};
+		}
 	}
 
 }

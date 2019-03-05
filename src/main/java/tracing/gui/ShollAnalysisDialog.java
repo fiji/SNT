@@ -38,6 +38,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -580,7 +581,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 			// Write svg file
 			final OutputStream outputStream = new FileOutputStream(svgFile);
-			final Writer out = new OutputStreamWriter(outputStream, "UTF-8");
+			final Writer out = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
 			svgGenerator.stream(out, true /* use css */);
 			outputStream.flush();
 			outputStream.close();
@@ -993,7 +994,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 				"Regression gradient", "Regression intercept" };
 
 			final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
-				new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+				new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
 			final int columns = headers.length;
 			for (int c = 0; c < columns; ++c) {
 				SNT.csvQuoteAndPrint(pw, headers[c]);
@@ -1032,7 +1033,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 				? "Inters./Area" : "Inters./Volume" };
 
 			final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
-				new FileOutputStream(outputFile.getAbsolutePath()), "UTF-8"));
+				new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
 			final int columns = headers.length;
 			for (int c = 0; c < columns; ++c) {
 				SNT.csvQuoteAndPrint(pw, headers[c]);

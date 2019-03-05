@@ -144,10 +144,7 @@ public class SNTColor {
 		else if (!color.equals(other.color)) {
 			return false;
 		}
-		if (swcType != other.swcType) {
-			return false;
-		}
-		return true;
+		return swcType == other.swcType;
 	}
 
 	/**

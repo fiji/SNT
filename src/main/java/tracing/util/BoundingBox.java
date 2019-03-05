@@ -287,8 +287,7 @@ public class BoundingBox {
 			box.zSpacing != zSpacing) return false;
 		if (!box.spacingUnit.equals(spacingUnit)) return false;
 		if (!origin.equals(box.origin)) return false;
-		if (!originOpposite.equals(box.originOpposite)) return false;
-		return true;
+		return originOpposite.equals(box.originOpposite);
 	}
 
 }

@@ -23,7 +23,6 @@
 package tracing.gui.cmds;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -134,7 +133,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 	private Map<String, String> getImportMap() {
 		if (dir == null || !dir.isDirectory() || !dir.exists()) return null;
 		if (pattern == null) pattern = "";
-		final File[] files = dir.listFiles((FileFilter) file -> {
+		final File[] files = dir.listFiles(file -> {
 			if (file.isHidden()) return false;
 			final String fName = file.getName().toLowerCase();
 			return fName.endsWith("swc") && fName.contains(pattern);

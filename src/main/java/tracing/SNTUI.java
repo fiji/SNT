@@ -2200,7 +2200,7 @@ public class SNTUI extends JDialog {
 			else if (enable && !plugin.inputImageLoaded()) {
 				loadImagefromGUI(plugin.channel, plugin.frame);
 			}
-			plugin.enableAstar(true);
+			plugin.enableAstar(enable);
 		});
 		aStarPanel.add(aStarCheckBox, gc);
 		return aStarPanel;

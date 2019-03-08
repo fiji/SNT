@@ -49,7 +49,6 @@ import tracing.Path;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.gui.cmds.CommonDynamicCmd;
-import tracing.util.PointInImage;
 import tracing.util.SNTColor;
 import tracing.viewer.Viewer2D;
 
@@ -181,8 +180,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 			final Path dup = new Path(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth,
 				cal.getUnit());
 			for (int i = 0; i < pathToPlot.size(); i++) {
-				final PointInImage pim = pathToPlot.getNode(i);
-				dup.addPointDouble(pim.x, pim.y, pim.z);
+				dup.addNode(pathToPlot.getNode(i));
 			}
 			dup.setSWCType(pathToPlot.getSWCType());
 			dup.setCTposition(pathToPlot.getChannel(), pathToPlot.getFrame());

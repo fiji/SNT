@@ -453,7 +453,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	public BoundingBox getBoundingBox(final boolean compute) {
 		if (boundingBox == null) boundingBox = new BoundingBox();
 		if (!compute || getPaths().size() == 0) return boundingBox;
-		final AllPointsIterator allPointsIt = allPointsIterator();
+		final Iterator<PointInImage> allPointsIt = allPointsIterator();
 		boundingBox.compute(allPointsIt);
 		return boundingBox;
 	}
@@ -2600,7 +2600,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 	}
 
-	public AllPointsIterator allPointsIterator() {
+	public Iterator<PointInImage> allPointsIterator() {
 		return new AllPointsIterator();
 	}
 
@@ -2610,7 +2610,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 */
 	@SuppressWarnings("unused")
 	private int pointsInAllPaths() {
-		final AllPointsIterator a = allPointsIterator();
+		final Iterator<PointInImage> a = allPointsIterator();
 		int points = 0;
 		while (a.hasNext()) {
 			a.next();
@@ -2634,7 +2634,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 		final ArrayList<NearPoint> result = new ArrayList<>();
 
-		final AllPointsIterator i = allPointsIterator();
+		final Iterator<PointInImage> i = allPointsIterator();
 		while (i.hasNext()) {
 			final PointInImage p = i.next();
 			final NearPoint np = other.nearestPointOnAnyPath(p.x, p.y, p.z,

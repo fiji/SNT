@@ -747,7 +747,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			last_y_in_pane_precise, plane, p);
 		final PointInCanvas offset = editingPath.getCanvasOffset();
 		try {
-			editingPath.addNode(editingNode, new PointInImage((p[0] - offset.x) *
+			editingPath.insertNode(editingNode, new PointInImage((p[0] - offset.x) *
 				tracerPlugin.x_spacing, (p[1] - offset.y) * tracerPlugin.y_spacing,
 				(p[2] - offset.z) * tracerPlugin.z_spacing));
 			editingPath.setEditableNode(editingNode + 1);

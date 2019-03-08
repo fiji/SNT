@@ -576,7 +576,7 @@ public class Path implements Comparable<Path> {
 	 * @param point the node to be inserted
 	 * @throws IllegalArgumentException if index is out-of-range
 	 */
-	public void addNode(final int index, final PointInImage point) {
+	public void insertNode(final int index, final PointInImage point) {
 		if (index < 0 || index > size()) throw new IllegalArgumentException(
 			"addNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
@@ -930,7 +930,17 @@ public class Path implements Comparable<Path> {
 		return c;
 	}
 
-	public void addPointDouble(final double x, final double y, final double z) {
+	/**
+	 * Appends a node to this Path.
+	 *
+	 * @param point the node to be inserted
+	 */
+	public void addNode(final PointInImage point) {
+		addPointDouble(point.x, point.y, point.z);
+		if (!Double.isNaN(point.v)) setNodeValue(point.v, size() - 1);
+	}
+
+	protected void addPointDouble(final double x, final double y, final double z) {
 		if (points >= maxPoints) {
 			final int newReserved = (int) (maxPoints * 1.2 + 1);
 			expandTo(newReserved);

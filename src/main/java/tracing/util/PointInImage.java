@@ -29,6 +29,7 @@ import ij.measure.Calibration;
 import sholl.UPoint;
 import tracing.Path;
 import tracing.PathTransformer;
+import tracing.annotation.BrainAnnotation;
 
 /**
  * Defines a Point in an image, a node of a traced {@link Path}. Coordinates are
@@ -46,6 +47,8 @@ public class PointInImage implements SNTPoint {
 	 * field)
 	 */
 	public double v;
+
+	private BrainAnnotation annotation;
 
 	/** The Path associated with this node, if any (optional field) */
 	public Path onPath = null;
@@ -169,5 +172,15 @@ public class PointInImage implements SNTPoint {
 	@Override
 	public double getZ() {
 		return z;
+	}
+
+	@Override
+	public void setLabel(final BrainAnnotation annotation) {
+		this.annotation = annotation;
+	}
+
+	@Override
+	public BrainAnnotation getLabel() {
+		return annotation;
 	}
 }

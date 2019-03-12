@@ -45,10 +45,12 @@ import ij3d.Content;
 import ij3d.Image3DUniverse;
 import ij3d.Pipe;
 import tracing.analysis.PathProfiler;
+import tracing.annotation.BrainAnnotation;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 import tracing.util.SNTColor;
+import tracing.util.SWCPoint;
 
 /**
  * This class represents a traced segment - Path - in a reconstruction. It has
@@ -127,6 +129,8 @@ public class Path implements Comparable<Path> {
 	protected double[] tangents_z;
 	// numeric properties of nodes (e.g., pixel intensities)
 	private double[] nodeValues;
+	// BrainAnnotations associated with this node;
+	private BrainAnnotation[] nodeLabels;
 	// NB: id should be assigned by PathAndFillManager
 	private int id = -1;
 	// NB: The leagacy 3D viewer requires always a unique name
@@ -532,6 +536,7 @@ public class Path implements Comparable<Path> {
 			precise_y_positions[pos], precise_z_positions[pos]);
 		result.onPath = this;
 		if (nodeValues != null) result.v = nodeValues[pos];
+		if (nodeLabels != null) result.setLabel(nodeLabels[pos]);
 		return result;
 	}
 
@@ -940,6 +945,12 @@ public class Path implements Comparable<Path> {
 		if (!Double.isNaN(point.v)) setNodeValue(point.v, size() - 1);
 	}
 
+	protected void addNode(final SWCPoint point) {
+		addPointDouble(point.x, point.y, point.z);
+		radii[size() - 1] = point.radius;
+		if (point.getLabel() != null) setNodeLabel(point.getLabel(), size() - 1);
+	}
+
 	protected void addPointDouble(final double x, final double y, final double z) {
 		if (points >= maxPoints) {
 			final int newReserved = (int) (maxPoints * 1.2 + 1);
@@ -1202,6 +1213,17 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
+	 * Assigns an annotation to this node.
+	 *
+	 * @param annotation the node annotation
+	 * @param pos the node position
+	 */
+	public void setNodeLabel(final BrainAnnotation annotation, final int pos) {
+		if (nodeLabels == null) nodeLabels = new BrainAnnotation[size()];
+		nodeLabels[pos] = annotation;
+	}
+
+	/**
 	 * Returns the "value" property of this node.
 	 *
 	 * @param pos the node position
@@ -1211,6 +1233,17 @@ public class Path implements Comparable<Path> {
 	 */
 	public double getNodeValue(final int pos) {
 		return (nodeValues == null) ? null : nodeValues[pos];
+	}
+
+	/**
+	 * Returns the neuropil annotation associated with this node.
+	 *
+	 * @param pos the node position
+	 * @return the annotation of this node,
+	 * @see PointInImage#getLabel()
+	 */
+	public BrainAnnotation getNodeLabel(final int pos) {
+		return (nodeLabels == null) ? null : nodeLabels[pos];
 	}
 
 	/**
@@ -1239,6 +1272,17 @@ public class Path implements Comparable<Path> {
 	 */
 	public boolean hasNodeValues() {
 		return nodeValues != null;
+	}
+
+	/**
+	 * Assesses whether the nodes of this path have been assigned an array of
+	 * labels
+	 *
+	 * @return true, if successful
+	 * @see PointInImage#getLabel()
+	 */
+	public boolean hasNodeLabels() {
+		return nodeLabels != null;
 	}
 
 	/**

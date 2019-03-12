@@ -2027,25 +2027,18 @@ public class PathAndFillManager extends DefaultHandler implements
 		while ((start = backtrackTo.poll()) != null) {
 			currentPath = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 			currentPath.createCircles();
-			int added = 0;
 			if (start.previousPoint != null) {
 				final SWCPoint beforeStart = start.previousPoint;
 				pathStartsOnSWCPoint.put(currentPath, beforeStart);
 				pathStartsAtPointInImage.put(currentPath, beforeStart
 					.getPointInImage());
-				currentPath.addPointDouble(beforeStart.x, beforeStart.y, beforeStart.z);
-				currentPath.radii[added] = beforeStart.radius;
-				++added;
-
+				currentPath.addNode(beforeStart);
 			}
 
 			// Now we can start adding points to the path:
 			SWCPoint currentPoint = start;
 			while (currentPoint != null) {
-				currentPath.addPointDouble(currentPoint.x, currentPoint.y,
-					currentPoint.z);
-				currentPath.radii[added] = currentPoint.radius;
-				++added;
+				currentPath.addNode(currentPoint);
 				pointToPath.put(currentPoint, currentPath);
 
 				if (currentPoint.nextPoints.size() > 0) {

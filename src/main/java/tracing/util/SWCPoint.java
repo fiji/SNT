@@ -32,6 +32,7 @@ import java.util.List;
 
 import tracing.Path;
 import tracing.SNT;
+import tracing.annotation.BrainAnnotation;
 
 /**
  * Defines a node in an SWC reconstruction. The SWC file format is detailed
@@ -71,6 +72,9 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 
 	/** The Path associated with this node (if any) */
 	public Path onPath = null;
+
+	/** Optional attribute: BrainAnnotation */
+	private BrainAnnotation annotation;
 
 	public SWCPoint(final int id, final int type, final double x, final double y,
 		final double z, final double radius, final int parent)
@@ -233,6 +237,16 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	@Override
 	public double getZ() {
 		return z;
+	}
+
+	@Override
+	public void setLabel(BrainAnnotation annotation) {
+		this.annotation = annotation;
+	}
+
+	@Override
+	public BrainAnnotation getLabel() {
+		return annotation;
 	}
 
 }

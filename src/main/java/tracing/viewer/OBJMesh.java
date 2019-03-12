@@ -71,7 +71,7 @@ public class OBJMesh {
 		this(getURL(filePath));
 	}
 
-	protected OBJMesh(final URL url) {
+	public OBJMesh(final URL url) {
 		loader = new OBJFileLoaderPlus(url);
 		if (!loader.compileModel()) {
 			throw new IllegalArgumentException(

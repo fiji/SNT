@@ -20,35 +20,11 @@
  * #L%
  */
 
-package tracing.util;
-
-import tracing.annotation.BrainAnnotation;
 
 /**
- * Classes extend this interface implement a point in a 3D space, always using
- * real world coordinates.
+ * Classes handling neuropil annotations and atlas metadata.
  *
  * @author Tiago Ferreira
  */
-public interface SNTPoint {
 
-	/** @return the X-coordinate of the point */
-	public double getX();
-
-	/** @return the Y-coordinate of the point */
-	public double getY();
-
-	/** @return the Z-coordinate of the point */
-	public double getZ();
-
-	/**
-	 * Assigns a neuropil annotation (e.g., atlas compartment) to this point.
-	 *
-	 * @param annotation the annotation to be assigned to this point
-	 */
-	public void setLabel(BrainAnnotation annotation);
-
-	/** @return the neuropil annotation assigned to this point */
-	public BrainAnnotation getLabel();
-
-}
+package tracing.annotation;

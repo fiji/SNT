@@ -209,31 +209,16 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see tracing.util.SNTPoint#getX()
-	 */
 	@Override
 	public double getX() {
 		return x;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see tracing.util.SNTPoint#getY()
-	 */
 	@Override
 	public double getY() {
 		return y;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see tracing.util.SNTPoint#getZ()
-	 */
 	@Override
 	public double getZ() {
 		return z;

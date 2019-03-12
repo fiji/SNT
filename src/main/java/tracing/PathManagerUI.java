@@ -1546,12 +1546,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					tree.clearSelection();
 					return;
 				case EXPAND_ALL_CMD:
-					for (int i = 0; i < tree.getRowCount(); i++)
-						tree.expandRow(i);
+					GuiUtils.expandAllTreeNodes(tree);
 					return;
 				case COLLAPSE_ALL_CMD:
-					for (int i = 0; i < tree.getRowCount(); i++)
-						tree.collapseRow(i);
+					GuiUtils.collapseAllTreeNodes(tree);
 					return;
 				default:
 					SNT.error("Unexpectedly got an event from an unknown source: " + e);

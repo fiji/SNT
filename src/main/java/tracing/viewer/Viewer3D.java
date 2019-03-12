@@ -2606,6 +2606,127 @@ public class Viewer3D {
 		}
 	}
 
+
+	private class AllenCCFNavigator {
+
+		private final SNTSearchableBar searchableBar;
+		private final DefaultTreeModel treeModel;
+		private final CheckBoxTree tree;
+		private JDialog dialog;
+		private GuiUtils guiUtils;
+
+		public AllenCCFNavigator() {
+			treeModel = AllenUtils.getTreeModel();
+			tree = new CheckBoxTree(treeModel);
+			tree.setVisibleRowCount(10);
+			tree.setEditable(false);
+			tree.setExpandsSelectedPaths(true);
+			GuiUtils.expandAllTreeNodes(tree);
+			//tree.setRootVisible(false);
+			searchableBar = new SNTSearchableBar(new TreeSearchable(tree));
+			searchableBar.setStatusLabelPlaceholder("Common Coordinate Framework v"+ AllenUtils.VERSION);
+			searchableBar.setVisibleButtons(
+				SearchableBar.SHOW_NAVIGATION | SearchableBar.SHOW_HIGHLIGHTS |
+				SearchableBar.SHOW_MATCHCASE | SearchableBar.SHOW_STATUS);
+		}
+
+		private List<AllenCompartment> getSelection() {
+			final TreePath[] treePaths = tree.getSelectionModel().getSelectionPaths();
+			if (treePaths == null || treePaths.length == 0) {
+				guiUtils.error("There are no selected ontologies.");
+				return null;
+			}
+			final List<AllenCompartment> list = new ArrayList<>(treePaths.length);
+			for (final TreePath treePath : treePaths) {
+				final DefaultMutableTreeNode selectedElement = (DefaultMutableTreeNode) treePath.getLastPathComponent();
+				list.add((AllenCompartment) selectedElement.getUserObject());
+			}
+			return list;
+		}
+
+		private void showSelectionInfo() {
+			final List<AllenCompartment> cs = getSelection();
+			if (cs == null) return;
+			System.out.println("*** Allen CCF Navigator: Info on selected items:");
+			for (final AllenCompartment c : cs) {
+				final StringBuilder sb = new StringBuilder();
+				sb.append("   name[").append(c.name()).append("]");
+				sb.append(" acronym[").append(c.acronym()).append("]");
+				sb.append(" id[").append(c.id()).append("]");
+				sb.append(" aliases[").append(String.join(",", c.aliases())).append("]");
+				sb.append(" UUID[").append(c.getUUID()).append("]");
+				System.out.println(sb.toString());
+			}
+		}
+
+		private JDialog show() {
+			dialog = new JDialog(frame, "Allen CCF Ontology");
+			frame.allenNavigator = dialog;
+			guiUtils = new GuiUtils(dialog);
+			dialog.setLocationRelativeTo(frame);
+			dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+			dialog.addWindowListener(new WindowAdapter() {
+
+				@Override
+				public void windowClosing(final WindowEvent e) {
+					frame.allenNavigator = null;
+					dialog.dispose();
+				}
+			});
+			dialog.setContentPane(getContentPane());
+			dialog.pack();
+			dialog.setSize(new Dimension(searchableBar.getWidth(), dialog.getHeight()));
+			dialog.setVisible(true);
+			return dialog;
+		}
+
+		private JPanel getContentPane() {
+			JPanel barPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			frame.managerPanel.setFixedHeightToPanel(barPanel);
+			barPanel.add(searchableBar);
+			final JScrollPane scrollPane = new JScrollPane(tree);
+			tree.setComponentPopupMenu(popupMenu());
+			scrollPane.setWheelScrollingEnabled(true);
+			final JPanel contentPane = new JPanel();
+			contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+			contentPane.add(barPanel);
+			contentPane.add(scrollPane);
+			contentPane.add(buttonPanel());
+			return contentPane;
+		}
+
+		private JPanel buttonPanel() {
+			final JPanel buttonPanel = new JPanel(new GridLayout(1,2));
+			buttonPanel.setBorder(null);
+			frame.managerPanel.setFixedHeightToPanel(buttonPanel);
+			JButton button = new JButton(IconFactory.getButtonIcon(GLYPH.INFO));
+			button.addActionListener(e -> showSelectionInfo());
+			buttonPanel.add(button);
+			button = new JButton(IconFactory.getButtonIcon(GLYPH.IMPORT));
+			button.addActionListener(e -> guiUtils.error("This feature is not yet implemented"));
+			buttonPanel.add(button);
+			return buttonPanel;
+		}
+
+		private JPopupMenu popupMenu() {
+			final JPopupMenu pMenu = new JPopupMenu();
+			JMenuItem jmi = new JMenuItem("Clear Selection");
+			jmi.addActionListener(e -> {
+				tree.clearSelection();
+			});
+			pMenu.add(jmi);
+			jmi = new JMenuItem("Collapse All");
+			jmi.addActionListener(e -> {
+				GuiUtils.collapseAllTreeNodes(tree);
+			});
+			pMenu.add(jmi);
+			jmi = new JMenuItem("Expand All");
+			jmi.addActionListener(e -> GuiUtils.expandAllTreeNodes(tree));
+			pMenu.add(jmi);
+			return pMenu;
+		}
+	}
+
 	private Viewer3D getOuter() {
 		return this;
 	}

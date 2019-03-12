@@ -97,7 +97,7 @@ public class SNTSearchableBar extends SearchableBar {
 			_comboBox.setVisible(true);
 			_textField.setVisible(false);
 		}
-		setStatusLabelPlaceholder("");
+		setStatusLabelPlaceholder(SNT.getReadableVersion());
 	}
 
 	public void setStatusLabelPlaceholder(final String placeholder) {
@@ -159,7 +159,7 @@ public class SNTSearchableBar extends SearchableBar {
 
 	private JPanel statusPanel() {
 		final JPanel statusPanel = leftAlignedPanel();
-		_statusLabel = new JLabel(SNT.getReadableVersion());
+		_statusLabel = new JLabel(statusLabelPlaceholder);
 		statusPanel.add(_statusLabel);
 		_statusLabel.addPropertyChangeListener("text", evt -> {
 			final String text = _statusLabel.getText();

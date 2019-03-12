@@ -31,6 +31,9 @@ import org.scijava.util.ColorRGB;
 import tracing.viewer.OBJMesh;
 
 /**
+ * Defines an Allen Reference Atlas (ARA) [Allen Mouse Common Coordinate
+ * Framework] annotation.
+ * 
  * @author tferr
  *
  */

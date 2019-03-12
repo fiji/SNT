@@ -48,6 +48,7 @@ import tracing.Path;
 import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.Tree;
+import tracing.annotation.AllenCompartment;
 import tracing.util.SWCPoint;
 
 /**
@@ -435,7 +436,9 @@ public class MouseLightLoader {
 					final double radius = node.getDouble("radius");
 					int parent = node.getInt("parentNumber");
 					if (parent > -1) parent += idOffset;
-					points.add(new SWCPoint(sn, type, x, y, z, radius, parent));
+					final SWCPoint point = new SWCPoint(sn, type, x, y, z, radius, parent);
+					point.setLabel(new AllenCompartment(UUID.fromString(node.getString("brainAreaId"))));
+					points.add(point);
 				}
 			}
 

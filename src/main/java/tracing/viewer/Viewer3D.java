@@ -22,13 +22,6 @@
 
 package tracing.viewer;
 
-import com.jidesoft.swing.CheckBoxList;
-import com.jidesoft.swing.ListSearchable;
-import com.jidesoft.swing.SearchableBar;
-import com.jogamp.opengl.FPSCounter;
-import com.jogamp.opengl.GLAnimatorControl;
-import com.jogamp.opengl.GLException;
-
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -81,10 +74,9 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
-
-import net.imagej.ImageJ;
-import net.imagej.display.ColorTables;
-import net.imglib2.display.ColorTable;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 
 import org.jzy3d.bridge.awt.FrameAWT;
 import org.jzy3d.chart.AWTChart;
@@ -149,7 +141,19 @@ import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 import org.scijava.util.FileUtils;
 
+import com.jidesoft.swing.CheckBoxList;
+import com.jidesoft.swing.CheckBoxTree;
+import com.jidesoft.swing.ListSearchable;
+import com.jidesoft.swing.SearchableBar;
+import com.jidesoft.swing.TreeSearchable;
+import com.jogamp.opengl.FPSCounter;
+import com.jogamp.opengl.GLAnimatorControl;
+import com.jogamp.opengl.GLException;
+
 import ij.gui.HTMLDialog;
+import net.imagej.ImageJ;
+import net.imagej.display.ColorTables;
+import net.imglib2.display.ColorTable;
 import tracing.Path;
 import tracing.SNT;
 import tracing.SNTService;
@@ -158,6 +162,8 @@ import tracing.analysis.MultiTreeColorMapper;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeColorMapper;
 import tracing.analysis.TreeStatistics;
+import tracing.annotation.AllenCompartment;
+import tracing.annotation.AllenUtils;
 import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.IconFactory.GLYPH;
@@ -1457,6 +1463,7 @@ public class Viewer3D {
 		private Chart chart;
 		private Component canvas;
 		private JDialog manager;
+		private JDialog allenNavigator;
 		private ManagerPanel managerPanel;
 
 		/**
@@ -2495,7 +2502,30 @@ public class Viewer3D {
 
 		private JPopupMenu meshMenu() {
 			final JPopupMenu meshMenu = new JPopupMenu();
-			JMenuItem mi = new JMenuItem("Import OBJ File(s)...", IconFactory
+			JMenuItem mi = new JMenuItem("Allen CCF Navigator", IconFactory
+					.getMenuIcon(GLYPH.NAVIGATE));
+			mi.addActionListener(e -> {
+				assert SwingUtilities.isEventDispatchThread();
+				if (frame.allenNavigator != null) {
+					frame.allenNavigator.toFront();
+					return;
+				}
+				JDialog tempSplash = frame.managerPanel.guiUtils.floatingMsg("Loading ontologies...", false);
+				final SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
+					@Override
+					protected Object doInBackground() {
+						new AllenCCFNavigator().show();
+						return null;
+					}
+					@Override
+					protected void done() {
+						tempSplash.dispose();
+					}
+				};
+				worker.execute();
+			});
+			meshMenu.add(mi);
+			mi = new JMenuItem("Import OBJ File(s)...", IconFactory
 				.getMenuIcon(GLYPH.IMPORT));
 			mi.addActionListener(e -> runCmd(LoadObjCmd.class, null,
 				CmdWorker.DO_NOTHING));

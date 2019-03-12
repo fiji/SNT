@@ -79,6 +79,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.JTree;
 import javax.swing.LookAndFeel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
@@ -495,6 +496,17 @@ public class GuiUtils {
 	}
 
 	/* Static methods */
+
+	public static void collapseAllTreeNodes(final JTree tree) {
+		final int row1 = (tree.isRootVisible()) ? 1 : 0;
+		for (int i = row1; i < tree.getRowCount(); i++)
+			tree.collapseRow(i);
+	}
+
+	public static void expandAllTreeNodes(final JTree tree) {
+		for (int i = 0; i < tree.getRowCount(); i++)
+			tree.expandRow(i);
+	}
 
 	public static void addSeparator(final JComponent component,
 		final String heading, final boolean vgap, final GridBagConstraints c)

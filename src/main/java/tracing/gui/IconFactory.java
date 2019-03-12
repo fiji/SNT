@@ -88,6 +88,7 @@ public class IconFactory {
 			HAND('\uf256', false), //
 			HOME('\uf015', true), //
 			ID('\uf2c1', false), //
+			INFO('\uf129', true), //
 			IMAGE('\uf03e', false), //
 			IMPORT('\uf56f', true), //
 			//JET('\uf0fb', true), //
@@ -95,6 +96,7 @@ public class IconFactory {
 			LINK('\uf0c1', true), //
 			LIST('\uf03a', true), //
 			MASKS('\uf630', true), //
+			NAVIGATE('\uf14e', false), //
 			MOVE('\uf0b2', true), //
 			NEXT('\uf35b', false), //
 			OPTIONS('\uf013', true), //

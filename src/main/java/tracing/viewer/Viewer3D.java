@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -236,10 +237,18 @@ public class Viewer3D {
 
 	}
 
-	private final static String ALLEN_MESH_LABEL = "MouseBrainAllen.obj";
-	private final static String JFRC2_MESH_LABEL = "JFRCtemplate2010.obj";
-	private final static String JFRC3_MESH_LABEL = "JFRCtemplate2013.obj";
-	private final static String FCWB_MESH_LABEL = "FCWB.obj";
+	private static final Map<String, String> TEMPLATE_MESHES;
+	private final static String ALLEN_MESH_LABEL = "Whole Brain";
+	private final static String JFRC2_MESH_LABEL = "JFRC2 Template";
+	private final static String JFRC3_MESH_LABEL = "JFRC3 Template";
+	private final static String FCWB_MESH_LABEL = "FCWB Template";
+	static {
+		TEMPLATE_MESHES = new HashMap<>();
+		TEMPLATE_MESHES.put(ALLEN_MESH_LABEL, "MouseBrainAllen.obj");
+		TEMPLATE_MESHES.put(JFRC2_MESH_LABEL, "JFRCtemplate2010.obj");
+		TEMPLATE_MESHES.put(JFRC3_MESH_LABEL, "JFRCtemplate2013.obj");
+		TEMPLATE_MESHES.put(FCWB_MESH_LABEL, "FCWB.obj");
+	}
 	private final static String PATH_MANAGER_TREE_LABEL = "Path Manager Contents";
 	private final static float DEF_NODE_RADIUS = 3f;
 	private static final Color DEF_COLOR = new Color(1f, 1f, 1f, 0.05f);
@@ -791,6 +800,8 @@ public class Viewer3D {
 			final Map.Entry<String, RemountableDrawableVBO> entry = it.next();
 			chart.getScene().getGraph().remove(entry.getValue(), false);
 			deleteItemFromManager(entry.getKey());
+			if (frame.allenNavigator != null)
+				frame.allenNavigator.meshRemoved(entry.getKey());
 			it.remove();
 		}
 		if (viewUpdatesEnabled) chart.render();
@@ -844,7 +855,11 @@ public class Viewer3D {
 		if (chart != null) {
 			removed = removed && chart.getScene().getGraph().remove(drawable,
 				viewUpdatesEnabled);
-			if (removed) deleteItemFromManager(label);
+			if (removed) {
+				deleteItemFromManager(label);
+				if (frame.allenNavigator != null)
+					frame.allenNavigator.meshRemoved(label);
+			}
 		}
 		return removed;
 	}
@@ -983,8 +998,8 @@ public class Viewer3D {
 	 * @param zMin the Z coordinate of the box origin
 	 * @param zMax the X coordinate of the box origin opposite
 	 */
-	public void setBounds(float xMin, float xMax, float yMin, float yMax,
-		float zMin, float zMax)
+	public void setBounds(final float xMin, final float xMax, final float yMin, final float yMax,
+		final float zMin, final float zMax)
 	{
 		final BoundingBox3d bBox = new BoundingBox3d(xMin, xMax, yMin, yMax, zMin,
 			zMax);
@@ -1141,6 +1156,9 @@ public class Viewer3D {
 		final String label = getUniqueLabel(plottedObjs, "Mesh", objMesh.getLabel());
 		plottedObjs.put(label, objMesh.drawable);
 		addItemToManager(label);
+		if (frame != null && frame.allenNavigator != null) {
+			frame.allenNavigator.meshLoaded(label);
+		}
 		return objMesh;
 	}
 
@@ -1199,9 +1217,10 @@ public class Viewer3D {
 			return plottedObjs.get(label).objMesh;
 		}
 		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		final URL url = loader.getResource("meshes/" + label);
+		final URL url = loader.getResource("meshes/" + TEMPLATE_MESHES.get(label));
 		if (url == null) throw new IllegalArgumentException(label + " not found");
 		final OBJMesh objMesh = new OBJMesh(url);
+		objMesh.setLabel(label);
 		objMesh.drawable.setColor(getNonUserDefColor());
 		return loadOBJMesh(objMesh);
 	}
@@ -1253,7 +1272,7 @@ public class Viewer3D {
 		}
 
 		// see super.setViewMode(mode);
-		public void setViewMode(ViewMode view) {
+		public void setViewMode(final ViewMode view) {
 			// Store current view mode and view point in memory
 			if (currentView == ViewMode.DEFAULT) previousViewPointFree = getView()
 				.getViewPoint();
@@ -1425,7 +1444,7 @@ public class Viewer3D {
 		}
 	
 		public void setBoundManual(final BoundingBox3d bounds,
-			boolean logInDebugMode)
+			final boolean logInDebugMode)
 		{
 			super.setBoundManual(bounds);
 			if (logInDebugMode && SNT.isDebugMode()) {
@@ -1463,7 +1482,7 @@ public class Viewer3D {
 		private Chart chart;
 		private Component canvas;
 		private JDialog manager;
-		private JDialog allenNavigator;
+		private AllenCCFNavigator allenNavigator;
 		private ManagerPanel managerPanel;
 
 		/**
@@ -1489,7 +1508,7 @@ public class Viewer3D {
 			}
 			addComponentListener(new ComponentAdapter() {
 		    @Override
-			public void componentResized(ComponentEvent componentEvent) {
+			public void componentResized(final ComponentEvent componentEvent) {
 		        if (SNT.isDebugMode()) {
 		        	SNT.log("Frame resized("+ getWidth() + ", " + getHeight()  +");");
 		        }
@@ -1708,8 +1727,8 @@ public class Viewer3D {
 		private final GuiUtils guiUtils;
 		private DefaultGenericTable table;
 		private JCheckBoxMenuItem debugCheckBox;
-		private JPanel barPanel;
-		private SNTSearchableBar searchableBar;
+		private final JPanel barPanel;
+		private final SNTSearchableBar searchableBar;
 
 		public ManagerPanel(final GuiUtils guiUtils) {
 			super();
@@ -2507,10 +2526,10 @@ public class Viewer3D {
 			mi.addActionListener(e -> {
 				assert SwingUtilities.isEventDispatchThread();
 				if (frame.allenNavigator != null) {
-					frame.allenNavigator.toFront();
+					frame.allenNavigator.dialog.toFront();
 					return;
 				}
-				JDialog tempSplash = frame.managerPanel.guiUtils.floatingMsg("Loading ontologies...", false);
+				final JDialog tempSplash = frame.managerPanel.guiUtils.floatingMsg("Loading ontologies...", false);
 				final SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
 					@Override
 					protected Object doInBackground() {
@@ -2641,29 +2660,32 @@ public class Viewer3D {
 
 		private final SNTSearchableBar searchableBar;
 		private final DefaultTreeModel treeModel;
-		private final CheckBoxTree tree;
+		private final NavigatorTree tree;
 		private JDialog dialog;
 		private GuiUtils guiUtils;
 
 		public AllenCCFNavigator() {
 			treeModel = AllenUtils.getTreeModel();
-			tree = new CheckBoxTree(treeModel);
+			tree = new NavigatorTree(treeModel);
 			tree.setVisibleRowCount(10);
 			tree.setEditable(false);
+			tree.getCheckBoxTreeSelectionModel().setDigIn(false);
 			tree.setExpandsSelectedPaths(true);
+			tree.setRootVisible(true);
 			GuiUtils.expandAllTreeNodes(tree);
-			//tree.setRootVisible(false);
+			tree.setClickInCheckBoxOnly(false);
 			searchableBar = new SNTSearchableBar(new TreeSearchable(tree));
 			searchableBar.setStatusLabelPlaceholder("Common Coordinate Framework v"+ AllenUtils.VERSION);
 			searchableBar.setVisibleButtons(
 				SearchableBar.SHOW_NAVIGATION | SearchableBar.SHOW_HIGHLIGHTS |
 				SearchableBar.SHOW_MATCHCASE | SearchableBar.SHOW_STATUS);
+			refreshTree(false);
 		}
 
-		private List<AllenCompartment> getSelection() {
-			final TreePath[] treePaths = tree.getSelectionModel().getSelectionPaths();
+		private List<AllenCompartment> getCheckedSelection() {
+			final TreePath[] treePaths = tree.getCheckBoxTreeSelectionModel().getSelectionPaths();
 			if (treePaths == null || treePaths.length == 0) {
-				guiUtils.error("There are no selected ontologies.");
+				guiUtils.error("There are no checked ontologies.");
 				return null;
 			}
 			final List<AllenCompartment> list = new ArrayList<>(treePaths.length);
@@ -2674,8 +2696,93 @@ public class Viewer3D {
 			return list;
 		}
 
+		private void refreshTree(final boolean repaint) {
+			for (final String meshLabel : getOBJs().keySet())
+				meshLoaded(meshLabel);
+			if (repaint)
+				tree.repaint();
+		}
+
+		private void meshLoaded(final String meshLabel) {
+			setCheckboxSelected(meshLabel, true);
+			setCheckboxEnabled(meshLabel);
+		}
+
+		private void meshRemoved(final String meshLabel) {
+			setCheckboxSelected(meshLabel, false);
+			setCheckboxEnabled(meshLabel);
+		}
+
+		private void setCheckboxEnabled(final String nodeLabel) {
+			DefaultMutableTreeNode node = getNode(nodeLabel);
+			if (node == null)
+				return;
+			tree.isCheckBoxEnabled(new TreePath(node.getPath()));
+		}
+
+		private void setCheckboxSelected(final String nodeLabel, final boolean enable) {
+			DefaultMutableTreeNode node = getNode(nodeLabel);
+			if (node == null)
+				return;
+			if (enable)
+				tree.getCheckBoxTreeSelectionModel().addSelectionPath(new TreePath(node.getPath()));
+			else
+				tree.getCheckBoxTreeSelectionModel().removeSelectionPath(new TreePath(node.getPath()));
+
+		}
+
+		private DefaultMutableTreeNode getNode(final String nodeLabel) {
+			 @SuppressWarnings("unchecked")
+			    Enumeration<DefaultMutableTreeNode> e = ((DefaultMutableTreeNode) tree.getModel().getRoot()).depthFirstEnumeration();
+			    while (e.hasMoreElements()) {
+			        DefaultMutableTreeNode node = e.nextElement();
+			        AllenCompartment compartment = (AllenCompartment) node.getUserObject();
+			        if (nodeLabel.equals(compartment.name())) {
+			        	return node;
+			        }
+			    }
+			    return null;
+		}
+
+		private void downloadMeshes() {
+			final List<AllenCompartment> compartments = getCheckedSelection();
+			if (compartments == null)
+				return;
+			int loadedCompartments = 0;
+			final ArrayList<String> failedCompartments = new ArrayList<>();
+			for (final AllenCompartment compartment : compartments) {
+				if (ALLEN_MESH_LABEL.equals(compartment.name())) {
+					final boolean rootLoaded = getOBJs().keySet().contains(ALLEN_MESH_LABEL);
+					if (!rootLoaded) loadMouseRefBrain();
+				}
+				else if (getOBJs().keySet().contains(compartment.name())) {
+					managerList.addCheckBoxListSelectedValue(compartment.name(), true);
+				} else
+					try {
+						final OBJMesh msh = loadOBJMesh(compartment.getMesh());
+						if (msh != null) {
+							meshLoaded(compartment.name());
+							loadedCompartments++;
+						}
+					} catch (final IllegalArgumentException ignored) {
+						failedCompartments.add(compartment.name());
+						meshRemoved(compartment.name());
+					}
+			}
+			if (loadedCompartments > 0)
+				getOuter().validate();
+			if (failedCompartments.size() > 0) {
+				final StringBuilder sb = new StringBuilder(String.valueOf(loadedCompartments)).append("/")
+						.append(loadedCompartments + failedCompartments.size())
+						.append(" meshes retrieved. The following compartments failed to load:").append("<br>&nbsp;<br>")
+						.append(String.join("; ", failedCompartments)).append("<br>&nbsp;<br>")
+						.append("Either such meshes are not available or file(s) could not be reached. Check Console logs for details.");
+				guiUtils.centeredMsg(sb.toString(), "Exceptions Occured");
+			}
+		}
+
 		private void showSelectionInfo() {
-			final List<AllenCompartment> cs = getSelection();
+			final List<AllenCompartment> cs = getCheckedSelection();
 			if (cs == null) return;
 			System.out.println("*** Allen CCF Navigator: Info on selected items:");
 			for (final AllenCompartment c : cs) {
@@ -2691,7 +2798,7 @@ public class Viewer3D {
 
 		private JDialog show() {
 			dialog = new JDialog(frame, "Allen CCF Ontology");
-			frame.allenNavigator = dialog;
+			frame.allenNavigator = this;
 			guiUtils = new GuiUtils(dialog);
 			dialog.setLocationRelativeTo(frame);
 			dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -2711,7 +2818,7 @@ public class Viewer3D {
 		}
 
 		private JPanel getContentPane() {
-			JPanel barPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			final JPanel barPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			frame.managerPanel.setFixedHeightToPanel(barPanel);
 			barPanel.add(searchableBar);
 			final JScrollPane scrollPane = new JScrollPane(tree);
@@ -2733,7 +2840,9 @@ public class Viewer3D {
 			button.addActionListener(e -> showSelectionInfo());
 			buttonPanel.add(button);
 			button = new JButton(IconFactory.getButtonIcon(GLYPH.IMPORT));
-			button.addActionListener(e -> guiUtils.error("This feature is not yet implemented"));
+			button.addActionListener(e -> {
+				downloadMeshes();
+			});
 			buttonPanel.add(button);
 			return buttonPanel;
 		}
@@ -2754,6 +2863,20 @@ public class Viewer3D {
 			jmi.addActionListener(e -> GuiUtils.expandAllTreeNodes(tree));
 			pMenu.add(jmi);
 			return pMenu;
+		}
+		private class NavigatorTree extends CheckBoxTree {
+			private static final long serialVersionUID = 1L;
+
+			public NavigatorTree(final DefaultTreeModel treeModel) {
+				super(treeModel);
+			}
+
+			@Override
+			public boolean isCheckBoxEnabled(final TreePath treePath) {
+				final DefaultMutableTreeNode selectedElement = (DefaultMutableTreeNode) treePath.getLastPathComponent();
+				final AllenCompartment compartment = (AllenCompartment) selectedElement.getUserObject();
+				return !getOBJs().containsKey(compartment.name());
+			}
 		}
 	}
 
@@ -3138,7 +3261,7 @@ public class Viewer3D {
 		}
 
 		@Override
-		protected void rotate(final Coord2d move, boolean updateView){
+		protected void rotate(final Coord2d move, final boolean updateView){
 			// make method visible
 			super.rotate(move, updateView);
 		}

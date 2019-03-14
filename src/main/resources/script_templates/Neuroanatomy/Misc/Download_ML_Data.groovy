@@ -8,7 +8,7 @@ import java.text.DecimalFormat;
  */
 
 // Absolute path to saving directory
-destinationDirectory = "/home/tferr/Desktop/ML-neurons/"
+destinationDirectory = System.properties.'user.home' + "/Desktop/ML-neurons/"
 
 // Range of IDs to be downloaded
 idRange = 1..100
@@ -28,7 +28,7 @@ for (index in idRange) {
 	loader = new MouseLightLoader(id)
 	if (!loader.idExists()) {
 		println(" id not found. Skipping...")
-		continue;
+		continue
 	}
 	print("\tJSON saved: " + MouseLightLoader.saveAsJSON(id, destinationDirectory))
 	println("\tSWC saved: " + MouseLightLoader.saveAsSWC(id, destinationDirectory))

@@ -2714,34 +2714,34 @@ public class Viewer3D {
 		}
 
 		private void setCheckboxEnabled(final String nodeLabel) {
-			DefaultMutableTreeNode node = getNode(nodeLabel);
+			final DefaultMutableTreeNode node = getNode(nodeLabel);
 			if (node == null)
 				return;
 			tree.isCheckBoxEnabled(new TreePath(node.getPath()));
 		}
 
 		private void setCheckboxSelected(final String nodeLabel, final boolean enable) {
-			DefaultMutableTreeNode node = getNode(nodeLabel);
+			final DefaultMutableTreeNode node = getNode(nodeLabel);
 			if (node == null)
 				return;
 			if (enable)
 				tree.getCheckBoxTreeSelectionModel().addSelectionPath(new TreePath(node.getPath()));
 			else
 				tree.getCheckBoxTreeSelectionModel().removeSelectionPath(new TreePath(node.getPath()));
-
 		}
 
 		private DefaultMutableTreeNode getNode(final String nodeLabel) {
-			 @SuppressWarnings("unchecked")
-			    Enumeration<DefaultMutableTreeNode> e = ((DefaultMutableTreeNode) tree.getModel().getRoot()).depthFirstEnumeration();
-			    while (e.hasMoreElements()) {
-			        DefaultMutableTreeNode node = e.nextElement();
-			        AllenCompartment compartment = (AllenCompartment) node.getUserObject();
-			        if (nodeLabel.equals(compartment.name())) {
-			        	return node;
-			        }
-			    }
-			    return null;
+			@SuppressWarnings("unchecked")
+			final Enumeration<DefaultMutableTreeNode> e = ((DefaultMutableTreeNode) tree.getModel().getRoot())
+					.depthFirstEnumeration();
+			while (e.hasMoreElements()) {
+				final DefaultMutableTreeNode node = e.nextElement();
+				final AllenCompartment compartment = (AllenCompartment) node.getUserObject();
+				if (nodeLabel.equals(compartment.name())) {
+					return node;
+				}
+			}
+			return null;
 		}
 
 		private void downloadMeshes() {

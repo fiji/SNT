@@ -361,7 +361,7 @@ public class MouseLightLoader {
 	}
 
 	/**
-	 * Script-friendly method to extract a compartment as a collection of Paths
+	 * Script-friendly method to extract a compartment as a collection of Paths.
 	 *
 	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
 	 * @param color the color to be applied to the Tree. Null not expected.
@@ -456,6 +456,60 @@ public class MouseLightLoader {
 		catch (final NullPointerException nep) {
 			return Path.SWC_UNDEFINED;
 		}
+	}
+
+	/**
+	 * Gets all the reconstruction data present in the database associated with the
+	 * specified reconstruction ID as a JSON object.
+	 * 
+	 * @param id the reconstruction id. Note that DOIs are not supported.
+	 * @return the JSON data or null if id was not found in the database or if data
+	 *         could not be downloaded.
+	 */
+	public static JSONObject getJSON(final String id) {
+		return MouseLightDownloader.getJSON(id);
+	}
+
+	/**
+	 * Returns all the SWC data present in the database associated with the
+	 * specified reconstruction ID.
+	 *
+	 * @param id the reconstruction ID. Note that DOIs are not supported.
+	 * @return the SWC data or null if id was not found in the database or if data
+	 *         could not be downloaded.
+	 */
+	public static String getSWC(final String id) {
+		return MouseLightDownloader.getSWC(id);
+	}
+
+	/**
+	 * Convenience method that saves SWC data for a specified reconstruction to a
+	 * local directory.
+	 *
+	 * @param id              the reconstruction id. Note that DOIs are not
+	 *                        supported.
+	 * @param outputDirectory the output directory
+	 * @return true, if file was successful saved. If saving failed, exceptions
+	 *         messages are logged to the console window when running SNT in debug
+	 *         mode
+	 */
+	public static boolean saveAsSWC(final String id, final String outputDirectory) {
+		return MouseLightDownloader.saveAsSWC(id, outputDirectory);
+	}
+
+	/**
+	 * Convenience method that saves JSON data for a specified reconstruction to a
+	 * local directory.
+	 *
+	 * @param id              the reconstruction id. Note that DOIs are not
+	 *                        supported.
+	 * @param outputDirectory the output directory
+	 * @return true, if file was successful saved. If saving failed, exceptions
+	 *         messages are logged to the console window when running SNT in debug
+	 *         mode
+	 */
+	public static boolean saveAsJSON(final String id, final String outputDirectory) {
+		return MouseLightDownloader.saveAsJSON(id, outputDirectory);
 	}
 
 	/* IDE debug method */

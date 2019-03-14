@@ -58,6 +58,7 @@ public class OBJMesh {
 
 	protected final OBJFileLoaderPlus loader;
 	protected final RemountableDrawableVBO drawable;
+	private String label;
 
 	/**
 	 * Instantiates a new wavefront OBJ mesh from a file path/URL.
@@ -136,7 +137,11 @@ public class OBJMesh {
 	}
 
 	protected String getLabel() {
-		return loader.getLabel();
+		return (label == null) ? loader.getLabel() : label;
+	}
+
+	public void setLabel(final String label) {
+		this.label = label;
 	}
 
 	/**

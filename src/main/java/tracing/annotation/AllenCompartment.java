@@ -21,13 +21,16 @@
  */
 package tracing.annotation;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.scijava.util.ColorRGB;
 
+import tracing.SNT;
 import tracing.viewer.OBJMesh;
 
 /**
@@ -134,10 +137,15 @@ public class AllenCompartment implements BrainAnnotation {
 	public OBJMesh getMesh() {
 		initializeAsNeeded();
 		final ColorRGB geometryColor = ColorRGB.fromHTMLColor("#" + jsonObj.getString("geometryColor"));
-		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		final URL url = loader.getResource("meshes/" + jsonObj.getString("geometryFile"));
-		final OBJMesh mesh = new OBJMesh(url);
-		mesh.setColor(geometryColor, 50f);
+		OBJMesh mesh = null;
+		try {
+			final URL url = new URL("https://ml-neuronbrowser.janelia.org/static/allen/obj/" + jsonObj.getString("geometryFile"));
+			mesh = new OBJMesh(url);
+			mesh.setColor(geometryColor, 87.5f);
+			mesh.setLabel(name);
+		} catch (MalformedURLException | JSONException e) {
+			SNT.error("Could not retrieve mesh ", e);
+		}
 		return mesh;
 	}
 

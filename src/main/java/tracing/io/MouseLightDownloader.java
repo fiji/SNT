@@ -25,11 +25,11 @@ package tracing.io;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import okhttp3.MediaType;
@@ -42,19 +42,20 @@ import tracing.SNT;
 /**
  * Static methods for downloading reconstructions from MouseLight's online
  * database at <a href=
- * "https://ml-neuronbrowser.janelia.org/">ml-neuronbrowser.janelia.org</a>
+ * "https://ml-neuronbrowser.janelia.org/">ml-neuronbrowser.janelia.org</a> *
  *
  * @author Tiago Ferreira
  */
 class MouseLightDownloader {
 
 	private final static String JSON_URL = "https://ml-neuronbrowser.janelia.org/json";
-	private static final int MAX_JSON_LIMIT = 100;
+	private final static String SWC_URL = "https://ml-neuronbrowser.janelia.org/swc";
+	private static final int MIN_CHARS_IN_VALID_RESPONSE_BODY = 150;
 
 	private MouseLightDownloader() {
 	}
 
-	private static Response getJSONResponse(final Collection<String> ids) throws IOException {
+	private static Response getResponse(final String url, final Collection<String> ids) throws IOException {
 		final StringBuilder sb = new StringBuilder();
 		for (final String id : ids) {
 			sb.append('"').append(id).append("\",");
@@ -64,7 +65,7 @@ class MouseLightDownloader {
 		final MediaType mediaType = MediaType.parse("application/json");
 		final RequestBody body = RequestBody.create(mediaType, "{\"ids\": [" + idsString + "]}");
 		final Request request = new Request.Builder() //
-				.url(JSON_URL) //
+				.url(url) //
 				.post(body).addHeader("Content-Type", "application/json") //
 				.addHeader("cache-control", "no-cache") //
 				.build(); //
@@ -85,38 +86,69 @@ class MouseLightDownloader {
 		return directory.exists();
 	}
 
-	protected static JSONObject getJSON(final String id) throws IOException {
-		return getJSON(Collections.singletonList(id));
-	}
-
-	protected static JSONObject getJSON(final Collection<String> ids) throws IOException {
-		final Response response = getJSONResponse(ids);
+	private static JSONObject getJSON(final String url, final Collection<String> ids) throws IOException {
+		final Response response = getResponse(url, ids);
 		final String responseBody = response.body().string();
+		if (responseBody.length() < MIN_CHARS_IN_VALID_RESPONSE_BODY)
+			return null;
 		final JSONObject json = new JSONObject(responseBody);
 		return json;
 	}
 
-	protected static boolean saveAsJSON(final String id, final String outputDirectory) {
-		return saveAsJSON(Collections.singletonList(id), outputDirectory);
+	protected static JSONObject getJSON(final String id) {
+		try {
+			final JSONObject json = getJSON(JSON_URL, Collections.singletonList(id));
+			if (json != null && json.getJSONObject("contents").getJSONArray("neurons").isEmpty())
+				return null;
+			return json;
+		} catch (final IOException e) {
+			SNT.error("Failed to retrieve id " + id, e);
+		}
+		return null;
 	}
 
-	protected static boolean saveAsJSON(final Collection<String> ids, final String outputDirectory)
-			throws IllegalArgumentException {
-		if (ids.size() > MAX_JSON_LIMIT)
-			throw new IllegalArgumentException("No. of ids exceeds the server imposed limit of " + MAX_JSON_LIMIT);
+	protected static String getSWC(final String id) {
+		JSONObject json;
+		try {
+			json = getJSON(SWC_URL, Collections.singletonList(id));
+			if (json == null)
+				return null;
+			final String jsonContents = json.get("contents").toString();
+			final byte[] decodedContents = Base64.getDecoder().decode(jsonContents);
+			return new String(decodedContents, StandardCharsets.UTF_8);
+		} catch (final IOException e) {
+			SNT.error("Failed to retrieve id " + id, e);
+		}
+		return null;
+	}
+
+	protected static boolean saveAsSWC(final String id, final String outputDirectory) throws IllegalArgumentException {
 		final File dir = new File(outputDirectory);
 		if (!validDirectory(dir))
 			return false;
+		final File file = new File(outputDirectory + id + ".swc");
+		return saveJSONContents(getSWC(id), file);
+	}
+
+	protected static boolean saveAsJSON(final String id, final String outputDirectory) throws IllegalArgumentException {
+		final File dir = new File(outputDirectory);
+		if (!validDirectory(dir))
+			return false;
+		final File file = new File(dir, id + ".json");
+		final JSONObject json = getJSON(id);
+		if (json == null)
+			return false;
+		final String jsonContents = json.getJSONObject("contents").toString();
+		return saveJSONContents(jsonContents, file);
+	}
+
+	private static boolean saveJSONContents(final String jsonContents, final File file) {
 		try {
-			final JSONObject json = getJSON(ids);
-			final JSONArray neuronsArray = json.getJSONObject("contents").getJSONArray("neurons");
-			if (neuronsArray.isEmpty()) {
-				SNT.log("ID not found");
-				return false;
+			if (jsonContents == null) {
+				throw new IOException("Id(s) not found!?");
 			}
-			final String filename = (ids.size() == 1) ? ids.stream().findFirst().get() : "mlnb-export";
-			final PrintWriter out = new PrintWriter(outputDirectory + filename + ".json");
-			out.println(json);
+			final PrintWriter out = new PrintWriter(file);
+			out.print(jsonContents);
 			out.close();
 		} catch (SecurityException | IOException ex) {
 			SNT.error("Could not save requested data", ex);
@@ -128,10 +160,10 @@ class MouseLightDownloader {
 	/* IDE debug method */
 	public static void main(final String... args) {
 		System.out.println("# starting");
-		System.out.println("Saving bogus id: "+ saveAsJSON("AA01", "/home/tferr/Desktop/testjson/"));
-		System.out.println("Saving valid id: "+ saveAsJSON("AA0001", "/home/tferr/Desktop/testjson/"));
-		final boolean list = saveAsJSON(Arrays.asList("AA0001", "bar", "baz"), "/home/tferr/Desktop/testjson/");
-		System.out.println(list);
+		System.out.println("Saving bogus id: " + saveAsSWC("AA02", "/home/tferr/Desktop/testjson/"));
+		System.out.println("Saving valid id: " + saveAsSWC("AA0002", "/home/tferr/Desktop/testjson/"));
+		System.out.println("Saving bogus id: " + saveAsJSON("AA02", "/home/tferr/Desktop/testjson/"));
+		System.out.println("Saving valid id: " + saveAsJSON("AA0002", "/home/tferr/Desktop/testjson/"));
 		System.out.println("# done");
 	}
 

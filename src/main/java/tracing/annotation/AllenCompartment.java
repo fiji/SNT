@@ -23,6 +23,8 @@ package tracing.annotation;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.json.JSONArray;
@@ -35,9 +37,13 @@ import tracing.viewer.OBJMesh;
 
 /**
  * Defines an Allen Reference Atlas (ARA) [Allen Mouse Common Coordinate
- * Framework] annotation.
+ * Framework] annotation. A Compartment is defined by either a UUID (as per
+ * MouseLight's database) or its unique integer identifier. To improve
+ * performance, a compartment's metadata (reference to its mesh, its aliases,
+ * etc.) are not loaded at initialization, but retrieved only when such getters
+ * are called.
  * 
- * @author tferr
+ * @author Tiago Ferreira
  *
  */
 public class AllenCompartment implements BrainAnnotation {
@@ -46,11 +52,27 @@ public class AllenCompartment implements BrainAnnotation {
 	private String acronym;
 	private String[] aliases;
 	private int structureId;
-	private final UUID uuid;
-	protected JSONObject jsonObj;
+	private UUID uuid;
+	private JSONObject jsonObj;
 
+	/**
+	 * Instantiates a new ARA annotation from an UUID (as used by MouseLight's
+	 * database).
+	 *
+	 * @param uuid the ML UUID identifying the annotation
+	 */
 	public AllenCompartment(final UUID uuid) {
 		this(null, uuid);
+	}
+
+	/**
+	 * Instantiates a new ARA annotation from its identifier.
+	 *
+	 * @param uuid the integer identifying the annotation
+	 */
+	public AllenCompartment(final int id) {
+		this(null, null);
+		structureId = id;
 	}
 
 	protected AllenCompartment(final JSONObject jsonObj, final UUID uuid) {
@@ -63,20 +85,21 @@ public class AllenCompartment implements BrainAnnotation {
 		final JSONArray areaList = AllenUtils.getBrainAreasList();
 		for (int n = 0; n < areaList.length(); n++) {
 			final JSONObject area = (JSONObject) areaList.get(n);
-			final UUID id = UUID.fromString(area.getString("id"));
-			if (uuid.equals(id)) {
+			final UUID areaUUID = UUID.fromString(area.getString("id"));
+			if (areaUUID.equals(uuid) || structureId ==  area.optInt("structureId")) {
 				jsonObj = area;
 				break;
+				}
 			}
 		}
-	}
 
 	private void initializeAsNeeded() {
 		if (name != null) return;
 		loadJsonObj();
 		name = jsonObj.getString("name");
 		acronym = jsonObj.getString("acronym");
-		structureId = jsonObj.optInt("structureId");
+		if (structureId == 0) structureId = jsonObj.optInt("structureId");
+		if (uuid != null) uuid = UUID.fromString(jsonObj.getString("id"));
 	}
 
 	private String[] getArray(final JSONArray jArray) {
@@ -97,6 +120,7 @@ public class AllenCompartment implements BrainAnnotation {
 	}
 
 	protected String getStructureIdPath() {
+		initializeAsNeeded();
 		return jsonObj.optString("structureIdPath");
 	}
 
@@ -104,8 +128,46 @@ public class AllenCompartment implements BrainAnnotation {
 		return jsonObj.optInt("parentStructureId");
 	}
 
-	public UUID getUUID() {
-		return uuid;
+	/**
+	 * Assesses if this annotation is parent of a specified compartment.
+	 *
+	 * @param childCompartment the compartment to be tested
+	 * @return true, if successful, i.e., {@code childCompartment}'s
+	 *         {@link #getTreePath()} contains this compartment
+	 */
+	public boolean contains(final AllenCompartment childCompartment) {
+		return childCompartment.getStructureIdPath().contains(String.valueOf(id()));
+	}
+
+	/**
+	 * Assesses if this annotation is a child of a specified compartment.
+	 *
+	 * @param parentCompartment the compartment to be tested
+	 * @return true, if successful, i.e., {@link #getTreePath()} contains
+	 *         {@code parentCompartment}
+	 */
+	public boolean containedBy(final AllenCompartment parentCompartment) {
+		return getStructureIdPath().contains(String.valueOf(parentCompartment.id()));
+	}
+
+	/**
+	 * Gets the tree path of this compartment. The TreePath is the list of parent
+	 * compartments that uniquely identify this compartment in the ontologies
+	 * hierarchical tree. The elements of the list are ordered with the root ('Whole
+	 * Brain") as the first element of the list.
+	 *
+	 * @return the tree path that uniquely identifies this compartment as a node in
+	 *         the CCF ontologies tree
+	 */
+	public List<AllenCompartment> getTreePath() {
+		final String path = getStructureIdPath();
+		final ArrayList<AllenCompartment> parentStructure = new ArrayList<>();
+		for (final String structureID : path.split("/")) {
+			if (structureID.isEmpty())
+				continue;
+			parentStructure.add(AllenUtils.getCompartment(Integer.parseInt(structureID)));
+		}
+		return parentStructure;
 	}
 
 	@Override
@@ -151,7 +213,7 @@ public class AllenCompartment implements BrainAnnotation {
 
 	@Override
 	public String toString() {
-		return name + " [" + acronym + "]";
+		return name() + " [" + acronym + "]";
 	}
 
 	@Override
@@ -160,7 +222,8 @@ public class AllenCompartment implements BrainAnnotation {
 			return true;
 		if (!(o instanceof AllenCompartment))
 			return false;
-		return uuid.equals(((AllenCompartment) o).uuid);
+		return uuid.equals(((AllenCompartment) o).uuid) 
+				|| id() == ((AllenCompartment) o).id();
 	}
 
 }

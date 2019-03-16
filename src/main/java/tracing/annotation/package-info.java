@@ -22,7 +22,7 @@
 
 
 /**
- * Classes handling neuropil annotations and atlas metadata.
+ * Classes handling neuropil annotations and atlases metadata.
  *
  * @author Tiago Ferreira
  */

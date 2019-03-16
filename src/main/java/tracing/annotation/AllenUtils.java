@@ -40,15 +40,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import tracing.Path;
-import tracing.Tree;
 import tracing.util.PointInImage;
 import tracing.util.SNTPoint;
 
 /**
- * The Class AllenUtils.
- *
- * @author tferr
+ * Utilities methods for accessing/handling {@link AllenCompartments}
+ * 
+ * @author Tiago Ferreira
  */
 public class AllenUtils {
 
@@ -83,37 +81,58 @@ public class AllenUtils {
 		return areaList;
 	}
 
-	/**
-	 * Initialize compartments.
-	 *
-	 * @param path the path
-	 */
-	public static void initializeCompartments(final Path path) {
+	@SuppressWarnings("unused")
+	private static AllenCompartment getCompartment(final UUID uuid) {
 		areaList = getBrainAreasList();
-		for (int node = 0; node < path.size(); node++) {
-			for (int n = 0; n < areaList.length(); n++) {
-				final AllenCompartment label = (AllenCompartment) path.getNodeLabel(node);
-				final JSONObject area = (JSONObject) areaList.get(n);
-				final UUID id = UUID.fromString(area.getString("id"));
-				if (label.getUUID().equals(id)) {
-					path.setNodeLabel(new AllenCompartment(area, id), n);
-					break;
-				}
+		for (int n = 0; n < areaList.length(); n++) {
+			final JSONObject area = (JSONObject) areaList.get(n);
+			final UUID areaId = UUID.fromString(area.getString("id"));
+			if (uuid.equals(areaId)) {
+				return new AllenCompartment(area, areaId);
 			}
 		}
+		return null;
 	}
 
 	/**
-	 * Initialize compartments.
+	 * Constructs a compartment from its CCF id
 	 *
-	 * @param tree the tree
+	 * @param id the integer identifier
+	 * @return the compartment matching the id or null if id is not valid
 	 */
-	public static void initializeCompartments(final Tree tree) {
-		tree.list().parallelStream().forEach(p -> initializeCompartments(p));
+	public static AllenCompartment getCompartment(final int id) {
+		areaList = getBrainAreasList();
+		for (int n = 0; n < areaList.length(); n++) {
+			final JSONObject area = (JSONObject) areaList.get(n);
+			if (area.optInt("structureId") == id) {
+				return new AllenCompartment(area, UUID.fromString(area.getString("id")));
+			}
+		}
+		return null;
 	}
 
 	/**
-	 * Checks the which hemisphere a reconstruction
+	 * Constructs a compartment from its CCF name or acronym
+	 *
+	 * @param nameOrAcronym the name or acronym (case insensitive) identifying the
+	 *                      compartment
+	 * @return the compartment whose name or acronym matches the specified string or
+	 *         null if no match was found
+	 */
+	public static AllenCompartment getCompartment(final String nameOrAcronym) {
+		areaList = getBrainAreasList();
+		for (int n = 0; n < areaList.length(); n++) {
+			final JSONObject area = (JSONObject) areaList.get(n);
+			if (nameOrAcronym.equalsIgnoreCase(area.getString("name"))
+					|| nameOrAcronym.equalsIgnoreCase(area.getString("acronym"))) {
+				return new AllenCompartment(area, UUID.fromString(area.getString("id")));
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Checks the hemisphere a reconstruction node belongs to.
 	 *
 	 * @param point the point
 	 * @return true, if is left hemisphere, false otherwise
@@ -125,7 +144,7 @@ public class AllenUtils {
 	/**
 	 * Returns the spatial centroid of the Allen CCF.
 	 *
-	 * @return the SNT point defining the center of the ARA
+	 * @return the SNT point defining the (X,Y,Z) center of the ARA
 	 */
 	public static SNTPoint brainBarycentre() {
 		return BRAIN_BARYCENTRE;
@@ -143,7 +162,7 @@ public class AllenUtils {
 	/**
 	 * Gets the Allen CCF as a flat (non-hierarchical) collection of ontologies.
 	 *
-	 * @return the "flattened" ontogenies
+	 * @return the "flattened" ontogenies list
 	 */
 	public static Collection<AllenCompartment> getOntogenies() {
 		return new AllenTreeModel().getOntogenies();
@@ -228,6 +247,9 @@ public class AllenUtils {
 
 	/* IDE Debug method */
 	public static void main(final String[] args) {
+		final AllenCompartment compartmentOfInterest = AllenUtils.getCompartment("CA3");
+		System.out.println(compartmentOfInterest);
+		System.out.println(compartmentOfInterest.getTreePath());
 		final javax.swing.JTree tree = new javax.swing.JTree(getTreeModel());
 		final javax.swing.JScrollPane treeView = new javax.swing.JScrollPane(tree);
 		final javax.swing.JFrame f = new javax.swing.JFrame();

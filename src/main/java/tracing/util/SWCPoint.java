@@ -44,7 +44,7 @@ import tracing.annotation.BrainAnnotation;
 public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 
 	/** The sample number of this node */
-	public final int id;
+	public int id;
 
 	/**
 	 * The SWC-type flag of this node ({@link Path#SWC_SOMA},
@@ -53,7 +53,7 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	public final int type;
 
 	/** The parent id of this node */
-	public final int parent;
+	public int parent;
 
 	/** The cartesian coordinate of this node */
 	public double x, y, z;

@@ -229,7 +229,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	 * @param choice the input choice
 	 * @return a valid {@link MouseLightLoader} flag
 	 */
-	private String getCompartment(final String choice) {
+	protected String getCompartment(final String choice) {
 		if (choice == null) return null;
 		switch (choice) {
 			case CHOICE_AXONS:

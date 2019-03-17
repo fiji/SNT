@@ -46,9 +46,9 @@ public interface SNTPoint {
 	 *
 	 * @param annotation the annotation to be assigned to this point
 	 */
-	public void setLabel(BrainAnnotation annotation);
+	public void setAnnotation(BrainAnnotation annotation);
 
 	/** @return the neuropil annotation assigned to this point */
-	public BrainAnnotation getLabel();
+	public BrainAnnotation getAnnotation();
 
 }

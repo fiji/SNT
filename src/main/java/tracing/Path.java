@@ -130,7 +130,7 @@ public class Path implements Comparable<Path> {
 	// numeric properties of nodes (e.g., pixel intensities)
 	private double[] nodeValues;
 	// BrainAnnotations associated with this node;
-	private BrainAnnotation[] nodeLabels;
+	private BrainAnnotation[] nodeAnnotations;
 	// NB: id should be assigned by PathAndFillManager
 	private int id = -1;
 	// NB: The leagacy 3D viewer requires always a unique name
@@ -536,7 +536,7 @@ public class Path implements Comparable<Path> {
 			precise_y_positions[pos], precise_z_positions[pos]);
 		result.onPath = this;
 		if (nodeValues != null) result.v = nodeValues[pos];
-		if (nodeLabels != null) result.setLabel(nodeLabels[pos]);
+		if (nodeAnnotations != null) result.setAnnotation(nodeAnnotations[pos]);
 		return result;
 	}
 
@@ -948,7 +948,7 @@ public class Path implements Comparable<Path> {
 	protected void addNode(final SWCPoint point) {
 		addPointDouble(point.x, point.y, point.z);
 		radii[size() - 1] = point.radius;
-		if (point.getLabel() != null) setNodeLabel(point.getLabel(), size() - 1);
+		if (point.getAnnotation() != null) setNodeLabel(point.getAnnotation(), size() - 1);
 	}
 
 	protected void addPointDouble(final double x, final double y, final double z) {
@@ -1219,8 +1219,8 @@ public class Path implements Comparable<Path> {
 	 * @param pos the node position
 	 */
 	public void setNodeLabel(final BrainAnnotation annotation, final int pos) {
-		if (nodeLabels == null) nodeLabels = new BrainAnnotation[size()];
-		nodeLabels[pos] = annotation;
+		if (nodeAnnotations == null) nodeAnnotations = new BrainAnnotation[size()];
+		nodeAnnotations[pos] = annotation;
 	}
 
 	/**
@@ -1240,10 +1240,10 @@ public class Path implements Comparable<Path> {
 	 *
 	 * @param pos the node position
 	 * @return the annotation of this node,
-	 * @see PointInImage#getLabel()
+	 * @see PointInImage#getAnnotation()
 	 */
 	public BrainAnnotation getNodeLabel(final int pos) {
-		return (nodeLabels == null) ? null : nodeLabels[pos];
+		return (nodeAnnotations == null) ? null : nodeAnnotations[pos];
 	}
 
 	/**
@@ -1279,10 +1279,10 @@ public class Path implements Comparable<Path> {
 	 * labels
 	 *
 	 * @return true, if successful
-	 * @see PointInImage#getLabel()
+	 * @see PointInImage#getAnnotation()
 	 */
 	public boolean hasNodeLabels() {
-		return nodeLabels != null;
+		return nodeAnnotations != null;
 	}
 
 	/**

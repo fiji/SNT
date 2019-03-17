@@ -437,7 +437,7 @@ class MouseLightQuerier {
 					int parent = node.getInt("parentNumber");
 					if (parent > -1) parent += idOffset;
 					final SWCPoint point = new SWCPoint(sn, type, x, y, z, radius, parent);
-					point.setLabel(new AllenCompartment(UUID.fromString(node.getString("brainAreaId"))));
+					point.setAnnotation(new AllenCompartment(UUID.fromString(node.getString("brainAreaId"))));
 					points.add(point);
 				}
 			}

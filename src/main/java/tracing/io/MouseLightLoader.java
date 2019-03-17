@@ -204,7 +204,7 @@ public class MouseLightLoader {
 		final double radius = node.optDouble("radius", 1);
 		final int parent = node.optInt("parentNumber", -1);
 		final SWCPoint point = new SWCPoint(sn, swcType, x, y, z, radius, parent);
-		point.setLabel(new AllenCompartment(node.getInt("allenId")));
+		point.setAnnotation(new AllenCompartment(node.getInt("allenId")));
 		return point;
 	}
 

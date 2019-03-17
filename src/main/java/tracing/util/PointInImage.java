@@ -175,12 +175,12 @@ public class PointInImage implements SNTPoint {
 	}
 
 	@Override
-	public void setLabel(final BrainAnnotation annotation) {
+	public void setAnnotation(final BrainAnnotation annotation) {
 		this.annotation = annotation;
 	}
 
 	@Override
-	public BrainAnnotation getLabel() {
+	public BrainAnnotation getAnnotation() {
 		return annotation;
 	}
 }

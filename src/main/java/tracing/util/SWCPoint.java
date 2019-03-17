@@ -225,12 +225,12 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	}
 
 	@Override
-	public void setLabel(BrainAnnotation annotation) {
+	public void setAnnotation(BrainAnnotation annotation) {
 		this.annotation = annotation;
 	}
 
 	@Override
-	public BrainAnnotation getLabel() {
+	public BrainAnnotation getAnnotation() {
 		return annotation;
 	}
 

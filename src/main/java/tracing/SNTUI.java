@@ -112,6 +112,7 @@ import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.SigmaPalette;
 import tracing.gui.cmds.ChooseDatasetCmd;
 import tracing.gui.cmds.CompareFilesCmd;
+import tracing.gui.cmds.JSONImporterCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
 import tracing.gui.cmds.OpenDatasetCmd;
@@ -1952,6 +1953,11 @@ public class SNTUI extends JDialog {
 		loadSWCMenuItem = new JMenuItem("(e)SWC...");
 		loadSWCMenuItem.addActionListener(listener);
 		importSubmenu.add(loadSWCMenuItem);
+		final JMenuItem importJSON = new JMenuItem("JSON...");
+		importSubmenu.add(importJSON);
+		importJSON.addActionListener(e -> {
+			(new CmdRunner(JSONImporterCmd.class, true)).execute();
+		});
 		final JMenuItem importDirectory = new JMenuItem("Directory of SWCs...");
 		importDirectory.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.FOLDER));
 		importSubmenu.add(importDirectory);

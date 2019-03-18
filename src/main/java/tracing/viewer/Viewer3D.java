@@ -2791,7 +2791,7 @@ public class Viewer3D {
 				sb.append(" acronym[").append(c.acronym()).append("]");
 				sb.append(" id[").append(c.id()).append("]");
 				sb.append(" aliases[").append(String.join(",", c.aliases())).append("]");
-				sb.append(" UUID[").append(c.getUUID()).append("]");
+				//sb.append(" UUID[").append(c.getUUID()).append("]");
 				System.out.println(sb.toString());
 			}
 		}

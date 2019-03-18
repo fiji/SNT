@@ -24,9 +24,11 @@ package tracing.gui.cmds;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.stream.IntStream;
 
 import net.imagej.ImageJ;
@@ -45,6 +47,7 @@ import tracing.SNTUI;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.MouseLightLoader;
+import tracing.util.SWCPoint;
 import tracing.viewer.Viewer3D;
 
 /**
@@ -138,12 +141,17 @@ public class MLImporterCmd extends CommonDynamicCmd {
 		}
 		else {
 			pafm = new PathAndFillManager();
+			pafm.setHeadless(true);
 		}
 
 		status("Retrieving ids... Please wait...", false);
 		final int lastExistingPathIdx = pafm.size() - 1;
-		final Map<String, Tree> result = pafm.importMLNeurons(ids, getCompartment(
-			arborChoice), getColor());
+		final Map<String, TreeSet<SWCPoint>> inMap = new HashMap<>();
+		for (final String id : ids) {
+			final MouseLightLoader loader = new MouseLightLoader(id);
+			inMap.put(id, (loader.idExists()) ? loader.getNodes(arborChoice) : null);
+		}
+		final Map<String, Tree> result = pafm.importNeurons(inMap, getColor(), "um");
 		final long failures = result.values().stream().filter(
 			tree -> (tree == null || tree.isEmpty())).count();
 		if (failures == ids.size()) {

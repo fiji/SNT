@@ -27,7 +27,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +36,6 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.scijava.util.ColorRGB;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -45,9 +43,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import tracing.Path;
-import tracing.PathAndFillManager;
 import tracing.SNT;
-import tracing.Tree;
 import tracing.annotation.AllenCompartment;
 import tracing.util.SWCPoint;
 
@@ -359,30 +355,30 @@ class MouseLightQuerier {
 			comp);
 		return getNodes();
 	}
-
-	/**
-	 * Script-friendly method to extract a compartment as a collection of Paths.
-	 *
-	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
-	 * @param color the color to be applied to the Tree. Null not expected.
-	 * @return the compartment as a {@link Tree}, or null if data could not be
-	 *         retrieved
-	 * @throws IllegalArgumentException if compartment is not recognized or
-	 *           retrieval of data for this neuron is not possible
-	 */
-	public Tree getTree(final String compartment, final ColorRGB color)
-		throws IllegalArgumentException
-	{
-		if (compartment == null || compartment.trim().isEmpty())
-			throw new IllegalArgumentException("Invalid compartment" + compartment);
-		if (!initialized) initialize();
-		final String comp = compartment.toLowerCase();
-		final PathAndFillManager pafm = new PathAndFillManager();
-		pafm.setHeadless(true);
-		final Map<String, Tree> map = pafm.importMLNeurons(Collections
-			.singletonList(publicID), comp, color);
-		return map.get(publicID);
-	}
+//
+//	/**
+//	 * Script-friendly method to extract a compartment as a collection of Paths.
+//	 *
+//	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
+//	 * @param color the color to be applied to the Tree. Null not expected.
+//	 * @return the compartment as a {@link Tree}, or null if data could not be
+//	 *         retrieved
+//	 * @throws IllegalArgumentException if compartment is not recognized or
+//	 *           retrieval of data for this neuron is not possible
+//	 */
+//	public Tree getTree(final String compartment, final ColorRGB color)
+//		throws IllegalArgumentException
+//	{
+//		if (compartment == null || compartment.trim().isEmpty())
+//			throw new IllegalArgumentException("Invalid compartment" + compartment);
+//		if (!initialized) initialize();
+//		final String comp = compartment.toLowerCase();
+//		final PathAndFillManager pafm = new PathAndFillManager();
+//		pafm.setHeadless(true);
+//		final Map<String, Tree> map = pafm.importMLNeurons(Collections
+//			.singletonList(publicID), comp, color);
+//		return map.get(publicID);
+//	}
 
 	private TreeSet<SWCPoint> getNodesInternal(final String compartment) {
 		if (!initialized) initialize();

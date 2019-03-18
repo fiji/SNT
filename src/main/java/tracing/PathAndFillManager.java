@@ -2095,32 +2095,24 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	/**
-	 * Import neurons from the MouseLight database.
+	 * Import neuron(s) as a collection of reconstruction nodes (SWC points)
 	 *
-	 * @param ids the list of cell IDs
-	 * @param compartment the compartment. Either 'axon', 'dendrite', 'soma' or
-	 *          'all'
-	 * @param color the color to be applied to imported Paths. If null, paths from
-	 *          each ID will assigned unique colors
+	 * @param map         the input map of reconstruction nodes
+	 * @param color       the color to be applied to imported Paths. If null, paths
+	 *                    from each ID will assigned unique colors
+	 * @param spatialUnit the spatial unit (um, mm, etc) associated with imported
+	 *                    nodes. If null, "um" are assumed
 	 * @return the map mapping imported ids to imported Trees. A null Tree will be
 	 *         assigned if a morphology could not be imported
 	 * @see SNTColor#getDistinctColors(int)
 	 */
-	public Map<String, Tree> importMLNeurons(final Collection<String> ids,
-		final String compartment, final ColorRGB color)
+	public Map<String, Tree> importNeurons(final Map<String, TreeSet<SWCPoint>> map, final ColorRGB color, final String spatialUnit)
 	{
-		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
-		for (final String id : ids) {
-			final MouseLightLoader loader = new MouseLightLoader(id);
-			map.put(id, (loader.idExists()) ? loader.getNodes(compartment) : null);
-		}
 		final Map<String, Tree> result = importMap(map, color);
-		if (result.values().stream().anyMatch(tree -> tree != null && tree
-			.isEmpty()))
-		{
-			if (boundingBox == null) boundingBox = new BoundingBox(); // should never
-																																// happen
-			boundingBox.setUnit("um");
+		if (result.values().stream().anyMatch(tree -> tree != null && !tree.isEmpty())) {
+			if (boundingBox == null) // should never happen
+				boundingBox = new BoundingBox();
+			boundingBox.setUnit((spatialUnit == null) ? "um" : spatialUnit);
 		}
 		return result;
 	}

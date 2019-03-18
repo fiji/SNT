@@ -22,29 +22,37 @@
 
 package tracing.io;
 
-import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeSet;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONTokener;
+import org.scijava.util.ColorRGB;
 
+import net.imagej.ImageJ;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import tracing.Path;
+import tracing.PathAndFillManager;
 import tracing.SNT;
+import tracing.Tree;
 import tracing.annotation.AllenCompartment;
+import tracing.gui.GuiUtils;
 import tracing.util.SWCPoint;
+import tracing.viewer.Viewer3D;
 
 /**
  * Methods for retrieving reconstructions from MouseLight's online database at
@@ -123,40 +131,92 @@ public class MouseLightLoader {
 	}
 
 	/**
-	 * Script-friendly method to extract the nodes of a compartment.
+	 * Script-friendly method to extract the nodes of a cellular compartment.
 	 *
-	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
-	 * @return the list of nodes of the neuron as {@link SWCPoint}s.
-	 * @throws IllegalArgumentException if compartment is not recognized or it was
-	 *                                  not possible to retrieve data
+	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive). All
+	 *                    nodes are retrieved if {@code compartment} is not
+	 *                    recognized
+	 * @return the set of nodes of the neuron as {@link SWCPoint}s.
 	 */
-	public TreeSet<SWCPoint> getNodes(final String compartment) throws IllegalArgumentException {
-		if (compartment == null || compartment.trim().isEmpty())
-			throw new IllegalArgumentException("Invalid compartment" + compartment);
+	public TreeSet<SWCPoint> getNodes(final String compartment) {
+		final String normCompartment = (compartment == null) ? "" : compartment.toLowerCase();
 		jsonData = getJSON();
 		if (jsonData == null) return null;
 		final JSONObject neuron = jsonData.getJSONObject("contents").getJSONArray("neurons").optJSONObject(0);
+		final TreeSet<SWCPoint> nodes = extractNodesFromJSONObject(normCompartment, neuron);
+		return nodes;
+	}
+
+
+	/**
+	 * Extracts reconstruction(s) from a JSON file.
+	 *
+	 * @param jsonFile    the JSON file to be parsed
+	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive). All
+	 *                    nodes are retrieved if {@code compartment} is not
+	 *                    recognized
+	 * @return the map containing the reconstruction nodes as {@link Tree}s 
+	 * @throws FileNotFoundException if file could not be retrieved
+	 * @see #extractNodesFromJSONObject(String, JSONObject)
+	 */
+	public static Map<String, Tree> extractTrees(final File jsonFile, final String compartment) throws FileNotFoundException {
+		final Map<String, TreeSet<SWCPoint>> nodesMap = extractNodes(jsonFile, compartment);
+		final PathAndFillManager pafm = new PathAndFillManager();
+		pafm.setHeadless(true);
+		return pafm.importNeurons(nodesMap, null, null);
+	}
+
+	/**
+	 * Extracts reconstruction(s) from a JSON file.
+	 *
+	 * @param jsonFile    the JSON file to be parsed
+	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive). All
+	 *                    nodes are retrieved if {@code compartment} is not
+	 *                    recognized
+	 * @return the map containing the reconstruction nodes as {@link SWCPoint}s 
+	 * @throws FileNotFoundException if file could not be retrieved
+	 * @see #extractTrees(File, String)
+	 */
+	public static Map<String, TreeSet<SWCPoint>> extractNodes(final File jsonFile, final String compartment) throws FileNotFoundException {
+		final JSONTokener tokener = new JSONTokener(new FileInputStream(jsonFile));
+		final JSONObject json = new JSONObject(tokener);
+		final JSONArray neuronArray = json.getJSONArray("neurons");
+		if (neuronArray == null) return null;
+		final String normCompartment = (compartment == null) ? "" : compartment.toLowerCase();
+		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
+		for (int i = 0; i < neuronArray.length(); i++) {
+			final JSONObject neuron = neuronArray.optJSONObject(i);
+			final String identifier = neuron.optString("idString", "Neuron "+ i);
+			map.put(identifier, extractNodesFromJSONObject(normCompartment, neuron));
+		}
+		return map;
+	}
+
+	private static TreeSet<SWCPoint> extractNodesFromJSONObject(final String normCompartment, final JSONObject neuron) {
 		if (neuron == null) return null;
 		final TreeSet<SWCPoint> nodes = new TreeSet<>();
-		switch (compartment.toLowerCase()) {
+		switch (normCompartment) {
 		case SOMA:
+		case "cell body":
 			// single point soma
 			final JSONObject sNode = neuron.getJSONObject("soma");
 			nodes.add(jsonObjectToSWCPoint(sNode, Path.SWC_SOMA));
 			break;
 		case DENDRITE:
+		case "dendrites":
 			final JSONArray dNodeList = neuron.getJSONArray(DENDRITE);
 			for (int n = 0; n < dNodeList.length(); n++) {
 				nodes.add(jsonObjectToSWCPoint(dNodeList.getJSONObject(n), Path.SWC_DENDRITE));
 			}
 			break;
 		case AXON:
+		case "axons":
 			final JSONArray aNodeList = neuron.getJSONArray(AXON);
 			for (int n = 0; n < aNodeList.length(); n++) {
 				nodes.add(jsonObjectToSWCPoint(aNodeList.getJSONObject(n), Path.SWC_AXON));
 			}
 			break;
-		case "all":
+		default:
 			int sn = 1;
 			final JSONObject somaNode = neuron.getJSONObject("soma");
 			nodes.add(jsonObjectToSWCPoint(somaNode, Path.SWC_SOMA));
@@ -176,13 +236,11 @@ public class MouseLightLoader {
 				nodes.add(node);
 			}
 			break;
-		default:
-			throw new IllegalArgumentException(compartment + " is not a valid argument");
 		}
 		return nodes;
 	}
 
-	private SWCPoint jsonObjectToSWCPoint(final JSONObject node, final int swcType) {
+	private static SWCPoint jsonObjectToSWCPoint(final JSONObject node, final int swcType) {
 		final int sn = node.optInt("sampleNumber", 1);
 		final double x = node.getDouble("x");
 		final double y = node.getDouble("y");
@@ -265,6 +323,28 @@ public class MouseLightLoader {
 		return true;
 	}
 
+	/**
+	 * Script-friendly method to extract a compartment as a collection of Paths.
+	 *
+	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
+	 * @param color the color to be applied to the Tree. Null not expected.
+	 * @return the compartment as a {@link Tree}, or null if data could not be
+	 *         retrieved
+	 * @throws IllegalArgumentException if compartment is not recognized or
+	 *           retrieval of data for this neuron is not possible
+	 */
+	public Tree getTree(final String compartment, final ColorRGB color)
+		throws IllegalArgumentException
+	{
+		if (compartment == null || compartment.trim().isEmpty())
+			throw new IllegalArgumentException("Invalid compartment" + compartment);
+		final PathAndFillManager pafm = new PathAndFillManager();
+		pafm.setHeadless(true);
+		final Map<String, TreeSet<SWCPoint>> inMap = new HashMap<>();
+		inMap.put(id, getNodes(compartment));
+		final Map<String, Tree> outMap = pafm.importNeurons(inMap, color, "um");
+		return outMap.get(id);
+	}
 	/**
 	 * Checks whether a connection to the MouseLight database can be established.
 	 *

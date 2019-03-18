@@ -844,6 +844,11 @@ public class Path implements Comparable<Path> {
 			tangents_z = new_tangents_z;
 			radii = new_radiuses;
 		}
+		if (nodeAnnotations != null) {
+			final BrainAnnotation[] newNodeAnnotations = new BrainAnnotation[newMaxPoints];
+			System.arraycopy(nodeAnnotations, 0, newNodeAnnotations, 0, points);
+			nodeAnnotations = newNodeAnnotations;
+		}
 		maxPoints = newMaxPoints;
 	}
 
@@ -948,7 +953,7 @@ public class Path implements Comparable<Path> {
 	protected void addNode(final SWCPoint point) {
 		addPointDouble(point.x, point.y, point.z);
 		radii[size() - 1] = point.radius;
-		if (point.getAnnotation() != null) setNodeLabel(point.getAnnotation(), size() - 1);
+		if (point.getAnnotation() != null) setNodeAnnotation(point.getAnnotation(), size() - 1);
 	}
 
 	protected void addPointDouble(final double x, final double y, final double z) {
@@ -1213,13 +1218,15 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Assigns an annotation to this node.
+	 * Assigns an annotation to an existing node.
 	 *
 	 * @param annotation the node annotation
 	 * @param pos the node position
 	 */
-	public void setNodeLabel(final BrainAnnotation annotation, final int pos) {
-		if (nodeAnnotations == null) nodeAnnotations = new BrainAnnotation[size()];
+	public void setNodeAnnotation(final BrainAnnotation annotation, final int pos) {
+		if (nodeAnnotations == null) {
+			nodeAnnotations = new BrainAnnotation[maxPoints];
+		}
 		nodeAnnotations[pos] = annotation;
 	}
 
@@ -1242,7 +1249,7 @@ public class Path implements Comparable<Path> {
 	 * @return the annotation of this node,
 	 * @see PointInImage#getAnnotation()
 	 */
-	public BrainAnnotation getNodeLabel(final int pos) {
+	public BrainAnnotation getNodeAnnotation(final int pos) {
 		return (nodeAnnotations == null) ? null : nodeAnnotations[pos];
 	}
 
@@ -1276,12 +1283,12 @@ public class Path implements Comparable<Path> {
 
 	/**
 	 * Assesses whether the nodes of this path have been assigned an array of
-	 * labels
+	 * annotations
 	 *
 	 * @return true, if successful
 	 * @see PointInImage#getAnnotation()
 	 */
-	public boolean hasNodeLabels() {
+	public boolean hasNodeAnnotations() {
 		return nodeAnnotations != null;
 	}
 

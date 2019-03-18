@@ -1151,6 +1151,19 @@ public class Viewer3D {
 		return loadOBJMesh(objMesh);
 	}
 
+	/**
+	 * Loads a Wavefront .OBJ file. Should be called before_ displaying the scene,
+	 * otherwise, if the scene is already visible, {@link #validate()} should be
+	 * called to ensure all meshes are visible.
+	 *
+	 * @param objMesh the mesh to be loaded
+	 * @return true, if successful
+	 * @throws IllegalArgumentException if mesh could not be compiled
+	 */
+	public boolean loadMesh(final OBJMesh objMesh) throws IllegalArgumentException {
+		return loadOBJMesh(objMesh) != null;
+	}
+
 	private OBJMesh loadOBJMesh(final OBJMesh objMesh) {
 		chart.add(objMesh.drawable, false); // GLException if true
 		final String label = getUniqueLabel(plottedObjs, "Mesh", objMesh.getLabel());
@@ -1218,7 +1231,7 @@ public class Viewer3D {
 		}
 		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
 		final URL url = loader.getResource("meshes/" + TEMPLATE_MESHES.get(label));
-		if (url == null) throw new IllegalArgumentException(label + " not found");
+		if (url == null) throw new IllegalArgumentException(label + " not found.");
 		final OBJMesh objMesh = new OBJMesh(url);
 		objMesh.setLabel(label);
 		objMesh.drawable.setColor(getNonUserDefColor());

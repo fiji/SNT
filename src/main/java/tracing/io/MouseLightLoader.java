@@ -92,20 +92,6 @@ public class MouseLightLoader {
 		return client.newCall(request).execute();
 	}
 
-	private static boolean validDirectory(final File directory) {
-		if (!directory.isDirectory()) {
-			SNT.log("Invalid directory path: " + directory);
-			return false;
-		}
-		try {
-			if (!directory.exists())
-				directory.mkdirs();
-		} catch (final SecurityException ex) {
-			SNT.error("Could not create path", ex);
-		}
-		return directory.exists();
-	}
-
 	private JSONObject getJSON(final String url) {
 		try {
 			final Response response = getResponse(url);
@@ -245,47 +231,37 @@ public class MouseLightLoader {
 	 * Convenience method to save SWC data to a local directory.
 	 *
 	 * @param outputDirectory the output directory
-	 * @return true, if file was successful saved. If saving failed, exceptions
-	 *         messages are logged to the console window when running SNT in debug
-	 *         mode
+	 * @return true, if successful
+	 * @throws IOException if an I/O exception occurred during saving
 	 */
-	public boolean saveAsSWC(final String outputDirectory) throws IllegalArgumentException {
-		final File dir = new File(outputDirectory);
-		if (!validDirectory(dir)) return false;
-		final File file = new File(outputDirectory + id + ".swc");
-		return saveJSONContents(getSWC(), file);
+	public boolean saveAsSWC(final String outputDirectory) throws IOException {
+		return saveJSONContents(getSWC(), outputDirectory, id + ".swc");
 	}
 
 	/**
 	 * Convenience method to save JSON data to a local directory.
 	 *
 	 * @param outputDirectory the output directory
-	 * @return true, if file was successful saved. If saving failed, exceptions
-	 *         messages are logged to the console window when running SNT in debug
-	 *         mode
+	 * @return true, if successful
+	 * @throws IOException if an I/O exception occurred during saving
 	 */
-	public boolean saveAsJSON(final String outputDirectory) throws IllegalArgumentException {
-		final File dir = new File(outputDirectory);
-		if (!validDirectory(dir)) return false;
-		final File file = new File(dir, id + ".json");
-		final JSONObject json = getJSON();
-		if (json == null) return false;
-		final String jsonContents = json.getJSONObject("contents").toString();
-		return saveJSONContents(jsonContents, file);
+	public boolean saveAsJSON(final String outputDirectory) throws IOException {
+		final String jsonContents = getJSON().getJSONObject("contents").toString();
+		return saveJSONContents(jsonContents, outputDirectory, id + ".json");
 	}
 
-	private static boolean saveJSONContents(final String jsonContents, final File file) {
-		try {
-			if (jsonContents == null) {
-				throw new IOException("Id(s) not found!?");
-			}
-			final PrintWriter out = new PrintWriter(file);
-			out.print(jsonContents);
-			out.close();
-		} catch (SecurityException | IOException ex) {
-			SNT.error("Could not save requested data", ex);
+	private boolean saveJSONContents(final String jsonContents, final String dirPath, final String filename)
+			throws IOException {
+		if (jsonContents == null)
+			return false;
+		final File dir = new File(dirPath);
+		if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
 			return false;
 		}
+		final File file = new File(dir, filename);
+		final PrintWriter out = new PrintWriter(file);
+		out.print(jsonContents);
+		out.close();
 		return true;
 	}
 

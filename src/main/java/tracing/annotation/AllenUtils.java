@@ -23,6 +23,7 @@ package tracing.annotation;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -39,9 +40,11 @@ import javax.swing.tree.DefaultTreeModel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.scijava.util.ColorRGB;
 
 import tracing.util.PointInImage;
 import tracing.util.SNTPoint;
+import tracing.viewer.OBJMesh;
 
 /**
  * Utilities methods for accessing/handling {@link AllenCompartments}
@@ -52,8 +55,8 @@ public class AllenUtils {
 
 	/** The version of the Common Coordinate Framework currently used by SNT */
 	public static final int VERSION = 3;
+	protected static final int BRAIN_ROOT_ID = 997;
 	private final static PointInImage BRAIN_BARYCENTRE = new PointInImage(5687.5435f, 3849.6099f, 6595.3813f);
-
 
 	private static JSONArray areaList;
 
@@ -243,6 +246,26 @@ public class AllenUtils {
 			}
 			return null;
 		}
+	}
+
+	/**
+	 * Retrieves the surface contours for the Allen Mouse Brain Atlas (CCF), bundled
+	 * with SNT.
+	 *
+	 * @param color the color to be assigned to the mesh
+	 * @return a reference to the retrieved mesh
+	 */
+	public static OBJMesh getRootMesh(final ColorRGB color) {
+		final String meshLabel = "Whole Brain";
+		final String meshPath = "meshes/MouseBrainAllen.obj";
+		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
+		final URL url = loader.getResource(meshPath);
+		if (url == null)
+			throw new IllegalArgumentException(meshLabel + " not found");
+		final OBJMesh mesh = new OBJMesh(url);
+		mesh.setColor(color, 95f);
+		mesh.setLabel(meshLabel);
+		return mesh;
 	}
 
 	/* IDE Debug method */

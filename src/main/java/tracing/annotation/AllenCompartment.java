@@ -31,6 +31,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.scijava.util.ColorRGB;
+import org.scijava.util.Colors;
 
 import tracing.SNT;
 import tracing.viewer.OBJMesh;
@@ -197,8 +198,8 @@ public class AllenCompartment implements BrainAnnotation {
 
 	@Override
 	public OBJMesh getMesh() {
-		initializeAsNeeded();
-		final ColorRGB geometryColor = ColorRGB.fromHTMLColor("#" + jsonObj.getString("geometryColor"));
+		if (id() == AllenUtils.BRAIN_ROOT_ID) return AllenUtils.getRootMesh(Colors.WHITE);
+		final ColorRGB geometryColor = ColorRGB.fromHTMLColor("#" + jsonObj.optString("geometryColor", "ffffff"));
 		OBJMesh mesh = null;
 		try {
 			final URL url = new URL("https://ml-neuronbrowser.janelia.org/static/allen/obj/" + jsonObj.getString("geometryFile"));

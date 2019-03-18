@@ -1170,7 +1170,7 @@ public class Viewer3D {
 	 * @throws IllegalArgumentException if Viewer is not available
 	 */
 	public OBJMesh loadMouseRefBrain() throws IllegalArgumentException {
-		return loadRefBrain(ALLEN_MESH_LABEL);
+		return AllenUtils.getRootMesh((isDarkModeOn()?Colors.WHITE:Colors.BLACK));
 	}
 
 	/**
@@ -2751,11 +2751,7 @@ public class Viewer3D {
 			int loadedCompartments = 0;
 			final ArrayList<String> failedCompartments = new ArrayList<>();
 			for (final AllenCompartment compartment : compartments) {
-				if (ALLEN_MESH_LABEL.equals(compartment.name())) {
-					final boolean rootLoaded = getOBJs().keySet().contains(ALLEN_MESH_LABEL);
-					if (!rootLoaded) loadMouseRefBrain();
-				}
-				else if (getOBJs().keySet().contains(compartment.name())) {
+				if (getOBJs().keySet().contains(compartment.name())) {
 					managerList.addCheckBoxListSelectedValue(compartment.name(), true);
 				} else
 					try {

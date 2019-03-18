@@ -85,6 +85,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 		setVisibleButtons(SHOW_NAVIGATION | SHOW_STATUS | SHOW_HIGHLIGHTS);
 		setStatusLabelPlaceholder(String.format("%d Path(s) listed", pmui
 			.getPathAndFillManager().size()));
+		setShowMatchCount(true); // will slow things down slightly
 	}
 
 	private JPopupMenu getPopupMenu() {
@@ -110,6 +111,9 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 		jcbmi3.addItemListener(e -> getSearchable().setRepeats(jcbmi3
 			.isSelected()));
 		optionsMenu.add(jcbmi3);
+		final JMenuItem jcbmi4 = new JCheckBoxMenuItem("Display No. of Matches", getSearchable().isCountMatch());
+		jcbmi3.addItemListener(e -> getSearchable().setCountMatch(jcbmi4.isSelected()));
+		optionsMenu.add(jcbmi4);
 		optionsMenu.addSeparator();
 
 		JMenuItem mi = new JMenuItem("Replace...");
@@ -360,13 +364,15 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 	private void filterHelpMsg() {
 		final String key = GuiUtils.ctrlKey();
 		final String msg = "<HTML><body><div style='width:500;'><ol>" +
-			"<li>Filtering is case-insensitive by default. Wildcards " +
+			"<li>"
+			+ " case-insensitive by default. Wildcards " +
 			"<b>?</b> (any character), and <b>*</b> (any string) can also be used</li>" +
 			"<li>Press the <i>Highlight All</i> button or " + key +
 			"+A to select all the paths filtered by the search string</li>" +
 			"<li>Press and hold " + key +
 			" while pressing the up/down keys to select multiple filtered paths</li>" +
 			"<li>Press the up/down keys to find the next/previous occurrence of the filtering string</li>" +
+			"<li>Uncheck <i>Display No. of Matches</i> to improve search performance</li>" +
 			"</ol></div></html>";
 		guiUtils.centeredMsg(msg, "Text-based Filtering");
 	}

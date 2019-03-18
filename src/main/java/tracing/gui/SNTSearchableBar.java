@@ -74,8 +74,7 @@ public class SNTSearchableBar extends SearchableBar {
 		searchable.setCaseSensitive(false);
 		searchable.setFromStart(false);
 		searchable.setRepeats(true);
-		searchable.setCountMatch(true);
-		setShowMatchCount(true);
+		setShowMatchCount(false); // for performance reasons
 		setBorderPainted(false);
 		setBorder(BorderFactory.createEmptyBorder());
 		setMismatchForeground(Color.RED);

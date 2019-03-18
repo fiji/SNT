@@ -100,7 +100,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 		final long failures = result.stream().filter(Tree::isEmpty)
 			.count();
 		if (failures == result.size()) {
-			snt.error("No reconstructions could be retrieved. Invalid Query?");
+			snt.error("No reconstructions could be retrieved. Invalid directory?");
 			ui.showStatus("Error... No reconstructions imported", true);
 			return;
 		}
@@ -110,7 +110,6 @@ public class MultiSWCImporterCmd extends ContextCommand {
 			pafm.deletePaths(indices);
 		}
 		SNT.log("Rebuilding canvases...");
-		snt.rebuildDisplayCanvases();
 		if (failures > 0) {
 			snt.error(String.format("%d/%d reconstructions could not be retrieved.",
 				failures, result.size()));

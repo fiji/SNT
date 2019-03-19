@@ -47,7 +47,7 @@ import tracing.util.SNTPoint;
 import tracing.viewer.OBJMesh;
 
 /**
- * Utilities methods for accessing/handling {@link AllenCompartments}
+ * Utilities methods for accessing/handling {@link AllenCompartment}s
  * 
  * @author Tiago Ferreira
  */

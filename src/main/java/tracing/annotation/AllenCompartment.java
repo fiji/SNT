@@ -69,7 +69,7 @@ public class AllenCompartment implements BrainAnnotation {
 	/**
 	 * Instantiates a new ARA annotation from its identifier.
 	 *
-	 * @param uuid the integer identifying the annotation
+	 * @param id the integer identifying the annotation
 	 */
 	public AllenCompartment(final int id) {
 		this(null, null);

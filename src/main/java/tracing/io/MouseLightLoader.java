@@ -155,7 +155,7 @@ public class MouseLightLoader {
 	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive). All
 	 *                    nodes are retrieved if {@code compartment} is not
 	 *                    recognized
-	 * @return the map containing the reconstruction nodes as {@link Tree}s 
+	 * @return the map containing the reconstruction nodes as {@link Tree}s
 	 * @throws FileNotFoundException if file could not be retrieved
 	 * @see #extractNodesFromJSONObject(String, JSONObject)
 	 */

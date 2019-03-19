@@ -6,46 +6,64 @@
 """
 file:       Reconstruction_Viewer_Demo.py
 author:     Tiago Ferreira
-version:    20190218
-info:       Exemplifies how to render a remote file in a stand-alone
-            Reconstruction Viewer
+version:    20190318
+info:       Exemplifies how to render reconstructions and neuropil annotations
+            in a stand-alone Reconstruction Viewer. Requires internet connection
 """
 from tracing import Tree
 from tracing.io import MouseLightLoader
 from tracing.analysis import TreeColorMapper
+from tracing.annotation import AllenCompartment
+from tracing.annotation import AllenUtils
 from tracing.viewer import OBJMesh, Viewer3D
 from tracing.viewer.Viewer3D import ViewMode
+
 from org.scijava.util import Colors
 
 def run():
 
-    # Import some data from the MouseLight database
-    print("    Retrieving ML neuron...")
-    loader = MouseLightLoader("AA0100") # one of the largest cells in the database
-    if not loader.isDatabaseAvailable():
+    if not MouseLightLoader.isDatabaseAvailable():
         ui.showDialog("Could not connect to ML database", "Error")
         return
+
+    # Import one of the largest cells in the MouseLight database
+    loader = MouseLightLoader("AA0100")
     if not loader.idExists():
         ui.showDialog("Somehow the specified id was not found", "Error")
         return
 
-    print("... Done. Assembling Tree...")
-    tree = loader.getTree('all', None)  # compartment, color
+    # We'll visualize dendrites and axons differently, loading cell in 2 steps
+    print("    Retrieving ML neuron...")
+    dend_tree = loader.getTree('dendrite', Colors.ORANGE)
+    dend_tree.setLabel("AA0100 (Dendrites)")
+    axon_tree = loader.getTree('axon', None)
+    axon_tree.setLabel("AA0100 (Axon)")
 
-    # Define and map branch order to color table
-    print("... Done. Assigning LUT to Tree...")
+    # Color code axons: map branch order to color table
+    print("... Done. Assigning LUT to axonal arbor...")
     mapper = TreeColorMapper(context)
     color_table = lut.loadLUT(lut.findLUTs().get("Ice.lut"))
-    mapper.map(tree, "branch order", color_table)
+    mapper.map(axon_tree, "branch order", color_table)
+    bounds = mapper.getMinMax()
 
-    # Visualize tree in Reconstruction Viewer
+    # Assemble 3D scene in Reconstruction Viewer
     print("... Done. Preparing Reconstruction Viewer...")
     viewer = Viewer3D(context) # Initialize viewer with GUI controls
-    viewer.add(tree)
-    bounds = mapper.getMinMax()
+
+    # Add reconstructions and color map legend
+    viewer.add(dend_tree)
+    viewer.add(axon_tree)
     viewer.addColorBarLegend(color_table, bounds[0], bounds[1])
-    brain = viewer.loadMouseRefBrain()
-    brain.setBoundingBoxColor(Colors.GREEN)
+
+    # Add Allen Reference Atlas (ARA) annotations: brain contour
+    # and compartment associated with soma of downloaded cell
+    brainMesh = AllenUtils.getCompartment("Whole Brain").getMesh()
+    brainMesh.setBoundingBoxColor(Colors.GRAY)
+    viewer.loadMesh(brainMesh)
+    soma_annotation = next(iter(loader.getNodes("soma"))).getAnnotation()
+    viewer.loadMesh(soma_annotation.getMesh())
+
+    # Display scene
     viewer.setViewMode(ViewMode.SIDE)
     viewer.show()
     viewer.setAnimationEnabled(True)

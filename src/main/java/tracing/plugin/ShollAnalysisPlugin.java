@@ -117,7 +117,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 		}
 		if (tracesPath.endsWith(".traces")) pafm = new PathAndFillManager();
 		else pafm = new PathAndFillManager();
-		if (!pafm.loadGuessingType(tracesPath)) {
+		if (!pafm.load(tracesPath)) {
 			GuiUtils.errorPrompt("File could not be loaded:\n" + tracesPath);
 			return;
 		}

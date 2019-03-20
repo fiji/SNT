@@ -650,7 +650,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void loadTracings(final File file) {
 		if (file != null && file.exists()) {
 			if (isUIready()) ui.changeState(SNTUI.LOADING);
-			pathAndFillManager.loadGuessingType(file.getAbsolutePath());
+			pathAndFillManager.load(file.getAbsolutePath());
 			if (isUIready()) ui.resetState();
 		}
 	}
@@ -2182,7 +2182,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	{
 
 		final PathAndFillManager pafmTraces = new PathAndFillManager(this);
-		if (!pafmTraces.loadGuessingType(tracesFile.getAbsolutePath())) {
+		if (!pafmTraces.load(tracesFile.getAbsolutePath())) {
 			guiUtils.error("Failed to load traces from: " + tracesFile
 				.getAbsolutePath());
 			return;

@@ -62,6 +62,7 @@ import java.util.zip.GZIPOutputStream;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.json.JSONException;
 import org.scijava.java3d.View;
 import org.scijava.util.ColorRGB;
 import org.scijava.vecmath.Color3f;
@@ -78,8 +79,8 @@ import tracing.gui.GuiUtils;
 import tracing.io.MouseLightLoader;
 import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
-import tracing.util.SNTPoint;
 import tracing.util.SNTColor;
+import tracing.util.SNTPoint;
 import tracing.util.SWCPoint;
 import util.Bresenham3D;
 import util.XMLFunctions;
@@ -97,6 +98,8 @@ public class PathAndFillManager extends DefaultHandler implements
 	protected static final int TRACES_FILE_TYPE_COMPRESSED_XML = 1;
 	protected static final int TRACES_FILE_TYPE_UNCOMPRESSED_XML = 2;
 	protected static final int TRACES_FILE_TYPE_SWC = 3;
+	protected static final int TRACES_FILE_TYPE_ML_JSON = 4;
+
 	private static final DecimalFormat fileIndexFormatter = new DecimalFormat(
 		"000");
 
@@ -387,9 +390,9 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	/**
-	 * Sets whether this PathAndFillManager instance should run 'headless'.
+	 * Sets whether this PathAndFillManager instance should run headless.
 	 *
-	 * @param headless true to activate 'headless' calls, otherwise false
+	 * @param headless true to activate headless calls, otherwise false
 	 */
 	public void setHeadless(final boolean headless) {
 		PathAndFillManager.headless = headless;
@@ -1703,17 +1706,17 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	/**
-	 * Creates a PathAndFillManager instance from a imported data
+	 * Creates a PathAndFillManager instance from imported data
 	 *
 	 * @param filePath the absolute path of the file to be imported as per
-	 *          {@link #loadGuessingType(String)}
+	 *          {@link #load(String)}
 	 * @return the PathAndFillManager instance, or null if file could not be
 	 *         imported
 	 */
 	public static PathAndFillManager createFromFile(final String filePath) {
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);
-		if (pafm.loadGuessingType(filePath)) return pafm;
+		if (pafm.load(filePath)) return pafm;
 		else return null;
 	}
 
@@ -1904,7 +1907,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 *          the import. Default is false.
 	 * @return true, if import was successful
 	 */
-	public boolean importSWC(final BufferedReader br,
+	protected boolean importSWC(final BufferedReader br,
 		final boolean assumeCoordinatesInVoxels, final double xOffset,
 		final double yOffset, final double zOffset, final double xScale,
 		final double yScale, final double zScale, final boolean replaceAllPaths)
@@ -2159,7 +2162,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @param ignoreCalibration the ignore calibration
 	 * @return true, if import was successful
 	 */
-	public boolean importSWC(final String filePath,
+	protected boolean importSWC(final String filePath,
 		final boolean ignoreCalibration)
 	{
 		return importSWC(filePath, ignoreCalibration, 0, 0, 0, 1, 1, 1, false);
@@ -2230,19 +2233,15 @@ public class PathAndFillManager extends DefaultHandler implements
 		 * Look at the magic bytes at the start of the file:
 		 *
 		 * If this looks as if it's gzip compressed, assume it's a compressed traces
-		 * file - the native format of this plugin.
-		 *
-		 * If it begins "<?xml", assume it's an uncompressed traces file.
-		 *
-		 * Otherwise, assum it's an SWC file.
+		 * file. If it begins "<?xml", assume it's an uncompressed traces file. If it
+		 * begins with '{"' assume it is a ML JSON file, otherwise assume it's an SWC
+		 * file.
 		 */
-
 		final File f = new File(filename);
 		if (!SNT.fileAvailable(f)) {
 			errorStatic("The file '" + filename + "' is not available.");
 			return -1;
 		}
-
 		try {
 			if (!headless) SNT.log("Guessing file type...");
 			InputStream is;
@@ -2256,17 +2255,17 @@ public class PathAndFillManager extends DefaultHandler implements
 			else if (((buf[0] == '<') && (buf[1] == '?') && (buf[2] == 'x') &&
 				(buf[3] == 'm') && (buf[4] == 'l') && (buf[5] == ' ')))
 				return TRACES_FILE_TYPE_UNCOMPRESSED_XML;
-
+			else if (((buf[0] == '{') && (buf[1] == '"')))
+				return TRACES_FILE_TYPE_ML_JSON;
 		}
 		catch (final IOException e) {
 			SNT.error("Couldn't read from file: " + filename, e);
 			return -1;
 		}
-
 		return TRACES_FILE_TYPE_SWC;
 	}
 
-	public boolean loadCompressedXML(final String filename) {
+	protected boolean loadCompressedXML(final String filename) {
 		try {
 			SNT.log("Loading gzipped file...");
 			return load(new GZIPInputStream(new BufferedInputStream(
@@ -2279,7 +2278,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 	}
 
-	public boolean loadUncompressedXML(final String filename) {
+	protected boolean loadUncompressedXML(final String filename) {
 		try {
 			SNT.log("Loading uncompressed file...");
 			return load(new BufferedInputStream(new FileInputStream(filename)));
@@ -2290,25 +2289,46 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 	}
 
-	public boolean loadGuessingType(final String filename) {
-		final int guessedType = guessTracesFileType(filename);
+	private boolean loadJSON(final String filename) {
+		try {
+			final Map<String, TreeSet<SWCPoint>> nMap = MouseLightLoader.extractNodes(new File(filename), "all");
+			final Map<String, Tree> outMap = importNeurons(nMap, null, "um");
+			return outMap.values().stream().anyMatch(tree -> tree != null && !tree.isEmpty());
+		} catch (final FileNotFoundException | IllegalArgumentException | JSONException e) {
+			error("Failed to read file: '" + filename + "' (" + e.getMessage() +")");
+			return false;
+		}
+	}
+
+	/**
+	 * Imports a reconstruction file (any supported extension).
+	 *
+	 * @param filePath the absolute path to the file (.Traces, SWC or JSON) to be
+	 *                 imported
+	 * @return true, if successful
+	 */
+	public boolean load(final String filePath) {
+		final int guessedType = guessTracesFileType(filePath);
 		boolean result;
 		switch (guessedType) {
 			case TRACES_FILE_TYPE_COMPRESSED_XML:
-				result = loadCompressedXML(filename);
+				result = loadCompressedXML(filePath);
 				break;
 			case TRACES_FILE_TYPE_UNCOMPRESSED_XML:
-				result = loadUncompressedXML(filename);
+				result = loadUncompressedXML(filePath);
+				break;
+			case TRACES_FILE_TYPE_ML_JSON:
+				result = loadJSON(filePath);
 				break;
 			case TRACES_FILE_TYPE_SWC:
-				result = importSWC(filename, false, 0, 0, 0, 1, 1, 1, true);
+				result = importSWC(filePath, false, 0, 0, 0, 1, 1, 1, true);
 				break;
 			default:
 				SNT.warn("guessTracesFileType() return an unknown type" + guessedType);
 				return false;
 		}
 		if (result) {
-			final File file = new File(filename);
+			final File file = new File(filePath);
 			if (getPlugin() != null) getPlugin().prefs.setRecentFile(file);
 			if (boundingBox != null) boundingBox.info = file.getName();
 		}

@@ -237,8 +237,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 			final PathAndFillManager pathAndFillManager = new PathAndFillManager();
 			if (tracesFile != null && tracesFile.exists()) {
 				pathAndFillManager.setHeadless(true);
-				if (!pathAndFillManager.loadGuessingType(tracesFile
-					.getAbsolutePath()))
+				if (!pathAndFillManager.load(tracesFile.getAbsolutePath()))
 				{
 					cancel(String.format("%s is not a valid file", tracesFile
 						.getAbsolutePath()));

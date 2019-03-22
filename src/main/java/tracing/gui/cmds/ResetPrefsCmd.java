@@ -86,10 +86,12 @@ public class ResetPrefsCmd extends ContextCommand {
 		prefService.clear(ColorMapReconstructionCmd.class);
 		prefService.clear(CompareFilesCmd.class);
 		prefService.clear(DistributionCmd.class);
+		prefService.clear(JSONImporterCmd.class);
 		prefService.clear(LoadObjCmd.class);
 		prefService.clear(LoadReconstructionCmd.class);
 		prefService.clear(MLImporterCmd.class);
 		prefService.clear(MultiSWCImporterCmd.class);
+		prefService.clear(OpenDatasetCmd.class);
 		prefService.clear(PathFitterCmd.class);
 		prefService.clear(ReconstructionViewerCmd.class);
 		prefService.clear(RecViewerPrefsCmd.class);

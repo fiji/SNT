@@ -79,9 +79,11 @@ public class SNTLoaderCmd extends DynamicCommand {
 	private static final String UI_SIMPLE = "Memory saving: Only XY view";
 	private static final String UI_DEFAULT = "Default: XY, ZY and XZ views";
 	private static final String DEF_DESCRIPTION =
-		"Ignored when \"Analysis Mode\" is chosen";
+		"Ignored when a display canvas is used";
 
-	@Parameter(required = true, label = "Image", callback = "imageChoiceChanged")
+	@Parameter(required = true, label = "Image", //
+			description = "The image to be traced", //
+			callback = "imageChoiceChanged")
 	private String imageChoice;
 
 	@Parameter(required = false, label = "Path", description = DEF_DESCRIPTION,
@@ -92,7 +94,8 @@ public class SNTLoaderCmd extends DynamicCommand {
 		visibility = ItemVisibility.MESSAGE)
 	private String SPACER1;
 
-	@Parameter(required = false, label = "Traces/(e)SWC file",
+	@Parameter(required = false, label = "Reconstruction file", //
+			description="The reconstruction file to be loaded (.traces, .(e)swc or .json)",
 		style = FileWidget.OPEN_STYLE, callback = "tracesFileChanged")
 	private File tracesFile;
 
@@ -101,8 +104,8 @@ public class SNTLoaderCmd extends DynamicCommand {
 	private String SPACER2;
 
 	@Parameter(required = false, label = "User interface", choices = { UI_DEFAULT,
-		UI_SIMPLE }) // TODO: Add options for
-	// 3D viewer
+		UI_SIMPLE },
+			description = "Ignored if no image and no reconstruction file are provided")
 	private String uiChoice;
 
 	@Parameter(required = false, label = "Tracing channel",

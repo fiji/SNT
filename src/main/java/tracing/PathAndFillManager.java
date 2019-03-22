@@ -2249,14 +2249,16 @@ public class PathAndFillManager extends DefaultHandler implements
 			is = new FileInputStream(filename);
 			is.read(buf, 0, 8);
 			is.close();
-			// SNT.log("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
-			if (((buf[0] & 0xFF) == 0x1F) && ((buf[1] & 0xFF) == 0x8B))
+			//SNT.log("buf[0]: " + buf[0] + ", buf[1]: " + buf[1]);
+			if (((buf[0] & 0xFF) == 0x1F) && ((buf[1] & 0xFF) == 0x8B)) {
 				return TRACES_FILE_TYPE_COMPRESSED_XML;
+			}
 			else if (((buf[0] == '<') && (buf[1] == '?') && (buf[2] == 'x') &&
-				(buf[3] == 'm') && (buf[4] == 'l') && (buf[5] == ' ')))
+				(buf[3] == 'm') && (buf[4] == 'l') && (buf[5] == ' '))) {
 				return TRACES_FILE_TYPE_UNCOMPRESSED_XML;
-			else if (((buf[0] == '{') && (buf[1] == '"')))
+			} else if (((char)(buf[0] & 0xFF) == '{')) {
 				return TRACES_FILE_TYPE_ML_JSON;
+			}
 		}
 		catch (final IOException e) {
 			SNT.error("Couldn't read from file: " + filename, e);

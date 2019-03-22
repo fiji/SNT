@@ -34,6 +34,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import ij.IJ;
+import ij.ImagePlus;
 
 /**
  * Implements the 'Choose Tracing Image (From File)...' command.
@@ -61,7 +62,12 @@ public class OpenDatasetCmd extends CommonDynamicCmd implements Command {
 //			final Dataset ds = ioService.open(file.getAbsolutePath());
 //			final ImagePlus imp = convertService.convert(ds, ImagePlus.class);
 //			snt.initialize(imp);
-			snt.initialize(IJ.openImage(file.getAbsolutePath()));
+			final ImagePlus imp = IJ.openImage(file.getAbsolutePath());
+			if (imp.getType()==ImagePlus.COLOR_RGB) {
+				cancel("Invalid Image: RGB images not supported.");
+			} else {
+				snt.initialize(imp);
+			}
 		}
 		catch (final Throwable ex) {
 			error("Loading of image failed (" + ex.getMessage() +

@@ -41,7 +41,6 @@ import org.scijava.widget.Button;
 
 import tracing.PathAndFillManager;
 import tracing.SNT;
-import tracing.SNTUI;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.FlyCircuitLoader;
@@ -60,8 +59,7 @@ import tracing.viewer.Viewer3D;
 public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 
 	@Parameter(required = true, persist = true,
-		label = "IDs (comma- or space- separated list)",
-		description = "e.g., AA0001 or 10.25378/janelia.5527672")
+		label = "IDs (comma- or space- separated list)")
 	private String query;
 
 	@Parameter(required = false, label = "Colors", choices = {
@@ -173,7 +171,6 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			recViewer.setSceneUpdatesEnabled(true);
 		}
 		else if (snt != null) {
-			if (snt.getUI() != null) snt.getUI().changeState(SNTUI.TRACING_PAUSED);
 			if (rebuildCanvas) {
 				SNT.log("Rebuilding canvases...");
 				snt.rebuildDisplayCanvases();

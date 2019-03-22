@@ -51,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
@@ -86,6 +87,7 @@ import javax.swing.event.DocumentListener;
 import net.imagej.Dataset;
 
 import org.scijava.command.Command;
+import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.table.DefaultGenericTable;
 import org.scijava.util.ColorRGB;
@@ -1265,7 +1267,7 @@ public class SNTUI extends JDialog {
 		++gdb.gridy;
 		final JButton resetbutton = GuiUtils.smallButton("Reset Preferences...");
 		resetbutton.addActionListener(e -> {
-			(new CmdRunner(ResetPrefsCmd.class, false)).execute();
+			(new CmdRunner(ResetPrefsCmd.class)).execute();
 		});
 		gdb.fill = GridBagConstraints.NONE;
 		miscPanel.add(resetbutton, gdb);
@@ -1476,7 +1478,7 @@ public class SNTUI extends JDialog {
 						new ApplyLabelsAction().actionPerformed(ev);
 						break;
 					case COMPARE_AGAINST:
-						(new CmdRunner(ShowCorrespondencesCmd.class, false)).execute();
+						(new CmdRunner(ShowCorrespondencesCmd.class)).execute();
 						break;
 					default:
 						break;
@@ -1931,12 +1933,12 @@ public class SNTUI extends JDialog {
 		changeImpMenu.setIcon(IconFactory.getMenuIcon(GLYPH.FILE_IMAGE));
 		final JMenuItem fromList = new JMenuItem("From Open Image...");
 		fromList.addActionListener(e -> {
-			(new CmdRunner(ChooseDatasetCmd.class, false)).execute();
+			(new CmdRunner(ChooseDatasetCmd.class, null, LOADING)).execute();
 		});
 		changeImpMenu.add(fromList);
 		final JMenuItem fromFile = new JMenuItem("From Imported File...");
 		fromFile.addActionListener(e -> {
-			(new CmdRunner(OpenDatasetCmd.class, false)).execute();
+			(new CmdRunner(OpenDatasetCmd.class, null, LOADING)).execute();
 		});
 		changeImpMenu.add(fromFile);
 		fileMenu.addSeparator();
@@ -1956,13 +1958,17 @@ public class SNTUI extends JDialog {
 		final JMenuItem importJSON = new JMenuItem("JSON...");
 		importSubmenu.add(importJSON);
 		importJSON.addActionListener(e -> {
-			(new CmdRunner(JSONImporterCmd.class, true)).execute();
+			final HashMap<String, Object> inputs = new HashMap<>();
+			inputs.put("rebuildCanvas", true);
+			(new CmdRunner(JSONImporterCmd.class, inputs, LOADING)).execute();
 		});
 		final JMenuItem importDirectory = new JMenuItem("Directory of SWCs...");
 		importDirectory.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.FOLDER));
 		importSubmenu.add(importDirectory);
 		importDirectory.addActionListener(e -> {
-			(new CmdRunner(MultiSWCImporterCmd.class, true)).execute();
+			final HashMap<String, Object> inputs = new HashMap<>();
+			inputs.put("rebuildCanvas", true);
+			(new CmdRunner(MultiSWCImporterCmd.class, inputs, LOADING)).execute();
 		});
 		importSubmenu.addSeparator();
 		loadLabelsMenuItem = new JMenuItem("Labels (AmiraMesh)...");
@@ -1977,19 +1983,23 @@ public class SNTUI extends JDialog {
 		importFlyCircuit.addActionListener(e -> {
 			final HashMap<String, Object> inputs = new HashMap<>();
 			inputs.put("loader", new FlyCircuitLoader());
-			(new CmdRunner(RemoteSWCImporterCmd.class, inputs, true)).execute();
+			inputs.put("rebuildCanvas", true);
+			(new CmdRunner(RemoteSWCImporterCmd.class, inputs, LOADING)).execute();
 		});
 		final JMenuItem importMouselight = new JMenuItem("MouseLight...");
 		remoteSubmenu.add(importMouselight);
 		importMouselight.addActionListener(e -> {
-			(new CmdRunner(MLImporterCmd.class, null, true)).execute();
+			final HashMap<String, Object> inputs = new HashMap<>();
+			inputs.put("rebuildCanvas", true);
+			(new CmdRunner(MLImporterCmd.class, inputs, LOADING)).execute();
 		});
 		final JMenuItem importNeuroMorpho = new JMenuItem("NeuroMorpho...");
 		remoteSubmenu.add(importNeuroMorpho);
 		importNeuroMorpho.addActionListener(e -> {
 			final HashMap<String, Object> inputs = new HashMap<>();
 			inputs.put("loader", new NeuroMorphoLoader());
-			(new CmdRunner(RemoteSWCImporterCmd.class, inputs, true)).execute();
+			inputs.put("rebuildCanvas", true);
+			(new CmdRunner(RemoteSWCImporterCmd.class, inputs, LOADING)).execute();
 		});
 		importSubmenu.add(remoteSubmenu);
 
@@ -2026,7 +2036,7 @@ public class SNTUI extends JDialog {
 		compareFiles.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BINOCULARS));
 		analysisMenu.add(compareFiles);
 		compareFiles.addActionListener(e -> {
-			(new CmdRunner(CompareFilesCmd.class, false)).execute();
+			(new CmdRunner(CompareFilesCmd.class)).execute();
 		});
 		analysisMenu.addSeparator();
 
@@ -3163,68 +3173,78 @@ public class SNTUI extends JDialog {
 		}
 	}
 
-	private class CmdRunner extends SwingWorker<Object, Object> {
+	private class CmdRunner extends SwingWorker<String, Void> {
 
 		private final Class<? extends Command> cmd;
-		private final boolean analysisModeCmd;
+		private final int preRunState;
+		private final boolean run;
 		private HashMap<String, Object> inputs;
 
-		public CmdRunner(final Class<? extends Command> cmd,
-			final boolean analysisModeCmd)
+		// Cmd that does not require rebuilding canvas(es) nor changing UI state
+		public CmdRunner(final Class<? extends Command> cmd)
 		{
-			this.cmd = cmd;
-			this.inputs = null;
-			this.analysisModeCmd = analysisModeCmd;
+			this(cmd, null, getCurrentState());
 		}
 
-		public CmdRunner(final Class<? extends Command> cmd,
-			final HashMap<String, Object> inputs, final boolean analysisModeCmd)
+		public CmdRunner(final Class<? extends Command> cmd, final HashMap<String, Object> inputs, 
+				final int uiStateduringRun)
 		{
+			assert SwingUtilities.isEventDispatchThread();
 			this.cmd = cmd;
+			this.preRunState = getCurrentState();
 			this.inputs = inputs;
-			this.analysisModeCmd = analysisModeCmd;
-			if (analysisModeCmd) {
-				if (inputs == null) this.inputs = new HashMap<>();
-				this.inputs.put("rebuildCanvas", !plugin.accessToValidImageData());
-			}
+			run = initialize();
+			if (run && preRunState != uiStateduringRun) changeState(uiStateduringRun);
 		}
 
-		@Override
-		public Object doInBackground() {
-			if (getCurrentState() == SNTUI.EDITING) {
-				guiUtils.error("Please finish editing " + plugin.getEditingPath()
-					.getName() + " before running this command.");
-				return null;
-			}
-			if (analysisModeCmd && !plugin.accessToValidImageData() && !plugin
-				.getImagePlus().changes && guiUtils.getConfirmation(
-					"<HTML><div WIDTH=500>" +
-						"Coordinates of external reconstructions <i>may</i> fall outside the boundaries " +
-						"of current image. Would you like to close active image and use a display canvas " +
-						"with computed dimensions containing all the nodes of the imported file?",
-					"Change to Display Canvas?", "Yes. Use Display Canvas",
-					"No. Use Current Image"))
-			{
-				plugin.tracingHalted = true;
-				if (inputs == null) inputs = new HashMap<>();
-				inputs.put("rebuildCanvas", true);
-			}
-			try {
-				final CommandService cmdService = plugin.getContext().getService(
-					CommandService.class);
-				cmdService.run(cmd, true, inputs).get();
-			}
-			catch (final InterruptedException | ExecutionException e1) {
+		private boolean initialize() {
+			if (preRunState == SNTUI.EDITING) {
 				guiUtils.error(
-					"Unfortunately an exception occured. See console for details.");
-				e1.printStackTrace();
+						"Please finish editing " + plugin.getEditingPath().getName() + " before running this command.");
+				return false;
 			}
-			return null;
+			final boolean rebuildCanvas = inputs != null && inputs.get("rebuildCanvas") == (Boolean)true;
+			final boolean dataCouldBeLost = plugin.accessToValidImageData()
+					|| (plugin.getImagePlus() != null && plugin.getImagePlus().changes);
+			final boolean rebuild = rebuildCanvas && dataCouldBeLost
+					&& guiUtils.getConfirmation("<HTML><div WIDTH=500>" //
+							+ "Coordinates of external reconstructions <i>may</i> fall outside the boundaries " //
+							+ "of current image. Would you like to close active image and use a display canvas " //
+							+ "with computed dimensions containing all the nodes of the imported file?", //
+							"Change to Display Canvas?", "Yes. Use Display Canvas", "No. Use Current Image");
+			if (inputs != null) inputs.put("rebuildCanvas", rebuild);
+			if (rebuild) plugin.tracingHalted = true;
+			return true;
+		}
+	
+		@Override
+		public String doInBackground() {
+			if (!run) return "Ongoing task";
+			try {
+				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				final CommandModule cmdModule = cmdService.run(cmd, true, inputs).get();
+				return (cmdModule.isCanceled()) ? cmdModule.getCancelReason() : "Command completed";
+			} catch (final NullPointerException e1) {
+				// This seems to happen if command is DynamicCommand
+				return "Scijava Command...";
+			}
+			catch (final CancellationException | InterruptedException | ExecutionException e2) {
+				return e2.getMessage();
+			}
+			catch (final IllegalArgumentException e3) {
+				e3.printStackTrace();
+				return "Unfortunately an error occured. See console for details.";
+			}
 		}
 
 		@Override
 		protected void done() {
-			showStatus("Command completed...", true);
+			try {
+				showStatus(get(), true);
+			} catch (InterruptedException | ExecutionException e) {
+				showStatus("Command terminated...", false);
+			}
+			if (run && preRunState != getCurrentState()) changeState(preRunState);
 		}
 	}
 

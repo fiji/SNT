@@ -29,8 +29,8 @@ import java.util.TreeSet;
 import java.util.stream.IntStream;
 
 import org.json.JSONException;
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
-import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.util.ColorRGB;
@@ -38,9 +38,6 @@ import org.scijava.util.ColorRGB;
 import net.imagej.ImageJ;
 import tracing.PathAndFillManager;
 import tracing.SNT;
-import tracing.SNTService;
-import tracing.SNTUI;
-import tracing.SimpleNeuriteTracer;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.MouseLightLoader;
@@ -53,10 +50,7 @@ import tracing.util.SWCPoint;
  */
 @Plugin(type = Command.class, visible = false,
 	label = "Import ML JSON Data")
-public class JSONImporterCmd extends ContextCommand {
-
-	@Parameter
-	private SNTService sntService;
+public class JSONImporterCmd extends CommonDynamicCmd {
 
 	@Parameter(label = "File")
 	private File file;
@@ -71,6 +65,10 @@ public class JSONImporterCmd extends ContextCommand {
 	@Parameter(required = false, label = "Replace existing paths")
 	private boolean clearExisting;
 
+	@Parameter(persist = false, required = false,
+		visibility = ItemVisibility.INVISIBLE)
+	private boolean rebuildCanvas;
+
 	/*
 	 * (non-Javadoc)
 	 *
@@ -79,22 +77,21 @@ public class JSONImporterCmd extends ContextCommand {
 	@Override
 	public void run() {
 
-		final SimpleNeuriteTracer snt = sntService.getPlugin();
-		final SNTUI ui = sntService.getUI();
+		snt = sntService.getPlugin();
+		ui = sntService.getUI();
 		final PathAndFillManager pafm = sntService.getPathAndFillManager();
 
-		ui.showStatus("Importing file. Please wait...", false);
+		status("Importing file. Please wait...", false);
 		SNT.log("Importing file " + file);
 
 		final int lastExistingPathIdx = pafm.size() - 1;
-		long failures = 0;
 		try {
+
 			final Map<String, TreeSet<SWCPoint>> nodes = MouseLightLoader.extractNodes(file, "all");
 			final Map<String, Tree> result = pafm.importNeurons(nodes, getColor(), null);
-			failures = result.values().stream().filter(Tree::isEmpty).count();
-			if (failures == result.size()) {
-				snt.error("No reconstructions could be retrieved. Invalid directory?");
-				ui.showStatus("Error... No reconstructions imported", true);
+			if (pafm.size() - 1 == lastExistingPathIdx) {
+				error("No reconstructions could be retrieved. Invalid file?");
+				status("Error... No reconstructions imported", true);
 				return;
 			}
 
@@ -102,21 +99,18 @@ public class JSONImporterCmd extends ContextCommand {
 				final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx).toArray();
 				pafm.deletePaths(indices);
 			}
-			SNT.log("Rebuilding canvases...");
-			if (failures > 0) {
-				snt.error(String.format("%d/%d reconstructions could not be retrieved.", failures, result.size()));
-				ui.showStatus("Partially successful import...", true);
-				SNT.log("Import failed for the following files:");
-				result.values().forEach(tree -> {
-					if (tree.isEmpty())
-						SNT.log(tree.getLabel());
-				});
-			} else {
-				ui.showStatus("Successful imported " + result.size() + " reconstruction(s)...", true);
+
+			if (rebuildCanvas) {
+				SNT.log("Rebuilding canvases...");
+				snt.rebuildDisplayCanvases();
 			}
+
+			status("Successful imported " + result.size() + " reconstruction(s)...", true);
+	
 		} catch (final FileNotFoundException | IllegalArgumentException | JSONException e) {
-			snt.error(e.getMessage());
+			error(e.getMessage());
 		}
+
 	}
 
 	private ColorRGB getColor() {

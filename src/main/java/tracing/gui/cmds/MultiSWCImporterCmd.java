@@ -30,6 +30,7 @@ import java.util.stream.IntStream;
 
 import net.imagej.ImageJ;
 
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
@@ -74,6 +75,10 @@ public class MultiSWCImporterCmd extends ContextCommand {
 	@Parameter(required = false, label = "Replace existing paths")
 	private boolean clearExisting;
 
+	@Parameter(persist = false, required = false,
+		visibility = ItemVisibility.INVISIBLE)
+	private boolean rebuildCanvas;
+
 	/*
 	 * (non-Javadoc)
 	 *
@@ -104,12 +109,18 @@ public class MultiSWCImporterCmd extends ContextCommand {
 			ui.showStatus("Error... No reconstructions imported", true);
 			return;
 		}
+
 		if (clearExisting) {
 			final int[] indices = IntStream.rangeClosed(0, lastExistingPathIdx)
 				.toArray();
 			pafm.deletePaths(indices);
 		}
-		SNT.log("Rebuilding canvases...");
+
+		if (rebuildCanvas) {
+			SNT.log("Rebuilding canvases...");
+			snt.rebuildDisplayCanvases();
+		}
+
 		if (failures > 0) {
 			snt.error(String.format("%d/%d reconstructions could not be retrieved.",
 				failures, result.size()));

@@ -1349,7 +1349,7 @@ public class Viewer3D {
 		}
 
 		public ColorLegend(final ColorTableMapper mapper) {
-			this(mapper, new Font(Font.SANS_SERIF, Font.PLAIN, 12), 5, 2);
+			this(mapper, new Font(Font.SANS_SERIF, Font.PLAIN, (int) (12 * Prefs.SCALE_FACTOR)), 5, 2);
 		}
 
 		public void update(final double min, final double max) {
@@ -1506,7 +1506,8 @@ public class Viewer3D {
 		 *          should be made visible
 		 */
 		public ViewerFrame(final Chart chart, final boolean includeManager) {
-			this(chart, DEF_WIDTH, DEF_HEIGHT, true, includeManager);
+			this(chart, (int) (DEF_WIDTH * Prefs.SCALE_FACTOR), (int) (DEF_HEIGHT * Prefs.SCALE_FACTOR), true,
+					includeManager);
 		}
 
 		public ViewerFrame(final Chart chart, final int width, final int height, final boolean center, final boolean includeManager) {
@@ -1520,13 +1521,13 @@ public class Viewer3D {
 				manager.setVisible(true);
 			}
 			addComponentListener(new ComponentAdapter() {
-		    @Override
-			public void componentResized(final ComponentEvent componentEvent) {
-		        if (SNT.isDebugMode()) {
-		        	SNT.log("Frame resized("+ getWidth() + ", " + getHeight()  +");");
-		        }
-		    }
-		});
+				@Override
+				public void componentResized(final ComponentEvent componentEvent) {
+					if (SNT.isDebugMode()) {
+						SNT.log("Frame resized(" + getWidth() + ", " + getHeight() + ");");
+					}
+				}
+			});
 			toFront();
 		}
 
@@ -1626,6 +1627,7 @@ public class Viewer3D {
 		private static final double DEF_ROTATION_STEP = ROTATION_STEPS[1];
 
 		/* GUI */
+		private static final double SCALE_FACTOR = ij.Prefs.getDouble("gui.scale", 1d); //TODO: Replace w/ Prefs.getGuiScale(); when IJ1.52k in POM
 		private static final boolean DEF_NAG_USER_ON_RETRIEVE_ALL = true;
 		private static final boolean DEF_RETRIEVE_ALL_IF_NONE_SELECTED = true;
 		public boolean nagUserOnRetrieveAll;

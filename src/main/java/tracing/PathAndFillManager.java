@@ -635,7 +635,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 				double distanceSquaredToNearestParentPoint = Double.MAX_VALUE;
 				for (final SWCPoint s : result) {
-					if (s.onPath != parent) continue;
+					if (s.getOnPath() != parent) continue;
 					final double distanceSquared = connectingPoint.distanceSquaredTo(s.x,
 						s.y, s.z);
 					if (distanceSquared < distanceSquaredToNearestParentPoint) {
@@ -662,7 +662,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					pathToUse.precise_y_positions[i], pathToUse.precise_z_positions[i],
 					radius, firstSWCPoint == null ? nearestParentSWCPointID
 						: currentPointID - 1);
-				swcPoint.onPath = currentPath;
+				swcPoint.setOnPath(currentPath);
 				result.add(swcPoint);
 				++currentPointID;
 				if (firstSWCPoint == null) firstSWCPoint = swcPoint;
@@ -681,7 +681,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					.getSWCType(), pathToUse.precise_x_positions[i],
 					pathToUse.precise_y_positions[i], pathToUse.precise_z_positions[i],
 					radius, previousPointID);
-				swcPoint.onPath = currentPath;
+				swcPoint.setOnPath(currentPath);
 				result.add(swcPoint);
 				++currentPointID;
 			}
@@ -1972,8 +1972,8 @@ public class PathAndFillManager extends DefaultHandler implements
 			else {
 				final SWCPoint previousPoint = idToSWCPoint.get(point.parent);
 				if (previousPoint != null) {
-					point.previousPoint = previousPoint;
-					previousPoint.nextPoints.add(point);
+					point.setPreviousPoint(previousPoint);
+					previousPoint.getNextPoints().add(point);
 				}
 			}
 		}
@@ -2030,8 +2030,8 @@ public class PathAndFillManager extends DefaultHandler implements
 		while ((start = backtrackTo.poll()) != null) {
 			currentPath = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 			currentPath.createCircles();
-			if (start.previousPoint != null) {
-				final SWCPoint beforeStart = start.previousPoint;
+			if (start.getPreviousPoint() != null) {
+				final SWCPoint beforeStart = start.getPreviousPoint();
 				pathStartsOnSWCPoint.put(currentPath, beforeStart);
 				pathStartsAtPointInImage.put(currentPath, beforeStart
 					.getPointInImage());
@@ -2044,10 +2044,10 @@ public class PathAndFillManager extends DefaultHandler implements
 				currentPath.addNode(currentPoint);
 				pointToPath.put(currentPoint, currentPath);
 
-				if (currentPoint.nextPoints.size() > 0) {
-					final SWCPoint newCurrentPoint = currentPoint.nextPoints.get(0);
-					currentPoint.nextPoints.remove(0);
-					backtrackTo.addAll(currentPoint.nextPoints);
+				if (currentPoint.getNextPoints().size() > 0) {
+					final SWCPoint newCurrentPoint = currentPoint.getNextPoints().get(0);
+					currentPoint.getNextPoints().remove(0);
+					backtrackTo.addAll(currentPoint.getNextPoints());
 					currentPoint = newCurrentPoint;
 				}
 				else {

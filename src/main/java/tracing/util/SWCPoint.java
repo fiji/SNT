@@ -61,17 +61,9 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	/** The radius of reconstructed structure at this node */
 	public double radius;
 
-	/**
-	 * The list holding the subsequent nodes in the reconstructed structure after
-	 * this one.
-	 */
-	public final List<SWCPoint> nextPoints;
-
-	/** The preceding node (if any) */
-	public SWCPoint previousPoint;
-
-	/** The Path associated with this node (if any) */
-	public Path onPath = null;
+	private final List<SWCPoint> nextPoints;
+	private SWCPoint previousPoint;
+	private Path onPath = null;
 
 	/** Optional attribute: BrainAnnotation */
 	private BrainAnnotation annotation;
@@ -232,6 +224,54 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	@Override
 	public BrainAnnotation getAnnotation() {
 		return annotation;
+	}
+
+	/**
+	 * Returns the preceding node (if any)
+	 * 
+	 * @return the previous node or null if set by
+	 *         {@link #setPreviousPoint(SWCPoint)} has not been called
+	 */
+	public SWCPoint getPreviousPoint() {
+		return previousPoint;
+	}
+
+	/**
+	 * Sets the preceding node in the reconstruction
+	 * 
+	 * @param previousPoint the previous node preceding this one
+	 */
+	public void setPreviousPoint(final SWCPoint previousPoint) {
+		this.previousPoint = previousPoint;
+	}
+
+	/**
+	 * Returns the list holding the subsequent nodes in the reconstructed structure
+	 * after this one.
+	 * 
+	 * @return the list of "next points"
+	 */
+	public List<SWCPoint> getNextPoints() {
+		return nextPoints;
+	}
+
+	/**
+	 * Returns the Path associated with this node (if any)
+	 * 
+	 * @return the path associated with this node or null if
+	 *         {@link #setOnPath(Path)} has not been called.
+	 */
+	public Path getOnPath() {
+		return onPath;
+	}
+
+	/**
+	 * Associates a Path with this node
+	 * 
+	 * @param onPath the Path to be associated with this node
+	 */
+	public void setOnPath(final Path onPath) {
+		this.onPath = onPath;
 	}
 
 }

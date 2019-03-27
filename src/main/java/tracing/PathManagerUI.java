@@ -652,9 +652,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			return; // user pressed cancel
 		}
 
-		if (saveFile.exists() && !guiUtils.getConfirmation("The file " + saveFile
-			.getAbsolutePath() + " already exists. Replace it?", "Override?")) return;
-
 		plugin.statusService.showStatus("Exporting SWC data to " + saveFile
 			.getAbsolutePath());
 
@@ -1500,11 +1497,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			Collections.singletonList(".csv"));
 		if (saveFile == null) return; // user pressed cancel
 
-		if (saveFile.exists() && !guiUtils.getConfirmation("The file " + saveFile
-			.getAbsolutePath() + " already exists. Replace it?", "Override?"))
-		{
-			return;
-		}
 		plugin.getUI().showStatus("Exporting Measurements..", false);
 		try {
 			saveTable(saveFile);

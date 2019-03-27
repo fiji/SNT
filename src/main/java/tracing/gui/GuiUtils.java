@@ -322,11 +322,23 @@ public class GuiUtils {
 	public File saveFile(final String title, final File file,
 		final List<String> allowedExtensions)
 	{
-		final JFileChooser chooser = fileChooser(title, file,
-			JFileChooser.FILES_ONLY, allowedExtensions);
-		if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION)
-			return chooser.getSelectedFile();
-		return null;
+		File chosenFile = null;
+		final JFileChooser chooser = fileChooser(title, file, JFileChooser.FILES_ONLY, allowedExtensions);
+		if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
+			chosenFile = chooser.getSelectedFile();
+			if (chosenFile != null && allowedExtensions != null && allowedExtensions.size() == 1) {
+				final String path = chosenFile.getAbsolutePath();
+				final String extension = allowedExtensions.get(0);
+				if (!path.endsWith(extension))
+					chosenFile = new File(path + extension);
+			}
+			if (chosenFile.exists()
+					&& !getConfirmation(chosenFile.getAbsolutePath() + " already exists. Do you want to replace it?",
+							"Override File?")) {
+				return null;
+			}
+		}
+		return chosenFile;
 	}
 
 	public File openFile(final String title, final File file,
@@ -351,7 +363,11 @@ public class GuiUtils {
 		final int type, final List<String> allowedExtensions)
 	{
 		final JFileChooser chooser = new JFileChooser(file);
-		chooser.setSelectedFile(file);
+		if (file.exists()) {
+			chooser.setSelectedFile(file);
+		} else {
+			chooser.setCurrentDirectory(file.getParentFile());
+		}
 		chooser.setDialogTitle(title);
 		chooser.setFileSelectionMode(type);
 		chooser.setDragEnabled(true);

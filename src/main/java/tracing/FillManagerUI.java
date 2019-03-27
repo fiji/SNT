@@ -460,12 +460,6 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 			final File saveFile = gUtils.saveFile("Export CSV Summary...", file,
 				Collections.singletonList(".csv"));
 			if (saveFile == null) return; // user pressed cancel;
-			if (saveFile.exists() && !gUtils.getConfirmation("Export data...",
-				"The file " + saveFile.getAbsolutePath() +
-					" already exists. Do you want to replace it?"))
-			{
-				return;
-			}
 			plugin.getUI().showStatus("Exporting CSV data to " + saveFile
 				.getAbsolutePath(), false);
 			try {

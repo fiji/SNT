@@ -2961,13 +2961,6 @@ public class SNTUI extends JDialog {
 				final File saveFile = guiUtils.saveFile("Save traces as...",
 					suggestedFile, Collections.singletonList(".traces"));
 				if (saveFile == null) return; // user pressed cancel;
-				if (saveFile.exists() && !guiUtils.getConfirmation("The file " +
-					saveFile.getAbsolutePath() + " already exists.\n" +
-					"Do you want to replace it?", "Override traces file?"))
-				{
-					return;
-				}
-
 				showStatus("Saving traces to " + saveFile.getAbsolutePath(), false);
 
 				final int preSavingState = currentState;

@@ -24,6 +24,7 @@ package tracing.analysis.graph;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeSet;
 
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 
 import org.jgrapht.Graph;
@@ -87,17 +89,16 @@ public class GraphUtils {
 	}
 
 	/**
-	 * Assembles a frame holding an UI commands for interacting with a graph
+	 * Assembles a window holding an UI commands for interacting with a graph
 	 *
 	 * @param       <V> the graph vertex type
 	 * @param       <E> the graph edge type
 	 * @param graph the graph to be displayed
-	 * @return the assembled frame
+	 * @return the assembled window
 	 */
-	public static <V, E> JFrame assembleFrame(final Graph<V, E> graph) {
+	public static <V, E> Window assembleDisplay(final Graph<V, E> graph) {
 		GuiUtils.setSystemLookAndFeel();
-		final JFrame frame = new JFrame("DemoGraph");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		final JDialog frame = new JDialog((JFrame)null, "SNT Graph Canvas");
 		final TreeGraphAdapter<?, ?> graphAdapter = new TreeGraphAdapter<>(graph);
 		final mxIGraphLayout layout = new mxCompactTreeLayout(graphAdapter);
 		layout.execute(graphAdapter.getDefaultParent());
@@ -110,8 +111,6 @@ public class GraphUtils {
 				(int) Math.min(prefDim.getHeight(), maxDim.getHeight() / 2)));
 		frame.pack();
 		graphComponent.zoomActual();
-		frame.setLocationByPlatform(true);
-		frame.setTitle("SNT Graph Canvas");
 		return frame;
 	}
 
@@ -122,7 +121,7 @@ public class GraphUtils {
 			final String firstCell = map.keySet().iterator().next();
 			final DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> graph = GraphUtils.createGraph(map.get(firstCell),
 					true);
-			GraphUtils.assembleFrame(graph).setVisible(true);
+			GraphUtils.assembleDisplay(graph).setVisible(true);
 		} catch (final FileNotFoundException e) {
 			e.printStackTrace();
 		}

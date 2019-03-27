@@ -123,10 +123,8 @@ public class MouseLightLoader {
 	 * loaded neuron.
 	 *
 	 * @return the list of nodes of the neuron as {@link SWCPoint}s.
-	 * @throws IllegalArgumentException if compartment is not recognized or it was
-	 *                                  not possible to retrieve data
 	 */
-	public TreeSet<SWCPoint> getNodes() throws IllegalArgumentException {
+	public TreeSet<SWCPoint> getNodes() {
 		return getNodes("all");
 	}
 

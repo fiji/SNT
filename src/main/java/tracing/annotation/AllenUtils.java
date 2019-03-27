@@ -167,8 +167,8 @@ public class AllenUtils {
 	 *
 	 * @return the "flattened" ontogenies list
 	 */
-	public static Collection<AllenCompartment> getOntogenies() {
-		return new AllenTreeModel().getOntogenies();
+	public static Collection<AllenCompartment> getOntologies() {
+		return new AllenTreeModel().getOntologies();
 	}
 
 	private static class AllenTreeModel {
@@ -187,7 +187,7 @@ public class AllenUtils {
 			return ac;
 		}
 
-		private Collection<AllenCompartment> getOntogenies() {
+		private Collection<AllenCompartment> getOntologies() {
 			final Collection<AllenCompartment> list = new ArrayList<>(areaList.length());
 			for (int n = 0; n < areaList.length(); n++) {
 				list.add(getAreaListCompartment(n));

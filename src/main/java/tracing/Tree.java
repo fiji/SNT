@@ -44,6 +44,7 @@ import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.BoundingBox;
 import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
+import tracing.util.SWCPoint;
 
 /**
  * Utility class to access a Collection of Paths. A Tree is the preferred way to
@@ -94,6 +95,19 @@ public class Tree {
 			}
 			tree.add(pathToAdd);
 		}
+	}
+
+	/**
+	 * Instantiates a Tree from a collection of reconstruction nodes.
+	 *
+	 * @param nodes the collection of reconstruction nodes. Nodes will be sorted by
+	 *              id and any duplicate entries pruned.
+	 * @param label the identifying label for this Tree.
+	 */
+	public Tree(final Collection<SWCPoint> nodes, final String label) {
+		final PathAndFillManager pafm = PathAndFillManager.createFromNodes(nodes);
+		tree = (pafm == null) ? new ArrayList<>() : pafm.getPaths();
+		setLabel(label);
 	}
 
 	/**

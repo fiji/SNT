@@ -1720,6 +1720,26 @@ public class PathAndFillManager extends DefaultHandler implements
 		else return null;
 	}
 
+	/**
+	 * Creates a PathAndFillManager instance from a collection of reconstruction
+	 * nodes.
+	 *
+	 * @param nodes the collection of reconstruction nodes. Nodes will be sorted by
+	 *              id and any duplicate entries pruned.
+	 * @return the PathAndFillManager instance, or null if file could not be
+	 *         imported
+	 */
+	public static PathAndFillManager createFromNodes(final Collection<SWCPoint> nodes) {
+		final PathAndFillManager pafm = new PathAndFillManager();
+		pafm.setHeadless(true);
+		final TreeSet<SWCPoint> set = (nodes instanceof TreeSet) ? (TreeSet<SWCPoint>) nodes
+				: new TreeSet<SWCPoint>(nodes);
+		if (pafm.importNodes(null, set, null, false))
+			return pafm;
+		else
+			return null;
+	}
+
 	private boolean load(final InputStream is) {
 
 		try {

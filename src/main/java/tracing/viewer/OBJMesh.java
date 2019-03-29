@@ -109,6 +109,20 @@ public class OBJMesh {
 	}
 
 	/**
+	 * Script friendly method to assign a color to the mesh.
+	 *
+	 * @param color               the color to render the imported file, either a 1)
+	 *                            HTML color codes starting with hash ({@code #}), a
+	 *                            color preset ("red", "blue", etc.), or integer
+	 *                            triples of the form {@code r,g,b} and range
+	 *                            {@code [0, 255]}
+	 * @param transparencyPercent the color transparency (in percentage)
+	 */
+	public void setColor(final String color, final double transparencyPercent) {
+		setColor(new ColorRGB(color), transparencyPercent);
+	}
+
+	/**
 	 * Assigns a color to the mesh.
 	 * 
 	 * @param color the color to render the imported file

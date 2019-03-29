@@ -533,6 +533,19 @@ public class Tree {
 	}
 
 	/**
+	 * Assigns a color to all the paths in this tree. Note that assigning a non-null
+	 * color will remove node colors from Paths.
+	 * 
+	 * @param color the color to be applied, either a 1) HTML color codes starting
+	 *              with hash ({@code #}), a color preset ("red", "blue", etc.), or
+	 *              integer triples of the form {@code r,g,b} and range
+	 *              {@code [0, 255]}
+	 */
+	public void setColor(final String color) {
+		setColor(new ColorRGB(color));
+	}
+
+	/**
 	 * Assigns a fixed radius to all the nodes in this tree.
 	 *
 	 * @param r the radius to be assigned. Setting it to 0 or Double.NaN removes

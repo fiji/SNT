@@ -49,6 +49,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -763,6 +764,17 @@ public class Viewer3D {
 	/**
 	 * Removes the specified Tree.
 	 *
+	 * @param tree the tree to be removed.
+	 * @return true, if tree was successfully removed.
+	 * @see #add(Tree)
+	 */
+	public boolean remove(final Tree tree) {
+		return remove(getLabel(tree));
+	}
+
+	/**
+	 * Removes the specified Tree.
+	 *
 	 * @param treeLabel the key defining the tree to be removed.
 	 * @return true, if tree was successfully removed.
 	 * @see #add(Tree)
@@ -777,6 +789,18 @@ public class Viewer3D {
 			if (removed) deleteItemFromManager(treeLabel);
 		}
 		return removed;
+	}
+
+	/**
+	 * Removes the specified OBJ mesh.
+	 *
+	 * @param mesh the OBJ mesh to be removed.
+	 * @return true, if mesh was successfully removed.
+	 * @see #loadOBJ(String, ColorRGB, double)
+	 */
+	public boolean removeOBJ(final OBJMesh mesh) {
+		final String meshLabel = getLabel(mesh);
+		return removeDrawable(plottedObjs, meshLabel);
 	}
 
 	/**
@@ -3690,6 +3714,20 @@ public class Viewer3D {
 		}
 	}
 
+	private String getLabel(final OBJMesh mesh) {
+		for (final Entry<String, RemountableDrawableVBO> entry : plottedObjs.entrySet()) {
+			if (entry.getValue().objMesh == mesh) return entry.getKey();
+		}
+		return null;
+	}
+
+	private String getLabel(final Tree tree) {
+		for (final Map.Entry<String, ShapeTree> entry : plottedTrees.entrySet()) {
+			if (entry.getValue().tree == tree) return entry.getKey();
+		}
+		return null;
+	}
+
 	/**
 	 * Sets the line thickness for rendering {@link Tree}s that have no specified
 	 * radius.
@@ -3769,6 +3807,18 @@ public class Viewer3D {
 	public void setTreesThickness(final float thickness) {
 		plottedTrees.values().forEach(shapeTree -> shapeTree.setThickness(
 			thickness));
+	}
+
+	/**
+	 * Translates the specified Tree. Does nothing if tree is not present in scene.
+	 *
+	 * @param tree the Tree to be translated
+	 * @param offset the translation offset. If null, tree position will be reset to
+	 *               their original location.
+	 */
+	public void translate(final Tree tree, final SNTPoint offset){
+		final String treeLabel = getLabel(tree);
+		if (treeLabel != null) this.translate(Collections.singletonList(treeLabel), offset);
 	}
 
 	/**

@@ -26,16 +26,22 @@ import java.util.Map;
 
 import org.jgrapht.Graph;
 import org.jgrapht.ext.JGraphXAdapter;
+import org.scijava.util.ColorRGB;
 
 import com.mxgraph.util.mxConstants;
 
-public class TreeGraphAdapter<V, E> extends JGraphXAdapter<V, E> {
+class TreeGraphAdapter<V, E> extends JGraphXAdapter<V, E> {
 
 	private static final String DARK_GRAY = "#222222";
 	private static final String LIGHT_GRAY = "#eeeeee";
 
-	public TreeGraphAdapter(final Graph<V, E> graph) {
+	protected TreeGraphAdapter(final Graph<V, E> graph) {
+		this(graph, LIGHT_GRAY);
+	}
+
+	protected TreeGraphAdapter(final Graph<V, E> graph, final String verticesColor) {
 		super(graph);
+		final String vColor = (verticesColor == null) ? LIGHT_GRAY : new ColorRGB(verticesColor).toHTMLColor();
 		final Map<String, Object> edgeStyle = getStylesheet().getDefaultEdgeStyle();
 		edgeStyle.put(mxConstants.STYLE_NOLABEL, true);
 		edgeStyle.put(mxConstants.STYLE_STROKECOLOR, DARK_GRAY);
@@ -44,7 +50,7 @@ public class TreeGraphAdapter<V, E> extends JGraphXAdapter<V, E> {
 		vertexStyle.put(mxConstants.STYLE_VERTICAL_LABEL_POSITION, mxConstants.ALIGN_MIDDLE);
 		vertexStyle.put(mxConstants.STYLE_FONTCOLOR, DARK_GRAY);
 		vertexStyle.put(mxConstants.STYLE_STROKECOLOR, DARK_GRAY);
-		vertexStyle.put(mxConstants.STYLE_FILLCOLOR, LIGHT_GRAY);
+		vertexStyle.put(mxConstants.STYLE_FILLCOLOR, vColor);
 	}
 
 }

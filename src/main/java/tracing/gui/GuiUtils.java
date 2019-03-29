@@ -363,10 +363,12 @@ public class GuiUtils {
 		final int type, final List<String> allowedExtensions)
 	{
 		final JFileChooser chooser = new JFileChooser(file);
-		if (file.exists()) {
-			chooser.setSelectedFile(file);
-		} else {
-			chooser.setCurrentDirectory(file.getParentFile());
+		if (file != null) {
+			if (file.exists()) {
+				chooser.setSelectedFile(file);
+			} else {
+				chooser.setCurrentDirectory(file.getParentFile());
+			}
 		}
 		chooser.setDialogTitle(title);
 		chooser.setFileSelectionMode(type);

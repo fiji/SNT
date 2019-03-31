@@ -44,7 +44,6 @@ import org.scijava.util.ColorRGB;
 import org.scijava.widget.FileWidget;
 import org.scijava.widget.NumberWidget;
 
-import ij.measure.Calibration;
 import tracing.Path;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
@@ -171,22 +170,11 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 		// to a new Tree. To avoid rotation lags we'll keep it monochrome,
 		// We'll store input colors to be restored by the 'snapshot' action
 		plottingTree = new Tree();
-		snapshotTree = new Tree();
 		for (final Path p : tree.list()) {
-			Path pathToPlot;
-			if (p.getUseFitted()) pathToPlot = p.getFitted();
-			else pathToPlot = p;
-			final Calibration cal = pathToPlot.getCalibration();
-			final Path dup = new Path(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth,
-				cal.getUnit());
-			for (int i = 0; i < pathToPlot.size(); i++) {
-				dup.addNode(pathToPlot.getNode(i));
-			}
-			dup.setSWCType(pathToPlot.getSWCType());
-			dup.setCTposition(pathToPlot.getChannel(), pathToPlot.getFrame());
-			plottingTree.add(dup);
-			snapshotTree.add(pathToPlot);
+			plottingTree.add((p.getUseFitted()) ? p.getFitted() : p);
 		}
+		snapshotTree = plottingTree.clone();
+		plottingTree.setColor(DEF_COLOR);
 		buildPlot();
 		chart = plot.getChart();
 		frame = new ChartFrame(tree.getLabel(), chart);

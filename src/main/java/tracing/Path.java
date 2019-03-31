@@ -50,6 +50,7 @@ import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInCanvas;
 import tracing.util.PointInImage;
 import tracing.util.SNTColor;
+import tracing.util.SNTPoint;
 import tracing.util.SWCPoint;
 
 /**
@@ -770,31 +771,46 @@ public class Path implements Comparable<Path> {
 		return precise_z_positions[i] / z_spacing + canvasOffset.z;
 	}
 
-	/*
-	 * FIXME:
-	 *
-	 * @Override public Path clone() {
-	 *
-	 * Path result = new Path( points );
-	 *
-	 * System.arraycopy( x_positions, 0, result.x_positions, 0, points );
-	 * System.arraycopy( y_positions, 0, result.y_positions, 0, points );
-	 * System.arraycopy( z_positions, 0, result.z_positions, 0, points );
-	 * result.points = points; result.startJoins = startJoins;
-	 * result.startJoinsIndex = startJoinsIndex; result.endJoins = endJoins;
-	 * result.endJoinsIndex = endJoinsIndex;
-	 *
-	 * if( radii != null ) { this.radii = new double[radii.length];
-	 * System.arraycopy( radii, 0, result.radii, 0, radii.length ); } if(
-	 * tangents_x != null ) { this.tangents_x = new double[tangents_x.length];
-	 * System.arraycopy( tangents_x, 0, result.tangents_x, 0, tangents_x.length ); }
-	 * if( tangents_y != null ) { this.tangents_y = new double[tangents_y.length];
-	 * System.arraycopy( tangents_y, 0, result.tangents_y, 0, tangents_y.length ); }
-	 * if( tangents_z != null ) { this.tangents_z = new double[tangents_z.length];
-	 * System.arraycopy( tangents_z, 0, result.tangents_z, 0, tangents_z.length ); }
-	 *
-	 * return result; }
-	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Path clone() {
+
+		final Calibration cal = getCalibration();
+		final Path dup = new Path(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth, cal.getUnit(), size());
+		dup.points = points;
+		dup.precise_x_positions = precise_x_positions.clone();
+		dup.precise_y_positions = precise_y_positions.clone();
+		dup.precise_z_positions = precise_z_positions.clone();
+		if (radii != null) dup.radii = radii.clone();
+		if (tangents_x != null) dup.tangents_x = tangents_x.clone();
+		if (tangents_y != null) dup.tangents_y = tangents_y.clone();
+		if (tangents_z != null) dup.tangents_z = tangents_z.clone();
+		if (nodeValues != null) dup.nodeValues = nodeValues.clone();
+		if (nodeAnnotations != null) System.arraycopy(nodeAnnotations, 0, dup.nodeAnnotations, 0, points);
+		dup.somehowJoins = (ArrayList<Path>) somehowJoins.clone();
+		dup.children = (ArrayList<Path>) children.clone();
+		if (startJoins != null) dup.startJoins = startJoins.clone();
+		if (startJoinsPoint != null) {
+			dup.startJoinsPoint = new PointInImage(startJoinsPoint.x, startJoinsPoint.y, startJoinsPoint.z);
+			dup.startJoinsPoint.onPath = dup;
+		}
+		if (endJoins != null) dup.endJoins = endJoins.clone();
+		if (endJoinsPoint != null) {
+			dup.endJoinsPoint = new PointInImage(endJoinsPoint.x, endJoinsPoint.y, endJoinsPoint.z);
+			dup.endJoinsPoint.onPath = dup;
+		}
+
+		if (getFitted() != null) dup.setFitted(getFitted().clone());
+		dup.setOrder(getOrder());
+		dup.setIsPrimary(isPrimary());
+		dup.setSWCType(getSWCType());
+		dup.setCTposition(getChannel(), getFrame());
+		dup.setEditableNode(getEditableNodeIndex());
+		dup.setCanvasOffset(getCanvasOffset());
+		dup.setColor(getColor());
+		dup.setNodeColors(getNodeColors());
+		return dup;
+	}
 
 	/**
 	 * Gets the spatial calibration of this Path.
@@ -951,13 +967,17 @@ public class Path implements Comparable<Path> {
 	 * @param point the node to be inserted
 	 */
 	public void addNode(final PointInImage point) {
-		addPointDouble(point.x, point.y, point.z);
+		addCommonPropertiesNode(point);
 		if (!Double.isNaN(point.v)) setNodeValue(point.v, size() - 1);
 	}
 
 	protected void addNode(final SWCPoint point) {
-		addPointDouble(point.x, point.y, point.z);
+		addCommonPropertiesNode(point);
 		radii[size() - 1] = point.radius;
+	}
+
+	private void addCommonPropertiesNode(final SNTPoint point) {
+		addPointDouble(point.getX(), point.getY(), point.getZ());
 		if (point.getAnnotation() != null) setNodeAnnotation(point.getAnnotation(), size() - 1);
 	}
 

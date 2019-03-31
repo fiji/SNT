@@ -588,4 +588,10 @@ public class Tree {
 		return label;
 	}
 
+	@Override
+	public Tree clone() {
+		final Tree clone = new Tree();
+		for (final Path path : list()) clone.add(path.clone());
+		return clone;
+	}
 }

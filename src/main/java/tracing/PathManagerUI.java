@@ -489,6 +489,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 	private void deletePaths(final Collection<Path> pathsToBeDeleted) {
 		for (final Path p : pathsToBeDeleted) {
+			if (plugin !=null && p.isBeingEdited()) plugin.enableEditMode(false);
 			p.disconnectFromAll();
 			pathAndFillManager.deletePath(p);
 		}

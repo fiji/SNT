@@ -849,6 +849,11 @@ public class Path implements Comparable<Path> {
 			System.arraycopy(nodeAnnotations, 0, newNodeAnnotations, 0, points);
 			nodeAnnotations = newNodeAnnotations;
 		}
+		if (nodeValues != null) {
+			final double[] newNodeValues = new double[newMaxPoints];
+			System.arraycopy(nodeValues, 0, newNodeValues, 0, points);
+			nodeValues = newNodeValues;
+		}
 		maxPoints = newMaxPoints;
 	}
 
@@ -1213,7 +1218,9 @@ public class Path implements Comparable<Path> {
 	 * @see PathProfiler#assignValues()
 	 */
 	public void setNodeValue(final double value, final int pos) {
-		if (nodeValues == null) nodeValues = new double[size()];
+		if (nodeValues == null) {
+			nodeValues = new double[maxPoints];
+		}
 		nodeValues[pos] = value;
 	}
 

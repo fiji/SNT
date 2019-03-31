@@ -818,7 +818,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				setTemporaryPath(result);
 
 				if (ui.confirmTemporarySegments) {
-					ui.changeState(SNTUI.QUERY_KEEP);
+					changeUIState(SNTUI.QUERY_KEEP);
 				}
 				else {
 					confirmTemporary();
@@ -1491,7 +1491,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		if (currentPath.endJoins == null) {
 			setTemporaryPath(null);
-			ui.changeState(SNTUI.PARTIAL_PATH);
+			changeUIState(SNTUI.PARTIAL_PATH);
 			updateAllViewers();
 		}
 		else {
@@ -1633,7 +1633,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 			try {
 				// Block and update UI
-				ui.changeState(SNTUI.SEARCHING);
+				changeUIState(SNTUI.SEARCHING);
 				showStatus(i, nNodes, "Finding path to node " + i + "/" + nNodes);
 
 				// Append node and wait for search to be finished
@@ -1718,7 +1718,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setCurrentPath(null);
 
 		// ... and change the state of the UI
-		ui.changeState(SNTUI.WAITING_TO_START_PATH);
+		changeUIState(SNTUI.WAITING_TO_START_PATH);
 		updateAllViewers();
 	}
 
@@ -1759,12 +1759,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			 * Then this is a succeeding point, and we should start a search.
 			 */
 			testPathTo(world_x, world_y, world_z, joinPoint);
-			ui.changeState(SNTUI.SEARCHING);
+			changeUIState(SNTUI.SEARCHING);
 		}
 		else {
 			/* This is an initial point. */
 			startPath(world_x, world_y, world_z, joinPoint);
-			ui.changeState(SNTUI.PARTIAL_PATH);
+			changeUIState(SNTUI.PARTIAL_PATH);
 		}
 
 	}

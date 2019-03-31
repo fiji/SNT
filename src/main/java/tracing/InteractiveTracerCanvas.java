@@ -610,10 +610,9 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	 */
 	private class AListener implements ActionListener, ItemListener {
 
-		public final String FORK_NEAREST = "Fork at Nearest Node  [" + GuiUtils
-			.modKey() + "+Shift+Click]";
+		public final String FORK_NEAREST = "Fork at Nearest Node  [Alt+Shift+Click]";
 		public static final String SELECT_NEAREST =
-			"Select Nearest Path  [G, Shift+G]";
+			"Select Nearest Path  [G] [Shift+G]";
 		public static final String PAUSE_SNT_TOGGLE = "Pause SNT";
 		public static final String PAUSE_TRACING_TOGGLE = "Pause Tracing";
 		public static final String EDIT_TOGGLE = "Edit Path";

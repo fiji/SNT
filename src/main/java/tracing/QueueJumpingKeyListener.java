@@ -33,7 +33,6 @@ import java.util.Arrays;
 
 import javax.swing.SwingUtilities;
 
-import org.scijava.util.PlatformUtils;
 import org.scijava.vecmath.Point3d;
 
 import ij.gui.Toolbar;
@@ -52,7 +51,6 @@ class QueueJumpingKeyListener implements KeyListener {
 	private final Image3DUniverse univ;
 
 	private final ArrayList<KeyListener> listeners = new ArrayList<>();
-	private final boolean mac;
 
 	private static final int DOUBLE_PRESS_INTERVAL = 300; // ms
 	private long timeKeyDown = 0; // last time key was pressed
@@ -75,7 +73,6 @@ class QueueJumpingKeyListener implements KeyListener {
 	{
 		this.tracerPlugin = tracerPlugin;
 		this.canvas = canvas;
-		mac = PlatformUtils.isMac();
 		univ = null;
 	}
 
@@ -84,7 +81,6 @@ class QueueJumpingKeyListener implements KeyListener {
 	{
 		this.tracerPlugin = tracerPlugin;
 		this.canvas = null;
-		mac = PlatformUtils.isMac();
 		this.univ = univ;
 		univ.addInteractiveBehavior(new PointSelectionBehavior(univ));
 	}
@@ -150,13 +146,10 @@ class QueueJumpingKeyListener implements KeyListener {
 		final char keyChar = e.getKeyChar();
 		final int modifiers = e.getModifiersEx();
 		final boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
-		final boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
-		final boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
-		final boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT
-			: keyCode == KeyEvent.VK_CONTROL;
+		final boolean join_modifier_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 
 		// SNT Hotkeys that do not override defaults
-		if (shift_down && alt_down && keyCode == KeyEvent.VK_A)
+		if (shift_down && join_modifier_down && keyCode == KeyEvent.VK_A)
 		{
 			startShollAnalysis();
 			e.consume();
@@ -164,12 +157,12 @@ class QueueJumpingKeyListener implements KeyListener {
 
 		// SNT Keystrokes that override IJ defaults. These
 		// are common to both tracing and edit mode
-		else if (canvas != null && (shift_pressed || join_modifier_pressed)) {
+		else if (canvas != null && (shift_down|| join_modifier_down)) {
 
 			// This case is just so that when someone starts holding down
 			// the modified immediately see the effect, rather than having
 			// to wait for the next mouse move event
-			canvas.fakeMouseMoved(shift_pressed, join_modifier_pressed);
+			canvas.fakeMouseMoved(shift_down, join_modifier_down);
 			e.consume();
 		}
 		else if (keyChar == 'g' || keyChar == 'G') {
@@ -422,9 +415,8 @@ class QueueJumpingKeyListener implements KeyListener {
 				.getY());
 			gUtils.tempMsg(SNT.formatDouble(point.x, 3) + ", " + SNT.formatDouble(
 				point.y, 3) + ", " + SNT.formatDouble(point.z, 3));
-			final boolean joiner_modifier_down = mac ? ((me.getModifiersEx() &
-				InputEvent.ALT_DOWN_MASK) != 0) : ((me.getModifiersEx() &
-					InputEvent.CTRL_DOWN_MASK) != 0);
+			final boolean joiner_modifier_down = ((me.getModifiersEx() &
+				InputEvent.ALT_DOWN_MASK) != 0);
 			SwingUtilities.invokeLater(() -> tracerPlugin.clickForTrace(point,
 				joiner_modifier_down));
 		}

@@ -1713,6 +1713,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		pathAndFillManager.addPath(currentPath, true);
 		unsavedPaths = true;
 		lastStartPointSet = false;
+		selectPath(currentPath, false);
 		setPathUnfinished(false);
 		setCurrentPath(null);
 

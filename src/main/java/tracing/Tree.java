@@ -111,7 +111,7 @@ public class Tree {
 	}
 
 	/**
-	 * Instantiates a new tree from a SWC or TRACES file.
+	 * Instantiates a new tree from a SWC, TRACES or JSON file.
 	 *
 	 * @param filename the absolute file path of the imported file
 	 */
@@ -127,7 +127,7 @@ public class Tree {
 	}
 
 	/**
-	 * Instantiates a new tree from a filtered SWC or TRACES file.
+	 * Instantiates a new tree from a filtered SWC, TRACES or JSON file.
 	 *
 	 * @param filename the absolute file path of the imported file
 	 * @param swcTypes only paths matching the specified SWC type(s) (e.g.,

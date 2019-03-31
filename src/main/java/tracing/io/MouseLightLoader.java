@@ -328,7 +328,7 @@ public class MouseLightLoader {
 	}
 
 	/**
-	 * Script-friendly method to extract a compartment as a collection of Paths.
+	 * Extracts a cell compartment as a collection of Paths.
 	 *
 	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
 	 * @param color the color to be applied to the Tree. Null not expected.
@@ -349,6 +349,21 @@ public class MouseLightLoader {
 		final Map<String, Tree> outMap = pafm.importNeurons(inMap, color, "um");
 		return outMap.get(id);
 	}
+
+	/**
+	 * Script-friendly method to extract a compartment as a collection of Paths.
+	 *
+	 * @param compartment 'soma', 'axon', 'dendrite', 'all' (case insensitive)
+	 * @return the compartment as a {@link Tree}, or null if data could not be
+	 *         retrieved
+	 * @throws IllegalArgumentException if compartment is not recognized or
+	 *           retrieval of data for this neuron is not possible
+	 */
+	public Tree getTree(final String compartment) throws IllegalArgumentException
+	{
+		return getTree(compartment, null);
+	}
+
 	/**
 	 * Checks whether a connection to the MouseLight database can be established.
 	 *

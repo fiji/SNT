@@ -93,9 +93,10 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		// components?
 		final AListener listener = new AListener();
 		pMenu.add(menuItem(AListener.SELECT_NEAREST, listener));
-		if (!tracerPlugin.tracingHalted) pMenu.add(menuItem(listener.FORK_NEAREST,
-			listener));
+		pMenu.add(menuItem(AListener.FORK_NEAREST, listener));
 		pMenu.addSeparator();
+		extendPathMenuItem = menuItem(AListener.EXTEND_SELECTED, listener);
+		pMenu.add(extendPathMenuItem);
 		toggleEditModeMenuItem = new JCheckBoxMenuItem(AListener.EDIT_TOGGLE);
 		toggleEditModeMenuItem.addItemListener(listener);
 		pMenu.add(toggleEditModeMenuItem);
@@ -301,7 +302,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			}
 		}
 		if (centerScaled == null) {
-			tracerPlugin.discreteMsg("No selectable nodes in view");
+			getGuiUtils().tempMsg("No selectable nodes in view");
 			return;
 		}
 		tracerPlugin.startSholl(centerScaled);
@@ -311,16 +312,16 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		final boolean addToExistingSelection)
 	{
 		if (pathAndFillManager.size() == 0) {
-			tracerPlugin.discreteMsg("Nothing to select: There are no traced paths");
+			getGuiUtils().tempMsg("Nothing to select: There are no traced paths");
 			return;
 		}
 		final NearPoint nearPoint = getNearPointToMousePointer();
 		if (nearPoint == null) {
-			tracerPlugin.discreteMsg("No selectable paths in view");
+			getGuiUtils().tempMsg("No selectable paths in view");
 		}
 		else {
 			tracerPlugin.selectPath(nearPoint.getPath(), addToExistingSelection);
-			tracerPlugin.discreteMsg(nearPoint.getPath().getName() + " selected");
+			getGuiUtils().tempMsg(nearPoint.getPath().getName() + " selected");
 		}
 	}
 
@@ -472,7 +473,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 				restoreDefaultCursor();
 				break;
 			case SNTUI.WAITING_FOR_SIGMA_CHOICE:
-				tracerPlugin.discreteMsg(
+				getGuiUtils().tempMsg(
 					"You must close the sigma palette to continue");
 				break;
 
@@ -495,11 +496,11 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	private boolean impossibleEdit(final boolean displayError) {
 		boolean invalid = !tracerPlugin.pathAndFillManager.isSelected(tracerPlugin
 			.getEditingPath());
-		if (invalid && displayError) tracerPlugin.discreteMsg(
+		if (invalid && displayError) getGuiUtils().tempMsg(
 			"Editing path not selected");
 		if (!invalid) {
 			invalid = (tracerPlugin.getEditingNode() == -1);
-			if (invalid && displayError) tracerPlugin.discreteMsg("No node selected");
+			if (invalid && displayError) getGuiUtils().tempMsg("No node selected");
 		}
 		return invalid;
 	}
@@ -683,8 +684,8 @@ class InteractiveTracerCanvas extends TracerCanvas {
 						"Please finish current operation before creating branch");
 					return;
 				}
-				if (pathAndFillManager.size() == 0) {
-					tracerPlugin.discreteMsg(
+				else if (pathAndFillManager.size() == 0) {
+					getGuiUtils().tempMsg(
 						"There are no finished paths to branch out from");
 					return;
 				}

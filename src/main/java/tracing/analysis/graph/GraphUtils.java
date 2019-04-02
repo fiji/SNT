@@ -34,6 +34,7 @@ import java.util.TreeSet;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -89,14 +90,15 @@ public class GraphUtils {
 	}
 
 	/**
-	 * Assembles a window holding an UI commands for interacting with a graph
+	 * Displays a graph in a dedicated window featuring UI commands for interactive
+	 * visualization and export options.
 	 *
 	 * @param       <V> the graph vertex type
 	 * @param       <E> the graph edge type
 	 * @param graph the graph to be displayed
 	 * @return the assembled window
 	 */
-	public static <V, E> Window assembleDisplay(final Graph<V, E> graph) {
+	public static <V, E> Window show(final Graph<V, E> graph) {
 		GuiUtils.setSystemLookAndFeel();
 		final JDialog frame = new JDialog((JFrame)null, "SNT Graph Canvas");
 		final TreeGraphAdapter<?, ?> graphAdapter = new TreeGraphAdapter<>(graph);
@@ -111,6 +113,7 @@ public class GraphUtils {
 				(int) Math.min(prefDim.getHeight(), maxDim.getHeight() / 2)));
 		frame.pack();
 		graphComponent.zoomActual();
+		SwingUtilities.invokeLater(() -> frame.setVisible(true));
 		return frame;
 	}
 
@@ -121,7 +124,7 @@ public class GraphUtils {
 			final String firstCell = map.keySet().iterator().next();
 			final DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> graph = GraphUtils.createGraph(map.get(firstCell),
 					true);
-			GraphUtils.assembleDisplay(graph).setVisible(true);
+			GraphUtils.show(graph);
 		} catch (final FileNotFoundException e) {
 			e.printStackTrace();
 		}

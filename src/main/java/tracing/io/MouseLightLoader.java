@@ -22,11 +22,13 @@
 
 package tracing.io;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
@@ -39,7 +41,6 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.scijava.util.ColorRGB;
 
-import net.imagej.ImageJ;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -50,9 +51,7 @@ import tracing.PathAndFillManager;
 import tracing.SNT;
 import tracing.Tree;
 import tracing.annotation.AllenCompartment;
-import tracing.gui.GuiUtils;
 import tracing.util.SWCPoint;
-import tracing.viewer.Viewer3D;
 
 /**
  * Methods for retrieving reconstructions from MouseLight's online database at
@@ -401,7 +400,7 @@ public class MouseLightLoader {
 	}
 
 	/* IDE debug method */
-	public static void main(final String... args) {
+	public static void main(final String... args) throws IOException {
 		final String dir = "/home/tferr/Desktop/testjson/";
 		final String id = "AA0360";
 		System.out.println("# starting");

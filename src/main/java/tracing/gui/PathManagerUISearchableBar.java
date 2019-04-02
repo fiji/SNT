@@ -169,39 +169,12 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 		optionsMenu.add(mi2);
 		popup.add(optionsMenu);
 		popup.addSeparator();
+		popup.add(getColorFilterMenu());
+		popup.add(getMorphoFilterMenu());
+		return popup;
+	}
 
-		final ColorMenu colorFilterMenu = new ColorMenu("Color Filters");
-		colorFilterMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.COLOR));
-		popup.add(colorFilterMenu);
-		colorFilterMenu.addActionListener(e -> {
-			final List<Path> filteredPaths = pmui.getPathAndFillManager()
-				.getPathsFiltered();
-			if (filteredPaths.isEmpty()) {
-				guiUtils.error("There are no traced paths.");
-				return;
-			}
-			final Color filteredColor = colorFilterMenu.getSelectedSWCColor().color();
-			for (final Iterator<Path> iterator = filteredPaths.iterator(); iterator
-				.hasNext();)
-			{
-				final Color color = iterator.next().getColor();
-				if ((filteredColor != null && color != null && !filteredColor.equals(
-					color)) || (filteredColor == null && color != null) ||
-					(filteredColor != null && color == null))
-				{
-					iterator.remove();
-				}
-			}
-			if (filteredPaths.isEmpty()) {
-				guiUtils.error("No Path matches the specified color tag.");
-				return;
-			}
-			pmui.setSelectedPaths(new HashSet<>(filteredPaths), this);
-			guiUtils.tempMsg(filteredPaths.size() + " Path(s) selected");
-			// refreshManager(true, true);
-		});
-		popup.add(colorFilterMenu);
-
+	public JMenu getMorphoFilterMenu() {
 		final JMenu morphoFilteringMenu = new JMenu("Morphology Filters");
 		morphoFilteringMenu.setIcon(IconFactory.getMenuIcon(
 			IconFactory.GLYPH.RULER));
@@ -268,8 +241,40 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 			(new GetFilteredTypes()).execute();
 		});
 		morphoFilteringMenu.add(mi1);
-		popup.add(morphoFilteringMenu);
-		return popup;
+		return morphoFilteringMenu;
+	}
+
+	public ColorMenu getColorFilterMenu() {
+		final ColorMenu colorFilterMenu = new ColorMenu("Color Filters");
+		colorFilterMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.COLOR));
+		colorFilterMenu.addActionListener(e -> {
+			final List<Path> filteredPaths = pmui.getPathAndFillManager()
+				.getPathsFiltered();
+			if (filteredPaths.isEmpty()) {
+				guiUtils.error("There are no traced paths.");
+				return;
+			}
+			final Color filteredColor = colorFilterMenu.getSelectedSWCColor().color();
+			for (final Iterator<Path> iterator = filteredPaths.iterator(); iterator
+				.hasNext();)
+			{
+				final Color color = iterator.next().getColor();
+				if ((filteredColor != null && color != null && !filteredColor.equals(
+					color)) || (filteredColor == null && color != null) ||
+					(filteredColor != null && color == null))
+				{
+					iterator.remove();
+				}
+			}
+			if (filteredPaths.isEmpty()) {
+				guiUtils.error("No Path matches the specified color tag.");
+				return;
+			}
+			pmui.setSelectedPaths(new HashSet<>(filteredPaths), this);
+			guiUtils.tempMsg(filteredPaths.size() + " Path(s) selected");
+			// refreshManager(true, true);
+		});
+		return colorFilterMenu;
 	}
 
 	private void updateSearch() {

@@ -180,15 +180,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 		final JMenu editMenu = new JMenu("Edit");
 		menuBar.add(editMenu);
-		final JMenuItem deleteMitem = new JMenuItem(
-			MultiPathActionListener.DELETE_CMD);
-		deleteMitem.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.TRASH));
-		deleteMitem.addActionListener(multiPathListener);
-		editMenu.add(deleteMitem);
-		final JMenuItem renameMitem = new JMenuItem(
-			SinglePathActionListener.RENAME_CMD);
-		renameMitem.addActionListener(singlePathListener);
-		editMenu.add(renameMitem);
+		editMenu.add(getDeleteMenuItem(multiPathListener));
+		editMenu.add(getRenameMenuItem(singlePathListener));
 		editMenu.addSeparator();
 		final JMenuItem primaryMitem = new JMenuItem(
 			SinglePathActionListener.MAKE_PRIMARY_CMD);
@@ -318,73 +311,70 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
 
-		// final JMenuItem toggleDnDMenuItem = new JCheckBoxMenuItem(
-		// "Allow Hierarchy Edits");
-		// toggleDnDMenuItem.setSelected(tree.getDragEnabled());
-		// toggleDnDMenuItem.addItemListener(new ItemListener() {
-		//
-		// // TODO: This is not functional: PathAndFillManager is not aware of any
-		// // of these
-		// @Override
-		// public void itemStateChanged(final ItemEvent e) {
-		// tree.setDragEnabled(toggleDnDMenuItem.isSelected() && confirmDnD());
-		// if (!tree.getDragEnabled()) displayTmpMsg(
-		// "Default behavior restored: Hierarchy is now locked.");
-		// }
-		//
-		// });
-		// advanced.add(toggleDnDMenuItem);
-
+		// Search Bar TreeSearchable
+		final PathManagerUISearchableBar searchableBar = new PathManagerUISearchableBar(this);
 		popup = new JPopupMenu();
-		final JMenuItem deleteMitem2 = new JMenuItem(
-			MultiPathActionListener.DELETE_CMD);
-		deleteMitem2.addActionListener(multiPathListener);
-		popup.add(deleteMitem2);
-		final JMenuItem renameMitem2 = new JMenuItem(
-			SinglePathActionListener.RENAME_CMD);
-		renameMitem2.addActionListener(singlePathListener);
-		popup.add(renameMitem2);
+		popup.add(getDeleteMenuItem(multiPathListener));
+		popup.add(getRenameMenuItem(singlePathListener));
 		popup.addSeparator();
-		JMenuItem pjmi = popup.add(NoPathActionListener.SELECT_NONE_CMD);
-		pjmi.addActionListener(noPathListener);
-		popup.addSeparator();
-		pjmi = popup.add(NoPathActionListener.COLLAPSE_ALL_CMD);
+		JMenuItem pjmi = popup.add(NoPathActionListener.COLLAPSE_ALL_CMD);
 		pjmi.addActionListener(noPathListener);
 		pjmi = popup.add(NoPathActionListener.EXPAND_ALL_CMD);
 		pjmi.addActionListener(noPathListener);
-		final JMenuItem jcbmi = new JCheckBoxMenuItem("Expand Selected Nodes");
-		jcbmi.setSelected(tree.getExpandsSelectedPaths());
-		jcbmi.addItemListener(e -> {
-			tree.setExpandsSelectedPaths(jcbmi.isSelected());
-			tree.setScrollsOnExpand(jcbmi.isSelected());
-		});
+		pjmi = popup.add(NoPathActionListener.SELECT_NONE_CMD);
+		pjmi.addActionListener(noPathListener);
+		pjmi = popup.add(MultiPathActionListener.APPEND_CHILDREN_CMD);
+		pjmi.addActionListener(multiPathListener);
 		popup.addSeparator();
-		popup.add(jcbmi);
-
+		final JMenu selectByColorMenu = searchableBar.getColorFilterMenu();
+		selectByColorMenu.setText("Select by Color Tag");
+		popup.add(selectByColorMenu);
+		final JMenu selectByMorphoMenu = searchableBar.getMorphoFilterMenu();
+		selectByMorphoMenu.setText("Select by Morphometric Trait");
+		popup.add(selectByMorphoMenu);
 		tree.addMouseListener(new MouseAdapter() {
 
 			@Override
 			public void mouseReleased(final MouseEvent me) { // Required for Windows
-				if (me.isPopupTrigger()) showPopup(me);
+				handleMouseEvent(me);
 			}
 
 			@Override
 			public void mousePressed(final MouseEvent me) {
-				if (me.isPopupTrigger()) {
-					showPopup(me);
-				}
-				else if (tree.getRowForLocation(me.getX(), me.getY()) == -1) {
-					tree.clearSelection(); // Deselect when clicking on 'empty space'
-				}
+				handleMouseEvent(me);
 			}
 
+			private void handleMouseEvent(final MouseEvent e) {
+				if (e.isConsumed())
+					return;
+				if (e.isPopupTrigger()) {
+					showPopup(e);
+				} else if (tree.getRowForLocation(e.getX(), e.getY()) == -1) {
+					tree.clearSelection(); // Deselect when clicking on 'empty space'
+				}
+				e.consume();
+			}
 		});
 
-		// Search Bar TreeSearchable
-		add(new PathManagerUISearchableBar(this), BorderLayout.PAGE_END);
+		add(searchableBar, BorderLayout.PAGE_END);
 		pack();
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE); // prevent
 																																		// closing
+	}
+
+	private JMenuItem getRenameMenuItem(final SinglePathActionListener singlePathListener) {
+		final JMenuItem renameMitem = new JMenuItem(
+			SinglePathActionListener.RENAME_CMD);
+		renameMitem.addActionListener(singlePathListener);
+		return renameMitem;
+	}
+
+	private JMenuItem getDeleteMenuItem(final MultiPathActionListener multiPathListener) {
+		final JMenuItem deleteMitem = new JMenuItem(
+			MultiPathActionListener.DELETE_CMD);
+		deleteMitem.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.TRASH));
+		deleteMitem.addActionListener(multiPathListener);
+		return deleteMitem;
 	}
 
 	private void assembleSWCtypeMenu(final boolean applyPromptOptions) {
@@ -798,20 +788,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		guiUtils.tempMsg(msg);
 	}
 
-	// private boolean confirmDnD() {
-	// return guiUtils.getConfirmation(
-	// "Enabling this option will allow you to re-link paths through drag-and drop
-	// "
-	// +
-	// "of their respective nodes. Re-organizing paths in such way is useful to "
-	// +
-	// "proof-edit ill-relashionships but can also render the existing hierarchy "
-	// +
-	// "of paths meaningless. Please save your work before enabling this option. "
-	// +
-	// "Enable it now?", "Confirm Hierarchy Edits?");
-	// }
-
 	private void showPopup(final MouseEvent me) {
 		assert SwingUtilities.isEventDispatchThread();
 		popup.show(me.getComponent(), me.getX(), me.getY());
@@ -1001,11 +977,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			setCellRenderer(renderer);
 			getSelectionModel().setSelectionMode(
 				TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-			// setDragEnabled(true);
-			// setDropMode(DropMode.ON_OR_INSERT);
-			// setTransferHandler(new TreeTransferHandler());
+			setExpandsSelectedPaths(true);
+			setScrollsOnExpand(true);
 			setRowHeight(getPreferredRowSize());
-
 			searchable = new TreeSearchable(this);
 			searchable.setWildcardEnabled(true);
 		}

@@ -920,7 +920,7 @@ public class Path implements Comparable<Path> {
 		System.arraycopy(other.precise_z_positions, toSkip, precise_z_positions,
 			points, other.points - toSkip);
 
-		if (hasRadii()) {
+		if (hasRadii() && other.hasRadii()) {
 			System.arraycopy(other.radii, toSkip, radii, points, other.points -
 				toSkip);
 		}

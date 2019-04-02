@@ -1299,7 +1299,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final Path oldCurrentPath = this.currentPath;
 		currentPath = path;
 		if (currentPath != null) {
-			currentPath.setName("Current Path");
+			if (pathAndFillManager.getPathFromID(currentPath.getID()) == null)
+				currentPath.setName("Current Path");
 			path.setSelected(true); // so it is rendered as an active path
 		}
 		xy_tracer_canvas.setCurrentPath(path);
@@ -1679,7 +1680,29 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return currentSearchThread;
 	}
 
-	synchronized public void finishedPath() {
+	synchronized protected void replaceCurrentPath(final Path path) {
+		if (currentPath != null) {
+			discreteMsg("An active temporary path already exists...");
+			return;
+		}
+//		if (getUIState() != SNTUI.WAITING_TO_START_PATH) {
+//			discreteMsg("Please finish current operation before extending "+ path.getName());
+//			return;
+//		}
+		unsavedPaths = true;
+		lastStartPointSet = true;
+		selectPath(path, false);
+		setPathUnfinished(true);
+		setCurrentPath(path);
+		last_start_point_x = (int) Math.round(path.lastPoint().x / x_spacing);
+		last_start_point_y = (int) Math.round(path.lastPoint().y / y_spacing);
+		last_start_point_z = (int) Math.round(path.lastPoint().z / z_spacing);
+		setTemporaryPath(null);
+		changeUIState(SNTUI.PARTIAL_PATH);
+		updateAllViewers();
+	}
+
+	synchronized protected void finishedPath() {
 
 		if (currentPath == null) {
 			// this can happen through repeated hotkey presses
@@ -1710,7 +1733,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 
 		removeSphere(targetBallName);
-		pathAndFillManager.addPath(currentPath, true);
+		if (pathAndFillManager.getPathFromID(currentPath.getID()) == null)
+			pathAndFillManager.addPath(currentPath, true);
 		unsavedPaths = true;
 		lastStartPointSet = false;
 		selectPath(currentPath, false);

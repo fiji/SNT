@@ -56,6 +56,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	private final SimpleNeuriteTracer tracerPlugin;
 	private JPopupMenu pMenu;
 	private JCheckBoxMenuItem toggleEditModeMenuItem;
+	private JMenuItem extendPathMenuItem;
 	private JCheckBoxMenuItem togglePauseTracingMenuItem;
 	private JCheckBoxMenuItem togglePauseSNTMenuItem;
 	private JMenu deselectedEditingPathsMenu;
@@ -119,6 +120,9 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	private void showPopupMenu(final int x, final int y) {
 		final Path activePath = tracerPlugin.getSingleSelectedPath();
 		final boolean be = uiReadyForModeChange(SNTUI.EDITING);
+		extendPathMenuItem.setText((activePath != null) ? "Continue Extending " + activePath
+				.getName() : AListener.EXTEND_SELECTED);
+		extendPathMenuItem.setEnabled(!(editMode || tracerPlugin.tracingHalted));
 		toggleEditModeMenuItem.setEnabled(be);
 		toggleEditModeMenuItem.setState(be && editMode);
 		toggleEditModeMenuItem.setText((activePath != null) ? "Edit " + activePath
@@ -130,6 +134,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		togglePauseTracingMenuItem.setEnabled(!togglePauseSNTMenuItem.isSelected());
 		togglePauseTracingMenuItem.setEnabled(bp);
 		togglePauseTracingMenuItem.setSelected(tracerPlugin.tracingHalted);
+
 		// Disable editing commands
 		for (final MenuElement me : pMenu.getSubElements()) {
 			if (me instanceof JMenuItem) {
@@ -610,9 +615,11 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	 */
 	private class AListener implements ActionListener, ItemListener {
 
-		public final String FORK_NEAREST = "Fork at Nearest Node  [Alt+Shift+Click]";
+		public static final String FORK_NEAREST = 
+			"Fork at Nearest Node  [Alt+Shift+Click]";
 		public static final String SELECT_NEAREST =
 			"Select Nearest Path  [G] [Shift+G]";
+		public static final String EXTEND_SELECTED = "Continue Extending Path";
 		public static final String PAUSE_SNT_TOGGLE = "Pause SNT";
 		public static final String PAUSE_TRACING_TOGGLE = "Pause Tracing";
 		public static final String EDIT_TOGGLE = "Edit Path";
@@ -642,7 +649,34 @@ class InteractiveTracerCanvas extends TracerCanvas {
 
 		@Override
 		public void actionPerformed(final ActionEvent e) {
-			if (e.getActionCommand().equals(FORK_NEAREST)) {
+			if (e.getSource() == extendPathMenuItem) {
+
+				if (tracerPlugin.tracingHalted) {
+					getGuiUtils().tempMsg(
+						"Tracing functions currently disabled");
+					return;
+				}
+				else if (pathAndFillManager.size() == 0) {
+					getGuiUtils().tempMsg(
+						"There are no finished paths to extend");
+					return;
+				}
+				else if (!uiReadyForModeChange(SNTUI.WAITING_TO_START_PATH)) {
+					getGuiUtils().tempMsg(
+						"Please finish current operation before extending path");
+					return;
+				}
+				final Path activePath = tracerPlugin.getSingleSelectedPath();
+				if (activePath == null) {
+					getGuiUtils().tempMsg(
+						"No path selected. Please select a single path to be extended");
+					return;
+				}
+				tracerPlugin.replaceCurrentPath(activePath);
+				return;
+
+			}
+			else if (e.getActionCommand().equals(FORK_NEAREST)) {
 
 				if (!uiReadyForModeChange(SNTUI.WAITING_TO_START_PATH)) {
 					getGuiUtils().tempMsg(

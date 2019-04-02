@@ -415,10 +415,10 @@ public class PathAndFillManager extends DefaultHandler implements
 	protected void flushSWCPoints(final List<SWCPoint> swcPoints,
 		final PrintWriter pw)
 	{
-		pw.println("# Exported from \"Simple Neurite Tracer\" version " +
+		pw.println("# Exported from SNT v" +
 			SNT.VERSION + " on " + LocalDateTime.of(LocalDate.now(), LocalTime
 				.now()));
-		pw.println("# https://imagej.net/Simple_Neurite_Tracer");
+		pw.println("# https://imagej.net/SNT");
 		pw.println("#");
 		pw.println("# All positions and radii in " + spacing_units);
 		if (usingNonPhysicalUnits()) pw.println(

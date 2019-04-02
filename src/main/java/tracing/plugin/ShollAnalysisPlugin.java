@@ -95,7 +95,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 
 	private static String getDefaultInfoMessage() {
 		return "Running " + "Sholl Analysis v" + Sholl_Analysis.VERSION +
-			" / Simple Neurite Tracer v" + SNT.VERSION + "...";
+			" / SNT v" + SNT.VERSION + "...";
 	}
 
 	@Override
@@ -239,7 +239,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 
 			final String msg = "No points associated with \"" +
 				CENTER_CHOICES[centerChoice] +
-				"\". You can either re-run with \ncorrected settings or analyze the file interactively in Simple Neurite Tracer.";
+				"\". You can either re-run with \ncorrected settings or analyze the file interactively in SNT.";
 			IJ.error("Error: Center Point Not Found", msg);
 			return;
 

@@ -1667,7 +1667,7 @@ public class SNTUI extends JDialog {
 		filteredImgPathField = new JTextField();
 		filteredImgLoadButton = GuiUtils.smallButton("Choose...");
 		filteredImgParserChoice = new JComboBox<>();
-		filteredImgParserChoice.addItem("Simple Neurite Tracer");
+		filteredImgParserChoice.addItem("SNT");
 		filteredImgParserChoice.addItem("ITK: Tubular Geodesics");
 		filteredImgInitButton = GuiUtils.smallButton("Initialize...");
 		filteredImgActivateCheckbox = new JCheckBox(hotKeyLabel(
@@ -2662,7 +2662,7 @@ public class SNTUI extends JDialog {
 		arrangeCanvases(false);
 	}
 
-	protected void abortCurrentOperation() {// FIXME: MOVE TO Simple NeuriteTracer
+	protected void abortCurrentOperation() {// FIXME: MOVE TO SimpleNeuriteTracer?
 		switch (currentState) {
 			case (SEARCHING):
 				updateStatusText("Cancelling path search...", true);

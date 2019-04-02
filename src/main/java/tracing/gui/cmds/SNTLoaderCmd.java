@@ -57,7 +57,7 @@ import tracing.gui.GuiUtils;
  * @author Tiago Ferreira
  */
 @Plugin(type = DynamicCommand.class, visible = true,
-	menuPath = "Plugins>NeuroAnatomy>Simple Neurite Tracer...",
+	menuPath = "Plugins>NeuroAnatomy>SNT...",
 	initializer = "initialize")
 public class SNTLoaderCmd extends DynamicCommand {
 

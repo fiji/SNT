@@ -1629,6 +1629,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		ItemListener
 	{
 
+		private static final String APPEND_CHILDREN_CMD = "Append Children To Selection";
 		private final static String COLORS_MENU = "Color";
 		private final static String DELETE_CMD = "Delete...";
 		private final static String MERGE_CMD = "Merge...";
@@ -1666,6 +1667,20 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 																																		// by curly
 																																		// braces
 
+		private void selectChildren(final Collection<Path> paths) {
+			final HashSet<Path> set = new HashSet<>(paths);
+			for (final Path p : paths) addChildrenToCollection(p, set);
+			setSelectedPaths(set, PathManagerUI.this);
+			refreshManager(true, true);
+		}
+
+		private void addChildrenToCollection(final Path p, final Collection<Path> collection) {
+			if (p.children != null && !p.children.isEmpty()) {
+				collection.addAll(p.children);
+				for (final Path cp : p.children) addChildrenToCollection(cp, collection);
+			}
+		}
+	
 		@Override
 		public void actionPerformed(final ActionEvent e) {
 
@@ -1686,13 +1701,19 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			// if (noSelection && !assumeAll) return;
 
 			// Case 1: Non-destructive commands that do not require confirmation
-			if (COLORS_MENU.equals(cmd)) {
+			if (APPEND_CHILDREN_CMD.equals(cmd)) {
+				if (assumeAll)
+					guiUtils.error("No Path(s) are currently selected.");
+				else 
+					selectChildren(selectedPaths);
+				return;
+			}
+			else if (COLORS_MENU.equals(cmd)) {
 				final SNTColor swcColor = colorMenu.getSelectedSWCColor();
 				for (final Path p : selectedPaths)
 					p.setColor(swcColor.color());
 				refreshManager(true, true);
 				return;
-
 			}
 			else if (PLOT_PROFILE_CMD.equals(cmd)) {
 				SwingUtilities.invokeLater(() -> {

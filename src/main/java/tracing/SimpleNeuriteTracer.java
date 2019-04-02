@@ -719,7 +719,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public int getUIState() {
-		return ui.getCurrentState();
+		return (ui == null) ? -1 : ui.getCurrentState();
 	}
 
 	synchronized public void saveFill() {

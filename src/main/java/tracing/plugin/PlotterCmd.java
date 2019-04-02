@@ -169,11 +169,8 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 		// Tree rotation occurs in place so we'll copy plotting coordinates
 		// to a new Tree. To avoid rotation lags we'll keep it monochrome,
 		// We'll store input colors to be restored by the 'snapshot' action
-		plottingTree = new Tree();
-		for (final Path p : tree.list()) {
-			plottingTree.add((p.getUseFitted()) ? p.getFitted() : p);
-		}
-		snapshotTree = plottingTree.clone();
+		plottingTree = tree.clone();
+		snapshotTree = tree.clone();
 		plottingTree.setColor(DEF_COLOR);
 		buildPlot();
 		chart = plot.getChart();

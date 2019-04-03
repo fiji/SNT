@@ -377,12 +377,10 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		last_x_in_pane_precise = myOffScreenXD(e.getX());
 		last_y_in_pane_precise = myOffScreenYD(e.getY());
 
-		final boolean mac = PlatformUtils.isMac();
 		boolean shift_key_down = (e.getModifiersEx() &
 			InputEvent.SHIFT_DOWN_MASK) != 0;
-		final boolean joiner_modifier_down = mac ? ((e.getModifiersEx() &
-			InputEvent.ALT_DOWN_MASK) != 0) : ((e.getModifiersEx() &
-				InputEvent.CTRL_DOWN_MASK) != 0);
+		final boolean joiner_modifier_down = (e.getModifiersEx() &
+			InputEvent.ALT_DOWN_MASK) != 0;
 
 		if (!editMode && tracerPlugin.snapCursor &&
 			plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down &&
@@ -478,8 +476,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 				break;
 
 			default:
-				final boolean join = PlatformUtils.isMac() ? e.isAltDown() : e
-					.isControlDown();
+				final boolean join = e.isAltDown();
 				if (tracerPlugin.snapCursor && !join && !e.isShiftDown()) {
 					tracerPlugin.clickForTrace(last_x_in_pane_precise,
 						last_y_in_pane_precise, plane, false);
@@ -617,7 +614,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	private class AListener implements ActionListener, ItemListener {
 
 		public static final String FORK_NEAREST = 
-			"Fork at Nearest Node  [Alt+Shift+Click]";
+			"Fork at Nearest Node  [Shift+Alt+Click]";
 		public static final String SELECT_NEAREST =
 			"Select Nearest Path  [G] [Shift+G]";
 		public static final String EXTEND_SELECTED = "Continue Extending Path";
@@ -633,7 +630,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			"  Move Active Node to Cursor Position  [M]";
 		private final static String NODE_MOVE_Z =
 			"  Bring Active Node to Current Z-plane  [B]";
-		private final String START_SHOLL = "Sholl Analysis at Nearest Node  [Alt+Shift+A]";
+		private final String START_SHOLL = "Sholl Analysis at Nearest Node  [Shift+Alt+A]";
 
 		@Override
 		public void itemStateChanged(final ItemEvent e) {

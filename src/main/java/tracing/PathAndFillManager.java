@@ -109,8 +109,6 @@ public class PathAndFillManager extends DefaultHandler implements
 	private double y_spacing;
 	private double z_spacing;
 	private String spacing_units;
-	/** BoundingBox defined by the plugin's image if any */
-	private BoundingBox pluginBoundingBox;
 	/** BoundingBox for existing Paths */
 	private BoundingBox boundingBox;
 	protected boolean spacingIsUnset;
@@ -153,7 +151,6 @@ public class PathAndFillManager extends DefaultHandler implements
 		y_spacing = boundingBox.ySpacing;
 		z_spacing = boundingBox.zSpacing;
 		spacing_units = boundingBox.getUnit();
-		pluginBoundingBox = null;
 		plugin = null;
 		spacingIsUnset = true;
 	}
@@ -165,12 +162,10 @@ public class PathAndFillManager extends DefaultHandler implements
 		y_spacing = plugin.y_spacing;
 		z_spacing = plugin.z_spacing;
 		spacing_units = plugin.spacing_units;
-		pluginBoundingBox = new BoundingBox();
-		pluginBoundingBox.setOrigin(new PointInImage(0, 0, 0));
-		pluginBoundingBox.setSpacing(x_spacing, y_spacing, z_spacing,
+		boundingBox.setOrigin(new PointInImage(0, 0, 0));
+		boundingBox.setSpacing(x_spacing, y_spacing, z_spacing,
 			spacing_units);
-		pluginBoundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
-		boundingBox = pluginBoundingBox;
+		boundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
 		spacingIsUnset = false;
 		addPathAndFillListener(plugin);
 	}
@@ -2005,7 +2000,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			x_spacing = boundingBox.xSpacing;
 			y_spacing = boundingBox.ySpacing;
 			z_spacing = boundingBox.zSpacing;
-			boundingBox.setOrigin(new PointInImage(0, 0, 0));
+			// NB: we must leave boundingBox origin unset so that it's dimensions can be properly computed
 			spacingIsUnset = false;
 		}
 
@@ -2102,16 +2097,21 @@ public class PathAndFillManager extends DefaultHandler implements
 		// Infer fields for when an image has not been specified. We'll assume
 		// the image dimensions to be those of the coordinates bounding box.
 		// This allows us to open a SWC file without a source image
-		if (true) {
-			if (boundingBox == null) boundingBox = new BoundingBox();
+		{
+			if (boundingBox == null)
+				boundingBox = new BoundingBox();
 			boundingBox.compute(((TreeSet<? extends SNTPoint>) points).iterator());
-			// If a plugin exists, warn user if its image cannot render the imported
-			// nodes
-			if (pluginBoundingBox != null && !pluginBoundingBox.contains(
-				boundingBox))
-			{
-				SNT.warn(
-					"Some points are outside the image volume - you may need to change your SWC import options");
+
+			// If a plugin exists, warn user if its image cannot render imported nodes
+			if (plugin != null && plugin.getImagePlus() != null) {
+
+				final BoundingBox pluginBoundingBox = new BoundingBox();
+				pluginBoundingBox.setOrigin(new PointInImage(0, 0, 0));
+				pluginBoundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
+				if (!pluginBoundingBox.contains(boundingBox)) {
+					SNT.warn("Some nodes lay outside the image volume: you may need to "
+							+ "adjust import options or resize current image canvas");
+				}
 			}
 		}
 		return true;

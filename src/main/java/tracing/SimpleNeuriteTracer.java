@@ -527,6 +527,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		else {
 			this.channel = channel;
 			this.frame = frame;
+			if (channel<1) this.channel = 1;
+			if (channel>xy.getNChannels()) this.channel = xy.getNChannels();
+			if (frame<1) this.frame = 1;
+			if (frame>xy.getNFrames()) this.frame = xy.getNFrames();
 		}
 
 		setSinglePane(singlePane);

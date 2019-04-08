@@ -35,6 +35,8 @@ import org.scijava.command.Command;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.DialogPrompt.MessageType;
+import org.scijava.ui.DialogPrompt.Result;
 import org.scijava.widget.ChoiceWidget;
 
 import ij.ImagePlus;
@@ -56,6 +58,10 @@ public class ChooseDatasetCmd extends CommonDynamicCmd implements Command {
 		style = ChoiceWidget.RADIO_BUTTON_VERTICAL_STYLE)
 	private String choice;
 
+	@Parameter(label = "Validate spatial calibration", required = false,
+		description = "Checks whether voxel dimensions of chosen image differ from those of loaded image (if any)")
+	private boolean validateCalibration;
+
 	private HashMap<String, ImagePlus> impMap;
 
 	@Override
@@ -64,8 +70,22 @@ public class ChooseDatasetCmd extends CommonDynamicCmd implements Command {
 			error("No other open images seem to be available.");
 		}
 		else {
-			snt.initialize(impMap.get(choice));
+			final ImagePlus chosenImp = impMap.get(choice);
+			if (compatibleCalibration(chosenImp)) snt.initialize(chosenImp);
 		}
+	}
+
+	private boolean compatibleCalibration(final ImagePlus chosenImp) {
+		if (!validateCalibration || !snt.accessToValidImageData())
+			return true;
+		if (!snt.getImagePlus().getCalibration().equals(chosenImp.getCalibration())) {
+			final Result result = uiService.showDialog(
+					"Images do not share the same spatial calibration.\n"
+					+ "Load " + chosenImp.getTitle() + " nevertheless?",
+					MessageType.QUESTION_MESSAGE);
+			return (Result.YES_OPTION == result || Result.OK_OPTION == result);
+		}
+		return true;
 	}
 
 	@SuppressWarnings("unused")
@@ -79,8 +99,7 @@ public class ChooseDatasetCmd extends CommonDynamicCmd implements Command {
 			String.class);
 		final Collection<ImagePlus> impCollection = getImpInstances();
 		if (impCollection == null || impCollection.isEmpty()) {
-			choice = null;
-			resolveInput("choice");
+			resolveInputs();
 			return;
 		}
 		impMap = new HashMap<>(impCollection.size());
@@ -90,14 +109,19 @@ public class ChooseDatasetCmd extends CommonDynamicCmd implements Command {
 			impMap.put(imp.getTitle(), imp);
 		}
 		if (impMap.isEmpty()) {
-			choice = null;
-			resolveInput("choice");
+			resolveInputs();
 			return;
 		}
 		final List<String> choices = new ArrayList<>(impMap.keySet());
 		Collections.sort(choices);
 		mItem.setChoices(choices);
 		if (choices.size() > 10) mItem.setWidgetStyle(ChoiceWidget.LIST_BOX_STYLE);
+	}
+
+	private void resolveInputs() {
+		choice = null;
+		resolveInput("choice");
+		resolveInput("validateCalibration");
 	}
 
 	private Collection<ImagePlus> getImpInstances() {

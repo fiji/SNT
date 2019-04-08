@@ -420,7 +420,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		hessian = null;
 	}
 
-	protected boolean accessToValidImageData() {
+	public boolean accessToValidImageData() {
 		return getImagePlus() != null && !"SNT Display Canvas".equals(xy
 			.getInfoProperty());
 	}
@@ -687,12 +687,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected double getImpDiagonalLength(final boolean scaled,
 		final boolean xyOnly)
 	{
-		final BoundingBox box = getPathAndFillManager().getBoundingBox(false);
-		final double[] dims = box.getDimensions(scaled);
-		final PointInImage pim1 = new PointInImage(0, 0, 0);
-		final PointInImage pim2 = new PointInImage(dims[0], dims[1], (xyOnly) ? 0
-			: dims[2]);
-		return pim1.distanceTo(pim2);
+		final double x = (scaled) ? x_spacing * width : width;
+		final double y = (scaled) ? y_spacing * height : height;
+		if (xyOnly) {
+			return Math.sqrt(x * x + y * y);
+		} else {
+			final double z = (scaled) ? z_spacing * depth : depth;
+			return Math.sqrt(x * x + y * y + z * z);
+		}
 	}
 
 	/* This overrides the method in ThreePanes... */

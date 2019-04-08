@@ -2005,31 +2005,27 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 
 		// We'll now iterate (again!) through the points to fix some ill-assembled
-		// files
-		// that do exist in the wild. We typically encounter two major issues:
-		// a) Files in world coordinates (good) but with reversed signs
-		// b) Files in pixel coordinates
-		final double minimumVoxelSpacing = Math.min(Math.abs(x_spacing), Math.min(
-			Math.abs(y_spacing), Math.abs(z_spacing)));
+		// files that do exist in the wild defined in pixel coordinates!
+		if (assumeCoordinatesInVoxels) {
+			final double minimumVoxelSpacing = Math.min(Math.abs(x_spacing),
+					Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
 
-		final Iterator<SWCPoint> it = points.iterator();
-		while (it.hasNext()) {
-			final SWCPoint point = it.next();
+			final Iterator<SWCPoint> it = points.iterator();
+			while (it.hasNext()) {
+				final SWCPoint point = it.next();
 
-			// deal with SWC files that use pixel coordinates
-			if (assumeCoordinatesInVoxels) {
 				point.x *= x_spacing;
 				point.y *= y_spacing;
 				point.z *= z_spacing;
 				// this just seems to be the convention in the broken files we've came
 				// across
 				point.radius *= minimumVoxelSpacing;
-			}
 
-			// If the radius is set to near zero, then artificially set it to half
-			// of the voxel spacing so that something* appears in the 3D Viewer!
-			if (Math.abs(point.radius) < 0.0000001) point.radius =
-				minimumVoxelSpacing / 2;
+				// If the radius is set to near zero, then artificially set it to half
+				// of the voxel spacing so that something* appears in the 3D Viewer!
+				if (Math.abs(point.radius) < 0.0000001)
+					point.radius = minimumVoxelSpacing / 2;
+			}
 		}
 
 		// FIXME: This is really slow with large SWC files

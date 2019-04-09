@@ -2905,7 +2905,7 @@ public class SNTUI extends JDialog {
 			final double newMultiplier)
 		{
 			SwingUtilities.invokeLater(() -> {
-				changeState(preSigmaPaletteState);
+				restorePreSigmaState();
 				setMultiplier(newMultiplier);
 				setSigma(newSigma, true);
 			});

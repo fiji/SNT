@@ -213,6 +213,14 @@ public class GuiUtils {
 		return (yesNoDialog(msg, title, yesLabel, noLabel) == JOptionPane.YES_OPTION);
 	}
 
+	public String getChoice(final String message, final String title, final String[] choices,
+			final String defaultChoice) {
+		final String selectedValue = (String) JOptionPane.showInputDialog(parent, //
+				message, title, JOptionPane.QUESTION_MESSAGE, null, choices,
+				(defaultChoice == null) ? choices[0] : defaultChoice);
+		return selectedValue;
+	}
+
 	public boolean[] getPersistentConfirmation(final String msg,
 		final String title)
 	{

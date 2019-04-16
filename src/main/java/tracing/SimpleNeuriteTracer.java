@@ -22,8 +22,6 @@
 
 package tracing;
 
-import io.scif.services.DatasetIOService;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Window;
@@ -39,10 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import net.imagej.Dataset;
-import net.imagej.axis.Axes;
-import net.imagej.legacy.LegacyService;
 
 import org.scijava.Context;
 import org.scijava.NullContextException;
@@ -82,6 +76,9 @@ import ij3d.Content;
 import ij3d.ContentConstants;
 import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
+import io.scif.services.DatasetIOService;
+import net.imagej.Dataset;
+import net.imagej.legacy.LegacyService;
 import tracing.event.SNTEvent;
 import tracing.event.SNTListener;
 import tracing.gui.GuiUtils;
@@ -2103,12 +2100,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Specifies the "filtered" image to be used during a tracing session.
+	 * Specifies the 'filtered image' to be used during a tracing session.
 	 *
-	 * @param file The file containing the "filtered" image (typically named
-	 *          {@code <image-basename>.tubes.tif} (tubeness),
-	 *          {@code <image-basename>.frangi.tif} (Frangi Vesselness), or
-	 *          {@code <image-basename>.oof.tif} (tubular geodesics))
+	 * @param file The file containing the filtered image
+	 * @see #loadFilteredImage()
 	 */
 	public void setFilteredImage(final File file) {
 		filteredFileImage = file;
@@ -2124,7 +2119,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Assesses if a 'filtered image' has been loaded into memory. Note that while
+	 * Assesses if the 'filtered image' has been loaded into memory. Note that while
 	 * some tracers will load the image into memory, others may waive the loading
 	 * to third party libraries
 	 *
@@ -2143,39 +2138,68 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * loads the 'filtered image' specified by {@link #setFilteredImage(File) into
-	 * memory as 32-bit data}.
+	 * Loads the 'filtered image' specified by {@link #setFilteredImage(File)} into
+	 * memory as 32-bit data.
 	 *
-	 * @throws IOException If image could not be loaded
+	 * @throws IOException              If image could not be loaded
 	 * @throws IllegalArgumentException if path specified through
-	 *           {@link #setFilteredImage(File)} is invalid
+	 *                                  {@link #setFilteredImage(File)} is invalid,
+	 *                                  dimensions are unexpected, or image type is
+	 *                                  not supported
+	 * @see #filteredImageLoaded()
+	 * @see #getFilteredDataAsImp()
 	 */
 	public void loadFilteredImage() throws IOException, IllegalArgumentException {
 		if (xy == null) throw new IllegalArgumentException(
 			"Data can only be loaded after main tracing image is known");
-		if (!SNT.fileAvailable(filteredFileImage))
+		if (!SNT.fileAvailable(filteredFileImage)) {
 			throw new IllegalArgumentException("File path of input data unknown");
-		final Dataset ds = datasetIOService.open(filteredFileImage
-			.getAbsolutePath());
-		final int bitsPerPix = ds.getType().getBitsPerPixel();
-		final StringBuilder sBuilder = new StringBuilder();
-		if (bitsPerPix != 32) sBuilder.append("Not a 32-bit image. ");
-		if (ds.dimension(Axes.CHANNEL) > 1 || ds.dimension(Axes.TIME) > 1) sBuilder
-			.append("Too many dimensions: C,T images are not supported. ");
-		if (ds.getWidth() != xy.getWidth() || ds.getHeight() != xy.getHeight() || ds
-			.getDepth() != xy.getNSlices()) sBuilder.append("XYZ Dimensions do not match those of ").append(xy.getTitle()).append(".");
-		if (!sBuilder.toString().isEmpty()) throw new IllegalArgumentException(
-			sBuilder.toString());
+		}
+		ImagePlus imp = (ImagePlus) legacyService.getIJ1Helper().openImage(filteredFileImage.getAbsolutePath());
+		if (imp == null) {
+			final Dataset ds = datasetIOService.open(filteredFileImage.getAbsolutePath());
+			if (ds == null)
+				throw new IllegalArgumentException("Image could not be loaded by IJ.");
+			imp = convertService.convert(ds, ImagePlus.class);
+		}
+		if (imp.getNChannels() < channel || imp.getNFrames() < frame ||
+			imp.getWidth() != xy.getWidth() || imp.getHeight() != xy.getHeight() || 
+				imp.getNSlices() != xy.getNSlices()) {
+			throw new IllegalArgumentException("Dimensions do not match those of  " + xy.getTitle() + ".");
+		}
 
-		statusService.showStatus("Loading alternative tracing images");
-		final ImagePlus imp = convertService.convert(ds, ImagePlus.class);
+		showStatus(0, 0, "Loading filtered image");
+		SNT.convertTo32bit(imp);
 		final ImageStack s = imp.getStack();
 		filteredData = new float[depth][];
 		for (int z = 0; z < depth; ++z) {
-			statusService.showStatus(z, depth, "Loading stack...");
-			filteredData[z] = (float[]) s.getPixels(z + 1);
+			final int pos = imp.getStackIndex(channel, z + 1, frame);
+			showStatus(z, depth, "Loading image...");
+			filteredData[z] = (float[]) s.getPixels(pos);
 		}
-		statusService.clearStatus();
+		showStatus(0, 0, null);
+	}
+
+	/**
+	 * Retrieves the 'filtered image' data currently loaded in memory as an
+	 * ImagePlus object. Returned image is always of 32-bit type.
+	 *
+	 * @return the loaded data or null if no image has been loaded.
+	 * @see #filteredImageLoaded()
+	 * @see #loadFilteredImage()
+	 */
+	public ImagePlus getFilteredDataAsImp() {
+		if (!filteredImageLoaded()) return null;
+		final ImageStack stack = new ImageStack(xy.getWidth(), xy.getHeight());
+		for (int z = 0; z < depth; ++z) {
+			final ImageProcessor ip = new FloatProcessor(xy.getWidth(), xy.getHeight());
+			ip.setPixels(filteredData[z]);
+			stack.addSlice(ip);
+		}
+		final ImagePlus impFiltered = new ImagePlus("Filtered Data", stack);
+		updateLut();
+		impFiltered.setLut(lut);
+		return impFiltered;
 	}
 
 	public synchronized void enableHessian(final boolean enable) {

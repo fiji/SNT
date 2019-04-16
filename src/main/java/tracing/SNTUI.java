@@ -140,7 +140,6 @@ public class SNTUI extends JDialog {
 	private JComboBox<String> colorImageChoice;
 
 	/* UI */
-	private JComboBox<String> filterChoice;
 	private JCheckBox showPathsSelected;
 	protected JCheckBox showPartsNearby;
 	protected JCheckBox useSnapWindow;
@@ -154,7 +153,6 @@ public class SNTUI extends JDialog {
 	private JPanel aStarPanel;
 	private JCheckBox preprocess;
 	private JCheckBox aStarCheckBox;
-	private JButton displayFiltered;
 	private JMenuItem loadTracesMenuItem;
 	private JMenuItem loadSWCMenuItem;
 	private JMenuItem loadLabelsMenuItem;
@@ -945,8 +943,18 @@ public class SNTUI extends JDialog {
 		plugin.reloadImage(newC, newT);
 		if (!reload) plugin.getImagePlus().setPosition(newC, plugin.getImagePlus()
 			.getZ(), newT);
-		preprocess.setSelected(false);
+		if (plugin.isHessianEnabled()) enableHessian(false);
 		plugin.showMIPOverlays(0);
+		if (plugin.filteredImageLoaded()) {
+			final String[] choices = new String[] {"Unload. I'll load new data manually", "Reload", "Do nothing. Leave as is"};
+			final String choice = guiUtils.getChoice("What should be done with cached filtered image?",
+					"Reload Filtered Data?", choices, (reload) ? choices[1] : choices[0]);
+			if (choice != null && choice.startsWith("Unload")) {
+				flushCachedFilteredData();
+			} else if (choice != null && choice.startsWith("Reload")) {
+				loadCachedFilteredData(false);
+			}
+		}
 		resetState();
 		showStatus(reload ? "Image reloaded into memory..." : null, true);
 	}
@@ -1665,13 +1673,15 @@ public class SNTUI extends JDialog {
 
 	private JPanel filteredImagePanel() {
 		filteredImgPathField = new JTextField();
-		filteredImgLoadButton = GuiUtils.smallButton("Choose...");
+		filteredImgLoadButton = GuiUtils.smallButton("Browse");
 		filteredImgParserChoice = new JComboBox<>();
 		filteredImgParserChoice.addItem("SNT");
 		filteredImgParserChoice.addItem("ITK: Tubular Geodesics");
-		filteredImgInitButton = GuiUtils.smallButton("Initialize...");
+		filteredImgInitButton = GuiUtils.smallButton("Load");
 		filteredImgActivateCheckbox = new JCheckBox(hotKeyLabel(
 			"Trace on filtered Image", "I"));
+		guiUtils.addTooltip(filteredImgActivateCheckbox,
+				"Whether A* search should be performed on the (undisplayed) filtered image rather than the image currently being traced");
 		filteredImgActivateCheckbox.addActionListener(e -> enableFilteredImgTracing(
 			filteredImgActivateCheckbox.isSelected()));
 
@@ -1711,50 +1721,22 @@ public class SNTUI extends JDialog {
 					"Unload Image?")) return;
 
 				// reset cached filtered image/Tubular Geodesics
-				plugin.filteredData = null;
-				plugin.doSearchOnFilteredData = false;
+				flushCachedFilteredData();
 				if (plugin.tubularGeodesicsTracingEnabled) {
 					if (plugin.tubularGeodesicsThread != null)
 						plugin.tubularGeodesicsThread.requestStop();
 					plugin.tubularGeodesicsThread = null;
 					plugin.tubularGeodesicsTracingEnabled = false;
 				}
-				System.gc();
-				updateFilteredImgFields();
 
 			}
 			else { // toggle: set action to enable filtered tracing
-				final File file = new File(filteredImgPathField.getText());
-				if (!SNT.fileAvailable(file)) {
-					guiUtils.error(file.getAbsolutePath() +
-						" is not available. Image could not be loaded.",
-						"File Unavailable");
-					return;
+	
+				if (filteredImgParserChoice.getSelectedIndex() == 0) { // SNT
+					loadCachedFilteredData(true);
 				}
-				plugin.setFilteredImage(file);
-
-				if (filteredImgParserChoice.getSelectedIndex() == 0) { // SNT if
-																																// (!"Simple
-																																// Neurite
-					// Tracer".equals(parserChoice.getSelectedItem())
-					// {
-					final int byteDepth = 32 / 8;
-					final ImagePlus tracingImp = plugin.getImagePlus();
-					final long megaBytesExtra = (((long) tracingImp.getWidth()) *
-						tracingImp.getHeight() * tracingImp.getNSlices() * byteDepth * 2) /
-						(1024 * 1024);
-					final long maxMemory = Runtime.getRuntime().maxMemory() / (1024 *
-						1024);
-					if (!guiUtils.getConfirmation("Load " + file.getAbsolutePath() +
-						"? This operation will likely require " + megaBytesExtra +
-						"MiB of RAM (currently available: " + maxMemory + " MiB).",
-						"Confirm Loading?")) return;
-					loadFilteredImage();
-
-				}
-				else if (filteredImgParserChoice.getSelectedIndex() == 1) { // Tubular
-																																		// Geodesics
-
+				else if (filteredImgParserChoice.getSelectedIndex() == 1) { // TubularGeodesics
+					if (!setFilteredImage()) return;
 					if (Types.load(
 						"FijiITKInterface.TubularGeodesics") == null)
 					{
@@ -1763,22 +1745,9 @@ public class SNTUI extends JDialog {
 						return;
 					}
 					plugin.tubularGeodesicsTracingEnabled = true;
-					updateFilteredImgFields();
+					updateFilteredImgFields(false);
 				}
 			}
-		});
-
-		filterChoice = new JComboBox<>();
-		filterChoice.addItem("None");
-		filterChoice.addItem("Frangi Vesselness");
-		filterChoice.addItem("Tubeness");
-		filterChoice.addItem("Tubular Geodesics");
-		filterChoice.addItem("Other...");
-		filterChoice.addActionListener(e -> {
-			displayFiltered.setEnabled(filterChoice.getSelectedIndex() > 0);
-			guiUtils.centeredMsg("This feature is not yet implemented",
-				"Not Yet Implemented");
-			filterChoice.setSelectedIndex(0);
 		});
 
 		filteredImgPanel = new JPanel();
@@ -1827,7 +1796,44 @@ public class SNTUI extends JDialog {
 		return filteredImgPanel;
 	}
 
-	private void loadFilteredImage() {
+	private void flushCachedFilteredData() {
+		plugin.filteredData = null;
+		plugin.doSearchOnFilteredData = false;
+		updateFilteredImgFields(true);
+	}
+
+	private boolean setFilteredImage() {
+		final File file = new File(filteredImgPathField.getText());
+		final boolean valid = SNT.fileAvailable(file);
+		if (valid) {
+			plugin.setFilteredImage(file);
+		} else {
+			guiUtils.error(file.getAbsolutePath() + " is not available. Image could not be loaded.",
+					"File Unavailable");
+		}
+		plugin.setFilteredImage(file);
+		return valid;
+	}
+
+	private void loadCachedFilteredData(final boolean warnUserOnMemory) {
+		if (!setFilteredImage()) return;
+		if (warnUserOnMemory) {
+			final int byteDepth = 32 / 8;
+			final ImagePlus tracingImp = plugin.getImagePlus();
+			final long megaBytesExtra = (((long) tracingImp.getWidth()) * tracingImp.getHeight()
+					* tracingImp.getNSlices() * byteDepth * 2) / (1024 * 1024);
+			final long maxMemory = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+			if (megaBytesExtra > 0.80 * maxMemory && !guiUtils.getConfirmation( //
+					"Loading image will likely require " + megaBytesExtra + "MiB of " //
+					+ "RAM and currently only " + maxMemory + " MiB are available. " //
+					+ "Proceed nevertheless?", "Confirm Loading?")) {
+				return;
+			}
+		}
+		cacheFilteredImage();
+	}
+
+	private void cacheFilteredImage() {
 		filteredImgLoadingWorker = new SwingWorker<Object, Object>() {
 
 			@Override
@@ -1842,15 +1848,16 @@ public class SNTUI extends JDialog {
 					return null;
 				}
 				catch (final IOException e2) {
-					guiUtils.error("Loading of image failed. See Console for details");
+					guiUtils.error("Loading of image failed. See Console for details.");
 					e2.printStackTrace();
 					return null;
 				}
 				catch (final OutOfMemoryError e3) {
 					plugin.filteredData = null;
 					guiUtils.error(
-						"It seems there is not enough memory to proceed. See Console for details");
+						"It seems there is not enough memory to proceed. See Console for details.");
 					e3.printStackTrace();
+					return null;
 				}
 				return null;
 			}
@@ -1858,7 +1865,7 @@ public class SNTUI extends JDialog {
 			@Override
 			protected void done() {
 				resetState();
-				updateFilteredImgFields();
+				updateFilteredImgFields(plugin.filteredImageLoaded());
 			}
 		};
 		changeState(LOADING_FILTERED_IMAGE);
@@ -1866,15 +1873,16 @@ public class SNTUI extends JDialog {
 
 	}
 
-	private void updateFilteredImgFields() {
+	private void updateFilteredImgFields(final boolean resetHessian) {
 		SwingUtilities.invokeLater(() -> {
+			if (resetHessian) enableHessian(false);
 			final boolean successfullyLoaded = plugin
 				.isTracingOnFilteredImageAvailable();
 			filteredImgParserChoice.setEnabled(!successfullyLoaded);
 			filteredImgPathField.setEnabled(!successfullyLoaded);
 			filteredImgLoadButton.setEnabled(!successfullyLoaded);
-			filteredImgInitButton.setText((successfullyLoaded) ? "Reset"
-				: "Initialize...");
+			filteredImgInitButton.setText((successfullyLoaded) ? "Flush"
+				: "Load");
 			filteredImgInitButton.setEnabled(successfullyLoaded);
 			filteredImgActivateCheckbox.setEnabled(successfullyLoaded);
 			if (!successfullyLoaded) filteredImgActivateCheckbox.setSelected(false);
@@ -2672,9 +2680,9 @@ public class SNTUI extends JDialog {
 				updateStatusText("Unloading filtered image", true);
 				if (filteredImgLoadingWorker != null) filteredImgLoadingWorker.cancel(
 					true);
-				plugin.doSearchOnFilteredData = false;
+				flushCachedFilteredData();
 				plugin.tubularGeodesicsTracingEnabled = false;
-				plugin.filteredData = null;
+				updateFilteredImgFields(false);
 				break;
 			case (CALCULATING_GAUSSIAN):
 				updateStatusText("Cancelling Gaussian generation...", true);

@@ -111,7 +111,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	@Parameter
 	protected LegacyService legacyService;
 	@Parameter
-	protected LogService logService;
+	private LogService logService;
 	@Parameter
 	protected DatasetIOService datasetIOService;
 	@Parameter
@@ -254,15 +254,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public Color deselectedColor = DEFAULT_DESELECTED_COLOR;
 	public boolean displayCustomPathColors = true;
 
-	@Deprecated
-	protected SimpleNeuriteTracer() {
-		final Context context = (Context) IJ.runPlugIn("org.scijava.Context", "");
-		context.inject(this);
-		SNT.setPlugin(this);
-		pathAndFillManager = new PathAndFillManager(this);
-		tracingHalted = true;
-		enableAstar(false);
-	}
 
 	/**
 	 * Instantiates SimpleNeuriteTracer in 'Tracing Mode'.
@@ -822,12 +813,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				}
 				else {
 					confirmTemporary();
-					ui.changeState(SNTUI.PARTIAL_PATH);
+					changeUIState(SNTUI.PARTIAL_PATH);
 				}
 			}
 			else {
 
-				ui.changeState(SNTUI.PARTIAL_PATH);
+				changeUIState(SNTUI.PARTIAL_PATH);
 			}
 
 			// Indicate in the dialog that we've finished...
@@ -1635,7 +1626,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			try {
 				// Block and update UI
 				changeUIState(SNTUI.SEARCHING);
-				showStatus(i, nNodes, "Finding path to node " + i + "/" + nNodes);
+				//showStatus(i, nNodes, "Finding path to node " + i + "/" + nNodes);
 
 				// Append node and wait for search to be finished
 				final PointInImage node = pointList.get(i);
@@ -1966,7 +1957,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			sigmas[i] = ((i + 1) * getMinimumSeparation()) / 2;
 		}
 
-		ui.changeState(SNTUI.WAITING_FOR_SIGMA_CHOICE);
+		changeUIState(SNTUI.WAITING_FOR_SIGMA_CHOICE);
 
 		final SigmaPalette sp = new SigmaPalette();
 		sp.setListener(ui.listener);
@@ -2222,13 +2213,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			hessianEnabled = false;
 			hessian = null;
 			hessianSigma = -1;
-			ui.gaussianCalculated(false);
+			if (ui != null) ui.gaussianCalculated(false);
 			statusService.showProgress(1, 1);
 			return;
 		}
 		else if (proportion >= 1.0) {
 			hessianEnabled = true;
-			ui.gaussianCalculated(true);
+			if (ui != null) ui.gaussianCalculated(true);
 		}
 		statusService.showProgress((int) proportion, 1); // FIXME:
 	}
@@ -2721,7 +2712,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				slicesData[z - 1] = (byte[]) xyStack.getPixels(z);
 
 			// Create the ZY slices:
-			final ImageStack zy_stack = new ImageStack(depth, height);
+			final ImageStack zy_stack = new ImageStack(depth, height, width);
 			for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
 				final byte[] sliceBytes = new byte[depth * height];
 				for (int z_in_original = 0; z_in_original < depth; ++z_in_original) {
@@ -2746,7 +2737,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			zy8.setCalibration(zyCal);
 
 			// Create the XZ slices:
-			final ImageStack xz_stack = new ImageStack(width, depth);
+			final ImageStack xz_stack = new ImageStack(width, depth, height);
 			for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
 				final byte[] sliceBytes = new byte[width * depth];
 				for (int z_in_original = 0; z_in_original < depth; ++z_in_original) {
@@ -2957,7 +2948,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void showStatus(final int progress, final int maximum,
 		final String status)
 	{
-		statusService.showStatus(progress, maximum, status);
+		if (status == null)
+			statusService.clearStatus();
+		else
+			statusService.showStatus(progress, maximum, status);
 		if (isUIready()) getUI().showStatus(status, true);
 	}
 

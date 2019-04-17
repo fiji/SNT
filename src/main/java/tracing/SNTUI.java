@@ -188,8 +188,6 @@ public class SNTUI extends JDialog {
 
 	private static final int MARGIN = 4;
 	private volatile int currentState;
-	private volatile double currentSigma;
-	private volatile double currentMultiplier;
 	private volatile boolean ignoreColorImageChoiceEvents = false;
 	private volatile boolean ignorePreprocessEvents = false;
 	private volatile int preGaussianState;
@@ -584,14 +582,14 @@ public class SNTUI extends JDialog {
 	}
 
 	/**
-	 * Sets the multiplier value for Hessian computation of curvatures updating
-	 * the Hessian panel accordingly.
+	 * Sets the multiplier value for Hessian-based analysis. In the UI the
+	 * multiplier is reported as 1/256 * max of tubeness image.
 	 *
 	 * @param multiplier the new multiplier value
 	 */
 	public void setMultiplier(final double multiplier) {
+		plugin.hessianMultiplier = multiplier;
 		SwingUtilities.invokeLater(() -> {
-			currentMultiplier = multiplier;
 			updateHessianLabel();
 		});
 	}
@@ -606,7 +604,7 @@ public class SNTUI extends JDialog {
 	 */
 	public void setSigma(final double sigma, final boolean mayStartGaussian) {
 		SwingUtilities.invokeLater(() -> {
-			currentSigma = sigma;
+			plugin.hessianSigma = sigma;
 			updateHessianLabel();
 			if (!mayStartGaussian) return;
 			preprocess.setSelected(false);
@@ -620,30 +618,23 @@ public class SNTUI extends JDialog {
 		});
 	}
 
-	private void updateHessianLabel() {
-		final String label = hotKeyLabel("Hessian-based analysis (\u03C3 = " + SNT
-			.formatDouble(currentSigma, 2) + "; \u00D7 = " + SNT.formatDouble(
-				currentMultiplier, 2) + ")", "H");
+	protected void updateHessianLabel() {
+		final String label = hotKeyLabel("Hessian-based analysis (\u03C3=" + SNT
+			.formatDouble(plugin.hessianSigma, 2) + "; max=" + SNT.formatDouble(
+				256/plugin.hessianMultiplier, 1) + ")", "H");
 		assert SwingUtilities.isEventDispatchThread();
 		preprocess.setText(label);
 	}
 
 	/**
-	 * Gets the current Sigma value from the Hessian panel
+	 * Gets the current Sigma value as reported in the "Auto-tracing" widget.
 	 *
 	 * @return the sigma value currently in use
 	 */
 	public double getSigma() {
-		return currentSigma;
-	}
-
-	/**
-	 * Gets the current multiplier value from the Hessian panel
-	 *
-	 * @return the multiplier value currently in use
-	 */
-	public double getMultiplier() {
-		return currentMultiplier;
+		if(plugin.hessianSigma == - 1)
+			plugin.hessianSigma = plugin.getMinimumSeparation();
+		return plugin.hessianSigma;
 	}
 
 	protected void exitRequested() {
@@ -2235,7 +2226,6 @@ public class SNTUI extends JDialog {
 		final GridBagConstraints hc = GuiUtils.defaultGbc();
 		preprocess = new JCheckBox();
 		setSigma(plugin.getMinimumSeparation(), false);
-		setMultiplier(4);
 		updateHessianLabel();
 		preprocess.addActionListener(listener);
 		hessianPanel.add(preprocess, hc);
@@ -2352,32 +2342,34 @@ public class SNTUI extends JDialog {
 	private void setSigmaFromUser() {
 		final JTextField sigmaField = new JTextField(SNT.formatDouble(getSigma(),
 			5), 5);
-		final JTextField multiplierField = new JTextField(SNT.formatDouble(
-			getMultiplier(), 1), 5);
+		final JTextField maxField = new JTextField(SNT.formatDouble(
+			256/plugin.hessianMultiplier, 1), 5);
 		final Object[] contents = {
 			"<html><b>Sigma</b><br>Enter the approximate radius of the structures you are<br>" +
 				"tracing (the default is the minimum voxel separation,<br>i.e., " + SNT
 					.formatDouble(plugin.getMinimumSeparation(), 3) + plugin
-						.getImagePlus().getCalibration().getUnit() + ")", sigmaField,
-			"<html><br><b>Multiplier</b><br>Enter the scaling factor to apply " +
-				"(the default is 4.0):", multiplierField, };
+						.getImagePlus().getCalibration().getUnit() + "):", sigmaField,
+			"<html><br><b>Maximum</b><br>Enter the maximum pixel intensity on the <i>Tubeness</i><br>"
+			+ "image beyond which the cost function for A* search<br>"
+			+ "search is minimized (the default is 256/" + SNTPrefs.DEFAULT_MULTIPLIER + "="
+			+ SNT.formatDouble(256/SNTPrefs.DEFAULT_MULTIPLIER, 1) + "):", maxField, };
 		final int result = JOptionPane.showConfirmDialog(this, contents,
-			"Select Scale of Traced Structures", JOptionPane.OK_CANCEL_OPTION,
+			"Hessian Settings", JOptionPane.OK_CANCEL_OPTION,
 			JOptionPane.PLAIN_MESSAGE);
 		if (result == JOptionPane.OK_OPTION) {
 			final double sigma = GuiUtils.extractDouble(sigmaField);
-			final double multiplier = GuiUtils.extractDouble(multiplierField);
-			if (Double.isNaN(sigma) || sigma <= 0 || Double.isNaN(multiplier) ||
-				multiplier <= 0)
+			final double max = GuiUtils.extractDouble(maxField);
+			if (Double.isNaN(sigma) || sigma <= 0 || Double.isNaN(max) ||
+				max <= 0)
 			{
-				guiUtils.error("Sigma and multiplier must be positive numbers.",
+				guiUtils.error("Sigma and max must be positive numbers.",
 					"Invalid Input");
 				return;
 			}
 			preprocess.setSelected(false); // should never be on when setSigma is
 			// called
 			setSigma(sigma, true);
-			setMultiplier(multiplier);
+			setMultiplier( 256 / max);
 		}
 	}
 

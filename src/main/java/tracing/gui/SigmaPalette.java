@@ -22,26 +22,30 @@
 
 package tracing.gui;
 
+import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Label;
 import java.awt.Panel;
+import java.awt.Scrollbar;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 
+import javax.swing.BoxLayout;
+
 import features.HessianEvalueProcessor;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Prefs;
+import ij.gui.GUI;
 import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
 import ij.gui.Overlay;
-import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
 import ij.gui.TextRoi;
 import ij.process.FloatProcessor;
@@ -76,72 +80,100 @@ public class SigmaPalette extends Thread {
 		public void sigmaPaletteCanceled();
 	}
 
+
 	private class PaletteStackWindow extends StackWindow {
 
 		private static final long serialVersionUID = 1L;
-		private Label label;
-		private ScrollbarWithLabel maxValueScrollbar;
-		private boolean manuallyChangedAlready = false;
+		private Button applyButton;
+		private Scrollbar maxValueScrollbar;
+		private Label maxValueLabel;
+		private final double defaultMax;
 
 		public PaletteStackWindow(final ImagePlus imp, final ImageCanvas ic,
 			final double defaultMax)
 		{
 			super(imp, ic);
-			buildMaxValueScrollbar(defaultMax);
-			add(maxValueScrollbar);
-			buildLabel();
-			add(label);
-			add(buttonPanel());
+			this.defaultMax = defaultMax;
+			add(new Label("")); // spacer
+			final Panel panel = new Panel();
+			panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+			panel.add(maxPanel());
+			panel.add(buttonPanel());
+			add(panel);
+			updateLabels();
 			pack();
+			validate();
+			ic.disablePopupMenu(true);
+			ic.setShowCursorStatus(false);
+			ic.setCursor(new Cursor(Cursor.HAND_CURSOR));
+			final double scalingFactor = Prefs.getGuiScale();
+			if (scalingFactor > 1) {
+				ic.setMagnification(scalingFactor);
+				ic.zoomIn(ic.getWidth() / 2, ic.getHeight() / 2);
+			} else if (scalingFactor < 1) {
+				ic.setMagnification(scalingFactor);
+				ic.zoomOut(ic.getWidth() / 2, ic.getHeight() / 2);
+			} else {
+				ic.setMagnification(1);
+				ic.unzoom();
+			}
 		}
 
 		private Panel buttonPanel() {
-			final Panel buttonPanel = new Panel(new FlowLayout(FlowLayout.CENTER, 0,
-				0));
-			final Button cButton = new Button("Cancel");
-			final int width = (int) getLayout().preferredLayoutSize(this).getWidth() /
-				2 - (2 * ImageWindow.HGAP);
-			final int height = 25;
-			cButton.setPreferredSize(new Dimension(width, height));
+			final Panel buttonPanel = new Panel(new FlowLayout(FlowLayout.CENTER));
+			final Button cButton = scaledButton("Cancel");
 			cButton.addActionListener(e -> dismiss());
 			buttonPanel.add(cButton);
-			final Button aButton = new Button("Apply");
-			aButton.setPreferredSize(new Dimension(width, height));
-			aButton.addActionListener(e -> apply());
-			buttonPanel.add(aButton);
+			applyButton = scaledButton("Apply: (s=###.##; max=###.##)");
+			applyButton.addActionListener(e -> apply());
+			buttonPanel.add(applyButton);
 			return buttonPanel;
 		}
 
-		private void buildMaxValueScrollbar(final double defaultMaxValue) {
-			maxValueScrollbar = new ScrollbarWithLabel(this, (int) defaultMaxValue, 1,
-				1, 601, '\u00D7');
-			maxValueScrollbar.setFocusable(false); // prevents scroll bar from
-			// blinking on Windows
-			maxValueScrollbar.setUnitIncrement(1);
-			maxValueScrollbar.setBlockIncrement(1);
-			maxValueScrollbar.addAdjustmentListener(e -> {
-				manuallyChangedAlready = true;
-				final int newValue = e.getValue();
-				maxChanged(newValue);
+		private Label scaledLabel(final String text) {
+			final Label label = new Label(text);
+			GUI.scale(label);
+			return label;
+		}
+
+		private Button scaledButton(final String text) {
+			final Button button = new Button(text);
+			GUI.scale(button);
+			return button;
+		}
+
+		private Panel maxPanel() {
+			final Panel mainPanel = new Panel(new BorderLayout(0, 0));
+			mainPanel.add(scaledLabel("Adjusted max."), BorderLayout.WEST);
+			maxValueScrollbar = new Scrollbar(Scrollbar.HORIZONTAL, (int)defaultMax, (int) (3*defaultMax/100), 1, (int) (3*defaultMax));
+			maxValueScrollbar.setFocusable(false); // prevents scroll bar from flickering on windows!?
+			mainPanel.add(maxValueScrollbar, BorderLayout.CENTER);
+			final Panel rightPanel = new Panel(new BorderLayout(2, 0));
+			maxValueLabel = scaledLabel("####.##");
+			rightPanel.add(maxValueLabel, BorderLayout.WEST);
+			final Button resetButton = scaledButton("Reset");
+			resetButton.addActionListener(e -> {
+				maxValueScrollbar.setValue((int) defaultMax);
+				maxChanged(defaultMax);
 			});
+			rightPanel.add(resetButton, BorderLayout.EAST);
+			maxValueScrollbar.addAdjustmentListener(e -> {
+				maxChanged(e.getValue());
+			});
+			mainPanel.add(rightPanel, BorderLayout.EAST);
+			return mainPanel;
 		}
 
-		private void buildLabel() {
-			label = new Label(" ", Label.CENTER);
-			final int width = (int) getLayout().preferredLayoutSize(this).getWidth();
-			label.setPreferredSize(new Dimension(width, 12));
-			updateLabel();
-		}
-
-		private void updateLabel() {
-			label.setText("\u03C3 = " + getSelectedSigma() + "; \u00D7 = " + SNT
-				.formatDouble(getSelectedMultiplier(), 2) + "; Maximum: " +
-				(int) selectedMax);
+		private void updateLabels() {
+			final String max = SNT.formatDouble(selectedMax, 1);
+			maxValueLabel.setText(max);
+			applyButton.setLabel("Apply (\u03C3=" + SNT
+					.formatDouble(getSelectedSigma(), 2) + "; max=" + max + ")");
 		}
 
 		private void maxChanged(final double newValue) {
 			setMax(newValue);
-			updateLabel();
+			updateLabels();
 		}
 
 		@Override
@@ -327,10 +359,8 @@ public class SigmaPalette extends Thread {
 
 	private void setMax(final double max) {
 		selectedMax = max;
-		if (paletteImage != null) {
-			paletteImage.getProcessor().setMinAndMax(0, max);
-			paletteImage.updateAndDraw();
-		}
+		paletteImage.getProcessor().setMinAndMax(0, max);
+		paletteImage.updateAndDraw();
 	}
 
 	private double getMultiplierFromMax(final double max) {
@@ -359,13 +389,13 @@ public class SigmaPalette extends Thread {
 
 	private void setSelectedSigmaIndex(final int selectedSigmaIndex) {
 		this.selectedSigmaIndex = selectedSigmaIndex;
-		paletteWindow.updateLabel();
+		paletteWindow.updateLabels();
 		paletteImage.updateAndDraw();
 	}
 
 	private void setOverlayLabel(final int sigmaIndex, final int[] xyTile) {
-		final String label = "\u03C3 = " + SNT.formatDouble(sigmaValues[sigmaIndex],
-			1);
+		final String label = "\u03C3=" + SNT.formatDouble(sigmaValues[sigmaIndex],
+			2);
 		final TextRoi roi = new TextRoi(xyTile[0] * croppedWidth + 2, xyTile[1] *
 			croppedHeight + 2, label);
 		roi.setStrokeColor((getSelectedSigmaIndex() == sigmaIndex) ? Color.GREEN
@@ -386,7 +416,6 @@ public class SigmaPalette extends Thread {
 	 * @param z_max image boundary for choice grid
 	 * @param hep the HessianEvalueProcessor generating the preview
 	 * @param sigmaValues the desired range of sigma values for choice grid
-	 * @param defaultMax the default image maximum (setting the multiplier)
 	 * @param sigmasAcross the number of columns in choice grid
 	 * @param sigmasDown the number of rows in choice grid
 	 * @param initial_z the default z-position
@@ -394,7 +423,7 @@ public class SigmaPalette extends Thread {
 	public void makePalette(final ImagePlus image, final int x_min,
 		final int x_max, final int y_min, final int y_max, final int z_min,
 		final int z_max, final HessianEvalueProcessor hep,
-		final double[] sigmaValues, final double defaultMax, final int sigmasAcross,
+		final double[] sigmaValues, final int sigmasAcross,
 		final int sigmasDown, final int initial_z)
 	{
 
@@ -413,7 +442,6 @@ public class SigmaPalette extends Thread {
 		this.z_max = z_max;
 		this.hep = hep;
 		this.sigmaValues = sigmaValues;
-		this.defaultMax = defaultMax;
 		this.sigmasAcross = sigmasAcross;
 		this.sigmasDown = sigmasDown;
 		this.initial_z = initial_z;
@@ -475,19 +503,9 @@ public class SigmaPalette extends Thread {
 			final FloatProcessor fp = new FloatProcessor(paletteWidth, paletteHeight);
 			newStack.addSlice("", fp);
 		}
-		paletteImage = new ImagePlus("Pick Sigma and Multiplier", newStack);
-		setMax(defaultMax);
-
-		paletteCanvas = new PaletteCanvas(paletteImage, croppedWidth, croppedHeight,
-			sigmasAcross, sigmasDown);
-		paletteWindow = new PaletteStackWindow(paletteImage, paletteCanvas,
-			defaultMax);
-		paletteCanvas.addKeyListener(new KeyListener());
-		paletteCanvas.requestFocusInWindow(); // required to trigger keylistener
-		// events
+		paletteImage = new ImagePlus("Pick Sigma & Max", newStack);
 		paletteImage.setZ(initial_z - z_min + 1);
 		setOverlayLabel(0, new int[] { 0, 0 });
-
 		for (int sigmaIndex = 0; sigmaIndex < sigmaValues.length; ++sigmaIndex) {
 			final int sigmaY = sigmaIndex / sigmasAcross;
 			final int sigmaX = sigmaIndex % sigmasAcross;
@@ -496,16 +514,17 @@ public class SigmaPalette extends Thread {
 			final double sigma = sigmaValues[sigmaIndex];
 			hep.setSigma(sigma);
 			final ImagePlus processed = hep.generateImage(cropped);
-			if (!paletteWindow.manuallyChangedAlready) {
-				final float[] limits = Limits.getStackLimits(processed);
-				final int suggestedMax = (int) limits[1];
-				paletteWindow.maxValueScrollbar.setValue(suggestedMax);
-				paletteWindow.maxChanged(suggestedMax);
-			}
+			final float[] limits = Limits.getStackLimits(processed);
+			defaultMax = limits[1];
 			copyIntoPalette(processed, paletteImage, offsetX, offsetY);
-			paletteImage.updateAndDraw();
-
+			setMax(defaultMax);
 		}
+
+		paletteCanvas = new PaletteCanvas(paletteImage, croppedWidth, croppedHeight,
+			sigmasAcross, sigmasDown);
+		paletteWindow = new PaletteStackWindow(paletteImage, paletteCanvas, defaultMax);
+		paletteCanvas.addKeyListener(new KeyListener());
+		paletteCanvas.requestFocusInWindow(); // required to trigger keylistener events
 
 	}
 

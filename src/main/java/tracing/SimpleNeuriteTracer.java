@@ -178,14 +178,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	volatile protected float stackMax = Float.MIN_VALUE;
 	volatile protected float stackMin = Float.MAX_VALUE;
 
-	/* Curvatures */
+	/* Hessian-based analysis */
 	private volatile boolean hessianEnabled = false;
 	private ComputeCurvatures hessian = null;
-	/*
-	 * This variable just stores the sigma which the current 'hessian'
-	 * ComputeCurvatures was / is being calculated (or -1 if 'hessian' is null) ...
-	 */
-	private volatile double hessianSigma = -1;
+	protected volatile double hessianSigma = -1;
+	protected double hessianMultiplier = SNTPrefs.DEFAULT_MULTIPLIER;
 
 	/* tracing threads */
 	private TracerThread currentSearchThread = null;
@@ -1456,15 +1453,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			manualSearchThread.start();
 		}
 		else {
-			currentSearchThread = new TracerThread(xy, stackMin, stackMax, 0, // timeout
-				// in
-				// seconds
+			currentSearchThread = new TracerThread(xy, stackMin, stackMax, //
+				0, // timeout in seconds
 				1000, // reportEveryMilliseconds
 				(int) Math.round(last_start_point_x), (int) Math.round(
 					last_start_point_y), (int) Math.round(last_start_point_z), x_end,
 				y_end, z_end, //
 				true, // reciprocal
-				is2D(), (hessianEnabled ? hessian : null), ui.getMultiplier(),
+				is2D(), (hessianEnabled ? hessian : null), //
+				hessianMultiplier,
 				doSearchOnFilteredData ? filteredData : null, hessianEnabled);
 
 			addThreadToDraw(currentSearchThread);
@@ -1942,7 +1939,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return ui.isVisible();
 	}
 
-	public void launchPaletteAround(final int x, final int y, final int z) {
+	protected void launchPaletteAround(final int x, final int y, final int z) {
 
 		final int either_side = 40;
 
@@ -1974,8 +1971,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final SigmaPalette sp = new SigmaPalette();
 		sp.setListener(ui.listener);
 		sp.makePalette(getLoadedDataAsImp(), x_min, x_max, y_min, y_max, z_min,
-			z_max, new TubenessProcessor(true), sigmas, 256 / ui.getMultiplier(), 3,
-			3, z);
+			z_max, new TubenessProcessor(true), sigmas, 3, 3, z);
 	}
 
 	public void startFillerThread(final FillerThread filler) {
@@ -2079,24 +2075,30 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return imp;
 	}
 
-	public void startHessian() {
+	protected void startHessian() {
+		if (hessianSigma == -1) hessianSigma = getMinimumSeparation();
+		startHessian(hessianSigma, hessianMultiplier);
+	}
+
+	public void startHessian(final double sigma, final double multiplier) {
+		this.hessianMultiplier = multiplier;
 		if (hessian == null) {
-			ui.changeState(SNTUI.CALCULATING_GAUSSIAN);
-			hessianSigma = ui.getSigma();
+			changeUIState(SNTUI.CALCULATING_GAUSSIAN);
+			hessianSigma = sigma;
 			hessian = new ComputeCurvatures(getLoadedDataAsImp(), hessianSigma, this,
 				true);
 			new Thread(hessian).start();
 		}
 		else {
-			final double newSigma = ui.getSigma();
-			if (newSigma != hessianSigma) {
-				ui.changeState(SNTUI.CALCULATING_GAUSSIAN);
-				hessianSigma = newSigma;
+			if (sigma != hessianSigma) {
+				changeUIState(SNTUI.CALCULATING_GAUSSIAN);
+				hessianSigma = sigma;
 				hessian = new ComputeCurvatures(getLoadedDataAsImp(), hessianSigma,
 					this, true);
 				new Thread(hessian).start();
 			}
 		}
+		if (ui != null) ui.updateHessianLabel();
 	}
 
 	/**
@@ -2207,7 +2209,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (enable) startHessian();
 	}
 
-	public synchronized void cancelGaussian() {
+	protected synchronized void cancelGaussian() {
 		if (hessian != null) {
 			hessian.cancelGaussianGeneration();
 		}
@@ -2869,6 +2871,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 */
 	public boolean isAstarEnabled() {
 		return !manualOverride;
+	}
+
+	/**
+	 * Checks if Hessian analysis is enabled
+	 *
+	 * @return true, if Hessian analysis is enabled, otherwise false
+	 */
+	public boolean isHessianEnabled() {
+		return hessianEnabled && hessian != null;
 	}
 
 	/**

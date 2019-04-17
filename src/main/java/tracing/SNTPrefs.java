@@ -36,6 +36,8 @@ import ij3d.ContentConstants;
  */
 public class SNTPrefs { // TODO: Adopt PrefService
 
+	public static final double DEFAULT_MULTIPLIER = 4;
+
 	private static final int DRAW_DIAMETERS_XY = 1;
 	private static final int SNAP_CURSOR = 2;
 	// private static final int SHOW_MIP_OVERLAY = 4;

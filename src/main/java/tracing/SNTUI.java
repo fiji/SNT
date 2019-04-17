@@ -114,6 +114,7 @@ import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.SigmaPalette;
 import tracing.gui.cmds.ChooseDatasetCmd;
 import tracing.gui.cmds.CompareFilesCmd;
+import tracing.gui.cmds.ShowFilteredImgCmd;
 import tracing.gui.cmds.JSONImporterCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
@@ -121,6 +122,7 @@ import tracing.gui.cmds.OpenDatasetCmd;
 import tracing.gui.cmds.RemoteSWCImporterCmd;
 import tracing.gui.cmds.ResetPrefsCmd;
 import tracing.gui.cmds.ShowCorrespondencesCmd;
+import tracing.gui.cmds.TubenessCmd;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.io.FlyCircuitLoader;
 import tracing.io.NeuroMorphoLoader;
@@ -1020,7 +1022,7 @@ public class SNTUI extends JDialog {
 						"Out of Memory: There is not enough RAM to load side views!");
 				}
 				else {
-					guiUtils.error("An error occured. See Console for details");
+					guiUtils.error("An error occured. See Console for details.");
 					t.printStackTrace();
 				}
 				plugin.setSinglePane(true);
@@ -1053,7 +1055,8 @@ public class SNTUI extends JDialog {
 			}
 			else {
 				guiUtils.error(
-					"Command currently only available for Display Canvas(es).");
+					"Currently, this command is only available for display canvases. To resize "
+					+ "current image use IJ's command <i>Image> Adjust> Canvas Size...</i>");
 				return;
 			}
 		});
@@ -1113,6 +1116,8 @@ public class SNTUI extends JDialog {
 
 		final JCheckBox canvasCheckBox = new JCheckBox(
 			"Activate canvas on mouse hovering", plugin.autoCanvasActivation);
+		guiUtils.addTooltip(canvasCheckBox, "Whether the image window should be brought to front as soon as the mouse "
+				+ "pointer enters it. This ensures shortcuts work as expected.");
 		canvasCheckBox.addItemListener(e -> plugin.enableAutoActivation(e
 			.getStateChange() == ItemEvent.SELECTED));
 		intPanel.add(canvasCheckBox, gdb);
@@ -1179,7 +1184,7 @@ public class SNTUI extends JDialog {
 
 		final String selectedKey = String.valueOf(colorChoice.getSelectedItem());
 		final ColorChooserButton cChooser = new ColorChooserButton(hm.get(
-			selectedKey), "Change...", 1, SwingConstants.RIGHT);
+			selectedKey), "Change", 1, SwingConstants.RIGHT);
 
 		colorChoice.addActionListener(e -> cChooser.setSelectedColor(hm.get(String
 			.valueOf(colorChoice.getSelectedItem())), false));
@@ -1239,8 +1244,8 @@ public class SNTUI extends JDialog {
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
 		final JCheckBox winLocCheckBox = new JCheckBox("Remember window locations",
 			plugin.prefs.isSaveWinLocations());
-		winLocCheckBox.setToolTipText(
-			"Whether GUI positioning should be preserved across restarts");
+		guiUtils.addTooltip(winLocCheckBox,
+				"Whether position of dialogs should be preserved across restarts");
 		winLocCheckBox.addItemListener(e -> plugin.prefs.setSaveWinLocations(e
 			.getStateChange() == ItemEvent.SELECTED));
 		miscPanel.add(winLocCheckBox, gdb);
@@ -1253,7 +1258,7 @@ public class SNTUI extends JDialog {
 		++gdb.gridy;
 		final JCheckBox askUserConfirmationCheckBox = new JCheckBox(
 			"Skip confirmation dialogs", !askUserConfirmation);
-		askUserConfirmationCheckBox.setToolTipText(
+		guiUtils.addTooltip(askUserConfirmationCheckBox,
 			"Whether \"Are you sure?\" prompts should precede major operations");
 		askUserConfirmationCheckBox.addItemListener(e -> askUserConfirmation = e
 			.getStateChange() == ItemEvent.DESELECTED);
@@ -1890,8 +1895,9 @@ public class SNTUI extends JDialog {
 		filteredImgInitButton.setEnabled(validFile);
 		filteredImgParserChoice.setEnabled(validFile);
 		filteredImgActivateCheckbox.setEnabled(validFile);
-		filteredImgPathField.setToolTipText((validFile) ? path
-			: "Not a valid file path");
+		final String tooltext = "<HTML>Path to a matched image (32-bit preferred). Current file:<br>" + path + " ("
+				+ ((validFile) ? "valid" : "invalid") + " path)";
+		filteredImgPathField.setToolTipText(tooltext);
 	}
 
 	@SuppressWarnings("deprecation")
@@ -2044,44 +2050,53 @@ public class SNTUI extends JDialog {
 		scriptUtilsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.PLUS));
 		analysisMenu.add(scriptUtilsMenu);
 
-		final JCheckBoxMenuItem xyCanvasMenuItem = new JCheckBoxMenuItem(
-			"Hide XY View");
-		xyCanvasMenuItem.addActionListener(e -> toggleWindowVisibility(
-			MultiDThreePanes.XY_PLANE, xyCanvasMenuItem));
-		viewMenu.add(xyCanvasMenuItem);
-		final JCheckBoxMenuItem zyCanvasMenuItem = new JCheckBoxMenuItem(
-			"Hide ZY View");
-		zyCanvasMenuItem.addActionListener(e -> toggleWindowVisibility(
-			MultiDThreePanes.ZY_PLANE, zyCanvasMenuItem));
-		viewMenu.add(zyCanvasMenuItem);
-		final JCheckBoxMenuItem xzCanvasMenuItem = new JCheckBoxMenuItem(
-			"Hide XZ View");
-		xzCanvasMenuItem.addActionListener(e -> toggleWindowVisibility(
-			MultiDThreePanes.XZ_PLANE, xzCanvasMenuItem));
-		viewMenu.add(xzCanvasMenuItem);
-		final JCheckBoxMenuItem threeDViewerMenuItem = new JCheckBoxMenuItem(
-			"Hide 3D View");
-		threeDViewerMenuItem.setEnabled(plugin.use3DViewer);
-		threeDViewerMenuItem.addItemListener(e -> {
-			if (plugin.get3DUniverse() != null) plugin.get3DUniverse().getWindow()
-				.setVisible(e.getStateChange() == ItemEvent.DESELECTED);
-		});
-		viewMenu.add(threeDViewerMenuItem);
-		// viewMenu.addSeparator();
-		// final JMenuItem resetZoomMenuItem = new JMenuItem("Reset Zoom Levels");
-		// resetZoomMenuItem.addActionListener(new ActionListener() {
-		//
-		// @Override
-		// public void actionPerformed(final ActionEvent e) {
-		// plugin.zoom100PercentAllPanes();
-		// }
-		// });
-		// viewMenu.add(resetZoomMenuItem);
-		viewMenu.addSeparator();
+		// View menu
 		final JMenuItem arrangeWindowsMenuItem = new JMenuItem("Arrange Views");
 		arrangeWindowsMenuItem.setIcon(IconFactory.getMenuIcon(GLYPH.WINDOWS));
 		arrangeWindowsMenuItem.addActionListener(e -> arrangeCanvases(true));
 		viewMenu.add(arrangeWindowsMenuItem);
+		final JMenu hideViewsMenu = new JMenu("Hide Tracing Canvas");
+		hideViewsMenu.setIcon(IconFactory.getMenuIcon(GLYPH.EYE_SLASH));
+		final JCheckBoxMenuItem xyCanvasMenuItem = new JCheckBoxMenuItem(
+			"Hide XY View");
+		xyCanvasMenuItem.addActionListener(e -> toggleWindowVisibility(
+			MultiDThreePanes.XY_PLANE, xyCanvasMenuItem));
+		hideViewsMenu.add(xyCanvasMenuItem);
+		final JCheckBoxMenuItem zyCanvasMenuItem = new JCheckBoxMenuItem(
+			"Hide ZY View");
+		zyCanvasMenuItem.addActionListener(e -> toggleWindowVisibility(
+			MultiDThreePanes.ZY_PLANE, zyCanvasMenuItem));
+		hideViewsMenu.add(zyCanvasMenuItem);
+		final JCheckBoxMenuItem xzCanvasMenuItem = new JCheckBoxMenuItem(
+			"Hide XZ View");
+		xzCanvasMenuItem.addActionListener(e -> toggleWindowVisibility(
+			MultiDThreePanes.XZ_PLANE, xzCanvasMenuItem));
+		hideViewsMenu.add(xzCanvasMenuItem);
+		final JCheckBoxMenuItem threeDViewerMenuItem = new JCheckBoxMenuItem(
+			"Hide Legacy 3D View");
+		threeDViewerMenuItem.addItemListener(e -> {
+			if (plugin.get3DUniverse() == null || !plugin.use3DViewer) {
+				guiUtils.error("Legacy 3D Viewer is not active.");
+				return;
+			}
+			plugin.get3DUniverse().getWindow()
+				.setVisible(e.getStateChange() == ItemEvent.DESELECTED);
+		});
+		hideViewsMenu.add(threeDViewerMenuItem);
+		viewMenu.add(hideViewsMenu);
+		viewMenu.addSeparator();
+
+		final JMenuItem filteredImpMenu = new JMenuItem("<HTML>Show Filtered Image");
+		arrangeWindowsMenuItem.addActionListener(e -> arrangeCanvases(true));
+		filteredImpMenu.addActionListener(e -> {
+			(new CmdRunner(ShowFilteredImgCmd.class, null, LOADING_FILTERED_IMAGE)).execute();
+		});
+		viewMenu.add(filteredImpMenu);
+		final JMenuItem tubenessImpMenu = new JMenuItem("<HTML>Show Hessian (<i>Tubeness</i>) Image");
+		tubenessImpMenu.addActionListener(e -> {
+			(new CmdRunner(TubenessCmd.class, null, LOADING_FILTERED_IMAGE)).execute();
+		});
+		viewMenu.add(tubenessImpMenu);
 		return menuBar;
 	}
 
@@ -2146,6 +2161,8 @@ public class SNTUI extends JDialog {
 		++cop_f.gridy;
 		final JCheckBox jcheckbox = new JCheckBox(
 			"Enforce default colors (ignore color tags)");
+		guiUtils.addTooltip(jcheckbox,
+				"Whether default colors above should be used even when color tags have been applied in the Path Manager");
 		jcheckbox.addActionListener(e -> {
 			plugin.displayCustomPathColors = !jcheckbox.isSelected();
 			// colorChooser1.setEnabled(!plugin.displayCustomPathColors);
@@ -2163,6 +2180,8 @@ public class SNTUI extends JDialog {
 			FlowLayout.LEADING, 0, 0));
 		useSnapWindow = new JCheckBox(hotKeyLabel("Enable Snapping within: XY",
 			"S"), plugin.snapCursor);
+		guiUtils.addTooltip(useSnapWindow, "Whether the mouse pointer should snap to the brightest voxel "
+				+ "searched within the specified neighborhood (in pixels). If Z=0 snapping occurs in 2D.");
 		useSnapWindow.addItemListener(listener);
 		tracingOptionsPanel.add(useSnapWindow);
 
@@ -2194,7 +2213,7 @@ public class SNTUI extends JDialog {
 	private JPanel aStarPanel() {
 		aStarPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gc = GuiUtils.defaultGbc();
-		GuiUtils.addSeparator(aStarPanel, "Auto-Tracing:", true, gc);
+		GuiUtils.addSeparator(aStarPanel, "Auto-tracing:", true, gc);
 		++gc.gridy;
 		aStarCheckBox = new JCheckBox("Enable A* search algorithm",
 			plugin.isAstarEnabled());
@@ -2234,7 +2253,7 @@ public class SNTUI extends JDialog {
 		// Add sigma ui
 		final JPanel sigmaPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 2,
 			0));
-		sigmaPanel.add(GuiUtils.leftAlignedLabel("Choose Sigma: ", plugin
+		sigmaPanel.add(GuiUtils.leftAlignedLabel("Adjust settings: ", plugin
 			.isAstarEnabled()));
 		final JButton editSigma = GuiUtils.smallButton(
 			GuiListener.EDIT_SIGMA_MANUALLY);
@@ -2510,28 +2529,29 @@ public class SNTUI extends JDialog {
 
 	private JMenu helpMenu() {
 		final JMenu helpMenu = new JMenu("Help");
-		final String URL = "http://imagej.net/Simple_Neurite_Tracer";
-		JMenuItem mi = menuItemTriggeringURL("Main documentation page", URL);
+		final String URL_OLD = "http://imagej.net/Simple_Neurite_Tracer";
+		final String URL = "https://imagej.net/SNT";
+		JMenuItem mi = menuItemTriggeringURL("Main documentation page", URL_OLD);
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTriggeringURL("Tutorials", URL + "#Tutorials");
+		mi = menuItemTriggeringURL("Tutorials", URL_OLD + "#Tutorials");
 		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Basic instructions", URL +
+		mi = menuItemTriggeringURL("Basic instructions", URL_OLD +
 			":_Basic_Instructions");
 		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Step-by-step instructions", URL +
+		mi = menuItemTriggeringURL("Step-by-step instructions", URL_OLD +
 			":_Step-By-Step_Instructions");
 		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Filling out processes", URL +
+		mi = menuItemTriggeringURL("Filling out processes", URL_OLD +
 			":_Basic_Instructions#Filling_Out_Neurons");
 		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("3D interaction", URL + ":_3D_Interaction");
+		mi = menuItemTriggeringURL("3D interaction", URL_OLD + ":_3D_Interaction");
 		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Tubular Geodesics", URL +
+		mi = menuItemTriggeringURL("Tubular Geodesics", URL_OLD +
 			":_Tubular_Geodesics");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTriggeringURL("List of shortcuts", URL + ":_Key_Shortcuts");
+		mi = menuItemTriggeringURL("List of shortcuts", URL_OLD + ":_Key_Shortcuts");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.KEYBOARD));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
@@ -2539,10 +2559,14 @@ public class SNTUI extends JDialog {
 		// ":_Sholl_analysis");
 		// helpMenu.add(mi);
 		// helpMenu.addSeparator();
-		mi = menuItemTriggeringURL("Ask a question", "http://forum.imagej.net");
+		mi = menuItemTriggeringURL("FAQs", URL + ":_FAQ");
+		mi.setIcon(IconFactory.getMenuIcon(GLYPH.QUESTION));
+		helpMenu.add(mi);
+		mi = menuItemTriggeringURL("Ask a question", "https://forum.image.sc/tags/snt");
+		mi.setIcon(IconFactory.getMenuIcon(GLYPH.COMMENTS));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTriggeringURL("Citing SNT...", URL +
+		mi = menuItemTriggeringURL("Citing SNT...", URL_OLD +
 			"#Citing_Simple_Neurite_Tracer");
 		helpMenu.add(mi);
 		return helpMenu;
@@ -2865,8 +2889,8 @@ public class SNTUI extends JDialog {
 		SigmaPalette.SigmaPaletteListener, ImageListener
 	{
 
-		private final static String EDIT_SIGMA_MANUALLY = "Manually...";
-		private final static String EDIT_SIGMA_VISUALLY = "Visually...";
+		private final static String EDIT_SIGMA_MANUALLY = "Manually";
+		private final static String EDIT_SIGMA_VISUALLY = "Visually";
 		private int preSigmaPaletteState;
 
 		public GuiListener() {

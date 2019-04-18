@@ -954,6 +954,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				guiUtils.error("Please finish/abort current task before pausing SNT.");
 				return;
 			}
+			if (xy != null && accessToValidImageData())
+				xy.setProperty("snt-changes", xy.changes);
 			changeUIState(SNTUI.SNT_PAUSED);
 			disableEventsAllPanes(true);
 			setDrawCrosshairsAllPanes(false);
@@ -962,9 +964,20 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		else {
 			if (xy != null && xy.isLocked() && ui != null && !getConfirmation(
 				"Image appears to be locked by other process. Activate SNT nevertheless?",
-				"Image Locked")) return;
+				"Image Locked")) {
+				return;
+			}
 			disableEventsAllPanes(false);
 			pauseTracing(tracingHalted, false);
+			if (xy != null && accessToValidImageData()) {
+				final boolean changes = (boolean) xy.getProperty("snt-changes");
+				if (!changes && xy.changes && ui != null) {
+					ui.guiUtils.centeredMsg(
+							"Image seems to have been modified since you last paused SNT. You may want to reload it so that SNT can access the modified pixel data.",
+							"Changes in Image Detected");
+					xy.setProperty("snt-changes", null);
+				}
+			}
 		}
 	}
 
@@ -1246,7 +1259,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			final String material = materialList[m];
 			statusMessage += ", " + material;
 		}
-		statusMessage += " | Image: (" + ix + ", " + iy + ", " + (iz + 1) + ")";
+		statusMessage += " Image: (" + ix + ", " + iy + ", " + (iz + 1) + ")";
 		updateCursor(x, y, z);
 		statusService.showStatus(statusMessage);
 		repaintAllPanes(); // Or the crosshair isn't updated...

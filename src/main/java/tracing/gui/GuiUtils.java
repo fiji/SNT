@@ -468,6 +468,11 @@ public class GuiUtils {
 		return (Integer) result;
 	}
 
+	public void addTooltip(final JComponent c, final String text) {
+		final int length = Math.round(c.getFontMetrics(c.getFont()).stringWidth(text));
+		c.setToolTipText("<html>" + ((length > 500) ? "<body><div style='width:500;'>" : "") + text);
+	}
+
 	private JLabel getLabel(final String text) {
 		if (text == null || text.startsWith("<")) {
 			return new JLabel(text);

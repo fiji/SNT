@@ -65,6 +65,7 @@ public class IconFactory {
 			COG('\uf013', true), //
 			COLOR('\uf53f', true), //
 			COLOR2('\uf5c3', true), //
+			COMMENTS('\uf086', false), //
 			CROSSHAIR('\uf05b', true), //
 			CUBE('\uf1b2', true), //
 			DANGER('\uf071', true), //
@@ -84,6 +85,7 @@ public class IconFactory {
 			FILL('\uf575', true), //
 			FILTER('\uf0b0', true), //
 			FOLDER('\uf07b', false), //
+			FOOTPRINTS('\uf54b', true), //
 			//GLOBE('\uf0ac', true), //
 			HAND('\uf256', false), //
 			HOME('\uf015', true), //

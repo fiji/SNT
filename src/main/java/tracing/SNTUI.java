@@ -2087,12 +2087,13 @@ public class SNTUI extends JDialog {
 		viewMenu.addSeparator();
 
 		final JMenuItem filteredImpMenu = new JMenuItem("<HTML>Show Filtered Image");
-		arrangeWindowsMenuItem.addActionListener(e -> arrangeCanvases(true));
+		guiUtils.addTooltip(filteredImpMenu, "Displays the file specified in <i>Tracing on Filtered Image</i>");
 		filteredImpMenu.addActionListener(e -> {
 			(new CmdRunner(ShowFilteredImgCmd.class, null, LOADING_FILTERED_IMAGE)).execute();
 		});
 		viewMenu.add(filteredImpMenu);
 		final JMenuItem tubenessImpMenu = new JMenuItem("<HTML>Show Hessian (<i>Tubeness</i>) Image");
+		guiUtils.addTooltip(tubenessImpMenu, "Displays the data on which <i>Hessian-based analysis</i> is performed");
 		tubenessImpMenu.addActionListener(e -> {
 			(new CmdRunner(TubenessCmd.class, null, LOADING_FILTERED_IMAGE)).execute();
 		});
@@ -2531,7 +2532,7 @@ public class SNTUI extends JDialog {
 		final JMenu helpMenu = new JMenu("Help");
 		final String URL_OLD = "http://imagej.net/Simple_Neurite_Tracer";
 		final String URL = "https://imagej.net/SNT";
-		JMenuItem mi = menuItemTriggeringURL("Main documentation page", URL_OLD);
+		JMenuItem mi = menuItemTriggeringURL("Main documentation page", URL);
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 		mi = menuItemTriggeringURL("Tutorials", URL_OLD + "#Tutorials");
@@ -2539,26 +2540,18 @@ public class SNTUI extends JDialog {
 		mi = menuItemTriggeringURL("Basic instructions", URL_OLD +
 			":_Basic_Instructions");
 		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Step-by-step instructions", URL_OLD +
+		mi = menuItemTriggeringURL("Step-by-step Instructions", URL +
 			":_Step-By-Step_Instructions");
-		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Filling out processes", URL_OLD +
-			":_Basic_Instructions#Filling_Out_Neurons");
-		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("3D interaction", URL_OLD + ":_3D_Interaction");
+		mi.setIcon(IconFactory.getMenuIcon(GLYPH.FOOTPRINTS));
 		helpMenu.add(mi);
 		mi = menuItemTriggeringURL("Tubular Geodesics", URL_OLD +
 			":_Tubular_Geodesics");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTriggeringURL("List of shortcuts", URL_OLD + ":_Key_Shortcuts");
+		mi = menuItemTriggeringURL("List of shortcuts", URL + ":_Key_Shortcuts");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.KEYBOARD));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		// mi = menuItemTriggeringURL("Sholl analysis walkthrough", URL +
-		// ":_Sholl_analysis");
-		// helpMenu.add(mi);
-		// helpMenu.addSeparator();
 		mi = menuItemTriggeringURL("FAQs", URL + ":_FAQ");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.QUESTION));
 		helpMenu.add(mi);

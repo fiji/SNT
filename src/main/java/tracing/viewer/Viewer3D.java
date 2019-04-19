@@ -32,8 +32,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -674,7 +672,7 @@ public class Viewer3D {
 
 	/**
 	 * Displays the Viewer and returns a reference to its frame. If the frame has
-	 * been made displayable, this will simply make the frame visible. Tipically,
+	 * been made displayable, this will simply make the frame visible. Typically,
 	 * it should only be called once all objects have been added to the scene. If
 	 * this is an interactive viewer, the 'Controls' dialog is also displayed.
 	 *
@@ -699,7 +697,6 @@ public class Viewer3D {
 			updateView();
 			frame.setVisible(true);
 			if (width > 0 || height > 0) {
-				frame.setLocation(0, 0);
 				frame.setSize(width, height);
 			}
 			return frame;
@@ -714,7 +711,7 @@ public class Viewer3D {
 		}
 		frame = (width < 0 || height < 0) ? 
 			new ViewerFrame(chart, managerList != null)
-			: 	new ViewerFrame(chart, width, height, false, managerList != null);
+			: 	new ViewerFrame(chart, width, height, managerList != null);
 		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
 	}
@@ -1135,6 +1132,10 @@ public class Viewer3D {
 		try {
 			final File f = new File(prefs.snapshotDir, file);
 			SNT.log("Saving snapshot to " + f);
+			if (SNT.isDebugMode() && frame != null) {
+				SNT.log("Frame size: (" + frame.getWidth() + ", " + frame.getHeight() + ");");
+				((AView)view).logViewPoint();
+			}
 			chart.screenshot(f);
 		}
 		catch (final IOException e) {
@@ -1472,14 +1473,12 @@ public class Viewer3D {
 		}
 
 		private void logViewPoint() {
-			if (SNT.isDebugMode()) {
-				final StringBuilder sb = new StringBuilder("setViewPoint(");
-				sb.append(viewpoint.x).append("f, ");
-				sb.append(viewpoint.y).append("f);");
-				SNT.log(sb.toString());
-			}
+			final StringBuilder sb = new StringBuilder("setViewPoint(");
+			sb.append(viewpoint.x).append("f, ");
+			sb.append(viewpoint.y).append("f);");
+			SNT.log(sb.toString());
 		}
-	
+
 		public void setBoundManual(final BoundingBox3d bounds,
 			final boolean logInDebugMode)
 		{
@@ -1530,28 +1529,20 @@ public class Viewer3D {
 		 *          should be made visible
 		 */
 		public ViewerFrame(final Chart chart, final boolean includeManager) {
-			this(chart, (int) (DEF_WIDTH * Prefs.SCALE_FACTOR), (int) (DEF_HEIGHT * Prefs.SCALE_FACTOR), true,
+			this(chart, (int) (DEF_WIDTH * Prefs.SCALE_FACTOR), (int) (DEF_HEIGHT * Prefs.SCALE_FACTOR),
 					includeManager);
 		}
 
-		public ViewerFrame(final Chart chart, final int width, final int height, final boolean center, final boolean includeManager) {
+		public ViewerFrame(final Chart chart, final int width, final int height, final boolean includeManager) {
 			final String title = (isSNTInstance()) ? " (SNT)" : "";
 			initialize(chart, new Rectangle(width, height), "Reconstruction Viewer" +
 				title);
-			if (!center) setLocation(0,0);
+			setLocationRelativeTo(null); // ensures frame will not appear in between displays on a multidisplay setup
 			if (includeManager) {
 				manager = getManager();
 				managerList.selectAll();
 				manager.setVisible(true);
 			}
-			addComponentListener(new ComponentAdapter() {
-				@Override
-				public void componentResized(final ComponentEvent componentEvent) {
-					if (SNT.isDebugMode()) {
-						SNT.log("Frame resized(" + getWidth() + ", " + getHeight() + ");");
-					}
-				}
-			});
 			toFront();
 		}
 
@@ -3374,7 +3365,7 @@ public class Viewer3D {
 			if (AWTMouseUtilities.isLeftDown(e)) {
 				final Coord2d move = mouse.sub(prevMouse).div(100);
 				rotate(move);
-				((AView)view).logViewPoint();
+				//((AView)view).logViewPoint();
 			}
 
 			// Pan on right-click

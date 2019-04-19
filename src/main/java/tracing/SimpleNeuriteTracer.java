@@ -1136,53 +1136,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		loading = false;
 	}
 
-	synchronized public void loadTracings() {
-
-		loading = true;
-		final File suggestedFile = SNT.findClosestPair(prefs.getRecentFile(),
-			".traces");
-		final File chosenFile = guiUtils.openFile("Open .traces or .(e)swc file...",
-			suggestedFile, Arrays.asList(".traces", ".swc", ".eswc"));
-		if (chosenFile == null) return; // user pressed cancel;
-
-		if (!chosenFile.exists()) {
-			guiUtils.error(chosenFile.getAbsolutePath() + " is no longer available");
-			loading = false;
-			return;
-		}
-
-		final int guessedType = PathAndFillManager.guessTracesFileType(chosenFile
-			.getAbsolutePath());
-		switch (guessedType) {
-			case PathAndFillManager.TRACES_FILE_TYPE_SWC: {
-				final SWCImportOptionsDialog swcImportDialog =
-					new SWCImportOptionsDialog("SWC import options for " + chosenFile
-						.getName());
-				if (swcImportDialog.succeeded() && pathAndFillManager.importSWC(
-					chosenFile.getAbsolutePath(), swcImportDialog.getIgnoreCalibration(),
-					swcImportDialog.getXOffset(), swcImportDialog.getYOffset(),
-					swcImportDialog.getZOffset(), swcImportDialog.getXScale(),
-					swcImportDialog.getYScale(), swcImportDialog.getZScale(),
-					swcImportDialog.getReplaceExistingPaths())) unsavedPaths = false;
-				break;
-			}
-			case PathAndFillManager.TRACES_FILE_TYPE_COMPRESSED_XML:
-				if (pathAndFillManager.loadCompressedXML(chosenFile.getAbsolutePath()))
-					unsavedPaths = false;
-				break;
-			case PathAndFillManager.TRACES_FILE_TYPE_UNCOMPRESSED_XML:
-				if (pathAndFillManager.loadUncompressedXML(chosenFile
-					.getAbsolutePath())) unsavedPaths = false;
-				break;
-			default:
-				guiUtils.error("The file '" + chosenFile.getAbsolutePath() +
-					"' was of unknown type (" + guessedType + ")");
-				break;
-		}
-
-		loading = false;
-	}
-
 	public void mouseMovedTo(final double x_in_pane, final double y_in_pane,
 		final int in_plane, final boolean shift_key_down,
 		final boolean join_modifier_down)

@@ -933,10 +933,10 @@ public class SNTUI extends JDialog {
 		}
 		abortCurrentOperation();
 		changeState(LOADING);
-		plugin.reloadImage(newC, newT);
+		final boolean hessianDataExists = plugin.isHessianEnabled();
+		plugin.reloadImage(newC, newT); // nullifies hessianData
 		if (!reload) plugin.getImagePlus().setPosition(newC, plugin.getImagePlus()
 			.getZ(), newT);
-		if (plugin.isHessianEnabled()) enableHessian(false);
 		plugin.showMIPOverlays(0);
 		if (plugin.filteredImageLoaded()) {
 			final String[] choices = new String[] {"Unload. I'll load new data manually", "Reload", "Do nothing. Leave as is"};
@@ -948,6 +948,7 @@ public class SNTUI extends JDialog {
 				loadCachedFilteredData(false);
 			}
 		}
+		if (hessianDataExists) enableHessian(true);
 		resetState();
 		showStatus(reload ? "Image reloaded into memory..." : null, true);
 	}

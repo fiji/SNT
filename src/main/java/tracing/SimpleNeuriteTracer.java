@@ -402,7 +402,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		slices_data_b = null;
 		slices_data_s = null;
 		slices_data_f = null;
-		hessian = null;
+		nullifyHessian();
 	}
 
 	public boolean accessToValidImageData() {
@@ -556,9 +556,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				" T=" + frame);
 		this.channel = channel;
 		this.frame = frame;
-		loadData();
+		loadData(); // will call nullifyHessian();
 		if (!single_pane) reloadZYXZpanes(frame);
-		hessian = null;
 		if (use3DViewer && imageContent != null) {
 			updateImageContent(prefs.get3DViewerResamplingFactor());
 		}
@@ -625,7 +624,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				statusService.showProgress(0, 0);
 				break;
 		}
-		hessian = null; // ensure it will be reloaded
+		nullifyHessian(); // ensure it will be reloaded
 		updateLut();
 	}
 
@@ -2219,13 +2218,17 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
+	private void nullifyHessian() {
+		hessianEnabled = false;
+		hessian = null;
+		hessianSigma = -1;
+	}
+
 	// This is the implementation of GaussianGenerationCallback
 	@Override
 	public void proportionDone(final double proportion) {
 		if (proportion < 0) {
-			hessianEnabled = false;
-			hessian = null;
-			hessianSigma = -1;
+			nullifyHessian();
 			if (ui != null) ui.gaussianCalculated(false);
 			statusService.showProgress(1, 1);
 			return;

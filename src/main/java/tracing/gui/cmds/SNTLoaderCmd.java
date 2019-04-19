@@ -88,7 +88,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 
 	@Parameter(required = false, label = "Image file",
 			description = "<HTML>Image file, when <i>Image</i> choice is <i>"+ IMAGE_FILE +"</i>",
-		style = FileWidget.OPEN_STYLE, callback = "sourceImageChanged")
+		style = FileWidget.OPEN_STYLE, callback = "imageFileChanged")
 	private File imageFile;
 
 	@Parameter(required = false, label = "<HTML>&nbsp;",
@@ -152,7 +152,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 			final String file = sourceImp.getOriginalFileInfo().fileName;
 			imageFile = (dir == null || file == null) ? null : new File(dir + file);
 		}
-		sourceImageChanged();
+		adjustFileFields(false);
 	}
 
 	@SuppressWarnings("unused")
@@ -165,7 +165,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 				return;
 			case IMAGE_FILE:
 				if (null == imageFile) imageFile = currentImageFile;
-				sourceImageChanged();
+				adjustFileFields(false);
 				return;
 			default: // imageChoice is now the title of frontmost image
 				loadActiveImage();
@@ -190,13 +190,18 @@ public class SNTLoaderCmd extends DynamicCommand {
 		imageFileInput.setValue(this, null);
 	}
 
-	private void sourceImageChanged() {
+	@SuppressWarnings("unused")
+	private void imageFileChanged() {
+		adjustFileFields(true);
+	}
+
+	private void adjustFileFields(final boolean adjustImageChoice) {
 		if (imageFile == null || !imageFile.exists()) {
 			imageChoice = IMAGE_NONE;
 			return;
 		}
-		if (IMAGE_NONE.equals(imageChoice)) imageChoice = IMAGE_FILE;
-		for (final String ext : new String[] { "traces", "swc" }) {
+		if (adjustImageChoice) imageChoice = IMAGE_FILE;
+		for (final String ext : new String[] { "traces", "swc" , "json"}) {
 			final File candidate = SNT.findClosestPair(imageFile, ext);
 			if (candidate != null && candidate.exists()) {
 				tracesFile = candidate;

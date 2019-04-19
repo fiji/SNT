@@ -45,7 +45,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -84,8 +83,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import net.imagej.Dataset;
-
 import org.scijava.command.Command;
 import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
@@ -104,6 +101,7 @@ import ij3d.Content;
 import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
 import ij3d.ImageWindow3D;
+import net.imagej.Dataset;
 import sholl.ShollUtils;
 import tracing.analysis.TreeAnalyzer;
 import tracing.event.SNTEvent;
@@ -114,7 +112,6 @@ import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.SigmaPalette;
 import tracing.gui.cmds.ChooseDatasetCmd;
 import tracing.gui.cmds.CompareFilesCmd;
-import tracing.gui.cmds.ShowFilteredImgCmd;
 import tracing.gui.cmds.JSONImporterCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
@@ -122,6 +119,7 @@ import tracing.gui.cmds.OpenDatasetCmd;
 import tracing.gui.cmds.RemoteSWCImporterCmd;
 import tracing.gui.cmds.ResetPrefsCmd;
 import tracing.gui.cmds.ShowCorrespondencesCmd;
+import tracing.gui.cmds.ShowFilteredImgCmd;
 import tracing.gui.cmds.TubenessCmd;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.io.FlyCircuitLoader;
@@ -181,10 +179,8 @@ public class SNTUI extends JDialog {
 	private JPanel filteredImgPanel;
 	private JTextField filteredImgPathField;
 	private JButton filteredImgInitButton;
-	private JButton filteredImgLoadButton;
+	private JButton filteredImgBrowseButton;
 	private JComboBox<String> filteredImgParserChoice;
-	private final List<String> filteredImgAllowedExts = Arrays.asList("tif",
-		"nrrd");
 	private JCheckBox filteredImgActivateCheckbox;
 	private SwingWorker<?, ?> filteredImgLoadingWorker;
 
@@ -1443,8 +1439,7 @@ public class SNTUI extends JDialog {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				final File imageFile = guiUtils.openFile("Choose labels image",
-					plugin.prefs.getRecentFile(), null);
+				final File imageFile = openFile("Choose Labels Image...", (File)null);
 				if (imageFile == null) return; // user pressed cancel
 				try {
 					plugin.statusService.showStatus(("Loading " + imageFile.getName()));
@@ -1669,8 +1664,8 @@ public class SNTUI extends JDialog {
 	}
 
 	private JPanel filteredImagePanel() {
-		filteredImgPathField = new JTextField();
-		filteredImgLoadButton = GuiUtils.smallButton("Browse");
+		filteredImgPathField = new JTextField("");
+		filteredImgBrowseButton = GuiUtils.smallButton("Browse");
 		filteredImgParserChoice = new JComboBox<>();
 		filteredImgParserChoice.addItem("SNT");
 		filteredImgParserChoice.addItem("ITK: Tubular Geodesics");
@@ -1703,9 +1698,9 @@ public class SNTUI extends JDialog {
 
 			});
 
-		filteredImgLoadButton.addActionListener(e -> {
-			final File file = guiUtils.openFile("Choose filtered image", new File(
-				filteredImgPathField.getText()), filteredImgAllowedExts);
+		filteredImgBrowseButton.addActionListener(e -> {
+			final File file = openFile("Choose Filtered Image",
+					new File(filteredImgPathField.getText()));
 			if (file == null) return;
 			filteredImgPathField.setText(file.getAbsolutePath());
 		});
@@ -1771,7 +1766,7 @@ public class SNTUI extends JDialog {
 		filteredImgPanel.add(filteredImgPathField, c);
 		c.gridx++;
 		c.weightx = 0;
-		filteredImgPanel.add(filteredImgLoadButton, c);
+		filteredImgPanel.add(filteredImgBrowseButton, c);
 		c.gridx++;
 
 		// row 2
@@ -1808,8 +1803,25 @@ public class SNTUI extends JDialog {
 			guiUtils.error(file.getAbsolutePath() + " is not available. Image could not be loaded.",
 					"File Unavailable");
 		}
-		plugin.setFilteredImage(file);
 		return valid;
+	}
+
+	protected File openFile(final String promptMsg, final String extension) {
+		final File suggestedFile = SNT.findClosestPair(plugin.prefs.getRecentFile(), extension);
+		return openFile(promptMsg, suggestedFile);
+	}
+
+	private File openFile(final String promptMsg, final File suggestedFile) {
+		final File openedFile = plugin.legacyService.getIJ1Helper().openDialog(promptMsg, suggestedFile);
+		if (openedFile != null) plugin.prefs.setRecentFile(openedFile);
+		return openedFile;
+	}
+
+	protected File saveFile(final String promptMsg, final File suggestedFile, final String fallbackExtension) {
+		final File fFile = (suggestedFile == null) ? SNT.findClosestPair(plugin.prefs.getRecentFile(), fallbackExtension) : suggestedFile;
+		final File savedFile = plugin.legacyService.getIJ1Helper().saveDialog(promptMsg, fFile, fallbackExtension);
+		if (savedFile != null) plugin.prefs.setRecentFile(savedFile);
+		return savedFile;
 	}
 
 	private void loadCachedFilteredData(final boolean warnUserOnMemory) {
@@ -1877,7 +1889,7 @@ public class SNTUI extends JDialog {
 				.isTracingOnFilteredImageAvailable();
 			filteredImgParserChoice.setEnabled(!successfullyLoaded);
 			filteredImgPathField.setEnabled(!successfullyLoaded);
-			filteredImgLoadButton.setEnabled(!successfullyLoaded);
+			filteredImgBrowseButton.setEnabled(!successfullyLoaded);
 			filteredImgInitButton.setText((successfullyLoaded) ? "Flush"
 				: "Load");
 			filteredImgInitButton.setEnabled(successfullyLoaded);
@@ -1889,8 +1901,7 @@ public class SNTUI extends JDialog {
 	private void updateFilteredFileField() {
 		if (filteredImgPathField == null) return;
 		final String path = filteredImgPathField.getText();
-		final boolean validFile = path != null && SNT.fileAvailable(new File(
-			path)) && filteredImgAllowedExts.stream().anyMatch(e -> path.endsWith(e));
+		final boolean validFile = path != null && SNT.fileAvailable(new File(path));
 		filteredImgPathField.setForeground((validFile) ? new JTextField()
 			.getForeground() : Color.RED);
 		filteredImgInitButton.setEnabled(validFile);
@@ -1907,6 +1918,7 @@ public class SNTUI extends JDialog {
 		final JMenu fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);
 		final JMenu importSubmenu = new JMenu("Import");
+		importSubmenu.setIcon(IconFactory.getMenuIcon(GLYPH.IMPORT));
 		final JMenu exportSubmenu = new JMenu("Export (All Paths)");
 		exportSubmenu.setIcon(IconFactory.getMenuIcon(GLYPH.EXPORT));
 		final JMenu analysisMenu = new JMenu("Utilities");
@@ -1927,7 +1939,7 @@ public class SNTUI extends JDialog {
 		saveMenuItem.setIcon(IconFactory.getMenuIcon(GLYPH.SAVE));
 		saveMenuItem.addActionListener(listener);
 		fileMenu.add(saveMenuItem);
-		final JMenuItem saveTable = new JMenuItem("Save Measurements...");
+		final JMenuItem saveTable = new JMenuItem("Save Measurements...", IconFactory.getMenuIcon(GLYPH.TABLE));
 		saveTable.addActionListener(e -> {
 			pmUI.saveTable();
 			return;
@@ -1942,7 +1954,7 @@ public class SNTUI extends JDialog {
 			(new CmdRunner(ChooseDatasetCmd.class, null, LOADING)).execute();
 		});
 		changeImpMenu.add(fromList);
-		final JMenuItem fromFile = new JMenuItem("From Imported File...");
+		final JMenuItem fromFile = new JMenuItem("From File...");
 		fromFile.addActionListener(e -> {
 			(new CmdRunner(OpenDatasetCmd.class, null, LOADING)).execute();
 		});
@@ -2351,7 +2363,14 @@ public class SNTUI extends JDialog {
 			if (plugin.prefs.isSaveWinLocations()) arrangeDialogs();
 			arrangeCanvases(false);
 			resetState();
+			pack();
 			setVisible(true);
+			{
+				// Adjust fields that resize the dialog unless it is visible
+				final String path = (plugin.filteredFileImage == null) ? ""
+						: plugin.filteredFileImage.getAbsolutePath();
+				filteredImgPathField.setText(path);
+			}
 			pathAndFillManager.resetListeners(null, true); // update Path lists
 			setPathListVisible(true, false);
 			setFillListVisible(false);
@@ -2974,10 +2993,7 @@ public class SNTUI extends JDialog {
 			}
 			else if (source == saveMenuItem && !noPathsError()) {
 
-				final File suggestedFile = SNT.findClosestPair(plugin.prefs
-					.getRecentFile(), "traces");
-				final File saveFile = guiUtils.saveFile("Save traces as...",
-					suggestedFile, Collections.singletonList(".traces"));
+				final File saveFile = saveFile("Save Traces As...", null, "traces");
 				if (saveFile == null) return; // user pressed cancel;
 				showStatus("Saving traces to " + saveFile.getAbsolutePath(), false);
 
@@ -3023,10 +3039,7 @@ public class SNTUI extends JDialog {
 							". Do you really want to proceed " + "with the SWC export?",
 						"Warning")) return;
 
-				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(),
-					".swc)");
-				final File saveFile = guiUtils.saveFile("Export All Paths as SWC...",
-					suggestedFile, Collections.singletonList(".swc"));
+				final File saveFile = saveFile("Export All Paths as SWC...", null, ".swc");
 				if (saveFile == null) return; // user pressed cancel
 				if (saveFile.exists()) {
 					if (!guiUtils.getConfirmation("The file " + saveFile
@@ -3040,10 +3053,7 @@ public class SNTUI extends JDialog {
 			}
 			else if (source == exportCSVMenuItem && !noPathsError()) {
 
-				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(),
-					".csv)");
-				final File saveFile = guiUtils.saveFile("Export All Paths as CSV...",
-					suggestedFile, Collections.singletonList(".csv"));
+				final File saveFile = saveFile("Export All Paths as CSV...", null, ".csv");
 				if (saveFile == null) return; // user pressed cancel
 				if (saveFile.exists()) {
 					if (!guiUtils.getConfirmation("The file " + saveFile
@@ -3101,10 +3111,7 @@ public class SNTUI extends JDialog {
 			}
 			else if (source == loadLabelsMenuItem) {
 
-				final File suggestedFile = SNT.findClosestPair(plugin.loadedImageFile(),
-					".labels)");
-				final File openFile = guiUtils.openFile("Select Labels File...",
-					suggestedFile, Collections.singletonList("labels"));
+				final File openFile = openFile("Select Labels File...", ".labels");
 				if (openFile != null) { // null if user pressed cancel;
 					plugin.loadLabelsFile(openFile.getAbsolutePath());
 					return;

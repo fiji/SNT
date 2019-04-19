@@ -349,7 +349,9 @@ public class GuiUtils {
 		return chosenFile;
 	}
 
-	public File openFile(final String title, final File file,
+	
+	@SuppressWarnings("unused")
+	private File openFile(final String title, final File file,
 		final List<String> allowedExtensions)
 	{
 		final JFileChooser chooser = fileChooser(title, file,
@@ -359,7 +361,8 @@ public class GuiUtils {
 		return null;
 	}
 
-	public File chooseDirectory(final String title, final File file) {
+	@SuppressWarnings("unused")
+	private File chooseDirectory(final String title, final File file) {
 		final JFileChooser chooser = fileChooser(title, file,
 			JFileChooser.DIRECTORIES_ONLY, null);
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)

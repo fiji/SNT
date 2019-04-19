@@ -38,6 +38,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
+import ij.io.OpenDialog;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
@@ -49,7 +50,6 @@ import tracing.NearPoint;
 import tracing.Path;
 import tracing.PathAndFillManager;
 import tracing.SNT;
-import tracing.SNTPrefs;
 import tracing.gui.GuiUtils;
 import tracing.gui.ShollAnalysisDialog;
 import tracing.gui.ShollAnalysisDialog.ShollPoint;
@@ -122,7 +122,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 			return;
 		}
 
-		SNTPrefs.setRecentDirectory(new File(tracesPath).getParent());
+		OpenDialog.setLastDirectory(new File(tracesPath).getParent());
 		final Path[] primaryPaths = pafm.getPathsStructured();
 		PointInImage shollCenter = null;
 
@@ -394,7 +394,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 	}
 
 	private void guessInitialPaths() {
-		final String lastDirPath = SNTPrefs.getRecentDirectory();
+		final String lastDirPath = OpenDialog.getLastDirectory();
 		if (lastDirPath != null && !lastDirPath.isEmpty()) {
 			final File lastDir = new File(lastDirPath);
 			final File[] tracing_files = lastDir.listFiles(file -> !file

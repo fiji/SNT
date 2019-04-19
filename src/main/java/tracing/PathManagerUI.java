@@ -22,9 +22,6 @@
 
 package tracing;
 
-import com.jidesoft.swing.Searchable;
-import com.jidesoft.swing.TreeSearchable;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -46,7 +43,6 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,7 +59,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -87,8 +82,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import net.imagej.ImageJ;
-
 import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
@@ -96,7 +89,11 @@ import org.scijava.display.DisplayService;
 import org.scijava.prefs.PrefService;
 import org.scijava.table.DefaultGenericTable;
 
+import com.jidesoft.swing.Searchable;
+import com.jidesoft.swing.TreeSearchable;
+
 import ij.ImagePlus;
+import net.imagej.ImageJ;
 import tracing.analysis.PathProfiler;
 import tracing.analysis.TreeAnalyzer;
 import tracing.gui.ColorMenu;
@@ -145,10 +142,11 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	private final JMenuItem fitVolumeMenuItem;
 
 	/**
-	 * Instantiates a new Path Manager {@link JFrame}
+	 * Instantiates a new Path Manager Dialog.
 	 *
 	 * @param plugin the the {@link SimpleNeuriteTracer} instance to be associated
-	 *          with this Path Manager
+	 *               with this Path Manager. It is assumed that its {@link SNTUI} is
+	 *               available.
 	 */
 	public PathManagerUI(final SimpleNeuriteTracer plugin) {
 
@@ -635,10 +633,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			return;
 		}
 
-		File saveFile = new File(plugin.getImagePlus().getShortTitle(), ".swc");
-		saveFile = guiUtils.saveFile("Export SWC file ...", saveFile, Collections
-			.singletonList(".swc"));
-
+		final File saveFile = plugin.getUI().saveFile("Save SNT Measurements...", null, "swc");
 		if (saveFile == null) {
 			return; // user pressed cancel
 		}
@@ -1467,9 +1462,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			plugin.error("There are no measurements to save.");
 			return;
 		}
-		File saveFile = new File("/home/tferr/Desktop/");
-		saveFile = guiUtils.saveFile("Save SNT Measurements...", saveFile,
-			Collections.singletonList(".csv"));
+		final File saveFile = plugin.getUI().saveFile("Save SNT Measurements...", null, ".csv");
 		if (saveFile == null) return; // user pressed cancel
 
 		plugin.getUI().showStatus("Exporting Measurements..", false);

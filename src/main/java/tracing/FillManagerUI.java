@@ -35,7 +35,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 
 import javax.swing.AbstractAction;
@@ -57,9 +56,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-import net.imagej.ImageJ;
-
 import ij.ImagePlus;
+import net.imagej.ImageJ;
 import tracing.gui.GuiUtils;
 
 /**
@@ -102,10 +100,11 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 	private final int MARGIN = 10;
 
 	/**
-	 * Instantiates a new Fill Manager {@link JDialog}
+	 * Instantiates a new Fill Manager Dialog
 	 *
 	 * @param plugin the the {@link SimpleNeuriteTracer} instance to be associated
-	 *          with this FillManager
+	 *               with this FillManager. It is assumed that its {@link SNTUI} is
+	 *               available.
 	 */
 	public FillManagerUI(final SimpleNeuriteTracer plugin) {
 		super(plugin.getUI(), "Fill Manager");
@@ -455,10 +454,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		}
 		else if (source == exportAsCSV) {
 
-			final File file = SNT.findClosestPair(plugin.prefs.getRecentFile(),
-				"csv");
-			final File saveFile = gUtils.saveFile("Export CSV Summary...", file,
-				Collections.singletonList(".csv"));
+			final File saveFile = plugin.getUI().saveFile("Export CSV Summary...", null, ".csv");
 			if (saveFile == null) return; // user pressed cancel;
 			plugin.getUI().showStatus("Exporting CSV data to " + saveFile
 				.getAbsolutePath(), false);

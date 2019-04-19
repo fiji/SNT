@@ -29,7 +29,6 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,7 +62,6 @@ import ij.gui.ImageRoi;
 import ij.gui.NewImage;
 import ij.gui.Overlay;
 import ij.gui.StackWindow;
-import ij.io.FileInfo;
 import ij.measure.Calibration;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
@@ -276,9 +274,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		context.inject(this);
 		SNT.setPlugin(this);
-		setFieldsFromImage(sourceImage);
 		pathAndFillManager = new PathAndFillManager(this);
 		prefs = new SNTPrefs(this);
+		setFieldsFromImage(sourceImage);
 		prefs.loadPluginPrefs();
 	}
 
@@ -341,7 +339,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				"One dimension of the calibration information was zero: (" + x_spacing +
 					"," + y_spacing + "," + z_spacing + ")");
 		}
-
+		if (accessToValidImageData()) {
+			final String dir = sourceImage.getOriginalFileInfo().directory;
+			final String name = sourceImage.getOriginalFileInfo().fileName;
+			if (dir != null && name != null)
+				prefs.setRecentFile(new File(dir, name));
+		}
 	}
 
 	/**
@@ -638,7 +641,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	public void loadTracings(final File file) {
 		if (file != null && file.exists()) {
 			if (isUIready()) ui.changeState(SNTUI.LOADING);
-			pathAndFillManager.load(file.getAbsolutePath());
+			if (pathAndFillManager.load(file.getAbsolutePath())) {
+				prefs.setRecentFile(file);
+			}
 			if (isUIready()) ui.resetState();
 		}
 	}
@@ -1064,22 +1069,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	}
 
-	protected File loadedImageFile() {
-		try {
-			final FileInfo fInfo = getImagePlus().getFileInfo();
-			return new File(fInfo.directory, fInfo.fileName);
-		}
-		catch (final NullPointerException npe) {
-			return null;
-		}
-	}
-
+	/** Assumes UI is available */
 	synchronized protected void loadTracesFile() {
 		loading = true;
-		final File suggestedFile = SNT.findClosestPair(prefs.getRecentFile(),
-			".traces");
-		final File chosenFile = guiUtils.openFile("Open .traces file...",
-			suggestedFile, Collections.singletonList(".traces"));
+		final File chosenFile = ui.openFile("Open .traces File...", ".traces");
 		if (chosenFile == null) return; // user pressed cancel;
 
 		if (!chosenFile.exists()) {
@@ -1108,12 +1101,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		loading = false;
 	}
 
+	/** Assumes UI is available */
 	synchronized protected void loadSWCFile() {
 		loading = true;
-		final File suggestedFile = SNT.findClosestPair(prefs.getRecentFile(),
-			".swc");
-		final File chosenFile = guiUtils.openFile("Open SWC file...", suggestedFile,
-			Arrays.asList(".swc", ".eswc"));
+		final File chosenFile = ui.openFile("Open (e)SWC File...", "swc");
 		if (chosenFile == null) return; // user pressed cancel;
 
 		if (!chosenFile.exists()) {

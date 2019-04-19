@@ -118,7 +118,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	}
 
 	private int getDefaultBooleans() {
-		return DRAW_DIAMETERS_XY + SNAP_CURSOR + COMPRESSED_XML;
+		return DRAW_DIAMETERS_XY + SNAP_CURSOR + COMPRESSED_XML + AUTO_CANVAS_ACTIVATION;
 	}
 
 	private void getBooleans() {
@@ -136,11 +136,11 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		snt.displayCustomPathColors = !getPref(ENFORCE_DEFAULT_PATH_COLORS);
 		snt.setShowOnlySelectedPaths(getPref(SHOW_ONLY_SELECTED), false);
 		if (!SNT.isDebugMode()) SNT.setDebugMode(getPref(DEBUG));
-		snt.cursorSnapWindowXY = (int) Prefs.get(SNAP_XY, 4);
+		snt.cursorSnapWindowXY = (int) Prefs.get(SNAP_XY, 6);
 		snt.cursorSnapWindowXY = whithinBoundaries(snt.cursorSnapWindowXY,
 			SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY,
 			SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY);
-		snt.cursorSnapWindowZ = (int) Prefs.get(SNAP_Z, 0);
+		snt.cursorSnapWindowZ = (int) Prefs.get(SNAP_Z, 2);
 		snt.cursorSnapWindowZ = whithinBoundaries(snt.cursorSnapWindowZ,
 			SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z,
 			SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z);
@@ -191,7 +191,6 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		setPref(SHOW_ONLY_SELECTED, snt.showOnlySelectedPaths);
 		setPref(DEBUG, SNT.isDebugMode());
 		Prefs.set(BOOLEANS, currentBooleans);
-		clearLegacyPrefs();
 		if (isSaveWinLocations()) {
 			final SNTUI rd = snt.getUI();
 			if (rd == null) return;
@@ -230,12 +229,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	}
 
 	protected void resetOptions() {
-		clearLegacyPrefs();
-		Prefs.set(BOOLEANS, null);
-		Prefs.set(SNAP_XY, null);
-		Prefs.set(SNAP_Z, null);
-		Prefs.set(FILLWIN_LOC, null);
-		Prefs.set(PATHWIN_LOC, null);
+		clearAll();
 		currentBooleans = UNSET_PREFS;
 	}
 

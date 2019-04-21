@@ -66,7 +66,6 @@ import ij.measure.Calibration;
 import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
-import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
@@ -2652,74 +2651,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		clickForTrace(p[0] * x_spacing, p[1] * y_spacing, p[2] * z_spacing, false);
 	}
 
-	private ImagePlus[] getLoadedDataGray8Panes() {
-
+	private ImagePlus[] getXYZYXZLoadedDataGray8() {
 		final ImagePlus xy8 = getLoadedDataAsImp();
-		ImagePlus xz8 = null;
-		ImagePlus zy8 = null;
-		if (xy8.getType() != ImagePlus.GRAY8) {
-			final boolean doScaling = ImageConverter.getDoScaling();
-			ImageConverter.setDoScaling(true);
-			new ImageConverter(xy8).convertToGray8();
-			ImageConverter.setDoScaling(doScaling);
-		}
-
-		if (!single_pane) {
-
-			final ImageStack xyStack = xy8.getStack();
-			final byte[][] slicesData = new byte[depth][];
-			for (int z = 1; z <= depth; ++z)
-				slicesData[z - 1] = (byte[]) xyStack.getPixels(z);
-
-			// Create the ZY slices:
-			final ImageStack zy_stack = new ImageStack(depth, height, width);
-			for (int x_in_original = 0; x_in_original < width; ++x_in_original) {
-				final byte[] sliceBytes = new byte[depth * height];
-				for (int z_in_original = 0; z_in_original < depth; ++z_in_original) {
-					for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
-						final int x_in_left = z_in_original;
-						final int y_in_left = y_in_original;
-						sliceBytes[y_in_left * depth + x_in_left] =
-							slicesData[z_in_original][y_in_original * width + x_in_original];
-					}
-				}
-
-				final ByteProcessor bp = new ByteProcessor(depth, height);
-				bp.setPixels(sliceBytes);
-				zy_stack.addSlice(null, bp);
-			}
-
-			zy8 = new ImagePlus("ZY 8-bit", zy_stack);
-			zy8.setLut(lut);
-			final Calibration zyCal = xy.getCalibration().copy();
-			zyCal.pixelWidth = xy8.getCalibration().pixelDepth;
-			zyCal.pixelDepth = xy8.getCalibration().pixelWidth;
-			zy8.setCalibration(zyCal);
-
-			// Create the XZ slices:
-			final ImageStack xz_stack = new ImageStack(width, depth, height);
-			for (int y_in_original = 0; y_in_original < height; ++y_in_original) {
-				final byte[] sliceBytes = new byte[width * depth];
-				for (int z_in_original = 0; z_in_original < depth; ++z_in_original) {
-					final int y_in_top = z_in_original;
-					System.arraycopy(slicesData[z_in_original], y_in_original * width,
-						sliceBytes, y_in_top * width, width);
-				}
-				final ByteProcessor bp = new ByteProcessor(width, depth);
-				bp.setPixels(sliceBytes);
-				xz_stack.addSlice(null, bp);
-			}
-
-			xz8 = new ImagePlus("XZ 8-bit", xz_stack);
-			xz8.setLut(lut);
-			final Calibration xzCal = xy8.getCalibration().copy();
-			xzCal.pixelHeight = xy8.getCalibration().pixelDepth;
-			xzCal.pixelDepth = xy8.getCalibration().pixelHeight;
-			xz8.setCalibration(xzCal);
-		}
-
-		return new ImagePlus[] { xy8, xz8, zy8 };
-
+		SNT.convertTo8bit(xy8);
+		final ImagePlus[] views = (single_pane) ? new ImagePlus[] { null, null } : MultiDThreePanes.getZYXZ(xy8, 1);
+		return new ImagePlus[] { xy8, views[0], views[1] };
 	}
 
 	private void updateLut() {
@@ -2745,8 +2681,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			return;
 		}
 
-		final ImagePlus[] paneImps = new ImagePlus[] { xy, xz, zy };
-		final ImagePlus[] paneMips = getLoadedDataGray8Panes();
+		final ImagePlus[] paneImps = new ImagePlus[] { xy, zy, xz };
+		final ImagePlus[] paneMips = getXYZYXZLoadedDataGray8();
 
 		// Create a MIP Z-projection of the active channel
 		for (int i = 0; i < paneImps.length; i++) {

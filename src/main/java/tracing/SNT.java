@@ -129,6 +129,15 @@ public class SNT {
 			new StackConverter(imp).convertToGray32();
 	}
 
+	protected static void convertTo8bit(final ImagePlus imp) {
+		if (imp.getType() != ImagePlus.GRAY8) {
+			final boolean doScaling = ImageConverter.getDoScaling();
+			ImageConverter.setDoScaling(true);
+			new ImageConverter(imp).convertToGray8();
+			ImageConverter.setDoScaling(doScaling);
+		}
+	}
+
 	public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {
 		pw.print(stringForCSV("" + o));
 	}

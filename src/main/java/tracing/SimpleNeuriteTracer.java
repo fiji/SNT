@@ -2646,8 +2646,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		clickForTrace(p[0] * x_spacing, p[1] * y_spacing, p[2] * z_spacing, false);
 	}
 
-	private ImagePlus[] getXYZYXZLoadedDataGray8() {
-		final ImagePlus xy8 = getLoadedDataAsImp();
+	private ImagePlus[] getXYZYXZDataGray8(final boolean filteredData) {
+		final ImagePlus xy8 = (filteredData) ? getFilteredDataAsImp() : getLoadedDataAsImp();
 		SNT.convertTo8bit(xy8);
 		final ImagePlus[] views = (single_pane) ? new ImagePlus[] { null, null } : MultiDThreePanes.getZYXZ(xy8, 1);
 		return new ImagePlus[] { xy8, views[0], views[1] };
@@ -2668,16 +2668,25 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 *          clears previous MIPs.
 	 */
 	public void showMIPOverlays(final double opacity) {
-		if (is2D()) return;
+		showMIPOverlays(false, opacity);
+	}
 
+	protected void showMIPOverlays(final boolean filteredData, final double opacity) {
+		if (is2D() || !accessToValidImageData()) return;
+		final String identifer = (filteredData) ? MIP_OVERLAY_IDENTIFIER_PREFIX + "2"
+				: MIP_OVERLAY_IDENTIFIER_PREFIX + "1";
 		if (opacity == 0d) {
-			removeMIPOverlayAllPanes();
-			this.unzoomAllPanes();
+			removeMIPOverlayAllPanes(identifer);
+			//this.unzoomAllPanes();
 			return;
 		}
-
 		final ImagePlus[] paneImps = new ImagePlus[] { xy, zy, xz };
-		final ImagePlus[] paneMips = getXYZYXZLoadedDataGray8();
+		final ImagePlus[] paneMips = getXYZYXZDataGray8(filteredData);
+		showMIPOverlays(paneImps, paneMips, identifer,opacity);
+	}
+
+	private void showMIPOverlays(ImagePlus[] paneImps, ImagePlus[] paneMips, final String overlayIdentifier,
+			final double opacity) {
 
 		// Create a MIP Z-projection of the active channel
 		for (int i = 0; i < paneImps.length; i++) {
@@ -2692,7 +2701,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 			// (This logic is taken from OverlayCommands.)
 			final ImageRoi roi = new ImageRoi(0, 0, overlay.getProcessor());
-			roi.setName(MIP_OVERLAY_IDENTIFIER);
+			roi.setName(overlayIdentifier);
 			roi.setOpacity(opacity);
 			existingOverlay.add(roi);
 			paneImp.setOverlay(existingOverlay);

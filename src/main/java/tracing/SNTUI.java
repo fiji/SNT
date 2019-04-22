@@ -89,7 +89,6 @@ import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.table.DefaultGenericTable;
 import org.scijava.util.ColorRGB;
-import org.scijava.util.Types;
 
 import ij.IJ;
 import ij.ImageListener;
@@ -181,7 +180,7 @@ public class SNTUI extends JDialog {
 	private JTextField filteredImgPathField;
 	private JButton filteredImgInitButton;
 	private JButton filteredImgBrowseButton;
-	private JComboBox<String> filteredImgParserChoice;
+	private JCheckBox filteredImgOverlayCheckbox;
 	private JCheckBox filteredImgActivateCheckbox;
 	private SwingWorker<?, ?> filteredImgLoadingWorker;
 
@@ -966,16 +965,24 @@ public class SNTUI extends JDialog {
 		final JPanel mipPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,
 			0));
 		final JCheckBox mipOverlayCheckBox = new JCheckBox("Overlay MIP(s) at");
-		mipOverlayCheckBox.setEnabled(!plugin.is2D());
 		mipPanel.add(mipOverlayCheckBox);
 		final JSpinner mipSpinner = GuiUtils.integerSpinner(20, 10, 80, 1);
-		mipSpinner.setEnabled(!plugin.is2D());
 		mipSpinner.addChangeListener(e -> mipOverlayCheckBox.setSelected(false));
 		mipPanel.add(mipSpinner);
-		mipPanel.add(GuiUtils.leftAlignedLabel(" % opacity", !plugin.is2D()));
-		mipOverlayCheckBox.addActionListener(e -> plugin.showMIPOverlays(
-			(mipOverlayCheckBox.isSelected()) ? (int) mipSpinner.getValue() * 0.01
-				: 0));
+		mipPanel.add(GuiUtils.leftAlignedLabel(" % opacity", true));
+		mipOverlayCheckBox.addActionListener(e -> {
+			if (!plugin.accessToValidImageData()) {
+				noValidImageDataError();
+				mipOverlayCheckBox.setSelected(false);
+			} else if (plugin.is2D()) {
+				guiUtils.error(plugin.getImagePlus().getTitle() +
+						" has no depth. Cannot generate projection.");
+				mipOverlayCheckBox.setSelected(false);
+			} else {
+				plugin.showMIPOverlays(false,
+						(mipOverlayCheckBox.isSelected()) ? (int) mipSpinner.getValue() * 0.01 : 0);
+			}
+		});
 		viewsPanel.add(mipPanel, gdb);
 		++gdb.gridy;
 
@@ -1675,14 +1682,11 @@ public class SNTUI extends JDialog {
 	private JPanel filteredImagePanel() {
 		filteredImgPathField = new JTextField();
 		filteredImgBrowseButton = GuiUtils.smallButton("Browse");
-		filteredImgParserChoice = new JComboBox<>();
-		filteredImgParserChoice.addItem("SNT");
-		filteredImgParserChoice.addItem("ITK: Tubular Geodesics");
 		filteredImgInitButton = GuiUtils.smallButton("Load");
 		filteredImgActivateCheckbox = new JCheckBox(hotKeyLabel(
 			"Trace on filtered Image", "I"));
 		guiUtils.addTooltip(filteredImgActivateCheckbox,
-				"Whether A* search should be performed on the (undisplayed) filtered image rather than the image currently being traced");
+				"Whether A* search should be performed on the filtered image rather than the image currently being traced");
 		filteredImgActivateCheckbox.addActionListener(e -> enableFilteredImgTracing(
 			filteredImgActivateCheckbox.isSelected()));
 
@@ -1715,91 +1719,93 @@ public class SNTUI extends JDialog {
 		});
 
 		filteredImgInitButton.addActionListener(e -> {
-			if (plugin.isTracingOnFilteredImageAvailable()) { // Toggle: set action
-																												// to disable filtered
-																												// tracing
+			if (plugin.isTracingOnFilteredImageAvailable()) {
+				// Toggle: set action to disable filtered tracing
 				if (!guiUtils.getConfirmation("Disable access to filtered image?",
-					"Unload Image?")) return;
+						"Unload Image?")) return;
 
-				// reset cached filtered image/Tubular Geodesics
+				// reset cached filtered image
 				flushCachedFilteredData();
-				if (plugin.tubularGeodesicsTracingEnabled) {
-					if (plugin.tubularGeodesicsThread != null)
-						plugin.tubularGeodesicsThread.requestStop();
-					plugin.tubularGeodesicsThread = null;
-					plugin.tubularGeodesicsTracingEnabled = false;
-				}
-
 			}
 			else { // toggle: set action to enable filtered tracing
-	
-				if (filteredImgParserChoice.getSelectedIndex() == 0) { // SNT
-					loadCachedFilteredData(true);
-				}
-				else if (filteredImgParserChoice.getSelectedIndex() == 1) { // TubularGeodesics
-					if (!setFilteredImage()) return;
-					if (Types.load(
-						"FijiITKInterface.TubularGeodesics") == null)
-					{
-						guiUtils.error(
-							"The 'Tubular Geodesics' plugin does not seem to be installed!");
-						return;
-					}
-					plugin.tubularGeodesicsTracingEnabled = true;
-					updateFilteredImgFields(false);
-				}
+				loadCachedFilteredData(true);
 			}
 		});
 
 		filteredImgPanel = new JPanel();
 		filteredImgPanel.setLayout(new GridBagLayout());
 		GridBagConstraints c = GuiUtils.defaultGbc();
-		c.gridwidth = GridBagConstraints.REMAINDER;
-
-		// Header
-		GuiUtils.addSeparator(filteredImgPanel, "Tracing on Filtered Image:", true,
-			c);
-
-		c = new GridBagConstraints();
 		c.ipadx = 0;
-		c.insets = new Insets(0, 0, 0, 0);
-		c.anchor = GridBagConstraints.LINE_START;
-		c.fill = GridBagConstraints.HORIZONTAL;
+
+		// header row
+		addSeparatorWithURL(filteredImgPanel, "Tracing on Filtered Image:", true, c);
+		c.gridy++;
 
 		// row 1
-		c.gridy = 1;
-		c.gridx = 0;
-		filteredImgPanel.add(GuiUtils.leftAlignedLabel("Image: ", true), c);
-		c.gridx++;
-		c.weightx = 1;
+		c.gridwidth = 3;
+		filteredImgPanel.add(GuiUtils.leftAlignedLabel("Image: ", true));
+		c.gridx = 1;
 		filteredImgPanel.add(filteredImgPathField, c);
-		c.gridx++;
-		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
+		c.gridx = 2;
 		filteredImgPanel.add(filteredImgBrowseButton, c);
-		c.gridx++;
+		c.gridy++;
 
 		// row 2
-		c.gridy++;
-		c.gridx = 0;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		filteredImgPanel.add(GuiUtils.leftAlignedLabel("Parser: ", true), c);
-		c.gridx++;
-		filteredImgPanel.add(filteredImgParserChoice, c);
-		c.gridx++;
-		c.gridwidth = GridBagConstraints.REMAINDER;
-		filteredImgPanel.add(filteredImgInitButton, c);
-		c.gridx++;
+		filteredImgOverlayCheckbox = new JCheckBox("Render in overlay at");
+		final JSpinner mipSpinner = GuiUtils.integerSpinner(20, 10, 80, 1);
+		mipSpinner.addChangeListener(e -> filteredImgOverlayCheckbox.setSelected(false));
+		filteredImgOverlayCheckbox.addActionListener(e -> {
+			if (!plugin.filteredImageLoaded()) {
+				noFilteredImgAvailableError();
+				return;
+			}
+			plugin.showMIPOverlays(true, (filteredImgOverlayCheckbox.isSelected()) ? (int) mipSpinner.getValue() * 0.01 : 0);
+		});
+		final JPanel overlayPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+		overlayPanel.add(filteredImgOverlayCheckbox);
+		overlayPanel.add(mipSpinner);
+		overlayPanel.add(GuiUtils.leftAlignedLabel(" % opacity", true));
 
-		// row 3
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridwidth = 2;
+		filteredImgPanel.add(overlayPanel, c);
+		c.gridwidth = 3;
+		c.fill = GridBagConstraints.NONE;
+
+		c.gridx = 2;
+		equalizeButtons(filteredImgInitButton, filteredImgBrowseButton);
+		filteredImgPanel.add(filteredImgInitButton, c);
 		c.gridy++;
+
+		//row 3
+		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
 		filteredImgPanel.add(filteredImgActivateCheckbox, c);
+		c.gridy++;
+
 		return filteredImgPanel;
 	}
 
+	private void equalizeButtons(final JButton b1, final JButton b2) {
+		if (b1.getText().length() >= b2.getText().length()) {
+			b2.setMinimumSize(b1.getMinimumSize());
+			b2.setPreferredSize(b1.getPreferredSize());
+			b2.setMaximumSize(b1.getMaximumSize());
+		} else {
+			b1.setMinimumSize(b2.getMinimumSize());
+			b1.setPreferredSize(b2.getPreferredSize());
+			b1.setMaximumSize(b2.getMaximumSize());
+		}
+	}
 	private void flushCachedFilteredData() {
 		plugin.filteredData = null;
 		plugin.doSearchOnFilteredData = false;
+		if (filteredImgOverlayCheckbox.isSelected()) {
+			filteredImgOverlayCheckbox.setSelected(false);
+			plugin.showMIPOverlays(true, 0);
+		}
 		updateFilteredImgFields(true);
 	}
 
@@ -1896,12 +1902,12 @@ public class SNTUI extends JDialog {
 			if (resetHessian) enableHessian(false);
 			final boolean successfullyLoaded = plugin
 				.isTracingOnFilteredImageAvailable();
-			filteredImgParserChoice.setEnabled(!successfullyLoaded);
 			filteredImgPathField.setEnabled(!successfullyLoaded);
 			filteredImgBrowseButton.setEnabled(!successfullyLoaded);
 			filteredImgInitButton.setText((successfullyLoaded) ? "Flush"
 				: "Load");
 			filteredImgInitButton.setEnabled(successfullyLoaded);
+			GuiUtils.enableComponents(filteredImgOverlayCheckbox.getParent(), successfullyLoaded);
 			filteredImgActivateCheckbox.setEnabled(successfullyLoaded);
 			if (!successfullyLoaded) filteredImgActivateCheckbox.setSelected(false);
 		});
@@ -1914,8 +1920,8 @@ public class SNTUI extends JDialog {
 		filteredImgPathField.setForeground((validFile) ? new JTextField()
 			.getForeground() : Color.RED);
 		filteredImgInitButton.setEnabled(validFile);
-		filteredImgParserChoice.setEnabled(validFile);
 		filteredImgActivateCheckbox.setEnabled(validFile);
+		GuiUtils.enableComponents(filteredImgOverlayCheckbox.getParent(), validFile);
 		final String tooltext = "<HTML>Path to a matched image (32-bit preferred). Current file:<br>" + path + " ("
 				+ ((validFile) ? "valid" : "invalid") + " path)";
 		filteredImgPathField.setToolTipText(tooltext);
@@ -2828,25 +2834,26 @@ public class SNTUI extends JDialog {
 
 	protected void enableFilteredImgTracing(final boolean enable) {
 		if (plugin.isTracingOnFilteredImageAvailable()) {
-			if (filteredImgParserChoice.getSelectedIndex() == 0) {
-				plugin.doSearchOnFilteredData = enable;
-			}
-			else if (filteredImgParserChoice.getSelectedIndex() == 1) {
-				plugin.tubularGeodesicsTracingEnabled = enable;
-			}
+			plugin.doSearchOnFilteredData = enable;
 			filteredImgActivateCheckbox.setSelected(enable);
 		}
 		else if (enable) {
-			guiUtils.error("Filtered image has not yet been loaded. Please " + (!SNT
-				.fileAvailable(plugin.getFilteredImage())
-					? "specify the file path of filtered image, then " : "") +
-				"initialize its parser.", "Filtered Image Unavailable");
-			filteredImgActivateCheckbox.setSelected(false);
-			plugin.doSearchOnFilteredData = false;
-			updateFilteredFileField();
+			noFilteredImgAvailableError();
 		}
+		GuiUtils.enableComponents(hessianPanel,
+				!plugin.doSearchOnFilteredData && !plugin.tubularGeodesicsTracingEnabled);
 	}
 
+	private void noFilteredImgAvailableError() {
+		guiUtils.error("Filtered image has not been loaded. Please load it first.",
+				"Filtered Image Unavailable");
+		filteredImgOverlayCheckbox.setSelected(false);
+		filteredImgActivateCheckbox.setSelected(false);
+		plugin.doSearchOnFilteredData = false;
+		updateFilteredFileField();
+	}
+
+	
 	protected void toggleFilteredImgTracing() {
 		assert SwingUtilities.isEventDispatchThread();
 		// Do nothing if we are not allowed to enable FilteredImgTracing

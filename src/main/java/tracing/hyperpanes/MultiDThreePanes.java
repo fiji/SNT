@@ -48,7 +48,7 @@ public class MultiDThreePanes implements PaneOwner {
 	/** SNT's ZY view */
 	public static final int ZY_PLANE = 2; // constant x
 
-	protected static final String MIP_OVERLAY_IDENTIFIER = "SNT-MIP-OVERLAY";
+	protected static final String MIP_OVERLAY_IDENTIFIER_PREFIX = "SNT-MIP-OVERLAY";
 
 	protected ImagePlus xy;
 	protected ImagePlus xz;
@@ -244,11 +244,16 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	public void removeMIPOverlayAllPanes() {
+		removeMIPOverlayAllPanes(MIP_OVERLAY_IDENTIFIER_PREFIX + "1", MIP_OVERLAY_IDENTIFIER_PREFIX + "2");
+	}
+
+	protected void removeMIPOverlayAllPanes(final String... identifiers) {
 		for (final ImagePlus imp : new ImagePlus[] { xy, xz, zy }) {
 			if (imp == null) continue;
 			final Overlay overlay = imp.getOverlay();
 			if (overlay != null && overlay.size() > 0) {
-				overlay.remove(MIP_OVERLAY_IDENTIFIER);
+				for (String identifier : identifiers)
+					overlay.remove(identifier);
 				imp.getCanvas().repaint();
 			}
 		}

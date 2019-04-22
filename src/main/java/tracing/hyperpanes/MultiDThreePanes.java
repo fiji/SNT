@@ -691,8 +691,7 @@ public class MultiDThreePanes implements PaneOwner {
 	 * plane. This method returns the x, y and z coordinates of all the points in
 	 * that column.
 	 */
-
-	public int[][] findAllPointsAlongLine(final int x_in_pane,
+	protected int[][] findAllPointsAlongLine(final int x_in_pane,
 		final int y_in_pane, final int plane)
 	{
 		int n = -1;

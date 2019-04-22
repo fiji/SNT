@@ -2524,7 +2524,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setAsFirstKeyListener(c.getParent(), firstKeyListener);
 	}
 
-	public synchronized void findSnappingPointInXYview(final double x_in_pane,
+	protected synchronized void findSnappingPointInXYview(final double x_in_pane,
 		final double y_in_pane, final double[] point)
 	{
 
@@ -2554,12 +2554,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			stopz = depth;
 		}
 
-		ArrayList<int[]> pointsAtMaximum = new ArrayList<>();
-		float currentMaximum = -Float.MAX_VALUE;
+		final ArrayList<int[]> pointsAtMaximum = new ArrayList<>();
+		float currentMaximum = stackMin;
 		for (int x = startx; x < stopx; ++x) {
 			for (int y = starty; y < stopy; ++y) {
 				for (int z = startz; z < stopz; ++z) {
-					float v = -Float.MAX_VALUE;
+					float v = stackMin;
 					final int xyIndex = y * width + x;
 					switch (imageType) {
 						case ImagePlus.GRAY8:
@@ -2573,10 +2573,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 							v = slices_data_f[z][xyIndex];
 							break;
 						default:
-							throw new RuntimeException("Unknow image type: " + imageType);
+							throw new IllegalArgumentException("Unknow image type: " + imageType);
 					}
-					if (v > currentMaximum) {
-						pointsAtMaximum = new ArrayList<>();
+					if (v == stackMin)
+						continue;
+					else if (v > currentMaximum) {
 						pointsAtMaximum.add(new int[] { x, y, z });
 						currentMaximum = v;
 					}
@@ -2587,36 +2588,29 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			}
 		}
 
-		// if (pointsAtMaximum.size() == 0) {
-		// findPointInStackPrecise(x_in_pane, y_in_pane, ThreePanes.XY_PLANE,
-		// point);
-		// if (verbose)
-		// SNT.log("No maxima in snap-to window");
-		// return;
-		// }
+		if (pointsAtMaximum.isEmpty()) {
+			point[0] = window_center[0];
+			point[1] = window_center[1];
+			point[2] = window_center[2];
+		} else {
+			final int[] snapped_p = pointsAtMaximum.get(pointsAtMaximum.size() / 2);
+			if (window_center[2] != snapped_p[2]) xy.setZ(snapped_p[2] + 1);
+			point[0] = snapped_p[0];
+			point[1] = snapped_p[1];
+			point[2] = snapped_p[2];
+		}
 
-		final int[] snapped_p = pointsAtMaximum.get(pointsAtMaximum.size() / 2);
-		if (window_center[2] != snapped_p[2]) xy.setZ(snapped_p[2] + 1);
-		point[0] = snapped_p[0];
-		point[1] = snapped_p[1];
-		point[2] = snapped_p[2];
 	}
 
-	public void clickAtMaxPointInMainPane(final int x_in_pane,
-		final int y_in_pane)
-	{
-		clickAtMaxPoint(x_in_pane, y_in_pane, MultiDThreePanes.XY_PLANE);
-	}
-
-	public void clickAtMaxPoint(final int x_in_pane, final int y_in_pane,
+	protected void clickAtMaxPoint(final int x_in_pane, final int y_in_pane,
 		final int plane)
 	{
 		final int[][] pointsToConsider = findAllPointsAlongLine(x_in_pane,
 			y_in_pane, plane);
-		ArrayList<int[]> pointsAtMaximum = new ArrayList<>();
-		float currentMaximum = -Float.MAX_VALUE;
+		final ArrayList<int[]> pointsAtMaximum = new ArrayList<>();
+		float currentMaximum = stackMin;
 		for (int[] ints : pointsToConsider) {
-			float v = -Float.MAX_VALUE;
+			float v = stackMin;
 			final int[] p = ints;
 			final int xyIndex = p[1] * width + p[0];
 			switch (imageType) {
@@ -2631,10 +2625,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 					v = slices_data_f[p[2]][xyIndex];
 					break;
 				default:
-					throw new RuntimeException("Unknow image type: " + imageType);
+					throw new IllegalArgumentException("Unknow image type: " + imageType);
 			}
-			if (v > currentMaximum) {
-				pointsAtMaximum = new ArrayList<>();
+			if (v == stackMin) {
+				continue;
+			} else if (v > currentMaximum) {
 				pointsAtMaximum.add(p);
 				currentMaximum = v;
 			}

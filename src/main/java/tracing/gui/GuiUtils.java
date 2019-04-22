@@ -27,6 +27,8 @@ import com.jidesoft.popup.JidePopup;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -44,7 +46,10 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -543,10 +548,15 @@ public class GuiUtils {
 	}
 
 	public static void addSeparator(final JComponent component,
-		final String heading, final boolean vgap, final GridBagConstraints c)
+			final String heading, final boolean vgap, final GridBagConstraints c)
+		{
+			addSeparator(component, leftAlignedLabel(heading, null, true), vgap, c);
+		}
+
+	public static void addSeparator(final JComponent component,
+		final JLabel label, final boolean vgap, final GridBagConstraints c)
 	{
 		final int previousTopGap = c.insets.top;
-		final JLabel label = leftAlignedLabel(heading, true);
 		final Font font = label.getFont();
 		label.setFont(font.deriveFont((float) (font.getSize() * .85)));
 		if (vgap) c.insets.top = (int) (component.getFontMetrics(font).getHeight() *
@@ -555,15 +565,43 @@ public class GuiUtils {
 		if (vgap) c.insets.top = previousTopGap;
 	}
 
-	public static JLabel leftAlignedLabel(final String text,
+	public static JLabel leftAlignedLabel(final String text, final boolean enabled) {
+		return leftAlignedLabel(text, null, enabled);
+	}
+
+	public static JLabel leftAlignedLabel(final String text, final String uri,
 		final boolean enabled)
 	{
 		final JLabel label = new JLabel(text);
 		label.setHorizontalAlignment(SwingConstants.LEFT);
 		label.setEnabled(enabled);
-		if (!enabled) label.setForeground(getDisabledComponentColor()); // required
-																																		// for
-																																		// MACOS!?
+		final Color fg = (enabled) ? label.getForeground() : getDisabledComponentColor(); // required
+		label.setForeground(fg);														// for MACOS!?
+		if (uri != null && Desktop.isDesktopSupported()) {
+			label.addMouseListener(new MouseAdapter() {
+
+				@Override
+				public void mouseEntered(MouseEvent e) {
+					label.setForeground(Color.BLUE);
+					label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+				}
+
+				@Override
+				public void mouseExited(MouseEvent e) {
+					label.setForeground(fg);
+					label.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				}
+
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					try {
+						Desktop.getDesktop().browse(new URI(uri));
+					} catch (IOException | URISyntaxException ex) {
+						SNT.log("Could not open " + uri);
+					}
+				}
+			});
+		}
 		return label;
 	}
 

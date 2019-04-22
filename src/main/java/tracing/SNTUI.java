@@ -61,6 +61,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -287,7 +288,7 @@ public class SNTUI extends JDialog {
 				final JPanel tab1 = getTab();
 				// c.insets.left = MARGIN * 2;
 				c1.anchor = GridBagConstraints.NORTHEAST;
-				GuiUtils.addSeparator(tab1, "Cursor Auto-snapping:", false, c1);
+				addSeparatorWithURL(tab1,"Cursor Auto-snapping:", false, c1);
 				++c1.gridy;
 				tab1.add(snappingPanel(), c1);
 				++c1.gridy;
@@ -297,11 +298,11 @@ public class SNTUI extends JDialog {
 				++c1.gridy;
 				tab1.add(filteredImagePanel(), c1);
 				++c1.gridy;
-				GuiUtils.addSeparator(tab1, "Filters for Visibility of Paths:", true, c1);
+				addSeparatorWithURL(tab1, "Filters for Visibility of Paths:", true, c1);
 				++c1.gridy;
 				tab1.add(renderingPanel(), c1);
 				++c1.gridy;
-				GuiUtils.addSeparator(tab1, "Default Path Colors:", true, c1);
+				addSeparatorWithURL(tab1, "Default Path Colors:", true, c1);
 				++c1.gridy;
 				tab1.add(colorOptionsPanel(), c1);
 				++c1.gridy;
@@ -322,27 +323,27 @@ public class SNTUI extends JDialog {
 			c2.anchor = GridBagConstraints.NORTHEAST;
 			c2.gridwidth = GridBagConstraints.REMAINDER;
 			{
-				GuiUtils.addSeparator(tab2, "Data Source:", false, c2);
+				addSeparatorWithURL(tab2, "Data Source:", false, c2);
 				++c2.gridy;
 				tab2.add(sourcePanel = sourcePanel(plugin.getImagePlus()), c2);
 				++c2.gridy;
 			}
 
-			GuiUtils.addSeparator(tab2, "Views:", true, c2);
+			addSeparatorWithURL(tab2, "Views:", true, c2);
 			++c2.gridy;
 			tab2.add(viewsPanel(), c2);
 			++c2.gridy;
 			{
-				GuiUtils.addSeparator(tab2, "Temporary Paths:", true, c2);
+				addSeparatorWithURL(tab2, "Temporary Paths:", true, c2);
 				++c2.gridy;
 				tab2.add(tracingPanel(), c2);
 				++c2.gridy;
 			}
-			GuiUtils.addSeparator(tab2, "UI Interaction:", true, c2);
+			addSeparatorWithURL(tab2, "UI Interaction:", true, c2);
 			++c2.gridy;
 			tab2.add(interactionPanel(), c2);
 			++c2.gridy;
-			GuiUtils.addSeparator(tab2, "Misc:", true, c2);
+			addSeparatorWithURL(tab2, "Misc:", true, c2);
 			++c2.gridy;
 			c2.weighty = 1;
 			tab2.add(miscPanel(), c2);
@@ -485,6 +486,14 @@ public class SNTUI extends JDialog {
 			// will call SNT.setDebugMode(enable);
 			getReconstructionViewer(false).setEnableDebugMode(enable);
 		}
+	}
+
+	private void addSeparatorWithURL(final JComponent component, final String label, final boolean vgap,
+			final GridBagConstraints c) {
+		final String anchor = label.replace(" ", "_").replace(":", "");
+		final String uri = "https://imagej.net/SNT:_Overview#" + anchor;
+		JLabel jLabel = GuiUtils.leftAlignedLabel(label, uri, true);
+		GuiUtils.addSeparator(component, jLabel, vgap, c);
 	}
 
 	private void updateStatusText(final String newStatus,
@@ -1664,7 +1673,7 @@ public class SNTUI extends JDialog {
 	}
 
 	private JPanel filteredImagePanel() {
-		filteredImgPathField = new JTextField("");
+		filteredImgPathField = new JTextField();
 		filteredImgBrowseButton = GuiUtils.smallButton("Browse");
 		filteredImgParserChoice = new JComboBox<>();
 		filteredImgParserChoice.addItem("SNT");
@@ -2557,15 +2566,11 @@ public class SNTUI extends JDialog {
 		helpMenu.addSeparator();
 		mi = menuItemTriggeringURL("Tutorials", URL_OLD + "#Tutorials");
 		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Basic instructions", URL_OLD +
-			":_Basic_Instructions");
+		mi = menuItemTriggeringURL("Overview", URL + ":_Overview");
 		helpMenu.add(mi);
 		mi = menuItemTriggeringURL("Step-by-step Instructions", URL +
 			":_Step-By-Step_Instructions");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.FOOTPRINTS));
-		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Tubular Geodesics", URL_OLD +
-			":_Tubular_Geodesics");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 		mi = menuItemTriggeringURL("List of shortcuts", URL + ":_Key_Shortcuts");

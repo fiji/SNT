@@ -213,7 +213,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 
 	@SuppressWarnings("unused")
 	private void tracesFileChanged() {
-		if (!IMAGE_FILE.equals(imageChoice) || tracesFile == null || !tracesFile
+		if (IMAGE_FILE.equals(imageChoice) || tracesFile == null || !tracesFile
 			.exists()) return;
 		final File candidate = SNT.findClosestPair(tracesFile, "tif");
 		if (candidate != null && candidate.exists()) {

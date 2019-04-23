@@ -1136,7 +1136,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void mouseMovedTo(final double x_in_pane, final double y_in_pane,
-		final int in_plane, final boolean shift_key_down,
+		final int in_plane, final boolean sync_panes_modifier_down,
 		final boolean join_modifier_down)
 	{
 
@@ -1182,7 +1182,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		final int iy = (int) Math.round(y);
 		final int iz = (int) Math.round(z);
 
-		if (shift_key_down || editing) setZPositionAllPanes(ix, iy, iz);
+		if (sync_panes_modifier_down || editing) setZPositionAllPanes(ix, iy, iz);
 
 		String statusMessage = "";
 		if (editing && editingPath.getEditableNodeIndex() > -1) {

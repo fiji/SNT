@@ -24,7 +24,6 @@ package tracing;
 
 import java.awt.Point;
 import java.awt.Toolkit;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -58,15 +57,14 @@ class QueueJumpingKeyListener implements KeyListener {
 
 	/* Define which keys are always parsed by IJ listeners */
 	private static final int[] W_KEYS = new int[] { //
-		KeyEvent.VK_EQUALS, KeyEvent.VK_MINUS, KeyEvent.VK_UP, KeyEvent.VK_DOWN, // zoom
-																																							// keys
-		KeyEvent.VK_COMMA, KeyEvent.VK_PERIOD, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, // navigation
-																																								// keys
-		KeyEvent.VK_L, // Command Finder
-		KeyEvent.VK_PLUS, KeyEvent.VK_LESS, KeyEvent.VK_GREATER, KeyEvent.VK_TAB // extra
-																																							// navigation/zoom
-																																							// keys
-	};
+			// Zoom keys
+			KeyEvent.VK_EQUALS, KeyEvent.VK_MINUS, KeyEvent.VK_UP, KeyEvent.VK_DOWN, //
+			// Stack navigation keys
+			KeyEvent.VK_COMMA, KeyEvent.VK_PERIOD, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, //
+			// Extra navigation/zoom keys
+			KeyEvent.VK_PLUS, KeyEvent.VK_LESS, KeyEvent.VK_GREATER, KeyEvent.VK_TAB, //
+			// Command Finder
+			KeyEvent.VK_L };
 
 	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin,
 		final InteractiveTracerCanvas canvas)
@@ -135,21 +133,21 @@ class QueueJumpingKeyListener implements KeyListener {
 		// combinations that include the OS shortcut key, action keys, or
 		// numpad keys (so that users can still access IJ built-in shortcuts
 		// and/or custom shortcuts for their macros)
-		else if (Arrays.stream(W_KEYS).anyMatch(i -> i == keyCode) || (e
-			.getModifiers() & CTRL_CMD_MASK) != 0 || e.isActionKey() || e
-				.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD)
+		else if ((e.getModifiers() & CTRL_CMD_MASK) != 0 || e.isActionKey()
+				|| e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD
+				|| Arrays.stream(W_KEYS).anyMatch(i -> i == keyCode))
 		{
 			waiveKeyPress(e);
 			return;
 		}
 
 		final char keyChar = e.getKeyChar();
-		final int modifiers = e.getModifiersEx();
-		final boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
-		final boolean join_modifier_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
+		final boolean shift_down = e.isShiftDown();
+		final boolean alt_down = e.isAltDown();
+		final boolean join_modifier_down = alt_down && shift_down;
 
 		// SNT Hotkeys that do not override defaults
-		if (shift_down && join_modifier_down && keyCode == KeyEvent.VK_A)
+		if (join_modifier_down && keyCode == KeyEvent.VK_A)
 		{
 			startShollAnalysis();
 			e.consume();
@@ -157,7 +155,7 @@ class QueueJumpingKeyListener implements KeyListener {
 
 		// SNT Keystrokes that override IJ defaults. These
 		// are common to both tracing and edit mode
-		else if (canvas != null && (shift_down|| join_modifier_down)) {
+		else if (canvas != null && keyChar == '\u0000' && (shift_down || alt_down)) {
 
 			// This case is just so that when someone starts holding down
 			// the modified immediately see the effect, rather than having
@@ -202,8 +200,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			{
 				canvas.deleteEditingNode(false);
 			}
-			else if (keyCode == KeyEvent.VK_INSERT || keyChar == 'i' ||
-				keyChar == 'I')
+			else if (keyChar == 'i' || keyChar == 'I')
 			{
 				canvas.appendLastCanvasPositionToEditingNode(false);
 			}
@@ -363,7 +360,9 @@ class QueueJumpingKeyListener implements KeyListener {
 	public void addOtherKeyListeners(final KeyListener[] laterKeyListeners) {
 		final ArrayList<KeyListener> newListeners = new ArrayList<>(Arrays.asList(
 			laterKeyListeners));
-		listeners.addAll(newListeners);
+		for (KeyListener listener : newListeners) {
+			if (!listeners.contains(listener)) listeners.add(listener);
+		}
 	}
 
 	private class PointSelectionBehavior extends InteractiveBehavior {
@@ -415,8 +414,7 @@ class QueueJumpingKeyListener implements KeyListener {
 				.getY());
 			gUtils.tempMsg(SNT.formatDouble(point.x, 3) + ", " + SNT.formatDouble(
 				point.y, 3) + ", " + SNT.formatDouble(point.z, 3));
-			final boolean joiner_modifier_down = ((me.getModifiersEx() &
-				InputEvent.ALT_DOWN_MASK) != 0);
+			final boolean joiner_modifier_down = me.isAltDown();
 			SwingUtilities.invokeLater(() -> tracerPlugin.clickForTrace(point,
 				joiner_modifier_down));
 		}

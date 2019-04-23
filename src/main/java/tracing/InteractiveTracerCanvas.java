@@ -28,7 +28,6 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
@@ -267,7 +266,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		just_near_slices = !just_near_slices;
 	}
 
-	public void fakeMouseMoved(final boolean shift_pressed,
+	protected void fakeMouseMoved(final boolean shift_pressed,
 		final boolean join_modifier_pressed)
 	{
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise,
@@ -377,10 +376,8 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		last_x_in_pane_precise = myOffScreenXD(e.getX());
 		last_y_in_pane_precise = myOffScreenYD(e.getY());
 
-		boolean shift_key_down = (e.getModifiersEx() &
-			InputEvent.SHIFT_DOWN_MASK) != 0;
-		final boolean joiner_modifier_down = (e.getModifiersEx() &
-			InputEvent.ALT_DOWN_MASK) != 0;
+		boolean shift_key_down = e.isShiftDown();
+		final boolean joiner_modifier_down = shift_key_down && e.isAltDown();
 
 		if (!editMode && tracerPlugin.snapCursor &&
 			plane == MultiDThreePanes.XY_PLANE && !joiner_modifier_down &&
@@ -391,9 +388,8 @@ class InteractiveTracerCanvas extends TracerCanvas {
 				last_y_in_pane_precise, p);
 			last_x_in_pane_precise = p[0];
 			last_y_in_pane_precise = p[1];
-			shift_key_down = tracerPlugin.cursorSnapWindowZ > 0; // always sync panes
-																														// in Z-snapping
-																														// mode
+			// Always sync panes if Z-snapping is enabled
+			shift_key_down = tracerPlugin.cursorSnapWindowZ > 0;
 		}
 
 		tracerPlugin.mouseMovedTo(last_x_in_pane_precise, last_y_in_pane_precise,
@@ -625,7 +621,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		private final static String NODE_DELETE =
 			"  Delete Active Node  [D, Backspace]";
 		private final static String NODE_INSERT =
-			"  Insert New Node at Cursor Position  [I, Ins]";
+			"  Insert New Node at Cursor Position  [I]";
 		private final static String NODE_MOVE =
 			"  Move Active Node to Cursor Position  [M]";
 		private final static String NODE_MOVE_Z =

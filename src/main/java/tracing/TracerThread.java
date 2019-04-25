@@ -30,19 +30,32 @@ import ij.ImagePlus;
 
 public class TracerThread extends SearchThread {
 
-	private final int start_x;
-	private final int start_y;
-	private final int start_z;
-	private final int goal_x;
-	private final int goal_y;
-	private final int goal_z;
-	private final boolean reciprocal;
-	private final ComputeCurvatures hessian;
-	private final double multiplier;
-	private final float[][] filtered;
-	private final boolean useHessian;
-	private final boolean singleSlice;
+	private int start_x;
+	private int start_y;
+	private int start_z;
+	private int goal_x;
+	private int goal_y;
+	private int goal_z;
+	private boolean reciprocal;
+	private ComputeCurvatures hessian;
+	private double multiplier;
+	private float[][] cachedTubeness;
+	private boolean useHessian;
+	private boolean singleSlice;
 	private Path result;
+
+
+	public TracerThread(final SimpleNeuriteTracer snt, final int start_x, final int start_y,
+			final int start_z, final int goal_x, final int goal_y, final int goal_z) {
+		super(snt);
+		reciprocal = true;
+		singleSlice = snt.is2D();
+		useHessian = snt.isHessianEnabled();
+		hessian = (useHessian) ? snt.hessian : null;
+		multiplier = snt.hessianMultiplier;
+		cachedTubeness = snt.cachedTubeness;
+		init(start_x, start_y, start_z, goal_x, goal_y, goal_z);
+	}
 
 	/* If you specify 0 for timeoutSeconds then there is no timeout. */
 	public TracerThread(final ImagePlus imagePlus, final float stackMin,
@@ -51,9 +64,8 @@ public class TracerThread extends SearchThread {
 		final int start_z, final int goal_x, final int goal_y, final int goal_z,
 		final boolean reciprocal, final boolean singleSlice,
 		final ComputeCurvatures hessian, final double multiplier,
-		final float[][] filtered, final boolean useHessian)
+		final float[][] cachedTubeness, final boolean useHessian)
 	{
-
 		super(imagePlus, stackMin, stackMax, true, // bidirectional
 			true, // definedGoal
 			false, // startPaused,
@@ -62,28 +74,29 @@ public class TracerThread extends SearchThread {
 		this.reciprocal = reciprocal;
 		this.singleSlice = singleSlice;
 		this.hessian = hessian;
-		this.filtered = filtered;
+		this.cachedTubeness = cachedTubeness;
 		this.multiplier = multiplier;
-		// need to do this again since it needs to know if hessian is set...
-		minimum_cost_per_unit_distance = minimumCostPerUnitDistance();
 		this.useHessian = useHessian;
+		init(start_x, start_y, start_z, goal_x, goal_y, goal_z);
+	}
+
+	private void init(final int start_x, final int start_y, final int start_z, final int goal_x, final int goal_y,
+			final int goal_z) {
 		this.start_x = start_x;
 		this.start_y = start_y;
 		this.start_z = start_z;
 		this.goal_x = goal_x;
 		this.goal_y = goal_y;
 		this.goal_z = goal_z;
-
+		// need to do this again since it needs to know if hessian is set...
+		minimum_cost_per_unit_distance = minimumCostPerUnitDistance();
 		final SearchNode s = createNewNode(start_x, start_y, start_z, 0,
 			estimateCostToGoal(start_x, start_y, start_z, true), null,
 			OPEN_FROM_START);
 		addNode(s, true);
-
 		final SearchNode g = createNewNode(goal_x, goal_y, goal_z, 0,
 			estimateCostToGoal(goal_x, goal_y, goal_z, false), null, OPEN_FROM_GOAL);
-
 		addNode(g, false);
-
 		this.result = null;
 	}
 
@@ -184,7 +197,7 @@ public class TracerThread extends SearchThread {
 
 		if (useHessian) {
 
-			if (filtered == null) {
+			if (cachedTubeness == null) {
 
 				if (singleSlice) {
 
@@ -261,7 +274,7 @@ public class TracerThread extends SearchThread {
 			else {
 
 				// Then this saves a lot of time:
-				float measure = filtered[new_z][new_y * width + new_x];
+				float measure = cachedTubeness[new_z][new_y * width + new_x];
 				if (measure == 0) measure = 0.2f;
 				cost = 1 / measure;
 

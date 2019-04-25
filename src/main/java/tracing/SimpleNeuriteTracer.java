@@ -177,9 +177,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	/* Hessian-based analysis */
 	private volatile boolean hessianEnabled = false;
-	private ComputeCurvatures hessian = null;
+	protected ComputeCurvatures hessian = null;
 	protected volatile double hessianSigma = -1;
 	protected double hessianMultiplier = SNTPrefs.DEFAULT_MULTIPLIER;
+	protected float[][] cachedTubeness;
 
 	/* tracing threads */
 	private TracerThread currentSearchThread = null;
@@ -193,6 +194,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected boolean doSearchOnFilteredData;
 	protected float[][] filteredData;
 	protected File filteredFileImage = null;
+	volatile protected float stackMaxFiltered = Float.MIN_VALUE;
+	volatile protected float stackMinFiltered = Float.MAX_VALUE;
 	protected boolean tubularGeodesicsTracingEnabled = false;
 	protected TubularGeodesicsTracer tubularGeodesicsThread;
 
@@ -1399,16 +1402,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			manualSearchThread.start();
 		}
 		else {
-			currentSearchThread = new TracerThread(xy, stackMin, stackMax, //
-				0, // timeout in seconds
-				1000, // reportEveryMilliseconds
-				(int) Math.round(last_start_point_x), (int) Math.round(
-					last_start_point_y), (int) Math.round(last_start_point_z), x_end,
-				y_end, z_end, //
-				true, // reciprocal
-				is2D(), (hessianEnabled ? hessian : null), //
-				hessianMultiplier,
-				doSearchOnFilteredData ? filteredData : null, hessianEnabled);
+			currentSearchThread = new TracerThread(this, (int) Math.round(last_start_point_x),
+					(int) Math.round(last_start_point_y), (int) Math.round(last_start_point_z), x_end, y_end, z_end);
 
 			addThreadToDraw(currentSearchThread);
 			currentSearchThread.setDrawingColors(Color.CYAN, null);// TODO: Make this
@@ -2098,34 +2093,76 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * @see #getFilteredDataAsImp()
 	 */
 	public void loadFilteredImage() throws IOException, IllegalArgumentException {
+		final ImagePlus imp = openCachedDataImage(filteredFileImage);
+		if (imp != null && filteredFileImage.getName().toLowerCase().contains(".oof")) {
+			showStatus(0, 0, "Optimally Oriented Flux image detected");
+			SNT.log("Optimally Oriented Flux image detected. Image won't be cached...");
+			tubularGeodesicsTracingEnabled = true;
+			return;
+		}
+		loadCachedData(imp, filteredData = new float[depth][]);
+	}
+
+	public void loadTubenessImage(final File file) throws IOException, IllegalArgumentException {
+		final ImagePlus imp = openCachedDataImage(file);
+		loadCachedData(imp, cachedTubeness = new float[depth][]);
+		hessianSigma = -1;
+	}
+
+	public void loadTubenessImage(final ImagePlus imp) throws IllegalArgumentException {
+		if (xy == null) throw new IllegalArgumentException(
+				"Data can only be loaded after tracing image is known");;
+		if (!compatibleImp(imp)) {
+				throw new IllegalArgumentException("Dimensions do not match those of  " + xy.getTitle()
+				+ ". If this unexpected, check under 'Image>Properties...' that CZT axes are not swapped.");
+		}
+		changeUIState(SNTUI.CACHING_DATA);
+		loadCachedData(imp, cachedTubeness = new float[depth][]);
+		changeUIState(SNTUI.WAITING_TO_START_PATH);
+	}
+
+	private void loadCachedData(final ImagePlus imp, final float[][] destination) {
+		showStatus(0, 0, "Loading filtered image");
+		SNT.convertTo32bit(imp);
+		final ImageStack s = imp.getStack();
+		for (int z = 0; z < depth; ++z) {
+			showStatus(z, depth, "Loading image/Computing range...");
+			final int pos = imp.getStackIndex(channel, z + 1, frame);
+			destination[z] = (float[]) s.getPixels(pos);
+			for (int y = 0; y < height; ++y) {
+				for (int x = 0; x < width; ++x) {
+					final float v = destination[z][y * width + x];
+					if (v < stackMinFiltered) stackMinFiltered = v;
+					if (v > stackMaxFiltered) stackMaxFiltered = v;
+				}
+			}
+		}
+		showStatus(0, 0, null);
+	}
+
+	private boolean compatibleImp(final ImagePlus imp) {
+		return imp.getNChannels() <= channel && imp.getNFrames() <= frame && imp.getWidth() == xy.getWidth()
+				&& imp.getHeight() == xy.getHeight() && imp.getNSlices() == xy.getNSlices();
+	}
+
+	private ImagePlus openCachedDataImage(final File file) throws IOException {
 		if (xy == null) throw new IllegalArgumentException(
 			"Data can only be loaded after main tracing image is known");
-		if (!SNT.fileAvailable(filteredFileImage)) {
+		if (!SNT.fileAvailable(file)) {
 			throw new IllegalArgumentException("File path of input data unknown");
 		}
-		ImagePlus imp = (ImagePlus) legacyService.getIJ1Helper().openImage(filteredFileImage.getAbsolutePath());
+		ImagePlus imp = (ImagePlus) legacyService.getIJ1Helper().openImage(file.getAbsolutePath());
 		if (imp == null) {
-			final Dataset ds = datasetIOService.open(filteredFileImage.getAbsolutePath());
+			final Dataset ds = datasetIOService.open(file.getAbsolutePath());
 			if (ds == null)
 				throw new IllegalArgumentException("Image could not be loaded by IJ.");
 			imp = convertService.convert(ds, ImagePlus.class);
 		}
-		if (imp.getNChannels() < channel || imp.getNFrames() < frame ||
-			imp.getWidth() != xy.getWidth() || imp.getHeight() != xy.getHeight() || 
-				imp.getNSlices() != xy.getNSlices()) {
-			throw new IllegalArgumentException("Dimensions do not match those of  " + xy.getTitle() + ".");
+		if (!compatibleImp(imp)) {
+			throw new IllegalArgumentException("Dimensions do not match those of  " + xy.getTitle()
+			+ ". If this unexpected, check under 'Image>Properties...' that CZT axes are not swapped.");
 		}
-
-		showStatus(0, 0, "Loading filtered image");
-		SNT.convertTo32bit(imp);
-		final ImageStack s = imp.getStack();
-		filteredData = new float[depth][];
-		for (int z = 0; z < depth; ++z) {
-			final int pos = imp.getStackIndex(channel, z + 1, frame);
-			showStatus(z, depth, "Loading image...");
-			filteredData[z] = (float[]) s.getPixels(pos);
-		}
-		showStatus(0, 0, null);
+		return imp;
 	}
 
 	/**
@@ -2137,22 +2174,31 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * @see #loadFilteredImage()
 	 */
 	public ImagePlus getFilteredDataAsImp() {
-		if (!filteredImageLoaded()) return null;
+		return (filteredImageLoaded()) ? getFilteredDataFromCachedData("Filtered Data", filteredData) : null;
+	}
+
+	protected ImagePlus getCachedTubenessDataAsImp() {
+		return (cachedTubeness != null) ? getFilteredDataFromCachedData("Tubeness Data", cachedTubeness) : null;
+	}
+
+	private ImagePlus getFilteredDataFromCachedData(final String title, final float[][] data) {
 		final ImageStack stack = new ImageStack(xy.getWidth(), xy.getHeight());
 		for (int z = 0; z < depth; ++z) {
-			final ImageProcessor ip = new FloatProcessor(xy.getWidth(), xy.getHeight());
-			ip.setPixels(filteredData[z]);
+			final FloatProcessor ip = new FloatProcessor(xy.getWidth(), xy.getHeight());
+			if (data[z]==null) continue;
+			ip.setPixels(data[z]);
 			stack.addSlice(ip);
 		}
-		final ImagePlus impFiltered = new ImagePlus("Filtered Data", stack);
+		final ImagePlus impFiltered = new ImagePlus(title, stack);
 		updateLut();
 		impFiltered.setLut(lut);
+		impFiltered.copyScale(xy);
 		return impFiltered;
 	}
 
 	public synchronized void enableHessian(final boolean enable) {
 		hessianEnabled = enable;
-		if (enable) startHessian();
+		if (enable && cachedTubeness == null) startHessian();
 	}
 
 	protected synchronized void cancelGaussian() {
@@ -2647,7 +2693,19 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	private ImagePlus[] getXYZYXZDataGray8(final boolean filteredData) {
-		final ImagePlus xy8 = (filteredData) ? getFilteredDataAsImp() : getLoadedDataAsImp();
+		ImagePlus xy8 = null;
+		if(filteredData) {
+			if (tubularGeodesicsTracingEnabled)
+				try {
+					xy8 = openCachedDataImage(filteredFileImage);
+				} catch (final IOException e) {
+					SNT.error("IOerror", e);
+					return null;
+				}
+			else 
+				xy8 = getFilteredDataAsImp();
+		} else 
+			xy8 = getLoadedDataAsImp();
 		SNT.convertTo8bit(xy8);
 		final ImagePlus[] views = (single_pane) ? new ImagePlus[] { null, null } : MultiDThreePanes.getZYXZ(xy8, 1);
 		return new ImagePlus[] { xy8, views[0], views[1] };
@@ -2771,6 +2829,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 */
 	public boolean isHessianEnabled() {
 		return hessianEnabled && hessian != null;
+	}
+
+	public boolean isTubenessImageCached() {
+		return this.cachedTubeness != null;
 	}
 
 	/**

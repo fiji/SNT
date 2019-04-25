@@ -307,7 +307,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 		width = imagePlus.getWidth();
 		height = imagePlus.getHeight();
-		depth = imagePlus.getNSlices(); // FIXME: Check hyperstack support
+		depth = imagePlus.getNSlices();
 
 		{
 			final ImageStack s = imagePlus.getStack();
@@ -349,19 +349,56 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 		this.timeoutSeconds = timeoutSeconds;
 		this.reportEveryMilliseconds = reportEveryMilliseconds;
+		init();
+	}
 
+	protected SearchThread(final SimpleNeuriteTracer snt)
+		{
+			imagePlus = snt.getImagePlus();
+			imageType = imagePlus.getType();
+			width = snt.width;
+			height = snt.height;
+			depth = snt.depth;
+			stackMin = snt.stackMin;
+			stackMax = snt.stackMax;
+			if (snt.doSearchOnFilteredData && snt.filteredImageLoaded()) {
+				imageType = ImagePlus.GRAY32;
+				slices_data_f = snt.filteredData;
+				stackMin = snt.stackMinFiltered;
+				stackMax = snt.stackMaxFiltered;
+			} else if (snt.slices_data_b != null) {
+				imageType = ImagePlus.GRAY8;
+				slices_data_b = snt.slices_data_b;
+			} else if (snt.slices_data_s != null) {
+				imageType = ImagePlus.GRAY16;
+				slices_data_s = snt.slices_data_s;
+			} else if (snt.slices_data_f != null) {
+				imageType = ImagePlus.GRAY32;
+				slices_data_f = snt.slices_data_f;
+			}
+			x_spacing = (float) snt.x_spacing;
+			y_spacing = (float) snt.y_spacing;
+			z_spacing = (float) snt.z_spacing;
+			spacing_units = snt.spacing_units;
+
+			bidirectional = true;
+			definedGoal = true;
+			startPaused = false;
+			timeoutSeconds = 0;
+			reportEveryMilliseconds = 1000;
+			init();
+		}
+
+	private void init() {
 		closed_from_start = new PriorityQueue<>();
 		open_from_start = new PriorityQueue<>();
 		if (bidirectional) {
 			closed_from_goal = new PriorityQueue<>();
 			open_from_goal = new PriorityQueue<>();
 		}
-
 		nodes_as_image_from_start = new SearchNode[depth][];
 		if (bidirectional) nodes_as_image_from_goal = new SearchNode[depth][];
-
 		minimum_cost_per_unit_distance = minimumCostPerUnitDistance();
-
 		progressListeners = new ArrayList<>();
 	}
 
@@ -376,13 +413,11 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	SearchNode[][] nodes_as_image_from_goal;
 
 	public void printStatus() {
-		SNT.log("... with " + open_from_start.size() +
-			" open nodes at the start and " + closed_from_start.size() +
-			" closed nodes at the start");
+		SNT.log("... Start nodes: open=" + open_from_start.size() +
+			" closed=" + closed_from_start.size());
 		if (bidirectional) {
-			SNT.log("... with " + open_from_goal.size() +
-				" open nodes at the goal and " + closed_from_goal.size() +
-				" closed nodes at the goal");
+			SNT.log("...  Goal nodes: open=" + open_from_goal.size() +
+				" closed=" + closed_from_goal.size());
 		}
 		else SNT.log(" ... unidirectional search");
 	}
@@ -461,8 +496,8 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 					{
 
 						final int loops_since_last_report = loops - loops_at_last_report;
-						SNT.log("milliseconds per loop: " + (since_last_report /
-							(double) loops_since_last_report));
+						SNT.log("" + (since_last_report /
+							(double) loops_since_last_report) + "ms/loop");
 
 						if (verbose) printStatus();
 

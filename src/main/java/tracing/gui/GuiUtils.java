@@ -214,6 +214,16 @@ public class GuiUtils {
 		return (yesNoDialog(msg, title) == JOptionPane.YES_OPTION);
 	}
 
+	public void error(final String msg, final String title, final String helpURI) {
+		final JOptionPane optionPane = new JOptionPane(getLabel(msg), JOptionPane.ERROR_MESSAGE,
+				JOptionPane.YES_NO_OPTION, null, new String[] { "Online Help", "OK" });
+		final JDialog d = optionPane.createDialog(parent, title);
+		d.setVisible(true);
+		d.dispose();
+		if ("Online Help".equals(optionPane.getValue()))
+			openURL(helpURI);
+	}
+
 	public boolean getConfirmation(final String msg, final String title, final String yesLabel, final String noLabel) {
 		return (yesNoDialog(msg, title, yesLabel, noLabel) == JOptionPane.YES_OPTION);
 	}
@@ -594,15 +604,19 @@ public class GuiUtils {
 
 				@Override
 				public void mouseClicked(MouseEvent e) {
-					try {
-						Desktop.getDesktop().browse(new URI(uri));
-					} catch (IOException | URISyntaxException ex) {
-						SNT.log("Could not open " + uri);
-					}
+					openURL(uri);
 				}
 			});
 		}
 		return label;
+	}
+
+	private static void openURL(final String uri) {
+		try {
+			Desktop.getDesktop().browse(new URI(uri));
+		} catch (IOException | URISyntaxException ex) {
+			SNT.log("Could not open " + uri);
+		}
 	}
 
 	public static ImageIcon createIcon(final Color color, final int width,

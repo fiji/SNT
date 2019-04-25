@@ -2040,7 +2040,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				new Thread(hessian).start();
 			}
 		}
-		if (ui != null) ui.updateHessianLabel();
+		if (ui != null) ui.updateHessianPanel();
 	}
 
 	/**

@@ -22,11 +22,13 @@
 
 package tracing.gui.cmds;
 
+import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import ij.ImagePlus;
+import ij.measure.Calibration;
 import net.imagej.ImageJ;
 import net.imagej.ops.OpService;
 import net.imglib2.img.Img;
@@ -37,17 +39,20 @@ import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 
 /**
- * Implements the "Show Hessian ('Tubeness') Image" command.
+ * Implements the "Cache All Hessian Computations" command.
  *
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, initializer = "init")
-public class TubenessCmd extends CommonDynamicCmd {
+public class ComputeTubenessImg extends CommonDynamicCmd {
 
 	@Parameter
 	private OpService ops;
 
 	private double sigma;
+
+	@Parameter(type = ItemIO.OUTPUT)
+	private ImagePlus tubenessImp;
 
 	@SuppressWarnings("unused")
 	private void init() {
@@ -57,11 +62,7 @@ public class TubenessCmd extends CommonDynamicCmd {
 		}
 		final SimpleNeuriteTracer plugin = sntService.getPlugin();
 		if (!plugin.accessToValidImageData()) {
-			error("Valid image data is required for displaying \"Tubeness\" image.");
-			return;
-		}
-		if (!plugin.isAstarEnabled() || !plugin.isHessianEnabled()) {
-			error("Auto-tracing and Hessian analysis must be enabled for displaying \"Tubeness\" image.");
+			error("Valid image data is required for computation.");
 			return;
 		}
 	}
@@ -73,12 +74,23 @@ public class TubenessCmd extends CommonDynamicCmd {
 	 */
 	@Override
 	public void run() {
-		final ImagePlus inputImp = sntService.getPlugin().getImagePlus();
+		statusService.showStatus("Computing whole-image Hessian data...");
+		final ImagePlus inputImp = sntService.getPlugin().getLoadedDataAsImp();
+		final Calibration cal = inputImp.getCalibration(); // never null
 		sigma = sntService.getUI().getSigma();
 		final Img<FloatType> in = ImageJFunctions.convertFloat(inputImp);
 		final Img<DoubleType> out = ops.create().img(in, new DoubleType());
-		ops.filter().tubeness(out, in, sigma);
-		ImageJFunctions.show(out, String.format("Tubeness: Sigma=%.1f%s", sigma, inputImp.getCalibration().getUnit()));
+		ops.filter().tubeness(out, in, sigma, cal.pixelWidth, cal.pixelHeight,
+				cal.pixelDepth);
+		tubenessImp = ImageJFunctions.wrap(out, String.format("Tubeness: Sigma=%.1f", sigma));
+		// Somehow metadata seems to be lost, so we'll ensure result is correct
+		tubenessImp.setDimensions(inputImp.getNChannels(), inputImp.getNSlices(), inputImp.getNFrames());
+		tubenessImp.copyScale(inputImp);
+		statusService.clearStatus();
+	}
+
+	public ImagePlus getTubenessImp() {
+		return tubenessImp;
 	}
 
 	/* IDE debug method **/
@@ -86,6 +98,6 @@ public class TubenessCmd extends CommonDynamicCmd {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		ij.command().run(TubenessCmd.class, true);
+		ij.command().run(ComputeTubenessImg.class, true);
 	}
 }

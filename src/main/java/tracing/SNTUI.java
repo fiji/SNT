@@ -116,6 +116,7 @@ import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.SigmaPalette;
 import tracing.gui.cmds.ChooseDatasetCmd;
 import tracing.gui.cmds.CompareFilesCmd;
+import tracing.gui.cmds.ComputeTubenessImg;
 import tracing.gui.cmds.JSONImporterCmd;
 import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;

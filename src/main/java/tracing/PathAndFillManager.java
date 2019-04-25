@@ -158,15 +158,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	protected PathAndFillManager(final SimpleNeuriteTracer plugin) {
 		this();
 		this.plugin = plugin;
-		x_spacing = plugin.x_spacing;
-		y_spacing = plugin.y_spacing;
-		z_spacing = plugin.z_spacing;
-		spacing_units = plugin.spacing_units;
-		boundingBox.setOrigin(new PointInImage(0, 0, 0));
-		boundingBox.setSpacing(x_spacing, y_spacing, z_spacing,
-			spacing_units);
-		boundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
-		spacingIsUnset = false;
+		syncPluginSpatialSettings();
 		addPathAndFillListener(plugin);
 	}
 
@@ -190,6 +182,18 @@ public class PathAndFillManager extends DefaultHandler implements
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
 		this.spacing_units = boundingBox.getUnit();
+		spacingIsUnset = false;
+	}
+
+	protected void syncPluginSpatialSettings() {
+		x_spacing = plugin.x_spacing;
+		y_spacing = plugin.y_spacing;
+		z_spacing = plugin.z_spacing;
+		spacing_units = plugin.spacing_units;
+		boundingBox.setOrigin(new PointInImage(0, 0, 0));
+		boundingBox.setSpacing(x_spacing, y_spacing, z_spacing,
+			spacing_units);
+		boundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
 		spacingIsUnset = false;
 	}
 

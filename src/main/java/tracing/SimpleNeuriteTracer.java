@@ -125,8 +125,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected static final String targetBallName = "Target point";
 	protected static final int ballRadiusMultiplier = 5;
 
-	protected PathAndFillManager pathAndFillManager;
-	protected SNTPrefs prefs;
+	protected final PathAndFillManager pathAndFillManager;
+	protected final SNTPrefs prefs;
 	private GuiUtils guiUtils;
 
 	/* Legacy 3D Viewer. This is all deprecated stuff */
@@ -276,8 +276,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 		context.inject(this);
 		SNT.setPlugin(this);
-		pathAndFillManager = new PathAndFillManager(this);
 		prefs = new SNTPrefs(this);
+		pathAndFillManager = new PathAndFillManager(this);
 		setFieldsFromImage(sourceImage);
 		prefs.loadPluginPrefs();
 	}
@@ -341,7 +341,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				"One dimension of the calibration information was zero: (" + x_spacing +
 					"," + y_spacing + "," + z_spacing + ")");
 		}
-		if (accessToValidImageData()) {
+		pathAndFillManager.syncPluginSpatialSettings();
+		if (accessToValidImageData() && sourceImage.getOriginalFileInfo() != null) {
 			final String dir = sourceImage.getOriginalFileInfo().directory;
 			final String name = sourceImage.getOriginalFileInfo().fileName;
 			if (dir != null && name != null)
@@ -2740,7 +2741,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 		final ImagePlus[] paneImps = new ImagePlus[] { xy, zy, xz };
 		final ImagePlus[] paneMips = getXYZYXZDataGray8(filteredData);
-		showMIPOverlays(paneImps, paneMips, identifer,opacity);
+		if (paneMips != null) showMIPOverlays(paneImps, paneMips, identifer,opacity);
 	}
 
 	private void showMIPOverlays(ImagePlus[] paneImps, ImagePlus[] paneMips, final String overlayIdentifier,

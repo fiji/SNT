@@ -1965,8 +1965,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public double getMinimumSeparation() {
-		return Math.min(Math.abs(x_spacing), Math.min(Math.abs(y_spacing), Math.abs(
-			z_spacing)));
+		return (is2D()) ? Math.min(Math.abs(x_spacing), Math.abs(y_spacing))
+				: Math.min(Math.abs(x_spacing), Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
+	}
+
+	private double getAverageSeparation() {
+		return (is2D()) ? (x_spacing + y_spacing) / 2 : (x_spacing + y_spacing + z_spacing) / 3;
 	}
 
 	/**
@@ -2018,7 +2022,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected void startHessian() {
-		if (hessianSigma == -1) hessianSigma = getMinimumSeparation();
+		if (hessianSigma == -1) hessianSigma = getDefaultHessianSigma();
 		startHessian(hessianSigma, hessianMultiplier);
 	}
 
@@ -2838,7 +2842,17 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * @return true, if Hessian analysis is enabled, otherwise false
 	 */
 	public boolean isHessianEnabled() {
-		return hessianEnabled && hessian != null;
+		return hessianEnabled && hessian != null && hessianSigma > -1;
+	}
+
+	public double getHessianSigma() {
+		return hessianSigma;
+	}
+
+	protected double getDefaultHessianSigma() {
+		double minSep = getMinimumSeparation();
+		double avgSep = getAverageSeparation();
+		return (minSep == avgSep) ? 2 * minSep : avgSep;
 	}
 
 	public boolean isTubenessImageCached() {

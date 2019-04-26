@@ -662,7 +662,7 @@ public class SNTUI extends JDialog {
 	 */
 	public double getSigma() {
 		if(plugin.hessianSigma == - 1)
-			plugin.hessianSigma = plugin.getMinimumSeparation();
+			plugin.hessianSigma = plugin.getDefaultHessianSigma();
 		return plugin.hessianSigma;
 	}
 
@@ -2438,7 +2438,7 @@ public class SNTUI extends JDialog {
 		loadTubenessJMI = new JMenuItem("Load Precomputed \"Tubeness\" Image...");
 		flushTubenessJMI = new JMenuItem("Flush Existing Cached Data");
 
-		setSigma(plugin.getMinimumSeparation(), false);
+		setSigma(plugin.getDefaultHessianSigma(), false);
 		updateHessianPanel();
 		preprocess.addActionListener(listener);
 		final JButton optionsButton = new JButton();
@@ -2661,16 +2661,17 @@ public class SNTUI extends JDialog {
 		final JTextField maxField = new JTextField(SNT.formatDouble(
 			256/plugin.hessianMultiplier, 1), 5);
 		final Object[] contents = {
-			"<html><b>Sigma</b><br>Enter the approximate radius of the structures you are<br>" +
-				"tracing (the default is the minimum voxel separation,<br>i.e., " + SNT
-					.formatDouble(plugin.getMinimumSeparation(), 3) + plugin
-						.getImagePlus().getCalibration().getUnit() + "):", sigmaField,
+			"<html><b>Sigma</b><br>Enter the approximate radius of the structures you are<br>" //
+				+ "tracing. The default is the average of voxel dimensions<br>" //
+				+ "(anisotropic images) or twice the voxel size (isotropic),<br>" //
+				+ "i.e., " + SNT.formatDouble(plugin.getDefaultHessianSigma(), 3) //
+				+ plugin.spacing_units + " for active image:", sigmaField, //
 			"<html><br><b>Maximum</b><br>Enter the maximum pixel intensity on the <i>Tubeness</i><br>"
 			+ "image beyond which the cost function for A* search<br>"
 			+ "is minimized (the default is 256/" + SNTPrefs.DEFAULT_MULTIPLIER + "="
 			+ SNT.formatDouble(256/SNTPrefs.DEFAULT_MULTIPLIER, 1) + "):", maxField, };
 		final int result = JOptionPane.showConfirmDialog(this, contents,
-			"Hessian Settings", JOptionPane.OK_CANCEL_OPTION,
+			"Hessian (\"Tubeness\") Settings", JOptionPane.OK_CANCEL_OPTION,
 			JOptionPane.PLAIN_MESSAGE);
 		if (result == JOptionPane.OK_OPTION) {
 			final double sigma = GuiUtils.extractDouble(sigmaField);

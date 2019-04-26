@@ -604,7 +604,7 @@ public class GuiUtils {
 
 				@Override
 				public void mouseClicked(MouseEvent e) {
-					openURL(uri);
+					if (label.isEnabled()) openURL(uri);
 				}
 			});
 		}

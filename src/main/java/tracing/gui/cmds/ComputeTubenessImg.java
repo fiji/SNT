@@ -92,13 +92,13 @@ public class ComputeTubenessImg extends CommonDynamicCmd {
 
 	@SuppressWarnings("unused")
 	private void processUsingOps(final ImagePlus inputImp) {
+		final Calibration cal = inputImp.getCalibration(); // never null
 		final Img<FloatType> in = ImageJFunctions.convertFloat(inputImp);
 		final Img<DoubleType> out = ops.create().img(in, new DoubleType());
 		ops.filter().tubeness(out, in, sigma, cal.pixelWidth, cal.pixelHeight,
 				cal.pixelDepth);
 		tubenessImp = ImageJFunctions.wrap(out, String.format("Tubeness: Sigma=%.1f", sigma));
 		// Somehow metadata seems to be lost, so we'll ensure result is correct
-		final Calibration cal = inputImp.getCalibration(); // never null
 		tubenessImp.setDimensions(inputImp.getNChannels(), inputImp.getNSlices(), inputImp.getNFrames());
 		tubenessImp.copyScale(inputImp);
 	}

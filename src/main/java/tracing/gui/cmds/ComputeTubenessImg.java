@@ -27,6 +27,7 @@ import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import features.TubenessProcessor;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 import net.imagej.ImageJ;
@@ -35,6 +36,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
+import tracing.SNT;
 import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 
@@ -75,18 +77,30 @@ public class ComputeTubenessImg extends CommonDynamicCmd {
 	@Override
 	public void run() {
 		statusService.showStatus("Computing whole-image Hessian data...");
+		sigma = sntService.getPlugin().getHessianSigma();
+		SNT.log("Generating Tubeness image: sigma=" + sigma);
 		final ImagePlus inputImp = sntService.getPlugin().getLoadedDataAsImp();
-		final Calibration cal = inputImp.getCalibration(); // never null
-		sigma = sntService.getUI().getSigma();
+		processUsingIJ1(inputImp);
+		statusService.clearStatus();
+	}
+
+	private void processUsingIJ1(final ImagePlus inputImp) {
+		final TubenessProcessor tp = new TubenessProcessor(true);
+		tp.setSigma(sigma);
+		tubenessImp = tp.generateImage(inputImp);
+	}
+
+	@SuppressWarnings("unused")
+	private void processUsingOps(final ImagePlus inputImp) {
 		final Img<FloatType> in = ImageJFunctions.convertFloat(inputImp);
 		final Img<DoubleType> out = ops.create().img(in, new DoubleType());
 		ops.filter().tubeness(out, in, sigma, cal.pixelWidth, cal.pixelHeight,
 				cal.pixelDepth);
 		tubenessImp = ImageJFunctions.wrap(out, String.format("Tubeness: Sigma=%.1f", sigma));
 		// Somehow metadata seems to be lost, so we'll ensure result is correct
+		final Calibration cal = inputImp.getCalibration(); // never null
 		tubenessImp.setDimensions(inputImp.getNChannels(), inputImp.getNSlices(), inputImp.getNFrames());
 		tubenessImp.copyScale(inputImp);
-		statusService.clearStatus();
 	}
 
 	public ImagePlus getTubenessImp() {

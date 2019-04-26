@@ -25,6 +25,7 @@ package tracing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
@@ -186,8 +187,8 @@ public class SNTUI extends JDialog {
 	// UI controls for loading 'filtered image'
 	private JPanel filteredImgPanel;
 	private JTextField filteredImgPathField;
-	private JButton filteredImgInitButton;
-	private JButton filteredImgBrowseButton;
+	private JButton filteredImgOptionsButton;
+	private final JButton filteredImgBrowseButton = new JButton("Browse"); // needs to be initialized
 	private JCheckBox filteredImgOverlayCheckbox;
 	private JCheckBox filteredImgActivateCheckbox;
 	private ActiveWorker activeWorker;
@@ -222,7 +223,7 @@ public class SNTUI extends JDialog {
 	static final int QUERY_KEEP = 3;
 	// static final int LOGGING_POINTS = 4;
 	// static final int DISPLAY_EVS = 5;
-	public static final int CACHING_DATA = 5;
+	static final int CRUNCHING_DATA = 5;
 	static final int FILLING_PATHS = 6;
 	static final int CALCULATING_GAUSSIAN = 7;
 	static final int WAITING_FOR_SIGMA_POINT = 8;
@@ -618,8 +619,8 @@ public class SNTUI extends JDialog {
 	 *          Gaussian computation will be performed using the the new parameter
 	 */
 	public void setSigma(final double sigma, final boolean mayStartGaussian) {
+		plugin.hessianSigma = sigma; //ensure it is applied immediately
 		SwingUtilities.invokeLater(() -> {
-			plugin.hessianSigma = sigma;
 			updateHessianPanel();
 			if (!mayStartGaussian) return;
 			preprocess.setSelected(false);
@@ -641,13 +642,11 @@ public class SNTUI extends JDialog {
 			sb.append("(preset \u03C3");
 		else
 			sb.append("(\u03C3=").append(SNT.formatDouble(plugin.hessianSigma, 2));
-		sb.append("; max=" + SNT.formatDouble(256 / plugin.hessianMultiplier, 1));
+		sb.append("; max=").append(SNT.formatDouble(256 / plugin.hessianMultiplier, 1));
 		sb.append(")");
-		if (plugin.isTubenessImageCached())
-			sb.append(" [C]");
-		else 
-			sb.append(" &emsp;&nbsp; ");
-
+		preprocess.setToolTipText((plugin.isTubenessImageCached()) 
+				? "Computations currently cached in memory"
+				: "Computations are not cached. Will be performed as needed");
 		assert SwingUtilities.isEventDispatchThread();
 		preprocess.setText(hotKeyLabel(sb.toString(), "H"));
 		final boolean dataCached = plugin.isTubenessImageCached();
@@ -827,8 +826,8 @@ public class SNTUI extends JDialog {
 					updateStatusText("Fitting volumes around selected paths...");
 					break;
 
-				case CACHING_DATA:
-					updateStatusText("Caching data. This may take a while. Please wait...");
+				case CRUNCHING_DATA:
+					updateStatusText("Crunching data. This could take a while...");
 					disableEverything();
 					break;
 
@@ -1713,9 +1712,8 @@ public class SNTUI extends JDialog {
 
 	private JPanel filteredImagePanel() {
 		filteredImgPathField = new JTextField();
-		filteredImgBrowseButton = new JButton("Browse");
-		filteredImgInitButton = new JButton();
-		IconFactory.applyIcon(filteredImgInitButton, filteredImgBrowseButton.getFont().getSize2D(), GLYPH.OPTIONS);
+		filteredImgOptionsButton = new JButton();
+		IconFactory.applyIcon(filteredImgOptionsButton, filteredImgBrowseButton.getFont().getSize2D(), GLYPH.OPTIONS);
 
 		filteredImgActivateCheckbox = new JCheckBox(hotKeyLabel(
 			"Trace on filtered Image", "I"));
@@ -1752,20 +1750,55 @@ public class SNTUI extends JDialog {
 			filteredImgPathField.setText(file.getAbsolutePath());
 		});
 
-		filteredImgInitButton.addActionListener(e -> {
+		final JPopupMenu optionsMenu = new JPopupMenu();
+		final JMenuItem loadMenuItem = new JMenuItem("Load Image...");
+		optionsMenu.add(loadMenuItem);
+		loadMenuItem.addActionListener(e -> {
 			if (plugin.isTracingOnFilteredImageAvailable()) {
 				// Toggle: set action to disable filtered tracing
 				if (!guiUtils.getConfirmation("Disable access to filtered image?",
 						"Unload Image?")) return;
-
 				// reset cached filtered image
 				flushFilteredData();
-
 			}
 			else { // toggle: set action to enable 'filtered tracing'
 				loadCachedDataImage(true, false, plugin.filteredFileImage);
 				setFastMarchSearchEnabled(plugin.tubularGeodesicsTracingEnabled);
 			}
+			if (plugin.isTracingOnFilteredImageAvailable())
+				loadMenuItem.setText("Flush Cached Image...");
+			else
+				loadMenuItem.setText("Load Image...");
+		});
+		filteredImgOptionsButton.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(final MouseEvent e) {
+				optionsMenu.show(filteredImgOptionsButton, 
+						filteredImgOptionsButton.getWidth()/2, filteredImgOptionsButton.getHeight()/2);
+			}
+		});
+		final JMenuItem revealMenuItem = new JMenuItem("Show File in File Explorer");
+		optionsMenu.add(revealMenuItem);
+		revealMenuItem.addActionListener(e -> {
+			try {
+				File file = new File(filteredImgPathField.getText());
+				if (SNT.fileAvailable(file)) {
+					Desktop.getDesktop().open(file.getParentFile());
+					//TODO: Move to java9
+					//Desktop.getDesktop().browseFileDirectory(file);
+				} else {
+					guiUtils.error("Current image path is not valid.");
+				}
+			} catch (NullPointerException | IllegalArgumentException | IOException iae) {
+				guiUtils.error("An error occured: image directory not available?");
+			}
+		});
+		optionsMenu.addSeparator();
+		final JMenuItem makeImgMenuItem = new JMenuItem("Generate Filtered Image...");
+		optionsMenu.add(makeImgMenuItem);
+		makeImgMenuItem.addActionListener(e -> {
+				guiUtils.error("Not yet implemented");
 		});
 
 		filteredImgPanel = new JPanel();
@@ -1779,7 +1812,7 @@ public class SNTUI extends JDialog {
 
 		// row 1
 		c.gridwidth = 3;
-		filteredImgPanel.add(GuiUtils.leftAlignedLabel("Image: ", true));
+		filteredImgPanel.add(GuiUtils.leftAlignedLabel("File: ", true));
 		c.gridx = 1;
 		filteredImgPanel.add(filteredImgPathField, c);
 		c.fill = GridBagConstraints.NONE;
@@ -1811,8 +1844,8 @@ public class SNTUI extends JDialog {
 		c.fill = GridBagConstraints.NONE;
 
 		c.gridx = 2;
-		equalizeButtons(filteredImgInitButton, filteredImgBrowseButton);
-		filteredImgPanel.add(filteredImgInitButton, c);
+		equalizeButtons(filteredImgOptionsButton, filteredImgBrowseButton);
+		filteredImgPanel.add(filteredImgOptionsButton, c);
 		c.gridy++;
 
 		//row 3
@@ -1826,10 +1859,12 @@ public class SNTUI extends JDialog {
 
 	private void equalizeButtons(final JButton b1, final JButton b2) {
 		if (b1.getText().length() >= b2.getText().length()) {
+			b2.setSize(b1.getSize());
 			b2.setMinimumSize(b1.getMinimumSize());
 			b2.setPreferredSize(b1.getPreferredSize());
 			b2.setMaximumSize(b1.getMaximumSize());
 		} else {
+			b1.setSize(b2.getSize());
 			b1.setMinimumSize(b2.getMinimumSize());
 			b1.setPreferredSize(b2.getPreferredSize());
 			b1.setMaximumSize(b2.getMaximumSize());
@@ -1895,7 +1930,7 @@ public class SNTUI extends JDialog {
 	private void loadImageData(final boolean isTubeness, final File file) {
 
 		showStatus("Loading image. Please wait...", false);
-		changeState(CACHING_DATA);
+		changeState(CRUNCHING_DATA);
 		activeWorker = new ActiveWorker() {
 
 			@Override
@@ -1966,7 +2001,8 @@ public class SNTUI extends JDialog {
 		assert SwingUtilities.isEventDispatchThread();
 
 		showStatus("Generating and parsing Tubeness image...", false);
-		changeState(CACHING_DATA);
+		changeState(CRUNCHING_DATA);
+
 		activeWorker = new ActiveWorker() {
 			@Override
 			protected Object doInBackground() {
@@ -1975,7 +2011,7 @@ public class SNTUI extends JDialog {
 				cacti.setContext(plugin.getContext());
 				// execute the command in the same thread, blocking until complete
 				cacti.run();
-				plugin.loadTubenessImage(cacti.getTubenessImp());
+				plugin.loadTubenessImage(cacti.getTubenessImp(), false);
 				return null;
 			}
 
@@ -2015,7 +2051,7 @@ public class SNTUI extends JDialog {
 		final boolean validFile = path != null && SNT.fileAvailable(new File(path));
 		filteredImgPathField.setForeground((validFile) ? new JTextField()
 			.getForeground() : Color.RED);
-		filteredImgInitButton.setEnabled(validFile);
+		filteredImgOptionsButton.setEnabled(validFile);
 		filteredImgActivateCheckbox.setEnabled(validFile);
 		GuiUtils.enableComponents(filteredImgOverlayCheckbox.getParent(), validFile);
 		final String tooltext = "<HTML>Path to a matched image (32-bit preferred). Current file:<br>" + path + " ("
@@ -2210,22 +2246,25 @@ public class SNTUI extends JDialog {
 		viewMenu.add(hideViewsMenu);
 		viewMenu.addSeparator();
 
-		final JMenuItem filteredImpMenu = new JMenuItem("<HTML>Show Loaded <i>Filtered</i> Image");
+		final JMenuItem filteredImpMenu = new JMenuItem("<HTML>Show Loaded <i>Filtered Image</i>");
 		filteredImpMenu.addActionListener(e -> {
 			final ImagePlus imp = plugin.getFilteredDataAsImp();
 			if (imp == null) {
-				guiUtils.error("No \"Filtered\" image has been loaded.");
+				guiUtils.error("No \"Filtered Image\" has been loaded.");
 			} else {
+				imp.resetDisplayRange();
 				imp.show();
 			}
 		});
 		viewMenu.add(filteredImpMenu);
-		final JMenuItem tubenessImpMenu = new JMenuItem("<HTML>Show Cached/Loaded Hessian (<i>Tubeness</i>) image");
+		final JMenuItem tubenessImpMenu = new JMenuItem("<HTML>Show Cached/Loaded <i>Hessian (Tubeness) Image</i>");
 		tubenessImpMenu.addActionListener(e -> {
 			final ImagePlus imp = plugin.getCachedTubenessDataAsImp();
 			if (imp == null) {
 				guiUtils.error("No \"Tubeness\" image has been loaded/computed.");
 			} else {
+				final double max = 256 / plugin.hessianMultiplier;
+				imp.setDisplayRange(0, max);
 				imp.show();
 			}
 		});
@@ -2403,7 +2442,7 @@ public class SNTUI extends JDialog {
 		updateHessianPanel();
 		preprocess.addActionListener(listener);
 		final JButton optionsButton = new JButton();
-		IconFactory.applyIcon(optionsButton, preprocess.getFont().getSize2D()*1.2f, GLYPH.OPTIONS);
+		IconFactory.applyIcon(optionsButton, preprocess.getFont().getSize2D(), GLYPH.OPTIONS);
 		hessianPanel.add(optionsButton);
 		final JPopupMenu optionsMenu = new JPopupMenu();
 		final JMenuItem jmiVisual = new JMenuItem(GuiListener.EDIT_SIGMA_VISUALLY);
@@ -2435,8 +2474,22 @@ public class SNTUI extends JDialog {
 			}
 		});
 
-		hessianPanel.add(preprocess);
-		hessianPanel.add(optionsButton);
+
+		hessianPanel = new JPanel();
+		hessianPanel.setLayout(new GridBagLayout());
+		final GridBagConstraints c = GuiUtils.defaultGbc();
+
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridwidth = 2;
+		hessianPanel.add(preprocess, c);
+		c.gridwidth = 3;
+		c.fill = GridBagConstraints.NONE;
+
+		c.gridx = 2;
+		equalizeButtons(optionsButton, filteredImgBrowseButton);
+		hessianPanel.add(optionsButton, c);
+		c.gridy++;
 		return hessianPanel;
 	}
 
@@ -2775,24 +2828,27 @@ public class SNTUI extends JDialog {
 
 	private JMenu helpMenu() {
 		final JMenu helpMenu = new JMenu("Help");
-		final String URL_OLD = "http://imagej.net/Simple_Neurite_Tracer";
 		final String URL = "https://imagej.net/SNT";
 		JMenuItem mi = menuItemTriggeringURL("Main documentation page", URL);
+		mi.setIcon(IconFactory.getMenuIcon(GLYPH.HOME));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTriggeringURL("Tutorials", URL_OLD + "#Tutorials");
-		helpMenu.add(mi);
+
 		mi = menuItemTriggeringURL("Overview", URL + ":_Overview");
+		helpMenu.add(mi);
+		mi = menuItemTriggeringURL("Tutorials", URL + "#Tutorials");
 		helpMenu.add(mi);
 		mi = menuItemTriggeringURL("Step-by-step Instructions", URL +
 			":_Step-By-Step_Instructions");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.FOOTPRINTS));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
+
 		mi = menuItemTriggeringURL("List of shortcuts", URL + ":_Key_Shortcuts");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.KEYBOARD));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
+
 		mi = menuItemTriggeringURL("FAQs", URL + ":_FAQ");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.QUESTION));
 		helpMenu.add(mi);
@@ -2800,8 +2856,12 @@ public class SNTUI extends JDialog {
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.COMMENTS));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTriggeringURL("Citing SNT...", URL_OLD +
-			"#Citing_Simple_Neurite_Tracer");
+
+		mi = menuItemTriggeringURL("Python Notebooks", URL + ":_Python_Notebooks");
+		helpMenu.add(mi);
+		helpMenu.addSeparator();
+
+		mi = menuItemTriggeringURL("Citing SNT", URL + ":_FAQ#citing");
 		helpMenu.add(mi);
 		return helpMenu;
 	}
@@ -2926,7 +2986,7 @@ public class SNTUI extends JDialog {
 				updateStatusText("Cancelling path search...", true);
 				plugin.cancelSearch(false);
 				break;
-			case (CACHING_DATA):
+			case (CRUNCHING_DATA):
 				updateStatusText("Unloading cached data", true);
 				if (activeWorker != null) activeWorker.kill();
 				break;
@@ -3005,7 +3065,7 @@ public class SNTUI extends JDialog {
 				return "SEARCHING";
 			case QUERY_KEEP:
 				return "QUERY_KEEP";
-			case CACHING_DATA:
+			case CRUNCHING_DATA:
 				return "CACHING_DATA";
 			// case LOGGING_POINTS:
 			// return "LOGGING_POINTS";

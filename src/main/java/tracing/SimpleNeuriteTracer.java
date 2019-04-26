@@ -2111,15 +2111,24 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void loadTubenessImage(final ImagePlus imp) throws IllegalArgumentException {
+		loadTubenessImage(imp, true);
+	}
+
+	protected void loadTubenessImage(final ImagePlus imp, final boolean changeUIState) throws IllegalArgumentException {
 		if (xy == null) throw new IllegalArgumentException(
 				"Data can only be loaded after tracing image is known");;
 		if (!compatibleImp(imp)) {
 				throw new IllegalArgumentException("Dimensions do not match those of  " + xy.getTitle()
 				+ ". If this unexpected, check under 'Image>Properties...' that CZT axes are not swapped.");
 		}
-		changeUIState(SNTUI.CACHING_DATA);
+		if (changeUIState) changeUIState(SNTUI.CRUNCHING_DATA);
 		loadCachedData(imp, cachedTubeness = new float[depth][]);
-		changeUIState(SNTUI.WAITING_TO_START_PATH);
+		hessianMultiplier = 256 / stackMaxFiltered;
+		SNT.log("Multiplier m="+ hessianMultiplier + " max="+ stackMaxFiltered);
+		if (changeUIState) {
+			getUI().updateHessianPanel();
+			changeUIState(SNTUI.WAITING_TO_START_PATH);
+		}
 	}
 
 	private void loadCachedData(final ImagePlus imp, final float[][] destination) {

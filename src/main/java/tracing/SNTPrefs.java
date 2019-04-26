@@ -147,7 +147,6 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		if (snt.cursorSnapWindowZ > snt.depth) snt.cursorSnapWindowZ = snt.depth;
 		{
 			final String fIpath = Prefs.get(FILTERED_IMG_PATH, null);
-			System.out.println("reading prefs "+ fIpath );
 			if (fIpath != null) snt.setFilteredImage(new File(fIpath));
 		}
 	}

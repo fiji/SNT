@@ -3405,7 +3405,7 @@ public class Viewer3D {
 			switch (e.getKeyChar()) {
 				case 'a':
 				case 'A':
-					chart.setAxeDisplayed(!view.isAxeBoxDisplayed());
+					toggleAxes();
 					break;
 				case 'c':
 				case 'C':
@@ -3462,6 +3462,17 @@ public class Viewer3D {
 			}
 		}
 
+		private void toggleAxes() {
+			chart.setAxeDisplayed(!view.isAxeBoxDisplayed());
+		}
+
+		@SuppressWarnings("unused")
+		private boolean emptyScene() {
+			final boolean empty = view.getScene().getGraph().getAll().size() == 0;
+			if (empty) displayMsg("Scene is empty");
+			return empty;
+		}
+
 		private void saveScreenshot() {
 			getOuter().saveSnapshot();
 			displayMsg("Snapshot saved to " + FileUtils.limitPath(
@@ -3469,10 +3480,14 @@ public class Viewer3D {
 		}
 
 		private void resetView() {
-			chart.setViewPoint(View.DEFAULT_VIEW);
-			chart.setViewMode(ViewPositionMode.FREE);
-			view.setBoundMode(ViewBoundMode.AUTO_FIT);
-			displayMsg("View reset");
+			try {
+				chart.setViewPoint(View.DEFAULT_VIEW);
+				chart.setViewMode(ViewPositionMode.FREE);
+				view.setBoundMode(ViewBoundMode.AUTO_FIT);
+				displayMsg("View reset");
+			} catch (final GLException ex) {
+				SNT.error("Is scene empty? ", ex);
+			}
 		}
 
 		/*

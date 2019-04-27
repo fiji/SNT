@@ -198,8 +198,8 @@ public class SNTPrefs { // TODO: Adopt PrefService
 			final FillManagerUI fw = rd.getFillManager();
 			if (fw != null) Prefs.saveLocation(FILLWIN_LOC, fw.getLocation());
 		}
-		if (snt.getFilteredImage() != null) {
-			Prefs.set(FILTERED_IMG_PATH, snt.getFilteredImage().getAbsolutePath());
+		if (snt.getFilteredImageFile() != null) {
+			Prefs.set(FILTERED_IMG_PATH, snt.getFilteredImageFile().getAbsolutePath());
 		}
 		if (restoreIJ1prefs) restoreIJ1Prefs();
 		clearLegacyPrefs();

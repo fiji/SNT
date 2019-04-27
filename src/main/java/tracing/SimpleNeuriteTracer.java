@@ -2053,7 +2053,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * @param file The file containing the filtered image
 	 * @see #loadFilteredImage()
 	 */
-	public void setFilteredImage(final File file) {
+	protected void setFilteredImage(final File file) {
 		filteredFileImage = file;
 	}
 
@@ -2062,7 +2062,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 *
 	 * @return the filtered image file, or null if no file has been set
 	 */
-	public File getFilteredImage() {
+	protected File getFilteredImageFile() {
 		return filteredFileImage;
 	}
 
@@ -2088,24 +2088,34 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	/**
 	 * Loads the 'filtered image' specified by {@link #setFilteredImage(File)} into
 	 * memory as 32-bit data.
-	 *
+	 * 
+	 * @param file The file to be loaded
+	 * 
 	 * @throws IOException              If image could not be loaded
-	 * @throws IllegalArgumentException if path specified through
-	 *                                  {@link #setFilteredImage(File)} is invalid,
-	 *                                  dimensions are unexpected, or image type is
-	 *                                  not supported
+	 * @throws IllegalArgumentException if dimensions are unexpected, or image type
+	 *                                  is not supported
 	 * @see #filteredImageLoaded()
 	 * @see #getFilteredDataAsImp()
 	 */
-	public void loadFilteredImage() throws IOException, IllegalArgumentException {
-		final ImagePlus imp = openCachedDataImage(filteredFileImage);
-		if (imp != null && filteredFileImage.getName().toLowerCase().contains(".oof")) {
+	public void loadFilteredImage(final File file) throws IOException, IllegalArgumentException {
+		final ImagePlus imp = openCachedDataImage(file);
+		loadFilteredImage(imp, true);
+		setFilteredImage(filteredImageLoaded() ? file : null);
+	}
+
+	protected void loadFilteredImage(final ImagePlus imp, final boolean changeUIState) throws IllegalArgumentException {
+		if (imp != null && filteredFileImage != null && filteredFileImage.getName().toLowerCase().contains(".oof")) {
 			showStatus(0, 0, "Optimally Oriented Flux image detected");
 			SNT.log("Optimally Oriented Flux image detected. Image won't be cached...");
 			tubularGeodesicsTracingEnabled = true;
 			return;
 		}
+		if (changeUIState) changeUIState(SNTUI.CRUNCHING_DATA);
 		loadCachedData(imp, filteredData = new float[depth][]);
+		if (filteredImageLoaded() && imp.getFileInfo() != null) {
+			setFilteredImage(new File(imp.getFileInfo().directory, imp.getFileInfo().fileName));
+		}
+		if (changeUIState) changeUIState(SNTUI.WAITING_TO_START_PATH);
 	}
 
 	public void loadTubenessImage(final File file) throws IOException, IllegalArgumentException {

@@ -1903,11 +1903,10 @@ public class SNTUI extends JDialog {
 					if (isTubeness) {
 						plugin.loadTubenessImage(file);
 					} else {
-						plugin.setFilteredImage(file);
-						plugin.loadFilteredImage();
+						plugin.loadFilteredImage(file);
 					}
 				} catch (final IllegalArgumentException e1) {
-					return ("Could not load " + plugin.getFilteredImage().getAbsolutePath() + ":<br>"
+					return ("Could not load " + file.getAbsolutePath() + ":<br>"
 							+ e1.getMessage());
 				} catch (final IOException e2) {
 					e2.printStackTrace();

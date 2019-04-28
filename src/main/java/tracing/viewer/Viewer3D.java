@@ -2470,16 +2470,21 @@ public class Viewer3D {
 			mi.addActionListener(e -> {
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("loader", new FlyCircuitLoader());
+				inputs.put("rebuildCanvas", false);
 				runCmd(RemoteSWCImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			remoteMenu.add(mi);
 			mi = new JMenuItem("MouseLight...", 'm');
-			mi.addActionListener(e -> runCmd(MLImporterCmd.class, null,
-				CmdWorker.DO_NOTHING));
+			mi.addActionListener(e -> {
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("rebuildCanvas", false);
+				runCmd(MLImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
 			remoteMenu.add(mi);
 			mi = new JMenuItem("NeuroMorpho...", 'n');
 			mi.addActionListener(e -> {
 				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("rebuildCanvas", false);
 				inputs.put("loader", new NeuroMorphoLoader());
 				runCmd(RemoteSWCImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});

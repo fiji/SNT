@@ -49,7 +49,7 @@ import ij.WindowManager;
  */
 @Plugin(initializer = "init", type = Command.class, visible = false,
 	label = "Change Tracing Image")
-public class ChooseDatasetCmd extends CommonDynamicCmd implements Command {
+public class ChooseDatasetCmd extends CommonDynamicCmd {
 
 	@Parameter
 	private LegacyService legacyService;
@@ -73,6 +73,7 @@ public class ChooseDatasetCmd extends CommonDynamicCmd implements Command {
 			final ImagePlus chosenImp = impMap.get(choice);
 			if (compatibleCalibration(chosenImp)) snt.initialize(chosenImp);
 		}
+		resetUI();
 	}
 
 	private boolean compatibleCalibration(final ImagePlus chosenImp) {
@@ -88,13 +89,8 @@ public class ChooseDatasetCmd extends CommonDynamicCmd implements Command {
 		return true;
 	}
 
-	@SuppressWarnings("unused")
-	private void init() {
-		if (!sntService.isActive()) {
-			error("SNT is not running.");
-			return;
-		}
-		snt = sntService.getPlugin();
+	protected void init() {
+		super.init(true);
 		final MutableModuleItem<String> mItem = getInfo().getMutableInput("choice",
 			String.class);
 		final Collection<ImagePlus> impCollection = getImpInstances();

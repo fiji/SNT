@@ -106,8 +106,7 @@ public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void init() {
+	protected void init() {
 		// see net.imagej.lut.LUTSelector
 		luts = lutService.findLUTs();
 		final ArrayList<String> luTChoices = new ArrayList<>();
@@ -215,7 +214,6 @@ public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 		catch (final UnsupportedOperationException | NullPointerException exc) {
 			error("SNT's Reconstruction Viewer is not available");
 		}
-
 	}
 
 	/* IDE debug method **/

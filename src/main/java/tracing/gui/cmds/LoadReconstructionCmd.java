@@ -79,8 +79,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
 	private boolean importDir = false;
 
-	@SuppressWarnings("unused")
-	private void init() {
+	protected void init() {
 		if (importDir) {
 			final MutableModuleItem<File> fileMitem = getInfo().getMutableInput(
 				"file", File.class);

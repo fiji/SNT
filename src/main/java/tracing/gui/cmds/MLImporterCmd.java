@@ -134,16 +134,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			return;
 		}
 
-		if (sntService.isActive()) {
-			snt = sntService.getPlugin();
-			ui = sntService.getUI();
-			pafm = sntService.getPathAndFillManager();
-		}
-		else {
-			pafm = new PathAndFillManager();
-			pafm.setHeadless(true);
-		}
-
+		if (ui != null) ui.changeState(SNTUI.LOADING);
 		status("Retrieving ids... Please wait...", false);
 		final int lastExistingPathIdx = pafm.size() - 1;
 		final Map<String, TreeSet<SWCPoint>> inMap = new HashMap<>();
@@ -172,12 +163,10 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			}
 		}
 
-		if (snt != null) {
-			if (ui != null) snt.getUI().changeState(SNTUI.TRACING_PAUSED);
-			if (rebuildCanvas) {
-				SNT.log("Rebuilding canvases...");
-				snt.rebuildDisplayCanvases();
-			}
+		rebuildCanvas = false;
+		if (rebuildCanvas && snt != null) {
+			SNT.log("Rebuilding canvases...");
+			snt.rebuildDisplayCanvases();
 		}
 
 		if (recViewer != null) {
@@ -213,6 +202,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			status("Successful imported " + result.size() + " reconstruction(s)...",
 				true);
 		}
+		resetUI();
 	}
 
 	/**
@@ -251,8 +241,17 @@ public class MLImporterCmd extends CommonDynamicCmd {
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void init() {
+	protected void init() {
+		if (sntService.isActive()) {
+			snt = sntService.getPlugin();
+			ui = sntService.getUI();
+			pafm = sntService.getPathAndFillManager();
+			if (ui != null) ui.changeState(SNTUI.RUNNING_CMD);
+		}
+		else {
+			pafm = new PathAndFillManager();
+			pafm.setHeadless(true);
+		}
 		if (query == null || query.isEmpty()) query = "AA0001";
 		pingMsg =
 			"Internet connection required. Retrieval of long lists may be rather slow...           ";

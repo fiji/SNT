@@ -217,14 +217,15 @@ public class SNTUI extends JDialog {
 	 * Flag specifying that image data is available and the UI is not waiting on any
 	 * pending operations, thus 'ready to trace'
 	 */
-	public static final int WAITING_TO_START_PATH = 0;
+	public static final int READY = 0;
+	static final int WAITING_TO_START_PATH = 0;
 	static final int PARTIAL_PATH = 1;
 	static final int SEARCHING = 2;
 	static final int QUERY_KEEP = 3;
 	// static final int LOGGING_POINTS = 4;
 	// static final int DISPLAY_EVS = 5;
 	public static final int RUNNING_CMD = 4;
-	static final int CACHING_DATA = 5;
+	static final int CRUNCHING_DATA = 5;
 	static final int FILLING_PATHS = 6;
 	static final int CALCULATING_GAUSSIAN = 7;
 	static final int WAITING_FOR_SIGMA_POINT = 8;
@@ -823,7 +824,7 @@ public class SNTUI extends JDialog {
 				disableEverything();
 				break;
 
-			case CACHING_DATA:
+			case CRUNCHING_DATA:
 				updateStatusText("Crunching data. This could take a while...");
 				disableEverything();
 				break;
@@ -2894,8 +2895,11 @@ public class SNTUI extends JDialog {
 			updateStatusText("Cancelling path search...", true);
 			plugin.cancelSearch(false);
 			break;
-		case (CACHING_DATA):
-			updateStatusText("Flushing cached data", true);
+		case (CRUNCHING_DATA):
+		case (RUNNING_CMD):
+			updateStatusText((currentState==CRUNCHING_DATA)?"Unloading cached data":"Requesting command cancellation", true);
+			if (activeWorker != null)
+				activeWorker.kill();
 			break;
 		case (RUNNING_CMD):
 			updateStatusText("Requesting command cancellation", true);

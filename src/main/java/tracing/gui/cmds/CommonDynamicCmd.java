@@ -53,6 +53,16 @@ public class CommonDynamicCmd extends DynamicCommand {
 	protected SimpleNeuriteTracer snt;
 	protected SNTUI ui;
 
+	protected void init(final boolean abortIfInactive) {
+		if (abortIfInactive && !sntService.isActive()) {
+			error("SNT is not running.");
+			return;
+		}
+		snt = sntService.getPlugin();
+		ui = sntService.getUI();
+		if (ui != null) ui.changeState(SNTUI.RUNNING_CMD);
+	}
+
 	protected void status(final String statusMsg, final boolean temporaryMsg) {
 		if (ui == null) {
 			statusService.showStatus(statusMsg);
@@ -62,9 +72,21 @@ public class CommonDynamicCmd extends DynamicCommand {
 		}
 	}
 
+	@Override
+	public void cancel() {
+		resetUI();
+		super.cancel();
+	}
+
+	@Override
+	public void cancel(final String reason) {
+		resetUI();
+		super.cancel(reason);
+	}
+
 	protected void error(final String msg) {
-		if (snt != null) {
-			snt.error(msg);
+		if (ui != null) {
+			ui.error(msg);
 			cancel();
 		}
 		else {
@@ -73,12 +95,17 @@ public class CommonDynamicCmd extends DynamicCommand {
 	}
 
 	protected void msg(final String msg, final String title) {
-		if (snt != null) {
-			snt.showMsg(msg, title);
+		if (ui != null) {
+			ui.showMessage(msg, title);
 		}
 		else {
 			uiService.showDialog(msg, title);
 		}
+	}
+
+	protected void resetUI() {
+		if (ui != null) ui.changeState(SNTUI.READY);
+		statusService.clearStatus();
 	}
 
 	@Override

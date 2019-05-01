@@ -78,8 +78,7 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 	private double prevY;
 	private double prevZ;
 
-	@SuppressWarnings("unused")
-	private void init() {
+	protected void init() {
 		if (recViewer == null) {
 			error("No Reconstruction Viewer specified.");
 			return;

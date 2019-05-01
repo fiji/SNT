@@ -77,8 +77,7 @@ public class JSONImporterCmd extends CommonDynamicCmd {
 	@Override
 	public void run() {
 
-		snt = sntService.getPlugin();
-		ui = sntService.getUI();
+		super.init(true);
 		final PathAndFillManager pafm = sntService.getPathAndFillManager();
 
 		status("Importing file. Please wait...", false);
@@ -109,6 +108,8 @@ public class JSONImporterCmd extends CommonDynamicCmd {
 	
 		} catch (final FileNotFoundException | IllegalArgumentException | JSONException e) {
 			error(e.getMessage());
+		} finally {
+			resetUI();
 		}
 
 	}

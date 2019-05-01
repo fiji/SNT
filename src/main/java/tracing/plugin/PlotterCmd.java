@@ -117,8 +117,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	private int previousYangle = 0;
 	private int previousZangle = 0;
 
-	@SuppressWarnings("unused")
-	private void init() {
+	protected void init() {
 		if (tree == null) {
 			resolveInput("tree");
 			statusService.showStatus(

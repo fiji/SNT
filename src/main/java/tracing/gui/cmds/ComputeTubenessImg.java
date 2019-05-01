@@ -37,7 +37,6 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import tracing.SNT;
-import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 
 /**
@@ -56,14 +55,9 @@ public class ComputeTubenessImg extends CommonDynamicCmd {
 	@Parameter(type = ItemIO.OUTPUT)
 	private ImagePlus tubenessImp;
 
-	@SuppressWarnings("unused")
-	private void init() {
-		if (!sntService.isActive()) {
-			error("SNT is not running.");
-			return;
-		}
-		final SimpleNeuriteTracer plugin = sntService.getPlugin();
-		if (!plugin.accessToValidImageData()) {
+	protected void init() {
+		super.init(true);
+		if (!snt.accessToValidImageData()) {
 			error("Valid image data is required for computation.");
 			return;
 		}
@@ -76,12 +70,14 @@ public class ComputeTubenessImg extends CommonDynamicCmd {
 	 */
 	@Override
 	public void run() {
-		statusService.showStatus("Computing whole-image Hessian data...");
-		sigma = sntService.getPlugin().getHessianSigma();
+		status("Computing whole-image Hessian data...", false);
+		sigma = snt.getHessianSigma(true);
 		SNT.log("Generating Tubeness image: sigma=" + sigma);
 		final ImagePlus inputImp = sntService.getPlugin().getLoadedDataAsImp();
-		processUsingIJ1(inputImp);
-		statusService.clearStatus();
+		processUsingIJ1(inputImp); //processUsingOps(inputImp);
+		snt.loadTubenessImage(tubenessImp);
+		resetUI();
+		status("Computation completed.", true);
 	}
 
 	private void processUsingIJ1(final ImagePlus inputImp) {

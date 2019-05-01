@@ -67,8 +67,8 @@ public class DistributionCmd extends CommonDynamicCmd {
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
 	private boolean setValuesFromSNTService;
 
-	@SuppressWarnings("unused")
-	private void init() {
+	protected void init() {
+		super.init(false);
 		final MutableModuleItem<String> measurementChoiceInput = getInfo()
 			.getMutableInput("measurementChoice", String.class);
 		final List<String> choices = new ArrayList<>();

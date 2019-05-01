@@ -76,15 +76,6 @@ public class OpenDatasetCmd extends CommonDynamicCmd implements Command {
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void init() {
-		if (!sntService.isActive()) {
-			error("SNT is not running.");
-			return;
-		}
-		snt = sntService.getPlugin();
-	}
-
 	public static void main(final String... args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();

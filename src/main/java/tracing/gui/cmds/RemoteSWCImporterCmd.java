@@ -192,6 +192,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			status("Successful imported " + result.size() + " reconstruction(s)...",
 				true);
 		}
+		resetUI();
 	}
 
 	private ColorRGB getColor() {
@@ -211,6 +212,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 	}
 
 	protected void init() {
+		super.init(false);
 		makeMeDatabaseFriendly();
 		if (query == null || query.isEmpty()) query = placeholderQuery;
 		pingMsg =

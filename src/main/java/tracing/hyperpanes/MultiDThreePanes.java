@@ -36,7 +36,6 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
-import tracing.gui.GuiUtils;
 
 /** Convenience class defining methods common to SNT's XY, XZ, and ZY panes */
 public class MultiDThreePanes implements PaneOwner {
@@ -741,11 +740,6 @@ public class MultiDThreePanes implements PaneOwner {
 		final String message)
 	{
 		// Do nothing by default
-	}
-
-	@Override
-	public void error(final String error) {
-		GuiUtils.errorPrompt(error);
 	}
 
 	public static ImagePlus[] getZYXZ(final ImagePlus xy, final int frame) {

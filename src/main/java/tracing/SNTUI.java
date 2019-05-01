@@ -904,6 +904,14 @@ public class SNTUI extends JDialog {
 		return currentState;
 	}
 
+	public void error(final String msg) {
+		plugin.error(msg);
+	}
+
+	public void showMessage(final String msg, final String title) {
+		plugin.showMessage(msg, title);
+	}
+
 	private boolean isStackAvailable() {
 		return plugin != null && !plugin.is2D();
 	}

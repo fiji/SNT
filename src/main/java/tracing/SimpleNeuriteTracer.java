@@ -2018,6 +2018,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		updateLut(); // If the LUT meanwhile changed, update it
 		imp.setLut(lut); // ignored if null
 		imp.copyScale(xy);
+		imp.setFileInfo(xy.getOriginalFileInfo());
 		return imp;
 	}
 
@@ -2045,16 +2046,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			}
 		}
 		if (ui != null) ui.updateHessianPanel();
-	}
-
-	/**
-	 * Specifies the 'filtered image' to be used during a tracing session.
-	 *
-	 * @param file The file containing the filtered image
-	 * @see #loadFilteredImage()
-	 */
-	protected void setFilteredImage(final File file) {
-		filteredFileImage = file;
 	}
 
 	/**
@@ -2086,6 +2077,16 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
+	 * Specifies the 'filtered image' to be used during a tracing session.
+	 *
+	 * @param file The file containing the filtered image
+	 */
+	public void setFilteredImage(final File file) {
+		this.filteredFileImage = file;
+		if (ui != null) ui.updateFilteredImageFileWidget();
+	}
+
+	/**
 	 * Loads the 'filtered image' specified by {@link #setFilteredImage(File)} into
 	 * memory as 32-bit data.
 	 * 
@@ -2103,6 +2104,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setFilteredImage(filteredImageLoaded() ? file : null);
 	}
 
+	public void loadFilteredImage(final ImagePlus imp) throws IllegalArgumentException {
+		loadFilteredImage(imp, true);
+	}
+
 	protected void loadFilteredImage(final ImagePlus imp, final boolean changeUIState) throws IllegalArgumentException {
 		if (imp != null && filteredFileImage != null && filteredFileImage.getName().toLowerCase().contains(".oof")) {
 			showStatus(0, 0, "Optimally Oriented Flux image detected");
@@ -2112,9 +2117,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 		if (changeUIState) changeUIState(SNTUI.CRUNCHING_DATA);
 		loadCachedData(imp, filteredData = new float[depth][]);
-		if (filteredImageLoaded() && imp.getFileInfo() != null) {
-			setFilteredImage(new File(imp.getFileInfo().directory, imp.getFileInfo().fileName));
+		File file = null;
+		if (filteredImageLoaded() && (imp.getFileInfo() != null)) {
+			file = new File(imp.getFileInfo().directory, imp.getFileInfo().fileName);
 		}
+		setFilteredImage(file);
 		if (changeUIState) changeUIState(SNTUI.WAITING_TO_START_PATH);
 	}
 
@@ -2364,13 +2371,12 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return (imp == null || imp.getProcessor() == null) ? null : imp;
 	}
 
-	@Override
-	public void error(final String msg) {
+	protected void error(final String msg) {
 		new GuiUtils(getActiveWindow()).error(msg);
 	}
 
-	public void showMsg(final String msg, final String title) {
-		new GuiUtils(getActiveWindow()).error(msg, title);
+	protected void showMessage(final String msg, final String title) {
+		new GuiUtils(getActiveWindow()).centeredMsg(msg, title);
 	}
 
 	private Component getActiveCanvas() {
@@ -2855,8 +2861,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return hessianEnabled && hessian != null && hessianSigma > -1;
 	}
 
-	public double getHessianSigma() {
-		return hessianSigma;
+	public double getHessianSigma(final boolean physicalUnits) {
+		return (physicalUnits) ? hessianSigma : Math.round(hessianSigma / getAverageSeparation());
 	}
 
 	protected double getDefaultHessianSigma() {

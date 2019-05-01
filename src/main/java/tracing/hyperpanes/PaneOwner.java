@@ -31,6 +31,4 @@ public interface PaneOwner {
 
 	public void showStatus(int progress, int maximum, String message);
 
-	public void error(String error);
-
 }

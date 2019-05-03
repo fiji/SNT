@@ -223,7 +223,8 @@ public class SNTUI extends JDialog {
 	static final int QUERY_KEEP = 3;
 	// static final int LOGGING_POINTS = 4;
 	// static final int DISPLAY_EVS = 5;
-	static final int CRUNCHING_DATA = 5;
+	public static final int RUNNING_CMD = 4;
+	static final int CACHING_DATA = 5;
 	static final int FILLING_PATHS = 6;
 	static final int CALCULATING_GAUSSIAN = 7;
 	static final int WAITING_FOR_SIGMA_POINT = 8;
@@ -817,7 +818,12 @@ public class SNTUI extends JDialog {
 				updateStatusText("Fitting volumes around selected paths...");
 				break;
 
-			case CRUNCHING_DATA:
+			case RUNNING_CMD:
+				updateStatusText("Running Command...");
+				disableEverything();
+				break;
+
+			case CACHING_DATA:
 				updateStatusText("Crunching data. This could take a while...");
 				disableEverything();
 				break;
@@ -1901,7 +1907,7 @@ public class SNTUI extends JDialog {
 	private void loadImageData(final boolean isTubeness, final File file) {
 
 		showStatus("Loading image. Please wait...", false);
-		changeState(CRUNCHING_DATA);
+		changeState(CACHING_DATA);
 		activeWorker = new ActiveWorker() {
 
 			@Override
@@ -2888,10 +2894,11 @@ public class SNTUI extends JDialog {
 			updateStatusText("Cancelling path search...", true);
 			plugin.cancelSearch(false);
 			break;
-		case (CRUNCHING_DATA):
-			updateStatusText("Unloading cached data", true);
-			if (activeWorker != null)
-				activeWorker.kill();
+		case (CACHING_DATA):
+			updateStatusText("Flushing cached data", true);
+			break;
+		case (RUNNING_CMD):
+			updateStatusText("Requesting command cancellation", true);
 			break;
 		case (CALCULATING_GAUSSIAN):
 			updateStatusText("Cancelling Gaussian generation...", true);
@@ -2954,27 +2961,26 @@ public class SNTUI extends JDialog {
 				plugin.cancelPath();
 			if (plugin.temporaryPath != null)
 				plugin.cancelTemporary();
-			if (activeWorker != null)
-				activeWorker.kill();
 			showStatus("All tasks terminated", true);
 			return;
 		default:
 			break;
 		}
+		if (activeWorker != null) activeWorker.kill();
 		changeState(WAITING_TO_START_PATH);
 	}
 
 	private String getState(final int state) {
 		switch (state) {
-		case WAITING_TO_START_PATH:
-			return "WAITING_TO_START_PATH";
+		case READY:
+			return "READY";
 		case PARTIAL_PATH:
 			return "PARTIAL_PATH";
 		case SEARCHING:
 			return "SEARCHING";
 		case QUERY_KEEP:
 			return "QUERY_KEEP";
-		case CRUNCHING_DATA:
+		case CACHING_DATA:
 			return "CACHING_DATA";
 		// case LOGGING_POINTS:
 		// return "LOGGING_POINTS";

@@ -2115,7 +2115,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			tubularGeodesicsTracingEnabled = true;
 			return;
 		}
-		if (changeUIState) changeUIState(SNTUI.CRUNCHING_DATA);
+		if (changeUIState) changeUIState(SNTUI.CACHING_DATA);
 		loadCachedData(imp, filteredData = new float[depth][]);
 		File file = null;
 		if (filteredImageLoaded() && (imp.getFileInfo() != null)) {
@@ -2142,7 +2142,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				throw new IllegalArgumentException("Dimensions do not match those of  " + xy.getTitle()
 				+ ". If this unexpected, check under 'Image>Properties...' that CZT axes are not swapped.");
 		}
-		if (changeUIState) changeUIState(SNTUI.CRUNCHING_DATA);
+		if (changeUIState) changeUIState(SNTUI.CACHING_DATA);
 		loadCachedData(imp, cachedTubeness = new float[depth][]);
 		hessianMultiplier = 256 / stackMaxFiltered;
 		SNT.log("Multiplier m="+ hessianMultiplier + " max="+ stackMaxFiltered);

@@ -563,7 +563,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		this.channel = channel;
 		this.frame = frame;
 		loadData(); // will call nullifyHessian();
-		if (!single_pane) reloadZYXZpanes(frame);
 		if (use3DViewer && imageContent != null) {
 			updateImageContent(prefs.get3DViewerResamplingFactor());
 		}

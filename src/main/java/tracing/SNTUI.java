@@ -226,17 +226,17 @@ public class SNTUI extends JDialog {
 	// static final int LOGGING_POINTS = 4;
 	// static final int DISPLAY_EVS = 5;
 	public static final int RUNNING_CMD = 4;
-	static final int CRUNCHING_DATA = 5;
+	static final int CACHING_DATA = 5;
 	static final int FILLING_PATHS = 6;
 	static final int CALCULATING_GAUSSIAN = 7;
 	static final int WAITING_FOR_SIGMA_POINT = 8;
 	static final int WAITING_FOR_SIGMA_CHOICE = 9;
 	static final int SAVING = 10;
-	static final int LOADING = 11;
-	/** Flag specifying UI is currently waiting for fitting operations to conclued */
+	/** Flag specifying UI is currently waiting for I/0 operations to conclude */
+	public static final int LOADING = 11;
+	/** Flag specifying UI is currently waiting for fitting operations to conclude */
 	public static final int FITTING_PATHS = 12;
-	static final int LOADING_FILTERED_IMAGE = 13;
-	/** Flag specifying UI is currently waiting for user to edit a selected Path */
+	/**Flag specifying UI is currently waiting for user to edit a selected Path */
 	public static final int EDITING = 14;
 	/**
 	 * Flag specifying all SNT are temporarily disabled (all user interactions are
@@ -825,18 +825,13 @@ public class SNTUI extends JDialog {
 				disableEverything();
 				break;
 
-			case CRUNCHING_DATA:
-				updateStatusText("Crunching data. This could take a while...");
+			case CACHING_DATA:
+				updateStatusText("Caching data. This could take a while...");
 				disableEverything();
 				break;
 
 			case CALCULATING_GAUSSIAN:
 				updateStatusText("Calculating Gaussian...");
-				disableEverything();
-				break;
-
-			case LOADING_FILTERED_IMAGE:
-				updateStatusText("Loading Filtered Image...");
 				disableEverything();
 				break;
 
@@ -1631,51 +1626,31 @@ public class SNTUI extends JDialog {
 	}
 
 	private JPanel statusButtonPanel() {
-		final JPanel statusChoicesPanel = new JPanel();
-		statusChoicesPanel.setLayout(new GridBagLayout());
-		statusChoicesPanel.setBorder(new EmptyBorder(0, 0, MARGIN * 2, 0));
-		final GridBagConstraints gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.CENTER;
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.ipadx = 0;
-		gbc.ipady = 0;
-
-		gbc.insets = new Insets(0, 0, 0, 0);
+		final JPanel buttonsPanel = new JPanel(new GridLayout(1, 4, 0, 0));
 		keepSegment = GuiUtils.smallButton(hotKeyLabel("Yes", "Y"));
-		junkSegment = GuiUtils.smallButton(hotKeyLabel("No", "N"));
-		equalizeButtons(keepSegment, junkSegment);
 		keepSegment.addActionListener(listener);
-		gbc.weightx = 0.25;
-		statusChoicesPanel.add(keepSegment, gbc);
-		gbc.ipadx = 2;
+		junkSegment = GuiUtils.smallButton(hotKeyLabel("No", "N"));
 		junkSegment.addActionListener(listener);
-		gbc.gridx = 1;
-		statusChoicesPanel.add(junkSegment, gbc);
 		completePath = GuiUtils.smallButton(hotKeyLabel("Finish", "F"));
 		completePath.addActionListener(listener);
-		gbc.gridx = 2;
-		statusChoicesPanel.add(completePath, gbc);
-		gbc.gridx = 3;
 		final JButton abortButton = GuiUtils.smallButton(hotKeyLabel(hotKeyLabel("Cancel/Esc", "C"), "Esc"));
 		abortButton.addActionListener(e -> abortCurrentOperation());
-		gbc.gridx = 4;
-		gbc.ipadx = 0;
-		statusChoicesPanel.add(abortButton, gbc);
-		return statusChoicesPanel;
+		buttonsPanel.add(keepSegment);
+		buttonsPanel.add(junkSegment);
+		buttonsPanel.add(completePath);
+		buttonsPanel.add(abortButton);
+		return buttonsPanel;
 	}
 
 	private JPanel statusPanel() {
 		final JPanel statusPanel = new JPanel();
 		statusPanel.setLayout(new BorderLayout());
 		statusText = new JLabel("Loading SNT...");
-		statusText.setOpaque(true);
-		//statusText.setBackground(Color.WHITE);
 		statusText.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED),
 				BorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, MARGIN)));
 		statusPanel.add(statusText, BorderLayout.CENTER);
-		final JPanel buttonPanel = statusButtonPanel();
-		statusPanel.add(buttonPanel, BorderLayout.SOUTH);
-		statusPanel.setBorder(BorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN * 2, MARGIN));
+		statusPanel.add(statusButtonPanel(), BorderLayout.SOUTH);
+		statusPanel.setBorder(BorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN * MARGIN, MARGIN));
 		return statusPanel;
 	}
 
@@ -2896,11 +2871,8 @@ public class SNTUI extends JDialog {
 			updateStatusText("Cancelling path search...", true);
 			plugin.cancelSearch(false);
 			break;
-		case (CRUNCHING_DATA):
-		case (RUNNING_CMD):
-			updateStatusText((currentState==CRUNCHING_DATA)?"Unloading cached data":"Requesting command cancellation", true);
-			if (activeWorker != null)
-				activeWorker.kill();
+		case (CACHING_DATA):
+			updateStatusText("Unloading cached data", true);
 			break;
 		case (RUNNING_CMD):
 			updateStatusText("Requesting command cancellation", true);
@@ -2987,6 +2959,8 @@ public class SNTUI extends JDialog {
 			return "QUERY_KEEP";
 		case CACHING_DATA:
 			return "CACHING_DATA";
+		case RUNNING_CMD:
+			return "RUNNING_CMD";
 		// case LOGGING_POINTS:
 		// return "LOGGING_POINTS";
 		// case DISPLAY_EVS:

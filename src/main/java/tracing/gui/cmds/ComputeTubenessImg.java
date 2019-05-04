@@ -22,7 +22,6 @@
 
 package tracing.gui.cmds;
 
-import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -52,7 +51,7 @@ public class ComputeTubenessImg extends CommonDynamicCmd {
 
 	private double sigma;
 
-	@Parameter(type = ItemIO.OUTPUT)
+	//@Parameter(type = ItemIO.OUTPUT) // uncomment to have image displayed
 	private ImagePlus tubenessImp;
 
 	protected void init() {

@@ -116,6 +116,7 @@ import tracing.gui.IconFactory;
 import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.SigmaPalette;
 import tracing.gui.cmds.ChooseDatasetCmd;
+import tracing.gui.cmds.CommonDynamicCmd;
 import tracing.gui.cmds.CompareFilesCmd;
 import tracing.gui.cmds.ComputeTubenessImg;
 import tracing.gui.cmds.JSONImporterCmd;
@@ -2071,12 +2072,12 @@ public class SNTUI extends JDialog {
 		changeImpMenu.setIcon(IconFactory.getMenuIcon(GLYPH.FILE_IMAGE));
 		final JMenuItem fromList = new JMenuItem("From Open Image...");
 		fromList.addActionListener(e -> {
-			(new CmdRunner(ChooseDatasetCmd.class, null, LOADING)).execute();
+			(new DynamicCmdRunner(ChooseDatasetCmd.class, null, LOADING)).run();
 		});
 		changeImpMenu.add(fromList);
 		final JMenuItem fromFile = new JMenuItem("From File...");
 		fromFile.addActionListener(e -> {
-			(new CmdRunner(OpenDatasetCmd.class, null, LOADING)).execute();
+			(new DynamicCmdRunner(OpenDatasetCmd.class, null, LOADING)).run();
 		});
 		changeImpMenu.add(fromFile);
 		fileMenu.addSeparator();
@@ -2097,7 +2098,7 @@ public class SNTUI extends JDialog {
 		importJSON.addActionListener(e -> {
 			final HashMap<String, Object> inputs = new HashMap<>();
 			inputs.put("rebuildCanvas", true);
-			(new CmdRunner(JSONImporterCmd.class, inputs, LOADING)).execute();
+			(new DynamicCmdRunner(JSONImporterCmd.class, inputs, LOADING)).run();
 		});
 		final JMenuItem importDirectory = new JMenuItem("Directory of SWCs...");
 		importDirectory.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.FOLDER));
@@ -2121,14 +2122,14 @@ public class SNTUI extends JDialog {
 			final HashMap<String, Object> inputs = new HashMap<>();
 			inputs.put("loader", new FlyCircuitLoader());
 			inputs.put("rebuildCanvas", true);
-			(new CmdRunner(RemoteSWCImporterCmd.class, inputs, LOADING)).execute();
+			(new DynamicCmdRunner(RemoteSWCImporterCmd.class, inputs, LOADING)).run();
 		});
 		final JMenuItem importMouselight = new JMenuItem("MouseLight...");
 		remoteSubmenu.add(importMouselight);
 		importMouselight.addActionListener(e -> {
 			final HashMap<String, Object> inputs = new HashMap<>();
 			inputs.put("rebuildCanvas", true);
-			(new CmdRunner(MLImporterCmd.class, inputs, LOADING)).execute();
+			(new CmdRunner(MLImporterCmd.class, inputs, LOADING)).run();
 		});
 		final JMenuItem importNeuroMorpho = new JMenuItem("NeuroMorpho...");
 		remoteSubmenu.add(importNeuroMorpho);
@@ -2136,7 +2137,7 @@ public class SNTUI extends JDialog {
 			final HashMap<String, Object> inputs = new HashMap<>();
 			inputs.put("loader", new NeuroMorphoLoader());
 			inputs.put("rebuildCanvas", true);
-			(new CmdRunner(RemoteSWCImporterCmd.class, inputs, LOADING)).execute();
+			(new DynamicCmdRunner(RemoteSWCImporterCmd.class, inputs, LOADING)).run();
 		});
 		importSubmenu.add(remoteSubmenu);
 
@@ -3395,6 +3396,61 @@ public class SNTUI extends JDialog {
 				return guiUtils.getConfirmation(errorMessage.toString(), "Confirm overwriting SWC files?");
 			}
 		}
+	}
+
+	/** Dynamic commands don't work well with CmdRunner. Use this class instead to run them */
+	private class DynamicCmdRunner {
+
+		private final Class<? extends CommonDynamicCmd> cmd;
+		private final int preRunState;
+		private final boolean run;
+		private HashMap<String, Object> inputs;
+
+		public DynamicCmdRunner(final Class<? extends CommonDynamicCmd> cmd, final HashMap<String, Object> inputs,
+				final int uiStateduringRun) {
+			assert SwingUtilities.isEventDispatchThread();
+			this.cmd = cmd;
+			this.preRunState = getCurrentState();
+			this.inputs = inputs;
+			run = initialize();
+			if (run && preRunState != uiStateduringRun)
+				changeState(uiStateduringRun);
+		}
+
+		private boolean initialize() {
+			if (preRunState == SNTUI.EDITING) {
+				guiUtils.error(
+						"Please finish editing " + plugin.getEditingPath().getName() + " before running this command.");
+				return false;
+			}
+			final boolean rebuildCanvas = inputs != null && inputs.get("rebuildCanvas") == (Boolean) true;
+			final boolean dataCouldBeLost = plugin.accessToValidImageData()
+					|| (plugin.getImagePlus() != null && plugin.getImagePlus().changes);
+			final boolean rebuild = rebuildCanvas && dataCouldBeLost && guiUtils.getConfirmation("<HTML><div WIDTH=500>" //
+					+ "Coordinates of external reconstructions <i>may</i> fall outside the boundaries " //
+					+ "of current image. Would you like to close active image and use a display canvas " //
+					+ "with computed dimensions containing all the nodes of the imported file?", //
+					"Change to Display Canvas?", "Yes. Use Display Canvas", "No. Use Current Image");
+			if (inputs != null)
+				inputs.put("rebuildCanvas", rebuild);
+			if (rebuild)
+				plugin.tracingHalted = true;
+			return true;
+		}
+
+		public void run() {
+			try {
+				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				cmdService.run(cmd, true, inputs);
+			} catch (final OutOfMemoryError e) {
+				e.printStackTrace();
+				guiUtils.error("It seems there is not enough memory comple command. See Console for details.");
+			} finally {
+				if (run && preRunState != getCurrentState())
+					changeState(preRunState);
+			}
+		}
+
 	}
 
 	private class CmdRunner extends ActiveWorker {

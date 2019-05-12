@@ -143,7 +143,7 @@ public class ColorMenu extends JMenu {
 			customPanel.add(customColorPane);
 			_colorPanes.put(new SNTColor(uniquePlaceHolderColor), customColorPane);
 		}
-		addSeparator("Custom... (Righ-click to change):");
+		addSeparator("Custom... (Right-click to change):");
 		add(customPanel);
 
 	}

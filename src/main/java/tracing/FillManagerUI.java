@@ -146,9 +146,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 			++c.gridy;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(),
-			" Distance Threshold for Fill Search:", true, c);
-		++c.gridy;
+		addSeparator(" Distance Threshold for Fill Search:", c);
 
 		{
 			final JPanel distancePanel = new JPanel(new GridBagLayout());
@@ -197,9 +195,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 			setMaxThreshold.setEnabled(false);
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), " Search Status:",
-			true, c);
-		++c.gridy;
+		addSeparator(" Search Status:", c);
 
 		{
 			currentThreshold = GuiUtils.leftAlignedLabel(
@@ -222,9 +218,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 			c.insets = storedInsets;
 		}
 
-		GuiUtils.addSeparator((JComponent) getContentPane(), " Rendering Options:",
-			true, c);
-		++c.gridy;
+		addSeparator(" Rendering Options:", c);
 
 		{
 			transparent = new JCheckBox(
@@ -282,6 +276,13 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE); // prevent
 																																		// closing
 
+	}
+
+	private void addSeparator(final String label, final GridBagConstraints c) {
+		final String URI = "https://imagej.net/SNT:_Step-By-Step_Instructions#Filling";
+		final JLabel jLabel = GuiUtils.leftAlignedLabel(label, URI, true);
+		GuiUtils.addSeparator((JComponent) getContentPane(), jLabel, true, c);
+		++c.gridy;
 	}
 
 	private JPanel leftAlignedPanel() {

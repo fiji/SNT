@@ -2141,9 +2141,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				+ ". If this unexpected, check under 'Image>Properties...' that CZT axes are not swapped.");
 		}
 		if (changeUIState) changeUIState(SNTUI.CACHING_DATA);
+		SNT.log("Loading tubeness image multiplier=" + hessianMultiplier + " max=" + stackMaxFiltered);
 		loadCachedData(imp, cachedTubeness = new float[depth][]);
 		hessianMultiplier = 256 / stackMaxFiltered;
-		SNT.log("Multiplier m="+ hessianMultiplier + " max="+ stackMaxFiltered);
 		if (changeUIState) {
 			getUI().updateHessianPanel();
 			changeUIState(SNTUI.WAITING_TO_START_PATH);

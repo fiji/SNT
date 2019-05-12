@@ -417,6 +417,10 @@ public class SNTUI extends JDialog {
 		final GridBagConstraints dialogGbc = GuiUtils.defaultGbc();
 		add(statusPanel(), dialogGbc);
 		dialogGbc.gridy++;
+		add(new JLabel(" "), dialogGbc);
+		dialogGbc.gridy++;
+
+		dialogGbc.gridy++;
 		add(tabbedPane, dialogGbc);
 		dialogGbc.gridy++;
 		add(statusBar(), dialogGbc);
@@ -965,6 +969,11 @@ public class SNTUI extends JDialog {
 								"Change Hyperstack Position?")) {
 			return;
 		}
+		// take this opportunity to update 3-pane status
+		if (plugin.getImagePlus(MultiDThreePanes.XZ_PLANE) == null
+				&& plugin.getImagePlus(MultiDThreePanes.XZ_PLANE) == null)
+			plugin.setSinglePane(false);
+
 		abortCurrentOperation();
 		changeState(LOADING);
 		final boolean hessianDataExists = plugin.isHessianEnabled();
@@ -1711,6 +1720,7 @@ public class SNTUI extends JDialog {
 				guiUtils.error("An error occured: image directory not available?");
 			}
 		});
+		optionsMenu.add(revealMenuItem);
 		optionsMenu.addSeparator();
 		final JMenuItem makeImgMenuItem = new JMenuItem("Generate Filtered Image...");
 		optionsMenu.add(makeImgMenuItem);
@@ -1723,7 +1733,6 @@ public class SNTUI extends JDialog {
 		});
 		optionsMenu.addSeparator();
 		optionsMenu.add(showFilteredImpMenuItem());
-		optionsMenu.add(revealMenuItem);
 
 		filteredImgPanel = new JPanel();
 		filteredImgPanel.setLayout(new GridBagLayout());
@@ -2165,7 +2174,10 @@ public class SNTUI extends JDialog {
 		menuItem.addActionListener(e -> {
 			final ImagePlus imp = plugin.getCachedTubenessDataAsImp();
 			if (imp == null) {
-				guiUtils.error("No \"Tubeness\" image has been loaded/computed.");
+				guiUtils.error("No \"Tubeness\" image has been loaded/computed.<br>"
+						+ "Image can only be displayed after running <i>Cache All "
+						+ "Hessian Computations</i> or <i>Load Precomputed \"Tubeness\" "
+						+ "Image...</i>");
 			} else {
 				final double max = 256 / plugin.hessianMultiplier;
 				imp.setDisplayRange(0, max);
@@ -2363,7 +2375,8 @@ public class SNTUI extends JDialog {
 		optionsMenu.addSeparator();
 
 		loadTubenessJMI.addActionListener(e -> {
-			loadCachedDataImage(true, true, openFile("Choose \"Tubeness\" Image...", ".tubes.tif"));
+			final File file = openFile("Choose \"Tubeness\" Image...", ".tubes.tif");
+			if (file != null) loadCachedDataImage(true, true, file);
 		});
 		optionsMenu.add(loadTubenessJMI);
 		optionsMenu.add(showTubenessImpMenuItem());
@@ -2773,7 +2786,7 @@ public class SNTUI extends JDialog {
 				sb.append("<div WIDTH=500>");
 				sb.append("To initiate <a href='").append(ShollUtils.URL).append("'>Sholl Analysis</a>, ");
 				sb.append("you must select a focal point. You can do it coarsely by ");
-				sb.append("righ-clicking near a node and choosing <i>Sholl Analysis at Nearest ");
+				sb.append("right-clicking near a node and choosing <i>Sholl Analysis at Nearest ");
 				sb.append("Node</i> from the contextual menu (Shortcut: \"").append(modKey).append("+A\").");
 				sb.append("<p>Alternatively, for precise positioning of the center of analysis:</p>");
 				sb.append("<ol>");
@@ -3427,6 +3440,7 @@ public class SNTUI extends JDialog {
 
 		public void run() {
 			try {
+				SNT.log("Running "+ cmd.getName());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(cmd, true, inputs);
 			} catch (final OutOfMemoryError e) {
@@ -3487,30 +3501,31 @@ public class SNTUI extends JDialog {
 
 		@Override
 		public String doInBackground() {
-			if (!run)
-				return "Ongoing task";
+			if (!run) {
+				publish("Please finish ongoing task...");
+				return "";
+			}
 			try {
+				SNT.log("Running "+ cmd.getName());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				final CommandModule cmdModule = cmdService.run(cmd, true, inputs).get();
 				return (cmdModule.isCanceled()) ? cmdModule.getCancelReason() : "Command completed";
-			} catch (final NullPointerException e1) {
-				// This seems to happen if command is DynamicCommand
-				return "Scijava Command...";
-			} catch (final CancellationException | InterruptedException | ExecutionException e2) {
-				return e2.getMessage();
-			} catch (final IllegalArgumentException e3) {
-				e3.printStackTrace();
+			} catch (final NullPointerException | IllegalArgumentException | CancellationException | InterruptedException | ExecutionException e2) {
+				// NB: A NPE seems to happen if command is DynamicCommand
+				e2.printStackTrace();
 				return "Unfortunately an error occured. See console for details.";
 			}
 		}
 
 		@Override
+		protected void process(final List<Object> chunks) {
+			final String msg = (String) chunks.get(0);
+			guiUtils.error(msg);
+		}
+	
+		@Override
 		protected void done() {
-			try {
-				showStatus((String) get(), true);
-			} catch (InterruptedException | ExecutionException e) {
-				showStatus("Command terminated...", false);
-			}
+			showStatus("Command terminated...", false);
 			if (run && preRunState != getCurrentState())
 				changeState(preRunState);
 		}

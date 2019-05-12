@@ -48,6 +48,7 @@ import ij.measure.Calibration;
 import ij.plugin.CompositeConverter;
 import tracing.PathAndFillManager;
 import tracing.SNT;
+import tracing.SNTService;
 import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 
@@ -61,6 +62,8 @@ import tracing.gui.GuiUtils;
 	initializer = "initialize")
 public class SNTLoaderCmd extends DynamicCommand {
 
+	@Parameter
+	private SNTService sntService;
 	@Parameter
 	private DatasetIOService datasetIOService;
 	@Parameter
@@ -118,6 +121,9 @@ public class SNTLoaderCmd extends DynamicCommand {
 
 	@Override
 	public void initialize() {
+		if (sntService.isActive() && sntService.isUIReady()) {
+			cancel("SNT seems to be already running.");
+		}
 		GuiUtils.setSystemLookAndFeel();
 		// TODO: load defaults from prefService?
 		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService

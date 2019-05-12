@@ -129,7 +129,6 @@ public class SNTPrefs { // TODO: Adopt PrefService
 
 	protected void loadPluginPrefs() {
 		getBooleans();
-		snt.useCompressedXML = getPref(COMPRESSED_XML);
 		snt.autoCanvasActivation = getPref(AUTO_CANVAS_ACTIVATION);
 		snt.snapCursor = !snt.tracingHalted && getPref(SNAP_CURSOR);
 		snt.drawDiametersXY = getPref(DRAW_DIAMETERS_XY);
@@ -180,7 +179,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	}
 
 	protected void savePluginPrefs(final boolean restoreIJ1prefs) {
-		setPref(COMPRESSED_XML, snt.useCompressedXML);
+		setSaveCompressedTraces(isSaveCompressedTraces());
 		setPref(AUTO_CANVAS_ACTIVATION, snt.autoCanvasActivation);
 		if (!snt.tracingHalted) setPref(SNAP_CURSOR, snt.snapCursor);
 		Prefs.set(SNAP_XY, snt.cursorSnapWindowXY);
@@ -206,11 +205,19 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		Prefs.savePreferences();
 	}
 
-	protected boolean isSaveWinLocations() {
+	public boolean isSaveCompressedTraces() {
+		return getPref(COMPRESSED_XML);
+	}
+
+	public void setSaveCompressedTraces(final boolean bool) {
+		setPref(COMPRESSED_XML, bool);
+	}
+
+	public boolean isSaveWinLocations() {
 		return getPref(STORE_WIN_LOCATIONS);
 	}
 
-	protected void setSaveWinLocations(final boolean value) {
+	public void setSaveWinLocations(final boolean value) {
 		setPref(STORE_WIN_LOCATIONS, value);
 	}
 

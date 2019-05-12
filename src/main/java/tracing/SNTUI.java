@@ -125,7 +125,7 @@ import tracing.gui.cmds.MLImporterCmd;
 import tracing.gui.cmds.MultiSWCImporterCmd;
 import tracing.gui.cmds.OpenDatasetCmd;
 import tracing.gui.cmds.RemoteSWCImporterCmd;
-import tracing.gui.cmds.ResetPrefsCmd;
+import tracing.gui.cmds.PrefsCmd;
 import tracing.gui.cmds.ShowCorrespondencesCmd;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.io.FlyCircuitLoader;
@@ -1263,17 +1263,6 @@ public class SNTUI extends JDialog {
 	private JPanel miscPanel() {
 		final JPanel miscPanel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gdb = GuiUtils.defaultGbc();
-		final JCheckBox winLocCheckBox = new JCheckBox("Remember window locations", plugin.prefs.isSaveWinLocations());
-		guiUtils.addTooltip(winLocCheckBox, "Whether position of dialogs should be preserved across restarts");
-		winLocCheckBox.addItemListener(e -> plugin.prefs.setSaveWinLocations(e.getStateChange() == ItemEvent.SELECTED));
-		miscPanel.add(winLocCheckBox, gdb);
-		++gdb.gridy;
-		final JCheckBox compressedXMLCheckBox = new JCheckBox("Use compression when saving traces",
-				plugin.useCompressedXML);
-		compressedXMLCheckBox
-				.addItemListener(e -> plugin.useCompressedXML = (e.getStateChange() == ItemEvent.SELECTED));
-		miscPanel.add(compressedXMLCheckBox, gdb);
-		++gdb.gridy;
 		final JCheckBox askUserConfirmationCheckBox = new JCheckBox("Skip confirmation dialogs", !askUserConfirmation);
 		guiUtils.addTooltip(askUserConfirmationCheckBox,
 				"Whether \"Are you sure?\" prompts should precede major operations");
@@ -1285,12 +1274,12 @@ public class SNTUI extends JDialog {
 		debugCheckBox.addItemListener(e -> SNT.setDebugMode(e.getStateChange() == ItemEvent.SELECTED));
 		miscPanel.add(debugCheckBox, gdb);
 		++gdb.gridy;
-		final JButton resetbutton = GuiUtils.smallButton("Reset Preferences...");
-		resetbutton.addActionListener(e -> {
-			(new CmdRunner(ResetPrefsCmd.class)).execute();
+		final JButton prefsButton = GuiUtils.smallButton("Preferences...");
+		prefsButton.addActionListener(e -> {
+			(new CmdRunner(PrefsCmd.class)).execute();
 		});
 		gdb.fill = GridBagConstraints.NONE;
-		miscPanel.add(resetbutton, gdb);
+		miscPanel.add(prefsButton, gdb);
 		return miscPanel;
 	}
 
@@ -3213,7 +3202,7 @@ public class SNTUI extends JDialog {
 				final int preSavingState = currentState;
 				changeState(SAVING);
 				try {
-					pathAndFillManager.writeXML(saveFile.getAbsolutePath(), plugin.useCompressedXML);
+					pathAndFillManager.writeXML(saveFile.getAbsolutePath(), plugin.getPrefs().isSaveCompressedTraces());
 				} catch (final IOException ioe) {
 					showStatus("Saving failed.", true);
 					guiUtils.error(

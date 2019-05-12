@@ -32,8 +32,11 @@ import org.scijava.prefs.PrefService;
 import org.scijava.ui.DialogPrompt.MessageType;
 import org.scijava.ui.DialogPrompt.Result;
 import org.scijava.ui.UIService;
+import org.scijava.widget.Button;
 
 import tracing.SNTPrefs;
+import tracing.SNTService;
+import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
 import tracing.plugin.CallLegacyShollPlugin;
 import tracing.plugin.PlotterCmd;
@@ -44,12 +47,12 @@ import tracing.plugin.StrahlerCmd;
 import tracing.plugin.TreeMapperCmd;
 
 /**
- * Command for resetting SNT Preferences.
+ * Command for (re)setting SNT Preferences.
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false)
-public class ResetPrefsCmd extends ContextCommand {
+@Plugin(type = Command.class, visible = false, initializer="init", label="SNT Preferences")
+public class PrefsCmd extends ContextCommand {
 
 	@Parameter
 	private UIService uiService;
@@ -57,34 +60,61 @@ public class ResetPrefsCmd extends ContextCommand {
 	@Parameter
 	private PrefService prefService;
 
+	@Parameter
+	protected SNTService sntService;
+
+	@Parameter(label="Remember window locations", description="Whether position of dialogs should be preserved across restarts")
+	private boolean persistentWinLoc;
+
+	@Parameter(label="Use compression when saving traces", description="Wheter Gzip compression should be use when saving .traces files")
+	private boolean compressTraces;
+
+	@Parameter(label="Reset All Preferences...", callback="reset")
+	private Button reset;
+
+	private SimpleNeuriteTracer snt;
+
 	/*
 	 * (non-Javadoc)
 	 *
 	 * @see java.lang.Runnable#run()
 	 */
-	@Override
 	public void run() {
+		snt.getPrefs().setSaveWinLocations(persistentWinLoc);
+		snt.getPrefs().setSaveCompressedTraces(compressTraces);
+	}
 
+	private void init() {
+		try {
+			snt = sntService.getPlugin();
+			persistentWinLoc = snt.getPrefs().isSaveWinLocations();
+			compressTraces = snt.getPrefs().isSaveCompressedTraces();
+		} catch (NullPointerException npe) {
+			cancel("SNT is not running.");
+		}
+	}
+
+	@SuppressWarnings("unused")
+	private void reset() {
 		final Result result = uiService.showDialog(
 			"Reset preferences to defaults? (A restart may be required)",
 			MessageType.QUESTION_MESSAGE);
-		if (Result.YES_OPTION != result && Result.OK_OPTION != result) {
-			return;
+		if (Result.YES_OPTION == result || Result.OK_OPTION == result) {
+			clearAll();
+			init(); // update prompt;
+			uiService.showDialog("Preferences Reset. You should now restart"
+					+ " SNT for changes to take effect.", "Restart Required");
 		}
-		clearAll();
-		uiService.showDialog(
-			"Preferences Reset. You should now restart SNT for changes to take effect.",
-			"Restart Required");
-
 	}
 
-	/**
-	 * Clears all of SNT preferences.
-	 */
-	public void clearAll() {
+	/** Clears all of SNT preferences. */
+	protected void clearAll() {
 		// gui.cmds
+		prefService.clear(ChooseDatasetCmd.class);
 		prefService.clear(ColorMapReconstructionCmd.class);
 		prefService.clear(CompareFilesCmd.class);
+		prefService.clear(ComputeFilteredImg.class);
+		prefService.clear(ComputeTubenessImg.class);
 		prefService.clear(DistributionCmd.class);
 		prefService.clear(JSONImporterCmd.class);
 		prefService.clear(LoadObjCmd.class);
@@ -115,12 +145,13 @@ public class ResetPrefsCmd extends ContextCommand {
 		SNTPrefs.clearAll();
 	}
 
+
 	/* IDE debug method **/
 	public static void main(final String[] args) {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		ij.command().run(ResetPrefsCmd.class, true);
+		ij.command().run(PrefsCmd.class, true);
 	}
 
 }

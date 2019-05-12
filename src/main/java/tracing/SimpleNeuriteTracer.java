@@ -139,7 +139,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
 
 	/* UI preferences */
-	protected boolean useCompressedXML = true;
 	volatile protected int cursorSnapWindowXY;
 	volatile protected int cursorSnapWindowZ;
 	volatile protected boolean autoCanvasActivation;
@@ -2241,6 +2240,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		hessianEnabled = false;
 		hessian = null;
 		hessianSigma = -1;
+	}
+
+	public SNTPrefs getPrefs() {
+		return prefs;
 	}
 
 	// This is the implementation of GaussianGenerationCallback

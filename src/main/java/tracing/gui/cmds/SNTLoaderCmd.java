@@ -228,7 +228,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 		// There have been lots of reports of bugs caused simplify by persisting
 		// experimental preferences. We'll wipe everything until this version is
 		// properly released
-		final ResetPrefsCmd resetPrefs = new ResetPrefsCmd();
+		final PrefsCmd resetPrefs = new PrefsCmd();
 		resetPrefs.setContext(context());
 		resetPrefs.clearAll();
 		SNT.log("Prefs reset");

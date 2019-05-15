@@ -56,6 +56,7 @@ public class OpenDatasetCmd extends CommonDynamicCmd implements Command {
 
 	@Override
 	public void run() {
+		init(true);
 		try {
 			// In theory we should be able to use ioService but the
 			// following seems to always generate a virtual stack

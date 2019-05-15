@@ -429,8 +429,8 @@ public class SigmaPalette extends Thread {
 
 		if (sigmaValues.length > sigmasAcross * sigmasDown) {
 			throw new IllegalArgumentException("A " + sigmasAcross + "x" +
-				sigmasDown + " layout is not large enough for " + sigmaValues +
-				" + 1 images");
+				sigmasDown + " layout is not large enough for " + (sigmaValues.length +1 ) +
+				" images");
 		}
 
 		this.image = image;

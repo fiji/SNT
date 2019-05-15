@@ -2007,7 +2007,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					}
 				}
 
-				if (pathsToFit.size() > 0) {
+				if (skippedFits == n) {
+					noValidImageDataError();
+				}
+				else if (pathsToFit.size() > 0) {
 
 					final int finalSkippedFits = skippedFits;
 					class GetOptions extends SwingWorker<int[], Object> {

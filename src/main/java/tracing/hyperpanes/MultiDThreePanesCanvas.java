@@ -41,7 +41,7 @@ import ij.gui.ImageCanvas;
 public class MultiDThreePanesCanvas extends ImageCanvas {
 
 	private static final long serialVersionUID = 1L;
-	private static final double SCALE_FACTOR = Prefs.getDouble("gui.scale", 1d); //TODO: Replace w/ Prefs.getGuiScale(); when IJ1.52k in POM
+	private static final double SCALE_FACTOR = Prefs.getGuiScale();
 
 	protected PaneOwner owner;
 	protected int plane;

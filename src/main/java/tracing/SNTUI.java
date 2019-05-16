@@ -379,6 +379,17 @@ public class SNTUI extends JDialog {
 			tab3.add(reconstructionViewerPanel(), c3);
 			c3.gridy++;
 			addSpacer(tab3, c3);
+			GuiUtils.addSeparator(tab3, "SciView", true, c3);
+			++c3.gridy;
+			final String msg3 =
+				"SciView is IJ2's modern replacement for the Legacy 3D " +
+					"Viewer providing 3D visualization and virtual reality capabilities " +
+					"for both images and meshes. It is not yet available in SNT.";
+			tab3.add(largeMsg(msg3), c3);
+			c3.gridy++;
+			tab3.add(sciViewerPanel(), c3);
+			c3.gridy++;
+			addSpacer(tab3, c3);
 			GuiUtils.addSeparator(tab3, "Legacy 3D Viewer:", true, c3);
 			++c3.gridy;
 			final String msg2 =
@@ -388,15 +399,6 @@ public class SNTUI extends JDialog {
 			tab3.add(largeMsg(msg2), c3);
 			c3.gridy++;
 			tab3.add(legacy3DViewerPanel(), c3);
-			addSpacer(tab3, c3);
-			GuiUtils.addSeparator(tab3, "SciView", true, c3);
-			++c3.gridy;
-			final String msg3 =
-				"SciView is IJ2's modern replacement for the Legacy 3D " +
-					"Viewer providing 3D visualization and virtual reality capabilities " +
-					"for both images and meshes. It is not yet available in SNT.";
-			tab3.add(largeMsg(msg3), c3);
-
 			{
 				tabbedPane.setIconAt(0, IconFactory.getTabbedPaneIcon(GLYPH.HOME));
 				tabbedPane.setIconAt(1, IconFactory.getTabbedPaneIcon(GLYPH.TOOL));
@@ -843,7 +845,7 @@ public class SNTUI extends JDialog {
 				break;
 
 			case WAITING_FOR_SIGMA_CHOICE:
-				updateStatusText("Close the sigma palette window to continue...");
+				updateStatusText("Close 'Pick Sigma &amp; Max' to continue...");
 				disableEverything();
 				break;
 
@@ -1471,7 +1473,7 @@ public class SNTUI extends JDialog {
 		}
 
 		// Assemble widget for actions
-		final String COMPARE_AGAINST = "Compare Reconstruction Against...";
+		final String COMPARE_AGAINST = "Compare Reconstructions...";
 		actionChoice.addItem(ApplyLabelsAction.LABEL);
 		actionChoice.addItem(COMPARE_AGAINST);
 		applyActionChoice.addActionListener(new ActionListener() {
@@ -1621,8 +1623,22 @@ public class SNTUI extends JDialog {
 		return panel;
 	}
 
+	private JPanel sciViewerPanel() {
+		final JButton openSciView = new JButton("Open SciView");
+		openSciView.addActionListener(e -> {
+			guiUtils.error("Not yet implemented");
+		});
+
+		// Build panel
+		final JPanel panel = new JPanel(new GridBagLayout());
+		final GridBagConstraints gdb = new GridBagConstraints();
+		gdb.fill = GridBagConstraints.HORIZONTAL;
+		gdb.weightx = 0.5;
+		panel.add(openSciView, gdb);
+		return panel;
+	}
+
 	private JPanel statusButtonPanel() {
-		final JPanel buttonsPanel = new JPanel(new GridLayout(1, 4, 0, 0));
 		keepSegment = GuiUtils.smallButton(hotKeyLabel("Yes", "Y"));
 		keepSegment.addActionListener(listener);
 		junkSegment = GuiUtils.smallButton(hotKeyLabel("No", "N"));
@@ -1631,11 +1647,29 @@ public class SNTUI extends JDialog {
 		completePath.addActionListener(listener);
 		final JButton abortButton = GuiUtils.smallButton(hotKeyLabel(hotKeyLabel("Cancel/Esc", "C"), "Esc"));
 		abortButton.addActionListener(e -> abortCurrentOperation());
-		buttonsPanel.add(keepSegment);
-		buttonsPanel.add(junkSegment);
-		buttonsPanel.add(completePath);
-		buttonsPanel.add(abortButton);
-		return buttonsPanel;
+
+		// Build panel
+		final JPanel p = new JPanel();
+		p.setLayout(new GridBagLayout());
+		final GridBagConstraints c = new GridBagConstraints();
+		c.ipadx = 0;
+		c.insets = new Insets(0, 0, 0, 0);
+		c.anchor = GridBagConstraints.LINE_START;
+		c.fill = GridBagConstraints.HORIZONTAL;
+
+		// row 1
+		c.gridy = 0;
+		c.gridx = 0;
+		c.weightx = 0.1;
+		p.add(keepSegment, c);
+		c.gridx++;
+		p.add(junkSegment, c);
+		c.gridx++;
+		p.add(completePath, c);
+		c.gridx++;
+		c.weightx = 0;
+		p.add(abortButton, c);
+		return p;
 	}
 
 	private JPanel statusPanel() {
@@ -1651,9 +1685,9 @@ public class SNTUI extends JDialog {
 	}
 
 	private JPanel filteredImagePanel() {
-		filteredImgPathField = new JTextField();
+		filteredImgPathField = guiUtils.textField("File:");
 		final JPopupMenu optionsMenu = new JPopupMenu();
-		filteredImgBrowseButton = new JButton("Browse");
+		filteredImgBrowseButton =  new JButton(IconFactory.getButtonIcon(GLYPH.OPEN_FOLDER, 1f));
 		final JButton filteredImgOptionsButton = optionsButton(optionsMenu, filteredImgBrowseButton);
 
 		filteredImgActivateCheckbox = new JCheckBox(hotKeyLabel("Trace on filtered Image", "I"));
@@ -1744,13 +1778,10 @@ public class SNTUI extends JDialog {
 		c.gridy++;
 
 		// row 1
-		c.gridwidth = 3;
-		filteredImgPanel.add(GuiUtils.leftAlignedLabel("File: ", true));
-		c.gridx = 1;
-		filteredImgPanel.add(filteredImgPathField, c);
-		c.fill = GridBagConstraints.NONE;
-		c.gridx = 2;
-		filteredImgPanel.add(filteredImgBrowseButton, c);
+		JPanel filePanel = new JPanel(new BorderLayout(0,0));
+		filePanel.add(filteredImgPathField, BorderLayout.CENTER);
+		filePanel.add(filteredImgBrowseButton, BorderLayout.EAST);
+		filteredImgPanel.add(filePanel, c);
 		c.gridy++;
 
 		// row 2
@@ -1768,18 +1799,12 @@ public class SNTUI extends JDialog {
 		final JPanel overlayPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		overlayPanel.add(filteredImgOverlayCheckbox);
 		overlayPanel.add(mipSpinner);
-		overlayPanel.add(GuiUtils.leftAlignedLabel(" % opacity          ", true));
-
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridwidth = 2;
-		filteredImgPanel.add(overlayPanel, c);
-		c.gridwidth = 3;
-		c.fill = GridBagConstraints.NONE;
-
-		c.gridx = 2;
+		overlayPanel.add(GuiUtils.leftAlignedLabel(" % opacity", true));
+		JPanel overlayPanelHolder = new JPanel(new BorderLayout());
+		overlayPanelHolder.add(overlayPanel, BorderLayout.CENTER);
 		equalizeButtons(filteredImgOptionsButton, filteredImgBrowseButton);
-		filteredImgPanel.add(filteredImgOptionsButton, c);
+		overlayPanelHolder.add(filteredImgOptionsButton, BorderLayout.EAST);	
+		filteredImgPanel.add(overlayPanelHolder, c);
 		c.gridy++;
 
 		// row 3
@@ -1792,10 +1817,9 @@ public class SNTUI extends JDialog {
 	}
 
 	private JButton optionsButton(final JPopupMenu optionsMenu, JButton templateButton) {
-		JButton optionsButton = new JButton();
-		if (templateButton == null) templateButton = new JButton("Browse");
+		JButton optionsButton = new JButton(IconFactory.getButtonIcon(GLYPH.OPTIONS, 1f));
+		if (templateButton == null) templateButton = new JButton(IconFactory.getButtonIcon(GLYPH.OPEN_FOLDER, 1f));
 		this.equalizeButtons(optionsButton, templateButton);
-		IconFactory.applyIcon(optionsButton, templateButton.getFont().getSize2D(), GLYPH.OPTIONS);
 		optionsButton.addMouseListener(new MouseAdapter() {
 
 			@Override
@@ -1811,7 +1835,7 @@ public class SNTUI extends JDialog {
 		return optionsButton;
 	}
 	private void equalizeButtons(final JButton b1, final JButton b2) {
-		if (b1.getText().length() >= b2.getText().length()) {
+		if (b1.getWidth() > b2.getWidth() || b1.getHeight() > b2.getHeight()) {
 			b2.setSize(b1.getSize());
 			b2.setMinimumSize(b1.getMinimumSize());
 			b2.setPreferredSize(b1.getPreferredSize());
@@ -1850,9 +1874,12 @@ public class SNTUI extends JDialog {
 	}
 
 	private File openFile(final String promptMsg, final File suggestedFile) {
+		final boolean focused = hasFocus(); //HACK: On MacOS this seems to help to ensure prompt is displayed as frontmost
+		if (focused) toBack();
 		final File openedFile = plugin.legacyService.getIJ1Helper().openDialog(promptMsg, suggestedFile);
 		if (openedFile != null)
 			plugin.prefs.setRecentFile(openedFile);
+		if (focused) toFront();
 		return openedFile;
 	}
 
@@ -1860,9 +1887,12 @@ public class SNTUI extends JDialog {
 		final File fFile = (suggestedFile == null)
 				? SNT.findClosestPair(plugin.prefs.getRecentFile(), fallbackExtension)
 				: suggestedFile;
+		final boolean focused = hasFocus();
+		if (focused) toBack();
 		final File savedFile = plugin.legacyService.getIJ1Helper().saveDialog(promptMsg, fFile, fallbackExtension);
 		if (savedFile != null)
 			plugin.prefs.setRecentFile(savedFile);
+		if (focused) toFront();
 		return savedFile;
 	}
 
@@ -2381,20 +2411,9 @@ public class SNTUI extends JDialog {
 		optionsMenu.add(loadTubenessJMI);
 		optionsMenu.add(showTubenessImpMenuItem());
 
-		hessianPanel = new JPanel();
-		hessianPanel.setLayout(new GridBagLayout());
-		final GridBagConstraints c = GuiUtils.defaultGbc();
-
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridwidth = 2;
-		hessianPanel.add(preprocess, c);
-		c.gridwidth = 3;
-		c.fill = GridBagConstraints.NONE;
-
-		c.gridx = 2;
-		hessianPanel.add(optionsButton, c);
-		c.gridy++;
+		hessianPanel = new JPanel(new BorderLayout());
+		hessianPanel.add(preprocess, BorderLayout.CENTER);
+		hessianPanel.add(optionsButton, BorderLayout.EAST);
 		return hessianPanel;
 	}
 
@@ -2740,15 +2759,17 @@ public class SNTUI extends JDialog {
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 
-		mi = menuItemTriggeringURL("Overview", URL + ":_Overview");
+		mi = menuItemTriggeringURL("User Manual", URL + ":_Overview");
 		helpMenu.add(mi);
 		mi = menuItemTriggeringURL("Tutorials", URL + "#Tutorials");
 		helpMenu.add(mi);
 		mi = menuItemTriggeringURL("Step-by-step Instructions", URL + ":_Step-By-Step_Instructions");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.FOOTPRINTS));
 		helpMenu.add(mi);
+		mi = menuItemTriggeringURL("Reconstruction Viewer", URL + ":_Reconstruction_Viewer");
+		mi.setIcon(IconFactory.getMenuIcon(GLYPH.CUBE));
+		helpMenu.add(mi);
 		helpMenu.addSeparator();
-
 		mi = menuItemTriggeringURL("List of shortcuts", URL + ":_Key_Shortcuts");
 		mi.setIcon(IconFactory.getMenuIcon(GLYPH.KEYBOARD));
 		helpMenu.add(mi);
@@ -2762,7 +2783,9 @@ public class SNTUI extends JDialog {
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 
-		mi = menuItemTriggeringURL("Python Notebooks", URL + ":_Python_Notebooks");
+		mi = menuItemTriggeringURL("Scripting", URL + ":_Scripting");
+		helpMenu.add(mi);
+		mi = menuItemTriggeringURL("Python Notebooks", URL + ":_Scripting#Python_Notebooks");
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 

@@ -33,6 +33,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -54,7 +56,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
 
 import ij.ImagePlus;
 import net.imagej.ImageJ;
@@ -271,11 +272,13 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 			add(exportPanel, c);
 			c.gridy++;
 		}
-
 		pack();
-		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE); // prevent
-																																		// closing
-
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(final WindowEvent ignored) {
+				setVisible(false);
+			}
+		});
 	}
 
 	private void addSeparator(final String label, final GridBagConstraints c) {

@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -133,8 +134,7 @@ public class GuiUtils {
 	public JDialog floatingMsg(final String msg, final boolean autodismiss) {
 		final JDialog dialog = new FloatingDialog(msg);
 		if (autodismiss) GuiUtils.setAutoDismiss(dialog);
-		dialog.toFront();
-		dialog.setVisible(true);
+		makeVisible(dialog);
 		return dialog;
 	}
 
@@ -147,11 +147,6 @@ public class GuiUtils {
 	}
 
 	private JidePopup getPopup(final String msg) {
-
-//		final JDialog dialog = new FloatingDialog(msg);
-//		GuiUtils.setAutoDismiss(dialog);
-//		dialog.toFront();
-//		dialog.setVisible(true);
 		final JLabel label = getLabel(msg);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		final JidePopup popup = new JidePopup();
@@ -193,7 +188,7 @@ public class GuiUtils {
 			JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null,
 			buttonLabels);
 		final JDialog d = optionPane.createDialog(parent, title);
-		d.setVisible(true);
+		makeVisible(d);
 		d.dispose();
 		final Object result = optionPane.getValue();
 		if (result instanceof Integer) {
@@ -210,6 +205,14 @@ public class GuiUtils {
 		}
 	}
 
+	private void makeVisible(final JDialog dialog) {
+		// work around a bug in openjdk and MacOS in which prompts
+		// are not frontmost if the component hierarchy is > 3
+		dialog.setVisible(true);
+		dialog.toFront();
+		if (!dialog.hasFocus() && parent != null) parent.transferFocusUpCycle();
+	}
+
 	public boolean getConfirmation(final String msg, final String title) {
 		return (yesNoDialog(msg, title) == JOptionPane.YES_OPTION);
 	}
@@ -218,7 +221,7 @@ public class GuiUtils {
 		final JOptionPane optionPane = new JOptionPane(getLabel(msg), JOptionPane.ERROR_MESSAGE,
 				JOptionPane.YES_NO_OPTION, null, new String[] { "Online Help", "OK" });
 		final JDialog d = optionPane.createDialog(parent, title);
-		d.setVisible(true);
+		makeVisible(d);
 		d.dispose();
 		if ("Online Help".equals(optionPane.getValue()))
 			openURL(helpURI);
@@ -320,8 +323,7 @@ public class GuiUtils {
 		final ColorTracker ok = new ColorTracker(chooser);
 		final JDialog dialog = JColorChooser.createDialog(parent, title, true,
 			chooser, ok, null);
-		dialog.setVisible(true);
-		dialog.toFront();
+		makeVisible(dialog);
 		return ok.getColor();
 	}
 
@@ -479,7 +481,7 @@ public class GuiUtils {
 			AWTWindows.centerWindow(parent.getBounds(), d);
 			// we could also use d.setLocationRelativeTo(parent);
 		}
-		d.setVisible(true);
+		makeVisible(d);
 		final Object result = optionPane.getValue();
 		if ((!(result instanceof Integer)))
 			return SwingDialog.UNKNOWN_OPTION;

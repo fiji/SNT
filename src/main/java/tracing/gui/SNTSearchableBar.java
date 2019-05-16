@@ -111,12 +111,12 @@ public class SNTSearchableBar extends SearchableBar {
 			mainPanel.add(_closeButton);
 		}
 		mainPanel.add(_comboBox);
+		if ((getVisibleButtons() & SHOW_HIGHLIGHTS) != 0) {
+			addButton(buttonPanel, _highlightsButton);
+		}
 		if ((getVisibleButtons() & SHOW_NAVIGATION) != 0) {
 			addButton(buttonPanel, _findNextButton);
 			addButton(buttonPanel, _findPrevButton);
-		}
-		if ((getVisibleButtons() & SHOW_HIGHLIGHTS) != 0) {
-			addButton(buttonPanel, _highlightsButton);
 		}
 		if ((getVisibleButtons() & SHOW_MATCHCASE) != 0) {
 			addButton(buttonPanel, _matchCaseCheckBox);

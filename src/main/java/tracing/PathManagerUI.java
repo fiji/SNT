@@ -35,6 +35,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -70,7 +72,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
-import javax.swing.WindowConstants;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -355,9 +356,13 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		});
 
 		add(searchableBar, BorderLayout.PAGE_END);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(final WindowEvent ignored) {
+				setVisible(false);
+			}
+		});
 		pack();
-		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE); // prevent
-																																		// closing
 	}
 
 	private JMenuItem getRenameMenuItem(final SinglePathActionListener singlePathListener) {

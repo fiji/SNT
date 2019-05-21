@@ -1,5 +1,5 @@
 # @ImageJ ij
-# @String(value="This script processes all TIFF images in a directory with the Frangi Vesselness filter. Conversion log is shown in Console.", visibility="MESSAGE") msg
+# @String(value="This script processes all TIFF images in a directory with the Frangi Vesselness filter. Note that only 2D or 3D grayscale images are supported. Conversion log is shown in Console.", visibility="MESSAGE") msg
 # @File(label="Directory containing your images", style="directory") input_dir
 # @String(label="Consider only filenames containing",description="Clear field for no filtering",value="") name_filter
 # @boolean(label="Include subdirectories") recursive
@@ -30,12 +30,17 @@ def get_image_files(directory, filtering_string, extension):
                 files.append(os.path.join(dirpath, f))
         if not recursive:
             break  # do not process subdirectories
-            
+
     return files
 
 
 def run():
+    # First check that scale parameter is > 0, exiting if not
+    if scale <= 0:
+        log.error('Please select a value > 0 for the scale parameter. Exiting...')
+        return
 
+    # Get all files with specified name filter and extension in the input directory
     d = str(input_dir)
     extension = ".tif"
     files = get_image_files(d, name_filter, extension)
@@ -43,15 +48,25 @@ def run():
         uiservice.showDialog("No files matched the specified criteria", "Error")
         return
 
-    for (counter, f) in enumerate(files):
-    
+    processed = 0
+    skipped = 0
+    for f in files:
+
         basename = os.path.basename(f)
-        msg = 'Processing file %s: %s...' % (counter + 1, basename)
+        msg = 'Processing file %s: %s...' % (processed + skipped + 1, basename)
         status.showStatus(msg)
         log.info(msg)
 
         # Load the input image
         input_image = ij.io().open(f)
+
+        # Verify that the image is 2D/3D and grayscale, skipping it if not
+        num_dimensions = input_image.numDimensions()
+        if num_dimensions > 3 or int(input_image.getChannels()) > 1:
+            log.error('Could not process %s...Only 2D/3D grayscale images are supported' % basename)
+            skipped += 1
+            continue
+
         # Convert input image to float, since we are dealing with derivatives
         float_input = ij.op().run("convert.float32", input_image)
 
@@ -59,12 +74,11 @@ def run():
         x_spacing = float_input.averageScale(0)
         y_spacing = float_input.averageScale(1)
         spacing = [x_spacing, y_spacing]
-        dimensions = float_input.numDimensions()
-        if dimensions > 2:
+        if num_dimensions == 3:
             z_spacing = float_input.averageScale(2)
             spacing.append(z_spacing)
-        
-        # Create placeholder image for the output then run the Frangi op
+
+        # Create placeholder image for the output then run the Frangi Vesselness op
         output = ij.op().run("create.img", float_input)
         ij.op().run("frangiVesselness", output, float_input, spacing, scale)
 
@@ -72,10 +86,12 @@ def run():
         # For example, the output for "OP_1.tif" would be named "OP_1[Frangi].tif"
         l = len(f)
         el = len(extension)
-        output_filepath = f[0:l-el] + "[Frangi].tif"
+        output_filepath = f[0:l - el] + "[Frangi].tif"
         ij.io().save(output, output_filepath)
 
-    log.info('Done. %s file(s) processed...' % (counter + 1))
-    
-    
+        processed += 1
+
+    log.info('Done. %s file(s) processed. %s file(s) skipped...' % (processed, skipped))
+
+
 run()

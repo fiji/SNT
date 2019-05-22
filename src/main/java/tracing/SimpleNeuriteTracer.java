@@ -51,9 +51,7 @@ import org.scijava.vecmath.Point3f;
 
 import amira.AmiraMeshDecoder;
 import amira.AmiraParameters;
-import features.ComputeCurvatures;
 import features.GaussianGenerationCallback;
-import features.TubenessProcessor;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -80,7 +78,6 @@ import tracing.event.SNTEvent;
 import tracing.event.SNTListener;
 import tracing.gui.GuiUtils;
 import tracing.gui.SWCImportOptionsDialog;
-import tracing.gui.SigmaPalette;
 import tracing.gui.SwingSafeResult;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.plugin.ShollTracingsCmd;
@@ -176,10 +173,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	/* Hessian-based analysis */
 	private volatile boolean hessianEnabled = false;
-	protected ComputeCurvatures hessian = null;
-	protected volatile double hessianSigma = -1;
-	protected double hessianMultiplier = SNTPrefs.DEFAULT_MULTIPLIER;
-	protected float[][] cachedTubeness;
+	protected final HessianCaller primaryHessian;
+	protected final HessianCaller secondaryHessian;
 
 	/* tracing threads */
 	private TracerThread currentSearchThread = null;
@@ -279,6 +274,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		pathAndFillManager = new PathAndFillManager(this);
 		setFieldsFromImage(sourceImage);
 		prefs.loadPluginPrefs();
+		primaryHessian = new HessianCaller(this, HessianCaller.PRIMARY);
+		secondaryHessian = new HessianCaller(this, HessianCaller.SECONDARY);
 	}
 
 	/**
@@ -318,6 +315,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		enableAstar(false);
 		enableSnapCursor(false);
 		pathAndFillManager.setHeadless(false);
+		primaryHessian = new HessianCaller(this, HessianCaller.PRIMARY);
+		secondaryHessian = new HessianCaller(this, HessianCaller.SECONDARY);
 	}
 
 	private void setFieldsFromImage(final ImagePlus sourceImage) {
@@ -1879,41 +1878,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return ui.isVisible();
 	}
 
-	protected void launchPaletteAround(final int x, final int y, final int z) {
-
-		final int either_side = 40;
-
-		int x_min = x - either_side;
-		int x_max = x + either_side;
-		int y_min = y - either_side;
-		int y_max = y + either_side;
-		int z_min = z - either_side;
-		int z_max = z + either_side;
-
-		final int originalWidth = xy.getWidth();
-		final int originalHeight = xy.getHeight();
-		final int originalDepth = xy.getNSlices();
-
-		if (x_min < 0) x_min = 0;
-		if (y_min < 0) y_min = 0;
-		if (z_min < 0) z_min = 0;
-		if (x_max >= originalWidth) x_max = originalWidth - 1;
-		if (y_max >= originalHeight) y_max = originalHeight - 1;
-		if (z_max >= originalDepth) z_max = originalDepth - 1;
-
-		final double[] sigmas = new double[9];
-		for (int i = 0; i < sigmas.length; ++i) {
-			sigmas[i] = ((i + 1) * getMinimumSeparation()) / 2;
-		}
-
-		changeUIState(SNTUI.WAITING_FOR_SIGMA_CHOICE);
-
-		final SigmaPalette sp = new SigmaPalette();
-		sp.setListener(ui.listener);
-		sp.makePalette(getLoadedDataAsImp(), x_min, x_max, y_min, y_max, z_min,
-			z_max, new TubenessProcessor(true), sigmas, 3, 3, z);
-	}
-
 	public void startFillerThread(final FillerThread filler) {
 
 		this.filler = filler;
@@ -1967,7 +1931,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				: Math.min(Math.abs(x_spacing), Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
 	}
 
-	private double getAverageSeparation() {
+	protected double getAverageSeparation() {
 		return (is2D()) ? (x_spacing + y_spacing) / 2 : (x_spacing + y_spacing + z_spacing) / 3;
 	}
 
@@ -2020,30 +1984,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return imp;
 	}
 
-	protected void startHessian() {
-		if (hessianSigma == -1) hessianSigma = getDefaultHessianSigma();
-		startHessian(hessianSigma, hessianMultiplier);
-	}
-
-	public void startHessian(final double sigma, final double multiplier) {
-		this.hessianMultiplier = multiplier;
-		if (hessian == null) {
-			changeUIState(SNTUI.CALCULATING_GAUSSIAN);
-			hessianSigma = sigma;
-			hessian = new ComputeCurvatures(getLoadedDataAsImp(), hessianSigma, this,
-				true);
-			new Thread(hessian).start();
-		}
-		else {
-			if (sigma != hessianSigma) {
-				changeUIState(SNTUI.CALCULATING_GAUSSIAN);
-				hessianSigma = sigma;
-				hessian = new ComputeCurvatures(getLoadedDataAsImp(), hessianSigma,
-					this, true);
-				new Thread(hessian).start();
-			}
-		}
-		if (ui != null) ui.updateHessianPanel();
+	public void startHessian(final String image, final double sigma, final double max) {
+		final HessianCaller hc = getHessianCaller(image);
+		hc.setSigmaAndMax(sigma, max);
+		hc.start();
 	}
 
 	/**
@@ -2123,17 +2067,18 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (changeUIState) changeUIState(SNTUI.WAITING_TO_START_PATH);
 	}
 
-	public void loadTubenessImage(final File file) throws IOException, IllegalArgumentException {
+	public void loadTubenessImage(final String type, final File file) throws IOException, IllegalArgumentException {
 		final ImagePlus imp = openCachedDataImage(file);
-		loadCachedData(imp, cachedTubeness = new float[depth][]);
-		hessianSigma = -1;
+		final HessianCaller hc = getHessianCaller(type);
+		loadTubenessImage(hc, imp, true);
+		hc.sigma = -1;
 	}
 
-	public void loadTubenessImage(final ImagePlus imp) throws IllegalArgumentException {
-		loadTubenessImage(imp, true);
+	public void loadTubenessImage(final String type, final ImagePlus imp) throws IllegalArgumentException {
+		loadTubenessImage(getHessianCaller(type), imp, true);
 	}
 
-	protected void loadTubenessImage(final ImagePlus imp, final boolean changeUIState) throws IllegalArgumentException {
+	protected void loadTubenessImage(final HessianCaller hc, final ImagePlus imp, final boolean changeUIState) throws IllegalArgumentException {
 		if (xy == null) throw new IllegalArgumentException(
 				"Data can only be loaded after tracing image is known");;
 		if (!compatibleImp(imp)) {
@@ -2141,11 +2086,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				+ ". If this unexpected, check under 'Image>Properties...' that CZT axes are not swapped.");
 		}
 		if (changeUIState) changeUIState(SNTUI.CACHING_DATA);
-		SNT.log("Loading tubeness image multiplier=" + hessianMultiplier + " max=" + stackMaxFiltered);
-		loadCachedData(imp, cachedTubeness = new float[depth][]);
-		hessianMultiplier = 256 / stackMaxFiltered;
+		SNT.log("Loading tubeness image multiplier=" + hc.multiplier + " max=" + stackMaxFiltered);
+		loadCachedData(imp, hc.cachedTubeness = new float[depth][]);
+		hc.setSigmaAndMax(hc.getSigma(true), stackMaxFiltered);
 		if (changeUIState) {
-			getUI().updateHessianPanel();
+			getUI().updateHessianPanel(hc);
 			changeUIState(SNTUI.WAITING_TO_START_PATH);
 		}
 	}
@@ -2206,8 +2151,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		return (filteredImageLoaded()) ? getFilteredDataFromCachedData("Filtered Data", filteredData) : null;
 	}
 
-	protected ImagePlus getCachedTubenessDataAsImp() {
-		return (cachedTubeness != null) ? getFilteredDataFromCachedData("Tubeness Data", cachedTubeness) : null;
+	protected ImagePlus getCachedTubenessDataAsImp(final String type) {
+		final HessianCaller hc = getHessianCaller(type);
+		return (hc.cachedTubeness == null) ? null : getFilteredDataFromCachedData("Tubeness Data ["+ type + "]", hc.cachedTubeness);
 	}
 
 	private ImagePlus getFilteredDataFromCachedData(final String title, final float[][] data) {
@@ -2226,20 +2172,24 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public synchronized void enableHessian(final boolean enable) {
+		if (enable) {
+			if (isTracingOnFilteredImageActive())
+				secondaryHessian.start();
+			else
+				primaryHessian.start();
+		}
 		hessianEnabled = enable;
-		if (enable && cachedTubeness == null) startHessian();
 	}
 
 	protected synchronized void cancelGaussian() {
-		if (hessian != null) {
-			hessian.cancelGaussianGeneration();
-		}
+		primaryHessian.cancelGaussianGeneration();
+		secondaryHessian.cancelGaussianGeneration();
 	}
 
 	private void nullifyHessian() {
 		hessianEnabled = false;
-		hessian = null;
-		hessianSigma = -1;
+		primaryHessian.nullify();
+		secondaryHessian.nullify();
 	}
 
 	public SNTPrefs getPrefs() {
@@ -2859,22 +2809,19 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 *
 	 * @return true, if Hessian analysis is enabled, otherwise false
 	 */
-	public boolean isHessianEnabled() {
-		return hessianEnabled && hessian != null && hessianSigma > -1;
+	public boolean isHessianEnabled(final String image) {
+		if ("secondary".equalsIgnoreCase(image))
+			return hessianEnabled && isTracingOnFilteredImageAvailable() && secondaryHessian.sigma > -1;
+		return hessianEnabled && primaryHessian.sigma > -1;
 	}
 
-	public double getHessianSigma(final boolean physicalUnits) {
-		return (physicalUnits) ? hessianSigma : Math.round(hessianSigma / getAverageSeparation());
+	public double getHessianSigma(final String image, final boolean physicalUnits) {
+		return getHessianCaller(image).getSigma(physicalUnits);
 	}
 
-	protected double getDefaultHessianSigma() {
-		double minSep = getMinimumSeparation();
-		double avgSep = getAverageSeparation();
-		return (minSep == avgSep) ? 2 * minSep : avgSep;
-	}
-
-	public boolean isTubenessImageCached() {
-		return this.cachedTubeness != null;
+	public boolean isTubenessImageCached(final String image) {
+		final HessianCaller hc = getHessianCaller(image);
+		return hc != null && hc.cachedTubeness != null;
 	}
 
 	/**
@@ -2959,4 +2906,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (isUIready()) getUI().showStatus(status, true);
 	}
 
+	public HessianCaller getHessianCaller(final String image) {
+		return ("secondary".equalsIgnoreCase(image)) ? secondaryHessian : primaryHessian;
+	}
 }

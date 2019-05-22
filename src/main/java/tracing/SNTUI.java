@@ -182,6 +182,7 @@ public class SNTUI extends JDialog {
 	private JMenuItem flushTubenessJMI;
 	private JCheckBox preprocess;
 	private JCheckBox aStarCheckBox;
+	private SigmaPalette sigmaPalette;
 
 	// UI controls for CT data source
 	private JPanel sourcePanel;
@@ -586,83 +587,31 @@ public class SNTUI extends JDialog {
 
 	protected void gaussianCalculated(final boolean succeeded) {
 		SwingUtilities.invokeLater(() -> {
-			if (!succeeded) {
-				ignorePreprocessEvents = true;
-				preprocess.setSelected(false);
-				ignorePreprocessEvents = false;
-			}
-			changeState(preGaussianState);
-		});
-	}
-
-	/**
-	 * Sets the multiplier value for Hessian-based analysis. In the UI the
-	 * multiplier is reported as 1/256 * max of tubeness image.
-	 *
-	 * @param multiplier the new multiplier value
-	 */
-	public void setMultiplier(final double multiplier) {
-		plugin.hessianMultiplier = multiplier;
-		SwingUtilities.invokeLater(() -> {
-			updateHessianPanel();
-		});
-	}
-
-	/**
-	 * Sets the sigma value for computation of curvatures, updating the Hessian
-	 * panel accordingly
-	 *
-	 * @param sigma            the new sigma value
-	 * @param mayStartGaussian if true and the current UI state allows it, the
-	 *                         Gaussian computation will be performed using the the
-	 *                         new parameter
-	 */
-	public void setSigma(final double sigma, final boolean mayStartGaussian) {
-		plugin.hessianSigma = sigma; // ensure it is applied immediately
-		SwingUtilities.invokeLater(() -> {
-			updateHessianPanel();
-			if (!mayStartGaussian)
-				return;
-			preprocess.setSelected(false);
-
-			// Turn on the checkbox: according to the documentation this doesn't
-			// generate an event, so we manually turn on the Gaussian calculation
-			ignorePreprocessEvents = true;
-			preprocess.setSelected(true);
-			ignorePreprocessEvents = false;
-			enableHessian(true);
+			preprocess.setSelected(succeeded);
+			changeState(READY);
+			showStatus("Gaussian " + ((succeeded) ? " completed" : "failed"), true);
 		});
 	}
 
 	protected void updateHessianPanel() {
-		final StringBuilder sb = new StringBuilder("Hessian-based analysis ");
-		if (!plugin.isTubenessImageCached())
-			sb.append("(\u03C3=").append(SNT.formatDouble(getSigma(), 2));
-		else if (plugin.hessianSigma == -1)
-			sb.append("(\u03C3=?.??");
-		else
-			sb.append("(\u03C3=").append(SNT.formatDouble(plugin.hessianSigma, 2));
-		sb.append("; max=").append(SNT.formatDouble(256 / plugin.hessianMultiplier, 1));
-		sb.append(") ");
-		preprocess.setToolTipText((plugin.isTubenessImageCached()) ? "Computations currently cached in memory"
-				: "Computations are not cached. Will be performed as needed");
-		assert SwingUtilities.isEventDispatchThread();
-		preprocess.setText(hotKeyLabel(sb.toString(), "H"));
-		final boolean dataCached = plugin.isTubenessImageCached();
-		computeTubenessJMI.setEnabled(!dataCached);
-		loadTubenessJMI.setEnabled(!dataCached);
-		flushTubenessJMI.setEnabled(dataCached);
+		final HessianCaller hc = plugin.getHessianCaller((plugin.isTracingOnFilteredImageActive()) ? "secondary" : "primary");
+		updateHessianPanel(hc);
 	}
 
-	/**
-	 * Gets the current Sigma value as reported in the "Auto-tracing" widget.
-	 *
-	 * @return the sigma value currently in use
-	 */
-	public double getSigma() {
-		if (plugin.hessianSigma == -1)
-			plugin.hessianSigma = plugin.getDefaultHessianSigma();
-		return plugin.hessianSigma;
+	protected void updateHessianPanel(final HessianCaller hc) {
+		final StringBuilder sb = new StringBuilder("Hessian-based analysis ");
+		final double sigma = hc.getSigma(true);
+		if (sigma == -1)
+			sb.append("(\u03C3=?.??");
+		else
+			sb.append("(\u03C3=").append(SNT.formatDouble(sigma, 2));
+		final double max = hc.getMax();
+		final boolean smallMax = max < 0.01;
+		sb.append("; max=").append(SNT.formatDouble(max, 1));
+		sb.append(") ");
+		if (!smallMax) sb.append("  ");
+;		assert SwingUtilities.isEventDispatchThread();
+		preprocess.setText(hotKeyLabel(sb.toString(), "H"));
 	}
 
 	protected void exitRequested() {
@@ -2542,13 +2491,14 @@ public class SNTUI extends JDialog {
 		});
 	}
 
-	private void setMultiplierForCachedTubenessFromUser() {
-		final double defaultValue = 256 / SNTPrefs.DEFAULT_MULTIPLIER;
+	private void setMultiplierForCachedTubenessFromUser(final String primarySecondaryChoice) {
+		final HessianCaller hc = plugin.getHessianCaller(primarySecondaryChoice);
+		final double defaultValue = hc.getDefaultMax();
 		String promptMsg = "<HTML><body><div style='width:500;'>" //
 				+ "Enter the maximum pixel intensity on the cached "//
 				+ "<i>Tubeness</i> image beyond which the cost function for A* search "//
-				+ "is minimized. SNT's default is "//
-				+ SNT.formatDouble(256 / SNTPrefs.DEFAULT_MULTIPLIER, 1) + ".";
+				+ "is minimized. The current default is "//
+				+ SNT.formatDouble(defaultValue, 1) + ".";
 		if (plugin.filteredData == null) {
 			// min/max belong to plugin.cachedTubeness
 			promptMsg += " The image min-max range is "//
@@ -2563,34 +2513,45 @@ public class SNTUI extends JDialog {
 			guiUtils.error("Maximum must be a positive number.", "Invalid Input");
 			return;
 		}
-		setMultiplier(256 / max);
+		hc.setSigmaAndMax(hc.getSigma(true), max);
 	}
 
-	private boolean okToFlushCachedTubeness() {
-		if (plugin.cachedTubeness == null)
+	private boolean okToFlushCachedTubeness(final String type) {
+		final HessianCaller hc = plugin.getHessianCaller(type);
+		if (hc == null || hc.cachedTubeness == null)
 			return true;
-		final boolean ok = plugin.cachedTubeness != null && guiUtils.getConfirmation(
+		final boolean ok = hc.cachedTubeness != null && guiUtils.getConfirmation(
 				"Hessian computations for the entire image currently exist. Discard such data?",
 				"Discard Existing Computations?", "Yes. Discard Computations", "Cancel");
 		if (ok)
-			flushCachedTubeness();
+			flushCachedTubeness(type);
 		return ok;
 	}
 
-	private void setSigmaFromUser() {
-		final JTextField sigmaField = new JTextField(SNT.formatDouble(getSigma(), 5), 5);
-		final JTextField maxField = new JTextField(SNT.formatDouble(256 / plugin.hessianMultiplier, 1), 5);
+	private String getPrimarySecondaryImgChoice(final String promptMsg) {
+		if (plugin.isTracingOnFilteredImageAvailable()) {
+			final String[] choices = new String[] { "Primary", "Secondary" };
+			final String choice = guiUtils.getChoice(promptMsg, "Wich Image?", choices, choices[0]);
+			filteredImgActivateCheckbox.setSelected(choices[1].equals(choice));
+			return choice;
+		}
+		return "Primary";
+	}
+
+	private void setSigmaFromUser(final String primarySecondaryChoice) {
+		final HessianCaller hc = plugin.getHessianCaller(primarySecondaryChoice);
+		final JTextField sigmaField = new JTextField(SNT.formatDouble(hc.getSigma(true), 5), 5);
+		final JTextField maxField = new JTextField(SNT.formatDouble(hc.getMax(), 1), 5);
 		final Object[] contents = { "<html><b>Sigma</b><br>Enter the approximate radius of the structures you are<br>" //
 				+ "tracing. The default is the average of voxel dimensions<br>" //
 				+ "(anisotropic images) or twice the voxel size (isotropic),<br>" //
-				+ "i.e., " + SNT.formatDouble(plugin.getDefaultHessianSigma(), 3) //
+				+ "i.e., " + SNT.formatDouble(hc.getDefaultSigma(), 3) //
 				+ plugin.spacing_units + " for active image:", sigmaField, //
 				"<html><br><b>Maximum</b><br>Enter the maximum pixel intensity on the <i>Tubeness</i><br>"
-						+ "image beyond which the cost function for A* search<br>" + "is minimized (the default is 256/"
-						+ SNTPrefs.DEFAULT_MULTIPLIER + "=" + SNT.formatDouble(256 / SNTPrefs.DEFAULT_MULTIPLIER, 1)
-						+ "):",
+						+ "image beyond which the cost function for A* search<br>" + "is minimized (the default "
+						+ "for current image is " + SNT.formatDouble(hc.getDefaultMax(), 1) + "):",
 				maxField, };
-		final int result = JOptionPane.showConfirmDialog(this, contents, "Hessian (\"Tubeness\") Settings",
+		final int result = JOptionPane.showConfirmDialog(this, contents, "Hessian Settings ("+ primarySecondaryChoice +" Image)",
 				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 		if (result == JOptionPane.OK_OPTION) {
 			final double sigma = GuiUtils.extractDouble(sigmaField);
@@ -2599,12 +2560,9 @@ public class SNTUI extends JDialog {
 				guiUtils.error("Sigma and max must be positive numbers.", "Invalid Input");
 				return;
 			}
-			preprocess.setSelected(false); // should never be on when setSigma is
-			// called
-			setSigma(sigma, true);
-			plugin.hessianSigma = sigma;
-			setMultiplier(256 / max);
-
+			preprocess.setSelected(false);
+			hc.setSigmaAndMax(sigma, max);
+			if (hc.hessian == null) hc.start();
 		}
 	}
 
@@ -2996,6 +2954,38 @@ public class SNTUI extends JDialog {
 		changeState(WAITING_TO_START_PATH);
 	}
 
+	protected void launchSigmaPaletteAround(final int x, final int y) {
+
+		final int either_side = 40;
+		final int z = plugin.getImagePlus().getZ() - 1;
+		int x_min = x - either_side;
+		int x_max = x + either_side;
+		int y_min = y - either_side;
+		int y_max = y + either_side;
+		int z_min = z - either_side;
+		int z_max = z + either_side;
+
+		final int originalWidth = plugin.getImagePlus().getWidth();
+		final int originalHeight = plugin.getImagePlus().getHeight();
+		final int originalDepth = plugin.getImagePlus().getNSlices();
+
+		if (x_min < 0) x_min = 0;
+		if (y_min < 0) y_min = 0;
+		if (z_min < 0) z_min = 0;
+		if (x_max >= originalWidth) x_max = originalWidth - 1;
+		if (y_max >= originalHeight) y_max = originalHeight - 1;
+		if (z_max >= originalDepth) z_max = originalDepth - 1;
+
+		final double[] sigmas = new double[9];
+		for (int i = 0; i < sigmas.length; ++i) {
+			sigmas[i] = ((i + 1) * plugin.getMinimumSeparation()) / 2;
+		}
+
+		sigmaPalette = new SigmaPalette(plugin,
+				plugin.getHessianCaller((getCurrentState() == WAITING_FOR_SIGMA_POINT_II) ? "secondary" : "primary"));
+		sigmaPalette.makePalette(x_min, x_max, y_min, y_max, z_min, z_max, sigmas, 3, 3, z);
+	}
+
 	private String getState(final int state) {
 		switch (state) {
 		case READY:
@@ -3125,12 +3115,25 @@ public class SNTUI extends JDialog {
 		guiUtils.error("This option requires valid image data to be loaded.");
 	}
 
+	private boolean userPreferstoRunWizard() {
+		if (askUserConfirmation && sigmaPalette == null && guiUtils.getConfirmation(//
+				"You have not yet previewed Hessian parameters. It is recommended that you do so "
+				+ "at least once to ensure A* is properly tuned. Would you like to adjust them now "
+				+ "by clicking on a representative region of the image?",
+				"Adjust Hessian Visually?", "Yes. Adjust Visually...", "No. Use Existing Values")) {
+			final String choice = getPrimarySecondaryImgChoice("Adjust settings for wich image?");
+			if (choice == null) return false;
+			changeState(("secondary".equalsIgnoreCase(choice)) ? WAITING_FOR_SIGMA_POINT_II : WAITING_FOR_SIGMA_POINT_I);
+			return true;
+		}
+		return false;
+	}
+
 	private class GuiListener
-			implements ActionListener, ItemListener, SigmaPalette.SigmaPaletteListener, ImageListener {
+			implements ActionListener, ItemListener, ImageListener {
 
 		private final static String EDIT_SIGMA_MANUALLY = "Adjust Settings Manually...";
 		private final static String EDIT_SIGMA_VISUALLY = "Adjust Settings Visually...";
-		private int preSigmaPaletteState;
 
 		public GuiListener() {
 			ImagePlus.addImageListener(this);
@@ -3164,32 +3167,6 @@ public class SNTUI extends JDialog {
 		 */
 		@Override
 		public void imageUpdated(final ImagePlus imp) {
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see tracing.gui.SigmaPalette.SigmaPaletteListener#sigmaPaletteOKed(double,
-		 * double)
-		 */
-		/* SigmaPaletteListener */
-		@Override
-		public void sigmaPaletteOKed(final double newSigma, final double newMultiplier) {
-			SwingUtilities.invokeLater(() -> {
-				restorePreSigmaState();
-				setMultiplier(newMultiplier);
-				setSigma(newSigma, true);
-			});
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see tracing.gui.SigmaPalette.SigmaPaletteListener#sigmaPaletteCanceled()
-		 */
-		@Override
-		public void sigmaPaletteCanceled() {
-			SwingUtilities.invokeLater(() -> restorePreSigmaState());
 		}
 
 		/*
@@ -3395,11 +3372,6 @@ public class SNTUI extends JDialog {
 					checkForColorImageChange();
 
 			}
-		}
-
-		private void restorePreSigmaState() {
-			changeState(preSigmaPaletteState);
-			plugin.setCanvasLabelAllPanes(null);
 		}
 
 		private boolean checkOKToWriteAllAsSWC(final String prefix) {

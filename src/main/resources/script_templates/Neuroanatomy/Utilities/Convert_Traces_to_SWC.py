@@ -13,7 +13,7 @@ info:       Converts all .traces files in a directory into SWC
 """
 
 import os, re
-from tracing import PathAndFillManager
+from sc.fiji.snt import PathAndFillManager
 
 def run():
     if not input_dir:

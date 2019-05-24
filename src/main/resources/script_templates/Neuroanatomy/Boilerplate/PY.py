@@ -17,13 +17,13 @@ version:
 info:
 """
 
-from tracing import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
-from tracing.analysis import (RoiConverter, MultiTreeColorMapper, TreeAnalyzer,
+from fiji.sc.snt import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
+from fiji.sc.snt.analysis import (RoiConverter, MultiTreeColorMapper, TreeAnalyzer,
         TreeColorMapper, TreeStatistics)
-from tracing.analysis.sholl import TreeParser
-from tracing.io import (FlyCircuitLoader, MouseLightLoader, NeuroMorphoLoader)
-from tracing.plugin import (SkeletonizerCmd, StrahlerCmd)
-from tracing.util import (BoundingBox, PointInImage, SNTColor, SWCPoint)
-from tracing.viewer import (OBJMesh, Viewer2D, Viewer3D)
-from tracing.viewer.Viewer3D import ViewMode
+from fiji.sc.snt.analysis.sholl import TreeParser
+from fiji.sc.snt.io import (FlyCircuitLoader, MouseLightLoader, NeuroMorphoLoader)
+from fiji.sc.snt.plugin import (SkeletonizerCmd, StrahlerCmd)
+from fiji.sc.snt.util import (BoundingBox, PointInImage, SNTColor, SWCPoint)
+from fiji.sc.snt.viewer import (OBJMesh, Viewer2D, Viewer3D)
+from fiji.sc.snt.viewer.Viewer3D import ViewMode
 

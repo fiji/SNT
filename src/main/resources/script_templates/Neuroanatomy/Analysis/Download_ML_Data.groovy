@@ -1,6 +1,6 @@
-import tracing.io.MouseLightLoader
-import tracing.annotation.AllenCompartment
-import tracing.annotation.AllenUtils
+import sc.fiji.snt.io.MouseLightLoader
+import sc.fiji.snt.annotation.AllenCompartment
+import sc.fiji.snt.annotation.AllenUtils
 import java.text.DecimalFormat
 
 /**

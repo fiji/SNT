@@ -18,10 +18,10 @@ info:       Demonstrates how to handle neurons as graph structures[1] (graph the
 
 import time
 
-from tracing import Tree
-from tracing.io import MouseLightLoader
-from tracing.viewer import Viewer3D
-from tracing.analysis.graph import GraphUtils
+from fiji.sc.snt import Tree
+from fiji.sc.snt.io import MouseLightLoader
+from fiji.sc.snt.viewer import Viewer3D
+from fiji.sc.snt.analysis.graph import GraphUtils
 
 from org.jgrapht import Graphs, GraphPath, GraphTests
 from org.jgrapht.alg.shortestpath import DijkstraShortestPath
@@ -109,7 +109,7 @@ def run():
     # Visualize the longest path in Viewer3D (interactive instance)
     viewer = Viewer3D(context)
 
-    # Import results as tracing.Tree objects expected by Viewer3D
+    # Import results as sc.fiji.snt.Tree objects expected by Viewer3D
     snt_tree_input_nodes = Tree(nodes, "Input nodes")
     snt_tree_input_nodes.setColor("cyan")
     viewer.add(snt_tree_input_nodes)

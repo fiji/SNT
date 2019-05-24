@@ -4,11 +4,9 @@
 
 import groovy.io.FileType
 import groovy.time.TimeCategory
-import groovy.time.TimeDuration
-
-import tracing.Tree
-import tracing.analysis.MultiTreeColorMapper
-import tracing.viewer.Viewer3D
+import sc.fiji.snt.Tree
+import sc.fiji.snt.analysis.MultiTreeColorMapper
+import sc.fiji.snt.viewer.Viewer3D
 
 /**
  * Exemplifies how to quickly render large collections of cells from

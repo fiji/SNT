@@ -10,13 +10,13 @@ version:    20190318
 info:       Exemplifies how to render reconstructions and neuropil annotations
             in a stand-alone Reconstruction Viewer. Requires internet connection
 """
-from tracing import Tree
-from tracing.io import MouseLightLoader
-from tracing.analysis import TreeColorMapper
-from tracing.annotation import AllenCompartment
-from tracing.annotation import AllenUtils
-from tracing.viewer import OBJMesh, Viewer3D
-from tracing.viewer.Viewer3D import ViewMode
+from fiji.sc.snt import Tree
+from fiji.sc.snt.io import MouseLightLoader
+from fiji.sc.snt.analysis import TreeColorMapper
+from fiji.sc.snt.annotation import AllenCompartment
+from fiji.sc.snt.annotation import AllenUtils
+from fiji.sc.snt.viewer import OBJMesh, Viewer3D
+from fiji.sc.snt.viewer.Viewer3D import ViewMode
 
 from org.scijava.util import Colors
 

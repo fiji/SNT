@@ -14,7 +14,7 @@ info:       Displays a WYSIWYG image of a tracing canvas. Exemplifies
             how to script SNT using SNTService
 """
 
-from tracing import Tree
+from sc.fiji.snt import Tree
 
 def run():
 

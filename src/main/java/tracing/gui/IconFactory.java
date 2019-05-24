@@ -26,6 +26,7 @@ import java.awt.Color;
 
 import javax.swing.AbstractButton;
 import javax.swing.Icon;
+import javax.swing.JButton;
 import javax.swing.UIManager;
 
 /**
@@ -101,6 +102,7 @@ public class IconFactory {
 			NAVIGATE('\uf14e', false), //
 			MOVE('\uf0b2', true), //
 			NEXT('\uf35b', false), //
+			OPEN_FOLDER('\uf07c', false), //
 			OPTIONS('\uf013', true), //
 			PEN('\uf303', true), //
 			POINTER('\uf245', true), //
@@ -156,6 +158,12 @@ public class IconFactory {
 		return new FADerivedIcon(entry.id, size, color, entry.solid);
 	}
 
+	public static JButton getButton(final GLYPH glyph) {
+		final JButton button = new JButton();
+		applyIcon(button, UIManager.getFont("Button.font").getSize(), glyph);
+		return button;
+	}
+
 	public static void applyIcon(final AbstractButton button, final float iconSize,
 		final GLYPH glyph) {
 		final Icon defIcon = IconFactory.getIcon(glyph, iconSize, DEFAULT_COLOR);
@@ -167,9 +175,13 @@ public class IconFactory {
 		button.setPressedIcon(prssdIcon);
 	}
 
-	public static Icon getButtonIcon(final GLYPH entry) {
+	public static Icon getButtonIcon(final GLYPH entry, final float scalingFactor) {
 		return new FADerivedIcon(entry.id, UIManager.getFont("Button.font")
-			.getSize() * 1.4f, UIManager.getColor("Button.foreground"), entry.solid);
+			.getSize() * scalingFactor, UIManager.getColor("Button.foreground"), entry.solid);
+	}
+
+	public static Icon getButtonIcon(final GLYPH entry) {
+		return getButtonIcon(entry, 1.4f);
 	}
 
 	public static Icon getTabbedPaneIcon(final GLYPH entry) {

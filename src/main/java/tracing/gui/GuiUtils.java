@@ -35,6 +35,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -58,6 +59,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
@@ -342,6 +345,28 @@ public class GuiUtils {
 		catch (final ParseException ignored) {
 			return Double.NaN; // invalid user input
 		}
+	}
+
+	public float[] getRange(final String promptMsg, final String promptTitle, final float[] defaultRange) {
+		final String s = getString(promptMsg, promptTitle, SNT.formatDouble(defaultRange[0], 3) + "-"
+				+ SNT.formatDouble(defaultRange[1], 3));
+		if (s == null)
+			return null; // user pressed cancel
+		final float[] values = new float[2];
+		try {
+			// see https://stackoverflow.com/a/51283413
+			final String regex = "([-+]?\\d*\\.?\\d*)\\s*-\\s*([-+]?\\d*\\.?\\d*)";
+			final Pattern pattern = Pattern.compile(regex);
+			final Matcher matcher = pattern.matcher(s);
+			matcher.find();
+			values[0] = Float.parseFloat(matcher.group(1));
+			values[1] = Float.parseFloat(matcher.group(2));
+			return values;
+		} catch (final Exception ignored) {
+			values[0] = Float.NaN;
+			values[1] = Float.NaN;
+		}
+		return values;
 	}
 
 	public File saveFile(final String title, final File file,
@@ -661,6 +686,37 @@ public class GuiUtils {
 		cp.gridx = 0;
 		cp.gridy = 0;
 		return cp;
+	}
+
+	public JTextField textField(final String placeholder) {
+		return new TextFieldWithPlaceholder(placeholder);
+	}
+
+	private class TextFieldWithPlaceholder extends JTextField {
+
+		private final String placeholder;
+
+		private TextFieldWithPlaceholder(final String placeholder) {
+			this.placeholder = placeholder;
+		}
+
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		protected void paintComponent(final java.awt.Graphics g) {
+			super.paintComponent(g);
+
+			if (getText().isEmpty() && !(FocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == this)) {
+				final Graphics2D g2 = (Graphics2D) g.create();
+				g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+						RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+				g2.setColor(Color.GRAY);
+				g2.setFont(getFont().deriveFont(Font.ITALIC));
+				g2.drawString(placeholder, 4, g2.getFontMetrics().getHeight());
+				g2.dispose();
+			}
+		}
+
 	}
 
 	public static Color getDisabledComponentColor() {

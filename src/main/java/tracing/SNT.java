@@ -206,7 +206,7 @@ public class SNT {
 		while (pattern.length() < digits + 2)
 			pattern.append("0");
 		final double absValue = Math.abs(value);
-		if (absValue < 0.01 || absValue >= 1000) pattern.append("E0");
+		if ((absValue > 0 && absValue < 0.01) || absValue >= 1000) pattern.append("E0");
 		final NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
 		final DecimalFormat df = (DecimalFormat)nf;
 		df.applyPattern(pattern.toString());

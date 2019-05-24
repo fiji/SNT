@@ -111,7 +111,7 @@ import org.scijava.util.PlatformUtils;
 
 import tracing.SNT;
 
-/** Misc. utilities for SNT GUI. */
+/** Misc. utilities for SNT's GUI. */
 public class GuiUtils {
 
 	final private Component parent;
@@ -616,22 +616,25 @@ public class GuiUtils {
 		label.setForeground(fg);														// for MACOS!?
 		if (uri != null && Desktop.isDesktopSupported()) {
 			label.addMouseListener(new MouseAdapter() {
+				final int w = label.getFontMetrics(label.getFont()).stringWidth(label.getText());
 
 				@Override
-				public void mouseEntered(MouseEvent e) {
-					label.setForeground(Color.BLUE);
-					label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+				public void mouseEntered(final MouseEvent e) {
+					if (e.getX() <= w) {
+						label.setForeground(Color.BLUE);
+						label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+					}
 				}
 
 				@Override
-				public void mouseExited(MouseEvent e) {
+				public void mouseExited(final MouseEvent e) {
 					label.setForeground(fg);
 					label.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 				}
 
 				@Override
-				public void mouseClicked(MouseEvent e) {
-					if (label.isEnabled()) openURL(uri);
+				public void mouseClicked(final MouseEvent e) {
+					if (label.isEnabled() && e.getX() <= w) openURL(uri);
 				}
 			});
 		}

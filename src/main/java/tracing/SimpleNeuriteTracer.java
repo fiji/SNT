@@ -559,6 +559,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				" T=" + frame);
 		this.channel = channel;
 		this.frame = frame;
+		final boolean currentSinglePane = getSinglePane();
+		setFieldsFromImage(getImagePlus()); // In case image properties changed outside SNT 
+		setSinglePane(currentSinglePane);
 		loadData(); // will call nullifyHessian();
 		if (use3DViewer && imageContent != null) {
 			updateImageContent(prefs.get3DViewerResamplingFactor());

@@ -1367,6 +1367,7 @@ public class SNTUI extends JDialog {
 					new ApplyLabelsAction().actionPerformed(ev);
 					break;
 				case COMPARE_AGAINST:
+					if (noPathsError()) return;
 					(new CmdRunner(ShowCorrespondencesCmd.class)).execute();
 					break;
 				default:
@@ -2903,7 +2904,7 @@ public class SNTUI extends JDialog {
 		default:
 			break;
 		}
-		if (activeWorker != null) activeWorker.kill();
+		if (activeWorker != null && !activeWorker.isDone()) activeWorker.kill();
 		changeState(WAITING_TO_START_PATH);
 	}
 

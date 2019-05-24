@@ -50,10 +50,17 @@ public class TracerThread extends SearchThread {
 		super(snt);
 		reciprocal = true;
 		singleSlice = snt.is2D();
-		useHessian = snt.isHessianEnabled();
-		hessian = (useHessian) ? snt.hessian : null;
-		multiplier = snt.hessianMultiplier;
-		cachedTubeness = snt.cachedTubeness;
+		useHessian = snt.isHessianEnabled((snt.isTracingOnSecondaryImageActive())?"secondary":"primary");
+		if (useHessian) {
+			final boolean secondary = snt.isTracingOnSecondaryImageActive();
+			hessian = (secondary) ? snt.secondaryHessian.hessian : snt.primaryHessian.hessian;
+			multiplier = (secondary) ? snt.secondaryHessian.getMultiplier() : snt.primaryHessian.getMultiplier();
+			cachedTubeness = (secondary) ? snt.secondaryHessian.cachedTubeness : snt.primaryHessian.cachedTubeness;
+		} else {
+			hessian = null;
+			multiplier = HessianCaller.DEFAULT_MULTIPLIER;
+			cachedTubeness = null;
+		}
 		init(start_x, start_y, start_z, goal_x, goal_y, goal_z);
 	}
 
@@ -172,29 +179,7 @@ public class TracerThread extends SearchThread {
 		final int new_z)
 	{
 
-		double value_at_new_point = -1;
-
-		switch (imageType) {
-			case ImagePlus.GRAY8:
-			case ImagePlus.COLOR_256:
-				value_at_new_point = slices_data_b[new_z][new_y * width + new_x] & 0xFF;
-				break;
-			case ImagePlus.GRAY16: {
-				value_at_new_point = slices_data_s[new_z][new_y * width + new_x];
-				value_at_new_point = 255.0 * (value_at_new_point - stackMin) /
-					(stackMax - stackMin);
-				break;
-			}
-			case ImagePlus.GRAY32: {
-				value_at_new_point = slices_data_f[new_z][new_y * width + new_x];
-				value_at_new_point = 255.0 * (value_at_new_point - stackMin) /
-					(stackMax - stackMin);
-				break;
-			}
-		}
-
 		double cost;
-
 		if (useHessian) {
 
 			if (cachedTubeness == null) {
@@ -204,7 +189,7 @@ public class TracerThread extends SearchThread {
 					final double[] hessianEigenValues = new double[2];
 
 					final boolean real = hessian.hessianEigenvaluesAtPoint2D(new_x, new_y,
-						true, hessianEigenValues, false, true, x_spacing, y_spacing);
+							true, hessianEigenValues, false, true, x_spacing, y_spacing);
 
 					// Just use the absolute value
 					// of the largest eigenvalue
@@ -219,15 +204,12 @@ public class TracerThread extends SearchThread {
 
 						measure *= multiplier;
 						if (measure > 256) measure = 256;
-
 						cost = 1 / measure;
-
 					}
 					else {
-
 						cost = 1 / 0.2;
-
 					}
+					return cost;
 
 				}
 				else {
@@ -235,8 +217,8 @@ public class TracerThread extends SearchThread {
 					final double[] hessianEigenValues = new double[3];
 
 					final boolean real = hessian.hessianEigenvaluesAtPoint3D(new_x, new_y,
-						new_z, true, hessianEigenValues, false, true, x_spacing, y_spacing,
-						z_spacing);
+							new_z, true, hessianEigenValues, false, true, x_spacing, y_spacing,
+							z_spacing);
 
 					/*
 					 * FIXME: there's lots of literature on how to pick this rule (see Sato et al,
@@ -283,6 +265,7 @@ public class TracerThread extends SearchThread {
 		}
 		else {
 
+			final double value_at_new_point = getValueAtNewPoint(new_x, new_y, new_z);
 			if (reciprocal) {
 				cost = 1 / RECIPROCAL_FUDGE;
 				if (value_at_new_point != 0) cost = 1.0 / value_at_new_point;
@@ -294,6 +277,29 @@ public class TracerThread extends SearchThread {
 		}
 
 		return cost;
+	}
+
+	private double getValueAtNewPoint(final int new_x, final int new_y, final int new_z) {
+		double value_at_new_point = -1;
+		switch (imageType) {
+			case ImagePlus.GRAY8:
+			case ImagePlus.COLOR_256:
+				value_at_new_point = slices_data_b[new_z][new_y * width + new_x] & 0xFF;
+				break;
+			case ImagePlus.GRAY16: {
+				value_at_new_point = slices_data_s[new_z][new_y * width + new_x];
+				value_at_new_point = 255.0 * (value_at_new_point - stackMin) /
+					(stackMax - stackMin);
+				break;
+			}
+			case ImagePlus.GRAY32: {
+				value_at_new_point = slices_data_f[new_z][new_y * width + new_x];
+				value_at_new_point = 255.0 * (value_at_new_point - stackMin) /
+					(stackMax - stackMin);
+				break;
+			}
+		}
+		return value_at_new_point;
 	}
 
 	@Override

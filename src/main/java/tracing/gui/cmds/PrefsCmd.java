@@ -113,7 +113,7 @@ public class PrefsCmd extends ContextCommand {
 		prefService.clear(ChooseDatasetCmd.class);
 		prefService.clear(ColorMapReconstructionCmd.class);
 		prefService.clear(CompareFilesCmd.class);
-		prefService.clear(ComputeFilteredImg.class);
+		prefService.clear(ComputeSecondaryImg.class);
 		prefService.clear(ComputeTubenessImg.class);
 		prefService.clear(DistributionCmd.class);
 		prefService.clear(JSONImporterCmd.class);

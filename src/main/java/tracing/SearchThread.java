@@ -361,11 +361,11 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			depth = snt.depth;
 			stackMin = snt.stackMin;
 			stackMax = snt.stackMax;
-			if (snt.doSearchOnFilteredData && snt.filteredImageLoaded()) {
+			if (snt.doSearchOnSecondaryData && snt.secondaryImageLoaded()) {
 				imageType = ImagePlus.GRAY32;
-				slices_data_f = snt.filteredData;
-				stackMin = snt.stackMinFiltered;
-				stackMax = snt.stackMaxFiltered;
+				slices_data_f = snt.secondaryData;
+				stackMin = snt.stackMinSecondary;
+				stackMax = snt.stackMaxSecondary;
 			} else if (snt.slices_data_b != null) {
 				imageType = ImagePlus.GRAY8;
 				slices_data_b = snt.slices_data_b;

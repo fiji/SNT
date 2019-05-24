@@ -77,12 +77,12 @@ public class HessianCaller {
 	}
 
 	private double impMax() {
-		return (type == PRIMARY) ? snt.stackMax : snt.stackMaxFiltered;
+		return (type == PRIMARY) ? snt.stackMax : snt.stackMaxSecondary;
 	}
 
 	public double[] impRange() {
 		return (type == PRIMARY) ? new double[] { snt.stackMin, snt.stackMax }
-				: new double[] { snt.stackMinFiltered, snt.stackMaxFiltered };
+				: new double[] { snt.stackMinSecondary, snt.stackMaxSecondary };
 	}
 
 	public boolean isGaussianComputed() {
@@ -102,7 +102,7 @@ public class HessianCaller {
 	}
 
 	private void setImp() {
-		if (imp == null) imp = (type == PRIMARY) ? snt.getLoadedDataAsImp() : snt.getFilteredDataAsImp();
+		if (imp == null) imp = (type == PRIMARY) ? snt.getLoadedDataAsImp() : snt.getSecondaryDataAsImp();
 	}
 
 	public ImagePlus getImp() {

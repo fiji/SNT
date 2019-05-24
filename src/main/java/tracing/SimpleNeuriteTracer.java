@@ -185,11 +185,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * of two ways: image is loaded into memory or we waive its file path to a
 	 * third-party class that will parse it
 	 */
-	protected boolean doSearchOnFilteredData;
-	protected float[][] filteredData;
-	protected File filteredFileImage = null;
-	volatile protected float stackMaxFiltered = Float.MIN_VALUE;
-	volatile protected float stackMinFiltered = Float.MAX_VALUE;
+	protected boolean doSearchOnSecondaryData;
+	protected float[][] secondaryData;
+	protected File secondaryImageFile = null;
+	volatile protected float stackMaxSecondary = Float.MIN_VALUE;
+	volatile protected float stackMinSecondary = Float.MAX_VALUE;
 	protected boolean tubularGeodesicsTracingEnabled = false;
 	protected TubularGeodesicsTracer tubularGeodesicsThread;
 
@@ -1382,7 +1382,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 			// [xyz]_spacing
 
-			tubularGeodesicsThread = new TubularGeodesicsTracer(filteredFileImage,
+			tubularGeodesicsThread = new TubularGeodesicsTracer(secondaryImageFile,
 				(int) Math.round(last_start_point_x), (int) Math.round(
 					last_start_point_y), (int) Math.round(last_start_point_z), x_end,
 				y_end, z_end, x_spacing, y_spacing, z_spacing, spacing_units);
@@ -1936,10 +1936,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Retrieves the pixel data currently loaded in memory as an ImagePlus object.
-	 * Returned image is always a single channel image. The main purpose of this
-	 * method is to bridge SNT with other legacy classes that cannot deal with
-	 * multidimensional images.
+	 * Retrieves the pixel data of the main image currently loaded in memory as an
+	 * ImagePlus object. Returned image is always a single channel image.
 	 *
 	 * @return the loaded data corresponding to the C,T position currently being
 	 *         traced, or null if no image data has been loaded into memory.
@@ -1991,45 +1989,45 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Returns the file of the 'filtered' image, if any.
+	 * Returns the file of the 'secondary image', if any.
 	 *
-	 * @return the filtered image file, or null if no file has been set
+	 * @return the secondary image file, or null if no file has been set
 	 */
 	protected File getFilteredImageFile() {
-		return filteredFileImage;
+		return secondaryImageFile;
 	}
 
 	/**
-	 * Assesses if the 'filtered image' has been loaded into memory. Note that while
-	 * some tracers will load the image into memory, others may waive the loading
+	 * Assesses if the 'secondary image' has been loaded into memory. Note that while
+	 * some tracer Threads will load the image into memory, others may waive the loading
 	 * to third party libraries
 	 *
 	 * @return true, if image has been loaded into memory.
 	 */
-	public boolean filteredImageLoaded() {
-		return filteredData != null;
+	public boolean secondaryImageLoaded() {
+		return secondaryData != null;
 	}
 
 	protected boolean inputImageLoaded() {
 		return slices_data_b != null || slices_data_s != null || slices_data_f != null;
 	}
 
-	protected boolean isTracingOnFilteredImageAvailable() {
-		return filteredImageLoaded() || tubularGeodesicsTracingEnabled;
+	protected boolean isTracingOnSecondaryImageAvailable() {
+		return secondaryImageLoaded() || tubularGeodesicsTracingEnabled;
 	}
 
 	/**
-	 * Specifies the 'filtered image' to be used during a tracing session.
+	 * Specifies the 'secondary image' to be used during a tracing session.
 	 *
-	 * @param file The file containing the filtered image
+	 * @param file The file containing the 'secondary image'
 	 */
-	public void setFilteredImage(final File file) {
-		this.filteredFileImage = file;
+	public void setSecondaryImage(final File file) {
+		secondaryImageFile = file;
 		if (ui != null) ui.updateFilteredImageFileWidget();
 	}
 
 	/**
-	 * Loads the 'filtered image' specified by {@link #setFilteredImage(File)} into
+	 * Loads the 'secondary image' specified by {@link #setSecondaryImage(File)} into
 	 * memory as 32-bit data.
 	 * 
 	 * @param file The file to be loaded
@@ -2037,33 +2035,42 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * @throws IOException              If image could not be loaded
 	 * @throws IllegalArgumentException if dimensions are unexpected, or image type
 	 *                                  is not supported
-	 * @see #filteredImageLoaded()
-	 * @see #getFilteredDataAsImp()
+	 * @see #secondaryImageLoaded()
+	 * @see #getSecondaryDataAsImp()
 	 */
-	public void loadFilteredImage(final File file) throws IOException, IllegalArgumentException {
+	public void loadSecondaryImage(final File file) throws IOException, IllegalArgumentException {
 		final ImagePlus imp = openCachedDataImage(file);
-		loadFilteredImage(imp, true);
-		setFilteredImage(filteredImageLoaded() ? file : null);
+		loadSecondaryImage(imp, true);
+		setSecondaryImage(secondaryImageLoaded() ? file : null);
 	}
 
-	public void loadFilteredImage(final ImagePlus imp) throws IllegalArgumentException {
-		loadFilteredImage(imp, true);
+	public void loadSecondaryImage(final ImagePlus imp) throws IllegalArgumentException {
+		loadSecondaryImage(imp, true);
 	}
 
-	protected void loadFilteredImage(final ImagePlus imp, final boolean changeUIState) throws IllegalArgumentException {
-		if (imp != null && filteredFileImage != null && filteredFileImage.getName().toLowerCase().contains(".oof")) {
+	public void setSecondaryImageMinMax(final float min, final float max) {
+		stackMinSecondary = min;
+		stackMaxSecondary = max;
+	}
+
+	public float[] getSecondaryImageMinMax() {
+		return new float[] { stackMinSecondary, stackMaxSecondary };
+	}
+
+	protected void loadSecondaryImage(final ImagePlus imp, final boolean changeUIState) throws IllegalArgumentException {
+		if (imp != null && secondaryImageFile != null && secondaryImageFile.getName().toLowerCase().contains(".oof")) {
 			showStatus(0, 0, "Optimally Oriented Flux image detected");
 			SNT.log("Optimally Oriented Flux image detected. Image won't be cached...");
 			tubularGeodesicsTracingEnabled = true;
 			return;
 		}
 		if (changeUIState) changeUIState(SNTUI.CACHING_DATA);
-		loadCachedData(imp, filteredData = new float[depth][]);
+		loadCachedData(imp, secondaryData = new float[depth][]);
 		File file = null;
-		if (filteredImageLoaded() && (imp.getFileInfo() != null)) {
+		if (secondaryImageLoaded() && (imp.getFileInfo() != null)) {
 			file = new File(imp.getFileInfo().directory, imp.getFileInfo().fileName);
 		}
-		setFilteredImage(file);
+		setSecondaryImage(file);
 		if (changeUIState) changeUIState(SNTUI.WAITING_TO_START_PATH);
 	}
 
@@ -2086,9 +2093,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				+ ". If this unexpected, check under 'Image>Properties...' that CZT axes are not swapped.");
 		}
 		if (changeUIState) changeUIState(SNTUI.CACHING_DATA);
-		SNT.log("Loading tubeness image multiplier=" + hc.multiplier + " max=" + stackMaxFiltered);
+		SNT.log("Loading tubeness image multiplier=" + hc.multiplier + " max=" + stackMaxSecondary);
 		loadCachedData(imp, hc.cachedTubeness = new float[depth][]);
-		hc.setSigmaAndMax(hc.getSigma(true), stackMaxFiltered);
+		hc.setSigmaAndMax(hc.getSigma(true), stackMaxSecondary);
 		if (changeUIState) {
 			getUI().updateHessianPanel(hc);
 			changeUIState(SNTUI.WAITING_TO_START_PATH);
@@ -2096,7 +2103,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	private void loadCachedData(final ImagePlus imp, final float[][] destination) {
-		showStatus(0, 0, "Loading filtered image");
+		showStatus(0, 0, "Loading secondary image");
 		SNT.convertTo32bit(imp);
 		final ImageStack s = imp.getStack();
 		for (int z = 0; z < depth; ++z) {
@@ -2106,8 +2113,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			for (int y = 0; y < height; ++y) {
 				for (int x = 0; x < width; ++x) {
 					final float v = destination[z][y * width + x];
-					if (v < stackMinFiltered) stackMinFiltered = v;
-					if (v > stackMaxFiltered) stackMaxFiltered = v;
+					if (v < stackMinSecondary) stackMinSecondary = v;
+					if (v > stackMaxSecondary) stackMaxSecondary = v;
 				}
 			}
 		}
@@ -2140,15 +2147,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Retrieves the 'filtered image' data currently loaded in memory as an
+	 * Retrieves the 'secondary image' data currently loaded in memory as an
 	 * ImagePlus object. Returned image is always of 32-bit type.
 	 *
 	 * @return the loaded data or null if no image has been loaded.
-	 * @see #filteredImageLoaded()
+	 * @see #secondaryImageLoaded()
 	 * @see #loadFilteredImage()
 	 */
-	public ImagePlus getFilteredDataAsImp() {
-		return (filteredImageLoaded()) ? getFilteredDataFromCachedData("Filtered Data", filteredData) : null;
+	public ImagePlus getSecondaryDataAsImp() {
+		return (secondaryImageLoaded()) ? getFilteredDataFromCachedData("Secondary Data", secondaryData) : null;
 	}
 
 	protected ImagePlus getCachedTubenessDataAsImp(final String type) {
@@ -2173,7 +2180,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public synchronized void enableHessian(final boolean enable) {
 		if (enable) {
-			if (isTracingOnFilteredImageActive())
+			if (isTracingOnSecondaryImageActive())
 				secondaryHessian.start();
 			else
 				primaryHessian.start();
@@ -2679,13 +2686,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if(filteredData) {
 			if (tubularGeodesicsTracingEnabled)
 				try {
-					xy8 = openCachedDataImage(filteredFileImage);
+					xy8 = openCachedDataImage(secondaryImageFile);
 				} catch (final IOException e) {
 					SNT.error("IOerror", e);
 					return null;
 				}
 			else 
-				xy8 = getFilteredDataAsImp();
+				xy8 = getSecondaryDataAsImp();
 		} else 
 			xy8 = getLoadedDataAsImp();
 		SNT.convertTo8bit(xy8);
@@ -2785,6 +2792,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	// TODO: Use prefsService
 	private boolean manualOverride = false;
 
+	protected boolean isTracingOnSecondaryImageActive() {
+		return doSearchOnSecondaryData && secondaryImageLoaded();
+	}
+
 	/**
 	 * Enables (or disables) the A* search algorithm (enabled by default)
 	 *
@@ -2811,7 +2822,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 */
 	public boolean isHessianEnabled(final String image) {
 		if ("secondary".equalsIgnoreCase(image))
-			return hessianEnabled && isTracingOnFilteredImageAvailable() && secondaryHessian.sigma > -1;
+			return hessianEnabled && isTracingOnSecondaryImageAvailable() && secondaryHessian.sigma > -1;
 		return hessianEnabled && primaryHessian.sigma > -1;
 	}
 

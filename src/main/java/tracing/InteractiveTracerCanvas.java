@@ -461,10 +461,9 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			case SNTUI.EDITING:
 				impossibleEdit(true);
 				break;
-			case SNTUI.WAITING_FOR_SIGMA_POINT:
-				tracerPlugin.launchPaletteAround(myOffScreenX(e.getX()), myOffScreenY(e
-					.getY()), imp.getZ() - 1);
-				restoreDefaultCursor();
+			case SNTUI.WAITING_FOR_SIGMA_POINT_I:
+			case SNTUI.WAITING_FOR_SIGMA_POINT_II:
+				startSigmaWizard(e.getX(), e.getY());
 				break;
 			case SNTUI.WAITING_FOR_SIGMA_CHOICE:
 				getGuiUtils().tempMsg(
@@ -484,6 +483,11 @@ class InteractiveTracerCanvas extends TracerCanvas {
 				break;
 		}
 
+	}
+
+	private void startSigmaWizard(final int canvasX, final int canvasY) {
+		tracerPlugin.getUI().launchSigmaPaletteAround(myOffScreenX(canvasX), myOffScreenY(canvasY));
+		restoreDefaultCursor();
 	}
 
 	private boolean impossibleEdit(final boolean displayError) {

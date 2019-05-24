@@ -50,13 +50,15 @@ import tracing.SNT;
 import tracing.gui.GuiUtils;
 
 /**
- * Implements the "Generate Filtered Image" command.
+ * Implements the "Generate Secondary Image" command.
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, initializer = "init", label = "Compute \"Filtered Image\"")
-public class ComputeFilteredImg extends CommonDynamicCmd {
+@Plugin(type = Command.class, visible = false, initializer = "init", label = "Compute \"Secondary Image\"")
+public class ComputeSecondaryImg extends CommonDynamicCmd {
 
+	private static final String NONE = "None. Duplicate primary image"
+			+ "";
 	private static final String FRANGI = "Frangi";
 	private static final String FRANGI_NO_GAUS = "Frangi (without Gaussian)";
 	private static final String TUBENESS = "Tubeness";
@@ -73,7 +75,7 @@ public class ComputeFilteredImg extends CommonDynamicCmd {
 	@Parameter
 	private IOService io;
 
-	@Parameter(label = "Ops filter", choices = { FRANGI, FRANGI_NO_GAUS, TUBENESS })
+	@Parameter(label = "Ops filter", choices = { FRANGI, FRANGI_NO_GAUS, TUBENESS, NONE })
 	private String filter;
 
 	@Parameter(label = "Display", required = false)
@@ -83,9 +85,9 @@ public class ComputeFilteredImg extends CommonDynamicCmd {
 	private boolean save;
 
 	@Parameter(label = "N.B.:", persist = false, visibility = ItemVisibility.MESSAGE)
-	private String msg = "<HTML>It is assumed that the current sigma value in the Auto-tracing<br>"
-			+ "widget reflects the size of structures to be filtered. If that is<br>"
-			+ "not the case, you should dismiss this prompt and adjust it.";
+	private String msg = "<HTML>It is assumed that the current sigma value for the primary image in<br>"
+			+ "the Auto-tracing widget reflects the size of structures to be filtered.<br>"
+			+ "If that is not the case, you should dismiss this prompt and adjust it.";
 
 	@Parameter(label = "Online Help", callback = "help")
 	private Button button;
@@ -103,7 +105,7 @@ public class ComputeFilteredImg extends CommonDynamicCmd {
 
 	@SuppressWarnings("unused")
 	private void help() {
-		final String url = "https://imagej.net/SNT:_Overview#Tracing_on_Filtered_Image";
+		final String url = "https://imagej.net/SNT:_Overview#Tracing_on_Secondary_Image";
 		try {
 			platformService.open(new URL(url));
 		} catch (final IOException e) {
@@ -120,18 +122,25 @@ public class ComputeFilteredImg extends CommonDynamicCmd {
 	@Override
 	public void run() {
 
-		status("Computing filtered image...", false);
+		status("Computing secondary image...", false);
 		final ImagePlus inputImp = sntService.getPlugin().getLoadedDataAsImp();
+
+		if (NONE.equals(filter)) {
+			filteredImp = inputImp;
+			apply();
+			return;
+		}
+
 		final Img<FloatType> in = ImageJFunctions.convertFloat(inputImp);
-		final double sigmaScaled = sntService.getPlugin().getHessianSigma(true);
+		final double sigmaScaled = sntService.getPlugin().getHessianSigma("primary", true);
 		final double[] voxelDimensions = new double[] { inputImp.getCalibration().pixelWidth,
-				inputImp.getCalibration().pixelHeight, inputImp.getCalibration().pixelDepth, };
+				inputImp.getCalibration().pixelHeight, inputImp.getCalibration().pixelDepth };
 
 		switch (filter) {
 		case FRANGI:
 		case FRANGI_NO_GAUS:
 
-			final int sigmaUnscaled = (int) sntService.getPlugin().getHessianSigma(false);
+			final int sigmaUnscaled = (int) sntService.getPlugin().getHessianSigma("primary", false);
 			final Img<FloatType> frangiResult = ops.create().img(in);
 			final RandomAccessibleInterval<FloatType> vesselnessInput = (filter.equals(FRANGI_NO_GAUS)) ? in
 					: ops.filter().gauss(in, sigmaScaled);
@@ -154,7 +163,10 @@ public class ComputeFilteredImg extends CommonDynamicCmd {
 		// In legacy mode dimensions gets scrambled!?. Ensure it is correct
 		filteredImp.setDimensions(inputImp.getNChannels(), inputImp.getNSlices(), inputImp.getNFrames());
 		filteredImp.copyScale(inputImp);
+		apply();
+	}
 
+	private void apply() {
 		final File file = (save) ? getSaveFile() : null;
 		if (file != null) {
 			//TODO: Move to IOService, once it supports saving of ImagePlus
@@ -163,8 +175,8 @@ public class ComputeFilteredImg extends CommonDynamicCmd {
 			if (!saved)
 				msg("An error occured while saving image.", "IO Error");
 		}
-		snt.loadFilteredImage(filteredImp);
-		snt.setFilteredImage(file);
+		snt.loadSecondaryImage(filteredImp);
+		snt.setSecondaryImage(file);
 		if (show) filteredImp.show();
 		resetUI();
 	}
@@ -192,6 +204,6 @@ public class ComputeFilteredImg extends CommonDynamicCmd {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		ij.command().run(ComputeFilteredImg.class, true);
+		ij.command().run(ComputeSecondaryImg.class, true);
 	}
 }

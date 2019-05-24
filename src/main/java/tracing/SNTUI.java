@@ -98,10 +98,7 @@ import org.scijava.util.Types;
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.gui.HTMLDialog;
-import ij.gui.StackWindow;
-import ij.measure.Calibration;
 import ij3d.Content;
 import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
@@ -136,14 +133,6 @@ import tracing.viewer.Viewer3D;
 
 @SuppressWarnings("serial")
 public class SNTUI extends JDialog {
-
-	/* Deprecated stuff to be removed soon */
-	@Deprecated
-	private final String noColorImageString = "[None]";
-	@Deprecated
-	private ImagePlus currentColorImage;
-	@Deprecated
-	private JComboBox<String> colorImageChoice;
 
 	/* UI */
 	private static final int MARGIN = 4;
@@ -195,7 +184,6 @@ public class SNTUI extends JDialog {
 
 	private ActiveWorker activeWorker;
 	private volatile int currentState;
-	private volatile boolean ignoreColorImageChoiceEvents = false;
 
 	private final SimpleNeuriteTracer plugin;
 	private final PathAndFillManager pathAndFillManager;
@@ -512,74 +500,6 @@ public class SNTUI extends JDialog {
 
 	private void updateStatusText(final String newStatus) {
 		statusText.setText("<html><strong>" + newStatus + "</strong></html>");
-	}
-
-	@Deprecated
-	synchronized protected void updateColorImageChoice() {
-		assert SwingUtilities.isEventDispatchThread();
-
-		ignoreColorImageChoiceEvents = true;
-
-		// Try to preserve the old selection:
-		final String oldSelection = (String) colorImageChoice.getSelectedItem();
-
-		colorImageChoice.removeAllItems();
-
-		int j = 0;
-		colorImageChoice.addItem(noColorImageString);
-
-		int selectedIndex = 0;
-
-		final int[] wList = WindowManager.getIDList();
-		if (wList != null) {
-			for (int i1 : wList) {
-				final ImagePlus imp = WindowManager.getImage(i1);
-				j++;
-				final String title = imp.getTitle();
-				colorImageChoice.addItem(title);
-				if (title == oldSelection)
-					selectedIndex = j;
-			}
-		}
-
-		colorImageChoice.setSelectedIndex(selectedIndex);
-
-		ignoreColorImageChoiceEvents = false;
-
-		// This doesn't trigger an item event
-		checkForColorImageChange();
-	}
-
-	@Deprecated
-	synchronized protected void checkForColorImageChange() {
-		final String selectedTitle = (String) colorImageChoice.getSelectedItem();
-
-		ImagePlus intendedColorImage = null;
-		if (selectedTitle != null && !selectedTitle.equals(noColorImageString)) {
-			intendedColorImage = WindowManager.getImage(selectedTitle);
-		}
-
-		if (intendedColorImage != currentColorImage) {
-			if (intendedColorImage != null) {
-				final ImagePlus image = plugin.getImagePlus();
-				final Calibration calibration = plugin.getImagePlus().getCalibration();
-				final Calibration colorImageCalibration = intendedColorImage.getCalibration();
-				if (!SNT.similarCalibrations(calibration, colorImageCalibration)) {
-					guiUtils.centeredMsg("The calibration of '" + intendedColorImage.getTitle()
-							+ "' is different from the image you're tracing ('" + image.getTitle()
-							+ "')'\nThis may produce unexpected results.", "Warning");
-				}
-				if (!(intendedColorImage.getWidth() == image.getWidth()
-						&& intendedColorImage.getHeight() == image.getHeight()
-						&& intendedColorImage.getStackSize() == image.getStackSize()))
-					guiUtils.centeredMsg("the dimensions (in voxels) of '" + intendedColorImage.getTitle()
-							+ "' is different from the image you're tracing ('" + image.getTitle()
-							+ "')'\nThis may produce unexpected results.", "Warning");
-
-			}
-			currentColorImage = intendedColorImage;
-			plugin.setColorImage(currentColorImage);
-		}
 	}
 
 	protected void gaussianCalculated(final boolean succeeded) {
@@ -2532,7 +2452,7 @@ public class SNTUI extends JDialog {
 			pathAndFillManager.resetListeners(null, true); // update Path lists
 			setPathListVisible(true, false);
 			setFillListVisible(false);
-			final StackWindow impWindow = plugin.getWindow(MultiDThreePanes.XY_PLANE);
+			final Frame impWindow = plugin.getImagePlus(MultiDThreePanes.XY_PLANE).getWindow();
 			if (impWindow != null)
 				impWindow.toFront();
 		});
@@ -2634,7 +2554,7 @@ public class SNTUI extends JDialog {
 
 	private void arrangeCanvases(final boolean displayErrorOnFailure) {
 
-		final StackWindow xy_window = plugin.getWindow(MultiDThreePanes.XY_PLANE);
+		final Frame xy_window = plugin.getImagePlus(MultiDThreePanes.XY_PLANE).getWindow();
 		if (xy_window == null) {
 			if (displayErrorOnFailure)
 				guiUtils.error("XY view is not available");
@@ -2649,21 +2569,22 @@ public class SNTUI extends JDialog {
 		final int y = (xy_screen_bounds.height / 2) - (xy_window.getHeight() / 2) + xy_screen_bounds.y;
 		xy_window.setLocation(x, y);
 
-		final StackWindow zy_window = plugin.getWindow(MultiDThreePanes.ZY_PLANE);
-		if (zy_window != null) {
-			zy_window.setLocation(x + xy_window.getWidth(), y);
-			zy_window.toFront();
+		final ImagePlus zy = plugin.getImagePlus(MultiDThreePanes.ZY_PLANE);
+		if (zy != null && zy.getWindow() != null) {
+			zy.getWindow().setLocation(x + xy_window.getWidth(), y);
+			zy.getWindow().toFront();
 		}
-		final StackWindow xz_window = plugin.getWindow(MultiDThreePanes.XZ_PLANE);
-		if (xz_window != null) {
-			xz_window.setLocation(x, y + xy_window.getHeight());
-			xz_window.toFront();
+		final ImagePlus xz = plugin.getImagePlus(MultiDThreePanes.XZ_PLANE);
+		if (xz != null && xz.getWindow() != null) {
+			xz.getWindow().setLocation(x, y + xy_window.getHeight());
+			xz.getWindow().toFront();
 		}
 		xy_window.toFront();
 	}
 
 	private void toggleWindowVisibility(final int pane, final JCheckBoxMenuItem mItem) {
-		if (plugin.getImagePlus(pane) == null) {
+		final ImagePlus imp = plugin.getImagePlus(pane);
+		if (imp == null) {
 			String msg;
 			if (pane == MultiDThreePanes.XY_PLANE) {
 				msg = "XY view is not available.";
@@ -2677,7 +2598,7 @@ public class SNTUI extends JDialog {
 			return;
 		}
 		// NB: WindowManager list won't be notified
-		plugin.getWindow(pane).setVisible(!mItem.isSelected());
+		imp.getWindow().setVisible(!mItem.isSelected());
 	}
 
 	private boolean noPathsError() {
@@ -3404,12 +3325,6 @@ public class SNTUI extends JDialog {
 				}
 			}
 
-			else if (source == colorImageChoice) {
-
-				if (!ignoreColorImageChoiceEvents)
-					checkForColorImageChange();
-
-			}
 		}
 
 		private boolean checkOKToWriteAllAsSWC(final String prefix) {

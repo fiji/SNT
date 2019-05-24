@@ -46,6 +46,8 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.plugin.Colors;
+import ij.plugin.ContrastEnhancer;
+import ij.plugin.ZProjector;
 import ij.process.ImageConverter;
 import ij.process.StackConverter;
 import tracing.util.BoundingBox;
@@ -136,6 +138,12 @@ public class SNT {
 			new ImageConverter(imp).convertToGray8();
 			ImageConverter.setDoScaling(doScaling);
 		}
+	}
+
+	protected static ImagePlus getMIP(final ImagePlus imp) {
+		final ImagePlus mip = ZProjector.run(imp, "max");
+		new ContrastEnhancer().stretchHistogram(mip, 0.35);
+		return mip;
 	}
 
 	public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {

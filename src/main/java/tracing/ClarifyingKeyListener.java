@@ -29,9 +29,8 @@ import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import ij.gui.StackWindow;
+import ij.ImagePlus;
 import tracing.gui.GuiUtils;
-import tracing.hyperpanes.MultiDThreePanes;
 
 /**
  * There have been problems on Mac OS with people trying to start the Sholl
@@ -102,9 +101,9 @@ class ClarifyingKeyListener implements KeyListener, ContainerListener {
 			else plugin.getUI().abortCurrentOperation();
 		}
 
-		else if (keyCode == KeyEvent.VK_ENTER && plugin.getImagePlus() != null) {
-			final StackWindow win = plugin.getWindow(MultiDThreePanes.XY_PLANE);
-			if (win.isShowing()) win.toFront();
+		else if (keyCode == KeyEvent.VK_ENTER) {
+			final ImagePlus imp = plugin.getImagePlus();
+			if (imp.isVisible()) imp.getWindow().toFront();
 		}
 
 		else if (e.isShiftDown() && e.isAltDown() && (keyCode == KeyEvent.VK_A)) {

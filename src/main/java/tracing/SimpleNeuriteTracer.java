@@ -61,7 +61,6 @@ import ij.gui.NewImage;
 import ij.gui.Overlay;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
-import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -2288,19 +2287,6 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setShowOnlySelectedPaths(showOnlySelectedPaths, true);
 	}
 
-	protected StackWindow getWindow(final int plane) {
-		switch (plane) {
-			case MultiDThreePanes.XY_PLANE:
-				return xy_window;
-			case MultiDThreePanes.XZ_PLANE:
-				return (single_pane) ? null : xz_window;
-			case MultiDThreePanes.ZY_PLANE:
-				return (single_pane) ? null : zy_window;
-			default:
-				return null;
-		}
-	}
-
 	/**
 	 * Gets the Image associated with a view pane.
 	 *
@@ -2744,7 +2730,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 			Overlay existingOverlay = paneImp.getOverlay();
 			if (existingOverlay == null) existingOverlay = new Overlay();
-			final ImagePlus overlay = ZProjector.run(mipImp, "max");
+			final ImagePlus overlay = SNT.getMIP(mipImp);
 
 			// (This logic is taken from OverlayCommands.)
 			final ImageRoi roi = new ImageRoi(0, 0, overlay.getProcessor());

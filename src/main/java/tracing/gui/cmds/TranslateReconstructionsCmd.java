@@ -32,7 +32,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.widget.Button;
 
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.util.PointInImage;
@@ -103,7 +103,7 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 		prevX = 0;
 		prevY = 0;
 		prevZ = 0;
-		SNT.log("Reconstruction(s) re-placed at loaded location(s)");
+		SNTUtils.log("Reconstruction(s) re-placed at loaded location(s)");
 	}
 
 	@Override
@@ -131,7 +131,7 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
-		SNT.setDebugMode(true);
+		SNTUtils.setDebugMode(true);
 		final Viewer3D jzy3D = new Viewer3D(ij.context());
 		jzy3D.add(tree);
 		jzy3D.loadMouseRefBrain();

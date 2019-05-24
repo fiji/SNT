@@ -46,7 +46,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.gui.GuiUtils;
 
 /**
@@ -171,7 +171,7 @@ public class ComputeSecondaryImg extends CommonDynamicCmd {
 		if (file != null) {
 			//TODO: Move to IOService, once it supports saving of ImagePlus
 			final boolean saved = IJ.saveAsTiff(filteredImp, file.getAbsolutePath());
-			SNT.log("Saving to " + file.getAbsolutePath() + "... " + ((saved) ? "success" : "failed"));
+			SNTUtils.log("Saving to " + file.getAbsolutePath() + "... " + ((saved) ? "success" : "failed"));
 			if (!saved)
 				msg("An error occured while saving image.", "IO Error");
 		}

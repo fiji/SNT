@@ -43,7 +43,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.gui.IconFactory.GLYPH;
 
 /**
@@ -96,7 +96,7 @@ public class SNTSearchableBar extends SearchableBar {
 			_comboBox.setVisible(true);
 			_textField.setVisible(false);
 		}
-		setStatusLabelPlaceholder(SNT.getReadableVersion());
+		setStatusLabelPlaceholder(SNTUtils.getReadableVersion());
 	}
 
 	public void setStatusLabelPlaceholder(final String placeholder) {

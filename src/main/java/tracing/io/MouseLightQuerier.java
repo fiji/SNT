@@ -43,7 +43,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import tracing.Path;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.annotation.AllenCompartment;
 import tracing.util.SWCPoint;
 
@@ -181,18 +181,18 @@ class MouseLightQuerier {
 			assembleSwcTypeMap();
 		}
 		catch (final IOException | JSONException exc) {
-			SNT.error("Failed to initialize loader", exc);
+			SNTUtils.error("Failed to initialize loader", exc);
 			initialized = false;
 		}
 		initialized = true;
-		if (SNT.isDebugMode()) {
-			SNT.log("Retrieving compartment UUIDs for ML neuron " + publicID);
+		if (SNTUtils.isDebugMode()) {
+			SNTUtils.log("Retrieving compartment UUIDs for ML neuron " + publicID);
 			if (nameMap == null) {
-				SNT.log("Failed... " + publicID + " does not exist?");
+				SNTUtils.log("Failed... " + publicID + " does not exist?");
 				return;
 			}
 			for (final Entry<String, UUID> entry : nameMap.entrySet()) {
-				SNT.log(entry.toString());
+				SNTUtils.log(entry.toString());
 			}
 		}
 	}
@@ -440,7 +440,7 @@ class MouseLightQuerier {
 
 		}
 		catch (final JSONException exc) {
-			SNT.error("Error while extracting nodes", exc);
+			SNTUtils.error("Error while extracting nodes", exc);
 		}
 	}
 

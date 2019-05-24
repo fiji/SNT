@@ -52,7 +52,7 @@ import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
 
 import tracing.Path;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.analysis.TreeColorMapper;
 import tracing.util.PointInImage;
@@ -374,7 +374,7 @@ public class Viewer2D extends TreeColorMapper {
 		final Viewer2D pplot = new Viewer2D(ij.context());
 		final List<Tree> trees = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			final Tree tree = new Tree(SNT.randomPaths());
+			final Tree tree = new Tree(SNTUtils.randomPaths());
 			tree.rotate(Tree.Z_AXIS, i * 20);
 			trees.add(tree);
 		}

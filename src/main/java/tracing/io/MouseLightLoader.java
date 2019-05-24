@@ -48,7 +48,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import tracing.Path;
 import tracing.PathAndFillManager;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.annotation.AllenCompartment;
 import tracing.util.SWCPoint;
@@ -112,7 +112,7 @@ public class MouseLightLoader {
 				return null;
 			return json;
 		} catch (final IOException e) {
-			SNT.error("Failed to retrieve id " + id, e);
+			SNTUtils.error("Failed to retrieve id " + id, e);
 		}
 		return null;
 	}

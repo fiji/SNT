@@ -210,7 +210,7 @@ public class Path implements Comparable<Path> {
 		this.x_spacing = x_spacing;
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
-		this.spacing_units = SNT.getSanitizedUnit(spacing_units);
+		this.spacing_units = SNTUtils.getSanitizedUnit(spacing_units);
 		points = 0;
 		maxPoints = reserve;
 		precise_x_positions = new double[maxPoints];
@@ -443,7 +443,7 @@ public class Path implements Comparable<Path> {
 			endJoinsPoint = joinPoint;
 		}
 		else {
-			SNT.log("BUG: unknown first parameter to setJoin");
+			SNTUtils.log("BUG: unknown first parameter to setJoin");
 		}
 		// Also update the somehowJoins list:
 		if (somehowJoins.indexOf(other) < 0) {
@@ -876,7 +876,7 @@ public class Path implements Comparable<Path> {
 	protected void add(final Path other) {
 
 		if (other == null) {
-			SNT.warn("BUG: Trying to add null Path");
+			SNTUtils.warn("BUG: Trying to add null Path");
 			return;
 		}
 
@@ -2272,7 +2272,7 @@ public class Path implements Comparable<Path> {
 			templatePixelWidth = templateCalibration.pixelWidth;
 			templatePixelHeight = templateCalibration.pixelHeight;
 			templatePixelDepth = templateCalibration.pixelDepth;
-			templateUnits = SNT.getSanitizedUnit(templateCalibration.getUnit());
+			templateUnits = SNTUtils.getSanitizedUnit(templateCalibration.getUnit());
 		}
 
 		final Path result = new Path(templatePixelWidth, templatePixelHeight,

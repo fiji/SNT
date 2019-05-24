@@ -109,7 +109,7 @@ import org.scijava.ui.swing.widget.SwingColorWidget;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.PlatformUtils;
 
-import tracing.SNT;
+import tracing.SNTUtils;
 
 /** Misc. utilities for SNT's GUI. */
 public class GuiUtils {
@@ -127,7 +127,7 @@ public class GuiUtils {
 	}
 
 	public void error(final String msg) {
-		error(msg, "SNT v" + SNT.VERSION);
+		error(msg, "SNT v" + SNTUtils.VERSION);
 	}
 
 	public void error(final String msg, final String title) {
@@ -348,8 +348,8 @@ public class GuiUtils {
 	}
 
 	public float[] getRange(final String promptMsg, final String promptTitle, final float[] defaultRange) {
-		final String s = getString(promptMsg, promptTitle, SNT.formatDouble(defaultRange[0], 3) + "-"
-				+ SNT.formatDouble(defaultRange[1], 3));
+		final String s = getString(promptMsg, promptTitle, SNTUtils.formatDouble(defaultRange[0], 3) + "-"
+				+ SNTUtils.formatDouble(defaultRange[1], 3));
 		if (s == null)
 			return null; // user pressed cancel
 		final float[] values = new float[2];
@@ -645,7 +645,7 @@ public class GuiUtils {
 		try {
 			Desktop.getDesktop().browse(new URI(uri));
 		} catch (IOException | URISyntaxException ex) {
-			SNT.log("Could not open " + uri);
+			SNTUtils.log("Could not open " + uri);
 		}
 	}
 
@@ -758,7 +758,7 @@ public class GuiUtils {
 	public static JSpinner doubleSpinner(final double value, final double min,
 		final double max, final double step, final int nDecimals)
 	{
-		final int maxDigits = SNT.formatDouble(max, nDecimals).length();
+		final int maxDigits = SNTUtils.formatDouble(max, nDecimals).length();
 		final SpinnerModel model = new SpinnerNumberModel(value, min, max, step);
 		final JSpinner spinner = new JSpinner(model);
 		final JFormattedTextField textfield = ((DefaultEditor) spinner.getEditor())
@@ -862,11 +862,11 @@ public class GuiUtils {
 			length = umLength / 1000000000;
 			symbol = "km";
 		}
-		return SNT.formatDouble(length, digits) + symbol;
+		return SNTUtils.formatDouble(length, digits) + symbol;
 	}
 
 	public static void errorPrompt(final String msg) {
-		new GuiUtils().error(msg, "SNT v" + SNT.VERSION);
+		new GuiUtils().error(msg, "SNT v" + SNTUtils.VERSION);
 	}
 
 	public static void setSystemLookAndFeel() {

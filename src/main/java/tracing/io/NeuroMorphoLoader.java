@@ -36,7 +36,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import tracing.PathAndFillManager;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.SimpleNeuriteTracer;
 import tracing.Tree;
 
@@ -62,7 +62,7 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 			resStr = response.body().string();
 		}
 		catch (final IOException e) {
-			SNT.error("Unexpected response from " + url + anchor, e);
+			SNTUtils.error("Unexpected response from " + url + anchor, e);
 		}
 		finally {
 			if (response != null) response.close();

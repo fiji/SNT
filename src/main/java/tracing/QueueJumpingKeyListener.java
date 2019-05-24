@@ -295,7 +295,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		final NearPoint np = tracerPlugin.getPathAndFillManager()
 			.nearestPointOnAnyPath(point.x, point.y, point.z, diagonalLength);
 		if (np == null) {
-			SNT.error("BUG: No nearby path was found within " + diagonalLength +
+			SNTUtils.error("BUG: No nearby path was found within " + diagonalLength +
 				" of the pointer");
 		}
 		return np;
@@ -412,8 +412,8 @@ class QueueJumpingKeyListener implements KeyListener {
 			gUtils.tempMsg("Retrieving content...");
 			final Point3d point = picker.getPickPointGeometry(c, me.getX(), me
 				.getY());
-			gUtils.tempMsg(SNT.formatDouble(point.x, 3) + ", " + SNT.formatDouble(
-				point.y, 3) + ", " + SNT.formatDouble(point.z, 3));
+			gUtils.tempMsg(SNTUtils.formatDouble(point.x, 3) + ", " + SNTUtils.formatDouble(
+				point.y, 3) + ", " + SNTUtils.formatDouble(point.z, 3));
 			final boolean joiner_modifier_down = me.isAltDown();
 			SwingUtilities.invokeLater(() -> tracerPlugin.clickForTrace(point,
 				joiner_modifier_down));

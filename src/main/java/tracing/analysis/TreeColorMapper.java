@@ -46,7 +46,7 @@ import sholl.ProfileEntry;
 import sholl.UPoint;
 import sholl.math.LinearProfileStats;
 import tracing.Path;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.analysis.sholl.TreeParser;
 import tracing.util.PointInImage;
@@ -143,7 +143,7 @@ public class TreeColorMapper extends ColorMapper {
 					parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
 				}
 				catch (final IllegalArgumentException ignored) {
-					SNT.log(
+					SNTUtils.log(
 						"No soma attribute found... Defaulting to average of all root nodes");
 					parser.setCenter(TreeParser.PRIMARY_NODES_ANY);
 				}
@@ -280,7 +280,7 @@ public class TreeColorMapper extends ColorMapper {
 			min = Float.MAX_VALUE;
 			max = 0f;
 		}
-		SNT.log("Node values will be wiped after distance calculations");
+		SNTUtils.log("Node values will be wiped after distance calculations");
 
 		// 1st pass: Calculate distances for primary paths.
 		for (final Path p : paths) {
@@ -322,8 +322,8 @@ public class TreeColorMapper extends ColorMapper {
 
 		// now color nodes
 		if (setLimits) setMinMax(min, max);
-		SNT.log("Coloring nodes by path distance to " + root);
-		SNT.log("Range of mapped distances: " + min + "-" + max);
+		SNTUtils.log("Coloring nodes by path distance to " + root);
+		SNTUtils.log("Range of mapped distances: " + min + "-" + max);
 		for (final Path p : paths) {
 			for (int node = 0; node < p.size(); node++) {
 				// if (p.isPrimary()) System.out.println(p.getNodeValue(node));
@@ -358,7 +358,7 @@ public class TreeColorMapper extends ColorMapper {
 		paths = tree.list();
 		this.colorTable = colorTable;
 		final boolean useFitted = stats.validFit();
-		SNT.log("Mapping to fitted values: " + useFitted);
+		SNTUtils.log("Mapping to fitted values: " + useFitted);
 		setMinMax(stats.getMin(useFitted), stats.getMax(useFitted));
 		final PointInImage center = new PointInImage(ucenter.x, ucenter.y,
 			ucenter.z);
@@ -462,7 +462,7 @@ public class TreeColorMapper extends ColorMapper {
 		ij.ui().showUI();
 		final List<Tree> trees = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			final Tree tree = new Tree(SNT.randomPaths());
+			final Tree tree = new Tree(SNTUtils.randomPaths());
 			tree.rotate(Tree.Z_AXIS, i * 20);
 			trees.add(tree);
 		}

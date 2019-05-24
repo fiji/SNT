@@ -35,7 +35,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.gui.GuiUtils;
 
 /**
@@ -71,7 +71,7 @@ public class ComputeTubenessImg extends CommonDynamicCmd {
 	public void run() {
 		status("Computing whole-image Hessian data...", false);
 		sigma = snt.getHessianSigma("primary", true);
-		SNT.log("Generating Tubeness image: sigma=" + sigma);
+		SNTUtils.log("Generating Tubeness image: sigma=" + sigma);
 		final ImagePlus inputImp = sntService.getPlugin().getLoadedDataAsImp();
 		processUsingIJ1(inputImp); //processUsingOps(inputImp);
 		snt.loadTubenessImage("primary", tubenessImp);

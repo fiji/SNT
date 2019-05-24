@@ -38,7 +38,7 @@ import tracing.hyperpanes.MultiDThreePanes;
 
 public abstract class SearchThread extends Thread implements SearchInterface {
 
-	boolean verbose = SNT.isDebugMode();
+	boolean verbose = SNTUtils.isDebugMode();
 
 	public static final byte OPEN_FROM_START = 1;
 	public static final byte CLOSED_FROM_START = 2;
@@ -222,19 +222,19 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 	@Override
 	public void requestStop() {
-		SNT.log("requestStop called, about to enter synchronized");
+		SNTUtils.log("requestStop called, about to enter synchronized");
 		synchronized (this) {
-			SNT.log("... entered synchronized");
+			SNTUtils.log("... entered synchronized");
 			if (threadStatus == PAUSED) {
-				SNT.log("was paused so interrupting");
+				SNTUtils.log("was paused so interrupting");
 				this.interrupt();
-				SNT.log("done interrupting");
+				SNTUtils.log("done interrupting");
 			}
 			threadStatus = STOPPING;
 			reportThreadStatus();
-			SNT.log("... leaving synchronized");
+			SNTUtils.log("... leaving synchronized");
 		}
-		SNT.log("requestStop finished (threadStatus now " + threadStatus + ")");
+		SNTUtils.log("requestStop finished (threadStatus now " + threadStatus + ")");
 	}
 
 	/**
@@ -259,27 +259,27 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 	public void pauseOrUnpause() {
 		// Toggle the paused status:
-		SNT.log("pauseOrUnpause called, about to enter synchronized");
+		SNTUtils.log("pauseOrUnpause called, about to enter synchronized");
 		synchronized (this) {
-			SNT.log("... entered synchronized");
+			SNTUtils.log("... entered synchronized");
 			switch (threadStatus) {
 				case PAUSED:
-					SNT.log("paused, going to switch to running - interrupting first");
+					SNTUtils.log("paused, going to switch to running - interrupting first");
 					this.interrupt();
-					SNT.log("finished interrupting");
+					SNTUtils.log("finished interrupting");
 					threadStatus = RUNNING;
 					break;
 				case RUNNING:
-					SNT.log("running, going to switch to paused");
+					SNTUtils.log("running, going to switch to paused");
 					threadStatus = PAUSED;
 					break;
 				default:
 					// Do nothing, we're actually stopping anyway.
 			}
 			reportThreadStatus();
-			SNT.log("... leaving synchronized");
+			SNTUtils.log("... leaving synchronized");
 		}
-		SNT.log("pauseOrUnpause finished");
+		SNTUtils.log("pauseOrUnpause finished");
 	}
 
 	int imageType = -1;
@@ -336,11 +336,11 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		x_spacing = (float) calibration.pixelWidth;
 		y_spacing = (float) calibration.pixelHeight;
 		z_spacing = (float) calibration.pixelDepth;
-		spacing_units = SNT.getSanitizedUnit(calibration.getUnit());
+		spacing_units = SNTUtils.getSanitizedUnit(calibration.getUnit());
 
 		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 
-			SNT.error(
+			SNTUtils.error(
 				"SearchThread: One dimension of the calibration information was zero: (" +
 					x_spacing + "," + y_spacing + "," + z_spacing + ")");
 			return;
@@ -413,13 +413,13 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 	SearchNode[][] nodes_as_image_from_goal;
 
 	public void printStatus() {
-		SNT.log("... Start nodes: open=" + open_from_start.size() +
+		SNTUtils.log("... Start nodes: open=" + open_from_start.size() +
 			" closed=" + closed_from_start.size());
 		if (bidirectional) {
-			SNT.log("...  Goal nodes: open=" + open_from_goal.size() +
+			SNTUtils.log("...  Goal nodes: open=" + open_from_goal.size() +
 				" closed=" + closed_from_goal.size());
 		}
-		else SNT.log(" ... unidirectional search");
+		else SNTUtils.log(" ... unidirectional search");
 	}
 
 	@Override
@@ -427,9 +427,9 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 		try {
 
-			SNT.log("New SearchThread running!");
+			SNTUtils.log("New SearchThread running!");
 			if (verbose) printStatus();
-			SNT.log("... was asked to start it in the " + (startPaused ? "paused"
+			SNTUtils.log("... was asked to start it in the " + (startPaused ? "paused"
 				: "unpaused") + " state.");
 
 			synchronized (this) {
@@ -482,7 +482,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 					if ((timeoutSeconds > 0) && (millisecondsSinceStart > (1000 *
 						timeoutSeconds)))
 					{
-						SNT.log("Timed out...");
+						SNTUtils.log("Timed out...");
 						setExitReason(TIMED_OUT);
 						reportFinished(false);
 						return;
@@ -496,7 +496,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 					{
 
 						final int loops_since_last_report = loops - loops_at_last_report;
-						SNT.log("" + (since_last_report /
+						SNTUtils.log("" + (since_last_report /
 							(double) loops_since_last_report) + "ms/loop");
 
 						if (verbose) printStatus();
@@ -532,7 +532,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 
 				// Has the route from the start found the goal?
 				if (definedGoal && atGoal(p.x, p.y, p.z, fromStart)) {
-					SNT.log("Found the goal!");
+					SNTUtils.log("Found the goal!");
 					if (fromStart) foundGoal(p.asPath(x_spacing, y_spacing, z_spacing,
 						spacing_units));
 					else foundGoal(p.asPathReversed(x_spacing, y_spacing, z_spacing,
@@ -670,7 +670,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 											result.add(p.asPathReversed(x_spacing, y_spacing,
 												z_spacing, spacing_units));
 										}
-										SNT.log("Searches met!");
+										SNTUtils.log("Searches met!");
 										foundGoal(result);
 										setExitReason(SUCCESS);
 										reportFinished(true);
@@ -690,18 +690,18 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 			 * this case let's return the best path so far anyway...
 			 */
 
-			SNT.log("FAILED to find a route.  Shouldn't happen...");
+			SNTUtils.log("FAILED to find a route.  Shouldn't happen...");
 			setExitReason(POINTS_EXHAUSTED);
 			reportFinished(false);
 		}
 		catch (final OutOfMemoryError oome) {
-			SNT.error("Out Of Memory Error", oome);
+			SNTUtils.error("Out Of Memory Error", oome);
 			GuiUtils.errorPrompt("Out of memory while searching for a path");
 			setExitReason(OUT_OF_MEMORY);
 			reportFinished(false);
 		}
 		catch (final Throwable t) {
-			SNT.error("Exception in search thread", t);
+			SNTUtils.error("Exception in search thread", t);
 		}
 		return;
 

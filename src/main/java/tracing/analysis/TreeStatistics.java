@@ -40,7 +40,7 @@ import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.statistics.HistogramType;
 
 import tracing.Path;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.util.SNTColor;
 
@@ -137,16 +137,16 @@ public class TreeStatistics extends TreeAnalyzer {
 		// Append descriptive label
 		chart.removeLegend();
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Q1: ").append(SNT.formatDouble(q1, 2));
-		sb.append("  Median: ").append(SNT.formatDouble(lastDstats.dStats
+		sb.append("Q1: ").append(SNTUtils.formatDouble(q1, 2));
+		sb.append("  Median: ").append(SNTUtils.formatDouble(lastDstats.dStats
 			.getPercentile(50), 2));
-		sb.append("  Q3: ").append(SNT.formatDouble(q3, 2));
-		sb.append("  IQR: ").append(SNT.formatDouble(q3 - q1, 2));
+		sb.append("  Q3: ").append(SNTUtils.formatDouble(q3, 2));
+		sb.append("  IQR: ").append(SNTUtils.formatDouble(q3 - q1, 2));
 		sb.append("\nN: ").append(n);
-		sb.append("  Min: ").append(SNT.formatDouble(min, 2));
-		sb.append("  Max: ").append(SNT.formatDouble(max, 2));
-		sb.append("  Mean\u00B1").append("SD: ").append(SNT.formatDouble(
-			lastDstats.dStats.getMean(), 2)).append("\u00B1").append(SNT.formatDouble(
+		sb.append("  Min: ").append(SNTUtils.formatDouble(min, 2));
+		sb.append("  Max: ").append(SNTUtils.formatDouble(max, 2));
+		sb.append("  Mean\u00B1").append("SD: ").append(SNTUtils.formatDouble(
+			lastDstats.dStats.getMean(), 2)).append("\u00B1").append(SNTUtils.formatDouble(
 				lastDstats.dStats.getStandardDeviation(), 2));
 		final TextTitle label = new TextTitle(sb.toString());
 		label.setFont(label.getFont().deriveFont(Font.PLAIN));

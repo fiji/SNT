@@ -38,7 +38,7 @@ import org.scijava.util.Colors;
 import org.scijava.widget.FileWidget;
 
 import net.imagej.ImageJ;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.util.SNTColor;
 import tracing.viewer.Viewer3D;
@@ -170,7 +170,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 			for (final File file : files) {
 				final Tree tree = new Tree(file.getAbsolutePath());
 				if (tree.isEmpty()) {
-					SNT.log("Skipping file... No Paths extracted from " + file
+					SNTUtils.log("Skipping file... No Paths extracted from " + file
 						.getAbsolutePath());
 					failures++;
 					continue;

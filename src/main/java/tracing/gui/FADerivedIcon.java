@@ -37,7 +37,7 @@ import java.io.InputStream;
 import javax.swing.Icon;
 import javax.swing.UIManager;
 
-import tracing.SNT;
+import tracing.SNTUtils;
 
 /**
  * Creates icons from Font Awesome Glyphs: High-quality icons that render well
@@ -82,7 +82,7 @@ public class FADerivedIcon implements Icon {
 		}
 		catch (FontFormatException | IOException ex) {
 			font = UIManager.getFont("Label.font"); // desperate fallback
-			SNT.error("Could not load fonts", ex);
+			SNTUtils.error("Could not load fonts", ex);
 		}
 		return font.deriveFont(size);
 	}

@@ -40,7 +40,7 @@ import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
 import tracing.PathAndFillManager;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.FlyCircuitLoader;
@@ -137,7 +137,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		}
 
 		status("Retrieving cells. Please wait...", false);
-		SNT.log(database + " import: Downloading from URL(s)...");
+		SNTUtils.log(database + " import: Downloading from URL(s)...");
 		final int lastExistingPathIdx = pafm.size() - 1;
 		final List<Tree> result = pafm.importSWCs(urlsMap, getColor());
 		final long failures = result.stream().filter(tree -> tree == null || tree
@@ -172,7 +172,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		}
 		else if (snt != null) {
 			if (rebuildCanvas) {
-				SNT.log("Rebuilding canvases...");
+				SNTUtils.log("Rebuilding canvases...");
 				snt.rebuildDisplayCanvases();
 			}
 			if (recViewer != null) recViewer.syncPathManagerList();
@@ -183,9 +183,9 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			error(String.format("%d/%d reconstructions could not be retrieved.",
 				failures, result.size()));
 			status("Partially successful import...", true);
-			SNT.log("Import failed for the following queried morphologies:");
+			SNTUtils.log("Import failed for the following queried morphologies:");
 			result.forEach(tree -> {
-				if (tree.isEmpty()) SNT.log(tree.getLabel());
+				if (tree.isEmpty()) SNTUtils.log(tree.getLabel());
 			});
 		}
 		else {

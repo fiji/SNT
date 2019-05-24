@@ -37,7 +37,7 @@ import org.scijava.util.ColorRGB;
 
 import net.imagej.ImageJ;
 import tracing.PathAndFillManager;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
 import tracing.io.MouseLightLoader;
@@ -81,7 +81,7 @@ public class JSONImporterCmd extends CommonDynamicCmd {
 		final PathAndFillManager pafm = sntService.getPathAndFillManager();
 
 		status("Importing file. Please wait...", false);
-		SNT.log("Importing file " + file);
+		SNTUtils.log("Importing file " + file);
 
 		final int lastExistingPathIdx = pafm.size() - 1;
 		try {
@@ -100,7 +100,7 @@ public class JSONImporterCmd extends CommonDynamicCmd {
 			}
 
 			if (rebuildCanvas) {
-				SNT.log("Rebuilding canvases...");
+				SNTUtils.log("Rebuilding canvases...");
 				snt.rebuildDisplayCanvases();
 			}
 

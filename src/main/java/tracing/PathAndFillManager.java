@@ -379,7 +379,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			}
 			catch (final IOException ioe) {
 				error("Saving to " + swcFile.getAbsolutePath() + " failed.");
-				SNT.error("IOException", ioe);
+				SNTUtils.error("IOException", ioe);
 				return false;
 			}
 			++i;
@@ -399,7 +399,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 	private static void errorStatic(final String msg) {
 		if (headless || GraphicsEnvironment.isHeadless()) {
-			SNT.error(msg);
+			SNTUtils.error(msg);
 		}
 		else {
 			GuiUtils.errorPrompt(msg);
@@ -415,7 +415,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		final PrintWriter pw)
 	{
 		pw.println("# Exported from SNT v" +
-			SNT.VERSION + " on " + LocalDateTime.of(LocalDate.now(), LocalTime
+			SNTUtils.VERSION + " on " + LocalDateTime.of(LocalDate.now(), LocalTime
 				.now()));
 		pw.println("# https://imagej.net/SNT");
 		pw.println("#");
@@ -430,7 +430,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	protected boolean usingNonPhysicalUnits() {
-		return (new Calibration().getUnits()).equals(spacing_units) || (SNT
+		return (new Calibration().getUnits()).equals(spacing_units) || (SNTUtils
 			.getSanitizedUnit(null).equals(spacing_units) && x_spacing * y_spacing *
 				z_spacing == 1d);
 	}
@@ -745,7 +745,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 			final Fill f = allFills.get(i);
 			if (f == null) {
-				SNT.log("fill was null with i " + i + " out of " + fills);
+				SNTUtils.log("fill was null with i " + i + " out of " + fills);
 				continue;
 			}
 
@@ -1086,7 +1086,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				// method of Path.
 				pw.print("  <path id=\"" + p.getID() + "\"");
 				pw.print(" swctype=\"" + p.getSWCType() + "\"");
-				pw.print(" color=\"" + SNT.getColorString(p.getColor()) + "\"");
+				pw.print(" color=\"" + SNTUtils.getColorString(p.getColor()) + "\"");
 				pw.print(" channel=\"" + p.getChannel() + "\"");
 				pw.print(" frame=\"" + p.getFrame() + "\"");
 
@@ -1201,7 +1201,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				/*
 				 * We need to remove the old paths and fills before loading the ones:
 				 */
-				SNT.log("Clearing old paths and fills...");
+				SNTUtils.log("Clearing old paths and fills...");
 				clearPathsAndFills();
 
 				break;
@@ -1214,7 +1214,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					final int parsed_depth = Integer.parseInt(attributes.getValue("depth"));
 					if (plugin != null && (parsed_width != plugin.width ||
 							parsed_height != plugin.height || parsed_depth != plugin.depth)) {
-						SNT.warn(
+						SNTUtils.warn(
 								"The image size in the traces file didn't match - it's probably for another image");
 					}
 					boundingBox.setOrigin(new PointInImage(0, 0, 0));
@@ -1340,7 +1340,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					}
 
 					if (colorString != null) {
-						current_path.setColor(SNT.getColor(colorString));
+						current_path.setColor(SNTUtils.getColor(colorString));
 					}
 					if (channelString != null && frameString != null) {
 						current_path.setCTposition(Integer.parseInt(channelString), Integer
@@ -1513,7 +1513,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					}
 
 					if (fill_id != (last_fill_id + 1)) {
-						SNT.log("Out of order id in <fill> (" + fill_id +
+						SNTUtils.log("Out of order id in <fill> (" + fill_id +
 								" when we were expecting " + (last_fill_id + 1) + ")");
 						fill_id = last_fill_id + 1;
 					}
@@ -1757,7 +1757,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		catch (final javax.xml.parsers.ParserConfigurationException e) {
 
 			clearPathsAndFills();
-			SNT.error("ParserConfigurationException", e);
+			SNTUtils.error("ParserConfigurationException", e);
 			return false;
 
 		}
@@ -1771,7 +1771,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		catch (final FileNotFoundException e) {
 
 			clearPathsAndFills();
-			SNT.error("FileNotFoundException", e);
+			SNTUtils.error("FileNotFoundException", e);
 			e.printStackTrace();
 			return false;
 
@@ -1814,7 +1814,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 *      double, double, boolean)
 	 */
 	public boolean importSWC(final String urlOrFilePath) {
-		if (SNT.isValidURL(urlOrFilePath)) {
+		if (SNTUtils.isValidURL(urlOrFilePath)) {
 			try {
 				final URL url = new URL(urlOrFilePath);
 				final InputStream is = url.openStream();
@@ -1859,7 +1859,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		setHeadless(true);
 		final int[] colorIdx = { 0 };
 		swcs.forEach((id, path) -> {
-			SNT.log("Loading " + id + ": " + path);
+			SNTUtils.log("Loading " + id + ": " + path);
 			final Tree tree = new Tree();
 			tree.setLabel(id);
 			result.add(tree);
@@ -1968,7 +1968,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			}
 		}
 		catch (final IOException exc) {
-			SNT.error("IO ERROR", exc);
+			SNTUtils.error("IO ERROR", exc);
 			return false;
 		}
 		return importNodes(null, nodes, null, assumeCoordinatesInVoxels);
@@ -1998,7 +1998,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 
 		if (spacingIsUnset) {
-			if (!headless) SNT.log(
+			if (!headless) SNTUtils.log(
 				"Inferring pixel spacing from imported points... ");
 			boundingBox.inferSpacing(points);
 			x_spacing = boundingBox.xSpacing;
@@ -2109,7 +2109,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				pluginBoundingBox.setOrigin(new PointInImage(0, 0, 0));
 				pluginBoundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
 				if (!pluginBoundingBox.contains(boundingBox)) {
-					SNT.warn("Some nodes lay outside the image volume: you may need to "
+					SNTUtils.warn("Some nodes lay outside the image volume: you may need to "
 							+ "adjust import options or resize current image canvas");
 				}
 			}
@@ -2155,15 +2155,15 @@ public class PathAndFillManager extends DefaultHandler implements
 		final int[] colorIdx = { 0 };
 		map.forEach((k, points) -> {
 			if (points == null) {
-				SNT.error("Importing " + k + "... failed. Invalid structure?");
+				SNTUtils.error("Importing " + k + "... failed. Invalid structure?");
 				result.put(k, null);
 			}
 			else {
 				final int firstImportedPathIdx = size();
-				SNT.log("Importing " + k + "...");
+				SNTUtils.log("Importing " + k + "...");
 				final boolean success = importNodes(k, points, colors[colorIdx[0]],
 						false);
-				SNT.log("Successful import: " + success);
+				SNTUtils.log("Successful import: " + success);
 				final Tree tree = new Tree();
 				tree.setLabel(k);
 				for (int i = firstImportedPathIdx; i < size(); i++)
@@ -2218,7 +2218,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 		if (filePath == null) return false;
 		final File f = new File(filePath);
-		if (!SNT.fileAvailable(f)) {
+		if (!SNTUtils.fileAvailable(f)) {
 			error("The traces file '" + filePath + "' is not available.");
 			return false;
 		}
@@ -2258,12 +2258,12 @@ public class PathAndFillManager extends DefaultHandler implements
 		 * file.
 		 */
 		final File f = new File(filename);
-		if (!SNT.fileAvailable(f)) {
+		if (!SNTUtils.fileAvailable(f)) {
 			errorStatic("The file '" + filename + "' is not available.");
 			return -1;
 		}
 		try {
-			if (!headless) SNT.log("Guessing file type...");
+			if (!headless) SNTUtils.log("Guessing file type...");
 			InputStream is;
 			final byte[] buf = new byte[8];
 			is = new FileInputStream(filename);
@@ -2281,7 +2281,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			}
 		}
 		catch (final IOException e) {
-			SNT.error("Couldn't read from file: " + filename, e);
+			SNTUtils.error("Couldn't read from file: " + filename, e);
 			return -1;
 		}
 		return TRACES_FILE_TYPE_SWC;
@@ -2289,7 +2289,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 	protected boolean loadCompressedXML(final String filename) {
 		try {
-			SNT.log("Loading gzipped file...");
+			SNTUtils.log("Loading gzipped file...");
 			return load(new GZIPInputStream(new BufferedInputStream(
 				new FileInputStream(filename))));
 		}
@@ -2302,7 +2302,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 	protected boolean loadUncompressedXML(final String filename) {
 		try {
-			SNT.log("Loading uncompressed file...");
+			SNTUtils.log("Loading uncompressed file...");
 			return load(new BufferedInputStream(new FileInputStream(filename)));
 		}
 		catch (final IOException ioe) {
@@ -2346,7 +2346,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				result = importSWC(filePath, false, 0, 0, 0, 1, 1, 1, true);
 				break;
 			default:
-				SNT.warn("guessTracesFileType() return an unknown type" + guessedType);
+				SNTUtils.warn("guessTracesFileType() return an unknown type" + guessedType);
 				return false;
 		}
 		if (result) {
@@ -2431,7 +2431,7 @@ public class PathAndFillManager extends DefaultHandler implements
 							final int y = Math.min(height - 1, Math.max(0, ip.y));
 							final int z = Math.min(depth - 1, Math.max(0, ip.z));
 							slices[z][y * width + x] = (byte) 255;
-							SNT.warn(String.format(
+							SNTUtils.warn(String.format(
 								"Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]",
 								z, y, width, x));
 						}
@@ -2686,23 +2686,23 @@ public class PathAndFillManager extends DefaultHandler implements
 			new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
 		final int columns = headers.length;
 		for (int c = 0; c < columns; ++c) {
-			SNT.csvQuoteAndPrint(pw, headers[c]);
+			SNTUtils.csvQuoteAndPrint(pw, headers[c]);
 			if (c < (columns - 1)) pw.print(",");
 		}
 		pw.print("\r\n");
 		for (int i = 0; i < allFills.size(); ++i) {
 			final Fill f = allFills.get(i);
-			SNT.csvQuoteAndPrint(pw, i);
+			SNTUtils.csvQuoteAndPrint(pw, i);
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, f.getSourcePathsStringMachine());
+			SNTUtils.csvQuoteAndPrint(pw, f.getSourcePathsStringMachine());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, f.getThreshold());
+			SNTUtils.csvQuoteAndPrint(pw, f.getThreshold());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, f.getMetric());
+			SNTUtils.csvQuoteAndPrint(pw, f.getMetric());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, f.getVolume());
+			SNTUtils.csvQuoteAndPrint(pw, f.getVolume());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, f.spacing_units);
+			SNTUtils.csvQuoteAndPrint(pw, f.spacing_units);
 			pw.print("\r\n");
 		}
 		pw.close();
@@ -2731,7 +2731,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
 		final int columns = headers.length;
 		for (int c = 0; c < columns; ++c) {
-			SNT.csvQuoteAndPrint(pw, headers[c]);
+			SNTUtils.csvQuoteAndPrint(pw, headers[c]);
 			if (c < (columns - 1)) pw.print(",");
 		}
 		pw.print("\r\n");
@@ -2741,26 +2741,26 @@ public class PathAndFillManager extends DefaultHandler implements
 				pForLengthAndName = p.fitted;
 			}
 			if (p.fittedVersionOf != null) continue;
-			SNT.csvQuoteAndPrint(pw, p.getID());
+			SNTUtils.csvQuoteAndPrint(pw, p.getID());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, pForLengthAndName.getName());
+			SNTUtils.csvQuoteAndPrint(pw, pForLengthAndName.getName());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, Path.getSWCtypeName(p.getSWCType(), false));
+			SNTUtils.csvQuoteAndPrint(pw, Path.getSWCtypeName(p.getSWCType(), false));
 			pw.print(",");
 			final boolean primary = h.contains(p);
-			SNT.csvQuoteAndPrint(pw, primary);
+			SNTUtils.csvQuoteAndPrint(pw, primary);
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, pForLengthAndName.getLength());
+			SNTUtils.csvQuoteAndPrint(pw, pForLengthAndName.getLength());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, p.spacing_units);
+			SNTUtils.csvQuoteAndPrint(pw, p.spacing_units);
 			pw.print(",");
 			if (p.startJoins != null) pw.print("" + p.startJoins.getID());
 			pw.print(",");
 			if (p.endJoins != null) pw.print("" + p.endJoins.getID());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, p.somehowJoinsAsString());
+			SNTUtils.csvQuoteAndPrint(pw, p.somehowJoinsAsString());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, p.childrenAsString());
+			SNTUtils.csvQuoteAndPrint(pw, p.childrenAsString());
 			pw.print(",");
 
 			final double[] startPoint = new double[3];

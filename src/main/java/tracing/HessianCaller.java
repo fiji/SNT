@@ -50,7 +50,7 @@ public class HessianCaller {
 		this.sigma = sigmaInCalibratedUnits;
 		this.multiplier = impMax() / max;
 		if (snt.ui != null) snt.ui.updateHessianPanel(this);
-		SNT.log("Hessian parameters adjusted "+ toString());
+		SNTUtils.log("Hessian parameters adjusted "+ toString());
 	}
 
 	protected double getSigma(final boolean physicalUnits) {
@@ -91,7 +91,7 @@ public class HessianCaller {
 
 	public void start() {
 		if (hessian == null && cachedTubeness == null) {
-			SNT.log("Computing Gaussian "+ toString());
+			SNTUtils.log("Computing Gaussian "+ toString());
 			snt.changeUIState((type == PRIMARY) ? SNTUI.CALCULATING_GAUSSIAN_I : SNTUI.CALCULATING_GAUSSIAN_II);
 			if (sigma == -1)
 				sigma = getDefaultSigma();

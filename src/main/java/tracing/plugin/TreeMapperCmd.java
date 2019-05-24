@@ -45,7 +45,7 @@ import org.scijava.prefs.PrefService;
 import org.scijava.widget.Button;
 
 import tracing.Path;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.SNTService;
 import tracing.Tree;
 import tracing.analysis.PathProfiler;
@@ -110,12 +110,12 @@ public class TreeMapperCmd extends DynamicCommand {
 		if (!sntService.isActive()) cancel("SNT not running?");
 		if (tree == null || tree.isEmpty()) cancel("Invalid input tree");
 		statusService.showStatus("Applying Color Code...");
-		SNT.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
+		SNTUtils.log("Color Coding Tree (" + measurementChoice + ") using " + lutChoice);
 		final TreeColorMapper colorizer = new TreeColorMapper(context());
 		if (setValuesFromSNTService && TreeColorMapper.VALUES.equals(
 			measurementChoice))
 		{
-			SNT.log("Assigning values...");
+			SNTUtils.log("Assigning values...");
 			final PathProfiler profiler = new PathProfiler(tree, sntService
 				.getPlugin().getLoadedDataAsImp());
 			profiler.assignValues();
@@ -130,7 +130,7 @@ public class TreeMapperCmd extends DynamicCommand {
 		}
 		final double[] minMax = colorizer.getMinMax();
 		if (showPlot) {
-			SNT.log("Creating 2D plot...");
+			SNTUtils.log("Creating 2D plot...");
 			plot = new Viewer2D(context());
 			plot.addTree(tree);
 			plot.addColorBarLegend(colorTable, minMax[0], minMax[1]);
@@ -141,7 +141,7 @@ public class TreeMapperCmd extends DynamicCommand {
 			recViewer.addColorBarLegend(colorTable, (float) minMax[0], (float) minMax[1]);
 			recViewer.syncPathManagerList();
 		}
-		SNT.log("Finished...");
+		SNTUtils.log("Finished...");
 		statusService.clearStatus();
 	}
 
@@ -210,7 +210,7 @@ public class TreeMapperCmd extends DynamicCommand {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
-		final Tree tree = new Tree(SNT.randomPaths());
+		final Tree tree = new Tree(SNTUtils.randomPaths());
 		input.put("tree", tree);
 		ij.command().run(TreeMapperCmd.class, true, input);
 	}

@@ -132,7 +132,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		snt.drawDiametersXY = getPref(DRAW_DIAMETERS_XY);
 		snt.displayCustomPathColors = !getPref(ENFORCE_DEFAULT_PATH_COLORS);
 		snt.setShowOnlySelectedPaths(getPref(SHOW_ONLY_SELECTED), false);
-		if (!SNT.isDebugMode()) SNT.setDebugMode(getPref(DEBUG));
+		if (!SNTUtils.isDebugMode()) SNTUtils.setDebugMode(getPref(DEBUG));
 		snt.cursorSnapWindowXY = (int) Prefs.get(SNAP_XY, 6);
 		snt.cursorSnapWindowXY = whithinBoundaries(snt.cursorSnapWindowXY,
 			SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY,
@@ -185,7 +185,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		setPref(DRAW_DIAMETERS_XY, snt.drawDiametersXY);
 		setPref(ENFORCE_DEFAULT_PATH_COLORS, !snt.displayCustomPathColors);
 		setPref(SHOW_ONLY_SELECTED, snt.showOnlySelectedPaths);
-		setPref(DEBUG, SNT.isDebugMode());
+		setPref(DEBUG, SNTUtils.isDebugMode());
 		Prefs.set(BOOLEANS, currentBooleans);
 		if (isSaveWinLocations()) {
 			final SNTUI rd = snt.getUI();

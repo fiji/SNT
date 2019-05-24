@@ -64,7 +64,7 @@ class FittingProgress implements MultiTaskProgress {
 		for (final double p : tasksProportionsDone)
 			totalDone += p;
 		statusService.showStatus((int) totalDone, totalTasks, msgStatus);
-		sntui.showStatus(msgStatus + SNT.formatDouble(100 * totalDone / totalTasks,
+		sntui.showStatus(msgStatus + SNTUtils.formatDouble(100 * totalDone / totalTasks,
 			1) + "%", false);
 	}
 

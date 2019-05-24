@@ -47,7 +47,7 @@ import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.plugin.CompositeConverter;
 import tracing.PathAndFillManager;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.SNTService;
 import tracing.SimpleNeuriteTracer;
 import tracing.gui.GuiUtils;
@@ -208,7 +208,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 		}
 		if (adjustImageChoice) imageChoice = IMAGE_FILE;
 		for (final String ext : new String[] { "traces", "swc" , "json"}) {
-			final File candidate = SNT.findClosestPair(imageFile, ext);
+			final File candidate = SNTUtils.findClosestPair(imageFile, ext);
 			if (candidate != null && candidate.exists()) {
 				tracesFile = candidate;
 				break;
@@ -221,7 +221,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 	private void tracesFileChanged() {
 		if (IMAGE_FILE.equals(imageChoice) || tracesFile == null || !tracesFile
 			.exists()) return;
-		final File candidate = SNT.findClosestPair(tracesFile, "tif");
+		final File candidate = SNTUtils.findClosestPair(tracesFile, "tif");
 		if (candidate != null && candidate.exists()) {
 			imageFile = candidate;
 			adjustChannelInput();
@@ -237,7 +237,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 		final PrefsCmd resetPrefs = new PrefsCmd();
 		resetPrefs.setContext(context());
 		resetPrefs.clearAll();
-		SNT.log("Prefs reset");
+		SNTUtils.log("Prefs reset");
 	}
 
 	@Override
@@ -364,7 +364,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 		ij.ui().showUI();
 		final Object img = ij.io().open("/home/tferr/code/OP_1/OP_1.tif");
 		ij.ui().show("OP_1", img);
-		SNT.setDebugMode(true);
+		SNTUtils.setDebugMode(true);
 		ij.command().run(SNTLoaderCmd.class, true);
 	}
 

@@ -50,7 +50,7 @@ import ij.gui.TextRoi;
 import ij.process.FloatProcessor;
 import stacks.ThreePaneCrop;
 import tracing.HessianCaller;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.SNTUI;
 import tracing.SimpleNeuriteTracer;
 import util.Limits;
@@ -220,12 +220,12 @@ public class SigmaPalette extends Thread {
 		}
 
 		private void updateLabels() {
-			final String min = SNT.formatDouble(selectedMinMax[0], 2);
-			final String max = SNT.formatDouble(selectedMinMax[1], 2);
+			final String min = SNTUtils.formatDouble(selectedMinMax[0], 2);
+			final String max = SNTUtils.formatDouble(selectedMinMax[1], 2);
 			minValueLabel.setText(min);
 			maxValueLabel.setText(max);
 			applyButton.setLabel(
-					"Apply \u03C3=" + SNT.formatDouble(getSelectedSigma(), 2) + "; max=" + max);
+					"Apply \u03C3=" + SNTUtils.formatDouble(getSelectedSigma(), 2) + "; max=" + max);
 		}
 
 		private void minMaxChanged(final double newMin, final double newMax) {
@@ -242,7 +242,7 @@ public class SigmaPalette extends Thread {
 		@Override
 		public String createSubtitle() {
 			String label = "Sigma preview grid: \u03C3=" + getMouseOverSigma();
-			if (zSelector != null) label += "  z=" + SNT.formatDouble(image.getCalibration().getZ(zSelector.getValue() - 1), 2);
+			if (zSelector != null) label += "  z=" + SNTUtils.formatDouble(image.getCalibration().getZ(zSelector.getValue() - 1), 2);
 			return label;
 		}
 
@@ -392,7 +392,7 @@ public class SigmaPalette extends Thread {
 
 	private String getMouseOverSigma() {
 		if (mouseMovedSigmaIndex > -1 && mouseMovedSigmaIndex < sigmaValues.length)
-			return SNT.formatDouble(sigmaValues[mouseMovedSigmaIndex], 2);
+			return SNTUtils.formatDouble(sigmaValues[mouseMovedSigmaIndex], 2);
 		return "NaN";
 	}
 
@@ -403,7 +403,7 @@ public class SigmaPalette extends Thread {
 	}
 
 	private void setOverlayLabel(final int sigmaIndex, final int[] xyTile) {
-		final String label = "\u03C3=" + SNT.formatDouble(sigmaValues[sigmaIndex],
+		final String label = "\u03C3=" + SNTUtils.formatDouble(sigmaValues[sigmaIndex],
 			2);
 		final TextRoi roi = new TextRoi(xyTile[0] * croppedWidth + 2, xyTile[1] *
 			croppedHeight + 2, label);

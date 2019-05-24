@@ -65,7 +65,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	private static SimpleNeuriteTracer plugin;
 
 	private void accessActiveInstance() {
-		plugin = SNT.getPluginInstance();
+		plugin = SNTUtils.getPluginInstance();
 //		if (plugin == null) throw new UnsupportedOperationException(
 //			"SNT does not seem to be running");
 		if (plugin == null) {
@@ -86,7 +86,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
 	 */
 	public boolean isActive() {
-		return SNT.getPluginInstance() != null;
+		return SNTUtils.getPluginInstance() != null;
 	}
 
 	/**

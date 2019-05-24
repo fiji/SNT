@@ -88,7 +88,7 @@ public class FillerThread extends SearchThread {
 
 		openAtOrAbove = i;
 
-		SNT.log("openAtOrAbove is: " + openAtOrAbove);
+		SNTUtils.log("openAtOrAbove is: " + openAtOrAbove);
 
 		for (final SearchNode current : open_from_start) {
 			/* if( current.g <= threshold ) { */
@@ -106,7 +106,7 @@ public class FillerThread extends SearchThread {
 
 		fill.setSpacing(x_spacing, y_spacing, z_spacing, spacing_units);
 
-		SNT.log("... out of a.size() " + a.size() + " entries");
+		SNTUtils.log("... out of a.size() " + a.size() + " entries");
 
 		for (i = 0; i < a.size(); ++i) {
 			final SearchNode f = a.get(i);
@@ -145,12 +145,12 @@ public class FillerThread extends SearchThread {
 			reciprocal = false;
 		}
 		else {
-			SNT.error("Trying to load a fill with an unknown metric ('" + metric +
+			SNTUtils.error("Trying to load a fill with an unknown metric ('" + metric +
 				"')");
 			return null;
 		}
 
-		SNT.log("loading a fill with threshold: " + fill.getThreshold());
+		SNTUtils.log("loading a fill with threshold: " + fill.getThreshold());
 
 		final FillerThread result = new FillerThread(imagePlus, stackMin, stackMax,
 			startPaused, reciprocal, fill.getThreshold(), 5000);

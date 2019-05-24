@@ -71,7 +71,7 @@ import sholl.math.NormalizedProfileStats;
 import sholl.math.ShollStats;
 import sholl.plugin.Prefs;
 import tracing.Path;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.SimpleNeuriteTracer;
 import tracing.Tree;
 import tracing.analysis.TreeAnalyzer;
@@ -330,7 +330,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive,
 		if (calledFromSNT) {
 			previewOverlay = new PreviewOverlay(snt.getImagePlus(), center
 				.getUnscaledPoint());
-			logger.setDebug(SNT.isDebugMode());
+			logger.setDebug(SNTUtils.isDebugMode());
 			setLUTs();
 			resolveInput("file");
 			resolveInput("centerChoice");

@@ -109,8 +109,8 @@ class NormalPlaneCanvas extends TracerCanvas {
 		// build label
 		final double proportion = (scores[z] - minScore) / (maxScore - minScore);
 		super.setAnnotationsColor(fitColor);
-		setCanvasLabel(String.format("r=%s score=%s", SNT.formatDouble(radii[z],
-			2), SNT.formatDouble(proportion, 2)));
+		setCanvasLabel(String.format("r=%s score=%s", SNTUtils.formatDouble(radii[z],
+			2), SNTUtils.formatDouble(proportion, 2)));
 
 		// mark center
 		g.setStroke(new BasicStroke(2));
@@ -129,7 +129,7 @@ class NormalPlaneCanvas extends TracerCanvas {
 
 		// report angle
 		final StringBuilder sb = new StringBuilder();
-		sb.append(SNT.formatDouble(Math.toDegrees(angles[z]), 1)).append(DEG);
+		sb.append(SNTUtils.formatDouble(Math.toDegrees(angles[z]), 1)).append(DEG);
 		if (!valid[z]) sb.append("  Fit discarded");
 		g.drawString(sb.toString(), (float) myScreenXDprecise(0),
 			(float) myScreenYDprecise(imp.getHeight() - 1));

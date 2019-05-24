@@ -43,7 +43,7 @@ import org.jzy3d.plot3d.primitives.vbo.drawable.DrawableVBO;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.util.PointInImage;
 import tracing.util.SNTPoint;
 
@@ -85,7 +85,7 @@ public class OBJMesh {
 		if (filePath == null || filePath.isEmpty()) {
 			throw new IllegalArgumentException("Invalid file path");
 		}
-		SNT.log("Retrieving " + filePath);
+		SNTUtils.log("Retrieving " + filePath);
 		final URL url;
 		try {
 			// see https://stackoverflow.com/a/402771
@@ -228,13 +228,13 @@ public class OBJMesh {
 
 		private boolean compileModel() {
 			obj = new OBJFilePlus();
-			SNT.log("Loading OBJ file '" + url + "'");
+			SNTUtils.log("Loading OBJ file '" + url + "'");
 			if (!obj.loadModelFromURL(url)) {
-				SNT.log("Loading failed. Invalid file?");
+				SNTUtils.log("Loading failed. Invalid file?");
 				return false;
 			}
 			obj.compileModel();
-			SNT.log(String.format("Meshed compiled: %d vertices and %d triangles", obj
+			SNTUtils.log(String.format("Meshed compiled: %d vertices and %d triangles", obj
 				.getPositionCount(), (obj.getIndexCount() / 3)));
 			return obj.getPositionCount() > 0;
 		}

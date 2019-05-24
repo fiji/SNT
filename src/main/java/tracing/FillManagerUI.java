@@ -468,13 +468,13 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 			catch (final IOException ioe) {
 				gUtils.error("Saving to " + saveFile.getAbsolutePath() +
 					" failed. See console for details");
-				SNT.error("IO Error", ioe);
+				SNTUtils.error("IO Error", ioe);
 				return;
 			}
 			plugin.getUI().showStatus("Done... ", true);
 		}
 		else {
-			SNT.error("BUG: FillWindow received an event from an unknown source.");
+			SNTUtils.error("BUG: FillWindow received an event from an unknown source.");
 		}
 
 	}
@@ -516,8 +516,8 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 	protected void thresholdChanged(final double f) {
 		SwingUtilities.invokeLater(() -> {
 			assert SwingUtilities.isEventDispatchThread();
-			final String value = SNT.formatDouble(f, 3);
-			thresholdField.setText(SNT.formatDouble(f, 3));
+			final String value = SNTUtils.formatDouble(f, 3);
+			thresholdField.setText(SNTUtils.formatDouble(f, 3));
 			currentThreshold.setText("Current threshold distance: " + value);
 		});
 	}
@@ -530,7 +530,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		final float f)
 	{
 		SwingUtilities.invokeLater(() -> {
-			maxThreshold.setText("Max. explored distance: " + SNT.formatDouble(f, 3));
+			maxThreshold.setText("Max. explored distance: " + SNTUtils.formatDouble(f, 3));
 			maxThresholdValue = f;
 		});
 	}
@@ -588,7 +588,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 				newStatus = "Cursor position: Not reached by search yet";
 			}
 			else {
-				newStatus = "Cursor position: Distance from path is " + SNT
+				newStatus = "Cursor position: Distance from path is " + SNTUtils
 					.formatDouble(t, 3);
 			}
 			fillStatus.setText(newStatus);

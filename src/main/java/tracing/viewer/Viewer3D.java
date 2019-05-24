@@ -155,7 +155,7 @@ import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
 import tracing.Path;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.SNTService;
 import tracing.Tree;
 import tracing.analysis.MultiTreeColorMapper;
@@ -381,7 +381,7 @@ public class Viewer3D {
 	}
 
 	private void rebuild() {
-		SNT.log("Rebuilding scene...");
+		SNTUtils.log("Rebuilding scene...");
 		try {
 			// remember settings so that they can be restored
 			final boolean lighModeOn = !isDarkModeOn();
@@ -401,7 +401,7 @@ public class Viewer3D {
 			//if (managerList != null) managerList.selectAll();
 		}
 		catch (final GLException exc) {
-			SNT.error("Rebuild Error", exc);
+			SNTUtils.error("Rebuild Error", exc);
 		}
 		if (frame != null) frame.replaceCurrentChart(chart);
 		updateView();
@@ -427,7 +427,7 @@ public class Viewer3D {
 		if (frame != null && frame.managerPanel != null) {
 			frame.managerPanel.debugCheckBox.setSelected(enable);
 		}
-		SNT.setDebugMode(enable);
+		SNTUtils.setDebugMode(enable);
 	}
 
 	/**
@@ -892,9 +892,9 @@ public class Viewer3D {
 	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public boolean syncPathManagerList() throws UnsupportedOperationException {
-		if (SNT.getPluginInstance() == null) throw new IllegalArgumentException(
+		if (SNTUtils.getPluginInstance() == null) throw new IllegalArgumentException(
 			"SNT is not running.");
-		final Tree tree = new Tree(SNT.getPluginInstance().getPathAndFillManager()
+		final Tree tree = new Tree(SNTUtils.getPluginInstance().getPathAndFillManager()
 			.getPathsFiltered());
 		if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {
 			chart.getScene().getGraph().remove(plottedTrees.get(
@@ -921,7 +921,7 @@ public class Viewer3D {
 			updateView();
 		}
 		catch (final GLException ignored) {
-			SNT.log("Upate view failed...");
+			SNTUtils.log("Upate view failed...");
 			return false;
 		}
 		// now check that everything is visible
@@ -1131,15 +1131,15 @@ public class Viewer3D {
 			.format(new Date());
 		try {
 			final File f = new File(prefs.snapshotDir, file);
-			SNT.log("Saving snapshot to " + f);
-			if (SNT.isDebugMode() && frame != null) {
-				SNT.log("Frame size: (" + frame.getWidth() + ", " + frame.getHeight() + ");");
+			SNTUtils.log("Saving snapshot to " + f);
+			if (SNTUtils.isDebugMode() && frame != null) {
+				SNTUtils.log("Frame size: (" + frame.getWidth() + ", " + frame.getHeight() + ");");
 				((AView)view).logViewPoint();
 			}
 			chart.screenshot(f);
 		}
 		catch (final IOException e) {
-			SNT.error("IOException", e);
+			SNTUtils.error("IOException", e);
 			return false;
 		}
 		return true;
@@ -1476,14 +1476,14 @@ public class Viewer3D {
 			final StringBuilder sb = new StringBuilder("setViewPoint(");
 			sb.append(viewpoint.x).append("f, ");
 			sb.append(viewpoint.y).append("f);");
-			SNT.log(sb.toString());
+			SNTUtils.log(sb.toString());
 		}
 
 		public void setBoundManual(final BoundingBox3d bounds,
 			final boolean logInDebugMode)
 		{
 			super.setBoundManual(bounds);
-			if (logInDebugMode && SNT.isDebugMode()) {
+			if (logInDebugMode && SNTUtils.isDebugMode()) {
 				final StringBuilder sb = new StringBuilder("setBounds(");
 				sb.append(bounds.getXmin()).append("f, ");
 				sb.append(bounds.getXmax()).append("f, ");
@@ -1491,7 +1491,7 @@ public class Viewer3D {
 				sb.append(bounds.getYmax()).append("f, ");
 				sb.append(bounds.getZmin()).append("f, ");
 				sb.append(bounds.getZmax()).append("f);");
-				SNT.log(sb.toString());
+				SNTUtils.log(sb.toString());
 			}
 		}
 
@@ -2305,14 +2305,14 @@ public class Viewer3D {
 
 		private JPopupMenu toolsMenu() {
 			final JPopupMenu settingsMenu = new JPopupMenu();
-			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode", SNT.isDebugMode());
+			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode", SNTUtils.isDebugMode());
 			jcbmi.setEnabled(!isSNTInstance());jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
 			jcbmi.setMnemonic('d');
 			jcbmi.addItemListener(e -> {
 				if (isSNTInstance()) {
 					sntService.getPlugin().getUI().setEnableDebugMode(jcbmi.isSelected());
 				} else {
-					SNT.setDebugMode(jcbmi.isSelected());
+					SNTUtils.setDebugMode(jcbmi.isSelected());
 				}
 			});
 			settingsMenu.add(jcbmi);
@@ -2424,8 +2424,8 @@ public class Viewer3D {
 				catch (InterruptedException | ExecutionException ex) {
 					error = true;
 					doneMessage = "Unfortunately an exception occured.";
-					if (SNT.isDebugMode())
-						SNT.error("Recording failure", ex);
+					if (SNTUtils.isDebugMode())
+						SNTUtils.error("Recording failure", ex);
 				}
 				if (error) {
 					displayMsg("Recording failure...");
@@ -3190,7 +3190,7 @@ public class Viewer3D {
 			catch (InterruptedException | ExecutionException e2) {
 				gUtils.error(
 					"Unfortunately an exception occured. See console for details.");
-				SNT.error("Error", e2);
+				SNTUtils.error("Error", e2);
 				return false;
 			}
 		}
@@ -3491,7 +3491,7 @@ public class Viewer3D {
 				view.setBoundMode(ViewBoundMode.AUTO_FIT);
 				displayMsg("View reset");
 			} catch (final GLException ex) {
-				SNT.error("Is scene empty? ", ex);
+				SNTUtils.error("Is scene empty? ", ex);
 			}
 		}
 
@@ -3706,7 +3706,7 @@ public class Viewer3D {
 			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
 				RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 			g2d.setColor(color);
-			if (SNT.isDebugMode()) {
+			if (SNTUtils.isDebugMode()) {
 				int lineHeight = g.getFontMetrics().getHeight();
 				g2d.drawString("Camera: " + view.getCamera().getEye(), 20, lineHeight);
 				g2d.drawString("FOV: " + view.getCamera().getRenderingSphereRadius(),
@@ -3981,7 +3981,7 @@ public class Viewer3D {
 		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
 		colorizer.map(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();
-		SNT.setDebugMode(true);
+		SNTUtils.setDebugMode(true);
 		final Viewer3D jzy3D = new Viewer3D(ij.context());
 		jzy3D.addColorBarLegend(ColorTables.ICE, (float) bounds[0],
 			(float) bounds[1], new Font("Arial", Font.PLAIN, 24), 3, 4);

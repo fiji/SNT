@@ -158,7 +158,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected double x_spacing = 1;
 	protected double y_spacing = 1;
 	protected double z_spacing = 1;
-	protected String spacing_units = SNT.getSanitizedUnit(null);
+	protected String spacing_units = SNTUtils.getSanitizedUnit(null);
 	protected int channel;
 	protected int frame;
 	private LUT lut;
@@ -268,7 +268,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				"RGB images are not supported. Please convert to multichannel and re-run");
 
 		context.inject(this);
-		SNT.setPlugin(this);
+		SNTUtils.setPlugin(this);
 		prefs = new SNTPrefs(this);
 		pathAndFillManager = new PathAndFillManager(this);
 		setFieldsFromImage(sourceImage);
@@ -295,7 +295,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		this.pathAndFillManager = pathAndFillManager;
 
 		context.inject(this);
-		SNT.setPlugin(this);
+		SNTUtils.setPlugin(this);
 		prefs = new SNTPrefs(this);
 		pathAndFillManager.plugin = this;
 		pathAndFillManager.addPathAndFillListener(this);
@@ -331,7 +331,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			x_spacing = calibration.pixelWidth;
 			y_spacing = calibration.pixelHeight;
 			z_spacing = calibration.pixelDepth;
-			spacing_units = SNT.getSanitizedUnit(calibration.getUnit());
+			spacing_units = SNTUtils.getSanitizedUnit(calibration.getUnit());
 		}
 		if ((x_spacing == 0.0) || (y_spacing == 0.0) || (z_spacing == 0.0)) {
 			throw new IllegalArgumentException(
@@ -449,7 +449,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (memMax > 0 && memNeeded > memAvailable) {
 			singleSlice = true;
 			depth = 1;
-			SNT.log(
+			SNTUtils.log(
 				"Not enough memory for displaying 3D stack. Defaulting to 2D canvas");
 		}
 
@@ -725,10 +725,10 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			// The filler must be paused while we save to
 			// avoid concurrent modifications...
 
-			SNT.log("[" + Thread.currentThread() +
+			SNTUtils.log("[" + Thread.currentThread() +
 				"] going to lock filler in plugin.saveFill");
 			synchronized (filler) {
-				SNT.log("[" + Thread.currentThread() + "] acquired it");
+				SNTUtils.log("[" + Thread.currentThread() + "] acquired it");
 				if (SearchThread.PAUSED == filler.getThreadStatus()) {
 					// Then we can go ahead and save:
 					pathAndFillManager.addFill(filler.getFill());
@@ -742,7 +742,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				}
 
 			}
-			SNT.log("[" + Thread.currentThread() + "] left lock on filler");
+			SNTUtils.log("[" + Thread.currentThread() + "] left lock on filler");
 		}
 	}
 
@@ -806,7 +806,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			if (success) {
 				final Path result = source.getResult();
 				if (result == null) {
-					SNT.error("Bug! Succeeded, but null result.");
+					SNTUtils.error("Bug! Succeeded, but null result.");
 					return;
 				}
 				if (endJoin != null) {
@@ -1195,8 +1195,8 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 //			System.out.println("scaled "+ editingPath.getPointInImage(editingPath
 //					.getEditableNodeIndex()));
 		}
-		statusMessage += "World: (" + SNT.formatDouble(ix * x_spacing, 2) + ", " +
-			SNT.formatDouble(iy * y_spacing, 2) + ", " + SNT.formatDouble(iz *
+		statusMessage += "World: (" + SNTUtils.formatDouble(ix * x_spacing, 2) + ", " +
+			SNTUtils.formatDouble(iy * y_spacing, 2) + ", " + SNTUtils.formatDouble(iz *
 				z_spacing, 2) + ");";
 		if (labelData != null) {
 			final byte b = labelData[iz][iy * width + ix];
@@ -1589,7 +1589,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 			}
 			catch (final InterruptedException ex) {
 				showStatus(0, 0, "Search interrupted!");
-				SNT.error("Search interrupted", ex);
+				SNTUtils.error("Search interrupted", ex);
 			}
 			catch (final ArrayIndexOutOfBoundsException
 					| IllegalArgumentException ex)
@@ -1598,7 +1598,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				// triggered if
 				// e.g., point- is out of image bounds,
 				showStatus(i, nNodes, "ERROR: Search failed!...");
-				SNT.error("Search failed for node " + i);
+				SNTUtils.error("Search failed for node " + i);
 				// continue;
 			}
 			finally {
@@ -1760,7 +1760,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	public void setFillThreshold(final double distance) {
 		if (!Double.isNaN(distance) && distance > 0) {
-			SNT.log("Setting new threshold of: " + distance);
+			SNTUtils.log("Setting new threshold of: " + distance);
 			if (ui != null) ui.thresholdChanged(distance);
 			filler.setThreshold(distance);
 		}
@@ -1840,7 +1840,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		setZPositionAllPanes((int) Math.round(centerScaled.x), (int) Math.round(
 			centerScaled.y), (int) Math.round(centerScaled.z));
 		setShowOnlySelectedPaths(false);
-		SNT.log("Starting Sholl Analysis centered at " + centerScaled);
+		SNTUtils.log("Starting Sholl Analysis centered at " + centerScaled);
 		final Map<String, Object> input = new HashMap<>();
 		input.put("snt", this);
 		input.put("center", centerScaled);
@@ -2062,7 +2062,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected void loadSecondaryImage(final ImagePlus imp, final boolean changeUIState) throws IllegalArgumentException {
 		if (imp != null && secondaryImageFile != null && secondaryImageFile.getName().toLowerCase().contains(".oof")) {
 			showStatus(0, 0, "Optimally Oriented Flux image detected");
-			SNT.log("Optimally Oriented Flux image detected. Image won't be cached...");
+			SNTUtils.log("Optimally Oriented Flux image detected. Image won't be cached...");
 			tubularGeodesicsTracingEnabled = true;
 			return;
 		}
@@ -2095,7 +2095,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				+ ". If this unexpected, check under 'Image>Properties...' that CZT axes are not swapped.");
 		}
 		if (changeUIState) changeUIState(SNTUI.CACHING_DATA);
-		SNT.log("Loading tubeness image multiplier=" + hc.multiplier + " max=" + stackMaxSecondary);
+		SNTUtils.log("Loading tubeness image multiplier=" + hc.multiplier + " max=" + stackMaxSecondary);
 		loadCachedData(imp, hc.cachedTubeness = new float[depth][]);
 		hc.setSigmaAndMax(hc.getSigma(true), stackMaxSecondary);
 		if (changeUIState) {
@@ -2106,7 +2106,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	private void loadCachedData(final ImagePlus imp, final float[][] destination) {
 		showStatus(0, 0, "Loading secondary image");
-		SNT.convertTo32bit(imp);
+		SNTUtils.convertTo32bit(imp);
 		final ImageStack s = imp.getStack();
 		for (int z = 0; z < depth; ++z) {
 			showStatus(z, depth, "Loading image/Computing range...");
@@ -2131,7 +2131,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	private ImagePlus openCachedDataImage(final File file) throws IOException {
 		if (xy == null) throw new IllegalArgumentException(
 			"Data can only be loaded after main tracing image is known");
-		if (!SNT.fileAvailable(file)) {
+		if (!SNTUtils.fileAvailable(file)) {
 			throw new IllegalArgumentException("File path of input data unknown");
 		}
 		ImagePlus imp = (ImagePlus) legacyService.getIJ1Helper().openImage(file.getAbsolutePath());
@@ -2677,14 +2677,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				try {
 					xy8 = openCachedDataImage(secondaryImageFile);
 				} catch (final IOException e) {
-					SNT.error("IOerror", e);
+					SNTUtils.error("IOerror", e);
 					return null;
 				}
 			else 
 				xy8 = getSecondaryDataAsImp();
 		} else 
 			xy8 = getLoadedDataAsImp();
-		SNT.convertTo8bit(xy8);
+		SNTUtils.convertTo8bit(xy8);
 		final ImagePlus[] views = (single_pane) ? new ImagePlus[] { null, null } : MultiDThreePanes.getZYXZ(xy8, 1);
 		return new ImagePlus[] { xy8, views[0], views[1] };
 	}
@@ -2733,7 +2733,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 			Overlay existingOverlay = paneImp.getOverlay();
 			if (existingOverlay == null) existingOverlay = new Overlay();
-			final ImagePlus overlay = SNT.getMIP(mipImp);
+			final ImagePlus overlay = SNTUtils.getMIP(mipImp);
 
 			// (This logic is taken from OverlayCommands.)
 			final ImageRoi roi = new ImageRoi(0, 0, overlay.getProcessor());

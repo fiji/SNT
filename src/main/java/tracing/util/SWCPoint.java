@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.List;
 
 import tracing.Path;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.annotation.BrainAnnotation;
 
 /**
@@ -197,7 +197,7 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 			br.lines().forEach(pw::println);
 		}
 		catch (final IOException e) {
-			SNT.error("IO Error", e);
+			SNTUtils.error("IO Error", e);
 		}
 	}
 

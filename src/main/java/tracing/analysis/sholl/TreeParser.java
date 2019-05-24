@@ -41,7 +41,7 @@ import sholl.UPoint;
 import sholl.math.LinearProfileStats;
 import sholl.parsers.Parser;
 import tracing.Path;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.util.PointInImage;
 
@@ -398,7 +398,7 @@ public class TreeParser implements Parser {
 
 	/* IDE debug method */
 	public static void main(final String... args) {
-		final Tree tree = new Tree(SNT.randomPaths());
+		final Tree tree = new Tree(SNTUtils.randomPaths());
 		final TreeParser parser = new TreeParser(tree);
 		parser.setCenter(PRIMARY_NODES_ANY);
 		parser.parse();

@@ -549,7 +549,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			options[1] = Integer.parseInt(maxRadiustring);
 		}
 		catch (final NumberFormatException ex) {
-			SNT.error("Could not parse settings. Adopting Defaults...", ex);
+			SNTUtils.error("Could not parse settings. Adopting Defaults...", ex);
 		}
 		return options;
 	}
@@ -1442,18 +1442,18 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		final int rows = table.getRowCount();
 
 		// Print a column header to hold row headers
-		SNT.csvQuoteAndPrint(pw, "Description");
+		SNTUtils.csvQuoteAndPrint(pw, "Description");
 		pw.print(sep);
 		for (int col = 0; col < columns; ++col) {
-			SNT.csvQuoteAndPrint(pw, table.getColumnHeader(col));
+			SNTUtils.csvQuoteAndPrint(pw, table.getColumnHeader(col));
 			if (col < (columns - 1)) pw.print(sep);
 		}
 		pw.print("\r\n");
 		for (int row = 0; row < rows; row++) {
-			SNT.csvQuoteAndPrint(pw, table.getRowHeader(row));
+			SNTUtils.csvQuoteAndPrint(pw, table.getRowHeader(row));
 			pw.print(sep);
 			for (int col = 0; col < columns; col++) {
-				SNT.csvQuoteAndPrint(pw, table.get(col, row));
+				SNTUtils.csvQuoteAndPrint(pw, table.get(col, row));
 				if (col < (columns - 1)) pw.print(sep);
 			}
 			pw.print("\r\n");
@@ -1517,7 +1517,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					GuiUtils.collapseAllTreeNodes(tree);
 					return;
 				default:
-					SNT.error("Unexpectedly got an event from an unknown source: " + e);
+					SNTUtils.error("Unexpectedly got an event from an unknown source: " + e);
 					break;
 			}
 		}
@@ -1592,7 +1592,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					return;
 			}
 
-			SNT.error("Unexpectedly got an event from an unknown source: " + e);
+			SNTUtils.error("Unexpectedly got an event from an unknown source: " + e);
 		}
 	}
 
@@ -1938,7 +1938,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 						"Please specify the maximum permitted distance between nodes:<ul>" +
 						"<li>This destructive operation cannot be undone!</li>" +
 						"<li>Paths can only be downsampled: Smaller inter-node distances will not be interpolated</li>" +
-						"<li>Currently, the smallest voxel dimension is " + SNT
+						"<li>Currently, the smallest voxel dimension is " + SNTUtils
 							.formatDouble(minSep, 3) + plugin.spacing_units + "</li>",
 					"Downsampling: " + n + " Selected Path(s)", 2 * minSep);
 				if (userMaxDeviation == null) return; // user pressed cancel
@@ -2055,7 +2055,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else {
-				SNT.error("Unexpectedly got an event from an unknown source: " + e);
+				SNTUtils.error("Unexpectedly got an event from an unknown source: " + e);
 				return;
 			}
 		}
@@ -2126,7 +2126,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			else if (MEAN_RADIUS_TAG_CMD.equals(cmd)) {
 				if (jcbmi.isSelected()) {
 					for (final Path p : selectedPaths) {
-						final String radiusTag = " [MR:" + SNT.formatDouble(p
+						final String radiusTag = " [MR:" + SNTUtils.formatDouble(p
 							.getMeanRadius(), 3) + p.spacing_units + "]";
 						p.setName(p.getName() + radiusTag);
 					}

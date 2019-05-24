@@ -256,7 +256,7 @@ public class SNTUI extends JDialog {
 
 	private SNTUI(final SimpleNeuriteTracer plugin, final PathManagerUI pmUI, final FillManagerUI fmUI) {
 
-		super(plugin.legacyService.getIJ1Helper().getIJ(), "SNT v" + SNT.VERSION, false);
+		super(plugin.legacyService.getIJ1Helper().getIJ(), "SNT v" + SNTUtils.VERSION, false);
 		guiUtils = new GuiUtils(this);
 		this.plugin = plugin;
 		new ClarifyingKeyListener(plugin).addKeyAndContainerListenerRecursively(this);
@@ -477,7 +477,7 @@ public class SNTUI extends JDialog {
 	public void setEnableDebugMode(final boolean enable) {
 		debugCheckBox.setSelected(enable);
 		if (getReconstructionViewer(false) == null) {
-			SNT.setDebugMode(enable);
+			SNTUtils.setDebugMode(enable);
 		} else {
 			// will call SNT.setDebugMode(enable);
 			getReconstructionViewer(false).setEnableDebugMode(enable);
@@ -521,9 +521,9 @@ public class SNTUI extends JDialog {
 		if (sigma == -1)
 			sb.append("(\u03C3=?.??");
 		else
-			sb.append("(\u03C3=").append(SNT.formatDouble(sigma, 2));
+			sb.append("(\u03C3=").append(SNTUtils.formatDouble(sigma, 2));
 		final double max = hc.getMax();
-		sb.append("; max=").append(SNT.formatDouble(max, 1)).append(")");
+		sb.append("; max=").append(SNTUtils.formatDouble(max, 1)).append(")");
 		final boolean scientificNotation = max < 0.01;
 		if (!scientificNotation) sb.append("&ensp;&ensp;");
 ;		assert SwingUtilities.isEventDispatchThread();
@@ -551,7 +551,7 @@ public class SNTUI extends JDialog {
 		dispose();
 		// NB: If visible Reconstruction Plotter will remain open
 		plugin.closeAndResetAllPanes();
-		SNT.setPlugin(null);
+		SNTUtils.setPlugin(null);
 	}
 
 	private void setEnableAutoTracingComponents(final boolean enable, final boolean enableAstar) {
@@ -766,11 +766,11 @@ public class SNTUI extends JDialog {
 				break;
 
 			default:
-				SNT.error("BUG: switching to an unknown state");
+				SNTUtils.error("BUG: switching to an unknown state");
 				return;
 			}
 			currentState = newState;
-			SNT.log("UI state: " + getState(currentState));
+			SNTUtils.log("UI state: " + getState(currentState));
 			plugin.updateAllViewers();
 		});
 
@@ -1160,8 +1160,8 @@ public class SNTUI extends JDialog {
 				.addItemListener(e -> askUserConfirmation = e.getStateChange() == ItemEvent.DESELECTED);
 		miscPanel.add(askUserConfirmationCheckBox, gdb);
 		++gdb.gridy;
-		debugCheckBox = new JCheckBox("Debug mode", SNT.isDebugMode());
-		debugCheckBox.addItemListener(e -> SNT.setDebugMode(e.getStateChange() == ItemEvent.SELECTED));
+		debugCheckBox = new JCheckBox("Debug mode", SNTUtils.isDebugMode());
+		debugCheckBox.addItemListener(e -> SNTUtils.setDebugMode(e.getStateChange() == ItemEvent.SELECTED));
 		miscPanel.add(debugCheckBox, gdb);
 		++gdb.gridy;
 		final JButton prefsButton = GuiUtils.smallButton("Preferences...");
@@ -1638,7 +1638,7 @@ public class SNTUI extends JDialog {
 		revealMenuItem.addActionListener(e -> {
 			try {
 				final File file = new File(secondaryImgPathField.getText());
-				if (SNT.fileAvailable(file)) {
+				if (SNTUtils.fileAvailable(file)) {
 					Desktop.getDesktop().open(file.getParentFile());
 					// TODO: Move to java9
 					// Desktop.getDesktop().browseFileDirectory(file);
@@ -1693,7 +1693,7 @@ public class SNTUI extends JDialog {
 	}
 
 	private void loadSecondaryImageFile(final File imgFile) {
-		if (!SNT.fileAvailable(imgFile)) {
+		if (!SNTUtils.fileAvailable(imgFile)) {
 			guiUtils.error("Current file path is not valid.");
 			return;
 		}
@@ -1758,7 +1758,7 @@ public class SNTUI extends JDialog {
 	}
 
 	protected File openFile(final String promptMsg, final String extension) {
-		final File suggestedFile = SNT.findClosestPair(plugin.prefs.getRecentFile(), extension);
+		final File suggestedFile = SNTUtils.findClosestPair(plugin.prefs.getRecentFile(), extension);
 		return openFile(promptMsg, suggestedFile);
 	}
 
@@ -1774,7 +1774,7 @@ public class SNTUI extends JDialog {
 
 	protected File saveFile(final String promptMsg, final File suggestedFile, final String fallbackExtension) {
 		final File fFile = (suggestedFile == null)
-				? SNT.findClosestPair(plugin.prefs.getRecentFile(), fallbackExtension)
+				? SNTUtils.findClosestPair(plugin.prefs.getRecentFile(), fallbackExtension)
 				: suggestedFile;
 		final boolean focused = hasFocus();
 		if (focused) toBack();
@@ -1867,7 +1867,7 @@ public class SNTUI extends JDialog {
 						flushData();
 					}
 				} catch (InterruptedException | ExecutionException e) {
-					SNT.error("ActiveWorker failure", e);
+					SNTUtils.error("ActiveWorker failure", e);
 				}
 				if (isTubeness) {
 					updateHessianPanel();
@@ -1903,7 +1903,7 @@ public class SNTUI extends JDialog {
 		if (secondaryImgPathField == null)
 			return;
 		final String path = secondaryImgPathField.getText();
-		final boolean validFile = path != null && SNT.fileAvailable(new File(path));
+		final boolean validFile = path != null && SNTUtils.fileAvailable(new File(path));
 		secondaryImgPathField.setForeground((validFile) ? new JTextField().getForeground() : Color.RED);
 		final String tooltext = "<HTML>Path to a matched image (32-bit preferred). Current file:<br>" + path + " ("
 				+ ((validFile) ? "valid" : "invalid") + " path)";
@@ -2466,12 +2466,12 @@ public class SNTUI extends JDialog {
 				+ "Enter the maximum pixel intensity on the cached "//
 				+ "<i>Tubeness</i> image beyond which the cost function for A* search "//
 				+ "is minimized. The current default is "//
-				+ SNT.formatDouble(defaultValue, 1) + ".";
+				+ SNTUtils.formatDouble(defaultValue, 1) + ".";
 		if (plugin.secondaryData == null) {
 			// min/max belong to plugin.cachedTubeness
 			promptMsg += " The image min-max range is "//
-					+ SNT.formatDouble(plugin.stackMinSecondary, 1) + "-"//
-					+ SNT.formatDouble(plugin.stackMaxSecondary, 1) + ".";
+					+ SNTUtils.formatDouble(plugin.stackMinSecondary, 1) + "-"//
+					+ SNTUtils.formatDouble(plugin.stackMaxSecondary, 1) + ".";
 		}
 		final Double max = guiUtils.getDouble(promptMsg, "Hessian Settings (Cached Image)", defaultValue);
 		if (max == null) {
@@ -2508,16 +2508,16 @@ public class SNTUI extends JDialog {
 
 	private void setSigmaFromUser(final String primarySecondaryChoice) {
 		final HessianCaller hc = plugin.getHessianCaller(primarySecondaryChoice);
-		final JTextField sigmaField = new JTextField(SNT.formatDouble(hc.getSigma(true), 5), 5);
-		final JTextField maxField = new JTextField(SNT.formatDouble(hc.getMax(), 1), 5);
+		final JTextField sigmaField = new JTextField(SNTUtils.formatDouble(hc.getSigma(true), 5), 5);
+		final JTextField maxField = new JTextField(SNTUtils.formatDouble(hc.getMax(), 1), 5);
 		final Object[] contents = { "<html><b>Sigma</b><br>Enter the approximate radius of the structures you are<br>" //
 				+ "tracing. The default is the average of voxel dimensions<br>" //
 				+ "(anisotropic images) or twice the voxel size (isotropic),<br>" //
-				+ "i.e., " + SNT.formatDouble(hc.getDefaultSigma(), 3) //
+				+ "i.e., " + SNTUtils.formatDouble(hc.getDefaultSigma(), 3) //
 				+ plugin.spacing_units + " for active image:", sigmaField, //
 				"<html><br><b>Maximum</b><br>Enter the maximum pixel intensity on the <i>Tubeness</i><br>"
 						+ "image beyond which the cost function for A* search<br>" + "is minimized (the default "
-						+ "for current image is " + SNT.formatDouble(hc.getDefaultMax(), 1) + "):",
+						+ "for current image is " + SNTUtils.formatDouble(hc.getDefaultMax(), 1) + "):",
 				maxField, };
 		final int result = JOptionPane.showConfirmDialog(this, contents, "Hessian Settings ("+ primarySecondaryChoice +" Image)",
 				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -3215,7 +3215,7 @@ public class SNTUI extends JDialog {
 						return;
 				}
 				final String savePath = saveFile.getAbsolutePath();
-				SNT.log("Exporting paths to " + saveFile);
+				SNTUtils.log("Exporting paths to " + saveFile);
 				if (!checkOKToWriteAllAsSWC(savePath))
 					return;
 				plugin.unsavedPaths = !pathAndFillManager.exportAllPathsAsSWC(savePath);
@@ -3389,7 +3389,7 @@ public class SNTUI extends JDialog {
 
 		public void run() {
 			try {
-				SNT.log("Running "+ cmd.getName());
+				SNTUtils.log("Running "+ cmd.getName());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				cmdService.run(cmd, true, inputs);
 			} catch (final OutOfMemoryError e) {
@@ -3455,7 +3455,7 @@ public class SNTUI extends JDialog {
 				return "";
 			}
 			try {
-				SNT.log("Running "+ cmd.getName());
+				SNTUtils.log("Running "+ cmd.getName());
 				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
 				final CommandModule cmdModule = cmdService.run(cmd, true, inputs).get();
 				return (cmdModule.isCanceled()) ? cmdModule.getCancelReason() : "Command completed";

@@ -318,7 +318,7 @@ public class Tree {
 			parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
 		}
 		catch (final IllegalArgumentException ignored) {
-			SNT.log("No soma attribute found...");
+			SNTUtils.log("No soma attribute found...");
 			return null;
 		}
 		final UPoint center = parser.getCenter();

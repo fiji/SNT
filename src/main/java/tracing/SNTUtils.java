@@ -53,7 +53,7 @@ import ij.process.StackConverter;
 import tracing.util.BoundingBox;
 
 /** Static utilities for SNT **/
-public class SNT {
+public class SNTUtils {
 
 	private static Context context;
 	private static LogService logService;
@@ -64,7 +64,7 @@ public class SNT {
 	private static boolean initialized;
 	private static SimpleNeuriteTracer plugin;
 
-	private SNT() {}
+	private SNTUtils() {}
 
 	private synchronized static void initialize() {
 		if (initialized) return;
@@ -85,11 +85,11 @@ public class SNT {
 	}
 
 	protected static synchronized void error(final String string) {
-		if (SNT.isDebugMode()) nonDebugError(string);
+		if (SNTUtils.isDebugMode()) nonDebugError(string);
 	}
 
 	protected static void setPlugin(final SimpleNeuriteTracer plugin) {
-		SNT.plugin = plugin;
+		SNTUtils.plugin = plugin;
 		if (context == null && plugin != null) context = plugin.getContext();
 	}
 
@@ -105,19 +105,19 @@ public class SNT {
 	public static synchronized void error(final String string,
 		final Throwable t)
 	{
-		if (!SNT.isDebugMode()) return;
+		if (!SNTUtils.isDebugMode()) return;
 		if (!initialized) initialize();
 		logService.error("[SNT] " + string, t);
 	}
 
 	public static synchronized void log(final String string) {
-		if (!SNT.isDebugMode()) return;
+		if (!SNTUtils.isDebugMode()) return;
 		if (!initialized) initialize();
 		logService.info("[SNT] " + string);
 	}
 
 	protected static synchronized void warn(final String string) {
-		if (!SNT.isDebugMode()) return;
+		if (!SNTUtils.isDebugMode()) return;
 		if (!initialized) initialize();
 		logService.warn("[SNT] " + string);
 	}
@@ -241,10 +241,10 @@ public class SNT {
 
 	public static File findClosestPair(final File file, final String pairExt) {
 		try {
-			SNT.log("Finding closest pair for " + file);
+			SNTUtils.log("Finding closest pair for " + file);
 			final File dir = file.getParentFile();
 			final String[] list = dir.list((f, s) -> s.endsWith(pairExt));
-			SNT.log("Found " + list.length + " " + pairExt + " files");
+			SNTUtils.log("Found " + list.length + " " + pairExt + " files");
 			if (list.length == 0) return null;
 			Arrays.sort(list);
 			String dirPath = dir.getAbsolutePath();
@@ -257,13 +257,13 @@ public class SNT {
 				final String filename = stripExtension(Paths.get(item).getFileName()
 					.toString()).toLowerCase();
 				final int currentCost = levenshtein.cost(seed, filename);
-				SNT.log("Levenshtein cost for '" + item + "': " + currentCost);
+				SNTUtils.log("Levenshtein cost for '" + item + "': " + currentCost);
 				if (currentCost <= cost) {
 					cost = currentCost;
 					closest = item;
 				}
 			}
-			SNT.log("Identified pair '" + closest + "'");
+			SNTUtils.log("Identified pair '" + closest + "'");
 			return new File(dirPath + closest);
 		}
 		catch (final SecurityException | NullPointerException ignored) {

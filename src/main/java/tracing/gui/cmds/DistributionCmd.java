@@ -37,7 +37,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.analysis.PathProfiler;
 import tracing.analysis.TreeAnalyzer;
@@ -86,7 +86,7 @@ public class DistributionCmd extends CommonDynamicCmd {
 		if (setValuesFromSNTService && TreeColorMapper.VALUES.equals(
 			measurementChoice))
 		{
-			SNT.log("Assigning values...");
+			SNTUtils.log("Assigning values...");
 			final PathProfiler profiler = new PathProfiler(tree, sntService
 				.getPlugin().getLoadedDataAsImp());
 			profiler.assignValues();
@@ -100,7 +100,7 @@ public class DistributionCmd extends CommonDynamicCmd {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		final Tree tree = new Tree(SNT.randomPaths());
+		final Tree tree = new Tree(SNTUtils.randomPaths());
 		tree.setLabel("Bogus test");
 		final Map<String, Object> input = new HashMap<>();
 		input.put("tree", tree);

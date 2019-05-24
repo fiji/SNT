@@ -162,7 +162,7 @@ class ScriptInstaller implements MenuKeyListener {
 		final JMenu menu = getMenu("Utilities");
 		for (int i = 0; i < menu.getItemCount(); i++) {
 			final JMenuItem mItem = menu.getItem(i);
-			mItem.setText(SNT.stripExtension(mItem.getText()) + "...");
+			mItem.setText(SNTUtils.stripExtension(mItem.getText()) + "...");
 		}
 		return menu;
 	}

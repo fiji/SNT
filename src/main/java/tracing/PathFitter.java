@@ -209,7 +209,7 @@ public class PathFitter implements Callable<Path> {
 
 	private void fitCircles() {
 
-		SNT.log("Fitting " + path.getName() + ", Scope: " + getScopeAsString() +
+		SNTUtils.log("Fitting " + path.getName() + ", Scope: " + getScopeAsString() +
 			", Max radius: " + sideSearch);
 		final boolean fitRadii = (fitScope == PathFitter.RADII_AND_MIDPOINTS ||
 			fitScope == PathFitter.RADII);
@@ -228,7 +228,7 @@ public class PathFitter implements Callable<Path> {
 		fitted.setOrder(path.getOrder());
 		fitted.setCanvasOffset(path.getCanvasOffset());
 
-		SNT.log("  Generating cross-section stack (" + totalPoints +
+		SNTUtils.log("  Generating cross-section stack (" + totalPoints +
 			"slices/nodes)");
 		final int width = imp.getWidth();
 		final int height = imp.getHeight();
@@ -267,12 +267,12 @@ public class PathFitter implements Callable<Path> {
 		startValues[1] = sideSearch / 2.0;
 		startValues[2] = 3;
 
-		SNT.log("  Searches starting at: " + startValues[0] + "," + startValues[1] +
+		SNTUtils.log("  Searches starting at: " + startValues[0] + "," + startValues[1] +
 			" radius: " + startValues[2]);
 
 		for (int i = 0; i < totalPoints; ++i) {
 
-			SNT.log("  Node " + i + ". Computing tangents...");
+			SNTUtils.log("  Node " + i + ". Computing tangents...");
 
 			path.getTangent(i, pointsEitherSide, tangent);
 
@@ -316,7 +316,7 @@ public class PathFitter implements Callable<Path> {
 				optimizer.optimize(attempt, startValues, 2, 2);
 			}
 			catch (final ConjugateDirectionSearch.OptimizationError e) {
-				SNT.log("  Failure :" + e.getMessage());
+				SNTUtils.log("  Failure :" + e.getMessage());
 				fitted = null;
 				return;
 			}
@@ -344,7 +344,7 @@ public class PathFitter implements Callable<Path> {
 			double centre_real_y = y_world;
 			double centre_real_z = z_world;
 
-			SNT.log("    Original coordinates: " + centre_real_x + "," +
+			SNTUtils.log("    Original coordinates: " + centre_real_x + "," +
 				centre_real_y + "," + centre_real_z);
 
 			// FIXME: I really think these should be +=, but it seems clear from
@@ -357,7 +357,7 @@ public class PathFitter implements Callable<Path> {
 			centre_real_z -= x_basis_in_plane[2] * x_from_centre_in_plane +
 				y_basis_in_plane[2] * y_from_centre_in_plane;
 
-			SNT.log("    Adjusted coordinates: " + centre_real_x + "," +
+			SNTUtils.log("    Adjusted coordinates: " + centre_real_x + "," +
 				centre_real_y + "," + centre_real_z);
 
 			optimized_x[i] = centre_real_x;
@@ -401,7 +401,7 @@ public class PathFitter implements Callable<Path> {
 			fitted.setFittedCircles(totalPoints, path.tangents_x, path.tangents_y,
 				path.tangents_z, path.radii, //
 				optimized_x, optimized_y, optimized_z);
-			SNT.log("Done (radius fitting skipped)");
+			SNTUtils.log("Done (radius fitting skipped)");
 		}
 
 		/*
@@ -598,10 +598,10 @@ public class PathFitter implements Callable<Path> {
 			fitted_rs, //
 			fitted_optimized_x, fitted_optimized_y, fitted_optimized_z);
 
-		SNT.log("Done. With " + fittedPoints + "/" + totalPoints +
+		SNTUtils.log("Done. With " + fittedPoints + "/" + totalPoints +
 			" accepted fits");
 		if (showDetailedFittingResults) {
-			SNT.log("Generating annotated cross view stack");
+			SNTUtils.log("Generating annotated cross view stack");
 			final ImagePlus imp = new ImagePlus("Cross-section View " + fitted
 				.getName(), stack);
 			imp.setCalibration(this.imp.getCalibration());
@@ -653,7 +653,7 @@ public class PathFitter implements Callable<Path> {
 
 		final double det = n1dotn1 * n2dotn2 - n1dotn2 * n1dotn2;
 		if (Math.abs(det) < epsilon) {
-			SNT.log("WARNING: det was nearly zero: " + det);
+			SNTUtils.log("WARNING: det was nearly zero: " + det);
 			return true;
 		}
 
@@ -713,7 +713,7 @@ public class PathFitter implements Callable<Path> {
 		}
 
 		if (Math.abs(a1) < epsilon) {
-			SNT.warn("CirclesOverlap: a1 was nearly zero: " + a1);
+			SNTUtils.warn("CirclesOverlap: a1 was nearly zero: " + a1);
 			return true;
 		}
 
@@ -747,16 +747,16 @@ public class PathFitter implements Callable<Path> {
 		 * We only reach here if something has gone badly wrong, so dump helpful values
 		 * to aid in debugging:
 		 */
-		SNT.log("CirclesOverlap seems to have failed: Current settings");
-		SNT.log("det: " + det);
-		SNT.log("discriminant1: " + discriminant1);
-		SNT.log("discriminant2: " + discriminant2);
-		SNT.log("n1: (" + n1x + "," + n1y + "," + n1z + ")");
-		SNT.log("n2: (" + n2x + "," + n2y + "," + n2z + ")");
-		SNT.log("c1: (" + c1x + "," + c1y + "," + c1z + ")");
-		SNT.log("c2: (" + c2x + "," + c2y + "," + c2z + ")");
-		SNT.log("radius1: " + radius1);
-		SNT.log("radius2: " + radius2);
+		SNTUtils.log("CirclesOverlap seems to have failed: Current settings");
+		SNTUtils.log("det: " + det);
+		SNTUtils.log("discriminant1: " + discriminant1);
+		SNTUtils.log("discriminant2: " + discriminant2);
+		SNTUtils.log("n1: (" + n1x + "," + n1y + "," + n1z + ")");
+		SNTUtils.log("n2: (" + n2x + "," + n2y + "," + n2z + ")");
+		SNTUtils.log("c1: (" + c1x + "," + c1y + "," + c1z + ")");
+		SNTUtils.log("c2: (" + c2x + "," + c2y + "," + c2z + ")");
+		SNTUtils.log("radius1: " + radius1);
+		SNTUtils.log("radius2: " + radius2);
 
 		throw new IllegalArgumentException("Some overlapping case missed: " +
 			"u1_smaller=" + u1_smaller + "u1_larger=" + u1_larger + "u2_smaller=" +

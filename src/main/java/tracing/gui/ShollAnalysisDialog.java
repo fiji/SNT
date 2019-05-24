@@ -92,7 +92,7 @@ import sholl.Sholl_Analysis;
 import sholl.Sholl_Utils;
 import tracing.Path;
 import tracing.PathAndFillManager;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.SimpleNeuriteTracer;
 import tracing.util.BoundingBox;
 import tracing.util.PointInImage;
@@ -795,8 +795,8 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 			x_graph_points = Arrays.copyOf(sampled_distances, n_samples);
 			y_graph_points = Arrays.copyOf(sampled_counts, n_samples);
 
-			xAxisLabel = "Distance from (" + SNT.formatDouble(x_start, 3) + ", " + SNT
-				.formatDouble(y_start, 3) + ", " + SNT.formatDouble(z_start, 3) + ")";
+			xAxisLabel = "Distance from (" + SNTUtils.formatDouble(x_start, 3) + ", " + SNTUtils
+				.formatDouble(y_start, 3) + ", " + SNTUtils.formatDouble(z_start, 3) + ")";
 			yAxisLabel = "N. of Intersections";
 
 			if (normalization == NORMALIZED_FOR_SPHERE_VOLUME) {
@@ -995,31 +995,31 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 				new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
 			final int columns = headers.length;
 			for (int c = 0; c < columns; ++c) {
-				SNT.csvQuoteAndPrint(pw, headers[c]);
+				SNTUtils.csvQuoteAndPrint(pw, headers[c]);
 				if (c < (columns - 1)) pw.print(",");
 			}
 			pw.print("\r\n");
-			SNT.csvQuoteAndPrint(pw, getOriginalFilename());
+			SNTUtils.csvQuoteAndPrint(pw, getOriginalFilename());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, useAllPaths);
+			SNTUtils.csvQuoteAndPrint(pw, useAllPaths);
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, numberOfPathsUsed);
+			SNTUtils.csvQuoteAndPrint(pw, numberOfPathsUsed);
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, sphereSeparation);
+			SNTUtils.csvQuoteAndPrint(pw, sphereSeparation);
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, normalizationParameters[normalization]);
+			SNTUtils.csvQuoteAndPrint(pw, normalizationParameters[normalization]);
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, axesParameters[axes]);
+			SNTUtils.csvQuoteAndPrint(pw, axesParameters[axes]);
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, getCriticalValue());
+			SNTUtils.csvQuoteAndPrint(pw, getCriticalValue());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, getDendriteMaximum());
+			SNTUtils.csvQuoteAndPrint(pw, getDendriteMaximum());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, getShollRegressionCoefficient());
+			SNTUtils.csvQuoteAndPrint(pw, getShollRegressionCoefficient());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, getRegressionGradient());
+			SNTUtils.csvQuoteAndPrint(pw, getRegressionGradient());
 			pw.print(",");
-			SNT.csvQuoteAndPrint(pw, getRegressionIntercept());
+			SNTUtils.csvQuoteAndPrint(pw, getRegressionIntercept());
 			pw.print("\r\n");
 
 			pw.close();
@@ -1034,7 +1034,7 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 				new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
 			final int columns = headers.length;
 			for (int c = 0; c < columns; ++c) {
-				SNT.csvQuoteAndPrint(pw, headers[c]);
+				SNTUtils.csvQuoteAndPrint(pw, headers[c]);
 				if (c < (columns - 1)) pw.print(",");
 			}
 			pw.print("\r\n");
@@ -1048,11 +1048,11 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 					distanceSquared);
 				else normalizedCrossings = y / ((4.0 * Math.PI * x * distanceSquared) /
 					3.0);
-				SNT.csvQuoteAndPrint(pw, x);
+				SNTUtils.csvQuoteAndPrint(pw, x);
 				pw.print(",");
-				SNT.csvQuoteAndPrint(pw, y);
+				SNTUtils.csvQuoteAndPrint(pw, y);
 				pw.print(",");
-				SNT.csvQuoteAndPrint(pw, normalizedCrossings);
+				SNTUtils.csvQuoteAndPrint(pw, normalizedCrossings);
 				pw.print("\r\n");
 			}
 			pw.close();
@@ -1235,15 +1235,15 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 
 		private void updateFromResults(final ShollResults results) {
 			dendriteMaximumLabel.setText("" + results.getDendriteMaximum());
-			criticalValuesLabel.setText(SNT.formatDouble(results.getCriticalValue(),
+			criticalValuesLabel.setText(SNTUtils.formatDouble(results.getCriticalValue(),
 				3));
-			centerLabel.setText(SNT.formatDouble(x_start, 1) + ", " + SNT
-				.formatDouble(y_start, 1) + ", " + SNT.formatDouble(z_start, 1));
-			shollsRegressionCoefficientLabel.setText(SNT.formatDouble(results
+			centerLabel.setText(SNTUtils.formatDouble(x_start, 1) + ", " + SNTUtils
+				.formatDouble(y_start, 1) + ", " + SNTUtils.formatDouble(z_start, 1));
+			shollsRegressionCoefficientLabel.setText(SNTUtils.formatDouble(results
 				.getShollRegressionCoefficient(), -3));
-			shollsRegressionInterceptLabel.setText(SNT.formatDouble(results
+			shollsRegressionInterceptLabel.setText(SNTUtils.formatDouble(results
 				.getRegressionIntercept(), 3));
-			shollsRegressionRSquaredLabel.setText(SNT.formatDouble(results
+			shollsRegressionRSquaredLabel.setText(SNTUtils.formatDouble(results
 				.getRegressionRSquare(), 3));
 		}
 	}

@@ -49,7 +49,7 @@ import sholl.gui.Utils;
 import tracing.NearPoint;
 import tracing.Path;
 import tracing.PathAndFillManager;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.gui.GuiUtils;
 import tracing.gui.ShollAnalysisDialog;
 import tracing.gui.ShollAnalysisDialog.ShollPoint;
@@ -95,7 +95,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 
 	private static String getDefaultInfoMessage() {
 		return "Running " + "Sholl Analysis v" + Sholl_Analysis.VERSION +
-			" / SNT v" + SNT.VERSION + "...";
+			" / SNT v" + SNTUtils.VERSION + "...";
 	}
 
 	@Override
@@ -410,7 +410,7 @@ public class ShollAnalysisPlugin implements PlugIn, DialogListener {
 				}
 			}
 			if (debug && !getFilePathWithoutExtension(imgPath).equals(
-				getFilePathWithoutExtension(tracesPath))) SNT.log(
+				getFilePathWithoutExtension(tracesPath))) SNTUtils.log(
 					"Could not pair image to traces file:\n" + imgPath + "\n" +
 						tracesPath);
 		}

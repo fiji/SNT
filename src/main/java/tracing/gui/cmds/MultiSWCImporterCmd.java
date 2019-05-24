@@ -38,7 +38,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.util.ColorRGB;
 
 import tracing.PathAndFillManager;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.SNTService;
 import tracing.SNTUI;
 import tracing.SimpleNeuriteTracer;
@@ -98,7 +98,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 		}
 
 		ui.showStatus("Importing directory. Please wait...", false);
-		SNT.log("Importing directory " + dir);
+		SNTUtils.log("Importing directory " + dir);
 
 		final int lastExistingPathIdx = pafm.size() - 1;
 		final List<Tree> result = pafm.importSWCs(importMap, getColor());
@@ -117,7 +117,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 		}
 
 		if (rebuildCanvas) {
-			SNT.log("Rebuilding canvases...");
+			SNTUtils.log("Rebuilding canvases...");
 			snt.rebuildDisplayCanvases();
 		}
 
@@ -125,9 +125,9 @@ public class MultiSWCImporterCmd extends ContextCommand {
 			ui.error(String.format("%d/%d reconstructions could not be retrieved.",
 				failures, result.size()));
 			ui.showStatus("Partially successful import...", true);
-			SNT.log("Import failed for the following files:");
+			SNTUtils.log("Import failed for the following files:");
 			result.forEach(tree -> {
-				if (tree.isEmpty()) SNT.log(tree.getLabel());
+				if (tree.isEmpty()) SNTUtils.log(tree.getLabel());
 			});
 		}
 		else {
@@ -151,7 +151,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 		if (files == null || files.length == 0) return null;
 		final Map<String, String> map = new HashMap<>();
 		for (final File file : files) {
-			map.put(SNT.stripExtension(file.getName()), file.getAbsolutePath());
+			map.put(SNTUtils.stripExtension(file.getName()), file.getAbsolutePath());
 		}
 		return map;
 	}

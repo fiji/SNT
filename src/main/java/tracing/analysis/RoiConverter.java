@@ -34,7 +34,7 @@ import ij.gui.Roi;
 import ij.process.FloatPolygon;
 import tracing.Path;
 import tracing.PathNode;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.Tree;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.util.PointInImage;
@@ -271,7 +271,7 @@ public class RoiConverter extends TreeAnalyzer {
 		for (final PointInImage p : points) {
 			final Path path = p.onPath;
 			if (path == null) {
-				SNT.log("Converting " + path + " failed. Skipping it...");
+				SNTUtils.log("Converting " + path + " failed. Skipping it...");
 				continue;
 			}
 			final double[] coordinates = PathNode.unScale(p, exportPlane);

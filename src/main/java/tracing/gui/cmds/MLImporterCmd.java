@@ -42,7 +42,7 @@ import org.scijava.util.ColorRGB;
 import org.scijava.widget.Button;
 
 import tracing.PathAndFillManager;
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.SNTUI;
 import tracing.Tree;
 import tracing.gui.GuiUtils;
@@ -165,7 +165,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 
 		rebuildCanvas = false;
 		if (rebuildCanvas && snt != null) {
-			SNT.log("Rebuilding canvases...");
+			SNTUtils.log("Rebuilding canvases...");
 			snt.rebuildDisplayCanvases();
 		}
 

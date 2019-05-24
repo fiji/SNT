@@ -33,7 +33,7 @@ import org.json.JSONObject;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 
-import tracing.SNT;
+import tracing.SNTUtils;
 import tracing.viewer.OBJMesh;
 
 /**
@@ -207,7 +207,7 @@ public class AllenCompartment implements BrainAnnotation {
 			mesh.setColor(geometryColor, 87.5f);
 			mesh.setLabel(name);
 		} catch (MalformedURLException | JSONException e) {
-			SNT.error("Could not retrieve mesh ", e);
+			SNTUtils.error("Could not retrieve mesh ", e);
 		}
 		return mesh;
 	}

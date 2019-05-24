@@ -278,7 +278,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 		final int y = (int) Math.round(last_y_in_pane_precise);
 		final int[] p = new int[3];
 		tracerPlugin.findPointInStack(x, y, plane, p);
-		SNT.log("Clicking on x=" + x + " y= " + y + "on pane " + plane +
+		SNTUtils.log("Clicking on x=" + x + " y= " + y + "on pane " + plane +
 			" which corresponds to image position x=" + p[0] + ", y=" + p[1] + " z=" +
 			p[2]);
 		tracerPlugin.clickAtMaxPoint(x, y, plane);
@@ -727,7 +727,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 					assignLastCanvasZPositionToEditNode(true);
 					break;
 				default:
-					SNT.error("Unexpectedly got an event from an unknown source: " + e);
+					SNTUtils.error("Unexpectedly got an event from an unknown source: " + e);
 					return;
 			}
 
@@ -838,7 +838,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 			editingPath.moveNode(editingNode, new PointInImage(
 				editingPath.precise_x_positions[editingNode],
 				editingPath.precise_y_positions[editingNode], newZ));
-			redrawEditingPath("Node " + editingNode + "moved to Z=" + SNT
+			redrawEditingPath("Node " + editingNode + "moved to Z=" + SNTUtils
 				.formatDouble(newZ, 3));
 		}
 		catch (final IllegalArgumentException exc) {

@@ -48,11 +48,11 @@ import ij.gui.Overlay;
 import ij.gui.StackWindow;
 import ij.gui.TextRoi;
 import ij.process.FloatProcessor;
+import sc.fiji.snt.SNT;
 import stacks.ThreePaneCrop;
 import sc.fiji.snt.HessianCaller;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.SNTUI;
-import sc.fiji.snt.SimpleNeuriteTracer;
 import util.Limits;
 
 /**
@@ -81,11 +81,11 @@ public class SigmaPalette extends Thread {
 	private int initial_z;
 
 	private final ImagePlus image;
-	private final SimpleNeuriteTracer snt;
+	private final SNT snt;
 	private final HessianCaller hc;
 	private final HessianEvalueProcessor hep;
 
-	public SigmaPalette(final SimpleNeuriteTracer snt, final HessianCaller caller) {
+	public SigmaPalette(final SNT snt, final HessianCaller caller) {
 		this.snt = snt;
 		hc = caller;
 		image = hc.getImp();

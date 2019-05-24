@@ -71,7 +71,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 {
 
 	private static final long serialVersionUID = 1L;
-	private final SimpleNeuriteTracer plugin;
+	private final SNT plugin;
 	private final PathAndFillManager pathAndFillManager;
 	private JScrollPane scrollPane;
 	private final JList<String> fillList;
@@ -103,11 +103,11 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 	/**
 	 * Instantiates a new Fill Manager Dialog
 	 *
-	 * @param plugin the the {@link SimpleNeuriteTracer} instance to be associated
+	 * @param plugin the the {@link SNT} instance to be associated
 	 *               with this FillManager. It is assumed that its {@link SNTUI} is
 	 *               available.
 	 */
-	public FillManagerUI(final SimpleNeuriteTracer plugin) {
+	public FillManagerUI(final SNT plugin) {
 		super(plugin.getUI(), "Fill Manager");
 
 		this.plugin = plugin;
@@ -606,7 +606,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		final ImagePlus imp = new ImagePlus();
-		final SimpleNeuriteTracer snt = new SimpleNeuriteTracer(ij.context(), imp);
+		final SNT snt = new SNT(ij.context(), imp);
 		final FillManagerUI fm = new FillManagerUI(snt);
 		fm.setVisible(true);
 	}

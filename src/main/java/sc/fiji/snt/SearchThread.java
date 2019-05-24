@@ -352,7 +352,7 @@ public abstract class SearchThread extends Thread implements SearchInterface {
 		init();
 	}
 
-	protected SearchThread(final SimpleNeuriteTracer snt)
+	protected SearchThread(final SNT snt)
 		{
 			imagePlus = snt.getImagePlus();
 			imageType = imagePlus.getType();

@@ -27,7 +27,7 @@ import ij.ImagePlus;
 
 public class HessianCaller {
 
-	private final SimpleNeuriteTracer snt;
+	private final SNT snt;
 	static final int PRIMARY = 0;
 	static final int SECONDARY = 1;
 	static final double DEFAULT_MULTIPLIER = 4;
@@ -39,7 +39,7 @@ public class HessianCaller {
 	protected float[][] cachedTubeness;
 	private ImagePlus imp;
 
-	HessianCaller(final SimpleNeuriteTracer snt, final int type) {
+	HessianCaller(final SNT snt, final int type) {
 		this.snt = snt;
 		this.type = type;
 	}

@@ -49,7 +49,7 @@ import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 
 /**
  * Service for accessing and scripting the active instance of
- * {@link SimpleNeuriteTracer}.
+ * {@link SNT}.
  *
  * @author Tiago Ferreira
  */
@@ -62,14 +62,14 @@ public class SNTService extends AbstractService implements ImageJService {
 	@Parameter
 	private LogService logService;
 
-	private static SimpleNeuriteTracer plugin;
+	private static SNT plugin;
 
 	private void accessActiveInstance() {
 		plugin = SNTUtils.getPluginInstance();
 //		if (plugin == null) throw new UnsupportedOperationException(
 //			"SNT does not seem to be running");
 		if (plugin == null) {
-			plugin = new SimpleNeuriteTracer(getContext(), new PathAndFillManager());
+			plugin = new SNT(getContext(), new PathAndFillManager());
 		}
 	}
 
@@ -79,11 +79,11 @@ public class SNTService extends AbstractService implements ImageJService {
 	// }
 
 	/**
-	 * Gets whether SimpleNeuriteTracer is running.
+	 * Gets whether SNT is running.
 	 *
 	 * @return true if this {@code SNTService} is active, tied to the active
-	 *         instance of SimpleNeuriteTracer
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 *         instance of SNT
+	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public boolean isActive() {
 		return SNTUtils.getPluginInstance() != null;
@@ -96,7 +96,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *
 	 * @param selectedPathsOnly If true, only selected paths will be assigned
 	 *          values, otherwise voxel intensities will be assigned to all paths
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 * @see PathProfiler
 	 * @see Path#setNodeValues(double[])
 	 */
@@ -107,12 +107,12 @@ public class SNTService extends AbstractService implements ImageJService {
 	}
 
 	/**
-	 * Returns a reference to the active {@link SimpleNeuriteTracer} plugin.
+	 * Returns a reference to the active {@link SNT} plugin.
 	 *
-	 * @return the {@link SimpleNeuriteTracer} instance
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @return the {@link SNT} instance
+	 * @throws UnsupportedOperationException if SNT is not running
 	 */
-	public SimpleNeuriteTracer getPlugin() {
+	public SNT getPlugin() {
 		accessActiveInstance();
 		return plugin;
 	}
@@ -121,7 +121,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * Gets the paths currently selected in the Path Manager list.
 	 *
 	 * @return the paths currently selected, or null if no selection exists
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 * @see #getTree(boolean)
 	 */
 	public Collection<Path> getSelectedPaths() {
@@ -133,7 +133,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * Gets the paths currently listed in the Path Manager
 	 *
 	 * @return all the listed paths, or null if the Path Manager is empty
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 * @see #getTree(boolean)
 	 */
 	public List<Path> getPaths() {
@@ -147,7 +147,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *
 	 * @param selectedPathsOnly If true, only selected paths are retrieved
 	 * @return the Tree holding the Path collection
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public Tree getTree(final boolean selectedPathsOnly) {
 		final Tree tree = new Tree((selectedPathsOnly) ? getSelectedPaths()
@@ -161,7 +161,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *
 	 * @param selectedPathsOnly If true only selected paths will be considered
 	 * @return the TreeAnalyzer instance
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public TreeAnalyzer getAnalyzer(final boolean selectedPathsOnly) {
 		final TreeAnalyzer tAnalyzer = new TreeAnalyzer(getTree(selectedPathsOnly));
@@ -174,7 +174,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *
 	 * @param selectedPathsOnly If true only selected paths will be considered
 	 * @return the TreeStatistics instance
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public TreeStatistics getStatistics(final boolean selectedPathsOnly) {
 		final TreeStatistics tStats = new TreeStatistics(getTree(
@@ -188,7 +188,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * instance
 	 *
 	 * @return the PathAndFillManager instance
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public PathAndFillManager getPathAndFillManager() {
 		accessActiveInstance();
@@ -207,7 +207,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * Returns a reference to SNT's UI.
 	 *
 	 * @return the {@link SNTUI} window
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public SNTUI getUI() {
 		accessActiveInstance();
@@ -218,7 +218,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * Returns a reference to SNT's Reconstruction Viewer
 	 *
 	 * @return SNT's {@link Viewer3D} instance.
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public Viewer3D getReconstructionViewer() {
 		accessActiveInstance();
@@ -230,7 +230,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *
 	 * @return true if the UI is currently unblocked, i.e., ready for
 	 *         tracing/editing/analysis
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public boolean isUIReady() {
 		final SNTUI gui = getUI();
@@ -242,7 +242,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	/**
 	 * Returns a reference to SNT's main table of measurements.
 	 *
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 * @return the table
 	 */
 	public DefaultGenericTable getTable() {
@@ -258,7 +258,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @param project whether the snapshot of 3D image stacks should include its
 	 *          projection (MIP), or just the current plane
 	 * @return the snapshot capture of the canvas as an RGB image
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 * @throws UnsupportedOperationException if SNT is not running
 	 * @throws IllegalArgumentException if view is not a recognized option
 	 */
 	@SuppressWarnings("deprecation")

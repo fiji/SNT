@@ -88,6 +88,7 @@ import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import sc.fiji.snt.SNT;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInImage;
 import sholl.Sholl_Analysis;
@@ -95,7 +96,6 @@ import sholl.Sholl_Utils;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.PathAndFillManager;
 import sc.fiji.snt.SNTUtils;
-import sc.fiji.snt.SimpleNeuriteTracer;
 import util.FindConnectedRegions;
 
 @Deprecated
@@ -140,10 +140,10 @@ public class ShollAnalysisDialog extends JDialog implements ActionListener {
 	private final PathAndFillManager shollpafm;
 	private final ResultsPanel resultsPanel = new ResultsPanel();
 	private final GuiUtils gUtils;
-	private final SimpleNeuriteTracer plugin;
+	private final SNT plugin;
 
 	public ShollAnalysisDialog(final double x_start, final double y_start,
-		final double z_start, final SimpleNeuriteTracer plugin)
+		final double z_start, final SNT plugin)
 	{
 
 		super(plugin.getUI(), "Sholl Analysis Dialog", false);

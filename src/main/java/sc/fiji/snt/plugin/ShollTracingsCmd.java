@@ -58,6 +58,7 @@ import org.scijava.widget.NumberWidget;
 
 import ij.ImagePlus;
 import ij.gui.Overlay;
+import sc.fiji.snt.SNT;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.TreeColorMapper;
 import sholl.Logger;
@@ -75,7 +76,6 @@ import sholl.math.ShollStats;
 import sholl.plugin.Prefs;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTUtils;
-import sc.fiji.snt.SimpleNeuriteTracer;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.sholl.TreeParser;
 import sc.fiji.snt.gui.GuiUtils;
@@ -202,7 +202,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive,
 
 	/* Parameters for SNT interaction */
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
-	private SimpleNeuriteTracer snt;
+	private SNT snt;
 
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
 	private Tree tree;

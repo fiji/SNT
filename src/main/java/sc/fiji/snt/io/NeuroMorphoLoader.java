@@ -36,8 +36,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import sc.fiji.snt.PathAndFillManager;
+import sc.fiji.snt.SNT;
 import sc.fiji.snt.SNTUtils;
-import sc.fiji.snt.SimpleNeuriteTracer;
 import sc.fiji.snt.Tree;
 
 /**
@@ -164,7 +164,7 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 		final String urlPath = loader.getReconstructionURL(cellId);
 		System.out.println("URL :" + urlPath);
 		pafm.importSWC(urlPath);
-		final SimpleNeuriteTracer snt = new SimpleNeuriteTracer(ij.context(), pafm);
+		final SNT snt = new SNT(ij.context(), pafm);
 		snt.initialize(false, 1, 1);
 		snt.startUI();
 		System.out.println("# All done");

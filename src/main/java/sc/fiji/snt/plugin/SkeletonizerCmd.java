@@ -41,8 +41,8 @@ import ij.gui.Roi;
 import ij.process.ImageProcessor;
 import sc.fiji.analyzeSkeleton.AnalyzeSkeleton_;
 import sc.fiji.skeletonize3D.Skeletonize3D_;
+import sc.fiji.snt.SNT;
 import sc.fiji.snt.SNTService;
-import sc.fiji.snt.SimpleNeuriteTracer;
 import sc.fiji.snt.Tree;
 
 /**
@@ -72,7 +72,7 @@ public class SkeletonizerCmd implements Command {
 	@Parameter(required = true)
 	private Tree tree;
 
-	private SimpleNeuriteTracer plugin;
+	private SNT plugin;
 
 	/*
 	 * (non-Javadoc)
@@ -88,7 +88,7 @@ public class SkeletonizerCmd implements Command {
 		}
 		plugin = sntService.getPlugin();
 		if (plugin == null) {
-			error("No active instance of SimpleNeuriteTracer was found.");
+			error("No active instance of SNT was found.");
 			return;
 		}
 		final ImagePlus imp = plugin.getImagePlus();

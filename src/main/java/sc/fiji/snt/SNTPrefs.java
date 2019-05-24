@@ -66,14 +66,14 @@ public class SNTPrefs { // TODO: Adopt PrefService
 
 	private static File recentFile;
 
-	private final SimpleNeuriteTracer snt;
+	private final SNT snt;
 	private final int UNSET_PREFS = -1;
 	private int currentBooleans;
 	private boolean ij1ReverseSliderOrder;
 	private boolean ij1PointerCursor;
 	private int resFactor3Dcontent = -1;
 
-	public SNTPrefs(final SimpleNeuriteTracer snt) {
+	public SNTPrefs(final SNT snt) {
 		this.snt = snt;
 		getBooleans();
 		storeIJ1Prefs();
@@ -135,12 +135,12 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		if (!SNTUtils.isDebugMode()) SNTUtils.setDebugMode(getPref(DEBUG));
 		snt.cursorSnapWindowXY = (int) Prefs.get(SNAP_XY, 6);
 		snt.cursorSnapWindowXY = whithinBoundaries(snt.cursorSnapWindowXY,
-			SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY,
-			SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY);
+			SNT.MIN_SNAP_CURSOR_WINDOW_XY,
+			SNT.MAX_SNAP_CURSOR_WINDOW_XY);
 		snt.cursorSnapWindowZ = (int) Prefs.get(SNAP_Z, 2);
 		snt.cursorSnapWindowZ = whithinBoundaries(snt.cursorSnapWindowZ,
-			SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z,
-			SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z);
+			SNT.MIN_SNAP_CURSOR_WINDOW_Z,
+			SNT.MAX_SNAP_CURSOR_WINDOW_Z);
 		if (snt.cursorSnapWindowZ > snt.depth) snt.cursorSnapWindowZ = snt.depth;
 		{
 			final String fIpath = Prefs.get(FILTERED_IMG_PATH, null);

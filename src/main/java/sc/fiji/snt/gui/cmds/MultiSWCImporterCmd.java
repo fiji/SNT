@@ -41,7 +41,7 @@ import sc.fiji.snt.PathAndFillManager;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUI;
-import sc.fiji.snt.SimpleNeuriteTracer;
+import sc.fiji.snt.SNT;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.gui.GuiUtils;
 
@@ -87,7 +87,7 @@ public class MultiSWCImporterCmd extends ContextCommand {
 	@Override
 	public void run() {
 
-		final SimpleNeuriteTracer snt = sntService.getPlugin();
+		final SNT snt = sntService.getPlugin();
 		final SNTUI ui = sntService.getUI();
 		final PathAndFillManager pafm = sntService.getPathAndFillManager();
 

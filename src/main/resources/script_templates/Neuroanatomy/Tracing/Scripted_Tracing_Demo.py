@@ -18,7 +18,7 @@ info:       Exemplifies how to programmatically interact with a running
 
 import math
 
-from fiji.sc.snt import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
+from fiji.sc.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
 from fiji.sc.snt.util import PointInImage
 from fiji.sc.snt.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
@@ -41,9 +41,9 @@ def run():
     print("There are currently %s traced paths" % snt.getPaths().size())
     print("...of which %s are selected" % snt.getSelectedPaths().size())
     
-    # But for more advanced features, we need to access SimpleNeuriteTracer
-    # and PathAndFillManager (the latter manages all things related to Paths):
-    # http://javadoc.scijava.org/Fiji/sc/fiji/snt/SimpleNeuriteTracer.html
+    # But for more advanced features, we need to access SNT and
+    # PathAndFillManager (the latter manages all things related to Paths):
+    # http://javadoc.scijava.org/Fiji/sc/fiji/snt/SNT.html
     # http://javadoc.scijava.org/Fiji/sc/fiji/snt/PathAndFillManager.html
     plugin = snt.getPlugin()
     pafm = snt.getPathAndFillManager()

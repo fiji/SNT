@@ -20,7 +20,7 @@
 
 import fiji.sc.snt.Path;
 import fiji.sc.snt.PathAndFillManager;
-import fiji.sc.snt.SimpleNeuriteTracer;
+import fiji.sc.snt.SNT;
 import fiji.sc.snt.SNTUI;
 import fiji.sc.snt.Tree;
 import fiji.sc.snt.analysis.*;

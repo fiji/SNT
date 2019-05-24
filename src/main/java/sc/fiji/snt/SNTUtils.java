@@ -62,7 +62,7 @@ public class SNTUtils {
 	public static final String VERSION = getVersion();
 
 	private static boolean initialized;
-	private static SimpleNeuriteTracer plugin;
+	private static SNT plugin;
 
 	private SNTUtils() {}
 
@@ -81,19 +81,19 @@ public class SNTUtils {
 	}
 
 	private static String getVersion() {
-		return VersionUtils.getVersion(SimpleNeuriteTracer.class);
+		return VersionUtils.getVersion(SNT.class);
 	}
 
 	protected static synchronized void error(final String string) {
 		if (SNTUtils.isDebugMode()) nonDebugError(string);
 	}
 
-	protected static void setPlugin(final SimpleNeuriteTracer plugin) {
+	protected static void setPlugin(final SNT plugin) {
 		SNTUtils.plugin = plugin;
 		if (context == null && plugin != null) context = plugin.getContext();
 	}
 
-	public static SimpleNeuriteTracer getPluginInstance() {
+	public static SNT getPluginInstance() {
 		return plugin;
 	}
 
@@ -219,7 +219,7 @@ public class SNTUtils {
 	 * @return the debug flag
 	 */
 	public static boolean isDebugMode() {
-		return SimpleNeuriteTracer.verbose;
+		return SNT.verbose;
 	}
 
 	/**
@@ -231,7 +231,7 @@ public class SNTUtils {
 		if (isDebugMode() && !b) {
 			log("Exiting debug mode...");
 		}
-		SimpleNeuriteTracer.verbose = b;
+		SNT.verbose = b;
 		if (isDebugMode()) {
 			log("Entering debug mode..."); // will initialize uiService
 			final ConsolePane<?> console = uiService.getDefaultUI().getConsolePane();

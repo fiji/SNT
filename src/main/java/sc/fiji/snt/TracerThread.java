@@ -45,8 +45,8 @@ public class TracerThread extends SearchThread {
 	private Path result;
 
 
-	public TracerThread(final SimpleNeuriteTracer snt, final int start_x, final int start_y,
-			final int start_z, final int goal_x, final int goal_y, final int goal_z) {
+	public TracerThread(final SNT snt, final int start_x, final int start_y,
+	                    final int start_z, final int goal_x, final int goal_y, final int goal_z) {
 		super(snt);
 		reciprocal = true;
 		singleSlice = snt.is2D();

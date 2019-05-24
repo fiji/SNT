@@ -184,7 +184,7 @@ public class SNTUI extends JDialog {
 	private ActiveWorker activeWorker;
 	private volatile int currentState;
 
-	private final SimpleNeuriteTracer plugin;
+	private final SNT plugin;
 	private final PathAndFillManager pathAndFillManager;
 	protected final GuiUtils guiUtils;
 	private final PathManagerUI pmUI;
@@ -246,14 +246,14 @@ public class SNTUI extends JDialog {
 	 * Instantiates SNT's main UI and associated {@link PathManagerUI} and
 	 * {@link FillManagerUI} instances.
 	 *
-	 * @param plugin the {@link SimpleNeuriteTracer} instance associated with this
+	 * @param plugin the {@link SNT} instance associated with this
 	 *               UI
 	 */
-	public SNTUI(final SimpleNeuriteTracer plugin) {
+	public SNTUI(final SNT plugin) {
 		this(plugin, null, null);
 	}
 
-	private SNTUI(final SimpleNeuriteTracer plugin, final PathManagerUI pmUI, final FillManagerUI fmUI) {
+	private SNTUI(final SNT plugin, final PathManagerUI pmUI, final FillManagerUI fmUI) {
 
 		super(plugin.legacyService.getIJ1Helper().getIJ(), "SNT v" + SNTUtils.VERSION, false);
 		guiUtils = new GuiUtils(this);
@@ -1301,13 +1301,13 @@ public class SNTUI extends JDialog {
 
 			switch (String.valueOf(displayChoice.getSelectedItem())) {
 			case "Lines":
-				plugin.setPaths3DDisplay(SimpleNeuriteTracer.DISPLAY_PATHS_LINES);
+				plugin.setPaths3DDisplay(SNT.DISPLAY_PATHS_LINES);
 				break;
 			case "Lines and discs":
-				plugin.setPaths3DDisplay(SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS);
+				plugin.setPaths3DDisplay(SNT.DISPLAY_PATHS_LINES_AND_DISCS);
 				break;
 			default:
-				plugin.setPaths3DDisplay(SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE);
+				plugin.setPaths3DDisplay(SNT.DISPLAY_PATHS_SURFACE);
 				break;
 			}
 		});
@@ -2201,7 +2201,7 @@ public class SNTUI extends JDialog {
 		tracingOptionsPanel.add(useSnapWindow);
 
 		snapWindowXYsizeSpinner = GuiUtils.integerSpinner(plugin.cursorSnapWindowXY * 2,
-				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY * 2, 2);
+				SNT.MIN_SNAP_CURSOR_WINDOW_XY, SNT.MAX_SNAP_CURSOR_WINDOW_XY * 2, 2);
 		snapWindowXYsizeSpinner
 				.addChangeListener(e -> plugin.cursorSnapWindowXY = (int) snapWindowXYsizeSpinner.getValue() / 2);
 		tracingOptionsPanel.add(snapWindowXYsizeSpinner);
@@ -2210,7 +2210,7 @@ public class SNTUI extends JDialog {
 		z_spinner_label.setBorder(new EmptyBorder(0, 2, 0, 0));
 		tracingOptionsPanel.add(z_spinner_label);
 		snapWindowZsizeSpinner = GuiUtils.integerSpinner(plugin.cursorSnapWindowZ * 2,
-				SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z, SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z * 2, 2);
+				SNT.MIN_SNAP_CURSOR_WINDOW_Z, SNT.MAX_SNAP_CURSOR_WINDOW_Z * 2, 2);
 		snapWindowZsizeSpinner.setEnabled(isStackAvailable());
 		snapWindowZsizeSpinner
 				.addChangeListener(e -> plugin.cursorSnapWindowZ = (int) snapWindowZsizeSpinner.getValue() / 2);
@@ -2823,7 +2823,7 @@ public class SNTUI extends JDialog {
 		arrangeCanvases(false);
 	}
 
-	protected void abortCurrentOperation() {// FIXME: MOVE TO SimpleNeuriteTracer?
+	protected void abortCurrentOperation() {// FIXME: MOVE TO SNT?
 		switch (currentState) {
 		case (SEARCHING):
 			updateStatusText("Cancelling path search...", true);
@@ -3039,7 +3039,7 @@ public class SNTUI extends JDialog {
 		showStatus("Hessian " + ((enable) ? "enabled" : "disabled"), true);
 	}
 
-	/** Should only be called by {@link SimpleNeuriteTracer#enableAstar(boolean)} */
+	/** Should only be called by {@link SNT#enableAstar(boolean)} */
 	protected void enableAStarGUI(final boolean enable) {
 		SwingUtilities.invokeLater(() -> {
 			aStarCheckBox.setSelected(enable);

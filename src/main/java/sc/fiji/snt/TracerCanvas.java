@@ -85,7 +85,7 @@ class TracerCanvas extends MultiDThreePanesCanvas {
 				st.drawProgressOnSlice(plane, current_z, this, g);
 		}
 
-		final SimpleNeuriteTracer plugin = pathAndFillManager.getPlugin();
+		final SNT plugin = pathAndFillManager.getPlugin();
 		final Color selectedColor = plugin.selectedColor;
 		final Color deselectedColor = plugin.deselectedColor;
 

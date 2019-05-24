@@ -60,11 +60,11 @@ class NormalPlaneCanvas extends TracerCanvas {
 	private final double[] angles;
 
 	private final Path fittedPath;
-	private final SimpleNeuriteTracer tracerPlugin;
+	private final SNT tracerPlugin;
 	private final HashMap<Integer, Integer> indexToValidIndex = new HashMap<>();
 
 	protected NormalPlaneCanvas(final ImagePlus imp,
-	                            final SimpleNeuriteTracer plugin, final double[] centre_x_positions,
+	                            final SNT plugin, final double[] centre_x_positions,
 	                            final double[] centre_y_positions, final double[] radii,
 	                            final double[] scores, final double[] modeRadii, final double[] angles,
 	                            final boolean[] valid, final Path fittedPath)

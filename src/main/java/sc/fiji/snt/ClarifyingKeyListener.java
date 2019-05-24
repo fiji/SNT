@@ -41,12 +41,12 @@ import sc.fiji.snt.gui.GuiUtils;
  */
 class ClarifyingKeyListener implements KeyListener, ContainerListener {
 
-	private final SimpleNeuriteTracer plugin;
+	private final SNT plugin;
 	private static final int DOUBLE_PRESS_INTERVAL = 300; // ms
 	private long timeKeyDown = 0; // last time key was pressed
 	private int lastKeyPressedCode;
 
-	public ClarifyingKeyListener(final SimpleNeuriteTracer plugin) {
+	public ClarifyingKeyListener(final SNT plugin) {
 		this.plugin = plugin;
 	}
 

@@ -1007,7 +1007,7 @@ public class Path implements Comparable<Path> {
 	}
 
 	protected void drawPathAsPoints(final Graphics2D g2,
-		final TracerCanvas canvas, final SimpleNeuriteTracer snt)
+		final TracerCanvas canvas, final SNT snt)
 	{
 		final boolean customColor = (hasCustomColor && snt.displayCustomPathColors);
 		Color color = snt.deselectedColor;
@@ -1411,7 +1411,7 @@ public class Path implements Comparable<Path> {
 				return Color.YELLOW;
 			case Path.SWC_UNDEFINED:
 			default:
-				return SimpleNeuriteTracer.DEFAULT_DESELECTED_COLOR;
+				return SNT.DEFAULT_DESELECTED_COLOR;
 		}
 	}
 
@@ -1850,9 +1850,9 @@ public class Path implements Comparable<Path> {
 		/* Were we previously using a colour image, but now not? */
 
 		if (colorImage == null) {
-			if ((paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS &&
+			if ((paths3DDisplay == SNT.DISPLAY_PATHS_LINES_AND_DISCS &&
 				pathToUse.content3DExtraMultiColored != null) ||
-				(paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE &&
+				(paths3DDisplay == SNT.DISPLAY_PATHS_SURFACE &&
 					pathToUse.content3DMultiColored != null))
 			{
 				pathToUse.removeFrom3DViewer(univ);
@@ -1867,9 +1867,9 @@ public class Path implements Comparable<Path> {
 
 		}
 		else {
-			if ((paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS &&
+			if ((paths3DDisplay == SNT.DISPLAY_PATHS_LINES_AND_DISCS &&
 				pathToUse.content3DExtraMultiColored != colorImage) ||
-				(paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE &&
+				(paths3DDisplay == SNT.DISPLAY_PATHS_SURFACE &&
 					pathToUse.content3DMultiColored != colorImage))
 			{
 				pathToUse.removeFrom3DViewer(univ);
@@ -2032,13 +2032,13 @@ public class Path implements Comparable<Path> {
 			return;
 		}
 
-		if (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES ||
-			paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS)
+		if (paths3DDisplay == SNT.DISPLAY_PATHS_LINES ||
+			paths3DDisplay == SNT.DISPLAY_PATHS_LINES_AND_DISCS)
 		{
 			content3D = addAsLinesTo3DViewer(univ, realColor, colorImage);
 			content3D.setLocked(true);
 			nameWhenAddedToViewer = content3D.getName();
-			if (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS) {
+			if (paths3DDisplay == SNT.DISPLAY_PATHS_LINES_AND_DISCS) {
 				content3DExtra = addDiscsTo3DViewer(univ, realColor, colorImage);
 				content3DExtraMultiColored = colorImage;
 				if (content3DExtra == null) {

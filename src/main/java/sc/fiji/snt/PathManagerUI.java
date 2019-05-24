@@ -123,7 +123,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	private static final long serialVersionUID = 1L;
 	private final HelpfulJTree tree;
 	private DefaultMutableTreeNode root;
-	private final SimpleNeuriteTracer plugin;
+	private final SNT plugin;
 	private final PathAndFillManager pathAndFillManager;
 	private DefaultGenericTable table;
 	private boolean tableSaved;
@@ -144,11 +144,11 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	/**
 	 * Instantiates a new Path Manager Dialog.
 	 *
-	 * @param plugin the the {@link SimpleNeuriteTracer} instance to be associated
+	 * @param plugin the the {@link SNT} instance to be associated
 	 *               with this Path Manager. It is assumed that its {@link SNTUI} is
 	 *               available.
 	 */
-	public PathManagerUI(final SimpleNeuriteTracer plugin) {
+	public PathManagerUI(final SNT plugin) {
 
 		super(plugin.getUI(), "Path Manager");
 		this.plugin = plugin;
@@ -1408,7 +1408,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		return table;
 	}
 
-	public SimpleNeuriteTracer getSimpleNeuriteTracer() {
+	public SNT getSimpleNeuriteTracer() {
 		return plugin;
 	}
 
@@ -2195,7 +2195,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		final ImagePlus imp = new ImagePlus();
-		final SimpleNeuriteTracer snt = new SimpleNeuriteTracer(ij.context(), imp);
+		final SNT snt = new SNT(ij.context(), imp);
 		final PathManagerUI pm = new PathManagerUI(snt);
 		pm.setVisible(true);
 	}

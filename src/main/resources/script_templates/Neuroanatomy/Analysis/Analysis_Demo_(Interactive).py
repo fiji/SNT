@@ -21,7 +21,7 @@ info:       Exemplifies how to programmatically interact with a running instance
 
 import math
 
-from fiji.sc.snt import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
+from fiji.sc.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
 from fiji.sc.snt.io import MouseLightLoader
 from fiji.sc.snt.util import PointInImage
 from fiji.sc.snt.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 

@@ -52,7 +52,7 @@ import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 class InteractiveTracerCanvas extends TracerCanvas {
 
 	private static final long serialVersionUID = 1L;
-	private final SimpleNeuriteTracer tracerPlugin;
+	private final SNT tracerPlugin;
 	private JPopupMenu pMenu;
 	private JCheckBoxMenuItem toggleEditModeMenuItem;
 	private JMenuItem extendPathMenuItem;
@@ -76,8 +76,8 @@ class InteractiveTracerCanvas extends TracerCanvas {
 	protected static String TRACING_PAUSED_LABEL = "Tracing Paused";
 
 	protected InteractiveTracerCanvas(final ImagePlus imp,
-		final SimpleNeuriteTracer plugin, final int plane,
-		final PathAndFillManager pathAndFillManager)
+	                                  final SNT plugin, final int plane,
+	                                  final PathAndFillManager pathAndFillManager)
 	{
 		super(imp, plugin, plane, pathAndFillManager);
 		tracerPlugin = plugin;

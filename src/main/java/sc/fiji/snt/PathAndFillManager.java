@@ -89,7 +89,7 @@ import util.XMLFunctions;
 /**
  * The PathAndFillManager is responsible for importing, handling and managing of
  * Paths and Fills. Typically, a PathAndFillManager is accessed from an
- * {@link SimpleNeuriteTracer} instance, but accessing a PathAndFillManager
+ * {@link SNT} instance, but accessing a PathAndFillManager
  * directly is useful for batch/headless operations.
  */
 public class PathAndFillManager extends DefaultHandler implements
@@ -104,7 +104,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	private static final DecimalFormat fileIndexFormatter = new DecimalFormat(
 		"000");
 
-	protected SimpleNeuriteTracer plugin;
+	protected SNT plugin;
 	private static boolean headless = false;
 	private double x_spacing;
 	private double y_spacing;
@@ -156,7 +156,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		spacingIsUnset = true;
 	}
 
-	protected PathAndFillManager(final SimpleNeuriteTracer plugin) {
+	protected PathAndFillManager(final SNT plugin) {
 		this();
 		this.plugin = plugin;
 		syncPluginSpatialSettings();
@@ -2932,12 +2932,12 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	/**
-	 * Gets the SimpleNeuriteTracer instance.
+	 * Gets the SNT instance.
 	 *
-	 * @return the {@link SimpleNeuriteTracer} instance associated with this
+	 * @return the {@link SNT} instance associated with this
 	 *         PathManager (if any)
 	 */
-	public SimpleNeuriteTracer getPlugin() {
+	public SNT getPlugin() {
 		return plugin;
 	}
 

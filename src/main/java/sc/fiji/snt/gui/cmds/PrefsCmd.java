@@ -34,9 +34,9 @@ import org.scijava.ui.DialogPrompt.Result;
 import org.scijava.ui.UIService;
 import org.scijava.widget.Button;
 
+import sc.fiji.snt.SNT;
 import sc.fiji.snt.SNTPrefs;
 import sc.fiji.snt.SNTService;
-import sc.fiji.snt.SimpleNeuriteTracer;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.plugin.CallLegacyShollPlugin;
 import sc.fiji.snt.plugin.PlotterCmd;
@@ -72,7 +72,7 @@ public class PrefsCmd extends ContextCommand {
 	@Parameter(label="Reset All Preferences...", callback="reset")
 	private Button reset;
 
-	private SimpleNeuriteTracer snt;
+	private SNT snt;
 
 	/*
 	 * (non-Javadoc)

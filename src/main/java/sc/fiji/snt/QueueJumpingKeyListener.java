@@ -45,7 +45,7 @@ import sc.fiji.snt.gui.GuiUtils;
 class QueueJumpingKeyListener implements KeyListener {
 
 	private static final int CTRL_CMD_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-	private final SimpleNeuriteTracer tracerPlugin;
+	private final SNT tracerPlugin;
 	private final InteractiveTracerCanvas canvas;
 	private final Image3DUniverse univ;
 
@@ -66,7 +66,7 @@ class QueueJumpingKeyListener implements KeyListener {
 			// Command Finder
 			KeyEvent.VK_L };
 
-	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin,
+	public QueueJumpingKeyListener(final SNT tracerPlugin,
 		final InteractiveTracerCanvas canvas)
 	{
 		this.tracerPlugin = tracerPlugin;
@@ -74,7 +74,7 @@ class QueueJumpingKeyListener implements KeyListener {
 		univ = null;
 	}
 
-	public QueueJumpingKeyListener(final SimpleNeuriteTracer tracerPlugin,
+	public QueueJumpingKeyListener(final SNT tracerPlugin,
 		final Image3DUniverse univ)
 	{
 		this.tracerPlugin = tracerPlugin;

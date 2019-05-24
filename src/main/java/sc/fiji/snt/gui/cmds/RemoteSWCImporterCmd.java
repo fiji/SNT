@@ -108,7 +108,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		final boolean standAloneViewer = recViewer != null;
 		if (!standAloneViewer && !sntService.isActive()) {
 			error(
-				"No Reconstruction Viewer specified and no active instance of SimpleNeuriteTracer was found.");
+				"No Reconstruction Viewer specified and no active instance of SNT was found.");
 			return;
 		}
 

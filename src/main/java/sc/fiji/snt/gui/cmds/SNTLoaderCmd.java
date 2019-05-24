@@ -47,8 +47,8 @@ import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.plugin.CompositeConverter;
 import sc.fiji.snt.PathAndFillManager;
+import sc.fiji.snt.SNT;
 import sc.fiji.snt.SNTService;
-import sc.fiji.snt.SimpleNeuriteTracer;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.SNTUtils;
 
@@ -258,7 +258,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 				}
 			}
 
-			initPlugin(new SimpleNeuriteTracer(getContext(), pathAndFillManager));
+			initPlugin(new SNT(getContext(), pathAndFillManager));
 			return;
 		}
 
@@ -302,14 +302,14 @@ public class SNTLoaderCmd extends DynamicCommand {
 			sourceImp.show();
 		}
 
-		final SimpleNeuriteTracer sntInstance = new SimpleNeuriteTracer(
+		final SNT sntInstance = new SNT(
 			getContext(), sourceImp);
 		sntInstance.loadTracings(tracesFile);
 		initPlugin(sntInstance);
 
 	}
 
-	private void initPlugin(final SimpleNeuriteTracer snt)
+	private void initPlugin(final SNT snt)
 	{
 		try {
 			final boolean singlePane = IMAGE_NONE.equals(imageChoice) || uiChoice.equals(UI_SIMPLE);

@@ -33,13 +33,13 @@ public class ManualTracerThread extends Thread implements SearchInterface {
 	private final double goal_x;
 	private final double goal_y;
 	private final double goal_z;
-	private final SimpleNeuriteTracer plugin;
+	private final SNT plugin;
 	private final ArrayList<SearchProgressCallback> progListeners =
 		new ArrayList<>();
 	private volatile int threadStatus = SearchThread.PAUSED;
 	private Path result;
 
-	public ManualTracerThread(final SimpleNeuriteTracer plugin,
+	public ManualTracerThread(final SNT plugin,
 		final double start_x, final double start_y, final double start_z,
 		final double goal_x, final double goal_y, final double goal_z)
 	{

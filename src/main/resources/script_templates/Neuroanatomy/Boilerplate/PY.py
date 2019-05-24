@@ -17,7 +17,7 @@ version:
 info:
 """
 
-from fiji.sc.snt import (Path, PathAndFillManager, SimpleNeuriteTracer, SNTUI, Tree)
+from fiji.sc.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
 from fiji.sc.snt.analysis import (RoiConverter, MultiTreeColorMapper, TreeAnalyzer,
         TreeColorMapper, TreeStatistics)
 from fiji.sc.snt.analysis.sholl import TreeParser

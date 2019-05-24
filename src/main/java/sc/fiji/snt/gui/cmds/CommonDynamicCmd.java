@@ -31,7 +31,7 @@ import org.scijava.ui.UIService;
 
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUI;
-import sc.fiji.snt.SimpleNeuriteTracer;
+import sc.fiji.snt.SNT;
 
 /**
  * Command class for GUI commands extending DynamicCommand
@@ -50,7 +50,7 @@ public class CommonDynamicCmd extends DynamicCommand {
 	@Parameter
 	protected SNTService sntService;
 
-	protected SimpleNeuriteTracer snt;
+	protected SNT snt;
 	protected SNTUI ui;
 
 	protected void init(final boolean abortIfInactive) {

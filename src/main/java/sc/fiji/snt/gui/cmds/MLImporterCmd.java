@@ -121,7 +121,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	public void run() {
 
 		if (recViewer == null && !sntService.isActive()) {
-			error("No active instance of SimpleNeuriteTracer was found.");
+			error("No active instance of SNT was found.");
 			return;
 		}
 		final List<String> ids = getIdsFromQuery(query);

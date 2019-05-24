@@ -59,7 +59,7 @@ public class PathFitter implements Callable<Path> {
 	 */
 	public static final int RADII_AND_MIDPOINTS = 4;
 
-	private final SimpleNeuriteTracer plugin;
+	private final SNT plugin;
 	private final Path path;
 	private final boolean showDetailedFittingResults;
 	private final ImagePlus imp;
@@ -104,7 +104,7 @@ public class PathFitter implements Callable<Path> {
 	/**
 	 * Instantiates a new PathFitter.
 	 *
-	 * @param plugin the {@link SimpleNeuriteTracer} instance specifying input
+	 * @param plugin the {@link SNT} instance specifying input
 	 *          image. The computation will be performed on the image currently
 	 *          loaded by the plugin.
 	 * @param path the {@link Path} to be fitted
@@ -112,8 +112,8 @@ public class PathFitter implements Callable<Path> {
 	 *          fit is displayed. Note that this is probably only useful if SNT's
 	 *          UI is visible and functional.
 	 */
-	public PathFitter(final SimpleNeuriteTracer plugin, final Path path,
-		final boolean showFit)
+	public PathFitter(final SNT plugin, final Path path,
+	                  final boolean showFit)
 	{
 		if (path == null) throw new IllegalArgumentException(
 			"Cannot fit a null path");

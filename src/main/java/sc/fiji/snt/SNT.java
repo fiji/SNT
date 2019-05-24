@@ -93,7 +93,7 @@ import sc.fiji.snt.util.PointInImage;
 
 */
 
-public class SimpleNeuriteTracer extends MultiDThreePanes implements
+public class SNT extends MultiDThreePanes implements
 	SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener
 {
 
@@ -248,14 +248,14 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 
 	/**
-	 * Instantiates SimpleNeuriteTracer in 'Tracing Mode'.
+	 * Instantiates SNT in 'Tracing Mode'.
 	 *
 	 * @param context the SciJava application context providing the services
 	 *          required by the class
 	 * @param sourceImage the source image
 	 * @throws IllegalArgumentException If sourceImage is of type 'RGB'
 	 */
-	public SimpleNeuriteTracer(final Context context, final ImagePlus sourceImage)
+	public SNT(final Context context, final ImagePlus sourceImage)
 		throws IllegalArgumentException
 	{
 
@@ -277,15 +277,15 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	/**
-	 * Instantiates SimpleNeuriteTracer in 'Analysis Mode'
+	 * Instantiates SNT in 'Analysis Mode'
 	 *
 	 * @param context the SciJava application context providing the services
 	 *          required by the class
 	 * @param pathAndFillManager The PathAndFillManager instance to be associated
 	 *          with the plugin
 	 */
-	public SimpleNeuriteTracer(final Context context,
-		final PathAndFillManager pathAndFillManager)
+	public SNT(final Context context,
+	           final PathAndFillManager pathAndFillManager)
 	{
 
 		if (context == null) throw new NullContextException();
@@ -633,7 +633,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	public void startUI() {
-		final SimpleNeuriteTracer thisPlugin = this;
+		final SNT thisPlugin = this;
 		ui = SwingSafeResult.getResult(() -> new SNTUI(thisPlugin));
 		guiUtils = new GuiUtils(ui);
 		ui.displayOnStarting();

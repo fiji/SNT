@@ -359,6 +359,10 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		discardFill.setEnabled(false);
 	}
 
+	public void setFillTransparent(final boolean transparent) {
+		plugin.setFillTransparent(transparent);
+	}
+
 	/* (non-Javadoc)
 	 * @see tracing.PathAndFillListener#setPathList(java.lang.String[], tracing.Path, boolean)
 	 */

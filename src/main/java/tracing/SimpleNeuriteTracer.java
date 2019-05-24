@@ -133,6 +133,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
 	protected static final int DISPLAY_PATHS_LINES = 2;
 	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
+	private int paths3DDisplay = 1;
 
 	/* UI preferences */
 	volatile protected int cursorSnapWindowXY;
@@ -241,11 +242,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		Color.MAGENTA);
 	protected Color3f selectedColor3f = DEFAULT_SELECTED_COLOR3F;
 	protected Color3f deselectedColor3f = DEFAULT_DESELECTED_COLOR3F;
-
-	// TODO: Refactor: Adopt getters and setters
-	public Color selectedColor = DEFAULT_SELECTED_COLOR;
-	public Color deselectedColor = DEFAULT_DESELECTED_COLOR;
-	public boolean displayCustomPathColors = true;
+	protected Color selectedColor = DEFAULT_SELECTED_COLOR;
+	protected Color deselectedColor = DEFAULT_DESELECTED_COLOR;
+	protected boolean displayCustomPathColors = true;
 
 
 	/**
@@ -780,7 +779,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
-	public boolean anyListeners() {
+	protected boolean anyListeners() {
 		return listeners.size() > 0;
 	}
 
@@ -1920,7 +1919,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 
 	}
 
-	public void setFillTransparent(final boolean transparent) {
+	protected void setFillTransparent(final boolean transparent) {
 		xy_tracer_canvas.setFillTransparent(transparent);
 		if (!single_pane) {
 			xz_tracer_canvas.setFillTransparent(transparent);
@@ -2375,7 +2374,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * "Show only selected paths" option is set.
 	 */
 	@Deprecated
-	public void update3DViewerContents() {
+	private void update3DViewerContents() {
 		if (use3DViewer && univ != null) {
 			new Thread(() -> {
 				pathAndFillManager.update3DViewerContents();
@@ -2391,11 +2390,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 *         set
 	 */
 	@Deprecated
-	public Image3DUniverse get3DUniverse() {
+	protected Image3DUniverse get3DUniverse() {
 		return univ;
 	}
 
-	public void set3DUniverse(final Image3DUniverse universe) {
+	protected void set3DUniverse(final Image3DUniverse universe) {
 		univ = universe;
 		use3DViewer = universe != null;
 		if (use3DViewer) {
@@ -2407,7 +2406,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	@Deprecated
-	public void updateImageContent(final int resamplingFactor) {
+	protected void updateImageContent(final int resamplingFactor) {
 		if (univ == null || xy == null) return;
 
 		new Thread(() -> {
@@ -2459,21 +2458,19 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * FIXME: this can be very slow ... Perhaps do it in a separate thread?
 	 */
 	@Deprecated
-	public void setColorImage(final ImagePlus newColorImage) {
+	protected void setColorImage(final ImagePlus newColorImage) {
 		colorImage = newColorImage;
 		update3DViewerContents();
 	}
 
-	private int paths3DDisplay = 1;
-
 	@Deprecated
-	public void setPaths3DDisplay(final int paths3DDisplay) {
+	protected void setPaths3DDisplay(final int paths3DDisplay) {
 		this.paths3DDisplay = paths3DDisplay;
 		update3DViewerContents();
 	}
 
 	@Deprecated
-	public int getPaths3DDisplay() {
+	protected int getPaths3DDisplay() {
 		return this.paths3DDisplay;
 	}
 

@@ -649,7 +649,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}
 	}
 
-	public boolean pathsUnsaved() {
+	public boolean isChangesUnsaved() {
 		return unsavedPaths;
 	}
 
@@ -714,7 +714,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (ui != null) ui.changeState(newState);
 	}
 
-	public int getUIState() {
+	protected int getUIState() {
 		return (ui == null) ? -1 : ui.getCurrentState();
 	}
 
@@ -1850,10 +1850,9 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		cmdService.run(ShollTracingsCmd.class, true, input);
 	}
 
-	public void viewFillIn3D(final boolean asMask) {
-		if (filler == null) return;
-		final ImagePlus imagePlus = filler.fillAsImagePlus(!asMask);
-		imagePlus.show();
+	public ImagePlus getFilledVolume(final boolean asMask) {
+		if (filler == null) return null;
+		return filler.fillAsImagePlus(!asMask);
 	}
 
 	public int guessResamplingFactor() {
@@ -2005,7 +2004,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 *
 	 * @return true, if image has been loaded into memory.
 	 */
-	public boolean secondaryImageLoaded() {
+	public boolean isSecondaryImageLoaded() {
 		return secondaryData != null;
 	}
 
@@ -2014,7 +2013,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	}
 
 	protected boolean isTracingOnSecondaryImageAvailable() {
-		return secondaryImageLoaded() || tubularGeodesicsTracingEnabled;
+		return isSecondaryImageLoaded() || tubularGeodesicsTracingEnabled;
 	}
 
 	/**
@@ -2036,13 +2035,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * @throws IOException              If image could not be loaded
 	 * @throws IllegalArgumentException if dimensions are unexpected, or image type
 	 *                                  is not supported
-	 * @see #secondaryImageLoaded()
+	 * @see #isSecondaryImageLoaded()
 	 * @see #getSecondaryDataAsImp()
 	 */
 	public void loadSecondaryImage(final File file) throws IOException, IllegalArgumentException {
 		final ImagePlus imp = openCachedDataImage(file);
 		loadSecondaryImage(imp, true);
-		setSecondaryImage(secondaryImageLoaded() ? file : null);
+		setSecondaryImage(isSecondaryImageLoaded() ? file : null);
 	}
 
 	public void loadSecondaryImage(final ImagePlus imp) throws IllegalArgumentException {
@@ -2068,7 +2067,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		if (changeUIState) changeUIState(SNTUI.CACHING_DATA);
 		loadCachedData(imp, secondaryData = new float[depth][]);
 		File file = null;
-		if (secondaryImageLoaded() && (imp.getFileInfo() != null)) {
+		if (isSecondaryImageLoaded() && (imp.getFileInfo() != null)) {
 			file = new File(imp.getFileInfo().directory, imp.getFileInfo().fileName);
 		}
 		setSecondaryImage(file);
@@ -2152,11 +2151,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	 * ImagePlus object. Returned image is always of 32-bit type.
 	 *
 	 * @return the loaded data or null if no image has been loaded.
-	 * @see #secondaryImageLoaded()
+	 * @see #isSecondaryImageLoaded()
 	 * @see #loadFilteredImage()
 	 */
 	public ImagePlus getSecondaryDataAsImp() {
-		return (secondaryImageLoaded()) ? getFilteredDataFromCachedData("Secondary Data", secondaryData) : null;
+		return (isSecondaryImageLoaded()) ? getFilteredDataFromCachedData("Secondary Data", secondaryData) : null;
 	}
 
 	protected ImagePlus getCachedTubenessDataAsImp(final String type) {
@@ -2438,13 +2437,13 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 		}).start();
 	}
 
-	public void setSelectedColor(final Color newColor) {
+	protected void setSelectedColor(final Color newColor) {
 		selectedColor = newColor;
 		selectedColor3f = new Color3f(newColor);
 		updateAllViewers();
 	}
 
-	public void setDeselectedColor(final Color newColor) {
+	protected void setDeselectedColor(final Color newColor) {
 		deselectedColor = newColor;
 		deselectedColor3f = new Color3f(newColor);
 		if (getUI() != null && getUI().recViewer != null) {
@@ -2779,7 +2778,7 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 	private boolean manualOverride = false;
 
 	protected boolean isTracingOnSecondaryImageActive() {
-		return doSearchOnSecondaryData && secondaryImageLoaded();
+		return doSearchOnSecondaryData && isSecondaryImageLoaded();
 	}
 
 	/**

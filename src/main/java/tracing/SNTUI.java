@@ -533,7 +533,7 @@ public class SNTUI extends JDialog {
 	protected void exitRequested() {
 		assert SwingUtilities.isEventDispatchThread();
 		String msg = "Exit SNT?";
-		if (plugin.pathsUnsaved())
+		if (plugin.isChangesUnsaved())
 			msg = "There are unsaved paths. Do you really want to quit?";
 		if (pmUI.measurementsUnsaved())
 			msg = "There are unsaved measurements. Do you really want to quit?";
@@ -859,7 +859,7 @@ public class SNTUI extends JDialog {
 		if (!reload)
 			plugin.getImagePlus().setPosition(newC, plugin.getImagePlus().getZ(), newT);
 		plugin.showMIPOverlays(0);
-		if (plugin.secondaryImageLoaded()) {
+		if (plugin.isSecondaryImageLoaded()) {
 			final String[] choices = new String[] { "Unload. I'll load new data manually", "Reload",
 					"Do nothing. Leave as is" };
 			final String choice = guiUtils.getChoice("What should be done with the secondary image currently cached?",
@@ -1598,7 +1598,7 @@ public class SNTUI extends JDialog {
 		optionsMenu.add(secondaryImgLoadFlushMenuItem);
 		secondaryImgLoadFlushMenuItem.addActionListener(e -> {
 			// toggle menuitem: label is updated before menu is shown as per #optionsButton
-			if (plugin.secondaryImageLoaded()) {
+			if (plugin.isSecondaryImageLoaded()) {
 				if (!guiUtils.getConfirmation("Disable access to secondary image?", "Unload Image?"))
 					return;
 				flushSecondaryData();
@@ -1609,7 +1609,7 @@ public class SNTUI extends JDialog {
 		final JMenuItem makeImgMenuItem = new JMenuItem("Generate Secondary Image...");
 		optionsMenu.add(makeImgMenuItem);
 		makeImgMenuItem.addActionListener(e -> {
-			if (plugin.secondaryImageLoaded()
+			if (plugin.isSecondaryImageLoaded()
 					&& !guiUtils.getConfirmation("An image is already loaded. Unload it?", "Discard Existing Image?")) {
 				return;
 			}
@@ -1618,7 +1618,7 @@ public class SNTUI extends JDialog {
 		final JMenuItem adjustRangeMenuItem = new JMenuItem("Adjust Min-Max...");
 		optionsMenu.add(adjustRangeMenuItem);
 		adjustRangeMenuItem.addActionListener(e -> {
-			if (!plugin.secondaryImageLoaded()) {
+			if (!plugin.isSecondaryImageLoaded()) {
 				noSecondaryImgAvailableError();
 				return;
 			}
@@ -1672,7 +1672,7 @@ public class SNTUI extends JDialog {
 		final JSpinner mipSpinner = GuiUtils.integerSpinner(20, 10, 80, 1);
 		mipSpinner.addChangeListener(e -> secondaryImgOverlayCheckbox.setSelected(false));
 		secondaryImgOverlayCheckbox.addActionListener(e -> {
-			if (!plugin.secondaryImageLoaded()) {
+			if (!plugin.isSecondaryImageLoaded()) {
 				noSecondaryImgAvailableError();
 				return;
 			}
@@ -1712,7 +1712,7 @@ public class SNTUI extends JDialog {
 			public void mousePressed(final MouseEvent e) {
 				// Update menuitem labels in case we ended-up in some weird UI state
 				secondaryImgLoadFlushMenuItem
-						.setText((plugin.secondaryImageLoaded()) ? "Flush Cached Image..." : "Load Specified File");
+						.setText((plugin.isSecondaryImageLoaded()) ? "Flush Cached Image..." : "Load Specified File");
 				if (optionsButton.isEnabled())
 					optionsMenu.show(optionsButton, optionsButton.getWidth() / 2, optionsButton.getHeight() / 2);
 			}
@@ -1872,7 +1872,7 @@ public class SNTUI extends JDialog {
 				if (isTubeness) {
 					updateHessianPanel();
 				} else {
-					updateFilteredImgFields(plugin.secondaryImageLoaded());
+					updateFilteredImgFields(plugin.isSecondaryImageLoaded());
 				}
 				resetState();
 				showStatus(null, false);
@@ -2306,7 +2306,7 @@ public class SNTUI extends JDialog {
 		final JMenu menu = new JMenu(title);
 		JMenuItem jmi = new JMenuItem("<HTML>Cache Now...");
 		jmi.addActionListener(e -> {
-			if ("secondary".equalsIgnoreCase(type) && !plugin.secondaryImageLoaded()) {
+			if ("secondary".equalsIgnoreCase(type) && !plugin.isSecondaryImageLoaded()) {
 				noSecondaryImgAvailableError();
 				return;
 			}
@@ -2315,7 +2315,7 @@ public class SNTUI extends JDialog {
 		menu.add(jmi);
 		jmi = new JMenuItem("<HTML>Cache From Existing <i>Tubeness Image</i>...");
 		jmi.addActionListener(e -> {
-			if ("secondary".equalsIgnoreCase(type) && !plugin.secondaryImageLoaded()) {
+			if ("secondary".equalsIgnoreCase(type) && !plugin.isSecondaryImageLoaded()) {
 				noSecondaryImgAvailableError();
 				return;
 			}
@@ -2749,12 +2749,12 @@ public class SNTUI extends JDialog {
 		final File file = plugin.getFilteredImageFile();
 		if (file != null) {
 			secondaryImgPathField.setText(file.getAbsolutePath()); 
-		} else if (plugin.secondaryImageLoaded()) {
+		} else if (plugin.isSecondaryImageLoaded()) {
 			secondaryImgPathField.setText("Cached image"); 
 		} else {
 			secondaryImgPathField.setText(""); 
 		}
-		if (plugin.secondaryImageLoaded())
+		if (plugin.isSecondaryImageLoaded())
 			secondaryImgLoadFlushMenuItem.setText("Flush Cached Image...");
 		updateFilteredFileField();
 	}
@@ -3186,7 +3186,7 @@ public class SNTUI extends JDialog {
 
 			} else if (source == loadTracesMenuItem || source == loadSWCMenuItem) {
 
-				if (plugin.pathsUnsaved() && !guiUtils
+				if (plugin.isChangesUnsaved() && !guiUtils
 						.getConfirmation("There are unsaved paths. Do you really want to load new traces?", "Warning"))
 					return;
 				final int preLoadingState = currentState;

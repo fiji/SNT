@@ -22,6 +22,7 @@
 
 package tracing.plugin;
 
+import java.awt.Color;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -387,7 +388,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive,
 		}
 		catch (final Exception ignored) {
 			// presumably "No Lut" was chosen
-			lutTable = ShollUtils.constantLUT(snt.selectedColor);
+			lutTable = ShollUtils.constantLUT(Color.GREEN);
 		}
 		overlayShells();
 	}

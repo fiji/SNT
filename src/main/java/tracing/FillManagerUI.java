@@ -493,7 +493,8 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				plugin.viewFillIn3D(false);
+				final ImagePlus imp = plugin.getFilledVolume(false);
+				if (imp != null) imp.show();
 			}
 		}));
 		viewFillsMenu.add(new JMenuItem(new AbstractAction("As Binary Mask...") {
@@ -502,7 +503,8 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				plugin.viewFillIn3D(true);
+				final ImagePlus imp = plugin.getFilledVolume(true);
+				if (imp != null) imp.show();
 			}
 		}));
 	}

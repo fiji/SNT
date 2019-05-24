@@ -1667,16 +1667,15 @@ public class Path implements Comparable<Path> {
 
 	protected void setFittedCircles(final int nPoints, final double[] tangents_x,
 		final double[] tangents_y, final double[] tangents_z,
-		final double[] radiuses, final double[] optimized_x,
+		final double[] radii, final double[] optimized_x,
 		final double[] optimized_y, final double[] optimized_z)
 	{
 
 		this.points = nPoints;
-		this.tangents_x = tangents_x.clone();
-		this.tangents_y = tangents_y.clone();
-		this.tangents_z = tangents_z.clone();
-
-		this.radii = radiuses.clone();
+		if (tangents_x != null) this.tangents_x = tangents_x.clone();
+		if (tangents_x != null) this.tangents_y = tangents_y.clone();
+		if (tangents_x != null) this.tangents_z = tangents_z.clone();
+		if (radii != null) this.radii = radii.clone();
 
 		this.precise_x_positions = optimized_x.clone();
 		this.precise_y_positions = optimized_y.clone();

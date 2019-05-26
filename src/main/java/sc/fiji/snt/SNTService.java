@@ -55,6 +55,7 @@ import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.event.SNTEvent;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
+import sc.iview.SciView;
 
 /**
  * Service for accessing and scripting the active instance of
@@ -131,7 +132,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * Initializes SNT.
 	 *
 	 * @param imagePath the image to be traced. If "demo" (case insensitive), SNT is
-	 *                  initialized using the {@link demoTreeImage}. If empty or
+	 *                  initialized using the demoTreeImage. If empty or
 	 *                  null and SNT's UI is available an "Open" dialog prompt is
 	 *                  displayed.
 	 * @param startUI   Whether SNT's UI should also be initialized;
@@ -368,6 +369,28 @@ public class SNTService extends AbstractService implements ImageJService {
 	public Viewer3D getRecViewer(final int id) {
 		final HashMap<Integer, Viewer3D> viewerMap = SNTUtils.getViewers();
 		return (viewerMap == null || viewerMap.isEmpty()) ? null : viewerMap.get(id);
+	}
+
+	/**
+	 * Returns a reference to SNT's SciView instance
+	 *
+	 * @return SNT's {@link SciView} instance.
+	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 */
+	public SciView getSciView() {
+		accessActiveInstance(true);
+		return plugin.getUI().getSciView();
+	}
+
+
+	/**
+	 * Sets SNT's SciView instance
+	 *
+	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 */
+	public void setSciView(final SciView sciView) {
+		accessActiveInstance(false);
+		plugin.getUI().setSciView(sciView);
 	}
 
 	/**

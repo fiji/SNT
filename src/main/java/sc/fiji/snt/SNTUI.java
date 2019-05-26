@@ -114,6 +114,8 @@ import sc.fiji.snt.io.NeuroMorphoLoader;
 import sc.fiji.snt.plugin.PlotterCmd;
 import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.viewer.Viewer3D;
+import sc.iview.SciView;
+import sc.iview.SciViewService;
 import sholl.ShollUtils;
 import sc.fiji.snt.gui.cmds.ChooseDatasetCmd;
 import sc.fiji.snt.gui.cmds.CommonDynamicCmd;
@@ -198,6 +200,12 @@ public class SNTUI extends JDialog {
 	protected Viewer3D recViewer;
 	protected Frame recViewerFrame;
 	private JButton openRecViewer;
+
+	/* SciView */
+	protected SciView sciView;
+	private JButton openSciView;
+	protected SciViewSNT sciViewSNT;
+	private JButton svSyncPathManager;
 
 	protected final GuiListener listener;
 
@@ -388,6 +396,7 @@ public class SNTUI extends JDialog {
 			tab3.add(largeMsg(msg2), c3);
 			c3.gridy++;
 			tab3.add(legacy3DViewerPanel(), c3);
+
 			{
 				tabbedPane.setIconAt(0, IconFactory.getTabbedPaneIcon(IconFactory.GLYPH.HOME));
 				tabbedPane.setIconAt(1, IconFactory.getTabbedPaneIcon(IconFactory.GLYPH.TOOL));
@@ -1510,10 +1519,75 @@ public class SNTUI extends JDialog {
 		return panel;
 	}
 
+	public SciView getSciView() {
+		return sciView;
+	}
+
+	public void setSciView(final SciView sciView) {
+		System.out.println("Setting SciView in SNTUI");
+		this.sciView = sciView;
+		if( this.sciViewSNT == null ) {
+			this.sciViewSNT = new SciViewSNT();
+		}
+		this.sciViewSNT.sciView = sciView;
+		openSciView.setEnabled(this.sciView==null);
+	}
+
+	public void setSciViewSNT(SciViewSNT sciViewSNT) {
+		this.sciViewSNT = sciViewSNT;
+	}
+
+	public SciViewSNT getSciViewSNT() {
+		return sciViewSNT;
+	}
+
 	private JPanel sciViewerPanel() {
-		final JButton openSciView = new JButton("Open SciView");
+		openSciView = new JButton("Open SciView Viewer");
+
 		openSciView.addActionListener(e -> {
-			guiUtils.error("Not yet implemented");
+			// if (noPathsError()) return;
+			if (sciView == null) {
+				final SciViewService sciViewService = plugin.getContext().getService(
+					SciViewService.class);
+				//sciViewViewer.setDefaultColor(new ColorRGB(plugin.deselectedColor.getRed(),
+				//	plugin.deselectedColor.getGreen(), plugin.deselectedColor.getBlue()));
+				sciViewSNT = new SciViewSNT();
+				CmdRunner cmdRunner = (new CmdRunner(sc.fiji.snt.gui.cmds.OpenSciViewCmd.class));
+				cmdRunner.execute();
+//				while( sciViewSNT == null || sciViewSNT.sciView == null || !sciViewSNT.sciView.isInitialized()  ) {
+//					try {
+//						Thread.sleep(20);
+//					} catch (InterruptedException ex) {
+//						ex.printStackTrace();
+//					}
+//				}
+                // TODO can we get to the SNT service?
+//				sciView = sciViewService.getOrCreateActiveSciView();
+                System.out.println( "SciView: " + sciView );
+//                while( !cmdRunner.isDone() ) {
+//                //while( sciView == null || !sciView.isInitialized() ) {
+//                    try {
+//                        Thread.sleep(20);
+//                    } catch (InterruptedException e2) {
+//                        e2.printStackTrace();
+//                    }
+//                }
+//                System.out.println( "SciView: " + sciView );
+//				if (pathAndFillManager.size() > 0) sciViewSNT.syncPathManagerList();
+//				SciViewService sciViewService = SNT.getContext().getService(SciViewService.class);
+//				sciView = sciViewService.getOrCreateActiveSciView();
+//				sciViewSNT.sciView = sciView;
+			}
+		});
+
+		svSyncPathManager = new JButton("Sync PathManager to SciView");
+
+		svSyncPathManager.addActionListener(e -> {
+			// if (noPathsError()) return;
+			if (sciView != null) {
+				sciViewSNT.sciView = sciView;
+				if (pathAndFillManager.size() > 0) sciViewSNT.syncPathManagerList();
+			}
 		});
 
 		// Build panel
@@ -1522,8 +1596,10 @@ public class SNTUI extends JDialog {
 		gdb.fill = GridBagConstraints.HORIZONTAL;
 		gdb.weightx = 0.5;
 		panel.add(openSciView, gdb);
+		panel.add(svSyncPathManager, gdb);
 		return panel;
 	}
+
 
 	private JPanel statusButtonPanel() {
 		keepSegment = GuiUtils.smallButton(hotKeyLabel("Yes", "Y"));

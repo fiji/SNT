@@ -46,6 +46,7 @@ import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
+import sc.iview.SciView;
 
 /**
  * Service for accessing and scripting the active instance of
@@ -223,6 +224,28 @@ public class SNTService extends AbstractService implements ImageJService {
 	public Viewer3D getReconstructionViewer() {
 		accessActiveInstance();
 		return plugin.getUI().getReconstructionViewer(true);
+	}
+
+	/**
+	 * Returns a reference to SNT's SciView instance
+	 *
+	 * @return SNT's {@link SciView} instance.
+	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 */
+	public SciView getSciView() {
+		accessActiveInstance();
+		return plugin.getUI().getSciView();
+	}
+
+
+	/**
+	 * Sets SNT's SciView instance
+	 *
+	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 */
+	public void setSciView(final SciView sciView) {
+		accessActiveInstance();
+		plugin.getUI().setSciView(sciView);
 	}
 
 	/**

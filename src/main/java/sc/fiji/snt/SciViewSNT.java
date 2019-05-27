@@ -73,9 +73,13 @@ public class SciViewSNT {
 		plottedTrees.put(label, shapeTree);
 		addItemToManager(label);
 		for( Node node : shapeTree.get().getChildren() ) {
-		    System.out.println("addTree: node " + node.getMetadata().get("pathID"));
-		    //sciView.addNode(node);
+		    //System.out.println("addTree: node " + node.getMetadata().get("pathID"));
+		    sciView.addNode(node);
         }
+        GLVector treeCenter = shapeTree.getPosition();
+		sciView.getCamera().setTarget(treeCenter);
+		//sciView.getCamera().setPosition(treeCenter.minus(new GLVector(0,0,-10f)));
+        // TODO: sciView.fitCameraToScene();
 	}
 
 
@@ -197,7 +201,7 @@ public class SciViewSNT {
                     mat.setDiffuse(new GLVector(color.getRed(),color.getGreen(),color.getBlue()));
                     final float width = Math.max((float) p.getNodeRadius(i),
                             DEF_NODE_RADIUS);
-                    System.out.println( "(point " + i + " " + coord.source() + ")" );
+                    //System.out.println( "(point " + i + " " + coord.source() + ")" );
                     points[i] = new FloatVector3(coord.source().x()*scaleFactor,coord.source().y()*scaleFactor,coord.source().z()*scaleFactor);
                     //line.addPoint(coord.source());
                     if( i > 0 ) {
@@ -224,7 +228,7 @@ public class SciViewSNT {
             assembleSoma(somaPoints, somaColors);
             if (somaSubShape != null) addChild(somaSubShape);
 
-            sciView.addNode(this, true);
+            //sciView.addNode(this, true);
 
             this.setPosition(this.getMaximumBoundingBox().getBoundingSphere().getOrigin());
             sciView.setActiveNode(this);

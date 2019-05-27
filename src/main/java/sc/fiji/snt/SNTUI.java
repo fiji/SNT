@@ -1563,7 +1563,7 @@ public class SNTUI extends JDialog {
 //				}
                 // TODO can we get to the SNT service?
 //				sciView = sciViewService.getOrCreateActiveSciView();
-                System.out.println( "SciView: " + sciView );
+//                System.out.println( "SciView: " + sciView );
 //                while( !cmdRunner.isDone() ) {
 //                //while( sciView == null || !sciView.isInitialized() ) {
 //                    try {

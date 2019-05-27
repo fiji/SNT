@@ -24,7 +24,7 @@ package sc.fiji.snt;
 
 import java.util.HashSet;
 
-public interface PathAndFillListener {
+interface PathAndFillListener {
 
 	void setPathList(String[] pathList, Path justAdded, boolean expandAll);
 

@@ -40,7 +40,7 @@ import sc.fiji.snt.hyperpanes.MultiDThreePanes;
  *
  * @author Tiago Ferreira
  */
-public class PathNode {
+class PathNode {
 
 	/** Flag describing a start point node */
 	public static final int START = 1;
@@ -251,26 +251,6 @@ public class PathNode {
 	 */
 	public void setEditable(final boolean editable) {
 		this.editable = editable;
-	}
-
-	public static double[] unScale(final PointInImage pim, final int plane) {
-		final Path path = pim.onPath;
-		if (path == null) throw new IllegalArgumentException(
-			"Only path-associated points can be unscaled");
-		final double x = pim.x / pim.onPath.x_spacing;
-		final double y = pim.y / pim.onPath.y_spacing;
-		final double z = pim.z / pim.onPath.z_spacing;
-		switch (plane) {
-			case MultiDThreePanes.XY_PLANE:
-				return new double[] { x, y, z };
-			case MultiDThreePanes.XZ_PLANE:
-				return new double[] { x, z, y };
-			case MultiDThreePanes.ZY_PLANE:
-				return new double[] { z, y, x };
-			default:
-				throw new IllegalArgumentException("BUG: Unknown plane! (" + plane +
-					")");
-		}
 	}
 
 }

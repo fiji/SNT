@@ -84,15 +84,12 @@ import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
 
-/* Note on terminology:
 
-   "traces" files are made up of "paths".  Paths are non-branching
-   sequences of adjacent points (including diagonals) in the image.
-   Branches and joins are supported by attributes of paths that
-   specify that they begin on (or end on) other paths.
-
-*/
-
+/**
+ * Implements the SNT plugin.
+ *
+ * @author Tiago Ferreira
+ */
 public class SNT extends MultiDThreePanes implements
 	SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener
 {
@@ -715,7 +712,7 @@ public class SNT extends MultiDThreePanes implements
 	}
 
 	protected int getUIState() {
-		return (ui == null) ? -1 : ui.getCurrentState();
+		return (ui == null) ? -1 : ui.getState();
 	}
 
 	synchronized public void saveFill() {
@@ -1013,18 +1010,7 @@ public class SNT extends MultiDThreePanes implements
 		return isUIready() && SNTUI.EDITING == getUIState();
 	}
 
-	@Deprecated
-	public void setCrosshair(final double new_x, final double new_y,
-		final double new_z)
-	{
-		xy_tracer_canvas.setCrosshairs(new_x, new_y, new_z, true);
-		if (!single_pane) {
-			xz_tracer_canvas.setCrosshairs(new_x, new_y, new_z, true);
-			zy_tracer_canvas.setCrosshairs(new_x, new_y, new_z, true);
-		}
-	}
-
-	public void updateCursor(final double new_x, final double new_y,
+	protected void updateCursor(final double new_x, final double new_y,
 		final double new_z)
 	{
 		xy_tracer_canvas.updateCursor(new_x, new_y, new_z);
@@ -2152,7 +2138,8 @@ public class SNT extends MultiDThreePanes implements
 	 *
 	 * @return the loaded data or null if no image has been loaded.
 	 * @see #isSecondaryImageLoaded()
-	 * @see #loadFilteredImage()
+	 * @see #loadSecondaryImage(ImagePlus)
+	 * @see #loadSecondaryImage(File)
 	 */
 	public ImagePlus getSecondaryDataAsImp() {
 		return (isSecondaryImageLoaded()) ? getFilteredDataFromCachedData("Secondary Data", secondaryData) : null;

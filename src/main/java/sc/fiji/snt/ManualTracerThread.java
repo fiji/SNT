@@ -25,6 +25,11 @@ package sc.fiji.snt;
 import java.awt.Graphics;
 import java.util.ArrayList;
 
+/**
+ * A tracer thread for manual tracing.
+ * 
+ * @author Tiago Ferreira
+ */
 public class ManualTracerThread extends Thread implements SearchInterface {
 
 	private final double start_x;

@@ -112,7 +112,7 @@ import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.gui.GuiUtils;
 
 /**
- * Creates the "Path Manager" Dialog.
+ * Implements the <i>Path Manager</i> Dialog.
  *
  * @author Tiago Ferreira
  */

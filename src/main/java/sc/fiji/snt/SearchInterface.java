@@ -24,6 +24,10 @@ package sc.fiji.snt;
 
 import java.awt.Graphics;
 
+/**
+ * Tracer classes implementing searches between two points should implement this
+ * interface.
+ */
 public interface SearchInterface {
 
 	public Path getResult();

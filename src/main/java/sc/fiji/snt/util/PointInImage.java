@@ -30,6 +30,7 @@ import sholl.UPoint;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.PathTransformer;
 import sc.fiji.snt.annotation.BrainAnnotation;
+import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 
 /**
  * Defines a Point in an image, a node of a traced {@link Path}. Coordinates are
@@ -122,6 +123,37 @@ public class PointInImage implements SNTPoint {
 		final double y = this.y / cal.pixelHeight + offset.y;
 		final double z = this.z / cal.pixelDepth + offset.z;
 		return new PointInCanvas(x, y, z, onPath);
+	}
+
+	/**
+	 * Converts the coordinates of this point into pixel units if this point is
+	 * associated with a Path.
+	 *
+	 * @param view {@link MultiDThreePanes.XY_PLANE},
+	 *             {@link MultiDThreePanes.ZY_PLANE}, etc.
+	 * @return this point in pixel coordinates
+	 * @throws IllegalArgumentException if this point is not associated with a Path,
+	 *                                  or view was not recognized
+	 */
+	public PointInCanvas getUnscaledPoint(final int view) {
+		final PointInCanvas point = getUnscaledPoint();
+		final double x = point.getX();
+		final double y = point.getY();
+		final double z = point.getZ();
+		switch (view) {
+			case MultiDThreePanes.XY_PLANE:
+				break;
+			case MultiDThreePanes.XZ_PLANE:
+				point.y = z;
+				point.z = y;
+				break;
+			case MultiDThreePanes.ZY_PLANE:
+				point.x = z;
+				point.z = x;
+			default:
+				throw new IllegalArgumentException("Unknown plane: " + view);
+		}
+		return point;
 	}
 
 	public UPoint toUPoint() {

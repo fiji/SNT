@@ -22,7 +22,7 @@
 
 package sc.fiji.snt;
 
-public class PathResult {
+class PathResult {
 
 	protected float[] pathPoints;
 	protected float[] numberOfPoints;

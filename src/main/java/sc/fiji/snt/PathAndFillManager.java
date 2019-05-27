@@ -88,9 +88,12 @@ import util.XMLFunctions;
 
 /**
  * The PathAndFillManager is responsible for importing, handling and managing of
- * Paths and Fills. Typically, a PathAndFillManager is accessed from an
- * {@link SNT} instance, but accessing a PathAndFillManager
- * directly is useful for batch/headless operations.
+ * Paths and Fills. Typically, a PathAndFillManager is accessed from a
+ * {@link SNT} instance, but accessing a PathAndFillManager directly is useful
+ * for batch/headless operations.
+ * 
+ * @author Mark Longair
+ * @author Tiago Ferreira
  */
 public class PathAndFillManager extends DefaultHandler implements
 	UniverseListener
@@ -2515,24 +2518,28 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @see ij3d.UniverseListener#contentAdded(ij3d.Content)
 	 */
 	@Override
+	@Deprecated
 	public void contentAdded(final Content c) {}
 
 	/* (non-Javadoc)
 	 * @see ij3d.UniverseListener#contentRemoved(ij3d.Content)
 	 */
 	@Override
+	@Deprecated
 	public void contentRemoved(final Content c) {}
 
 	/* (non-Javadoc)
 	 * @see ij3d.UniverseListener#contentChanged(ij3d.Content)
 	 */
 	@Override
+	@Deprecated
 	public void contentChanged(final Content c) {}
 
 	/* (non-Javadoc)
 	 * @see ij3d.UniverseListener#contentSelected(ij3d.Content)
 	 */
 	@Override
+	@Deprecated
 	public void contentSelected(final Content c) {
 		if (c == null) return;
 		final String contentName = c.getName();
@@ -2545,12 +2552,14 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @see ij3d.UniverseListener#canvasResized()
 	 */
 	@Override
+	@Deprecated
 	public void canvasResized() {}
 
 	/* (non-Javadoc)
 	 * @see ij3d.UniverseListener#universeClosed()
 	 */
 	@Override
+	@Deprecated
 	public void universeClosed() {
 		if (plugin != null) {
 			plugin.use3DViewer = false;

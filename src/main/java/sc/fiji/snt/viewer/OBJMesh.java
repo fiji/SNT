@@ -49,7 +49,7 @@ import sc.fiji.snt.util.SNTPoint;
 
 /**
  * An OBJMesh stores information about a Wavefront .obj mesh loaded
- * into @{@link Viewer3D}, with access points to its {@link OBJFile} and
+ * into {@link Viewer3D}, with access points to its {@link OBJFile} and
  * {@link DrawableVBO}
  *
  * @author Tiago Ferreira

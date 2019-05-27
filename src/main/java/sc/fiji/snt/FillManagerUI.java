@@ -29,8 +29,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -62,12 +60,12 @@ import net.imagej.ImageJ;
 import sc.fiji.snt.gui.GuiUtils;
 
 /**
- * Creates the "Fill Manager" Dialog.
+ * Implements the <i>Fill Manager</i> dialog.
  *
  * @author Tiago Ferreira
  */
 public class FillManagerUI extends JDialog implements PathAndFillListener,
-	ActionListener, ItemListener, FillerProgressCallback
+	ActionListener, FillerProgressCallback
 {
 
 	private static final long serialVersionUID = 1L;
@@ -224,7 +222,9 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		{
 			transparent = new JCheckBox(
 				" Transparent overlay (may slow down filling)");
-			transparent.addItemListener(this);
+			transparent.addActionListener(e-> {
+				plugin.setFillTransparent(transparent.isSelected());
+			});
 			final JPanel transparencyPanel = leftAlignedPanel();
 			transparencyPanel.add(transparent);
 			add(transparencyPanel, c);
@@ -360,6 +360,9 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 	}
 
 	public void setFillTransparent(final boolean transparent) {
+		if (this.transparent != null) {
+			SwingUtilities.invokeLater(() -> this.transparent.setSelected(transparent));
+		}
 		plugin.setFillTransparent(transparent);
 	}
 
@@ -507,16 +510,6 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 				if (imp != null) imp.show();
 			}
 		}));
-	}
-
-	/* (non-Javadoc)
-	 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
-	 */
-	@Override
-	public void itemStateChanged(final ItemEvent ie) {
-		assert SwingUtilities.isEventDispatchThread();
-		if (ie.getSource() == transparent) plugin.setFillTransparent(transparent
-			.isSelected());
 	}
 
 	protected void thresholdChanged(final double f) {

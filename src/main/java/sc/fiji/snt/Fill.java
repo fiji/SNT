@@ -29,10 +29,21 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Defines a filled structure.
+ * 
+ * @author Mark Longair
+ * @author Tiago Ferreira
+ */
 public class Fill {
 
 	public double distanceThreshold;
 
+	/**
+	 * Defines a node in a filled structure.
+	 * 
+	 * @author Mark Longair
+	 */
 	public class Node {
 
 		public int x;

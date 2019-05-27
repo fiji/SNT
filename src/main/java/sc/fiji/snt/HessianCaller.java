@@ -25,6 +25,14 @@ package sc.fiji.snt;
 import features.ComputeCurvatures;
 import ij.ImagePlus;
 
+/**
+ * This class is responsible for initiating Heassian analysis on both the
+ * <i>primary</i> (main) and the <i>secondary</i> image. Currently computations
+ * are performed by {@link features.ComputeCurvatures}, but could be extended to
+ * adopt other approaches.
+ * 
+ * @author Tiago Ferreira
+ */
 public class HessianCaller {
 
 	private final SNT snt;

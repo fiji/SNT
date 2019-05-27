@@ -130,6 +130,11 @@ import sc.fiji.snt.gui.cmds.PrefsCmd;
 import sc.fiji.snt.gui.cmds.ShowCorrespondencesCmd;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 
+/**
+ * Implements SNT's main dialog.
+ *
+ * @author Tiago Ferreira
+ */
 @SuppressWarnings("serial")
 public class SNTUI extends JDialog {
 
@@ -392,8 +397,8 @@ public class SNTUI extends JDialog {
 		}
 
 		tabbedPane.addChangeListener(e -> {
-			if (tabbedPane.getSelectedIndex() == 1 && getCurrentState() > WAITING_TO_START_PATH
-					&& getCurrentState() < EDITING) {
+			if (tabbedPane.getSelectedIndex() == 1 && getState() > WAITING_TO_START_PATH
+					&& getState() < EDITING) {
 				tabbedPane.setSelectedIndex(0);
 				guiUtils.blinkingError(statusText,
 						"Please complete current task before selecting the \"Options\" tab.");
@@ -459,11 +464,11 @@ public class SNTUI extends JDialog {
 	/**
 	 * Gets the current UI state.
 	 *
-	 * @return the current UI state, e.g., {@link SNTUI#WAITING_FOR_SIGMA_POINT},
-	 *         {@link SNTUI#WAITING_FOR_SIGMA_POINT}, etc.
+	 * @return the current UI state, e.g., {@link SNTUI#READY},
+	 *         {@link SNTUI#RUNNING_CMD}, etc.
 	 */
-	public int getCurrentState() {
-		if (plugin.tracingHalted && currentState == WAITING_TO_START_PATH)
+	public int getState() {
+		if (plugin.tracingHalted && currentState == READY)
 			currentState = TRACING_PAUSED;
 		return currentState;
 	}
@@ -592,7 +597,7 @@ public class SNTUI extends JDialog {
 	/**
 	 * Changes this UI to a new state.
 	 *
-	 * @param newState the new state, e.g., {@link SNTUI#WAITING_TO_START_PATH},
+	 * @param newState the new state, e.g., {@link SNTUI#READY},
 	 *                 {@link SNTUI#TRACING_PAUSED}, etc.
 	 */
 	public void changeState(final int newState) {
@@ -777,16 +782,6 @@ public class SNTUI extends JDialog {
 
 	protected void resetState() {
 		plugin.pauseTracing(!plugin.accessToValidImageData() || plugin.tracingHalted, false); // will set UI state
-	}
-
-	/**
-	 * Gets the current UI state.
-	 *
-	 * @return the current state, e.g., {@link SNTUI#WAITING_TO_START_PATH},
-	 *         {@link SNTUI#TRACING_PAUSED}, etc.
-	 */
-	public int getState() {
-		return currentState;
 	}
 
 	public void error(final String msg) {
@@ -2935,7 +2930,7 @@ public class SNTUI extends JDialog {
 		}
 
 		sigmaPalette = new SigmaPalette(plugin,
-				plugin.getHessianCaller((getCurrentState() == WAITING_FOR_SIGMA_POINT_II) ? "secondary" : "primary"));
+				plugin.getHessianCaller((getState() == WAITING_FOR_SIGMA_POINT_II) ? "secondary" : "primary"));
 		sigmaPalette.makePalette(x_min, x_max, y_min, y_max, z_min, z_max, sigmas, 3, 3, z);
 		updateStatusText("Adjusting \u03C3 and max visually...");
 	}
@@ -3358,7 +3353,7 @@ public class SNTUI extends JDialog {
 				final int uiStateduringRun) {
 			assert SwingUtilities.isEventDispatchThread();
 			this.cmd = cmd;
-			this.preRunState = getCurrentState();
+			this.preRunState = getState();
 			this.inputs = inputs;
 			run = initialize();
 			if (run && preRunState != uiStateduringRun)
@@ -3395,7 +3390,7 @@ public class SNTUI extends JDialog {
 				e.printStackTrace();
 				guiUtils.error("It seems there is not enough memory comple command. See Console for details.");
 			} finally {
-				if (run && preRunState != getCurrentState())
+				if (run && preRunState != getState())
 					changeState(preRunState);
 			}
 		}
@@ -3411,14 +3406,14 @@ public class SNTUI extends JDialog {
 
 		// Cmd that does not require rebuilding canvas(es) nor changing UI state
 		public CmdRunner(final Class<? extends Command> cmd) {
-			this(cmd, null, getCurrentState());
+			this(cmd, null, SNTUI.this.getState());
 		}
 
 		public CmdRunner(final Class<? extends Command> cmd, final HashMap<String, Object> inputs,
 				final int uiStateduringRun) {
 			assert SwingUtilities.isEventDispatchThread();
 			this.cmd = cmd;
-			this.preRunState = getCurrentState();
+			this.preRunState = SNTUI.this.getState();
 			this.inputs = inputs;
 			run = initialize();
 			if (run && preRunState != uiStateduringRun)
@@ -3474,7 +3469,7 @@ public class SNTUI extends JDialog {
 		@Override
 		protected void done() {
 			showStatus("Command terminated...", false);
-			if (run && preRunState != getCurrentState())
+			if (run && preRunState != SNTUI.this.getState())
 				changeState(preRunState);
 		}
 	}

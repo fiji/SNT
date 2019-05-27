@@ -48,7 +48,11 @@ import org.scijava.util.FileUtils;
 
 import sc.fiji.snt.gui.IconFactory;
 
-/** Utility class for discovery of scripts scripting SNT */
+/**
+ * Utility class for discovery of scripts scripting SNT
+ * 
+ * @author Tiago Ferreira
+ */
 class ScriptInstaller implements MenuKeyListener {
 
 	@Parameter

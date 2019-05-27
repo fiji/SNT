@@ -30,6 +30,10 @@ import java.util.ArrayList;
 
 import ij.IJ;
 
+/**
+ * A tracer thread for {@code FijiITKInterface.TubularGeodesics} (assumes the
+ * tubularity add-on to be installed)
+ */
 public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 
 	public TubularGeodesicsTracer(final File oofFile, final float start_x_image,

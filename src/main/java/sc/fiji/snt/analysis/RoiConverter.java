@@ -34,10 +34,10 @@ import ij.gui.Roi;
 import ij.process.FloatPolygon;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.plugin.ROIExporterCmd;
-import sc.fiji.snt.PathNode;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
+import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
 
 /**
@@ -275,10 +275,10 @@ public class RoiConverter extends TreeAnalyzer {
 				SNTUtils.log("Converting " + path + " failed. Skipping it...");
 				continue;
 			}
-			final double[] coordinates = PathNode.unScale(p, exportPlane);
+			final PointInCanvas pp = p.getUnscaledPoint(exportPlane);
 			final int[] pos = new int[] { path.getChannel(), (int) Math.round(
-				coordinates[2] + 1), path.getFrame() };
-			roi.addPoint(coordinates[0], coordinates[1], pos);
+					pp.z + 1), path.getFrame() };
+			roi.addPoint(pp.x, pp.y, pos);
 		}
 		roi.setStrokeColor(color);
 		roi.setName(String.format("%s-roi-%s", id, sPlane));

@@ -25,9 +25,10 @@ package sc.fiji.snt;
 import features.ComputeCurvatures;
 import ij.ImagePlus;
 
-/* This is the thread that explores between two points in an image,
- * doing an A* search with a choice of distance measures. */
-
+/**
+ * SNT's default tracer thread: explores between two points in an image, doing
+ * an A* search with a choice of distance measures.
+ */
 public class TracerThread extends SearchThread {
 
 	private int start_x;

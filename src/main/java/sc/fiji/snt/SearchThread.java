@@ -33,9 +33,13 @@ import ij.measure.Calibration;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 
-/* This is the thread that explores the image using a variety of
-   strategies, for example to trace tubular structures or surfaces. */
-
+/**
+ * Implements a common thread that explores the image using a variety of
+ * strategies, e.g., to trace tubular structures or surfaces.
+ * 
+ * @author Mark Longair
+ * @author Tiago Ferreira
+ */
 public abstract class SearchThread extends Thread implements SearchInterface {
 
 	boolean verbose = SNTUtils.isDebugMode();

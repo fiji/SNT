@@ -508,23 +508,23 @@ public class Tree {
 		final Path referencePath = tree.iterator().next();
 		p1.onPath = referencePath;
 		p2.onPath = referencePath;
-		final double[] bound1 = PathNode.unScale(p1, multiDThreePaneView);
-		final double[] bound2 = PathNode.unScale(p2, multiDThreePaneView);
+		final PointInCanvas bound1 = p1.getUnscaledPoint(multiDThreePaneView);
+		final PointInCanvas bound2 = p2.getUnscaledPoint(multiDThreePaneView);
 
 		// Padding is required to accommodate "rounding errors"
 		// in PathAndFillManager.setPathPointsInVolume()
 		final int xyPadding = 5; // 5 extra pixels on each margin
 		final int zPadding = 2; // 1 slice above / below last point
-		final int w = (int) (bound2[0] - bound1[0]) + xyPadding;
-		final int h = (int) (bound2[1] - bound1[1]) + xyPadding;
-		int d = (int) (bound2[2] - bound1[2]);
+		final int w = (int) (bound2.x - bound1.x) + xyPadding;
+		final int h = (int) (bound2.y - bound1.y) + xyPadding;
+		int d = (int) (bound2.z - bound1.z);
 		if (d < 1) d = 1;
 		if (d > 1) d += zPadding;
 		return IJ.createImage(null, w, h, d, 8);
 	}
 
 	/**
-	 * Size.
+	 * Retrieves the number of paths in this tree.
 	 *
 	 * @return Returns the number of paths in this tree.
 	 */

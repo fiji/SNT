@@ -35,6 +35,10 @@ import pal.math.MultivariateFunction;
  * Class for fitting circular cross-sections around existing nodes of a
  * {@link Path} in order to compute radii (node thickness) and midpoint
  * refinement of existing coordinates.
+ * 
+ * @author Tiago Ferreira
+ * @author Mark Longair
+ * 
  */
 public class PathFitter implements Callable<Path> {
 

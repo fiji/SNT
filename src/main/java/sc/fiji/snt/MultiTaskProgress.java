@@ -22,7 +22,7 @@
 
 package sc.fiji.snt;
 
-public interface MultiTaskProgress {
+interface MultiTaskProgress {
 
 	public void updateProgress(double proportionDone, int taskIndex);
 

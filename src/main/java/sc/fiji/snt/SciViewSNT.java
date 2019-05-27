@@ -7,6 +7,7 @@ import net.imglib2.display.ColorTable;
 import org.jzy3d.colors.ISingleColorable;
 import org.jzy3d.plot3d.primitives.AbstractWireframeable;
 import org.scijava.util.ColorRGB;
+import org.scijava.util.Colors;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.util.PointInImage;
 import sc.iview.SciView;
@@ -187,30 +188,31 @@ public class SciViewSNT {
                 //final Line line = new Line();
                 //line.setCapacity(p.size());
                 //points = new
-                Vector3[] points = new Vector3[p.size()];
-                ColorRGB color = new ColorRGB(255,0,0);
+                List<Vector3> points = new ArrayList<>();
+                List<ColorRGB> colors = new ArrayList<>();
+                //ColorRGB color = new ColorRGB(255,0,0);
                 float scaleFactor = 0.1f;
-                Line3D line = new Line3D();
                 for (int i = 0; i < p.size(); ++i) {
                     final PointInImage pim = p.getNode(i);
                     final ClearGLVector3 coord = new ClearGLVector3((float)pim.x, (float)pim.y, (float)pim.z);
                     final Material mat = new Material();
-//                    ColorRGB color = fromAWTColor(p.hasNodeColors() ? p.getNodeColor(i)
-//                            : p.getColor());
-
+                    Color c = p.hasNodeColors() ? p.getNodeColor(i) : p.getColor();
+                    ColorRGB color = c == null ? Colors.ANTIQUEWHITE : fromAWTColor(c);
                     mat.setDiffuse(new GLVector(color.getRed(),color.getGreen(),color.getBlue()));
                     final float width = Math.max((float) p.getNodeRadius(i),
                             DEF_NODE_RADIUS);
                     //System.out.println( "(point " + i + " " + coord.source() + ")" );
-                    points[i] = new FloatVector3(coord.source().x()*scaleFactor,coord.source().y()*scaleFactor,coord.source().z()*scaleFactor);
+                    points.add( new FloatVector3(coord.source().x()*scaleFactor,coord.source().y()*scaleFactor,coord.source().z()*scaleFactor) );
+                    colors.add( color );
+
                     //line.addPoint(coord.source());
-                    if( i > 0 ) {
-                        Cylinder c = Cylinder.betweenPoints(ClearGLVector3.convert(points[i - 1]), ClearGLVector3.convert(points[i]), 0.05f, 1f, 18);
-                        line.addLine(c);
-                    }
+//                    if( i > 0 ) {
+//                        Cylinder c = Cylinder.betweenPoints(ClearGLVector3.convert(points[i - 1]), ClearGLVector3.convert(points[i]), 0.05f, 1f, 18);
+//                        line.addLine(c);
+//                    }
                 }
 
-
+                Line3D line = new Line3D(points, colors, 0.05);
                 line.getMetadata().put("pathID",p.getID());
                 //sciView.addNode(line,false );
                 lines.add(line);

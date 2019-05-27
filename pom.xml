@@ -106,8 +106,8 @@
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
 
-		<sciview.version>777b256</sciview.version>
-		<scenery.version>0.7.0-beta-5</scenery.version>
+		<sciview.version>8c7fa91</sciview.version>
+		<scenery.version>2a5c712</scenery.version>
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>

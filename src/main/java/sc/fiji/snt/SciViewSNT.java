@@ -77,10 +77,8 @@ public class SciViewSNT {
 		    //System.out.println("addTree: node " + node.getMetadata().get("pathID"));
 		    sciView.addNode(node);
         }
-        GLVector treeCenter = shapeTree.getPosition();
-		sciView.getCamera().setTarget(treeCenter);
 		//sciView.getCamera().setPosition(treeCenter.minus(new GLVector(0,0,-10f)));
-        // TODO: sciView.fitCameraToScene();
+        sciView.centerOnNode( shapeTree );
 	}
 
 
@@ -230,7 +228,7 @@ public class SciViewSNT {
             assembleSoma(somaPoints, somaColors);
             if (somaSubShape != null) addChild(somaSubShape);
 
-            //sciView.addNode(this, true);
+            sciView.addNode(this, true);
 
             this.setPosition(this.getMaximumBoundingBox().getBoundingSphere().getOrigin());
             sciView.setActiveNode(this);
@@ -360,6 +358,21 @@ public class SciViewSNT {
             return null;
         }
 
+        /**
+         * Generates an [OrientedBoundingBox] for this [Node]. This will take
+         * geometry information into consideration if this Node implements [HasGeometry].
+         * In case a bounding box cannot be determined, the function will return null.
+         */
+        public OrientedBoundingBox generateBoundingBox() {
+            OrientedBoundingBox bb = new OrientedBoundingBox(this, 0.0f, 0.0f, 0.0f,
+                    0.0f, 0.0f, 0.0f);
+            for( Node n : getChildren() ) {
+                OrientedBoundingBox cBB = n.generateBoundingBox();
+                if( cBB != null )
+                    bb = bb.expand(bb, cBB);
+            }
+            return bb;
+        }
     }
 
     /* IDE debug method */

@@ -228,7 +228,7 @@ public class SciViewSNT {
             assembleSoma(somaPoints, somaColors);
             if (somaSubShape != null) addChild(somaSubShape);
 
-            //sciView.addNode(this, true);
+            sciView.addNode(this, true);
 
             this.setPosition(this.getMaximumBoundingBox().getBoundingSphere().getOrigin());
             sciView.setActiveNode(this);

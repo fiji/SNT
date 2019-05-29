@@ -3,7 +3,7 @@
 # @File(label="Directory containing your images", style="directory") input_dir
 # @String(label="Consider only filenames containing",description="Clear field for no filtering",value="") name_filter
 # @boolean(label="Include subdirectories") recursive
-# @float(label="Size of structures to be filtered (spatially calibrated units)") scale
+# @float(label="Size of structures to be filtered (spatially calibrated units). Note this value is converted to pixel units using the average voxel size.") scale
 # @LogService log
 # @StatusService status
 # @UIService uiservice
@@ -74,13 +74,15 @@ def run():
         x_spacing = float_input.averageScale(0)
         y_spacing = float_input.averageScale(1)
         spacing = [x_spacing, y_spacing]
-        if num_dimensions == 3:
+
+        if num_dimensions == 3 and str(float_input.axis(2).type()) == 'Z':
             z_spacing = float_input.averageScale(2)
             spacing.append(z_spacing)
 
         # Create placeholder image for the output then run the Frangi Vesselness op
         output = ij.op().run("create.img", float_input)
-        ij.op().run("frangiVesselness", output, float_input, spacing, scale)
+        pixel_scale = scale / (sum(spacing) / len(spacing))  # average voxel size: convert scale to pixel units
+        ij.op().run("frangiVesselness", output, float_input, spacing, pixel_scale)
 
         # Save the result using the same basename as the image, adding "[Frangi].tif"
         # For example, the output for "OP_1.tif" would be named "OP_1[Frangi].tif"

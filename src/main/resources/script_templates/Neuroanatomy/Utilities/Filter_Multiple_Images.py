@@ -14,6 +14,8 @@ author: Tiago Ferreira, Cameron Arshadi
 info: Bulk filtering of image files using Frangi Vesselness
 """
 
+from net.imagej.axis import Axes
+
 import os
 
 
@@ -75,7 +77,7 @@ def run():
         y_spacing = float_input.averageScale(1)
         spacing = [x_spacing, y_spacing]
 
-        if num_dimensions == 3 and str(float_input.axis(2).type()) == 'Z':
+        if num_dimensions == 3 and float_input.axis(2).type() == Axes.Z:
             z_spacing = float_input.averageScale(2)
             spacing.append(z_spacing)
 

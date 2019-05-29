@@ -1,9 +1,9 @@
 # @ImageJ ij
-# @String(value="This script processes all TIFF images in a directory with the Frangi Vesselness filter. Note that only 2D or 3D grayscale images are supported. Conversion log is shown in Console.", visibility="MESSAGE") msg
+# @String(value="<HTML>This script applies the Frangi Vesselness filter to all TIFF images in a directory.<br>Only 2D or 3D grayscale images are supported. Processing log is shown in Console.", visibility="MESSAGE") msg
 # @File(label="Directory containing your images", style="directory") input_dir
 # @String(label="Consider only filenames containing",description="Clear field for no filtering",value="") name_filter
 # @boolean(label="Include subdirectories") recursive
-# @float(label="Size of structures to be filtered (spatially calibrated units). Note this value is converted to pixel units using the average voxel size.") scale
+# @float(label="Size of structures to be filtered (spatially calibrated units)",description="The filter kernel will be determined from the average voxel size") scale
 # @LogService log
 # @StatusService status
 # @UIService uiservice

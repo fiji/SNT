@@ -591,6 +591,7 @@ public class Path implements Comparable<Path> {
 	public void insertNode(final int index, final PointInImage point) {
 		if (index < 0 || index > size()) throw new IllegalArgumentException(
 			"addNode() asked for an out-of-range point: " + index);
+
 		// FIXME: This all would be much easier if we were using Collections/Lists
 		precise_x_positions = ArrayUtils.insert(index, precise_x_positions,
 			point.x);
@@ -598,6 +599,19 @@ public class Path implements Comparable<Path> {
 			point.y);
 		precise_z_positions = ArrayUtils.insert(index, precise_z_positions,
 			point.z);
+		points++;
+		if (hasRadii()) {
+			tangents_x = ArrayUtils.insert(index, tangents_x, 0d);
+			tangents_y = ArrayUtils.insert(index, tangents_y, 0d);
+			tangents_z = ArrayUtils.insert(index, tangents_z, 0d);
+			radii = ArrayUtils.insert(index, radii, 0d);
+		}
+		if (nodeAnnotations != null) {
+			nodeAnnotations = ArrayUtils.insert(index, nodeAnnotations, (BrainAnnotation)null);
+		}
+		if (nodeValues != null) {
+			nodeValues = ArrayUtils.insert(index, nodeValues, Double.NaN);
+		}
 	}
 
 	/**
@@ -617,6 +631,18 @@ public class Path implements Comparable<Path> {
 		precise_y_positions = ArrayUtils.remove(precise_y_positions, index);
 		precise_z_positions = ArrayUtils.remove(precise_z_positions, index);
 		points -= 1;
+		if (hasRadii()) {
+			tangents_x = ArrayUtils.remove(tangents_x, index);
+			tangents_y = ArrayUtils.remove(tangents_y, index);
+			tangents_z = ArrayUtils.remove(tangents_z, index);
+			radii = ArrayUtils.remove(radii, index);
+		}
+		if (nodeAnnotations != null) {
+			nodeAnnotations = ArrayUtils.remove(nodeAnnotations, index);
+		}
+		if (nodeValues != null) {
+			nodeValues = ArrayUtils.remove(nodeValues, index);
+		}
 		if (p.equals(startJoinsPoint)) startJoinsPoint = getNode(0);
 		if (p.equals(endJoinsPoint) && points > 0) endJoinsPoint = getNode(
 			points - 1);

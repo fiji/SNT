@@ -24,6 +24,8 @@ package sc.fiji.snt.gui;
 
 import com.jidesoft.popup.JidePopup;
 
+import ij.gui.HTMLDialog;
+
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Component;
@@ -147,6 +149,10 @@ public class GuiUtils {
 			popup = getPopup(msg);
 			popup.showPopup();
 		});
+	}
+
+	public static void showHTMLDialog(final String msg, final String title) {
+		new HTMLDialog(title, msg, false);
 	}
 
 	private JidePopup getPopup(final String msg) {

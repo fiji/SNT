@@ -98,7 +98,6 @@ import org.scijava.util.Types;
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
-import ij.gui.HTMLDialog;
 import ij3d.Content;
 import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
@@ -2725,7 +2724,7 @@ public class SNTUI extends JDialog {
 						.append("'>available online</a>. ");
 				sb.append("For batch processing, run <a href='").append(url1)
 						.append("'>Analyze>Sholl>Sholl Analysis (From Tracings)...</a>. ");
-				new HTMLDialog("Sholl Analysis How-to", sb.toString(), false);
+				GuiUtils.showHTMLDialog("Sholl Analysis How-to", sb.toString());
 			});
 			newThread.start();
 		});

@@ -152,7 +152,6 @@ import com.jogamp.opengl.FPSCounter;
 import com.jogamp.opengl.GLAnimatorControl;
 import com.jogamp.opengl.GLException;
 
-import ij.gui.HTMLDialog;
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
@@ -2817,16 +2816,20 @@ public class Viewer3D {
 		private void showSelectionInfo() {
 			final List<AllenCompartment> cs = getCheckedSelection();
 			if (cs == null) return;
-			System.out.println("*** Allen CCF Navigator: Info on selected items:");
+			final StringBuilder sb = new StringBuilder("<table>");
+			sb.append("<tr>")//
+			.append("<th>Name</th>").append("<th>Acronym</th>").append("<th>Id</th>").append("<th>Alias(es)</th>")//
+			.append("</tr>");
 			for (final AllenCompartment c : cs) {
-				final StringBuilder sb = new StringBuilder();
-				sb.append("   name[").append(c.name()).append("]");
-				sb.append(" acronym[").append(c.acronym()).append("]");
-				sb.append(" id[").append(c.id()).append("]");
-				sb.append(" aliases[").append(String.join(",", c.aliases())).append("]");
-				//sb.append(" UUID[").append(c.getUUID()).append("]");
-				System.out.println(sb.toString());
+				sb.append("<tr>");
+				sb.append("<td>").append(c.name()).append("</td>");
+				sb.append("<td>").append(c.acronym()).append("</td>");
+				sb.append("<td>").append(c.id()).append("</td>");
+				sb.append("<td>").append(String.join(",", c.aliases())).append("</td>");
+				sb.append("</tr>");
 			}
+			sb.append("</table>");
+			GuiUtils.showHTMLDialog(sb.toString(), "Info On Selected Compartments");
 		}
 
 		private JDialog show() {
@@ -3667,7 +3670,7 @@ public class Viewer3D {
 			}
 			sb.append("</table>");
 			if (showInDialog) {
-				new HTMLDialog("Reconstruction Viewer Shortcuts", sb.toString(), false);
+				GuiUtils.showHTMLDialog(sb.toString(), "Reconstruction Viewer Shortcuts");
 			}
 			else {
 				displayMsg(sb.toString(), 10000);

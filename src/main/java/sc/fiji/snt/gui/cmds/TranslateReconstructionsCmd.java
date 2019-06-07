@@ -134,7 +134,7 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 		SNTUtils.setDebugMode(true);
 		final Viewer3D jzy3D = new Viewer3D(ij.context());
 		jzy3D.add(tree);
-		jzy3D.loadMouseRefBrain();
+		jzy3D.loadRefBrain("Allen CCF");
 		jzy3D.show();
 	}
 

@@ -47,7 +47,7 @@ import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.viewer.OBJMesh;
 
 /**
- * Utilities methods for accessing/handling {@link AllenCompartment}s
+ * Utility methods for accessing/handling {@link AllenCompartment}s
  * 
  * @author Tiago Ferreira
  */

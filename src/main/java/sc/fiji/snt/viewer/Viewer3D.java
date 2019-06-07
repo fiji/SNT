@@ -1208,60 +1208,83 @@ public class Viewer3D {
 	 * @return a reference to the loaded mesh
 	 * @throws IllegalArgumentException if Viewer is not available
 	 */
-	public OBJMesh loadMouseRefBrain() throws IllegalArgumentException {
-		return AllenUtils.getRootMesh((isDarkModeOn()?Colors.WHITE:Colors.BLACK));
+	public OBJMesh loadRefBrain(final String template) throws IllegalArgumentException {
+		final String normLabel = getNormalizedBrainLabel(template);
+		if (normLabel == null) throw new IllegalArgumentException("Not a valid template: "+ template);
+		return loadRefBrainInternal(normLabel);
 	}
 
-	/**
-	 * Loads the surface mesh of a Drosophila template brain. It will simply make
-	 * the mesh visible if has already been loaded. These meshes are detailed on
-	 * the <a href=
-	 * "https://www.rdocumentation.org/packages/nat.templatebrains/">nat.flybrains</a>
-	 * documentation.
-	 *
-	 * @param templateBrain the template brain to be loaded (case-insensitive).
-	 *          Either "JFRC2" (AKA JFRC2010), "JFRC3" (AKA JFRC2013), or "FCWB"
-	 *          (FlyCircuit Whole Brain Template)
-	 * @return a reference to the loaded mesh
-	 * @throws IllegalArgumentException if templateBrain is not recognized, or
-	 *           Viewer is not available
-	 */
-	public OBJMesh loadDrosoRefBrain(final String templateBrain)
-		throws IllegalArgumentException
-	{
-		final String inputType = (templateBrain == null) ? null : templateBrain
-			.toLowerCase();
-		switch (inputType) {
-			case "jfrc2":
-			case "jfrc2010":
-			case "jfrctemplate2010":
-				return loadRefBrain(JFRC2_MESH_LABEL);
-			case "jfrc3":
-			case "jfrc2013":
-			case "jfrctemplate2013":
-				return loadRefBrain(JFRC3_MESH_LABEL);
-			case "fcwb":
-			case "flycircuit":
-				return loadRefBrain(FCWB_MESH_LABEL);
-			default:
-				throw new IllegalArgumentException("Invalid argument");
-		}
-	}
-
-	private OBJMesh loadRefBrain(final String label)
-		throws IllegalArgumentException
-	{
-		if (plottedObjs.keySet().contains(label)) {
+	private OBJMesh loadRefBrainInternal(final String label) throws NullPointerException, IllegalArgumentException {
+		if (getOBJs().keySet().contains(label)) {
 			setVisible(label, true);
+			if (managerList != null)
+				managerList.addCheckBoxListSelectedValue(label, true);
 			return plottedObjs.get(label).objMesh;
 		}
-		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		final URL url = loader.getResource("meshes/" + TEMPLATE_MESHES.get(label));
-		if (url == null) throw new IllegalArgumentException(label + " not found.");
-		final OBJMesh objMesh = new OBJMesh(url);
+		OBJMesh objMesh;
+		switch (label) {
+		case MESH_LABEL_JFRC2:
+			objMesh = VFBUtils.getRefBrain("jfrc2");
+			break;
+		case MESH_LABEL_JFRC3:
+			objMesh = VFBUtils.getRefBrain("jfrc3");
+			break;
+		case MESH_LABEL_FCWB:
+			objMesh = VFBUtils.getRefBrain("fcwb");
+			break;
+		case MESH_LABEL_L1:
+			objMesh = VFBUtils.getMesh("VFB_00050000");
+			break;
+		case MESH_LABEL_L3:
+			objMesh = VFBUtils.getMesh("VFB_00049000");
+			break;
+		case MESH_LABEL_VNS:
+			objMesh = VFBUtils.getMesh("VFB_00100000");
+			break;
+		case MESH_LABEL_ALLEN:
+			objMesh = AllenUtils.getRootMesh(null);
+			break;
+		case MESH_LABEL_ZEBRAFISH:
+			objMesh = ZBAtlasUtils.getRefBrain();
+			break;
+		default:
+			throw new IllegalArgumentException("Invalid option: " + label);
+		}
 		objMesh.setLabel(label);
 		objMesh.drawable.setColor(getNonUserDefColor());
-		return loadOBJMesh(objMesh);
+		if (loadMesh(objMesh)) validate();
+		return objMesh;
+	}
+
+	private static String getNormalizedBrainLabel(final String input) {
+		switch (input.toLowerCase()) {
+		case "jfrc2":
+		case "jfrc2010":
+		case "jfrctemplate2010":
+		case "vfb":
+			return MESH_LABEL_JFRC2;
+		case "jfrc3":
+		case "jfrc2013":
+		case "jfrctemplate2013":
+			return MESH_LABEL_JFRC3;
+		case "fcwb":
+		case "flycircuit":
+			return MESH_LABEL_FCWB;
+		case "l1":
+			return MESH_LABEL_L1;
+		case "l3":
+			return MESH_LABEL_L3;
+		case "vns":
+			return MESH_LABEL_VNS;
+		case "allen":
+		case "ccf":
+		case "allen ccf":
+		case "mouse":
+			return MESH_LABEL_ALLEN;
+		case "zebrafish":
+			return MESH_LABEL_ZEBRAFISH;
+		}
+		return null;
 	}
 
 	private Color getNonUserDefColor() {
@@ -4003,7 +4026,7 @@ public class Viewer3D {
 		jzy3D.addColorBarLegend(ColorTables.ICE, (float) bounds[0],
 			(float) bounds[1], new Font("Arial", Font.PLAIN, 24), 3, 4);
 		jzy3D.add(tree);
-		final OBJMesh brainMesh = jzy3D.loadMouseRefBrain();
+		final OBJMesh brainMesh = jzy3D.loadRefBrain("Allen CCF");
 		brainMesh.setBoundingBoxColor(Colors.RED);
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
 		jzy3D.addSurface(analyzer.getTips());

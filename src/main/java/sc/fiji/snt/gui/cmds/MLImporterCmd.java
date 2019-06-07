@@ -175,7 +175,9 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			result.forEach((id, tree) -> {
 				if (tree != null) recViewer.add(tree);
 			});
-			if (meshViewer) recViewer.loadMouseRefBrain();
+			if (meshViewer) {
+				recViewer.loadRefBrain("Allen CCF");
+			}
 			recViewer.setSceneUpdatesEnabled(true);
 			recViewer.validate();
 		}
@@ -187,7 +189,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			// Reconstruction Viewer synchronize
 			recViewer = sntService.getReconstructionViewer();
 			recViewer.setSceneUpdatesEnabled(false);
-			recViewer.loadMouseRefBrain();
+			recViewer.loadRefBrain("Allen CCF");
 			recViewer.syncPathManagerList();
 			recViewer.show();
 			recViewer.setSceneUpdatesEnabled(true);

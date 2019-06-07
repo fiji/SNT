@@ -196,6 +196,16 @@ public class AllenCompartment implements BrainAnnotation {
 		return aliases;
 	}
 
+	/**
+	 * Checks whether a mesh is known to be available for this compartment.
+	 *
+	 * @return true, if a mesh is available.
+	 */
+	public boolean isMeshAvailable() {
+		initializeAsNeeded();
+		return jsonObj.getBoolean("geometryEnable");
+	}
+
 	@Override
 	public OBJMesh getMesh() {
 		if (id() == AllenUtils.BRAIN_ROOT_ID) return AllenUtils.getRootMesh(Colors.WHITE);

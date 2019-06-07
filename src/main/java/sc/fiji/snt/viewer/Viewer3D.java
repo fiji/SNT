@@ -71,10 +71,12 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
@@ -1586,7 +1588,7 @@ public class Viewer3D {
 
 				@Override
 				public void windowClosing(final WindowEvent e) {
-					getOuter().dispose();
+					Viewer3D.this.dispose();
 				}
 			});
 			setVisible(true);
@@ -1896,7 +1898,7 @@ public class Viewer3D {
 					"Remove all items from scene? This action cannot be undone.",
 					"Wipe Scene?"))
 				{
-					getOuter().removeAll();
+					Viewer3D.this.removeAll();
 					removeAllOBJs();
 					removeColorLegends(false);
 					// Ensure nothing else remains (e.g., a Delaunay surface)
@@ -2505,10 +2507,10 @@ public class Viewer3D {
 				{
 					return;
 				}
-				getOuter().setSceneUpdatesEnabled(false);
-				keys.stream().forEach(k -> getOuter().remove(k));
-				getOuter().setSceneUpdatesEnabled(true);
-				getOuter().updateView();
+				Viewer3D.this.setSceneUpdatesEnabled(false);
+				keys.stream().forEach(k -> Viewer3D.this.remove(k));
+				Viewer3D.this.setSceneUpdatesEnabled(true);
+				Viewer3D.this.updateView();
 			});
 			tracesMenu.add(mi);
 			mi = new JMenuItem("Remove All...", IconFactory.getMenuIcon(GLYPH.TRASH));
@@ -2518,7 +2520,7 @@ public class Viewer3D {
 				{
 					return;
 				}
-				getOuter().removeAll();
+				Viewer3D.this.removeAll();
 			});
 			tracesMenu.add(mi);
 			return tracesMenu;
@@ -2617,10 +2619,10 @@ public class Viewer3D {
 				{
 					return;
 				}
-				getOuter().setSceneUpdatesEnabled(false);
-				keys.stream().forEach(k -> getOuter().removeOBJ(k));
-				getOuter().setSceneUpdatesEnabled(true);
-				getOuter().updateView();
+				Viewer3D.this.setSceneUpdatesEnabled(false);
+				keys.stream().forEach(k -> Viewer3D.this.removeOBJ(k));
+				Viewer3D.this.setSceneUpdatesEnabled(true);
+				Viewer3D.this.updateView();
 			});
 			meshMenu.add(mi);
 			mi = new JMenuItem("Remove All...");
@@ -2801,7 +2803,7 @@ public class Viewer3D {
 					}
 			}
 			if (loadedCompartments > 0)
-				getOuter().validate();
+				Viewer3D.this.validate();
 			if (failedCompartments.size() > 0) {
 				final StringBuilder sb = new StringBuilder(String.valueOf(loadedCompartments)).append("/")
 						.append(loadedCompartments + failedCompartments.size())
@@ -2900,19 +2902,31 @@ public class Viewer3D {
 
 			public NavigatorTree(final DefaultTreeModel treeModel) {
 				super(treeModel);
+				setCellRenderer(new CustomRenderer());
+				super.setLargeModel(true);
 			}
 
 			@Override
 			public boolean isCheckBoxEnabled(final TreePath treePath) {
 				final DefaultMutableTreeNode selectedElement = (DefaultMutableTreeNode) treePath.getLastPathComponent();
 				final AllenCompartment compartment = (AllenCompartment) selectedElement.getUserObject();
-				return !getOBJs().containsKey(compartment.name());
+				return compartment.isMeshAvailable() && !getOBJs().containsKey(compartment.name());
 			}
 		}
-	}
 
-	private Viewer3D getOuter() {
-		return this;
+		class CustomRenderer extends DefaultTreeCellRenderer {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Component getTreeCellRendererComponent(final JTree tree, final Object value, final boolean sel,
+					final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
+				final AllenCompartment ac = (AllenCompartment) ((DefaultMutableTreeNode) value).getUserObject();
+				final Component treeCellRendererComponent = super.getTreeCellRendererComponent(tree, value, sel,
+						expanded, leaf, row, hasFocus);
+				treeCellRendererComponent.setEnabled(ac.isMeshAvailable());
+				return treeCellRendererComponent;
+			}
+		}
 	}
 
 	/**
@@ -3179,7 +3193,7 @@ public class Viewer3D {
 		public Boolean doInBackground() {
 			try {
 				final Map<String, Object> input = new HashMap<>();
-				if (setRecViewerParamater) input.put("recViewer", getOuter());
+				if (setRecViewerParamater) input.put("recViewer", Viewer3D.this);
 				if (inputs != null) input.putAll(inputs);
 				cmdService.run(cmd, true, input).get();
 				return true;
@@ -3479,7 +3493,7 @@ public class Viewer3D {
 		}
 
 		private void saveScreenshot() {
-			getOuter().saveSnapshot();
+			Viewer3D.this.saveSnapshot();
 			displayMsg("Snapshot saved to " + FileUtils.limitPath(
 				prefs.snapshotDir, 50));
 		}

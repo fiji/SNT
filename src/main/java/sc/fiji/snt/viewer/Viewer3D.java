@@ -2040,6 +2040,37 @@ public class Viewer3D {
 				searchableBar.focusSearchField();
 			});
 
+			final JMenuItem remove = new JMenuItem("Remove Selected...", IconFactory.getMenuIcon(
+					GLYPH.TRASH));
+			remove.addActionListener(e -> {
+				final boolean noItems = plottedTrees.isEmpty() && plottedObjs.isEmpty();
+				if (noItems) {
+					guiUtils.error("There are no loaded items.");
+					return;
+				}
+				final List<?> selectedKeys = managerList.getSelectedValuesList();
+				if (selectedKeys.isEmpty()) {
+					guiUtils.error("There are no selected entries.");
+					return;
+				}
+				if (selectedKeys.size() == 1 && CheckBoxList.ALL_ENTRY.equals(selectedKeys.get(0)) && !noItems
+						&& guiUtils.getConfirmation("Remove all item(s)? This action cannot be undone.",
+								"Clear List?")) {
+					Viewer3D.this.removeAll();
+					removeAllOBJs();
+					return;
+				}
+				if (guiUtils.getConfirmation("Remove selected item(s)?", "Confirm Deletion?")) {
+					selectedKeys.forEach(k -> {
+						if (k.equals(CheckBoxList.ALL_ENTRY))
+							return; // continue in lambda expression
+						final String label = k.toString();
+						if (!Viewer3D.this.remove(label))
+							removeOBJ(label);
+					});
+				}
+			});
+
 			final JPopupMenu pMenu = new JPopupMenu();
 			pMenu.add(selectMenu);
 			pMenu.add(showMenu);
@@ -2048,6 +2079,8 @@ public class Viewer3D {
 			pMenu.add(find);
 			pMenu.addSeparator();
 			pMenu.add(sort);
+			pMenu.addSeparator();
+			pMenu.add(remove);
 			return pMenu;
 		}
 

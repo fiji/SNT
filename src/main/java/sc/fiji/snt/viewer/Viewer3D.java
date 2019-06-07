@@ -42,7 +42,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -165,6 +164,8 @@ import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.annotation.AllenCompartment;
 import sc.fiji.snt.annotation.AllenUtils;
+import sc.fiji.snt.annotation.ZBAtlasUtils;
+import sc.fiji.snt.annotation.VFBUtils;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.gui.IconFactory;
 import sc.fiji.snt.gui.IconFactory.GLYPH;
@@ -237,18 +238,15 @@ public class Viewer3D {
 
 	}
 
-	private static final Map<String, String> TEMPLATE_MESHES;
-	private final static String ALLEN_MESH_LABEL = "Whole Brain";
-	private final static String JFRC2_MESH_LABEL = "JFRC2 Template";
-	private final static String JFRC3_MESH_LABEL = "JFRC3 Template";
-	private final static String FCWB_MESH_LABEL = "FCWB Template";
-	static {
-		TEMPLATE_MESHES = new HashMap<>();
-		TEMPLATE_MESHES.put(ALLEN_MESH_LABEL, "MouseBrainAllen.obj");
-		TEMPLATE_MESHES.put(JFRC2_MESH_LABEL, "JFRCtemplate2010.obj");
-		TEMPLATE_MESHES.put(JFRC3_MESH_LABEL, "JFRCtemplate2013.obj");
-		TEMPLATE_MESHES.put(FCWB_MESH_LABEL, "FCWB.obj");
-	}
+	private final static String MESH_LABEL_ALLEN = "Whole Brain";
+	private final static String MESH_LABEL_ZEBRAFISH = "Outline (MP ZBA)";
+	private final static String MESH_LABEL_JFRC2 = "JFRC2 (VFB)";
+	private final static String MESH_LABEL_JFRC3 = "JFRC3";
+	private final static String MESH_LABEL_FCWB = "FCWB";
+	private final static String MESH_LABEL_VNS = "VNS";
+	private final static String MESH_LABEL_L1 = "L1";
+	private final static String MESH_LABEL_L3 = "L3";
+
 	private final static String PATH_MANAGER_TREE_LABEL = "Path Manager Contents";
 	private final static float DEF_NODE_RADIUS = 3f;
 	private static final Color DEF_COLOR = new Color(1f, 1f, 1f, 0.05f);
@@ -1829,7 +1827,7 @@ public class Viewer3D {
 		private JPanel buttonPanel() {
 			final boolean includeAnalysisCmds = !isSNTInstance();
 			final JPanel buttonPanel = new JPanel(new GridLayout(1,
-				(includeAnalysisCmds) ? 4 : 5));
+				(includeAnalysisCmds) ? 5 : 6));
 			buttonPanel.setBorder(null);
 			// do not allow panel to resize vertically
 			setFixedHeightToPanel(buttonPanel);
@@ -1837,6 +1835,7 @@ public class Viewer3D {
 			buttonPanel.add(menuButton(GLYPH.TREE, treesMenu(),
 				"Manage & Customize Neuronal Arbors"));
 			buttonPanel.add(menuButton(GLYPH.CUBE, meshMenu(), "Manage & Customize 3D Meshes"));
+			buttonPanel.add(menuButton(GLYPH.ATLAS, refBrainsMenu(), "Reference Brains"));
 			if (includeAnalysisCmds) buttonPanel.add(menuButton(GLYPH.CALCULATOR,
 				measureMenu(), "Analyze & Measure"));
 			buttonPanel.add(menuButton(GLYPH.TOOL, toolsMenu(), "Tools & Utilities"));
@@ -2036,9 +2035,9 @@ public class Viewer3D {
 			final JMenuItem find = new JMenuItem("Find...", IconFactory.getMenuIcon(
 				GLYPH.BINOCULARS));
 			find.addActionListener(e -> {
-					//managerList.clearSelection();
-					searchableBar.getInstaller().openSearchBar(searchableBar);
-					searchableBar.focusSearchField();
+				//managerList.clearSelection();
+				searchableBar.getInstaller().openSearchBar(searchableBar);
+				searchableBar.focusSearchField();
 			});
 
 			final JPopupMenu pMenu = new JPopupMenu();
@@ -2608,23 +2607,6 @@ public class Viewer3D {
 			mi.addActionListener(e -> runCmd(LoadObjCmd.class, null,
 				CmdWorker.DO_NOTHING));
 			meshMenu.add(mi);
-			final JMenu refMenu = new JMenu("Reference Brains");
-			refMenu.setMnemonic('R');
-			refMenu.setIcon(IconFactory.getMenuIcon(GLYPH.ATLAS));
-			meshMenu.add(refMenu);
-			mi = new JMenuItem("Mouse: Allen CCF");
-			mi.setMnemonic('A');
-			mi.addActionListener(e -> loadRefBrainAction(ALLEN_MESH_LABEL));
-			refMenu.add(mi);
-			mi = new JMenuItem("Drosophila: FlyCircuit");
-			mi.addActionListener(e -> loadRefBrainAction(FCWB_MESH_LABEL));
-			refMenu.add(mi);
-			mi = new JMenuItem("Drosophila: JFRC2");
-			mi.addActionListener(e -> loadRefBrainAction(JFRC2_MESH_LABEL));
-			refMenu.add(mi);
-			mi = new JMenuItem("Drosophila: JFRC3");
-			mi.addActionListener(e -> loadRefBrainAction(JFRC3_MESH_LABEL));
-			refMenu.add(mi);
 			meshMenu.addSeparator();
 			meshMenu.add(customizeMeshesMenu());
 			meshMenu.addSeparator();
@@ -2661,18 +2643,88 @@ public class Viewer3D {
 			return meshMenu;
 		}
 
-		private void loadRefBrainAction(final String label) {
-			if (getOBJs().keySet().contains(label)) {
-				guiUtils.error(label + " is already loaded.");
-				managerList.addCheckBoxListSelectedValue(label, true);
+		private JPopupMenu refBrainsMenu() {
+			final JPopupMenu refMenu = new JPopupMenu("Reference Brains");
+			final JMenu drosoAdultMenu = new JMenu("Drosophila (Adult)");
+			refMenu.add(drosoAdultMenu);
+			JMenuItem mi = new JMenuItem("FlyCircuit");
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_FCWB));
+			drosoAdultMenu.add(mi);
+			mi = new JMenuItem("JFRC2 (VFB)");
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_JFRC2));
+			drosoAdultMenu.add(mi);
+			mi = new JMenuItem("JFRC3");
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_JFRC3));
+			drosoAdultMenu.add(mi);
+			mi = new JMenuItem("Adult VNS", IconFactory.getMenuIcon(GLYPH.CLOUD));
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_VNS));
+			drosoAdultMenu.add(mi);
+			final JMenu drosoEmbMenu = new JMenu("Drosophila (Embryonic)");
+			refMenu.add(drosoEmbMenu);
+			mi = new JMenuItem("Larva L1", IconFactory.getMenuIcon(GLYPH.CLOUD));
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_L1));
+			drosoEmbMenu.add(mi);
+			mi = new JMenuItem("Larva L3", IconFactory.getMenuIcon(GLYPH.CLOUD));
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_L3));
+			drosoEmbMenu.add(mi);
+			refMenu.addSeparator();
+			mi = new JMenuItem("Mouse (Adult): Allen CCF Navigator", IconFactory
+					.getMenuIcon(GLYPH.NAVIGATE));
+			mi.addActionListener(e -> {
+				assert SwingUtilities.isEventDispatchThread();
+				if (frame.allenNavigator != null) {
+					frame.allenNavigator.dialog.toFront();
+					return;
+				}
+				final JDialog tempSplash = frame.managerPanel.guiUtils.floatingMsg("Loading ontologies...", false);
+				final SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
+					AllenCCFNavigator navigator;
+					@Override
+					protected Object doInBackground() {
+						loadRefBrainAction(false, MESH_LABEL_ALLEN);
+						navigator = new AllenCCFNavigator();
+						return null;
+					}
+					@Override
+					protected void done() {
+						tempSplash.dispose();
+						navigator.show();
+					}
+				};
+				worker.execute();
+			});
+			refMenu.add(mi);
+			refMenu.addSeparator();
+			final JMenuItem zfMenuItem = new JMenu("Zebrafish (Embryonic)");
+			refMenu.add(zfMenuItem);
+			mi = new JMenuItem("Max Planck ZBA");
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_ZEBRAFISH));
+			zfMenuItem.add(mi);
+			return refMenu;
+		}
+
+		private void loadRefBrainAction(final boolean warnIfLoaded, final String label) {
+			final boolean canProceed;
+			switch (label) {
+			case MESH_LABEL_L1:
+			case MESH_LABEL_L3:
+			case MESH_LABEL_VNS:
+				canProceed = VFBUtils.isDatabaseAvailable();
+				break;
+			default:
+				canProceed = true;
+			}
+			if (!canProceed) {
+				guiUtils.error("Remote server not reached. It is either down or you have no internet access.");
 				return;
 			}
 			try {
-				loadRefBrain(label);
-				getOuter().validate();
-			}
-			catch (final IllegalArgumentException ex) {
-				guiUtils.error(ex.getMessage());
+				if (warnIfLoaded && getOBJs().keySet().contains(label))
+					guiUtils.error(label + " is already loaded.");
+				loadRefBrainInternal(label);
+			} catch (final NullPointerException | IllegalArgumentException ex) {
+				guiUtils.error("An error occured and mesh could not be retrieved. See Console for details.");
+				ex.printStackTrace();
 			}
 		}
 

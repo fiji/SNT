@@ -32,6 +32,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -166,6 +167,7 @@ import sc.fiji.snt.annotation.AllenCompartment;
 import sc.fiji.snt.annotation.AllenUtils;
 import sc.fiji.snt.annotation.ZBAtlasUtils;
 import sc.fiji.snt.annotation.VFBUtils;
+import sc.fiji.snt.gui.FileDrop;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.gui.IconFactory;
 import sc.fiji.snt.gui.IconFactory.GLYPH;
@@ -354,6 +356,7 @@ public class Viewer3D {
 		squarify("none", false);
 		currentView = ViewMode.DEFAULT;
 		gUtils = new GuiUtils((Component) chart.getCanvas());
+		new FileDropWorker((Component) chart.getCanvas(), gUtils);
 		return true;
 	}
 
@@ -1822,6 +1825,7 @@ public class Viewer3D {
 			scrollPane.revalidate();
 			add(barPanel);
 			add(buttonPanel());
+			new FileDropWorker(managerList, guiUtils);
 		}
 
 		private JPanel buttonPanel() {
@@ -2799,6 +2803,127 @@ public class Viewer3D {
 		}
 	}
 
+	private class FileDropWorker {
+
+		private boolean escapePressed;
+
+		FileDropWorker(final Component component, final GuiUtils guiUtils) {
+			addEscListener(component);
+			new FileDrop(component, new FileDrop.Listener() {
+
+				@Override
+				public void filesDropped(final File[] files) {
+					final ArrayList<File> collection = new ArrayList<>();
+					assembleFlatFileCollection(collection, files);
+					if (collection.size() > 20
+							&& !guiUtils.getConfirmation(
+									"Are you sure you would like to import " + collection.size() + " files? "
+											+ "Importing large collections of data using drag-and-drop "
+											+ "may cause the UI to become unresponsive.",
+									"Proceed with Batch import?")) {
+						return;
+					}
+
+					final SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
+						int[] failuresAndSuccesses;
+
+						@Override
+						protected Object doInBackground() {
+							setSceneUpdatesEnabled(false);
+							failuresAndSuccesses = loadGuessingType(collection);
+							return null;
+						}
+
+						@Override
+						protected void done() {
+							setSceneUpdatesEnabled(true);
+							updateView();
+							if (failuresAndSuccesses[0] > 0)
+								guiUtils.error("" + failuresAndSuccesses[0] + "/" + failuresAndSuccesses[1]
+										+ " dropped file(s) were not be imported (Console log will"
+										+ " have more details, if you have enabled \"Debug mode\").");
+							resetEscape();
+						}
+					};
+					worker.execute();
+				}
+			});
+		}
+
+		private void addEscListener(final Component c) {
+			final KeyAdapter listener = new KeyAdapter() {
+				@Override
+				public void keyPressed(final KeyEvent e) {
+					if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+						escapePressed = true;
+					}
+				}
+			};
+			c.addKeyListener(listener);
+			if (c instanceof Container) {
+				final Container container = (Container) c;
+				final Component[] children = container.getComponents();
+				for (final Component child : children)
+					child.addKeyListener(listener);
+			}
+		}
+
+		private Collection<File> assembleFlatFileCollection(final Collection<File> collection, final File[] files) {
+			for (final File file : files) {
+				if (file.isDirectory())
+					assembleFlatFileCollection(collection, file.listFiles());
+				else
+					collection.add(file);
+			}
+			return collection;
+		}
+
+		/**
+		 * Returns {n. of failed imports, n. successful imports}. Assumes no directories
+		 * in collection
+		 */
+		private int[] loadGuessingType(final Collection<File> files) {
+			final ColorRGB[] uniqueColors = SNTColor.getDistinctColors(files.size());
+			int failures = 0;
+			int idx = 0;
+			for (final File file : files) {
+				if (escapePressed()) {
+					SNTUtils.log("Aborting...");
+					break;
+				}
+				if (!file.exists() || file.isDirectory())
+					continue;
+				SNTUtils.log("Loading " + file.getAbsolutePath());
+				final String fName = file.getName().toLowerCase();
+				try {
+					if (fName.endsWith("swc") || fName.endsWith(".traces") || fName.endsWith(".json")) { // reconstruction:
+						final Tree tree = new Tree(file.getAbsolutePath());
+						tree.setColor(uniqueColors[idx]);
+						Viewer3D.this.add(tree);
+					} else if (fName.endsWith("obj")) {
+						loadOBJ(file.getAbsolutePath(), uniqueColors[idx], 75d);
+					} else {
+						failures++;
+						SNTUtils.log("... failed. Not a supported file type");
+					}
+				} catch (final IllegalArgumentException ex) {
+					SNTUtils.log("... failed " + ex.getMessage());
+					failures++;
+				}
+				idx++;
+			}
+			return new int[] { failures, idx };
+		}
+
+		private boolean escapePressed() {
+			return escapePressed;
+		}
+
+		private void resetEscape() {
+			escapePressed = false;
+		}
+
+	}
 
 	private class AllenCCFNavigator {
 

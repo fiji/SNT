@@ -2473,9 +2473,7 @@ public class SNTUI extends JDialog {
 			pathAndFillManager.resetListeners(null, true); // update Path lists
 			setPathListVisible(true, false);
 			setFillListVisible(false);
-			final Frame impWindow = plugin.getImagePlus(MultiDThreePanes.XY_PLANE).getWindow();
-			if (impWindow != null)
-				impWindow.toFront();
+			if (plugin.getImagePlus()!=null) plugin.getImagePlus().getWindow().toFront();
 		});
 	}
 
@@ -2575,7 +2573,7 @@ public class SNTUI extends JDialog {
 
 	private void arrangeCanvases(final boolean displayErrorOnFailure) {
 
-		final Frame xy_window = plugin.getImagePlus(MultiDThreePanes.XY_PLANE).getWindow();
+		final Frame xy_window = (plugin.getImagePlus()==null) ? null : plugin.getImagePlus().getWindow();
 		if (xy_window == null) {
 			if (displayErrorOnFailure)
 				guiUtils.error("XY view is not available");

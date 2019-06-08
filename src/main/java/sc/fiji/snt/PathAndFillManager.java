@@ -825,24 +825,24 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * Deletes a Path by index
 	 *
 	 * @param index the index (zero-based) of the Path to be deleted
+	 * @return true, if index is valid and Path was successfully deleted
 	 */
-	public synchronized void deletePath(final int index) {
-		deletePath(index, true);
+	public synchronized boolean deletePath(final int index) {
+		return deletePath(index, true);
 	}
 
 	/**
 	 * Deletes a path.
 	 *
 	 * @param p the path to be deleted
-	 * @throws IllegalArgumentException if path was not found
+	 * @return true, if path was found and successfully deleted
 	 */
-	public synchronized void deletePath(final Path p)
+	public synchronized boolean deletePath(final Path p)
 		throws IllegalArgumentException
 	{
 		final int i = getPathIndex(p);
-		if (i < 0) throw new IllegalArgumentException(
-			"Trying to delete a non-existent path: " + p);
-		deletePath(i);
+		if (i < 0) return false;
+		return deletePath(i);
 	}
 
 	/**
@@ -859,7 +859,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		return -1;
 	}
 
-	private synchronized void deletePath(final int index,
+	private synchronized boolean deletePath(final int index,
 		final boolean updateInterface)
 	{
 
@@ -877,12 +877,13 @@ public class PathAndFillManager extends DefaultHandler implements
 			fittedPathToDelete = originalPathToDelete;
 		}
 
-		allPaths.remove(unfittedPathToDelete);
-		if (fittedPathToDelete != null) allPaths.remove(fittedPathToDelete);
+		boolean removed = allPaths.remove(unfittedPathToDelete);
+		if (fittedPathToDelete != null)
+			removed = removed || allPaths.remove(fittedPathToDelete);
+		if (removed && plugin != null) plugin.unsavedPaths = true;
 
 		// We don't just delete; have to fix up the references
 		// in other paths (for start and end joins):
-
 		for (final Path p : allPaths) {
 			if (p.getStartJoins() == unfittedPathToDelete) {
 				p.startJoins = null;
@@ -905,6 +906,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 
 		if (updateInterface) resetListeners(null);
+		return removed;
 	}
 
 	/**

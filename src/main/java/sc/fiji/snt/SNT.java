@@ -1057,58 +1057,53 @@ public class SNT extends MultiDThreePanes implements
 	}
 
 	/** Assumes UI is available */
-	synchronized protected void loadTracesFile() {
+	synchronized protected void loadTracesFile(File file) {
 		loading = true;
-		final File chosenFile = ui.openFile("Open .traces File...", ".traces");
-		if (chosenFile == null) return; // user pressed cancel;
-
-		if (!chosenFile.exists()) {
-			guiUtils.error(chosenFile.getAbsolutePath() + " is no longer available");
+		if (file == null) file = ui.openFile("Open .traces File...", ".traces");
+		if (file == null) return; // user pressed cancel;
+		if (!file.exists()) {
+			guiUtils.error(file.getAbsolutePath() + " is no longer available");
 			loading = false;
 			return;
 		}
-
-		final int guessedType = PathAndFillManager.guessTracesFileType(chosenFile
+		final int guessedType = PathAndFillManager.guessTracesFileType(file
 			.getAbsolutePath());
 		switch (guessedType) {
 			case PathAndFillManager.TRACES_FILE_TYPE_COMPRESSED_XML:
-				if (pathAndFillManager.loadCompressedXML(chosenFile.getAbsolutePath()))
+				if (pathAndFillManager.loadCompressedXML(file.getAbsolutePath()))
 					unsavedPaths = false;
 				break;
 			case PathAndFillManager.TRACES_FILE_TYPE_UNCOMPRESSED_XML:
-				if (pathAndFillManager.loadUncompressedXML(chosenFile
+				if (pathAndFillManager.loadUncompressedXML(file
 					.getAbsolutePath())) unsavedPaths = false;
 				break;
 			default:
-				guiUtils.error(chosenFile.getAbsolutePath() +
+				guiUtils.error(file.getAbsolutePath() +
 					" is not a valid traces file.");
 				break;
 		}
-
 		loading = false;
 	}
 
 	/** Assumes UI is available */
-	synchronized protected void loadSWCFile() {
+	synchronized protected void loadSWCFile(File file) {
 		loading = true;
-		final File chosenFile = ui.openFile("Open (e)SWC File...", "swc");
-		if (chosenFile == null) return; // user pressed cancel;
-
-		if (!chosenFile.exists()) {
-			guiUtils.error(chosenFile.getAbsolutePath() + " is no longer available");
+		if (file == null) file = ui.openFile("Open (e)SWC File...", "swc");
+		if (file == null) return; // user pressed cancel;
+		if (!file.exists()) {
+			guiUtils.error(file.getAbsolutePath() + " is no longer available");
 			loading = false;
 			return;
 		}
-
-		final int guessedType = PathAndFillManager.guessTracesFileType(chosenFile
+		final int guessedType = PathAndFillManager.guessTracesFileType(file
 			.getAbsolutePath());
 		switch (guessedType) {
 			case PathAndFillManager.TRACES_FILE_TYPE_SWC: {
 				final SWCImportOptionsDialog swcImportDialog =
-					new SWCImportOptionsDialog("SWC import options for " + chosenFile
+					new SWCImportOptionsDialog("SWC import options for " + file
 						.getName());
 				if (swcImportDialog.succeeded() && pathAndFillManager.importSWC(
-					chosenFile.getAbsolutePath(), swcImportDialog.getIgnoreCalibration(),
+					file.getAbsolutePath(), swcImportDialog.getIgnoreCalibration(),
 					swcImportDialog.getXOffset(), swcImportDialog.getYOffset(),
 					swcImportDialog.getZOffset(), swcImportDialog.getXScale(),
 					swcImportDialog.getYScale(), swcImportDialog.getZScale(),
@@ -1116,7 +1111,7 @@ public class SNT extends MultiDThreePanes implements
 				break;
 			}
 			default:
-				guiUtils.error(chosenFile.getAbsolutePath() +
+				guiUtils.error(file.getAbsolutePath() +
 					" does not seem to contain valid SWC data.");
 				break;
 		}

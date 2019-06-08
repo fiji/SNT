@@ -106,6 +106,7 @@ import net.imagej.Dataset;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.event.SNTEvent;
 import sc.fiji.snt.gui.ColorChooserButton;
+import sc.fiji.snt.gui.FileDrop;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.gui.IconFactory;
 import sc.fiji.snt.gui.SigmaPalette;
@@ -416,6 +417,36 @@ public class SNTUI extends JDialog {
 		dialogGbc.gridy++;
 		add(statusBar(), dialogGbc);
 		pack();
+		new FileDrop(this, new FileDrop.Listener() {
+
+			@Override
+			public void filesDropped(final File[] files) {
+				if (files.length == 0) { // Is this even possible?
+					guiUtils.error("Dropped file(s) not recognized.");
+					return;
+				}
+				if (files.length > 1) {
+					guiUtils.error("Ony a single file (or directory) can be imported using drag-and-drop.");
+					return;
+				}
+				final int type = getType(files[0]);
+				if (type == -1) {
+					guiUtils.error(files[0].getName() + " cannot be imported using drag-and-drop.");
+					return;
+				}
+				new ImportAction(type, files[0]).run();
+			}
+
+			private int getType(final File file) {
+				if (file.isDirectory()) return ImportAction.SWC_DIR;
+				final String filename = file.getName().toLowerCase();
+				if (filename.endsWith(".traces")) return ImportAction.TRACES;
+				if (filename.endsWith("swc")) return ImportAction.SWC;
+				if (filename.endsWith(".json")) return ImportAction.JSON;
+				if (filename.endsWith(".tif") || filename.endsWith(".tiff")) return ImportAction.IMAGE;
+				return -1;
+			}
+		});
 		toFront();
 
 		if (pmUI == null) {
@@ -1946,7 +1977,7 @@ public class SNTUI extends JDialog {
 		changeImpMenu.add(fromList);
 		final JMenuItem fromFile = new JMenuItem("From File...");
 		fromFile.addActionListener(e -> {
-			(new DynamicCmdRunner(OpenDatasetCmd.class, null, LOADING)).run();
+			new ImportAction(ImportAction.IMAGE, null).run();
 		});
 		changeImpMenu.add(fromFile);
 		fileMenu.addSeparator();
@@ -1965,17 +1996,13 @@ public class SNTUI extends JDialog {
 		final JMenuItem importJSON = new JMenuItem("JSON...");
 		importSubmenu.add(importJSON);
 		importJSON.addActionListener(e -> {
-			final HashMap<String, Object> inputs = new HashMap<>();
-			inputs.put("rebuildCanvas", true);
-			(new DynamicCmdRunner(JSONImporterCmd.class, inputs, LOADING)).run();
+			new ImportAction(ImportAction.JSON, null).run();
 		});
 		final JMenuItem importDirectory = new JMenuItem("Directory of SWCs...");
 		importDirectory.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.FOLDER));
 		importSubmenu.add(importDirectory);
 		importDirectory.addActionListener(e -> {
-			final HashMap<String, Object> inputs = new HashMap<>();
-			inputs.put("rebuildCanvas", true);
-			(new CmdRunner(MultiSWCImporterCmd.class, inputs, LOADING)).execute();
+			new ImportAction(ImportAction.SWC_DIR, null).run();
 		});
 		importSubmenu.addSeparator();
 		loadLabelsMenuItem = new JMenuItem("Labels (AmiraMesh)...");
@@ -3177,18 +3204,13 @@ public class SNTUI extends JDialog {
 
 				plugin.unsavedPaths = false;
 
-			} else if (source == loadTracesMenuItem || source == loadSWCMenuItem) {
+			} else if (source == loadTracesMenuItem) {
 
-				if (plugin.isChangesUnsaved() && !guiUtils
-						.getConfirmation("There are unsaved paths. Do you really want to load new traces?", "Warning"))
-					return;
-				final int preLoadingState = currentState;
-				changeState(LOADING);
-				if (source == loadTracesMenuItem)
-					plugin.loadTracesFile();
-				else
-					plugin.loadSWCFile();
-				changeState(preLoadingState);
+				new ImportAction(ImportAction.TRACES, null).run();
+
+			} else if (source == loadSWCMenuItem) {
+
+				new ImportAction(ImportAction.SWC, null).run();
 
 			} else if (source == exportAllSWCMenuItem && !noPathsError()) {
 
@@ -3482,6 +3504,67 @@ public class SNTUI extends JDialog {
 
 		public boolean kill() {
 			return cancel(true);
+		}
+	}
+
+	private class ImportAction {
+
+		private static final int TRACES = 0;
+		private static final int SWC = 1;
+		private static final int SWC_DIR = 2;
+		private static final int JSON = 3;
+		private static final int IMAGE = 4;
+
+		private final int type;
+		private File file;
+
+		private ImportAction(final int type, final File file) {
+			this.type = type;
+			this.file = file;
+		}
+
+		private void run() {
+			if (getState() != READY && getState() != TRACING_PAUSED) {
+				guiUtils.blinkingError(statusText, "Please exit current state before importing file(s).");
+				return;
+			}
+			if (!proceed()) return;
+			final HashMap<String, Object> inputs = new HashMap<>();
+			switch (type) {
+			case IMAGE:
+				if (file != null) inputs.put("file", file);
+				(new DynamicCmdRunner(OpenDatasetCmd.class, inputs, LOADING)).run();
+				return;
+			case JSON:
+				inputs.put("rebuildCanvas", true);
+				if (file != null) inputs.put("file", file);
+				(new DynamicCmdRunner(JSONImporterCmd.class, inputs, LOADING)).run();
+				return;
+			case SWC_DIR:
+				inputs.put("rebuildCanvas", true);
+				if (file != null) inputs.put("dir", file);
+				(new CmdRunner(MultiSWCImporterCmd.class, inputs, LOADING)).execute();
+				return;
+			case TRACES:
+			case SWC:
+				final int preLoadingState = currentState;
+				changeState(LOADING);
+				if (type == SWC) {
+					plugin.loadSWCFile(file);
+				} else {
+					plugin.loadTracesFile(file);
+				}
+				changeState(preLoadingState);
+				return;
+			default:
+				throw new IllegalArgumentException("Unknown action");
+			}
+		}
+
+		private boolean proceed() {
+			return !plugin.isChangesUnsaved() || (plugin.isChangesUnsaved() && plugin.accessToValidImageData()
+					&& guiUtils.getConfirmation("There are unsaved paths. Do you really want to load new data?",
+							"Proceed with Import?"));
 		}
 	}
 

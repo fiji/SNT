@@ -142,11 +142,11 @@ public class MultiSWCImporterCmd extends ContextCommand {
 
 	private Map<String, String> getImportMap() {
 		if (dir == null || !dir.isDirectory() || !dir.exists()) return null;
-		if (pattern == null) pattern = "";
 		final File[] files = dir.listFiles(file -> {
 			if (file.isHidden()) return false;
 			final String fName = file.getName().toLowerCase();
-			return fName.endsWith("swc") && fName.contains(pattern);
+			if (!fName.endsWith("swc")) return false;
+			return pattern == null || pattern.isEmpty() || fName.contains(pattern);
 		});
 		if (files == null || files.length == 0) return null;
 		final Map<String, String> map = new HashMap<>();

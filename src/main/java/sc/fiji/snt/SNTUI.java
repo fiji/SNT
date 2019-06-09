@@ -417,36 +417,7 @@ public class SNTUI extends JDialog {
 		dialogGbc.gridy++;
 		add(statusBar(), dialogGbc);
 		pack();
-		new FileDrop(this, new FileDrop.Listener() {
-
-			@Override
-			public void filesDropped(final File[] files) {
-				if (files.length == 0) { // Is this even possible?
-					guiUtils.error("Dropped file(s) not recognized.");
-					return;
-				}
-				if (files.length > 1) {
-					guiUtils.error("Ony a single file (or directory) can be imported using drag-and-drop.");
-					return;
-				}
-				final int type = getType(files[0]);
-				if (type == -1) {
-					guiUtils.error(files[0].getName() + " cannot be imported using drag-and-drop.");
-					return;
-				}
-				new ImportAction(type, files[0]).run();
-			}
-
-			private int getType(final File file) {
-				if (file.isDirectory()) return ImportAction.SWC_DIR;
-				final String filename = file.getName().toLowerCase();
-				if (filename.endsWith(".traces")) return ImportAction.TRACES;
-				if (filename.endsWith("swc")) return ImportAction.SWC;
-				if (filename.endsWith(".json")) return ImportAction.JSON;
-				if (filename.endsWith(".tif") || filename.endsWith(".tiff")) return ImportAction.IMAGE;
-				return -1;
-			}
-		});
+		addFileDrop(this, guiUtils);
 		toFront();
 
 		if (pmUI == null) {
@@ -469,6 +440,8 @@ public class SNTUI extends JDialog {
 		} else {
 			this.pmUI = pmUI;
 		}
+		addFileDrop(this.pmUI, this.pmUI.guiUtils);
+
 		if (fmUI == null) {
 			this.fmUI = new FillManagerUI(plugin);
 			this.fmUI.setLocation(getX() + getWidth(), getY() + this.pmUI.getHeight());
@@ -3503,6 +3476,39 @@ public class SNTUI extends JDialog {
 		public boolean kill() {
 			return cancel(true);
 		}
+	}
+
+	private void addFileDrop(final Component component, final GuiUtils guiUtils) {
+		new FileDrop(component, new FileDrop.Listener() {
+
+			@Override
+			public void filesDropped(final File[] files) {
+				if (files.length == 0) { // Is this even possible?
+					guiUtils.error("Dropped file(s) not recognized.");
+					return;
+				}
+				if (files.length > 1) {
+					guiUtils.error("Ony a single file (or directory) can be imported using drag-and-drop.");
+					return;
+				}
+				final int type = getType(files[0]);
+				if (type == -1) {
+					guiUtils.error(files[0].getName() + " cannot be imported using drag-and-drop.");
+					return;
+				}
+				new ImportAction(type, files[0]).run();
+			}
+
+			private int getType(final File file) {
+				if (file.isDirectory()) return ImportAction.SWC_DIR;
+				final String filename = file.getName().toLowerCase();
+				if (filename.endsWith(".traces")) return ImportAction.TRACES;
+				if (filename.endsWith("swc")) return ImportAction.SWC;
+				if (filename.endsWith(".json")) return ImportAction.JSON;
+				if (filename.endsWith(".tif") || filename.endsWith(".tiff")) return ImportAction.IMAGE;
+				return -1;
+			}
+		});
 	}
 
 	private class ImportAction {

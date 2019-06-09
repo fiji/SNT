@@ -130,7 +130,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	protected SwingWorker<Object, Object> fitWorker;
 
 	protected static final String TABLE_TITLE = "SNT Measurements";
-	private final GuiUtils guiUtils;
+	protected final GuiUtils guiUtils;
 	private final JScrollPane scrollPane;
 	private final JMenuBar menuBar;
 	private final JPopupMenu popup;

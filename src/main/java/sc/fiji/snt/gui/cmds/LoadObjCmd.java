@@ -34,6 +34,7 @@ import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
 import org.scijava.widget.NumberWidget;
 
+import sc.fiji.snt.viewer.OBJMesh;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.gui.GuiUtils;
@@ -65,6 +66,9 @@ public class LoadObjCmd extends ContextCommand {
 		description = "Rendering color of imported mesh(es)")
 	private ColorRGB color;
 
+	@Parameter(label = "Render bounding box", required = false)
+	private boolean box;
+
 	@Parameter(required = false)
 	private Viewer3D recViewer;
 
@@ -88,12 +92,14 @@ public class LoadObjCmd extends ContextCommand {
 		if (transparency <= 0d) transparency = 5;
 		if (file.isFile()) {
 			try {
-				recViewer.loadOBJ(file.getAbsolutePath(), color, transparency);
+				if (loadMesh(file.getAbsolutePath()))
+					recViewer.validate();
+				else
+					cancel(file.getName() + " could not be loaded.");
 			}
 			catch (final IllegalArgumentException exc) {
 				cancel(getExitMsg(exc.getMessage()));
 			}
-			recViewer.validate();
 			return;
 		}
 
@@ -104,7 +110,7 @@ public class LoadObjCmd extends ContextCommand {
 			int failures = 0;
 			for (final File file : files) {
 				try {
-					recViewer.loadOBJ(file.getAbsolutePath(), color, transparency);
+					if (!loadMesh(file.getAbsolutePath())) failures++;
 				}
 				catch (final IllegalArgumentException exc) {
 					failures++;
@@ -120,6 +126,13 @@ public class LoadObjCmd extends ContextCommand {
 			uiService.showDialog(msg, (failures == 0) ? "All Meshes Imported"
 				: "Partially Successful Import");
 		}
+	}
+
+	private boolean loadMesh(final String filePath) {
+		final OBJMesh objMesh = new OBJMesh(filePath);
+		objMesh.setColor(color, transparency);
+		if (box) objMesh.setBoundingBoxColor(color);
+		return recViewer.loadMesh(objMesh);
 	}
 
 	private String getExitMsg(final String msg) {

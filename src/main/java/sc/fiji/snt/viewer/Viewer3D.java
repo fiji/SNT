@@ -2825,7 +2825,7 @@ public class Viewer3D {
 					}
 
 					final SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
-						int[] failuresAndSuccesses;
+						int[] failuresAndSuccesses = new int[2];
 
 						@Override
 						protected Object doInBackground() {

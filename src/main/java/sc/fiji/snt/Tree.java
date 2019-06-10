@@ -232,6 +232,41 @@ public class Tree {
 	}
 
 	/**
+	 * Extracts the subset of paths matching the specified criteria (script friendly
+	 * method)
+	 *
+	 * @param swcTypes SWC type(s) a string with at least 2 characters describing
+	 *                 the SWC type allowed in the subtree (e.g., 'soma', 'axn', or
+	 *                 'dendrite')
+	 * @return the subset of paths matching the filtering criteria, or an empty Tree
+	 *         if no hits were retrieved
+	 */
+	public Tree subTree(final String... swcTypes) {
+		final int[] types = new int[swcTypes.length];
+		for (int i = 0; i < swcTypes.length; i++) {
+			switch (swcTypes[i].toLowerCase().substring(0, 2)) {
+			case "ax":
+				types[i] = Path.SWC_AXON;
+				break;
+			case "so":
+				types[i] = Path.SWC_SOMA;
+				break;
+			case "ap":
+				types[i] = Path.SWC_APICAL_DENDRITE;
+				break;
+			case "ba":
+			case "de":
+				types[i] = Path.SWC_DENDRITE;
+				break;
+			default:
+				types[i] = Path.SWC_UNDEFINED;
+				break;
+			}
+		}
+		return subTree(types);
+	}
+
+	/**
 	 * Extracts the subset of paths matching the specified criteria.
 	 *
 	 * @param swcTypes SWC type(s) (e.g., {@link Path#SWC_AXON},

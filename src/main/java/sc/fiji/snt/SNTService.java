@@ -24,6 +24,10 @@ package sc.fiji.snt;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.List;
 
@@ -166,6 +170,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	public TreeAnalyzer getAnalyzer(final boolean selectedPathsOnly) {
 		final TreeAnalyzer tAnalyzer = new TreeAnalyzer(getTree(selectedPathsOnly));
 		tAnalyzer.setContext(getContext());
+		tAnalyzer.setTable(getTable(), PathManagerUI.TABLE_TITLE);
 		return tAnalyzer;
 	}
 
@@ -247,6 +252,39 @@ public class SNTService extends AbstractService implements ImageJService {
 	 */
 	public DefaultGenericTable getTable() {
 		return getUI().getPathManager().getTable();
+	}
+
+	/**
+	 * Loads a demo reconstruction (fractal tree).
+	 *
+	 * @return a reference to the loaded tree, or null if data could no be retrieved
+	 * @throws UnsupportedOperationException if SNT is not running
+	 */
+	public Tree loadDemoTree() {
+		final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+		final InputStream is = classloader.getResourceAsStream("tests/TreeV.swc");
+		final PathAndFillManager pafm = getPathAndFillManager();
+		Tree tree;
+		try {
+			final int idx1stPath = pafm.size();
+			final BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+			if (pafm.importSWC(br, false, 0, 0, 0, 1, 1, 1, false)) {
+				tree = new Tree();
+				for (int i = idx1stPath; i < pafm.size(); i++) {
+					final Path p = pafm.getPath(i);
+					p.setName("TreeV Path "+ p.getID());
+					tree.add(p);
+				}
+				tree.setLabel("TreeV");
+			} else {
+				return null;
+			}
+			br.close();
+		} catch (final IOException e) {
+			tree = null;
+			SNTUtils.error("UnsupportedEncodingException", e);
+		}
+		return tree;
 	}
 
 	/**

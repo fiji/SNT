@@ -19,11 +19,11 @@ info:       A Jython demo of how SNT can analyze neuron reconstructions fetched
 import math
 from collections import defaultdict
 
-from fiji.sc.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
-from fiji.sc.snt.analysis import (RoiConverter, MultiTreeColorMapper, TreeAnalyzer,
+from sc.fiji.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
+from sc.fiji.snt.analysis import (RoiConverter, MultiTreeColorMapper, TreeAnalyzer,
         TreeColorMapper, TreeStatistics)
-from fiji.sc.snt.io import (MouseLightLoader, NeuroMorphoLoader)
-from fiji.sc.snt.viewer import (Viewer2D, Viewer3D)
+from sc.fiji.snt.io import (MouseLightLoader, NeuroMorphoLoader)
+from sc.fiji.snt.viewer import (Viewer2D, Viewer3D)
 
 
 def run():

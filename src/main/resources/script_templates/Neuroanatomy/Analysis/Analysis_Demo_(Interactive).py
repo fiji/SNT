@@ -21,12 +21,12 @@ info:       Exemplifies how to programmatically interact with a running instance
 
 import math
 
-from fiji.sc.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
-from fiji.sc.snt.io import MouseLightLoader
-from fiji.sc.snt.util import PointInImage
-from fiji.sc.snt.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
+from sc.fiji.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
+from sc.fiji.snt.io import MouseLightLoader
+from sc.fiji.snt.util import PointInImage
+from sc.fiji.snt.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
-from fiji.sc.snt.viewer import(Viewer2D, Viewer3D)
+from sc.fiji.snt.viewer import(Viewer2D, Viewer3D)
 
 
 def run():

@@ -18,10 +18,10 @@ info:       Demonstrates how to handle neurons as graph structures[1] (graph the
 
 import time
 
-from fiji.sc.snt import Tree
-from fiji.sc.snt.io import MouseLightLoader
-from fiji.sc.snt.viewer import Viewer3D
-from fiji.sc.snt.analysis.graph import GraphUtils
+from sc.fiji.snt import Tree
+from sc.fiji.snt.io import MouseLightLoader
+from sc.fiji.snt.viewer import Viewer3D
+from sc.fiji.snt.analysis.graph import GraphUtils
 
 from org.jgrapht import Graphs, GraphPath, GraphTests
 from org.jgrapht.alg.shortestpath import DijkstraShortestPath

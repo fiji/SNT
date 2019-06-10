@@ -17,10 +17,10 @@
  * info:	
  */
 
-import fiji.sc.snt.analysis.*
-import fiji.sc.snt.analysis.sholl.*
-import fiji.sc.snt.io.*
-import fiji.sc.snt.plugin.*
-import fiji.sc.snt.util.*
-import fiji.sc.snt.viewer.*
+import sc.fiji.snt.analysis.*
+import sc.fiji.snt.analysis.sholl.*
+import sc.fiji.snt.io.*
+import sc.fiji.snt.plugin.*
+import sc.fiji.snt.util.*
+import sc.fiji.snt.viewer.*
 

@@ -34,7 +34,7 @@ def run():
         ui.showDialog("Demo cannot run in current state: UI not ready", "Error")
         return
     # Ensure tracing functions are not paused
-    snt.getUI().changeState(SNTUI.WAITING_TO_START_PATH)
+    snt.getUI().changeState(SNTUI.READY)
 
     # For basic functionality we can call SNTService directly: E.g.:
     # http://javadoc.scijava.org/Fiji/sc/fiji/snt/SNTService.html

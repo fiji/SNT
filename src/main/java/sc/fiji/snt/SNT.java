@@ -810,7 +810,7 @@ public class SNT extends MultiDThreePanes implements
 				}
 				setTemporaryPath(result);
 
-				if (ui.confirmTemporarySegments) {
+				if (ui != null && ui.confirmTemporarySegments) {
 					changeUIState(SNTUI.QUERY_KEEP);
 				}
 				else {
@@ -1537,11 +1537,11 @@ public class SNT extends MultiDThreePanes implements
 		if (pointList == null || pointList.size() == 0)
 			throw new IllegalArgumentException("pointList cannot be null or empty");
 
-		// Set UI. Ensure there are no incomplete tracings around
-		final boolean cfTemp = getUI().confirmTemporarySegments;
-		if (getUIState() != SNTUI.WAITING_TO_START_PATH) getUI()
-			.abortCurrentOperation();
-		getUI().confirmTemporarySegments = false;
+		// Ensure there are no incomplete tracings around and disable UI
+		if (ui != null && ui.getState() != SNTUI.READY) ui.abortCurrentOperation();
+		final SNTUI existingUI = getUI();
+		changeUIState(SNTUI.SEARCHING);
+		ui = null;
 
 		// Start path from first point in list
 		final PointInImage start = pointList.get(0);
@@ -1554,9 +1554,6 @@ public class SNT extends MultiDThreePanes implements
 		for (int i = secondNodeIdx; i < nNodes; i++) {
 
 			try {
-				// Block and update UI
-				changeUIState(SNTUI.SEARCHING);
-				//showStatus(i, nNodes, "Finding path to node " + i + "/" + nNodes);
 
 				// Append node and wait for search to be finished
 				final PointInImage node = pointList.get(i);
@@ -1590,7 +1587,8 @@ public class SNT extends MultiDThreePanes implements
 
 		// restore UI state
 		showStatus(0, 0, "Tracing Complete");
-		getUI().confirmTemporarySegments = cfTemp;
+		ui = existingUI;
+		changeUIState(SNTUI.READY);
 
 		return pathAndFillManager.getPath(pathAndFillManager.size() - 1);
 	}
@@ -1627,14 +1625,14 @@ public class SNT extends MultiDThreePanes implements
 
 		if (currentPath == null) {
 			// this can happen through repeated hotkey presses
-			discreteMsg("No temporary path to finish...");
+			if (ui != null) discreteMsg("No temporary path to finish...");
 			return;
 		}
 
 		// Is there an unconfirmed path? If so, confirm it first
 		if (temporaryPath != null) confirmTemporary();
 
-		if (justFirstPoint() && ui.confirmTemporarySegments && !getConfirmation(
+		if (justFirstPoint() && ui != null && ui.confirmTemporarySegments && !getConfirmation(
 			"Create a single point path? (such path is typically used to mark the cell soma)",
 			"Create Single Point Path?"))
 		{
@@ -2460,14 +2458,14 @@ public class SNT extends MultiDThreePanes implements
 		if (p.isFittedVersionOfAnotherPath()) pathsToSelect.add(p.fittedVersionOf);
 		else pathsToSelect.add(p);
 		if (isEditModeEnabled()) { // impose a single editing path
-			ui.getPathManager().setSelectedPaths(pathsToSelect, this);
+			if (ui != null) ui.getPathManager().setSelectedPaths(pathsToSelect, this);
 			setEditingPath(p);
 			return;
 		}
 		if (addToExistingSelection) {
 			pathsToSelect.addAll(ui.getPathManager().getSelectedPaths(false));
 		}
-		ui.getPathManager().setSelectedPaths(pathsToSelect, this);
+		if (ui != null) ui.getPathManager().setSelectedPaths(pathsToSelect, this);
 	}
 
 	public Collection<Path> getSelectedPaths() {

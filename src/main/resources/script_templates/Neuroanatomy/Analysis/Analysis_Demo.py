@@ -27,7 +27,15 @@ from sc.fiji.snt.viewer import (Viewer2D, Viewer3D)
 
 
 def run():
-    # Import some data from the MouseLight database in 'headless' mode
+
+    # To load a neuron from a local file, one can use:
+    try:
+       tree = Tree("path/to/local/file")
+       axon = tree.subTree("axon")
+    except: 
+       print("path/to/local/file is not a valid file")       
+  
+    # But in this demo, we'll import some data from the MouseLight database
     loader = MouseLightLoader("AA0100")  # one of the largest cells in the database
     if not loader.isDatabaseAvailable():
         ui.showDialog("Could not connect to ML database", "Error")
@@ -36,6 +44,12 @@ def run():
         ui.showDialog("Somehow the specified id was not found", "Error")
         return
 
+    # All the 'raw data' in the MouseLight database is stored as JSONObjects.
+    # If needed, these could be access as follows:
+    # http://stleary.github.io/JSON-java/index.html
+    #all_data = loader.getJSON()
+
+    # To extract a compartment
     d_tree = loader.getTree('dendrites', None)  # compartment, color
     a_tree = loader.getTree('axon', None)
     for tree in [d_tree, a_tree]:
@@ -44,7 +58,7 @@ def run():
         d_stats = TreeStatistics(tree)
 
         # NB: SummaryStatistics should be more performant than DescriptiveStatistics
-        # http://javadoc.scijava.org/Fiji/tracing/analysis/TreeStatistics.html
+        # http://javadoc.scijava.org/Fiji/sc/fiji/tracing/analysis/TreeStatistics.html
         metric = TreeStatistics.INTER_NODE_DISTANCE  # same as "inter-node distance"
         summary_stats = d_stats.getSummaryStats(metric)
         d_stats.getHistogram(metric).show()

@@ -11,18 +11,16 @@
 """
 file:       Analysis_Demo_(Interactive).py
 author:     Tiago Ferreira
-version:    20181126
+version:    20190610
 info:       Exemplifies how to programmatically interact with a running instance
             of SNT to analyze traced data. Because of all the GUI updates, this
             approach is _significantly slower_ than analyzing reconstructions
-            retrieved directly from the loader.
-            Do check Analysis_Demo.py for comparison
+            directly (see Analysis_Demo.py for comparison)
 """
 
 import math
 
-from sc.fiji.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
-from sc.fiji.snt.io import MouseLightLoader
+from sc.fiji.snt import (Path, PathAndFillManager, SNT, SNTUI, SNTUtils,Tree)
 from sc.fiji.snt.util import PointInImage
 from sc.fiji.snt.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
@@ -35,35 +33,19 @@ def run():
     # our script. For more advanced features we'll script other classes
     # directly, but we'll use SNTService whenever pertinent. Now, lets
     # ensure SNT is currently running
-    # http://javadoc.scijava.org/Fiji/tracing/SNTService.html
+    # http://javadoc.scijava.org/Fiji/sc/fiji/tracing/SNTService.html
     if not snt.isActive():
         ui.showDialog("SNT does not seem to be running. Exiting..", "Error")
         return
 
-    # Let's import some data from the MouseLight database
-    loader = MouseLightLoader("AA0001")
-    if not loader.isDatabaseAvailable():
-        ui.showDialog("Could not connect to ML database", "Error")
-        return
-    if not loader.idExists():
-        ui.showDialog("Somehow the specified id was not found", "Error")
+    # Let's import some demo data
+    demo_tree = snt.loadDemoTree()
+    if not demo_tree:
+        ui.showDialog("Somehow could not load bundled file.", "Error")
         return
 
     # Pause tracing functions
     snt.getUI().changeState(SNTUI.TRACING_PAUSED)
-
-    # All the 'raw data' in the MouseLight database is stored as JSONObjects.
-    # If needed, these could be access as follows:
-    # http://stleary.github.io/JSON-java/index.html
-    axon = loader.getCompartment("axon")  # MouseLightLoader.AXON
-
-    # But we can import reconstructions directly using PathAndFillManager,
-    # SNT's work horse for management of Paths and ints importMLNeurons
-    # method that accepts 3 parameters: a list of cell ids, the compartment
-    # to be imported ('all', 'axon', or 'dendrites') and a color
-    # http://javadoc.scijava.org/Fiji/tracing/PathAndFillManager.html
-    pafm = snt.getPathAndFillManager()
-    pafm.importMLNeurons(['AA0001'], 'all', None)
 
     # Almost all SNT analyses are performed on a Tree, i.e., a collection
     # of Paths. We can immediately retrieve TreeAnalyzer (responsible for
@@ -74,14 +56,13 @@ def run():
     # just the current subset of selected Paths in the Path Manager dialog.
     # This is useful when one only wants to analyze the groups of Paths
     # selected using the Filtering toolbar of the Path Manager.
-    # http://javadoc.scijava.org/Fiji/tracing/analysis/TreeAnalyzer.html
-    # http://javadoc.scijava.org/Fiji/tracing/analysis/TreeStatistics.html
+    # http://javadoc.scijava.org/Fiji/sc/tracing/tracing/analysis/TreeAnalyzer.html
+    # http://javadoc.scijava.org/Fiji/sc/tracing/analysis/TreeStatistics.html
     analyzer = snt.getAnalyzer(False)  # Include only selected paths?
     stats = snt.getStatistics(False)   # Include only selected paths?
 
     # Measurements can be displayed in SNT's UI:
-    analyzer.setTable(snt.getTable())
-    analyzer.summarize("AA0001", True) # Split summary by compartment?
+    analyzer.summarize("TreeV Demo", True) # Split summary by compartment?
     analyzer.updateAndDisplayTable()
 
     # It is also possible to build the above instances from a Tree. This
@@ -102,7 +83,15 @@ def run():
     stats = TreeStatistics(tree)
     summary_stats = stats.getSummaryStats(metric)
     stats.getHistogram(metric).show()
+    analyzer.summarize("TreeV Demo (Downsampled)", True)
+    analyzer.updateAndDisplayTable()
     print("After downsampling: %d" % summary_stats.getMin())
 
+    # To overlay the downsampled tree against the original:
+    tree.setColor("cyan")
+    tree = snt.loadDemoTree()
+    tree.setColor("yellow")
+    snt.getReconstructionViewer().show()
+    snt.getPlugin().updateAllViewers()
 
 run()

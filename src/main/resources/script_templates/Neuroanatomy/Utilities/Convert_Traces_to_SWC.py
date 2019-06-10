@@ -18,6 +18,9 @@ from sc.fiji.snt import PathAndFillManager
 def run():
     if not input_dir:
         return
+    if not os.path.isdir(str(input_dir)):
+        ui.showDialog("Chosen path is not valid.", "Error")
+        return
     status.showStatus("Converting .traces files...")
     if open_console:
         ui.getDefaultUI().getConsolePane().show()

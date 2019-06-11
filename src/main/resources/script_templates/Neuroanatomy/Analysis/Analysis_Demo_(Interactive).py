@@ -33,7 +33,7 @@ def run():
     # our script. For more advanced features we'll script other classes
     # directly, but we'll use SNTService whenever pertinent. Now, lets
     # ensure SNT is currently running
-    # http://javadoc.scijava.org/Fiji/sc/fiji/tracing/SNTService.html
+    # https://javadoc.scijava.org/Fiji/sc/fiji/tracing/SNTService.html
     if not snt.isActive():
         ui.showDialog("SNT does not seem to be running. Exiting..", "Error")
         return
@@ -56,8 +56,8 @@ def run():
     # just the current subset of selected Paths in the Path Manager dialog.
     # This is useful when one only wants to analyze the groups of Paths
     # selected using the Filtering toolbar of the Path Manager.
-    # http://javadoc.scijava.org/Fiji/sc/tracing/tracing/analysis/TreeAnalyzer.html
-    # http://javadoc.scijava.org/Fiji/sc/tracing/analysis/TreeStatistics.html
+    # https://javadoc.scijava.org/Fiji/sc/tracing/tracing/analysis/TreeAnalyzer.html
+    # https://javadoc.scijava.org/Fiji/sc/tracing/analysis/TreeStatistics.html
     analyzer = snt.getAnalyzer(False)  # Include only selected paths?
     stats = snt.getStatistics(False)   # Include only selected paths?
 
@@ -87,11 +87,11 @@ def run():
     analyzer.updateAndDisplayTable()
     print("After downsampling: %d" % summary_stats.getMin())
 
-    # To overlay the downsampled tree against the original:
+    # To render both the downsampled tree and the original:
     tree.setColor("cyan")
     tree = snt.loadDemoTree()
     tree.setColor("yellow")
-    snt.getReconstructionViewer().show()
+    snt.getReconstructionViewer().show() # open Rec. viewer
     snt.getPlugin().updateAllViewers()
 
 run()

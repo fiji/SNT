@@ -22,12 +22,12 @@ import sc.fiji.snt.viewer.Viewer3D
 def getSWClist(dir) {
 	list = []
 	dir.eachFileMatch(FileType.ANY, ~/.*.swc/) {
-		tree = new Tree(it.getAbsolutePath())
-		if (tree.isEmpty()) {
-			println("Skipping invalid file: "+ it)
-		} else {
+		tree = Tree.fromFile(it.getAbsolutePath())
+		if (tree) {
 			println("Importing "+ it)
 			list << tree
+		} else {
+			println("Skipping invalid file: "+ it)
 		}
 	}
 	list

@@ -32,7 +32,7 @@ def get_swc_files(directory, filtering_string):
         for f in filenames:
             if os.path.basename(f).startswith('.'):
                 continue
-            if filtering_string in f and f.lower().endswith(('swc', 'traces')):
+            if filtering_string in f and f.lower().endswith(('swc', 'traces', 'json')):
                 files.append(os.path.join(dirpath, f))
         if not recursive:
             break # do not process subdirectories
@@ -58,9 +58,8 @@ def run():
         log.info(msg)
 
         # Import file as an analyzable Tree. Move on if import failed
-        try:
-           tree = Tree(f)
-        except:
+        tree = Tree.fromFile(f)
+        if not tree:
            log.error("Traces not imported. Invalid File? %s" % basename)
            continue
 

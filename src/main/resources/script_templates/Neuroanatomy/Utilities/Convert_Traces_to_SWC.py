@@ -8,12 +8,12 @@
 """
 file:       Convert_Traces_to_SWC.py
 author:     Tiago Ferreira
-version:    20181128
+version:    20190609
 info:       Converts all .traces files in a directory into SWC
 """
 
 import os, re
-from sc.fiji.snt import PathAndFillManager
+from sc.fiji.snt import Tree
 
 def run():
     if not input_dir:
@@ -38,8 +38,8 @@ def run():
         file_path = os.path.join(d, f)
         swc_filename_prefix = re.sub(r'\.traces', '-exported', file_path)
         log.info('Converting %s to %s-*.swc' % (file_path, swc_filename_prefix))
-        pafm = PathAndFillManager.createFromFile(file_path)
-        if pafm.exportAllPathsAsSWC(swc_filename_prefix):
+        tree = Tree(file_path)
+        if tree.saveAsSWC(swc_filename_prefix):
             conversion_counter += 1
         else:
             log.error('Could not convert %s' % file_path)

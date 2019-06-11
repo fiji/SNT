@@ -37,14 +37,14 @@ def run():
     snt.getUI().changeState(SNTUI.READY)
 
     # For basic functionality we can call SNTService directly: E.g.:
-    # http://javadoc.scijava.org/Fiji/sc/fiji/snt/SNTService.html
+    # https://javadoc.scijava.org/Fiji/sc/fiji/snt/SNTService.html
     print("There are currently %s traced paths" % snt.getPaths().size())
     print("...of which %s are selected" % snt.getSelectedPaths().size())
     
     # But for more advanced features, we need to access SNT and
     # PathAndFillManager (the latter manages all things related to Paths):
-    # http://javadoc.scijava.org/Fiji/sc/fiji/snt/SNT.html
-    # http://javadoc.scijava.org/Fiji/sc/fiji/snt/PathAndFillManager.html
+    # https://javadoc.scijava.org/Fiji/sc/fiji/snt/SNT.html
+    # https://javadoc.scijava.org/Fiji/sc/fiji/snt/PathAndFillManager.html
     plugin = snt.getPlugin()
     pafm = snt.getPathAndFillManager()
 
@@ -89,7 +89,7 @@ def run():
     # the path will be a straight line between the two points). A point in the
     # tracing space (always in spatially calibrated units!) is defined through
     # a PointInImage object
-    # http://javadoc.scijava.org/Fiji/sc/fiji/snt/utils/PointInImage.html
+    # https://javadoc.scijava.org/Fiji/sc/fiji/snt/util/PointInImage.html
     p = plugin.autoTrace(PointInImage(sx,sy,z), PointInImage(ex,ey,z), None)
     tree.add(p)
 
@@ -109,8 +109,8 @@ def run():
     # generate a mask ("fill it" in SNT's lingo). For simplicity, let's just
     # get some measurements out of the paths computed so far. The class to
     # script is TreeAnalyzer, or its subclass TreeStatistics
-    # http://javadoc.scijava.org/Fiji/sc/fiji/snt/analysis/TreeAnalyzer.html
-    # http://javadoc.scijava.org/Fiji/sc/fiji/snt/analysis/TreeStatistics.html
+    # https://javadoc.scijava.org/Fiji/sc/fiji/snt/analysis/TreeAnalyzer.html
+    # https://javadoc.scijava.org/Fiji/sc/fiji/snt/analysis/TreeStatistics.html
     tree_stats = TreeStatistics(tree)
     tree_stats.setContext(context)
     s_stats = tree_stats.getSummaryStats("length")
@@ -125,7 +125,7 @@ def run():
 
     # Remaining analysis classes can be access using the same scripting
     # pattern. E.g., to plot paths colored by rotation angle:
-    # http://javadoc.scijava.org/Fiji/sc/fiji/snt/plot/Viewer2D.html
+    # https://javadoc.scijava.org/Fiji/sc/fiji/snt/viewer/Viewer2D.html
     plot = Viewer2D(context)
     plot.addTree(tree, "y coordinates", "Ice.lut")
     plot.addColorBarLegend()

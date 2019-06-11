@@ -9,9 +9,10 @@
 # @UIService uiservice
 
 """
-file: Filter_Multiple_Images.py
-author: Tiago Ferreira, Cameron Arshadi
-info: Bulk filtering of image files using Frangi Vesselness
+file:       Filter_Multiple_Images.py
+author:     Tiago Ferreira, Cameron Arshadi
+version:    20190525
+info:       Bulk filtering of image files using Frangi Vesselness
 """
 
 from net.imagej.axis import Axes

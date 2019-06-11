@@ -2616,30 +2616,7 @@ public class Viewer3D {
 
 		private JPopupMenu meshMenu() {
 			final JPopupMenu meshMenu = new JPopupMenu();
-			JMenuItem mi = new JMenuItem("Allen CCF Navigator", IconFactory
-					.getMenuIcon(GLYPH.NAVIGATE));
-			mi.addActionListener(e -> {
-				assert SwingUtilities.isEventDispatchThread();
-				if (frame.allenNavigator != null) {
-					frame.allenNavigator.dialog.toFront();
-					return;
-				}
-				final JDialog tempSplash = frame.managerPanel.guiUtils.floatingMsg("Loading ontologies...", false);
-				final SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
-					@Override
-					protected Object doInBackground() {
-						new AllenCCFNavigator().show();
-						return null;
-					}
-					@Override
-					protected void done() {
-						tempSplash.dispose();
-					}
-				};
-				worker.execute();
-			});
-			meshMenu.add(mi);
-			mi = new JMenuItem("Import OBJ File(s)...", IconFactory
+			JMenuItem mi = new JMenuItem("Import OBJ File(s)...", IconFactory
 				.getMenuIcon(GLYPH.IMPORT));
 			mi.addActionListener(e -> runCmd(LoadObjCmd.class, null,
 				CmdWorker.DO_NOTHING));
@@ -2714,18 +2691,22 @@ public class Viewer3D {
 					return;
 				}
 				final JDialog tempSplash = frame.managerPanel.guiUtils.floatingMsg("Loading ontologies...", false);
-				final SwingWorker<?, ?> worker = new SwingWorker<Object, Object>() {
-					AllenCCFNavigator navigator;
+				final SwingWorker<AllenCCFNavigator, ?> worker = new SwingWorker<AllenCCFNavigator, Object>() {
+
 					@Override
-					protected Object doInBackground() {
+					protected AllenCCFNavigator doInBackground() {
 						loadRefBrainAction(false, MESH_LABEL_ALLEN);
-						navigator = new AllenCCFNavigator();
-						return null;
+						return new AllenCCFNavigator();
 					}
+
 					@Override
 					protected void done() {
-						tempSplash.dispose();
-						navigator.show();
+						try {
+							get().show();
+							tempSplash.dispose();
+						} catch (final InterruptedException | ExecutionException e) {
+							SNTUtils.error(e.getMessage(), e);
+						}
 					}
 				};
 				worker.execute();

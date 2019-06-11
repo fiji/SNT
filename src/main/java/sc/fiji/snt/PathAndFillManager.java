@@ -344,11 +344,18 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * Exports all as Paths as SWC file(s). Multiple files are created if multiple
 	 * Trees exist.
 	 *
-	 * @param prefix the common prefix to all exported files
+	 * @param baseFilename the file path (including common basename) for exported
+	 *                     files. The {@code .swc} extension can be omitted. Each
+	 *                     traced structure will be saved into a dedicated file.
+	 *                     E.g., if only a single structure exists, specifying
+	 *                     {@code /path/to/results}, generates a
+	 *                     {@code /path/to/results-000.swc} file.
 	 * @return true, if successful
 	 */
-	public synchronized boolean exportAllPathsAsSWC(final String prefix) {
+	public synchronized boolean exportAllPathsAsSWC(final String baseFilename) {
 		final Path[] primaryPaths = getPathsStructured();
+		final int dot = baseFilename.lastIndexOf('.');
+		final String prefix = (dot < 0) ? baseFilename : baseFilename.substring(0, dot+1);
 		int i = 0;
 		for (final Path primaryPath : primaryPaths) {
 			final File swcFile = getSWCFileForIndex(prefix, i);

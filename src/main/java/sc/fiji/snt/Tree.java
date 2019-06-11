@@ -64,6 +64,7 @@ public class Tree {
 	private ArrayList<Path> tree;
 	private String label;
 	private BoundingBox box;
+	private PathAndFillManager pafm;
 
 	/**
 	 * Instantiates a new empty Tree.
@@ -105,7 +106,7 @@ public class Tree {
 	 * @param label the identifying label for this Tree.
 	 */
 	public Tree(final Collection<SWCPoint> nodes, final String label) {
-		final PathAndFillManager pafm = PathAndFillManager.createFromNodes(nodes);
+		pafm = PathAndFillManager.createFromNodes(nodes);
 		tree = (pafm == null) ? new ArrayList<>() : pafm.getPaths();
 		setLabel(label);
 	}
@@ -114,12 +115,13 @@ public class Tree {
 	 * Instantiates a new tree from a SWC, TRACES or JSON file.
 	 *
 	 * @param filename the absolute file path of the imported file
+	 * @throws IllegalArgumentException if file path is not valid
 	 */
-	public Tree(final String filename) {
+	public Tree(final String filename) throws IllegalArgumentException {
 		final File f = new File(filename);
 		if (!f.exists()) throw new IllegalArgumentException(
 			"File does not exist: " + filename);
-		final PathAndFillManager pafm = PathAndFillManager.createFromFile(filename);
+		pafm = PathAndFillManager.createFromFile(filename);
 		if (pafm == null) throw new IllegalArgumentException(
 			"No paths extracted from " + filename + " Invalid file?");
 		tree = pafm.getPaths();
@@ -623,9 +625,47 @@ public class Tree {
 		return label;
 	}
 
+	/**
+	 * Script-friendly method for creating a Tree from a reconstruction file.
+	 *
+	 * @param filePath the absolute path to the file (.Traces, (e)SWC or JSON) to be
+	 *                 imported
+	 * @return the Tree instance, or null if file could not be imported
+	 */
+	public static Tree fromFile(final String filePath) {
+		try {
+			return new Tree(filePath);
+		} catch (final IllegalArgumentException ex) {
+			return null;
+		}
+	}
+
+	/**
+	 * Saves this Tree to an as SWC file.
+	 *
+	 * @param filePath the absolute path of the output file. {@code .swc} is
+	 *                 automatically appended if {@code filePath} does not include
+	 *                 an extension. Also, if a label has been assigned,
+	 *                 {@code filePath} can also be a directory.
+	 * @return true, if file successfully saved.
+	 * @see #setLabel(String)
+	 */
+	public boolean saveAsSWC(final String filePath) {
+		if (list() == null || list().isEmpty() || filePath == null || filePath.isEmpty())
+			return false;
+		if (pafm == null) pafm = new PathAndFillManager();
+		if (pafm.size() == 0) for (final Path p : list()) pafm.addPath(p);
+		File file = new File(filePath);
+		if (file.isDirectory() && getLabel() != null)
+			file = new File(file.getAbsolutePath(), getLabel());
+		return pafm.exportAllPathsAsSWC(file.getAbsolutePath());
+	}
+
 	@Override
 	public Tree clone() {
 		final Tree clone = new Tree();
+		clone.setLabel(getLabel());
+		clone.setBoundingBox(box);
 		for (final Path path : list()) clone.add(path.clone());
 		return clone;
 	}

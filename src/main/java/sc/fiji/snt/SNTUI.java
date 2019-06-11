@@ -3195,11 +3195,6 @@ public class SNTUI extends JDialog {
 				final File saveFile = saveFile("Export All Paths as SWC...", null, ".swc");
 				if (saveFile == null)
 					return; // user pressed cancel
-				if (saveFile.exists()) {
-					if (!guiUtils.getConfirmation("The file " + saveFile.getAbsolutePath() + " already exists.\n"
-							+ "Do you want to replace it?", "Override SWC file?"))
-						return;
-				}
 				final String savePath = saveFile.getAbsolutePath();
 				SNTUtils.log("Exporting paths to " + saveFile);
 				if (!checkOKToWriteAllAsSWC(savePath))

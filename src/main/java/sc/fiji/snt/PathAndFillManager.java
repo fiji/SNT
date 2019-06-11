@@ -346,16 +346,19 @@ public class PathAndFillManager extends DefaultHandler implements
 	 *
 	 * @param baseFilename the file path (including common basename) for exported
 	 *                     files. The {@code .swc} extension can be omitted. Each
-	 *                     traced structure will be saved into a dedicated file.
-	 *                     E.g., if only a single structure exists, specifying
-	 *                     {@code /path/to/results}, generates a
-	 *                     {@code /path/to/results-000.swc} file.
+	 *                     traced structure will be saved into a dedicated file
+	 *                     using a 3-digits identifier. E.g., if only a single
+	 *                     structure exists, specifying {@code /path/to/results},
+	 *                     generates a {@code /path/to/results-000.swc} file.
 	 * @return true, if successful
 	 */
 	public synchronized boolean exportAllPathsAsSWC(final String baseFilename) {
-		final Path[] primaryPaths = getPathsStructured();
+		return exportAllPathsAsSWC(getPathsStructured(), baseFilename);
+	}
+
+	protected synchronized boolean exportAllPathsAsSWC(final Path[] primaryPaths, final String baseFilename) {
 		final int dot = baseFilename.lastIndexOf('.');
-		final String prefix = (dot < 0) ? baseFilename : baseFilename.substring(0, dot+1);
+		final String prefix = (dot < 0) ? baseFilename : baseFilename.substring(0, dot);
 		int i = 0;
 		for (final Path primaryPath : primaryPaths) {
 			final File swcFile = getSWCFileForIndex(prefix, i);

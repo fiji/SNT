@@ -3195,11 +3195,7 @@ public class SNTUI extends JDialog {
 				final File saveFile = saveFile("Export All Paths as SWC...", null, ".swc");
 				if (saveFile == null)
 					return; // user pressed cancel
-				final String savePath = saveFile.getAbsolutePath();
-				SNTUtils.log("Exporting paths to " + saveFile);
-				if (!checkOKToWriteAllAsSWC(savePath))
-					return;
-				plugin.unsavedPaths = !pathAndFillManager.exportAllPathsAsSWC(savePath);
+				plugin.unsavedPaths = !saveAllPathsToSwc(saveFile.getAbsolutePath());
 			} else if (source == exportCSVMenuItem && !noPathsError()) {
 
 				final File saveFile = saveFile("Export All Paths as CSV...", null, ".csv");
@@ -3309,22 +3305,25 @@ public class SNTUI extends JDialog {
 
 		}
 
-		private boolean checkOKToWriteAllAsSWC(final String prefix) {
+		private boolean saveAllPathsToSwc(final String filePath) {
 			final List<Path> primaryPaths = Arrays.asList(pathAndFillManager.getPathsStructured());
 			final int n = primaryPaths.size();
-			StringBuilder errorMessage = new StringBuilder();
+			final int dot = filePath.lastIndexOf('.');
+			final String prefix = (dot < 0) ? filePath : filePath.substring(0, dot);
+			final StringBuilder errorMessage = new StringBuilder();
 			for (int i = 0; i < n; ++i) {
 				final File swcFile = pathAndFillManager.getSWCFileForIndex(prefix, i);
 				if (swcFile.exists())
-					errorMessage.append(swcFile.getAbsolutePath()).append("\n");
+					errorMessage.append(swcFile.getAbsolutePath()).append("<br>");
 			}
-			if (errorMessage.length() == 0)
-				return true;
-			else {
-				errorMessage.insert(0, "The following files would be overwritten:\n");
-				errorMessage.append("Continue to save, overwriting these files?");
-				return guiUtils.getConfirmation(errorMessage.toString(), "Confirm overwriting SWC files?");
+			if (errorMessage.length() > 0) {
+				errorMessage.insert(0, "The following files would be overwritten:<br>");
+				errorMessage.append("<b>Overwrite these files?</b>");
+				if (!guiUtils.getConfirmation(errorMessage.toString(), "Overwrite SWC files?"))
+					return false;
 			}
+			SNTUtils.log("Exporting paths... " + prefix);
+			return pathAndFillManager.exportAllPathsAsSWC(prefix);
 		}
 	}
 

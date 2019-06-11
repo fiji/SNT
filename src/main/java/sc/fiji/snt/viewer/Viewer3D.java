@@ -132,6 +132,7 @@ import org.jzy3d.plot3d.transform.squarifier.XZSquarifier;
 import org.jzy3d.plot3d.transform.squarifier.ZYSquarifier;
 import org.scijava.Context;
 import org.scijava.command.Command;
+import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
@@ -140,6 +141,7 @@ import org.scijava.prefs.PrefService;
 import org.scijava.table.DefaultGenericTable;
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.util.ColorRGB;
+import org.scijava.util.ColorRGBA;
 import org.scijava.util.Colors;
 import org.scijava.util.FileUtils;
 
@@ -173,6 +175,7 @@ import sc.fiji.snt.gui.IconFactory;
 import sc.fiji.snt.gui.IconFactory.GLYPH;
 import sc.fiji.snt.gui.SNTSearchableBar;
 import sc.fiji.snt.gui.cmds.ColorMapReconstructionCmd;
+import sc.fiji.snt.gui.cmds.CustomizeObjCmd;
 import sc.fiji.snt.gui.cmds.DistributionCmd;
 import sc.fiji.snt.gui.cmds.LoadObjCmd;
 import sc.fiji.snt.gui.cmds.LoadReconstructionCmd;
@@ -750,7 +753,7 @@ public class Viewer3D {
 	 * Returns the Collection of OBJ meshes imported into this viewer.
 	 *
 	 * @return the rendered Meshes (keys being the filename of the imported OBJ
-	 *         file as per {@link #loadOBJ(String, ColorRGB, double)}
+	 *         file as per {@link #loadMesh(String, ColorRGB, double)}
 	 */
 	private Map<String, OBJMesh> getOBJs() {
 		final Map<String, OBJMesh> newMap = new LinkedHashMap<>();
@@ -795,9 +798,9 @@ public class Viewer3D {
 	 *
 	 * @param mesh the OBJ mesh to be removed.
 	 * @return true, if mesh was successfully removed.
-	 * @see #loadOBJ(String, ColorRGB, double)
+	 * @see #loadMesh(String, ColorRGB, double)
 	 */
-	public boolean removeOBJ(final OBJMesh mesh) {
+	public boolean removeMesh(final OBJMesh mesh) {
 		final String meshLabel = getLabel(mesh);
 		return removeDrawable(plottedObjs, meshLabel);
 	}
@@ -807,16 +810,16 @@ public class Viewer3D {
 	 *
 	 * @param meshLabel the key defining the OBJ mesh to be removed.
 	 * @return true, if mesh was successfully removed.
-	 * @see #loadOBJ(String, ColorRGB, double)
+	 * @see #loadMesh(String, ColorRGB, double)
 	 */
-	public boolean removeOBJ(final String meshLabel) {
+	public boolean removeMesh(final String meshLabel) {
 		return removeDrawable(plottedObjs, meshLabel);
 	}
 
 	/**
 	 * Removes all loaded OBJ meshes from current viewer
 	 */
-	public void removeAllOBJs() {
+	public void removeAllMeshes() {
 		final Iterator<Entry<String, RemountableDrawableVBO>> it = plottedObjs
 			.entrySet().iterator();
 		while (it.hasNext()) {
@@ -957,7 +960,7 @@ public class Viewer3D {
 	 *
 	 * @param treeOrObjLabel the unique identifier of the Tree (as per
 	 *          {@link #add(Tree)}), or the filename of the loaded OBJ
-	 *          {@link #loadOBJ(String, ColorRGB, double)}
+	 *          {@link #loadMesh(String, ColorRGB, double)}
 	 * @param visible whether the Object should be displayed
 	 */
 	public void setVisible(final String treeOrObjLabel, final boolean visible) {
@@ -1170,7 +1173,7 @@ public class Viewer3D {
 	 * @throws IllegalArgumentException if filePath is invalid or file does not
 	 *           contain a compilable mesh
 	 */
-	public OBJMesh loadOBJ(final String filePath, final ColorRGB color,
+	public OBJMesh loadMesh(final String filePath, final ColorRGB color,
 		final double transparencyPercent) throws IllegalArgumentException
 	{
 		final OBJMesh objMesh = new OBJMesh(filePath);
@@ -1924,7 +1927,7 @@ public class Viewer3D {
 					"Wipe Scene?"))
 				{
 					Viewer3D.this.removeAll();
-					removeAllOBJs();
+					removeAllMeshes();
 					removeColorLegends(false);
 					// Ensure nothing else remains (e.g., a Delaunay surface)
 					chart.getScene().getGraph().getAll().clear();
@@ -2010,9 +2013,12 @@ public class Viewer3D {
 			hideTrees.addActionListener(e -> {
 				setArborsDisplayed(getLabelsCheckedInManager(), false);
 			});
-			final JMenuItem hideSomas = new JMenuItem("Somas of Visible Trees");
+			final JMenuItem hideSomas = new JMenuItem("Soma of Visible Trees");
 			hideSomas.addActionListener(e -> displaySomas(false));
 			hideMenu.add(hideSomas);
+			final JMenuItem hideBoxes = new JMenuItem("Bounding Box of Visible Meshes");
+			hideBoxes.addActionListener(e -> displayMeshBoundingBoxes(false));
+			hideMenu.add(hideBoxes);
 			final JMenuItem hideAll = new JMenuItem("All");
 			hideAll.addActionListener(e -> managerList.selectNone());
 			hideMenu.addSeparator();
@@ -2029,9 +2035,12 @@ public class Viewer3D {
 			showTrees.addActionListener(e -> managerList
 				.addCheckBoxListSelectedValues(plottedTrees.keySet().toArray()));
 			showMenu.add(showTrees);
-			final JMenuItem showSomas = new JMenuItem("Somas of Visible Trees");
+			final JMenuItem showSomas = new JMenuItem("Soma of Visible Trees");
 			showSomas.addActionListener(e -> displaySomas(true));
 			showMenu.add(showSomas);
+			final JMenuItem showBoxes = new JMenuItem("Bounding Box of Visible Meshes");
+			showBoxes.addActionListener(e -> displayMeshBoundingBoxes(true));
+			showMenu.add(showBoxes);
 			final JMenuItem showAll = new JMenuItem("All");
 			showAll.addActionListener(e -> managerList.selectAll());
 			showMenu.add(showAll);
@@ -2061,7 +2070,7 @@ public class Viewer3D {
 						&& guiUtils.getConfirmation("Remove all item(s)? This action cannot be undone.",
 								"Clear List?")) {
 					Viewer3D.this.removeAll();
-					removeAllOBJs();
+					removeAllMeshes();
 					return;
 				}
 				if (guiUtils.getConfirmation("Remove selected item(s)?", "Confirm Deletion?")) {
@@ -2070,7 +2079,7 @@ public class Viewer3D {
 							return; // continue in lambda expression
 						final String label = k.toString();
 						if (!Viewer3D.this.remove(label))
-							removeOBJ(label);
+							removeMesh(label);
 					});
 				}
 			});
@@ -2095,6 +2104,21 @@ public class Viewer3D {
 				return;
 			}
 			setSomasDisplayed(labels, displayed);
+		}
+
+		private void displayMeshBoundingBoxes(final boolean display) {
+			final List<String> labels = getLabelsCheckedInManager();
+			if (labels.isEmpty()) {
+				displayMsg("There are no items selectedt");
+				return;
+			}
+			plottedObjs.forEach((k, mesh) -> {
+				if (labels.contains(k)) {
+					if (display && mesh.getBoundingBoxColor() == null)
+						mesh.setBoundingBoxColor(mesh.getColor());
+					mesh.setBoundingBoxDisplayed(display);
+				}
+			});
 		}
 
 		private void selectRows(final Map<String, ?> map) {
@@ -2235,8 +2259,50 @@ public class Viewer3D {
 			meshMenu.setMnemonic('c');
 			meshMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CUBE));
 
+			JMenuItem mi = new JMenuItem("All Parameters...", IconFactory.getMenuIcon(GLYPH.SLIDERS));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedMeshes(true);
+				if (keys == null) return;
+				if (cmdService == null) {
+					guiUtils.error(
+						"This command requires Reconstruction Viewer to be aware of a Scijava Context");
+					return;
+				}
+				class getMeshColors extends SwingWorker<Object, Object> {
+
+					CommandModule cmdModule;
+
+					@Override
+					public Object doInBackground() {
+						try {
+							cmdModule = cmdService.run(CustomizeObjCmd.class, true).get();
+						}
+						catch (InterruptedException | ExecutionException ignored) {
+							return null;
+						}
+						return null;
+					}
+
+					@Override
+					protected void done() {
+						if (cmdModule != null && cmdModule.isCanceled()) {
+							return; // user pressed cancel or chose nothing
+						}
+						final ColorRGBA[] colors = (ColorRGBA[]) cmdModule.getInput("colors");
+						if (colors == null) return;
+						final Color surfaceColor = fromColorRGB((ColorRGBA)colors[0]);
+						for (final String label : keys) {
+							plottedObjs.get(label).setColor(surfaceColor);
+							plottedObjs.get(label).objMesh.setBoundingBoxColor(colors[1]);
+						}
+					}
+				}
+				(new getMeshColors()).execute();
+			});
+			meshMenu.add(mi);;
+
 			// Mesh customizations
-			JMenuItem mi = new JMenuItem("Assign Color...", IconFactory.getMenuIcon(
+			mi = new JMenuItem("Color...", IconFactory.getMenuIcon(
 				GLYPH.COLOR));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedMeshes(true);
@@ -2311,7 +2377,7 @@ public class Viewer3D {
 				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			menu.add(mi);
-			mi = new JMenuItem("Color Each Cell Uniquely...");
+			mi = new JMenuItem("Color Each Cell Uniquely");
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees(true);
 				if (keys == null || !okToApplyColor(keys)) return;
@@ -2323,6 +2389,7 @@ public class Viewer3D {
 					shapeTree.setSomaColor(colors[counter[0]]);
 					counter[0]++;
 				});
+				displayMsg("Unique colors assigned");
 			});
 			menu.add(mi);
 			menu.addSeparator();
@@ -2638,7 +2705,7 @@ public class Viewer3D {
 					return;
 				}
 				Viewer3D.this.setSceneUpdatesEnabled(false);
-				keys.stream().forEach(k -> Viewer3D.this.removeOBJ(k));
+				keys.stream().forEach(k -> Viewer3D.this.removeMesh(k));
 				Viewer3D.this.setSceneUpdatesEnabled(true);
 				Viewer3D.this.updateView();
 			});
@@ -2651,7 +2718,7 @@ public class Viewer3D {
 				{
 					return;
 				}
-				removeAllOBJs();
+				removeAllMeshes();
 			});
 			meshMenu.add(mi);
 			return meshMenu;
@@ -2882,7 +2949,7 @@ public class Viewer3D {
 						tree.setColor(uniqueColors[idx]);
 						Viewer3D.this.add(tree);
 					} else if (fName.endsWith("obj")) {
-						loadOBJ(file.getAbsolutePath(), uniqueColors[idx], 75d);
+						loadMesh(file.getAbsolutePath(), uniqueColors[idx], 75d);
 					} else {
 						failures++;
 						SNTUtils.log("... failed. Not a supported file type");

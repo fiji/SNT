@@ -145,7 +145,7 @@ public class OBJMesh {
 	public void setBoundingBoxColor(final ColorRGB boundingBoxColor) {
 		final Color c = (boundingBoxColor == null) ? null : new Color(
 			boundingBoxColor.getRed(), boundingBoxColor.getGreen(), boundingBoxColor
-				.getBlue());
+				.getBlue(), boundingBoxColor.getAlpha());
 		drawable.setBoundingBoxColor(c);
 		drawable.setBoundingBoxDisplayed(c != null);
 	}

@@ -62,10 +62,14 @@ import java.util.concurrent.ExecutionException;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -75,6 +79,7 @@ import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
+import javax.swing.border.Border;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -1787,6 +1792,7 @@ public class Viewer3D {
 		private JCheckBoxMenuItem debugCheckBox;
 		private final JPanel barPanel;
 		private final SNTSearchableBar searchableBar;
+		private final DefaultListCellRenderer defaultCellRender;
 
 		public ManagerPanel(final GuiUtils guiUtils) {
 			super();
@@ -1821,6 +1827,7 @@ public class Viewer3D {
 			});
 			final JScrollPane scrollPane = new JScrollPane(managerList);
 			managerList.setComponentPopupMenu(popupMenu());
+			defaultCellRender = (DefaultListCellRenderer) managerList.getActualCellRenderer();
 			scrollPane.setWheelScrollingEnabled(true);
 			scrollPane.setBorder(null);
 			scrollPane.setViewportView(managerList);
@@ -1967,6 +1974,7 @@ public class Viewer3D {
 			return menu;
 		}
 
+		@SuppressWarnings("unchecked")
 		private JPopupMenu popupMenu() {
 			final JMenuItem sort = new JMenuItem("Sort List", IconFactory.getMenuIcon(
 				GLYPH.SORT));
@@ -1989,6 +1997,11 @@ public class Viewer3D {
 				managerList.addCheckBoxListSelectedValues(checkedLabels.toArray());
 			});
 
+			final JMenuItem customRender = new JCheckBoxMenuItem("Label Categories", IconFactory.getMenuIcon(GLYPH.TAG));
+			customRender.addItemListener(e -> {
+				managerList.setCellRenderer((customRender.isSelected()) ? new CustomListRenderer() : defaultCellRender);
+			});
+	
 			// Select menu
 			final JMenu selectMenu = new JMenu("Select");
 			selectMenu.setIcon(IconFactory.getMenuIcon(GLYPH.POINTER));
@@ -2092,6 +2105,7 @@ public class Viewer3D {
 			pMenu.add(find);
 			pMenu.addSeparator();
 			pMenu.add(sort);
+			pMenu.add(customRender);
 			pMenu.addSeparator();
 			pMenu.add(remove);
 			return pMenu;
@@ -2562,6 +2576,31 @@ public class Viewer3D {
 			}
 		}
 
+		class CustomListRenderer extends DefaultListCellRenderer {
+			private static final long serialVersionUID = 1L;
+			private final Icon treeIcon = IconFactory.getListIcon(GLYPH.TREE);
+			private final Icon meshIcon = IconFactory.getListIcon(GLYPH.CUBE);
+
+			@Override
+			public Component getListCellRendererComponent(final JList<?> list, final Object value, final int index,
+					final boolean isSelected, final boolean cellHasFocus) {
+				final JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected,
+						cellHasFocus);
+				if (label.getText().equals(CheckBoxList.ALL_ENTRY.toString()))
+					return label;
+				if (plottedObjs.containsKey(label.getText()))
+					label.setIcon(meshIcon);
+				else
+					label.setIcon(treeIcon);
+				return label;
+			}
+
+			@Override
+			public void setBorder(final Border border) {
+				super.setBorder(defaultCellRender.getBorder());
+			}
+
+		}
 		private boolean okToApplyColor(final List<String> labelsOfselectedTrees) {
 			if (!treesContainColoredNodes(labelsOfselectedTrees)) return true;
 			return guiUtils.getConfirmation("Some of the selected reconstructions " +

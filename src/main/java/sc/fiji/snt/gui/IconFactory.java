@@ -196,4 +196,10 @@ public class IconFactory {
 			entry.solid);
 	}
 
+	public static Icon getListIcon(final GLYPH entry) {
+		return new FADerivedIcon(entry.id, UIManager.getFont("List.font")
+			.getSize() * 0.9f, UIManager.getColor("List.foreground"),
+			entry.solid);
+	}
+
 }

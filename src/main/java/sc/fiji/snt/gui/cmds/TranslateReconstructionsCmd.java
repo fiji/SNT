@@ -133,7 +133,7 @@ public class TranslateReconstructionsCmd extends CommonDynamicCmd implements
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		SNTUtils.setDebugMode(true);
 		final Viewer3D jzy3D = new Viewer3D(ij.context());
-		jzy3D.add(tree);
+		jzy3D.addTree(tree);
 		jzy3D.loadRefBrain("Allen CCF");
 		jzy3D.show();
 	}

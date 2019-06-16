@@ -159,7 +159,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			}
 			else {
 				// We are importing into a stand-alone Reconstruction Viewer
-				recViewer.removeAll();
+				recViewer.removeAllTrees();
 			}
 		}
 
@@ -173,7 +173,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			// A 'stand-alone' Reconstruction Viewer was specified
 			recViewer.setSceneUpdatesEnabled(false);
 			result.forEach((id, tree) -> {
-				if (tree != null) recViewer.add(tree);
+				if (tree != null) recViewer.addTree(tree);
 			});
 			if (meshViewer) {
 				recViewer.loadRefBrain("Allen CCF");

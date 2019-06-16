@@ -162,7 +162,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 		mapper.map(MultiTreeColorMapper.TOTAL_LENGTH, ColorTables.ICE);
 		final Viewer3D viewer = new Viewer3D();
 		for (final Tree tree : trees)
-			viewer.add(tree);
+			viewer.addTree(tree);
 		final double[] limits = mapper.getMinMax();
 		viewer.addColorBarLegend(ColorTables.ICE, (float) limits[0],
 			(float) limits[1]);

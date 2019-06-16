@@ -147,7 +147,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 				tree.setColor(color);
 				if (tree.isEmpty()) cancel(
 					"No Paths could be extracted from file. Invalid path?");
-				recViewer.add(tree);
+				recViewer.addTree(tree);
 				recViewer.validate();
 				return;
 			}
@@ -176,7 +176,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 					continue;
 				}
 				tree.setColor((colors == null) ? color : colors[idx++]);
-				recViewer.add(tree);
+				recViewer.addTree(tree);
 			}
 			if (failures == files.length) {
 				error("No files imported. Invalid Directory?");

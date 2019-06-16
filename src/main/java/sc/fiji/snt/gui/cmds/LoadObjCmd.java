@@ -132,7 +132,7 @@ public class LoadObjCmd extends ContextCommand {
 		final OBJMesh objMesh = new OBJMesh(filePath);
 		objMesh.setColor(color, transparency);
 		if (box) objMesh.setBoundingBoxColor(color);
-		return recViewer.loadMesh(objMesh);
+		return recViewer.addMesh(objMesh);
 	}
 
 	private String getExitMsg(final String msg) {

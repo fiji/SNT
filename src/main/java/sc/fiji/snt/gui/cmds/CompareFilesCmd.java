@@ -78,10 +78,10 @@ public class CompareFilesCmd extends ContextCommand {
 			final Viewer3D plot3d = new Viewer3D();
 			tree1.setColor(color1);
 			// plot3d.setDefaultColor(color1);
-			plot3d.add(tree1);
+			plot3d.addTree(tree1);
 			tree2.setColor(color2);
 			// plot3d.setDefaultColor(color2);
-			plot3d.add(tree2);
+			plot3d.addTree(tree2);
 			plot3d.show().setTitle(file1.getName() + " vs " + file2.getName());
 			report = makeReport(tree1, tree2);
 

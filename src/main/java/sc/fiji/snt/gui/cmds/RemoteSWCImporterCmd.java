@@ -150,7 +150,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 
 		if (clearExisting) {
 			if (standAloneViewer) {
-				recViewer.removeAll();
+				recViewer.removeAllTrees();
 			}
 			else {
 				// We are importing into a functional SNTUI with Path Manager
@@ -166,7 +166,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		if (standAloneViewer) {
 			recViewer.setSceneUpdatesEnabled(false);
 			result.forEach(tree -> {
-				if (tree != null && !tree.isEmpty()) recViewer.add(tree);
+				if (tree != null && !tree.isEmpty()) recViewer.addTree(tree);
 			});
 			recViewer.setSceneUpdatesEnabled(true);
 		}

@@ -553,10 +553,10 @@ public class Viewer3D {
 	 *          Trees, if not (or no label exists) a unique label will be
 	 *          generated.
 	 * @see Tree#getLabel()
-	 * @see #remove(String)
+	 * @see #removeTree(String)
 	 * @see #updateView()
 	 */
-	public void add(final Tree tree) {
+	public void addTree(final Tree tree) {
 		final String label = getUniqueLabel(plottedTrees, "Tree ", tree.getLabel());
 		final ShapeTree shapeTree = new ShapeTree(tree);
 		plottedTrees.put(label, shapeTree);
@@ -744,7 +744,7 @@ public class Viewer3D {
 	 * Returns the Collection of Trees in this viewer.
 	 *
 	 * @return the rendered Trees (keys being the Tree identifier as per
-	 *         {@link #add(Tree)})
+	 *         {@link #addTree(Tree)})
 	 */
 	private Map<String, Shape> getTrees() {
 		final Map<String, Shape> map = new HashMap<>();
@@ -773,10 +773,10 @@ public class Viewer3D {
 	 *
 	 * @param tree the tree to be removed.
 	 * @return true, if tree was successfully removed.
-	 * @see #add(Tree)
+	 * @see #addTree(Tree)
 	 */
-	public boolean remove(final Tree tree) {
-		return remove(getLabel(tree));
+	public boolean removeTree(final Tree tree) {
+		return removeTree(getLabel(tree));
 	}
 
 	/**
@@ -784,9 +784,9 @@ public class Viewer3D {
 	 *
 	 * @param treeLabel the key defining the tree to be removed.
 	 * @return true, if tree was successfully removed.
-	 * @see #add(Tree)
+	 * @see #addTree(Tree)
 	 */
-	public boolean remove(final String treeLabel) {
+	public boolean removeTree(final String treeLabel) {
 		final ShapeTree shapeTree = plottedTrees.get(treeLabel);
 		if (shapeTree == null) return false;
 		boolean removed = plottedTrees.remove(treeLabel) != null;
@@ -841,7 +841,7 @@ public class Viewer3D {
 	/**
 	 * Removes all the Trees from current viewer
 	 */
-	public void removeAll() {
+	public void removeAllTrees() {
 		final Iterator<Entry<String, ShapeTree>> it = plottedTrees.entrySet()
 			.iterator();
 		while (it.hasNext()) {
@@ -915,7 +915,7 @@ public class Viewer3D {
 		}
 		else {
 			tree.setLabel(PATH_MANAGER_TREE_LABEL);
-			add(tree);
+			addTree(tree);
 		}
 		updateView();
 		return plottedTrees.get(PATH_MANAGER_TREE_LABEL).get().isDisplayed();
@@ -964,7 +964,7 @@ public class Viewer3D {
 	 * Toggles the visibility of a rendered Tree or a loaded OBJ mesh.
 	 *
 	 * @param treeOrObjLabel the unique identifier of the Tree (as per
-	 *          {@link #add(Tree)}), or the filename of the loaded OBJ
+	 *          {@link #addTree(Tree)}), or the filename of the loaded OBJ
 	 *          {@link #loadMesh(String, ColorRGB, double)}
 	 * @param visible whether the Object should be displayed
 	 */
@@ -980,7 +980,7 @@ public class Viewer3D {
 	 * {@link Tree}s.
 	 *
 	 * @param treeLabels the collection of Tree identifiers (as per
-	 *          {@link #add(Tree)}) specifying the Trees to be color mapped
+	 *          {@link #addTree(Tree)}) specifying the Trees to be color mapped
 	 * @param measurement the mapping measurement e.g.,
 	 *          {@link MultiTreeColorMapper#TOTAL_LENGTH}
 	 *          {@link MultiTreeColorMapper#TOTAL_N_TIPS}, etc.
@@ -1041,7 +1041,7 @@ public class Viewer3D {
 	/**
 	 * Runs {@link TreeColorMapper} on the specified {@link Tree}.
 	 *
-	 * @param treeLabel the identifier of the Tree (as per {@link #add(Tree)})to
+	 * @param treeLabel the identifier of the Tree (as per {@link #addTree(Tree)})to
 	 *          be color mapped
 	 * @param measurement the mapping measurement e.g.,
 	 *          {@link TreeColorMapper#BRANCH_ORDER}
@@ -1096,7 +1096,7 @@ public class Viewer3D {
 	 * @see #setFont(Font, float, ColorRGB)
 	 * @see #setLabelLocation(float, float)
 	 */
-	public void setLabel(final String label) {
+	public void addLabel(final String label) {
 		((AChart)chart).overlayAnnotation.label = label;
 	}
 
@@ -1195,7 +1195,7 @@ public class Viewer3D {
 	 * @return true, if successful
 	 * @throws IllegalArgumentException if mesh could not be compiled
 	 */
-	public boolean loadMesh(final OBJMesh objMesh) throws IllegalArgumentException {
+	public boolean addMesh(final OBJMesh objMesh) throws IllegalArgumentException {
 		return loadOBJMesh(objMesh) != null;
 	}
 
@@ -1261,7 +1261,7 @@ public class Viewer3D {
 		}
 		objMesh.setLabel(label);
 		objMesh.drawable.setColor(getNonUserDefColor());
-		if (loadMesh(objMesh)) validate();
+		if (addMesh(objMesh)) validate();
 		return objMesh;
 	}
 
@@ -1933,7 +1933,7 @@ public class Viewer3D {
 					"Remove all items from scene? This action cannot be undone.",
 					"Wipe Scene?"))
 				{
-					Viewer3D.this.removeAll();
+					Viewer3D.this.removeAllTrees();
 					removeAllMeshes();
 					removeColorLegends(false);
 					// Ensure nothing else remains (e.g., a Delaunay surface)
@@ -2082,7 +2082,7 @@ public class Viewer3D {
 				if (selectedKeys.size() == 1 && CheckBoxList.ALL_ENTRY.equals(selectedKeys.get(0)) && !noItems
 						&& guiUtils.getConfirmation("Remove all item(s)? This action cannot be undone.",
 								"Clear List?")) {
-					Viewer3D.this.removeAll();
+					Viewer3D.this.removeAllTrees();
 					removeAllMeshes();
 					return;
 				}
@@ -2672,7 +2672,7 @@ public class Viewer3D {
 					return;
 				}
 				Viewer3D.this.setSceneUpdatesEnabled(false);
-				keys.stream().forEach(k -> Viewer3D.this.remove(k));
+				keys.stream().forEach(k -> Viewer3D.this.removeTree(k));
 				Viewer3D.this.setSceneUpdatesEnabled(true);
 				Viewer3D.this.updateView();
 			});
@@ -2684,7 +2684,7 @@ public class Viewer3D {
 				{
 					return;
 				}
-				Viewer3D.this.removeAll();
+				Viewer3D.this.removeAllTrees();
 			});
 			tracesMenu.add(mi);
 			return tracesMenu;
@@ -2986,7 +2986,7 @@ public class Viewer3D {
 					if (fName.endsWith("swc") || fName.endsWith(".traces") || fName.endsWith(".json")) { // reconstruction:
 						final Tree tree = new Tree(file.getAbsolutePath());
 						tree.setColor(uniqueColors[idx]);
-						Viewer3D.this.add(tree);
+						Viewer3D.this.addTree(tree);
 					} else if (fName.endsWith("obj")) {
 						loadMesh(file.getAbsolutePath(), uniqueColors[idx], 75d);
 					} else {
@@ -3316,7 +3316,7 @@ public class Viewer3D {
 		private void assembleShape() {
 
 			final List<LineStrip> lines = new ArrayList<>();
-			final List<PointInImage> somaPoints = new ArrayList<>();
+			final List<SWCPoint> somaPoints = new ArrayList<>();
 			final List<java.awt.Color> somaColors = new ArrayList<>();
 
 			for (final Path p : tree.list()) {
@@ -3325,8 +3325,9 @@ public class Viewer3D {
 				if (Path.SWC_SOMA == p.getSWCType()) {
 					for (int i = 0; i < p.size(); i++) {
 						final PointInImage pim = p.getNode(i);
-						pim.v = p.getNodeRadius(i);
-						somaPoints.add(pim);
+						final SWCPoint swcPoint = new SWCPoint(-1, Path.SWC_SOMA, pim.x, pim.y, pim.z,
+								p.getNodeRadius(i), -1);
+						somaPoints.add(swcPoint);
 					}
 					if (p.hasNodeColors()) {
 						somaColors.addAll(Arrays.asList(p.getNodeColors()));
@@ -3369,7 +3370,7 @@ public class Viewer3D {
 			// shape.setWireframeDisplayed(true);
 		}
 
-		private void assembleSoma(final List<PointInImage> somaPoints,
+		private void assembleSoma(final List<SWCPoint> somaPoints,
 			final List<java.awt.Color> somaColors)
 		{
 			final Color color = fromAWTColor(SNTColor.average(somaColors));
@@ -3380,14 +3381,13 @@ public class Viewer3D {
 					return;
 				case 1:
 					// single point soma: http://neuromorpho.org/SomaFormat.html
-					final PointInImage sCenter = somaPoints.get(0);
-					somaSubShape = sphere(sCenter, color);
+					somaSubShape = sphere(somaPoints.get(0), color);
 					return;
 				case 3:
 					// 3 point soma representation: http://neuromorpho.org/SomaFormat.html
-					final PointInImage p1 = somaPoints.get(0);
-					final PointInImage p2 = somaPoints.get(1);
-					final PointInImage p3 = somaPoints.get(2);
+					final SWCPoint p1 = somaPoints.get(0);
+					final SWCPoint p2 = somaPoints.get(1);
+					final SWCPoint p3 = somaPoints.get(2);
 					final Tube t1 = tube(p2, p1, color);
 					final Tube t2 = tube(p1, p3, color);
 					final Shape composite = new Shape();
@@ -3397,8 +3397,7 @@ public class Viewer3D {
 					return;
 				default:
 					// just create a centroid sphere
-					final PointInImage cCenter = PointInImage.average(somaPoints);
-					somaSubShape = sphere(cCenter, color);
+					somaSubShape = sphere(SNTPoint.average(somaPoints), color);
 					return;
 			}
 		}
@@ -3412,21 +3411,21 @@ public class Viewer3D {
 			t.setWireframeDisplayed(true);
 		}
 
-		private Tube tube(final PointInImage bottom, final PointInImage top,
+		private Tube tube(final SWCPoint bottom, final SWCPoint top,
 			final Color color)
 		{
 			final Tube tube = new Tube();
 			tube.setPosition(new Coord3d((bottom.x + top.x) / 2, (bottom.y + top.y) /
 				2, (bottom.z + top.z) / 2));
 			final float height = (float) bottom.distanceTo(top);
-			tube.setVolume((float) bottom.v, (float) top.v, height);
+			tube.setVolume((float) bottom.radius, (float) top.radius, height);
 			return tube;
 		}
 
-		private Sphere sphere(final PointInImage center, final Color color) {
+		private Sphere sphere(final SWCPoint center, final Color color) {
 			final Sphere s = new Sphere();
 			s.setPosition(new Coord3d(center.x, center.y, center.z));
-			final float radius = (float) Math.max(center.v, SOMA_SCALING_FACTOR *
+			final float radius = (float) Math.max(center.radius, SOMA_SCALING_FACTOR *
 				defThickness);
 			s.setVolume(radius);
 			setWireFrame(s, radius, color);
@@ -4173,7 +4172,7 @@ public class Viewer3D {
 	 * Translates the specified collection of {@link Tree}s.
 	 *
 	 * @param treeLabels the collection of Tree identifiers (as per
-	 *          {@link #add(Tree)}) specifying the Trees to be translated
+	 *          {@link #addTree(Tree)}) specifying the Trees to be translated
 	 * @param offset the translation offset. If null, trees position will be reset
 	 *          to their original location.
 	 */

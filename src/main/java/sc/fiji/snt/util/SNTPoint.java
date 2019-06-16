@@ -22,6 +22,9 @@
 
 package sc.fiji.snt.util;
 
+
+import java.util.Collection;
+
 import sc.fiji.snt.annotation.BrainAnnotation;
 
 /**
@@ -50,5 +53,32 @@ public interface SNTPoint {
 
 	/** @return the neuropil annotation assigned to this point */
 	public BrainAnnotation getAnnotation();
+
+	@SuppressWarnings("unchecked")
+	public static <T extends SNTPoint> T average(final Collection<T> points) {
+		double x = 0;
+		double y = 0;
+		double z = 0;
+		double v = 0;
+		if (points.isEmpty())
+			return null;
+		final Class<? extends SNTPoint> type = points.iterator().next().getClass();
+		for (final SNTPoint p : points) {
+			x += p.getX();
+			y += p.getY();
+			z += p.getZ();
+			if (type.isInstance(PointInImage.class))
+				v += ((PointInImage) p).v;
+			else if (type.isInstance(SWCPoint.class))
+				v += ((SWCPoint) p).radius;
+		}
+		final int n = points.size();
+		if (type.isInstance(SWCPoint.class)) {
+			return (T) new SWCPoint(-1, -1, x / n, y / n, z / n, v / n, -1);
+		}
+		final PointInImage result = new PointInImage(x / n, y / n, z / n);
+		result.v = v / n;
+		return (T) result;
+	}
 
 }

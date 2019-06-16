@@ -22,7 +22,6 @@
 
 package sc.fiji.snt.util;
 
-import java.util.List;
 import java.util.Objects;
 
 import ij.measure.Calibration;
@@ -107,6 +106,21 @@ public class PointInImage implements SNTPoint {
 	}
 
 	/**
+	 * Scales this point coordinates.
+	 *
+	 * @param xScale the scaling factor for x coordinates
+	 * @param yScale the scaling factor for y coordinates
+	 * @param zScale the scaling factor for z coordinates
+	 */
+	public void scale(final double xScale, final double yScale,
+		final double zScale)
+	{
+		x *= xScale;
+		y *= yScale;
+		z *= zScale;
+	}
+
+	/**
 	 * Converts the coordinates of this point into pixel units if this point is
 	 * associated with a Path.
 	 *
@@ -160,21 +174,23 @@ public class PointInImage implements SNTPoint {
 		return new UPoint(x, y, z);
 	}
 
-	public static PointInImage average(final List<PointInImage> points) {
-		double x = 0;
-		double y = 0;
-		double z = 0;
-		double v = 0;
-		for (final PointInImage p : points) {
-			x += p.x;
-			y += p.y;
-			z += p.z;
-			v += p.v;
-		}
-		final int n = points.size();
-		final PointInImage result = new PointInImage(x / n, y / n, z / n);
-		result.v = v / n;
-		return result;
+	/**
+	 * Returns the Path associated with this node (if any)
+	 * 
+	 * @return the path associated with this node or null if
+	 *         {@link #setPath(Path)} has not been called.
+	 */
+	public Path getPath() {
+		return onPath;
+	}
+
+	/**
+	 * Associates a Path with this node
+	 * 
+	 * @param onPath the Path to be associated with this node
+	 */
+	public void setPath(final Path onPath) {
+		this.onPath = onPath;
 	}
 
 	@Override

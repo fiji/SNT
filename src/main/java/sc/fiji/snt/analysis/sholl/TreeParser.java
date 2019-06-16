@@ -38,6 +38,7 @@ import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SNTPoint;
 import sholl.Profile;
 import sholl.ProfileEntry;
 import sholl.ShollUtils;
@@ -167,7 +168,7 @@ public class TreeParser implements Parser {
 				points.add(p.getNode(0));
 			}
 		}
-		return (points.isEmpty()) ? null : PointInImage.average(points);
+		return (points.isEmpty()) ? null : SNTPoint.average(points);
 	}
 
 	/**

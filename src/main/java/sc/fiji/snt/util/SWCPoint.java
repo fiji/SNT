@@ -41,7 +41,7 @@ import sc.fiji.snt.annotation.BrainAnnotation;
  *
  * @author Tiago Ferreira
  */
-public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
+public class SWCPoint extends PointInImage implements SNTPoint, Comparable<SWCPoint> {
 
 	/** The sample number of this node */
 	public int id;
@@ -55,15 +55,11 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	/** The parent id of this node */
 	public int parent;
 
-	/** The cartesian coordinate of this node */
-	public double x, y, z;
-
 	/** The radius of reconstructed structure at this node */
 	public double radius;
 
 	private final List<SWCPoint> nextPoints;
 	private SWCPoint previousPoint;
-	private Path onPath = null;
 
 	/** Optional attribute: BrainAnnotation */
 	private BrainAnnotation annotation;
@@ -71,25 +67,12 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	public SWCPoint(final int id, final int type, final double x, final double y,
 		final double z, final double radius, final int parent)
 	{
+		super(x, y, z);
 		nextPoints = new ArrayList<>();
 		this.id = id;
 		this.type = type;
-		this.x = x;
-		this.y = y;
-		this.z = z;
 		this.radius = radius;
 		this.parent = parent;
-	}
-
-	/**
-	 * Gets this node as a {@link PointInImage} object.
-	 *
-	 * @return the PointInImage node.
-	 */
-	public PointInImage getPointInImage() {
-		final PointInImage pim = new PointInImage(x, y, z);
-		pim.onPath = onPath;
-		return pim;
 	}
 
 	/**
@@ -253,25 +236,6 @@ public class SWCPoint implements SNTPoint, Comparable<SWCPoint> {
 	 */
 	public List<SWCPoint> getNextPoints() {
 		return nextPoints;
-	}
-
-	/**
-	 * Returns the Path associated with this node (if any)
-	 * 
-	 * @return the path associated with this node or null if
-	 *         {@link #setOnPath(Path)} has not been called.
-	 */
-	public Path getOnPath() {
-		return onPath;
-	}
-
-	/**
-	 * Associates a Path with this node
-	 * 
-	 * @param onPath the Path to be associated with this node
-	 */
-	public void setOnPath(final Path onPath) {
-		this.onPath = onPath;
 	}
 
 }

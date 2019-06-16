@@ -346,7 +346,12 @@ public class MouseLightLoader {
 		final Map<String, TreeSet<SWCPoint>> inMap = new HashMap<>();
 		inMap.put(id, getNodes(compartment));
 		final Map<String, Tree> outMap = pafm.importNeurons(inMap, color, "um");
-		return outMap.get(id);
+		final Tree tree = outMap.get(id);
+		if (!compartment.startsWith("all") && !compartment.startsWith("full"))
+			tree.setLabel(""+ id + " ("+ compartment + ")");
+		else
+			tree.setLabel(""+ id);
+		return tree;
 	}
 
 	/**
@@ -361,6 +366,18 @@ public class MouseLightLoader {
 	public Tree getTree(final String compartment) throws IllegalArgumentException
 	{
 		return getTree(compartment, null);
+	}
+
+	/**
+	 * Script-friendly method to extract the entire neuron as a collection of Paths.
+	 *
+	 * @return the neuron as a {@link Tree}, or null if data could not be retrieved
+	 * @throws IllegalArgumentException if retrieval of data for this neuron is not
+	 *                                  possible
+	 */
+	public Tree getTree() throws IllegalArgumentException
+	{
+		return getTree("all", null);
 	}
 
 	/**

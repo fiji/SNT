@@ -1642,6 +1642,7 @@ public class SNT extends MultiDThreePanes implements
 		if (justFirstPoint()) {
 			final PointInImage p = new PointInImage(last_start_point_x * x_spacing,
 				last_start_point_y * y_spacing, last_start_point_z * z_spacing);
+			p.onPath = currentPath;
 			currentPath.addPointDouble(p.x, p.y, p.z);
 			currentPath.endJoinsPoint = p;
 			currentPath.startJoinsPoint = p;

@@ -441,12 +441,14 @@ public class Path implements Comparable<Path> {
 				"setJoin for START should not replace another join");
 			startJoins = other;
 			startJoinsPoint = joinPoint;
+			startJoinsPoint.onPath = this;
 		}
 		else if (startOrEnd == PATH_END) {
 			if (endJoins != null) throw new IllegalArgumentException(
 				"setJoin for END should not replace another join");
 			endJoins = other;
 			endJoinsPoint = joinPoint;
+			endJoinsPoint.onPath = this;
 		}
 		else {
 			SNTUtils.log("BUG: unknown first parameter to setJoin");

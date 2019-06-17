@@ -30,6 +30,8 @@ import org.jzy3d.colors.Color;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.plot3d.builder.Builder;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
+import org.jzy3d.plot3d.primitives.LineStrip;
+import org.jzy3d.plot3d.primitives.Point;
 import org.jzy3d.plot3d.primitives.Scatter;
 import org.jzy3d.plot3d.primitives.Shape;
 import org.scijava.util.ColorRGB;
@@ -51,18 +53,38 @@ public class Annotation3D {
 
 	protected static final int SCATTER = 0;
 	protected static final int SURFACE = 1;
+	protected static final int STRIP = 2;
+	protected static final int Q_TIP = 3;
+
 
 	private final Viewer3D viewer;
 	private final Collection<? extends SNTPoint> points;
 	private final AbstractDrawable drawable;
+	private final int type;
 	private float size;
 	private String label;
 
 	protected Annotation3D(final Viewer3D viewer, final Collection<? extends SNTPoint> points, final int type) {
 		this.viewer = viewer;
 		this.points = points;
+		this.type = type;
 		size = viewer.getDefaultThickness();
-		drawable = (type == SCATTER) ? assembleScatter() : assembleSurface();
+		switch(type) {
+		case SCATTER:
+			drawable = assembleScatter();
+			break;
+		case SURFACE:
+			drawable = assembleSurface();
+			break;
+		case STRIP:
+			drawable = assembleStrip();
+			break;
+		case Q_TIP:
+			drawable = assembleQTip();
+			break;
+		default:
+			throw new IllegalArgumentException("Unrecognized type "+ type);
+		}
 		setSize(-1);
 	}
 
@@ -109,6 +131,39 @@ public class Annotation3D {
 		return scatter;
 	}
 
+	private AbstractDrawable assembleStrip() {
+		final ArrayList<Point> linePoints = new ArrayList<>(points.size());
+		for (final SNTPoint point : points) {
+			if (point == null) continue;
+			final Coord3d coord = new Coord3d(point.getX(), point.getY(), point.getZ());
+			Color color= viewer.getDefColor();
+			if (point instanceof PointInImage && ((PointInImage) point).getPath() != null) {
+				final Path path = ((PointInImage) point).getPath();
+				final int nodeIndex = path.getNodeIndex(((PointInImage) point));
+				if (nodeIndex > -1) {
+					color = viewer.fromAWTColor((path.hasNodeColors()) ? path.getNodeColor(nodeIndex) : path.getColor());
+				}
+			}
+			linePoints.add(new Point(coord, color));
+		}
+		final LineStrip line = new LineStrip();
+		line.addAll(linePoints);
+		//line.setShowPoints(true);
+		//line.setStipple(true);
+		//line.setStippleFactor(2);
+		//line.setStipplePattern((short) 0xAAAA);
+		return line;
+	}
+
+	private AbstractDrawable assembleQTip() {
+		final LineStrip line = (LineStrip)assembleStrip();
+		if (line.getPoints().size() < 2) return line;
+		final Shape shape = new Shape();
+		shape.add(line);
+		shape.add(assembleScatter());
+		return shape;
+	}
+
 	/**
 	 * Sets the annotation width.
 	 *
@@ -116,11 +171,29 @@ public class Annotation3D {
 	 */
 	public void setSize(final float size) {
 		this.size = (size < 0) ? viewer.getDefaultThickness() : size;
-		if (drawable != null) {
-			if (drawable instanceof Scatter)
-				((Scatter) drawable).setWidth(this.size);
-			else if (drawable instanceof Shape)
-				((Shape) drawable).setWireframeWidth(this.size);
+		if (drawable == null)
+			return;
+		switch (type) {
+		case SCATTER:
+			((Scatter) drawable).setWidth(this.size);
+			break;
+		case SURFACE:
+			((Shape) drawable).setWireframeWidth(this.size);
+			break;
+		case STRIP:
+			((LineStrip) drawable).setWidth(this.size);
+			break;
+		case Q_TIP:
+			for (final AbstractDrawable drawable : ((Shape) drawable).getDrawables()) {
+				if (drawable instanceof LineStrip) {
+					((LineStrip) drawable).setWidth(this.size / 4);
+				} else if (drawable instanceof Scatter) {
+					((Scatter) drawable).setWidth(this.size);
+				}
+			}
+			break;
+		default:
+			throw new IllegalArgumentException("Unrecognized type " + type);
 		}
 	}
 
@@ -137,12 +210,32 @@ public class Annotation3D {
 		final ColorRGB inputColor = (color == null) ? Colors.WHITE : color;
 		final Color c = new Color(inputColor.getRed(), inputColor.getGreen(), inputColor.getBlue(),
 				(int) Math.round((100 - transparencyPercent) * 255 / 100));
-		if (drawable instanceof Scatter) {
+		if (drawable == null)
+			return;
+		switch (type) {
+		case SCATTER:
 			((Scatter) drawable).setColors(null);
 			((Scatter) drawable).setColor(c);
-		} else if (drawable instanceof Shape) {
+			break;
+		case SURFACE:
 			((Shape) drawable).setColor(c);
 			((Shape) drawable).setWireframeColor(Viewer3D.Utils.contrastColor(c));
+			break;
+		case STRIP:
+			((LineStrip) drawable).setColor(c);
+			break;
+		case Q_TIP:
+			for (final AbstractDrawable drawable : ((Shape) drawable).getDrawables()) {
+				if (drawable instanceof LineStrip) {
+					((LineStrip) drawable).setColor(c);
+				} else if (drawable instanceof Scatter) {
+					((Scatter) drawable).setColors(null);
+					((Scatter) drawable).setColor(c);
+				}
+			}
+			break;
+		default:
+			throw new IllegalArgumentException("Unrecognized type " + type);
 		}
 	}
 

@@ -594,14 +594,14 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Adds an highlighting a point annotation to this viewer.
+	 * Adds an highlighting point annotation to this viewer.
 	 *
 	 * @param point the point to be highlighted
 	 * @param label the (optional) annotation identifier. If null or empty, a unique
 	 *              label will be generated.
 	 * @return the {@link Annotation3D}
 	 */
-	public Annotation3D annotatePoint(SNTPoint point, final String label) {
+	public Annotation3D annotatePoint(final SNTPoint point, final String label) {
 		final Annotation3D annotation = annotatePoints(Collections.singleton(point), label);
 		return annotation;
 	}
@@ -617,6 +617,29 @@ public class Viewer3D {
 	public Annotation3D annotatePoints(final Collection<? extends SNTPoint> points, final String label) {
 		final Annotation3D annotation = new Annotation3D(this, points, Annotation3D.SCATTER);
 		final String uniqueLabel = getUniqueLabel(plottedAnnotations, "Surf. Annot.", label);
+		annotation.setLabel(uniqueLabel);
+		plottedAnnotations.put(uniqueLabel, annotation.getDrawable());
+		addItemToManager(uniqueLabel);
+		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
+		return annotation;
+	}
+
+	/**
+	 * Adds a line annotation to this viewer.
+	 *
+	 * @param points the collection of points in the line annotation (at least 2
+	 *               elements required). Start and end of line are highlighted if 2
+	 *               points are specified.
+	 * @param label  the (optional) annotation identifier. If null or empty, a
+	 *               unique label will be generated.
+	 * @return the {@link Annotation3D} or null if collection contains less than 2
+	 *         elements
+	 */
+	public Annotation3D annotateLine(final Collection<? extends SNTPoint> points, final String label) {
+		if (points == null | points.size() < 2) return null;
+		final int type = (points.size()==2) ? Annotation3D.Q_TIP : Annotation3D.STRIP;
+		final Annotation3D annotation = new Annotation3D(this, points, type);
+		final String uniqueLabel = getUniqueLabel(plottedAnnotations, "Line Annot.", label);
 		annotation.setLabel(uniqueLabel);
 		plottedAnnotations.put(uniqueLabel, annotation.getDrawable());
 		addItemToManager(uniqueLabel);
@@ -4402,8 +4425,13 @@ public class Viewer3D {
 		final OBJMesh brainMesh = jzy3D.loadRefBrain("Allen CCF");
 		brainMesh.setBoundingBoxColor(Colors.RED);
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-		final Annotation3D annotation = jzy3D.annotatePoints(analyzer.getTips(), "tips");
+		final ArrayList<SNTPoint >selectedTips = new ArrayList<>();
+		selectedTips.add(SNTPoint.average(analyzer.getTips()));
+		selectedTips.add(AllenUtils.brainBarycentre());
+		final Annotation3D annotation = jzy3D.annotateLine(selectedTips, "dummy");
+		annotation.setColor("orange");
 		annotation.setSize(10);
+		jzy3D.annotatePoints(analyzer.getTips(), "tips");
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);

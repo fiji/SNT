@@ -1973,7 +1973,12 @@ public class PathAndFillManager extends DefaultHandler implements
 					final double x = xScale * Double.parseDouble(fields[2]) + xOffset;
 					final double y = yScale * Double.parseDouble(fields[3]) + yOffset;
 					final double z = zScale * Double.parseDouble(fields[4]) + zOffset;
-					final double radius = Double.parseDouble(fields[5]);
+					double radius;
+					try {
+						radius = Double.parseDouble(fields[5]);
+					} catch (final NumberFormatException ignored) {
+						radius = 0; // files in which radius is set to NaN
+					}
 					final int previous = Integer.parseInt(fields[6]);
 					nodes.add(new SWCPoint(id, type, x, y, z, radius, previous));
 				}

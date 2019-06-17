@@ -137,7 +137,7 @@ public class AllenCompartment implements BrainAnnotation {
 	 *         {@link #getTreePath()} contains this compartment
 	 */
 	public boolean contains(final AllenCompartment childCompartment) {
-		return childCompartment.getStructureIdPath().contains(String.valueOf(id()));
+		return childCompartment != null && childCompartment.getStructureIdPath().contains(String.valueOf(id()));
 	}
 
 	/**

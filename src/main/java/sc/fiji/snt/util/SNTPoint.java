@@ -73,12 +73,12 @@ public interface SNTPoint {
 				v += ((SWCPoint) p).radius;
 		}
 		final int n = points.size();
-		if (type.isInstance(SWCPoint.class)) {
-			return (T) new SWCPoint(-1, -1, x / n, y / n, z / n, v / n, -1);
+		if (type.isInstance(PointInImage.class)) {
+			final PointInImage result = new PointInImage(x / n, y / n, z / n);
+			result.v = v / n;
+			return (T) result;
 		}
-		final PointInImage result = new PointInImage(x / n, y / n, z / n);
-		result.v = v / n;
-		return (T) result;
+		return (T) new SWCPoint(-1, -1, x / n, y / n, z / n, v / n, -1);
 	}
 
 }

@@ -161,6 +161,19 @@ public class Annotation3D {
 	}
 
 	/**
+	 * Script friendly method to assign a color to the annotation.
+	 *
+	 * @param color               the color to render the imported file, either a 1)
+	 *                            HTML color codes starting with hash ({@code #}), a
+	 *                            color preset ("red", "blue", etc.), or integer
+	 *                            triples of the form {@code r,g,b} and range
+	 *                            {@code [0, 255]}
+	 */
+	public void setColor(final String color) {
+		setColor(new ColorRGB(color), 10d);
+	}
+
+	/**
 	 * Determines whether the mesh bounding box should be displayed.
 	 * 
 	 * @param boundingBoxColor the color of the mesh bounding box. If null, no

@@ -59,9 +59,9 @@ def run():
     # and compartment associated with soma of downloaded cell
     brainMesh = AllenUtils.getCompartment("Whole Brain").getMesh()
     brainMesh.setBoundingBoxColor(Colors.GRAY)
-    viewer.loadMesh(brainMesh)
+    viewer.add(brainMesh)
     soma_annotation = next(iter(loader.getNodes("soma"))).getAnnotation()
-    viewer.loadMesh(soma_annotation.getMesh())
+    viewer.add(soma_annotation.getMesh())
 
     # Display scene
     viewer.setViewMode(ViewMode.SIDE)

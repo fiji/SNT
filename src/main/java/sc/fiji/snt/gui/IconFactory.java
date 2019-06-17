@@ -99,6 +99,7 @@ public class IconFactory {
 			KEYBOARD('\uf11c', false), //
 			LINK('\uf0c1', true), //
 			LIST('\uf03a', true), //
+			MARKER('\uf3c5', true), //
 			MASKS('\uf630', true), //
 			NAVIGATE('\uf14e', false), //
 			MOVE('\uf0b2', true), //

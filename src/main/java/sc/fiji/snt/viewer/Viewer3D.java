@@ -103,7 +103,6 @@ import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.maths.Rectangle;
 import org.jzy3d.plot2d.primitive.AWTColorbarImageGenerator;
-import org.jzy3d.plot3d.builder.Builder;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
 import org.jzy3d.plot3d.primitives.AbstractWireframeable;
 import org.jzy3d.plot3d.primitives.LineStrip;
@@ -195,6 +194,7 @@ import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTColor;
 import sc.fiji.snt.util.SNTPoint;
+import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.OBJMesh.RemountableDrawableVBO;
 
 /**
@@ -265,6 +265,7 @@ public class Viewer3D {
 	/* Maps for plotted objects */
 	private final Map<String, ShapeTree> plottedTrees;
 	private final Map<String, RemountableDrawableVBO> plottedObjs;
+	private final Map<String, AbstractDrawable> plottedAnnotations;
 
 	/* Settings */
 	private Color defColor;
@@ -311,6 +312,7 @@ public class Viewer3D {
 	public Viewer3D() {
 		plottedTrees = new TreeMap<>();
 		plottedObjs = new TreeMap<>();
+		plottedAnnotations = new TreeMap<>();
 		initView();
 		uuid = UUID.randomUUID();
 		prefs = new Prefs(this);
@@ -495,6 +497,9 @@ public class Viewer3D {
 			drawableVBO.unmount();
 			chart.add(drawableVBO, false);
 		});
+		plottedAnnotations.forEach((k, drawable) -> {
+			chart.add(drawable, false);
+		});
 		plottedTrees.values().forEach(shapeTree -> chart.add(shapeTree.get(),
 			false));
 	}
@@ -512,12 +517,15 @@ public class Viewer3D {
 				plottedObjs.forEach((k2, drawableVBO) -> {
 					drawableVBO.setDisplayed(selectedKeys.contains(k2));
 				});
+				plottedAnnotations.forEach((k2, drawable) -> {
+					drawable.setDisplayed(selectedKeys.contains(k2));
+				});
 				// view.shoot();
 			}
 		});
 	}
 
-	private Color fromAWTColor(final java.awt.Color color) {
+	protected Color fromAWTColor(final java.awt.Color color) {
 		return (color == null) ? getDefColor() : new Color(color.getRed(), color
 			.getGreen(), color.getBlue(), color.getAlpha());
 	}
@@ -566,45 +574,54 @@ public class Viewer3D {
 
 	/**
 	 * Computes a Delaunay surface from a collection of points and adds it to the
-	 * scene using default options.
-	 * 
+	 * scene as an annotation.
+	 *
 	 * @param points the collection of points defining the triangulated surface
-	 * @see #addSurface(Collection, ColorRGB, double)
+	 * @param label  the (optional) annotation identifier. If null or empty, a
+	 *               unique label will be generated.
+	 * @return the {@link Annotation3D}
+	 * @see #addSurface(Collection)
 	 */
-	public void addSurface(final Collection<? extends SNTPoint> points) {
-		addSurface(points, null, 50);
+	public Annotation3D annotateSurface(final Collection<? extends SNTPoint> points, final String label)
+	{
+		final Annotation3D annotation = new Annotation3D(this, points, Annotation3D.SURFACE);
+		final String uniquelabel = getUniqueLabel(plottedAnnotations, "Point Annot.", label);
+		annotation.setLabel(uniquelabel);
+		plottedAnnotations.put(uniquelabel, annotation.getDrawable());
+		addItemToManager(uniquelabel);
+		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
+		return annotation;
 	}
 
 	/**
-	 * Computes a Delaunay surface from a collection of points and adds it to the
-	 * scene.
+	 * Adds an highlighting a point annotation to this viewer.
 	 *
-	 * @param points the collection of points defining the triangulated surface
-	 * @param color the color to render the surface
-	 * @param transparencyPercent the color transparency (in percentage)
-	 * @see #addSurface(Collection)
+	 * @param point the point to be highlighted
+	 * @param label the (optional) annotation identifier. If null or empty, a unique
+	 *              label will be generated.
+	 * @return the {@link Annotation3D}
 	 */
-	public void addSurface(final Collection<? extends SNTPoint> points,
-		final ColorRGB color, final double transparencyPercent)
-	{
-		Color c = (color == null) ? Color.WHITE: fromColorRGB(color);
-		c = c.alphaSelf((float) (1 -transparencyPercent / 100));
-		addSurface(points, c);
+	public Annotation3D annotatePoint(SNTPoint point, final String label) {
+		final Annotation3D annotation = annotatePoints(Collections.singleton(point), label);
+		return annotation;
 	}
 
-	private void addSurface(final Collection<? extends SNTPoint> points,
-		final Color surfaceColor)
-	{
-		final List<Coord3d> coordinates = new ArrayList<>();
-		for (final SNTPoint point : points) {
-			coordinates.add(new Coord3d(point.getX(), point.getY(), point.getZ()));
-		}
-		final Shape surface = Builder.buildDelaunay(coordinates);
-		surface.setFaceDisplayed(true);
-		surface.setWireframeDisplayed(true);
-		surface.setColor(surfaceColor);
-		surface.setWireframeColor(Utils.contrastColor(surfaceColor));
-		chart.add(surface, viewUpdatesEnabled);
+	/**
+	 * Adds a scatter (point cloud) annotation to this viewer.
+	 *
+	 * @param points the collection of points in the annotation
+	 * @param label  the (optional) annotation identifier. If null or empty, a
+	 *               unique label will be generated.
+	 * @return the {@link Annotation3D}
+	 */
+	public Annotation3D annotatePoints(final Collection<? extends SNTPoint> points, final String label) {
+		final Annotation3D annotation = new Annotation3D(this, points, Annotation3D.SCATTER);
+		final String uniqueLabel = getUniqueLabel(plottedAnnotations, "Surf. Annot.", label);
+		annotation.setLabel(uniqueLabel);
+		plottedAnnotations.put(uniqueLabel, annotation.getDrawable());
+		addItemToManager(uniqueLabel);
+		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
+		return annotation;
 	}
 
 	private void addItemToManager(final String label) {
@@ -717,6 +734,9 @@ public class Viewer3D {
 			});
 			plottedObjs.forEach((k, drawableVBO) -> {
 				chart.add(drawableVBO, viewUpdatesEnabled);
+			});
+			plottedAnnotations.forEach((k, drawable) -> {
+				chart.add(drawable, viewUpdatesEnabled);
 			});
 		}
 		frame = (width < 0 || height < 0) ? 
@@ -853,6 +873,59 @@ public class Viewer3D {
 		if (viewUpdatesEnabled) chart.render();
 	}
 
+	private void removeSceneObject(final String label) {
+		if (!removeTree(label)) {
+			if (!removeMesh(label))
+				removeDrawable(plottedAnnotations, label);
+		}
+	}
+
+	/**
+	 * Script friendly method to add a supported object ({@link Tree},
+	 * {@link OBJMesh}, {@link AbstractDrawable}, etc.) to this viewer.
+	 *
+	 * @param object the object to be added
+	 * @throws IllegalArgumentException if object is not supported
+	 */
+	public void add(final Object object) {
+		try {
+			if (object instanceof Tree) {
+				addTree((Tree) object);
+			} else if (object instanceof OBJMesh) {
+				addMesh((OBJMesh) object);
+			} else if (object instanceof String) {
+				addLabel((String) object);
+			} else if (object instanceof AbstractDrawable) {
+				chart.add((AbstractDrawable) object, viewUpdatesEnabled);
+			} else {
+				throw new IllegalArgumentException("Unsupported object: " + object.getClass().getName());
+			}
+		} catch (final ClassCastException ex) {
+			throw new IllegalArgumentException(ex.getMessage());
+		}
+	}
+
+	/**
+	 * Script friendly method to remove an object ({@link Tree}, {@link OBJMesh},
+	 * {@link AbstractDrawable}, etc.) from this viewer's scene.
+	 *
+	 * @param object the object to be removed, or the unique String identifying it
+	 * @throws IllegalArgumentException if object is not supported
+	 */
+	public void remove(final Object object) {
+		if (object instanceof Tree) {
+			removeTree((Tree) object);
+		} else if (object instanceof OBJMesh) {
+			removeMesh((OBJMesh) object);
+		} else if (object instanceof String) {
+			removeSceneObject((String) object);
+		} else if (object instanceof AbstractDrawable && chart != null) {
+			chart.getScene().getGraph().remove((AbstractDrawable) object, viewUpdatesEnabled);
+		} else {
+			throw new IllegalArgumentException("Unsupported object: " + object.getClass().getName());
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	private List<String> getLabelsCheckedInManager() {
 		final Object[] values = managerList.getCheckBoxListSelectedValues();
@@ -939,7 +1012,8 @@ public class Viewer3D {
 		final List<String> selectedKeys = getLabelsCheckedInManager();
 		final BoundingBox3d viewBounds = chart.view().getBounds();
 		return allDrawablesRendered(viewBounds, plottedObjs, selectedKeys) &&
-			allDrawablesRendered(viewBounds, getTrees(), selectedKeys);
+			allDrawablesRendered(viewBounds, getTrees(), selectedKeys) &&
+			allDrawablesRendered(viewBounds, plottedAnnotations, selectedKeys);
 	}
 
 	/** returns true if a drawable was removed */
@@ -1300,7 +1374,7 @@ public class Viewer3D {
 		return (isDarkModeOn()) ? DEF_COLOR : INVERTED_DEF_COLOR;
 	}
 
-	private Color getDefColor() {
+	protected Color getDefColor() {
 		return (defColor == null) ? getNonUserDefColor() : defColor;
 	}
 
@@ -2090,9 +2164,7 @@ public class Viewer3D {
 					selectedKeys.forEach(k -> {
 						if (k.equals(CheckBoxList.ALL_ENTRY))
 							return; // continue in lambda expression
-						final String label = k.toString();
-						if (!Viewer3D.this.remove(label))
-							removeMesh(label);
+						removeSceneObject(k.toString());
 					});
 				}
 			});
@@ -2580,6 +2652,7 @@ public class Viewer3D {
 			private static final long serialVersionUID = 1L;
 			private final Icon treeIcon = IconFactory.getListIcon(GLYPH.TREE);
 			private final Icon meshIcon = IconFactory.getListIcon(GLYPH.CUBE);
+			private final Icon annotationIcon = IconFactory.getListIcon(GLYPH.MARKER);
 
 			@Override
 			public Component getListCellRendererComponent(final JList<?> list, final Object value, final int index,
@@ -2588,10 +2661,13 @@ public class Viewer3D {
 						cellHasFocus);
 				if (label.getText().equals(CheckBoxList.ALL_ENTRY.toString()))
 					return label;
-				if (plottedObjs.containsKey(label.getText()))
+				if (plottedAnnotations.containsKey(label.getText()))
+					label.setIcon(annotationIcon);
+				else if (plottedObjs.containsKey(label.getText()))
 					label.setIcon(meshIcon);
-				else
+				else 
 					label.setIcon(treeIcon);
+				
 				return label;
 			}
 
@@ -3349,7 +3425,7 @@ public class Viewer3D {
 						DEF_NODE_RADIUS);
 					line.add(new Point(coord, color, width));
 				}
-				line.setShowPoints(true);
+				line.setShowPoints(false);
 				line.setWireframeWidth(defThickness);
 				lines.add(line);
 			}
@@ -3481,12 +3557,13 @@ public class Viewer3D {
 
 	}
 
-	private static class Utils {
+	protected static class Utils {
 
-		private static Color contrastColor(final Color color) {
+		protected static Color contrastColor(final Color color) {
 			final float factor = 0.75f;
 			return new Color(factor - color.r, factor - color.g, factor - color.b);
 		}
+
 	}
 
 	private class CmdWorker extends SwingWorker<Boolean, Object> {
@@ -4125,7 +4202,7 @@ public class Viewer3D {
 	 *
 	 * @return the default line thickness used to render Paths without radius
 	 */
-	private float getDefaultThickness() {
+	protected float getDefaultThickness() {
 		return defThickness;
 	}
 
@@ -4325,7 +4402,8 @@ public class Viewer3D {
 		final OBJMesh brainMesh = jzy3D.loadRefBrain("Allen CCF");
 		brainMesh.setBoundingBoxColor(Colors.RED);
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-		jzy3D.addSurface(analyzer.getTips());
+		final Annotation3D annotation = jzy3D.annotatePoints(analyzer.getTips(), "tips");
+		annotation.setSize(10);
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);

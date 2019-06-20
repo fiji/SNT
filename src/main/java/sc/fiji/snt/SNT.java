@@ -1962,10 +1962,16 @@ public class SNT extends MultiDThreePanes implements
 		return imp;
 	}
 
-	public void startHessian(final String image, final double sigma, final double max) {
+	public void startHessian(final String image, final double sigma, final double max, final boolean wait) {
 		final HessianCaller hc = getHessianCaller(image);
 		hc.setSigmaAndMax(sigma, max);
-		hc.start();
+		if (wait) {
+			try {
+				hc.start().join();
+			} catch (final InterruptedException e) {
+				SNTUtils.error(e.getMessage(), e);
+			}
+		} else hc.start();
 	}
 
 	/**

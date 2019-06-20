@@ -97,7 +97,7 @@ public class HessianCaller {
 		return hessian != null;
 	}
 
-	public void start() {
+	public Thread start() {
 		if (hessian == null && cachedTubeness == null) {
 			SNTUtils.log("Computing Gaussian "+ toString());
 			snt.changeUIState((type == PRIMARY) ? SNTUI.CALCULATING_GAUSSIAN_I : SNTUI.CALCULATING_GAUSSIAN_II);
@@ -105,8 +105,11 @@ public class HessianCaller {
 				sigma = getDefaultSigma();
 			setImp();
 			hessian = new ComputeCurvatures(imp, sigma, snt, true);
-			new Thread(hessian).start();
+			final Thread thread = new Thread(hessian);
+			thread.start();
+			return thread;
 		}
+		return null;
 	}
 
 	private void setImp() {

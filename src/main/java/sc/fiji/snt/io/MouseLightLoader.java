@@ -117,6 +117,10 @@ public class MouseLightLoader {
 		return null;
 	}
 
+	public String getID() {
+		return id;
+	}
+
 	/**
 	 * Extracts the nodes (single-point soma, axonal and dendritic arbor) of the
 	 * loaded neuron.

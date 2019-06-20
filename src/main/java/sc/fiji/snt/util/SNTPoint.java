@@ -24,6 +24,7 @@ package sc.fiji.snt.util;
 
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import sc.fiji.snt.annotation.BrainAnnotation;
 
@@ -60,20 +61,24 @@ public interface SNTPoint {
 		double y = 0;
 		double z = 0;
 		double v = 0;
-		if (points.isEmpty())
+		if (points == null || points.isEmpty())
 			return null;
-		final Class<? extends SNTPoint> type = points.iterator().next().getClass();
-		for (final SNTPoint p : points) {
+		final Iterator<? extends SNTPoint> it = points.iterator();
+		boolean pim = false;
+		while (it.hasNext()) {
+			final SNTPoint p = it.next();
+			if (p == null) continue;
 			x += p.getX();
 			y += p.getY();
 			z += p.getZ();
-			if (type.isInstance(PointInImage.class))
+			if (pim || p instanceof PointInImage) {
 				v += ((PointInImage) p).v;
-			else if (type.isInstance(SWCPoint.class))
+				pim = true;
+			} else if (p instanceof SWCPoint)
 				v += ((SWCPoint) p).radius;
 		}
 		final int n = points.size();
-		if (type.isInstance(PointInImage.class)) {
+		if (pim) {
 			final PointInImage result = new PointInImage(x / n, y / n, z / n);
 			result.v = v / n;
 			return (T) result;

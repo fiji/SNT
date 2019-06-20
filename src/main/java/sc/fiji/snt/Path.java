@@ -820,7 +820,7 @@ public class Path implements Comparable<Path> {
 		if (tangents_y != null) dup.tangents_y = tangents_y.clone();
 		if (tangents_z != null) dup.tangents_z = tangents_z.clone();
 		if (nodeValues != null) dup.nodeValues = nodeValues.clone();
-		if (nodeAnnotations != null) System.arraycopy(nodeAnnotations, 0, dup.nodeAnnotations, 0, points);
+		if (nodeAnnotations != null) dup.nodeAnnotations = nodeAnnotations.clone();
 		dup.somehowJoins = (ArrayList<Path>) somehowJoins.clone();
 		dup.children = (ArrayList<Path>) children.clone();
 		if (startJoins != null) dup.startJoins = startJoins.clone();

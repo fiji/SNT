@@ -984,7 +984,7 @@ public class Viewer3D {
 				viewUpdatesEnabled);
 			if (removed) {
 				deleteItemFromManager(label);
-				if (frame.allenNavigator != null)
+				if (frame != null && frame.allenNavigator != null)
 					frame.allenNavigator.meshRemoved(label);
 			}
 		}

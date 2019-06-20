@@ -47,7 +47,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -474,6 +473,17 @@ public class SNTUI extends JDialog {
 		if (plugin.tracingHalted && currentState == READY)
 			currentState = TRACING_PAUSED;
 		return currentState;
+	}
+
+	/**
+	 * Assesses whether the UI is blocked.
+	 *
+	 * @return true if the UI is currently unblocked, i.e., ready for
+	 *         tracing/editing/analysis *
+	 */
+	public boolean isReady() {
+		final int state = getState();
+		return isVisible() && (state == SNTUI.READY || state == SNTUI.TRACING_PAUSED || state == SNTUI.SNT_PAUSED);
 	}
 
 	/**
@@ -3154,26 +3164,7 @@ public class SNTUI extends JDialog {
 			} else if (source == saveMenuItem && !noPathsError()) {
 
 				final File saveFile = saveFile("Save Traces As...", null, "traces");
-				if (saveFile == null)
-					return; // user pressed cancel;
-				showStatus("Saving traces to " + saveFile.getAbsolutePath(), false);
-
-				final int preSavingState = currentState;
-				changeState(SAVING);
-				try {
-					pathAndFillManager.writeXML(saveFile.getAbsolutePath(), plugin.getPrefs().isSaveCompressedTraces());
-				} catch (final IOException ioe) {
-					showStatus("Saving failed.", true);
-					guiUtils.error(
-							"Writing traces to '" + saveFile.getAbsolutePath() + "' failed. See Console for details.");
-					changeState(preSavingState);
-					ioe.printStackTrace();
-					return;
-				}
-				changeState(preSavingState);
-				showStatus("Saving completed.", true);
-
-				plugin.unsavedPaths = false;
+				if (saveFile != null) saveToXML(saveFile);
 
 			} else if (source == loadTracesMenuItem) {
 
@@ -3195,7 +3186,7 @@ public class SNTUI extends JDialog {
 				final File saveFile = saveFile("Export All Paths as SWC...", null, ".swc");
 				if (saveFile == null)
 					return; // user pressed cancel
-				plugin.unsavedPaths = !saveAllPathsToSwc(saveFile.getAbsolutePath());
+				saveAllPathsToSwc(saveFile.getAbsolutePath());
 			} else if (source == exportCSVMenuItem && !noPathsError()) {
 
 				final File saveFile = saveFile("Export All Paths as CSV...", null, ".csv");
@@ -3305,26 +3296,6 @@ public class SNTUI extends JDialog {
 
 		}
 
-		private boolean saveAllPathsToSwc(final String filePath) {
-			final List<Path> primaryPaths = Arrays.asList(pathAndFillManager.getPathsStructured());
-			final int n = primaryPaths.size();
-			final int dot = filePath.lastIndexOf('.');
-			final String prefix = (dot < 0) ? filePath : filePath.substring(0, dot);
-			final StringBuilder errorMessage = new StringBuilder();
-			for (int i = 0; i < n; ++i) {
-				final File swcFile = pathAndFillManager.getSWCFileForIndex(prefix, i);
-				if (swcFile.exists())
-					errorMessage.append(swcFile.getAbsolutePath()).append("<br>");
-			}
-			if (errorMessage.length() > 0) {
-				errorMessage.insert(0, "The following files would be overwritten:<br>");
-				errorMessage.append("<b>Overwrite these files?</b>");
-				if (!guiUtils.getConfirmation(errorMessage.toString(), "Overwrite SWC files?"))
-					return false;
-			}
-			SNTUtils.log("Exporting paths... " + prefix);
-			return pathAndFillManager.exportAllPathsAsSWC(prefix);
-		}
 	}
 
 	/** Dynamic commands don't work well with CmdRunner. Use this class instead to run them */
@@ -3503,6 +3474,50 @@ public class SNTUI extends JDialog {
 				return -1;
 			}
 		});
+	}
+
+	protected boolean saveToXML(final File file) {
+		showStatus("Saving traces to " + file.getAbsolutePath(), false);
+
+		final int preSavingState = currentState;
+		changeState(SAVING);
+		try {
+			pathAndFillManager.writeXML(file.getAbsolutePath(), plugin.getPrefs().isSaveCompressedTraces());
+		} catch (final IOException ioe) {
+			showStatus("Saving failed.", true);
+			guiUtils.error(
+					"Writing traces to '" + file.getAbsolutePath() + "' failed. See Console for details.");
+			changeState(preSavingState);
+			ioe.printStackTrace();
+			return false;
+		}
+		changeState(preSavingState);
+		showStatus("Saving completed.", true);
+
+		plugin.unsavedPaths = false;
+		return true;
+	}
+
+	protected boolean saveAllPathsToSwc(final String filePath) {
+		final Path[] primaryPaths = pathAndFillManager.getPathsStructured();
+		final int n = primaryPaths.length;
+		final String prefix = SNTUtils.stripExtension(filePath);
+		final StringBuilder errorMessage = new StringBuilder();
+		for (int i = 0; i < n; ++i) {
+			final File swcFile = pathAndFillManager.getSWCFileForIndex(prefix, i);
+			if (swcFile.exists())
+				errorMessage.append(swcFile.getAbsolutePath()).append("<br>");
+		}
+		if (errorMessage.length() > 0) {
+			errorMessage.insert(0, "The following files would be overwritten:<br>");
+			errorMessage.append("<b>Overwrite these files?</b>");
+			if (!guiUtils.getConfirmation(errorMessage.toString(), "Overwrite SWC files?"))
+				return false;
+		}
+		SNTUtils.log("Exporting paths... " + prefix);
+		final boolean success = pathAndFillManager.exportAllPathsAsSWC(primaryPaths, prefix);
+		plugin.unsavedPaths = !success;
+		return success;
 	}
 
 	private class ImportAction {

@@ -25,6 +25,7 @@ package sc.fiji.snt;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,7 +34,7 @@ import java.util.List;
 
 import net.imagej.ImageJService;
 import org.scijava.table.DefaultGenericTable;
-
+import org.scijava.util.FileUtils;
 import org.scijava.Priority;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -42,13 +43,16 @@ import org.scijava.script.ScriptService;
 import org.scijava.service.AbstractService;
 import org.scijava.service.Service;
 
+import ij.IJ;
 import ij.ImagePlus;
+import ij.io.Opener;
 import ij.plugin.ZProjector;
 import ij.process.ColorProcessor;
 import sc.fiji.snt.analysis.PathProfiler;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.analysis.TreeStatistics;
+import sc.fiji.snt.event.SNTEvent;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 
 /**
@@ -68,12 +72,12 @@ public class SNTService extends AbstractService implements ImageJService {
 
 	private static SNT plugin;
 
-	private void accessActiveInstance() {
+	private void accessActiveInstance(final boolean createInstanceIfNull) {
 		plugin = SNTUtils.getPluginInstance();
-//		if (plugin == null) throw new UnsupportedOperationException(
-//			"SNT does not seem to be running");
-		if (plugin == null) {
+		if (createInstanceIfNull && plugin == null) {
 			plugin = new SNT(getContext(), new PathAndFillManager());
+		} else if (plugin == null) {
+			throw new UnsupportedOperationException("SNT is not running");
 		}
 	}
 
@@ -87,7 +91,6 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *
 	 * @return true if this {@code SNTService} is active, tied to the active
 	 *         instance of SNT
-	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public boolean isActive() {
 		return SNTUtils.getPluginInstance() != null;
@@ -105,20 +108,135 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @see Path#setNodeValues(double[])
 	 */
 	public void assignValues(final boolean selectedPathsOnly) {
+		accessActiveInstance(false);
 		final PathProfiler profiler = new PathProfiler(getTree(selectedPathsOnly),
-			getPlugin().getLoadedDataAsImp());
+			plugin.getLoadedDataAsImp());
 		profiler.assignValues();
+	}
+
+	/**
+	 * Initializes SNT. Since no image is specified, tracing functions are disabled.
+	 *
+	 * @param startUI Whether SNT's UI should also be initialized;
+	 * @return the SNT instance.
+	 */
+	public SNT initialize(final boolean startUI) {
+		accessActiveInstance(true);
+		if (startUI && plugin.getUI() == null) plugin.startUI();
+		return plugin;
+	}
+
+	/**
+	 * Initializes SNT.
+	 *
+	 * @param imagePath the image to be traced. If "demo" (case insensitive), SNT is
+	 *                  initialized using the {@link demoTreeImage}. If empty or
+	 *                  null and SNT's UI is available an "Open" dialog prompt is
+	 *                  displayed.
+	 * @param startUI   Whether SNT's UI should also be initialized;
+	 * @return the SNT instance.
+	 */
+	public SNT initialize(final String imagePath, final boolean startUI) {
+		if ("demo".equalsIgnoreCase(imagePath)) {
+			return initialize(demoTreeImage(), startUI);
+		}
+		if (imagePath == null || imagePath.isEmpty() && (!startUI || getUI() == null)) {
+			throw new IllegalArgumentException("Invalid imagePath " + imagePath);
+		}
+		return initialize(IJ.openImage(imagePath), startUI);
+	}
+
+	/**
+	 * Initializes SNT.
+	 *
+	 * @param imp the image to be traced (null not allowed)
+	 * @param startUI Whether SNT's UI should also be initialized;
+	 * @return the SNT instance.
+	 */
+	public SNT initialize(final ImagePlus imp, final boolean startUI) {
+		if (plugin == null) {
+			plugin = new SNT(getContext(), imp);
+			plugin.initialize(true, 1, 1);
+		} else {
+			plugin.initialize(imp);
+		}
+		if (startUI && plugin.getUI() == null) plugin.startUI();
+		return plugin;
 	}
 
 	/**
 	 * Returns a reference to the active {@link SNT} plugin.
 	 *
 	 * @return the {@link SNT} instance
-	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public SNT getPlugin() {
-		accessActiveInstance();
+		accessActiveInstance(true);
 		return plugin;
+	}
+
+	/**
+	 * Loads the specified tracings file.
+	 *
+	 * @param filePath either a "SWC", "TRACES" or "JSON" file. Null not allowed.
+	 * @throws UnsupportedOperationException if SNT is not running
+	 */
+	public void loadTracings(final String filePath) {
+		accessActiveInstance(false);
+		plugin.loadTracings(new File(filePath));
+	}
+
+	/**
+	 * Loads the specified tree.
+	 *
+	 * @param tree the {@link Tree} to be loaded (null not allowed)
+	 * @throws UnsupportedOperationException if SNT is not running
+	 */
+	public void loadTree(final Tree tree) {
+		accessActiveInstance(false);
+		plugin.getPathAndFillManager().addTree(tree);
+	}
+
+	/**
+	 * Saves all the existing paths to a file.
+	 *
+	 * @param filePath the saving output file path. If {@code filePath} ends in
+	 *                 ".swc" (case insensitive), an SWC file is created, otherwise
+	 *                 a "traces" file is created. If empty and a GUI exists, a save
+	 *                 prompt is displayed.
+	 * @return true, if paths exist and file was successfully written.
+	 * @throws UnsupportedOperationException if SNT is not running
+	 */
+	public boolean save(final String filePath) {
+		accessActiveInstance(false);
+		if (getPathAndFillManager().size() == 0)
+			return false;
+		File saveFile;
+		if (filePath == null || filePath.trim().isEmpty() && getUI() != null) {
+			saveFile = getUI().saveFile("Save Traces As...", null, "traces");
+		} else {
+			saveFile = new File(filePath);
+		}
+		if (saveFile == null)
+			return false;
+		final boolean asSWC = "swc".equalsIgnoreCase(FileUtils.getExtension(saveFile));
+		if (getUI() != null) {
+			if (asSWC) {
+				return getUI().saveAllPathsToSwc(saveFile.getAbsolutePath());
+			}
+			getUI().saveToXML(saveFile);
+		} else {
+			if (asSWC) {
+				return getPathAndFillManager().exportAllPathsAsSWC(SNTUtils.stripExtension(saveFile.getAbsolutePath()));
+			}
+			try {
+				getPathAndFillManager().writeXML(saveFile.getAbsolutePath(),
+						plugin.getPrefs().isSaveCompressedTraces());
+			} catch (final IOException ioe) {
+				ioe.printStackTrace();
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -129,7 +247,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @see #getTree(boolean)
 	 */
 	public Collection<Path> getSelectedPaths() {
-		accessActiveInstance();
+		accessActiveInstance(false);
 		return plugin.getSelectedPaths();
 	}
 
@@ -141,7 +259,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @see #getTree(boolean)
 	 */
 	public List<Path> getPaths() {
-		accessActiveInstance();
+		accessActiveInstance(false);
 		return plugin.getPathAndFillManager().getPathsFiltered();
 	}
 
@@ -168,6 +286,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public TreeAnalyzer getAnalyzer(final boolean selectedPathsOnly) {
+		accessActiveInstance(false);
 		final TreeAnalyzer tAnalyzer = new TreeAnalyzer(getTree(selectedPathsOnly));
 		tAnalyzer.setContext(getContext());
 		tAnalyzer.setTable(getTable(), PathManagerUI.TABLE_TITLE);
@@ -189,81 +308,67 @@ public class SNTService extends AbstractService implements ImageJService {
 	}
 
 	/**
-	 * Returns the {@link PathAndFillManager} associated with the current plugin
-	 * instance
+	 * Returns the {@link PathAndFillManager} associated with the current SNT
+	 * instance.
 	 *
 	 * @return the PathAndFillManager instance
-	 * @throws UnsupportedOperationException if SNT is not running
+	 * @throws UnsupportedOperationException if no SNT instance exists.
 	 */
 	public PathAndFillManager getPathAndFillManager() {
-		accessActiveInstance();
+		accessActiveInstance(false);
 		return plugin.getPathAndFillManager();
 	}
 
 	/**
-	 * Updates (refreshes) all viewers currently in use by the plugin
+	 * Updates (refreshes) all viewers currently in use by SNT. Does nothing if no
+	 * SNT instance exists.
 	 */
 	public void updateViewers() {
-		accessActiveInstance();
-		plugin.updateAllViewers();
+		if (plugin != null) plugin.updateAllViewers();
 	}
 
 	/**
 	 * Returns a reference to SNT's UI.
 	 *
-	 * @return the {@link SNTUI} window
-	 * @throws UnsupportedOperationException if SNT is not running
+	 * @return the {@link SNTUI} window, or null if SNT is not running, or is
+	 *         running without GUI
 	 */
 	public SNTUI getUI() {
-		accessActiveInstance();
-		return plugin.getUI();
+		return (plugin==null) ? null : plugin.getUI();
 	}
 
 	/**
-	 * Returns a reference to SNT's Reconstruction Viewer
+	 * Returns a reference to SNT's Reconstruction Viewer.
 	 *
 	 * @return SNT's {@link Viewer3D} instance.
 	 * @throws UnsupportedOperationException if SNT is not running
 	 */
 	public Viewer3D getReconstructionViewer() {
-		accessActiveInstance();
-		return plugin.getUI().getReconstructionViewer(true);
-	}
-
-	/**
-	 * Assesses whether the UI is blocked.
-	 *
-	 * @return true if the UI is currently unblocked, i.e., ready for
-	 *         tracing/editing/analysis
-	 * @throws UnsupportedOperationException if SNT is not running
-	 */
-	public boolean isUIReady() {
-		final SNTUI gui = getUI();
-		final int state = gui.getState();
-		return plugin.isUIready() && (state == SNTUI.WAITING_TO_START_PATH ||
-			state == SNTUI.EDITING || state == SNTUI.TRACING_PAUSED);
+		accessActiveInstance(false);
+		return (getUI() == null) ? null : getUI().getReconstructionViewer(true);
 	}
 
 	/**
 	 * Returns a reference to SNT's main table of measurements.
 	 *
+	 * @return SNT measurements table
 	 * @throws UnsupportedOperationException if SNT is not running
-	 * @return the table
 	 */
 	public DefaultGenericTable getTable() {
-		return getUI().getPathManager().getTable();
+		accessActiveInstance(false);
+		return (getUI() == null) ? null : getUI().getPathManager().getTable();
 	}
 
 	/**
-	 * Loads a demo reconstruction (fractal tree).
+	 * Returns a toy reconstruction (fractal tree).
 	 *
 	 * @return a reference to the loaded tree, or null if data could no be retrieved
-	 * @throws UnsupportedOperationException if SNT is not running
 	 */
-	public Tree loadDemoTree() {
+	public Tree demoTree() {
 		final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 		final InputStream is = classloader.getResourceAsStream("tests/TreeV.swc");
-		final PathAndFillManager pafm = getPathAndFillManager();
+		final PathAndFillManager pafm = new PathAndFillManager();
+		pafm.setHeadless(true);
 		Tree tree;
 		try {
 			final int idx1stPath = pafm.size();
@@ -287,6 +392,16 @@ public class SNTService extends AbstractService implements ImageJService {
 		return tree;
 	}
 
+	public ImagePlus demoTreeImage() {
+		final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+		final InputStream is = classloader.getResourceAsStream("tests/TreeV.tif");
+		final boolean redirecting = IJ.redirectingErrorMessages();
+		IJ.redirectErrorMessages(true);
+		final ImagePlus imp = new Opener().openTiff(is, "TreeV.tif");
+		IJ.redirectErrorMessages(redirecting);
+		return imp;
+	}
+
 	/**
 	 * Retrieves a WYSIWYG 'snapshot' of a tracing canvas.
 	 *
@@ -301,7 +416,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 */
 	@SuppressWarnings("deprecation")
 	public ImagePlus captureView(final String view, final boolean project) {
-		accessActiveInstance();
+		accessActiveInstance(false);
 		if (view == null || view.trim().isEmpty())
 			throw new IllegalArgumentException("Invalid view");
 
@@ -347,6 +462,26 @@ public class SNTService extends AbstractService implements ImageJService {
 				return MultiDThreePanes.ZY_PLANE;
 			default:
 				throw new IllegalArgumentException("Unrecognized view");
+		}
+	}
+
+	/**
+	 * Quits SNT. Does nothing if SNT is currently not running.
+	 */
+	public void dispose() {
+		if (plugin == null) return;
+		if (getUI() == null) {
+			SNTUtils.log("Disposing resources..");
+			plugin.cancelSearch(true);
+			plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
+			plugin.prefs.savePluginPrefs(true);
+			if (getReconstructionViewer() != null) getReconstructionViewer().dispose();
+			plugin.closeAndResetAllPanes();
+			if (plugin.getImagePlus() != null) plugin.getImagePlus().close();
+			SNTUtils.setPlugin(null);
+			plugin = null;
+		} else {
+			getUI().exitRequested();
 		}
 	}
 

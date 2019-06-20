@@ -357,8 +357,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	protected synchronized boolean exportAllPathsAsSWC(final Path[] primaryPaths, final String baseFilename) {
-		final int dot = baseFilename.lastIndexOf('.');
-		final String prefix = (dot < 0) ? baseFilename : baseFilename.substring(0, dot);
+		final String prefix = SNTUtils.stripExtension(baseFilename);
 		int i = 0;
 		for (final Path primaryPath : primaryPaths) {
 			final File swcFile = getSWCFileForIndex(prefix, i);
@@ -777,7 +776,16 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	/**
-	 * Adds the path.
+	 * Adds a {@link Tree}.
+	 *
+	 * @param tree the collection of paths to be added
+	 */
+	public void addTree(final Tree tree) {
+		tree.list().stream().forEach(p -> addPath(p, true));
+	}
+
+	/**
+	 * Adds a new path.
 	 *
 	 * @param p the Path to be added
 	 */
@@ -838,7 +846,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @return true, if index is valid and Path was successfully deleted
 	 */
 	public synchronized boolean deletePath(final int index) {
-		return deletePath(index, true);
+		return deletePath(index, enableUIupdates);
 	}
 
 	/**
@@ -1218,7 +1226,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				 * We need to remove the old paths and fills before loading the ones:
 				 */
 				SNTUtils.log("Clearing old paths and fills...");
-				clearPathsAndFills();
+				clear();
 
 				break;
 			case "imagesize":
@@ -1772,21 +1780,21 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 		catch (final javax.xml.parsers.ParserConfigurationException e) {
 
-			clearPathsAndFills();
+			clear();
 			SNTUtils.error("ParserConfigurationException", e);
 			return false;
 
 		}
 		catch (final SAXException e) {
 
-			clearPathsAndFills();
+			clear();
 			error(e.getMessage());
 			return false;
 
 		}
 		catch (final FileNotFoundException e) {
 
-			clearPathsAndFills();
+			clear();
 			SNTUtils.error("FileNotFoundException", e);
 			e.printStackTrace();
 			return false;
@@ -1794,7 +1802,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 		catch (final IOException e) {
 
-			clearPathsAndFills();
+			clear();
 			error(
 				"There was an IO exception while reading the file. See console for details");
 			e.printStackTrace();
@@ -1806,7 +1814,10 @@ public class PathAndFillManager extends DefaultHandler implements
 
 	}
 
-	private void clearPathsAndFills() {
+	/**
+	 * Deletes all paths and fills.
+	 */
+	public void clear() {
 		maxUsedID = -1;
 		if (plugin != null && plugin.use3DViewer) {
 			for (final Path p : allPaths)
@@ -1948,7 +1959,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		final double yScale, final double zScale, final boolean replaceAllPaths)
 	{
 
-		if (replaceAllPaths) clearPathsAndFills();
+		if (replaceAllPaths) clear();
 
 		final Pattern pEmpty = Pattern.compile("^\\s*$");
 		final Pattern pComment = Pattern.compile("^([^#]*)#.*$");

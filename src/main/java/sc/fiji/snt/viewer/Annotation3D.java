@@ -55,7 +55,7 @@ public class Annotation3D {
 	protected static final int SURFACE = 1;
 	protected static final int STRIP = 2;
 	protected static final int Q_TIP = 3;
-
+	protected static final int MERGE = 4;
 
 	private final Viewer3D viewer;
 	private final Collection<? extends SNTPoint> points;
@@ -63,6 +63,17 @@ public class Annotation3D {
 	private final int type;
 	private float size;
 	private String label;
+
+	protected Annotation3D(final Viewer3D viewer, final Collection<Annotation3D> annotations) {
+		this.viewer = viewer;
+		this.type = MERGE;
+		points = null;
+		final Shape shape = new Shape();
+		for (final Annotation3D annotation : annotations) {
+			shape.add(annotation.getDrawable());
+		}
+		drawable = shape;
+	}
 
 	protected Annotation3D(final Viewer3D viewer, final Collection<? extends SNTPoint> points, final int type) {
 		this.viewer = viewer;
@@ -156,11 +167,10 @@ public class Annotation3D {
 	}
 
 	private AbstractDrawable assembleQTip() {
-		final LineStrip line = (LineStrip)assembleStrip();
-		if (line.getPoints().size() < 2) return line;
 		final Shape shape = new Shape();
+		final LineStrip line = (LineStrip)assembleStrip();
 		shape.add(line);
-		shape.add(assembleScatter());
+		if (line.getPoints().size() >= 2) shape.add(assembleScatter());
 		return shape;
 	}
 
@@ -184,16 +194,23 @@ public class Annotation3D {
 			((LineStrip) drawable).setWidth(this.size);
 			break;
 		case Q_TIP:
-			for (final AbstractDrawable drawable : ((Shape) drawable).getDrawables()) {
-				if (drawable instanceof LineStrip) {
-					((LineStrip) drawable).setWidth(this.size / 4);
-				} else if (drawable instanceof Scatter) {
-					((Scatter) drawable).setWidth(this.size);
-				}
-			}
+		case MERGE:
+			setShapeWidth(size);
 			break;
 		default:
 			throw new IllegalArgumentException("Unrecognized type " + type);
+		}
+	}
+
+	private void setShapeWidth(final float size) {
+		for (final AbstractDrawable drawable : ((Shape) drawable).getDrawables()) {
+			if (drawable instanceof LineStrip) {
+				((LineStrip) drawable).setWidth(this.size / 4);
+			} else if (drawable instanceof Scatter) {
+				((Scatter) drawable).setWidth(this.size);
+			} else if (drawable instanceof Shape) {
+				((Shape) drawable).setWireframeWidth(size);
+			}
 		}
 	}
 
@@ -225,12 +242,16 @@ public class Annotation3D {
 			((LineStrip) drawable).setColor(c);
 			break;
 		case Q_TIP:
+		case MERGE:
 			for (final AbstractDrawable drawable : ((Shape) drawable).getDrawables()) {
 				if (drawable instanceof LineStrip) {
 					((LineStrip) drawable).setColor(c);
 				} else if (drawable instanceof Scatter) {
 					((Scatter) drawable).setColors(null);
 					((Scatter) drawable).setColor(c);
+				} else if (drawable instanceof Shape) {
+					((Shape) drawable).setColor(c);
+					((Shape) drawable).setWireframeColor(c);
 				}
 			}
 			break;

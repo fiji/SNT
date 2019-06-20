@@ -647,6 +647,20 @@ public class Viewer3D {
 		return annotation;
 	}
 
+	public Annotation3D mergeAnnotations(final Collection<Annotation3D> collection, final String label) {
+		final boolean updateFlag = viewUpdatesEnabled;
+		viewUpdatesEnabled = false;
+		collection.forEach(annot -> removeDrawable(plottedAnnotations, annot.getLabel()));
+		viewUpdatesEnabled = updateFlag;
+		final Annotation3D annotation = new Annotation3D(this, collection);
+		final String uniqueLabel = getUniqueLabel(plottedAnnotations, "Merged Annot.", label);
+		annotation.setLabel(uniqueLabel);
+		plottedAnnotations.put(uniqueLabel, annotation.getDrawable());
+		addItemToManager(uniqueLabel);
+		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
+		return annotation;
+	}
+
 	private void addItemToManager(final String label) {
 		if (managerList == null) return;
 		final int[] indices = managerList.getCheckBoxListSelectedIndices();
@@ -2086,6 +2100,9 @@ public class Viewer3D {
 					plottedObjs.keySet().forEach(k -> {
 						managerModel.addElement(k);
 					});
+					plottedAnnotations.keySet().forEach(k -> {
+						managerModel.addElement(k);
+					});
 					managerModel.addElement(CheckBoxList.ALL_ENTRY);
 				}
 				finally {
@@ -2102,12 +2119,15 @@ public class Viewer3D {
 			// Select menu
 			final JMenu selectMenu = new JMenu("Select");
 			selectMenu.setIcon(IconFactory.getMenuIcon(GLYPH.POINTER));
+			final JMenuItem selectAnnotations = new JMenuItem("Annotations");
+			selectAnnotations.addActionListener(e -> selectRows(plottedAnnotations));
 			final JMenuItem selectMeshes = new JMenuItem("Meshes");
 			selectMeshes.addActionListener(e -> selectRows(plottedObjs));
-			selectMenu.add(selectMeshes);
 			final JMenuItem selectTrees = new JMenuItem("Trees");
 			selectTrees.addActionListener(e -> selectRows(plottedTrees));
 			selectMenu.add(selectTrees);
+			selectMenu.add(selectMeshes);
+			selectMenu.add(selectAnnotations);
 			selectMenu.addSeparator();
 			final JMenuItem selectNone = new JMenuItem("None");
 			selectNone.addActionListener(e -> managerList.clearSelection());
@@ -2117,42 +2137,50 @@ public class Viewer3D {
 			final JMenu hideMenu = new JMenu("Hide");
 			hideMenu.setIcon(IconFactory.getMenuIcon(GLYPH.EYE_SLASH));
 			final JMenuItem hideMeshes = new JMenuItem("Meshes");
-			hideMeshes.addActionListener(e -> retainVisibility(plottedTrees));
-			hideMenu.add(hideMeshes);
+			hideMeshes.addActionListener(e -> hide(plottedTrees));
 			final JMenuItem hideTrees = new JMenuItem("Trees");
 			hideTrees.addActionListener(e -> {
 				setArborsDisplayed(getLabelsCheckedInManager(), false);
 			});
+			final JMenuItem hideAnnotations = new JMenuItem("Annotations");
+			hideAnnotations.addActionListener(e -> hide(plottedAnnotations));
 			final JMenuItem hideSomas = new JMenuItem("Soma of Visible Trees");
 			hideSomas.addActionListener(e -> displaySomas(false));
-			hideMenu.add(hideSomas);
 			final JMenuItem hideBoxes = new JMenuItem("Bounding Box of Visible Meshes");
 			hideBoxes.addActionListener(e -> displayMeshBoundingBoxes(false));
-			hideMenu.add(hideBoxes);
 			final JMenuItem hideAll = new JMenuItem("All");
 			hideAll.addActionListener(e -> managerList.selectNone());
+			hideMenu.add(hideTrees);
+			hideMenu.add(hideMeshes);
+			hideMenu.add(hideAnnotations);
+			hideMenu.addSeparator();
+			hideMenu.add(hideSomas);
+			hideMenu.add(hideBoxes);
 			hideMenu.addSeparator();
 			hideMenu.add(hideAll);
 
 			// Show Menu
 			final JMenu showMenu = new JMenu("Show");
 			showMenu.setIcon(IconFactory.getMenuIcon(GLYPH.EYE));
-			final JMenuItem showMeshes = new JMenuItem("Meshes");
-			showMeshes.addActionListener(e -> managerList
-				.addCheckBoxListSelectedValues(plottedObjs.keySet().toArray()));
-			showMenu.add(showMeshes);
-			final JMenuItem showTrees = new JMenuItem("Trees");
-			showTrees.addActionListener(e -> managerList
-				.addCheckBoxListSelectedValues(plottedTrees.keySet().toArray()));
-			showMenu.add(showTrees);
+			final JMenuItem showMeshes = new JMenuItem("Only Meshes");
+			showMeshes.addActionListener(e -> show(plottedObjs));
+			final JMenuItem showTrees = new JMenuItem("Only Trees");
+			showTrees.addActionListener(e -> show(plottedTrees));
+			final JMenuItem showAnnotations = new JMenuItem("Only Annotations");
+			showAnnotations.addActionListener(e -> show(plottedAnnotations));
 			final JMenuItem showSomas = new JMenuItem("Soma of Visible Trees");
 			showSomas.addActionListener(e -> displaySomas(true));
-			showMenu.add(showSomas);
 			final JMenuItem showBoxes = new JMenuItem("Bounding Box of Visible Meshes");
 			showBoxes.addActionListener(e -> displayMeshBoundingBoxes(true));
-			showMenu.add(showBoxes);
 			final JMenuItem showAll = new JMenuItem("All");
 			showAll.addActionListener(e -> managerList.selectAll());
+			showMenu.add(showTrees);
+			showMenu.add(showMeshes);
+			showMenu.add(showAnnotations);
+			showMenu.addSeparator();
+			showMenu.add(showSomas);
+			showMenu.add(showBoxes);
+			showMenu.addSeparator();
 			showMenu.add(showAll);
 
 			final JMenuItem find = new JMenuItem("Find...", IconFactory.getMenuIcon(
@@ -2239,10 +2267,19 @@ public class Viewer3D {
 			managerList.setSelectedIndices(indices);
 		}
 
-		private void retainVisibility(final Map<String, ?> map) {
-			final List<String> selectedKeys = new ArrayList<>(
-				getLabelsCheckedInManager());
-			selectedKeys.retainAll(map.keySet());
+		private void show(final Map<String, ?> map) {
+			final int[] indices = new int[map.keySet().size()];
+			int i = 0;
+			for (final String k : map.keySet()) {
+				indices[i++] = managerModel.indexOf(k);
+			}
+			managerList.setSelectedIndices(indices);
+			managerList.setCheckBoxListSelectedIndices(indices);
+		}
+
+		private void hide(final Map<String, ?> map) {
+			final List<String> selectedKeys = new ArrayList<String>(getLabelsCheckedInManager());
+			selectedKeys.removeAll(map.keySet());
 			managerList.setSelectedObjects(selectedKeys.toArray());
 		}
 
@@ -4423,15 +4460,37 @@ public class Viewer3D {
 			(float) bounds[1], new Font("Arial", Font.PLAIN, 24), 3, 4);
 		jzy3D.add(tree);
 		final OBJMesh brainMesh = jzy3D.loadRefBrain("Allen CCF");
+		OBJMesh mesh = AllenUtils.getCompartment("Thalamus").getMesh();
+		jzy3D.addMesh(mesh);
+		SNTPoint centroid = mesh.getBarycentre("l");
+		Annotation3D cAnnot = jzy3D.annotatePoint(centroid, "l");
+		cAnnot.setSize(30);
+		cAnnot.setColor("green");
+		centroid = mesh.getBarycentre("a");
+		cAnnot = jzy3D.annotatePoint(centroid, "a");
+		cAnnot.setSize(30);
+		cAnnot.setColor("cyan");
+		centroid = mesh.getBarycentre("r");
+		cAnnot = jzy3D.annotatePoint(centroid, "r");
+		cAnnot.setSize(30);
+		cAnnot.setColor("red");
 		brainMesh.setBoundingBoxColor(Colors.RED);
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
 		final ArrayList<SNTPoint >selectedTips = new ArrayList<>();
 		selectedTips.add(SNTPoint.average(analyzer.getTips()));
 		selectedTips.add(AllenUtils.brainBarycentre());
-		final Annotation3D annotation = jzy3D.annotateLine(selectedTips, "dummy");
-		annotation.setColor("orange");
-		annotation.setSize(10);
-		jzy3D.annotatePoints(analyzer.getTips(), "tips");
+		final Annotation3D annotation1 = jzy3D.annotateLine(selectedTips, "dummy");
+		annotation1.setColor("orange");
+		annotation1.setSize(10);
+		Annotation3D annotation2 = jzy3D.annotatePoints(analyzer.getTips(), "tips");
+		annotation2.setColor("green");
+		annotation2.setSize(20);
+		ArrayList<Annotation3D> list = new ArrayList<Annotation3D>();
+		list.add(annotation1);
+		list.add(annotation2);
+		Annotation3D a = jzy3D.mergeAnnotations(list, "");
+		a.setSize(4);
+		a.setColor("pink");
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);

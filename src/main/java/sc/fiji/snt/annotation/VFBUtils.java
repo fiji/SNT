@@ -34,6 +34,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import sc.fiji.snt.SNTUtils;
+import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.viewer.OBJMesh;
 
 /**
@@ -48,6 +50,10 @@ public class VFBUtils {
 	private final static String JFRC2_MESH_LABEL = "JFRC2 (VFB) Template";
 	private final static String JFRC3_MESH_LABEL = "JFRC3 Template";
 	private final static String FCWB_MESH_LABEL = "FCWB Template";
+	private final static PointInImage JFRC2_BRAIN_BARYCENTRE = new PointInImage(321.3978f, 154.8180f, 69.0848f);
+	private final static PointInImage JFRC3_BRAIN_BARYCENTRE = new PointInImage(276.5773f, 133.8614f, 82.6505f);
+	private final static PointInImage FCWB_BRAIN_BARYCENTRE = new PointInImage(281.7975f, 154.2765f, 53.6835f);
+
 
 	private VFBUtils() {
 	}
@@ -76,6 +82,46 @@ public class VFBUtils {
 	}
 
 	/**
+	 * Returns the spatial centroid of an adult Drosophila template brain.
+	 * @param templateBrain the template brain to be loaded (case-insensitive).
+	 *                      Either "JFRC2" (AKA JFRC2010, VFB), "JFRC3" (AKA
+	 *                      JFRC2013), or "FCWB" (FlyCircuit Whole Brain Template)
+	 * @return the SNT point defining the (X,Y,Z) center of brain mesh.
+	 */
+	public static SNTPoint brainBarycentre(final String templateBrain) {
+		switch (getNormalizedTemplateLabel(templateBrain)) {
+		case JFRC2_MESH_LABEL:
+			return JFRC2_BRAIN_BARYCENTRE;
+		case JFRC3_MESH_LABEL:
+			return JFRC3_BRAIN_BARYCENTRE;
+		case FCWB_MESH_LABEL:
+			return FCWB_BRAIN_BARYCENTRE;
+		default:
+			throw new IllegalArgumentException("Invalid argument");
+		}
+	}
+
+	private static String getNormalizedTemplateLabel(final String templateBrain) {
+		final String inputType = (templateBrain == null) ? null : templateBrain.toLowerCase();
+		switch (inputType) {
+		case "jfrc2":
+		case "jfrc2010":
+		case "jfrctemplate2010":
+		case "vfb":
+			return JFRC2_MESH_LABEL;
+		case "jfrc3":
+		case "jfrc2013":
+		case "jfrctemplate2013":
+			return JFRC3_MESH_LABEL;
+		case "fcwb":
+		case "flycircuit":
+			return FCWB_MESH_LABEL;
+		default:
+			throw new IllegalArgumentException("Invalid argument");
+		}
+	}
+
+	/**
 	 * Retrieves the surface mesh of an adult Drosophila template brain. No Internet
 	 * connection is required, as these meshes (detailed on the <a href=
 	 * "https://www.rdocumentation.org/packages/nat.templatebrains/">nat.flybrains</a>
@@ -88,19 +134,12 @@ public class VFBUtils {
 	 * @throws IllegalArgumentException if templateBrain is not recognized
 	 */
 	public static OBJMesh getRefBrain(final String templateBrain) throws IllegalArgumentException {
-		final String inputType = (templateBrain == null) ? null : templateBrain.toLowerCase();
-		switch (inputType) {
-		case "jfrc2":
-		case "jfrc2010":
-		case "jfrctemplate2010":
-		case "vfb":
+		switch (getNormalizedTemplateLabel(templateBrain)) {
+		case JFRC2_MESH_LABEL:
 			return getBundledMesh(JFRC2_MESH_LABEL, "meshes/JFRCtemplate2010.obj");
-		case "jfrc3":
-		case "jfrc2013":
-		case "jfrctemplate2013":
+		case JFRC3_MESH_LABEL:
 			return getBundledMesh(JFRC3_MESH_LABEL, "meshes/JFRCtemplate2013.obj");
-		case "fcwb":
-		case "flycircuit":
+		case FCWB_MESH_LABEL:
 			return getBundledMesh(FCWB_MESH_LABEL, "meshes/FCWB.obj");
 		default:
 			throw new IllegalArgumentException("Invalid argument");

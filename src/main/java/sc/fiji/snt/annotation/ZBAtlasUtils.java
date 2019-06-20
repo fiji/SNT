@@ -29,6 +29,8 @@ import org.scijava.util.Colors;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.viewer.OBJMesh;
 
 /**
@@ -40,6 +42,7 @@ import sc.fiji.snt.viewer.OBJMesh;
 public class ZBAtlasUtils {
 
 	private static final String HOME_DIR = "https://fishatlas.neuro.mpg.de/";
+	private final static PointInImage BRAIN_BARYCENTRE = new PointInImage(0.274314f, 0.511951f, 0.178172f);
 
 	private ZBAtlasUtils() {
 	}
@@ -65,6 +68,15 @@ public class ZBAtlasUtils {
 				response.close();
 		}
 		return success;
+	}
+
+	/**
+	 * Returns the spatial centroid of the template brain.
+	 *
+	 * @return the SNT point defining the (X,Y,Z) center of the brain outline.
+	 */
+	public static SNTPoint brainBarycentre() {
+		return BRAIN_BARYCENTRE;
 	}
 
 	/**

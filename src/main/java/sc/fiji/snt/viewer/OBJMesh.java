@@ -39,6 +39,7 @@ import org.jzy3d.colors.Color;
 import org.jzy3d.io.IGLLoader;
 import org.jzy3d.io.obj.OBJFile;
 import org.jzy3d.maths.BoundingBox3d;
+import org.jzy3d.maths.Coord3d;
 import org.jzy3d.plot3d.primitives.vbo.drawable.DrawableVBO;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
@@ -58,6 +59,7 @@ public class OBJMesh {
 
 	protected final OBJFileLoaderPlus loader;
 	protected final RemountableDrawableVBO drawable;
+	private double xMirrorCoord = Double.NaN;
 	private String label;
 
 	/**
@@ -168,6 +170,55 @@ public class OBJMesh {
 	}
 
 	/**
+	 * Returns the mesh vertices.
+	 * 
+	 * @param hemihalf either "left", "l", "right", "r" otherwise centroid is
+	 *                 retrieved for both hemi-halves, i.e., the full mesh
+	 * @return the mesh vertices as {@link SNTPoint}s
+	 */
+	public Collection<? extends SNTPoint> getVertices(final String hemihalf) {
+		return loader.obj.getVertices(getHemisphere(hemihalf));
+	}
+
+	/* returns 'left', 'right' or 'both' */
+	private String getHemisphere(final String label) {
+		if (label == null || label.trim().isEmpty()) return "both";
+		final String normLabel = label.toLowerCase().substring(0, 1);
+		if ("l1".contains(normLabel)) return "left"; // left, 1
+		else if ("r2".contains(normLabel)) return "right"; // right, 2
+		else return "both";
+	}
+
+	private Coord3d getBarycentreCoord() {
+		final Coord3d center;
+		if (getDrawable() != null && getDrawable().getBounds() != null) {
+			center = getDrawable().getBounds().getCenter();
+		} else {
+			center = loader.obj.computeBoundingBox().getCenter();
+		}
+		return center;
+	}
+
+	private SNTPoint getBarycentre() {
+		final Coord3d center = getBarycentreCoord();
+		return new PointInImage(center.x, center.y, center.z);
+	}
+	/**
+	 * Returns the spatial centroid of the specified (hemi)mesh.
+	 *
+	 * @param hemihalf either "left", "l", "right", "r", otherwise centroid is
+	 *                 retrieved for both hemi-halves, i.e., the full mesh
+	 * @return the SNT point defining the (X,Y,Z) center of the (hemi)mesh.
+	 */
+	public SNTPoint getBarycentre(final String hemihalf) {
+		final String normHemisphere = getHemisphere(hemihalf);
+		if ("both".contentEquals(normHemisphere)) {
+			return getBarycentre();
+		}
+		return loader.obj.getCenter(normHemisphere);
+	}
+
+	/**
 	 * Returns the {@link OBJFile} associated with this mesh
 	 *
 	 * @return the OBJFile
@@ -234,7 +285,7 @@ public class OBJMesh {
 				return false;
 			}
 			obj.compileModel();
-			SNTUtils.log(String.format("Meshed compiled: %d vertices and %d triangles", obj
+			SNTUtils.log(String.format("Mesh compiled: %d vertices and %d triangles", obj
 				.getPositionCount(), (obj.getIndexCount() / 3)));
 			return obj.getPositionCount() > 0;
 		}
@@ -301,7 +352,7 @@ public class OBJMesh {
 
 		private Collection<PointInImage> getVertices() {
 			if (positions_.isEmpty()) return null;
-			final List<PointInImage> points = new ArrayList<>(positions_.size());
+			final List<PointInImage> points = new ArrayList<>();
 			for (int i = 0; i < positions_.size(); i += 3) {
 				final float x = positions_.get(i);
 				final float y = positions_.get(i + 1);
@@ -309,6 +360,46 @@ public class OBJMesh {
 				points.add(new PointInImage(x, y, z));
 			}
 			return points;
+		}
+
+		private Collection<PointInImage> getVertices(final String hemiHalf) {
+			if (positions_.isEmpty())
+				return null;
+			if (Double.isNaN(xMirrorCoord))
+				xMirrorCoord = getBarycentre().getX();
+			final boolean isLeft = "left".equals(hemiHalf);
+			final List<PointInImage> points = new ArrayList<>();
+			for (int i = 0; i < positions_.size(); i += 3) {
+				final float x = positions_.get(i);
+				if (isLeft && x > xMirrorCoord || !isLeft && x <= xMirrorCoord) {
+					continue;
+				} else {
+					final float y = positions_.get(i + 1);
+					final float z = positions_.get(i + 2);
+					points.add(new PointInImage(x, y, z));
+				}
+			}
+			return points;
+		}
+
+		private PointInImage getCenter(final String hemiHalf) {
+			if (Double.isNaN(xMirrorCoord))
+				xMirrorCoord = getBarycentre().getX();
+			final boolean isLeft = "left".equals(hemiHalf);
+			float sumX = 0, sumY = 0, sumZ = 0;
+			int nPoints = 0;
+			for (int i = 0; i < positions_.size(); i += 3) {
+				final float x = positions_.get(i);
+				if (isLeft && x > xMirrorCoord || !isLeft && x <= xMirrorCoord) {
+					continue;
+				} else {
+					sumX += x;
+					sumY += positions_.get(i + 1);
+					sumZ += positions_.get(i + 2);
+					nPoints++;
+				}
+			}
+			return new PointInImage(sumX / nPoints, sumY / nPoints, sumZ / nPoints);
 		}
 
 	}

@@ -42,9 +42,12 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.scijava.util.ColorRGB;
 
+import sc.fiji.snt.Tree;
+import sc.fiji.snt.analysis.sholl.TreeParser;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.viewer.OBJMesh;
+import sholl.UPoint;
 
 /**
  * Utility methods for accessing/handling {@link AllenCompartment}s
@@ -132,6 +135,30 @@ public class AllenUtils {
 			}
 		}
 		return null;
+	}
+
+	private static PointInImage getSoma(final Tree tree) {
+		final TreeParser parser = new TreeParser(tree);
+		try {
+			parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
+		}
+		catch (final IllegalArgumentException ignored) {
+			parser.setCenter(TreeParser.PRIMARY_NODES_ANY);
+		}
+		final UPoint center = parser.getCenter();
+		return (center == null) ? null : new PointInImage(center.x, center.y,
+			center.z);
+	}
+
+	/**
+	 * Checks the hemisphere a neuron belongs to.
+	 *
+	 * @param tree the Tree to be tested
+	 * @return true, if soma (or root node) is in the left hemisphere, false
+	 *         otherwise
+	 */
+	public static boolean isLeftHemisphere(final Tree tree) {
+		return isLeftHemisphere(getSoma(tree));
 	}
 
 	/**

@@ -3157,7 +3157,7 @@ public class Viewer3D {
 		private GuiUtils guiUtils;
 
 		public AllenCCFNavigator() {
-			treeModel = AllenUtils.getTreeModel();
+			treeModel = AllenUtils.getTreeModel(true);
 			tree = new NavigatorTree(treeModel);
 			tree.setVisibleRowCount(10);
 			tree.setEditable(false);

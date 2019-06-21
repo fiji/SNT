@@ -177,7 +177,8 @@ public class OBJMesh {
 	 * @return the mesh vertices as {@link SNTPoint}s
 	 */
 	public Collection<? extends SNTPoint> getVertices(final String hemihalf) {
-		return loader.obj.getVertices(getHemisphere(hemihalf));
+		final String normHemisphere = getHemisphere(hemihalf);
+		return "both".equals(normHemisphere) ? getVertices() : loader.obj.getVertices(normHemisphere);
 	}
 
 	/* returns 'left', 'right' or 'both' */
@@ -279,7 +280,7 @@ public class OBJMesh {
 
 		private boolean compileModel() {
 			obj = new OBJFilePlus();
-			SNTUtils.log("Loading OBJ file '" + url + "'");
+			SNTUtils.log("Loading OBJ file '" + new File(url.getPath()).getName() + "'");
 			if (!obj.loadModelFromURL(url)) {
 				SNTUtils.log("Loading failed. Invalid file?");
 				return false;
@@ -362,6 +363,10 @@ public class OBJMesh {
 			return points;
 		}
 
+		private boolean assessHemisphere(final float x, final boolean isLeft) {
+			return (isLeft && x <= xMirrorCoord || !isLeft && x > xMirrorCoord);
+		}
+
 		private Collection<PointInImage> getVertices(final String hemiHalf) {
 			if (positions_.isEmpty())
 				return null;
@@ -371,9 +376,7 @@ public class OBJMesh {
 			final List<PointInImage> points = new ArrayList<>();
 			for (int i = 0; i < positions_.size(); i += 3) {
 				final float x = positions_.get(i);
-				if (isLeft && x > xMirrorCoord || !isLeft && x <= xMirrorCoord) {
-					continue;
-				} else {
+				if (assessHemisphere(x, isLeft)) {
 					final float y = positions_.get(i + 1);
 					final float z = positions_.get(i + 2);
 					points.add(new PointInImage(x, y, z));
@@ -390,9 +393,7 @@ public class OBJMesh {
 			int nPoints = 0;
 			for (int i = 0; i < positions_.size(); i += 3) {
 				final float x = positions_.get(i);
-				if (isLeft && x > xMirrorCoord || !isLeft && x <= xMirrorCoord) {
-					continue;
-				} else {
+				if (assessHemisphere(x, isLeft)) {
 					sumX += x;
 					sumY += positions_.get(i + 1);
 					sumZ += positions_.get(i + 2);

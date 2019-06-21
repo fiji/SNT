@@ -24,6 +24,7 @@ package sc.fiji.snt.annotation;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -171,6 +172,39 @@ public class AllenCompartment implements BrainAnnotation {
 		return parentStructure;
 	}
 
+	/**
+	 * Gets the child ontologies of this compartment as a flat (non-hierarchical)
+	 * list.
+	 *
+	 * @return the "flattened" ontologies list
+	 */
+	public List<AllenCompartment> getChildren() {
+		final ArrayList<AllenCompartment> children = new ArrayList<>();
+		final Collection<AllenCompartment> allCompartments = AllenUtils.getOntologies();
+		for (AllenCompartment c :  allCompartments) {
+			if (this.contains(c)) children.add(c);
+		}
+		return children;
+	}
+
+	/**
+	 * Gets the child ontologies of this compartment as a flat (non-hierarchical)
+	 * list.
+	 *
+	 * @param level maximum depth that should be considered.
+	 * @return the "flattened" ontologies list
+	 */
+	public List<AllenCompartment> getChildren(final int level) {
+		final int maxLevel = getTreePath().size() + level;
+		final ArrayList<AllenCompartment> children = new ArrayList<>();
+		final Collection<AllenCompartment> allCompartments = AllenUtils.getOntologies();
+		for (AllenCompartment c :  allCompartments) {
+			if (this.contains(c) && c.getTreePath().size() <= maxLevel)
+				children.add(c);
+		}
+		return children;
+	}
+
 	@Override
 	public int id() {
 		initializeAsNeeded();
@@ -211,12 +245,15 @@ public class AllenCompartment implements BrainAnnotation {
 		if (id() == AllenUtils.BRAIN_ROOT_ID) return AllenUtils.getRootMesh(Colors.WHITE);
 		final ColorRGB geometryColor = ColorRGB.fromHTMLColor("#" + jsonObj.optString("geometryColor", "ffffff"));
 		OBJMesh mesh = null;
+		if (!isMeshAvailable()) return null;
+		final String file = jsonObj.getString("geometryFile");
+		if (file == null || !file.endsWith(".obj")) return null;
 		try {
-			final URL url = new URL("https://ml-neuronbrowser.janelia.org/static/allen/obj/" + jsonObj.getString("geometryFile"));
+			final URL url = new URL("https://ml-neuronbrowser.janelia.org/static/allen/obj/" + file);
 			mesh = new OBJMesh(url);
 			mesh.setColor(geometryColor, 87.5f);
 			mesh.setLabel(name);
-		} catch (MalformedURLException | JSONException e) {
+		} catch (final MalformedURLException | JSONException | IllegalArgumentException e) {
 			SNTUtils.error("Could not retrieve mesh ", e);
 		}
 		return mesh;

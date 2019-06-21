@@ -182,17 +182,18 @@ public class AllenUtils {
 
 	/**
 	 * Retrieves the Allen CCF hierarchical tree data.
-	 * 
+	 *
+	 * @param meshesOnly Whether only compartments with known meshes should be included
 	 * @return the Allen CCF tree data model
 	 */
-	public static DefaultTreeModel getTreeModel() {
-		return new AllenTreeModel().getTreeModel();
+	public static DefaultTreeModel getTreeModel(final boolean meshesOnly) {
+		return new AllenTreeModel().getTreeModel(meshesOnly);
 	}
 
 	/**
 	 * Gets the Allen CCF as a flat (non-hierarchical) collection of ontologies.
 	 *
-	 * @return the "flattened" ontogenies list
+	 * @return the "flattened" ontologies list
 	 */
 	public static Collection<AllenCompartment> getOntologies() {
 		return new AllenTreeModel().getOntologies();
@@ -222,7 +223,7 @@ public class AllenUtils {
 			return list;
 		}
 
-		private DefaultTreeModel getTreeModel() {
+		private DefaultTreeModel getTreeModel(final boolean meshesOnly) {
 			final TreeSet<AllenCompartment> all = new TreeSet<>((ac1, ac2)->ac1.getStructureIdPath().compareTo(ac2.getStructureIdPath()));
 			final Map<Integer, AllenCompartment> idsMap = new HashMap<>();
 			final Set<Integer> visitedIds = new HashSet<>();
@@ -248,6 +249,7 @@ public class AllenUtils {
 					if (visitedIds.contains(id))
 						continue;
 					final AllenCompartment c = idsMap.get(id);
+					if (meshesOnly && !c.isMeshAvailable()) continue;
 					final AllenCompartment pc = idsMap.get(c.getParentStructureId());
 					final DefaultMutableTreeNode parentNode = getParentNode(pc);
 					if (parentNode!=null) {
@@ -300,7 +302,7 @@ public class AllenUtils {
 		final AllenCompartment compartmentOfInterest = AllenUtils.getCompartment("CA3");
 		System.out.println(compartmentOfInterest);
 		System.out.println(compartmentOfInterest.getTreePath());
-		final javax.swing.JTree tree = new javax.swing.JTree(getTreeModel());
+		final javax.swing.JTree tree = new javax.swing.JTree(getTreeModel(false));
 		final javax.swing.JScrollPane treeView = new javax.swing.JScrollPane(tree);
 		final javax.swing.JFrame f = new javax.swing.JFrame();
 		f.add(treeView);

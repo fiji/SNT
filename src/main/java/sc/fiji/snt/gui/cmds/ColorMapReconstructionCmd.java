@@ -170,7 +170,7 @@ public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 
 		try {
 			if (recViewer == null) {
-				recViewer = sntService.getReconstructionViewer();
+				recViewer = sntService.getRecViewer();
 			}
 
 			// FIXME: This is not suitable for measurements with negative values

@@ -41,8 +41,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +62,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -144,6 +148,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.prefs.PrefService;
 import org.scijava.table.DefaultGenericTable;
 import org.scijava.ui.awt.AWTWindows;
+import org.scijava.ui.swing.script.TextEditor;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.ColorRGBA;
 import org.scijava.util.Colors;
@@ -165,6 +170,7 @@ import sc.fiji.snt.analysis.MultiTreeColorMapper;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.Path;
+import sc.fiji.snt.SNT;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
@@ -262,6 +268,12 @@ public class Viewer3D {
 	private static final Color DEF_COLOR = new Color(1f, 1f, 1f, 0.05f);
 	private static final Color INVERTED_DEF_COLOR = new Color(0f, 0f, 0f, 0.05f);
 
+	/* Identifiers for multiple viewers */
+	private static int currentID = 0;
+	private int id;
+	private boolean sntInstance;
+
+
 	/* Maps for plotted objects */
 	private final Map<String, ShapeTree> plottedTrees;
 	private final Map<String, RemountableDrawableVBO> plottedObjs;
@@ -286,7 +298,6 @@ public class Viewer3D {
 	private KeyController keyController;
 	private MouseController mouseController;
 	private boolean viewUpdatesEnabled = true;
-	private final UUID uuid;
 	private ViewMode currentView;
 
 	@Parameter
@@ -314,9 +325,10 @@ public class Viewer3D {
 		plottedObjs = new TreeMap<>();
 		plottedAnnotations = new TreeMap<>();
 		initView();
-		uuid = UUID.randomUUID();
 		prefs = new Prefs(this);
 		prefs.setPreferences();
+		setID();
+		SNTUtils.addViewer(this);
 	}
 
 	/**
@@ -332,6 +344,24 @@ public class Viewer3D {
 		initManagerList();
 		context.inject(this);
 		prefs.setPreferences();
+	}
+
+	protected Viewer3D(final SNT snt) {
+		this(snt.getContext());
+		sntInstance = true;
+	}
+
+	/**
+	 * Returns this Viewer's id.
+	 *
+	 * @return this this Viewer's unique numeric ID.
+	 */
+	public int getID() {
+		return id;
+	}
+
+	private void setID() {
+		id = ++currentID;
 	}
 
 	/**
@@ -1678,7 +1708,7 @@ public class Viewer3D {
 		}
 
 		public ViewerFrame(final Chart chart, final int width, final int height, final boolean includeManager) {
-			final String title = (isSNTInstance()) ? " (SNT)" : "";
+			final String title = (isSNTInstance()) ? " (SNT)" : " ("+ getID() + ")";
 			initialize(chart, new Rectangle(width, height), "Reconstruction Viewer" +
 				title);
 			setLocationRelativeTo(null); // ensures frame will not appear in between displays on a multidisplay setup
@@ -1819,6 +1849,23 @@ public class Viewer3D {
 				mc.panStep = getPanStep();
 				storedSensitivity = null;
 			}
+		}
+
+		private String getScriptExtension() {
+			return tp.prefService.get(RecViewerPrefsCmd.class, "scriptExtension",
+					RecViewerPrefsCmd.DEF_SCRIPT_EXTENSION);
+		}
+
+		private String getBoilerplateScript() {
+			final HashMap<String, String> map = new HashMap<>();
+			map.put(".bsh", "BSH.bsh");
+			map.put(".groovy", "GVY.groovy");
+			map.put(".py", "PY.py");
+			final String ext = getScriptExtension();
+			final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+			final InputStream is = classloader.getResourceAsStream("script_templates/Neuroanatomy/Boilerplate/"
+					+ map.get(ext));
+			return  new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
 		}
 
 		private void setSnapshotDirectory() {
@@ -2620,6 +2667,17 @@ public class Viewer3D {
 				runCmd(RecViewerPrefsCmd.class, null, CmdWorker.RELOAD_PREFS, false);
 			});
 			settingsMenu.add(mi);
+			settingsMenu.addSeparator();
+			mi = new JMenuItem("Script This Viewer...", IconFactory.getMenuIcon(GLYPH.CODE));
+			mi.addActionListener(e -> {
+				final TextEditor editor = new TextEditor(context);
+				final String text = prefs.getBoilerplateScript() + "\nviewer = snt.getRecViewer("
+						+ (isSNTInstance() ? ")" : getID() + ")\n");
+				editor.createNewDocument("RecViewerScript" + prefs.getScriptExtension(), text);
+				//editor.newTab(text, prefs.getScriptExtension());
+				editor.setVisible(true);
+			});
+			settingsMenu.add(mi);
 			return settingsMenu;
 		}
 
@@ -3394,6 +3452,7 @@ public class Viewer3D {
 	public void dispose() {
 		if (isSNTInstance()) sntService.getUI().setReconstructionViewer(null);
 		frame.disposeFrame();
+		SNTUtils.removeViewer(this);
 	}
 
 	private class ShapeTree extends Shape {
@@ -4432,9 +4491,7 @@ public class Viewer3D {
 	 * @return true, if SNT instance, false otherwise
 	 */
 	public boolean isSNTInstance() {
-		return sntService != null && sntService.isActive() && sntService
-			.getUI() != null && this.equals(sntService.getUI()
-				.getReconstructionViewer(false));
+		return sntInstance;
 	}
 
 	@Override
@@ -4442,14 +4499,13 @@ public class Viewer3D {
 		if (o == this) return true;
 		if (o == null) return false;
 		if (getClass() != o.getClass()) return false;
-		return uuid.equals(((Viewer3D) o).uuid);
+		return id == ((Viewer3D) o).id;
 	}
 
 	/* IDE debug method */
 	public static void main(final String[] args) throws InterruptedException {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
-		ij.ui().showUI();
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
 		colorizer.map(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);

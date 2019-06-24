@@ -2787,7 +2787,7 @@ public class SNTUI extends JDialog {
 	 */
 	public Viewer3D getReconstructionViewer(final boolean initializeIfNull) {
 		if (initializeIfNull && recViewer == null) {
-			recViewer = new Viewer3D(plugin.getContext());
+			recViewer = new SNTViewer3D();
 			recViewer.show();
 			setReconstructionViewer(recViewer);
 		}
@@ -3428,6 +3428,12 @@ public class SNTUI extends JDialog {
 			showStatus("Command terminated...", false);
 			if (run && preRunState != SNTUI.this.getState())
 				changeState(preRunState);
+		}
+	}
+
+	private class SNTViewer3D extends Viewer3D {
+		private SNTViewer3D() {
+			super(SNTUI.this.plugin);
 		}
 	}
 

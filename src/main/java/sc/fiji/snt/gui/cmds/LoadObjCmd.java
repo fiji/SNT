@@ -80,7 +80,7 @@ public class LoadObjCmd extends ContextCommand {
 	@Override
 	public void run() {
 		try {
-			if (recViewer == null) recViewer = sntService.getReconstructionViewer();
+			if (recViewer == null) recViewer = sntService.getRecViewer();
 		}
 		catch (final UnsupportedOperationException exc) {
 			cancel("SNT's Reconstruction Viewer is not open");

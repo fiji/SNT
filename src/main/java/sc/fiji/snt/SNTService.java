@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import net.imagej.ImageJService;
@@ -343,9 +344,39 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @return SNT's {@link Viewer3D} instance.
 	 * @throws UnsupportedOperationException if SNT is not running
 	 */
-	public Viewer3D getReconstructionViewer() {
+	public Viewer3D getRecViewer() {
 		accessActiveInstance(false);
-		return (getUI() == null) ? null : getUI().getReconstructionViewer(true);
+		final HashMap<Integer, Viewer3D> viewerMap = SNTUtils.getViewers();
+		if (viewerMap == null || viewerMap.isEmpty()) return null;
+		for (final Viewer3D viewer: viewerMap.values()) {
+			if (viewer.isSNTInstance()) return viewer;
+		}
+		if (isActive() && getUI() != null)
+			return  getUI().getReconstructionViewer(true);
+		return  null;
+	}
+
+	/**
+	 * Returns a reference to an opened Reconstruction Viewer (standalone instance).
+	 *
+	 * @param id the unique numeric ID of the Reconstruction Viewer to be retrieved
+	 *           (as used by the "Script This Viewer" command, and typically
+	 *           displayed in the Viewer's window title)
+	 * @return The standalone {@link Viewer3D} instance, or null if id was not
+	 *         recognized
+	 */
+	public Viewer3D getRecViewer(final int id) {
+		final HashMap<Integer, Viewer3D> viewerMap = SNTUtils.getViewers();
+		return (viewerMap == null || viewerMap.isEmpty()) ? null : viewerMap.get(id);
+	}
+
+	/**
+	 * Instantiates a new standalone Reconstruction Viewer.
+	 *
+	 * @return The standalone {@link Viewer3D} instance
+	 */
+	public Viewer3D newRecViewer(final boolean guiControls) {
+		return (guiControls) ? new Viewer3D(getContext()) : new Viewer3D();
 	}
 
 	/**
@@ -475,7 +506,7 @@ public class SNTService extends AbstractService implements ImageJService {
 			plugin.cancelSearch(true);
 			plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
 			plugin.prefs.savePluginPrefs(true);
-			if (getReconstructionViewer() != null) getReconstructionViewer().dispose();
+			if (getRecViewer() != null) getRecViewer().dispose();
 			plugin.closeAndResetAllPanes();
 			if (plugin.getImagePlus() != null) plugin.getImagePlus().close();
 			SNTUtils.setPlugin(null);

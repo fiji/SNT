@@ -63,7 +63,7 @@ public class IconFactory {
 			CHECK_DOUBLE('\uf560', true), //
 			CIRCLE('\uf192', false), //
 			CLOUD('\uf381', true), //
-			//CODE('\uf120', true), //
+			CODE('\uf120', true), //
 			COG('\uf013', true), //
 			COLOR('\uf53f', true), //
 			COLOR2('\uf5c3', true), //

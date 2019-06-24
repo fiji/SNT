@@ -187,7 +187,7 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			// "Path Manager Contents" checkbox. Not sure if this is a
 			// feature or a logical flaw in the way Path Manager and
 			// Reconstruction Viewer synchronize
-			recViewer = sntService.getReconstructionViewer();
+			recViewer = sntService.getRecViewer();
 			recViewer.setSceneUpdatesEnabled(false);
 			recViewer.loadRefBrain("Allen CCF");
 			recViewer.syncPathManagerList();

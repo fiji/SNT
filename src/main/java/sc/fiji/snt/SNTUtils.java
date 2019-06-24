@@ -31,6 +31,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -51,6 +52,7 @@ import ij.plugin.ZProjector;
 import ij.process.ImageConverter;
 import ij.process.StackConverter;
 import sc.fiji.snt.util.BoundingBox;
+import sc.fiji.snt.viewer.Viewer3D;
 
 /** Static utilities for SNT **/
 public class SNTUtils {
@@ -63,6 +65,7 @@ public class SNTUtils {
 
 	private static boolean initialized;
 	private static SNT plugin;
+	private static HashMap<Integer, Viewer3D> viewerMap;
 
 	private SNTUtils() {}
 
@@ -82,6 +85,20 @@ public class SNTUtils {
 
 	private static String getVersion() {
 		return VersionUtils.getVersion(SNT.class);
+	}
+
+	public static synchronized void addViewer(final Viewer3D viewer) {
+		if (viewerMap == null) viewerMap = new HashMap<>();
+		viewerMap.put(viewer.getID(), viewer);
+	}
+
+	public static synchronized void removeViewer(final Viewer3D viewer) {
+		if (viewerMap != null && viewer!= null)
+			viewerMap.values().removeIf(viewer::equals);
+	}
+
+	protected static HashMap<Integer, Viewer3D> getViewers() {
+		return viewerMap;
 	}
 
 	protected static synchronized void error(final String string) {

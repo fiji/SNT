@@ -131,7 +131,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 	public void run() {
 
 		try {
-			if (recViewer == null) recViewer = sntService.getReconstructionViewer();
+			if (recViewer == null) recViewer = sntService.getRecViewer();
 		}
 		catch (final UnsupportedOperationException exc) {
 			error(

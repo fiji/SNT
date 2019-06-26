@@ -1767,6 +1767,7 @@ public class Viewer3D {
 		}
 
 		public void disposeFrame() {
+			chart.stopAnimator();
 			ViewerFrame.this.remove(canvas);
 			ViewerFrame.this.chart.dispose();
 			ViewerFrame.this.chart = null;

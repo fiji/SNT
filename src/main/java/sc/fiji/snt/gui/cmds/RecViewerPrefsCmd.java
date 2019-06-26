@@ -51,10 +51,11 @@ public class RecViewerPrefsCmd extends ContextCommand {
 	public static double DEF_ROTATION_DURATION = 12;
 	public static int DEF_ROTATION_FPS = 30;
 	public static String DEF_CONTROLS_SENSITIVITY = "High";
+	public static String DEF_SCRIPT_EXTENSION = ".groovy";
+
 
 	@Parameter(
-		label = "<HTML><b>I. Snapshot Recordings" +
-			"&emsp;&emsp;&emsp;",
+		label = "<HTML><b>I. Snapshot Recordings:",
 		required = false, visibility = ItemVisibility.MESSAGE)
 	private String HEADER1;
 
@@ -95,6 +96,19 @@ public class RecViewerPrefsCmd extends ContextCommand {
 		visibility = ItemVisibility.MESSAGE)
 	private String msg2;
 
+	@Parameter(label = "<HTML><b>III. Scripting:",
+			required = false, visibility = ItemVisibility.MESSAGE)
+	private String HEADER3;
+
+	@Parameter(label = "Preferred Language", required = false,
+			description = "The scripting language to be used when running \"Script This Viewer...\"",
+			choices = { ".bsh", ".groovy", ".py" })
+		private String scriptExtension;
+
+	@Parameter(label = "<HTML>&nbsp;", required = false,
+			visibility = ItemVisibility.MESSAGE)
+	private String msg3;
+
 	@Parameter(label = "Defaults", callback = "reset")
 	private Button defaults;
 
@@ -104,8 +118,8 @@ public class RecViewerPrefsCmd extends ContextCommand {
 		if (rotationAngle == 0) rotationAngle = DEF_ROTATION_ANGLE;
 		if (rotationDuration == 0) rotationDuration = DEF_ROTATION_DURATION;
 		if (rotationFPS == 0) rotationFPS = DEF_ROTATION_FPS;
-		if (sensitivity == null) sensitivity =
-				DEF_CONTROLS_SENSITIVITY;
+		if (sensitivity == null) sensitivity = DEF_CONTROLS_SENSITIVITY;
+		if (scriptExtension == null) sensitivity = DEF_SCRIPT_EXTENSION;
 	}
 
 	@SuppressWarnings("unused")
@@ -115,14 +129,15 @@ public class RecViewerPrefsCmd extends ContextCommand {
 		rotationDuration = 0;
 		rotationFPS = 0;
 		sensitivity = null;
+		scriptExtension = null;
 		init();
 	}
 
 	private void snapshotDirChanged() {
-		if (snapshotDir == null || !snapshotDir.exists()) {
+		if (snapshotDir != null && !snapshotDir.exists()) {
 			msg1 = "<HTML>Path does not exist and will be created.";
 		}
-		else if (!snapshotDir.canWrite()) {
+		else if (snapshotDir != null && !snapshotDir.canWrite()) {
 			msg1 = "<HTML><font color='red'>Directory is not writable!";
 		}
 		else {

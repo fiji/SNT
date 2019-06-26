@@ -940,6 +940,21 @@ public class Viewer3D {
 		if (viewUpdatesEnabled) chart.render();
 	}
 
+	/**
+	 * Removes all the Annotations from current viewer
+	 */
+	protected void removeAllAnnotations() {
+		final Iterator<Entry<String, AbstractDrawable>> it = plottedAnnotations.entrySet()
+			.iterator();
+		while (it.hasNext()) {
+			final Map.Entry<String, AbstractDrawable> entry = it.next();
+			chart.getScene().getGraph().remove(entry.getValue(), false);
+			deleteItemFromManager(entry.getKey());
+			it.remove();
+		}
+		if (viewUpdatesEnabled) chart.render();
+	}
+
 	private void removeSceneObject(final String label) {
 		if (!removeTree(label)) {
 			if (!removeMesh(label))
@@ -2088,16 +2103,7 @@ public class Viewer3D {
 
 			mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.BROOM));
 			mi.addActionListener(e -> {
-				if (guiUtils.getConfirmation(
-					"Remove all items from scene? This action cannot be undone.",
-					"Wipe Scene?"))
-				{
-					Viewer3D.this.removeAllTrees();
-					removeAllMeshes();
-					removeColorLegends(false);
-					// Ensure nothing else remains (e.g., a Delaunay surface)
-					chart.getScene().getGraph().getAll().clear();
-				}
+				wipeScene();
 			});
 			sceneMenu.add(mi);
 			sceneMenu.addSeparator();
@@ -2117,6 +2123,20 @@ public class Viewer3D {
 			mi.setEnabled(isSNTInstance());
 			sceneMenu.add(mi);
 			return sceneMenu;
+		}
+
+		private void wipeScene() {
+			if (guiUtils.getConfirmation(
+				"Remove all items from scene? This action cannot be undone.",
+				"Wipe Scene?"))
+			{
+				removeAllTrees();
+				removeAllMeshes();
+				removeAllAnnotations();
+				removeColorLegends(false);
+				// Ensure nothing else remains
+				chart.getScene().getGraph().getAll().clear();
+			}
 		}
 
 		private JMenu squarifyMenu() {
@@ -2252,11 +2272,8 @@ public class Viewer3D {
 					guiUtils.error("There are no selected entries.");
 					return;
 				}
-				if (selectedKeys.size() == 1 && CheckBoxList.ALL_ENTRY.equals(selectedKeys.get(0)) && !noItems
-						&& guiUtils.getConfirmation("Remove all item(s)? This action cannot be undone.",
-								"Clear List?")) {
-					Viewer3D.this.removeAllTrees();
-					removeAllMeshes();
+				if (selectedKeys.size() == 1 && CheckBoxList.ALL_ENTRY.equals(selectedKeys.get(0)) && !noItems) {
+					wipeScene();
 					return;
 				}
 				if (guiUtils.getConfirmation("Remove selected item(s)?", "Confirm Deletion?")) {

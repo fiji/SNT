@@ -10,6 +10,7 @@ import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SNTPoint;
 import sc.iview.SciView;
 import sc.iview.shape.Line3D;
 import sc.iview.vector.ClearGLVector3;
@@ -59,7 +60,7 @@ public class SciViewSNT {
 		return (map.containsKey(label)) ? makeUniqueKey(map, label) : label;
 	}
 
-    /**
+	/**
 	 * Adds a tree to this viewer.
 	 *
 	 * @param tree the {@link Tree} to be added. The Tree's label will be used as
@@ -70,14 +71,34 @@ public class SciViewSNT {
 	 */
 	public void add(final Tree tree) {
 		final String label = getUniqueLabel(plottedTrees, "Tree ", tree.getLabel());
-		final ShapeTree shapeTree = new ShapeTree(tree);
-		plottedTrees.put(label, shapeTree);
+		add(tree, label);
+	}
+
+
+    /**
+	 * Adds a tree to this viewer.
+	 *
+	 * @param tree the {@link Tree} to be added. The Tree's label will be used as
+	 *          identifier. It is expected to be unique when rendering multiple
+	 *          Trees, if not (or no label exists) a unique label will be
+	 *          generated.
+	 * @see Tree#getLabel()
+	 */
+	public void add(final Tree tree, final String label) {
+		final ShapeTree shapeTree;
+		if( !plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL) ) {
+            shapeTree = new ShapeTree(tree);
+            plottedTrees.put(label, shapeTree);
+        } else {
+		    shapeTree = (ShapeTree) plottedTrees.get(PATH_MANAGER_TREE_LABEL);
+        }
 		addItemToManager(label);
 		for( Node node : shapeTree.get().getChildren() ) {
 		    //System.out.println("addTree: node " + node.getMetadata().get("pathID"));
-		    sciView.addNode(node);
+		    sciView.addNode(node, false);
         }
 		//sciView.getCamera().setPosition(treeCenter.minus(new GLVector(0,0,-10f)));
+        shapeTree.setName("SNT");
         sciView.centerOnNode( shapeTree );
 	}
 
@@ -89,10 +110,17 @@ public class SciViewSNT {
                 .getPathsFiltered());
         if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {// PATH_MANAGER_TREE_LABEL, the value of this is the *new* tree to add
             // TODO If the Node exists, then remove and add new one to replace
+            System.out.println("Tree exists, updating current name: " + tree.getLabel() + " next label: " + PATH_MANAGER_TREE_LABEL);
             for( Node node : plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren() ) {
-                syncNode(tree,node);
-                //sciView.deleteNode(node);
+                //syncNode(tree,node);
+                plottedTrees.get(PATH_MANAGER_TREE_LABEL).removeChild(node);
+                sciView.deleteNode(node, false);
             }
+
+
+            // Dont create a new SNT node each time
+            tree.setLabel(PATH_MANAGER_TREE_LABEL);
+			add(tree, PATH_MANAGER_TREE_LABEL);
         }
         else {
             tree.setLabel(PATH_MANAGER_TREE_LABEL);
@@ -266,7 +294,7 @@ public class SciViewSNT {
                     return;
                 default:
                     // just create a centroid sphere
-                    final PointInImage cCenter = PointInImage.average(somaPoints);
+                    final PointInImage cCenter = SNTPoint.average(somaPoints);
                     somaSubShape = sciView.addSphere(convertPIIToVector3(cCenter), DEF_NODE_RADIUS, col);
                     return;
             }

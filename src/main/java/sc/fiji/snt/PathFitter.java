@@ -64,15 +64,17 @@ public class PathFitter implements Callable<Path> {
 	public static final int RADII_AND_MIDPOINTS = 4;
 
 	private final SNT plugin;
-	private final Path path;
-	private final boolean showDetailedFittingResults;
 	private final ImagePlus imp;
+	private Path path;
+	private boolean showDetailedFittingResults;
 	private int fitterIndex;
 	private MultiTaskProgress progress;
 	private boolean succeeded;
 	private int sideSearch = DEFAULT_MAX_RADIUS;
 	private int fitScope = RADII_AND_MIDPOINTS;
 	private Path fitted;
+	private boolean fitInPlace;
+
 
 	/**
 	 * Checks whether the fit succeeded.
@@ -112,12 +114,8 @@ public class PathFitter implements Callable<Path> {
 	 *          image. The computation will be performed on the image currently
 	 *          loaded by the plugin.
 	 * @param path the {@link Path} to be fitted
-	 * @param showFit If true, an interactive stack (cross-section view) of the
-	 *          fit is displayed. Note that this is probably only useful if SNT's
-	 *          UI is visible and functional.
 	 */
-	public PathFitter(final SNT plugin, final Path path,
-	                  final boolean showFit)
+	public PathFitter(final SNT plugin, final Path path)
 	{
 		if (path == null) throw new IllegalArgumentException(
 			"Cannot fit a null path");
@@ -128,7 +126,31 @@ public class PathFitter implements Callable<Path> {
 		this.path = path;
 		this.fitterIndex = -1;
 		this.progress = null;
-		this.showDetailedFittingResults = showFit;
+	}
+
+	/**
+	 * Sets whether fitting should occur "in place".
+	 *
+	 * @param replaceNodes If true, the nodes of the input Path will be replaced by
+	 *                     those of the fitted result. If false, the fitted result
+	 *                     is kept as a separated Path linked to the input as per
+	 *                     {@link Path#getFitted()}. Note that in the latter case,
+	 *                     some topological operations (e.g., forking) performed on
+	 *                     the fitted result may not percolate to the unfitted Path.
+	 */
+	public void setReplaceNodes(final boolean replaceNodes) {
+		fitInPlace = replaceNodes;
+	}
+
+	/**
+	 * Sets whether an interactive image of the result should be displayed.
+	 *
+	 * @param showAnnotatedView If true, an interactive stack (cross-section view)
+	 *                          of the fit is displayed. Note that this is probably
+	 *                          only useful if SNT's UI is visible and functional.
+	 */
+	public void setShowAnnotatedView(final boolean showAnnotatedView) {
+		showDetailedFittingResults = showAnnotatedView;
 	}
 
 	public void setProgressCallback(final int fitterIndex,
@@ -154,9 +176,21 @@ public class PathFitter implements Callable<Path> {
 		fitCircles();
 		if (fitted == null) {
 			succeeded = false;
-			return null;
+			return (fitInPlace) ? path : null;
 		}
 		succeeded = true;
+		if (fitInPlace) {
+			final String name = path.getName();
+			if (!name.contains(" [Fitted*]")) path.setName( name + " [Fitted*]");
+			// coordinates/radii were already applied 
+			return path;
+		}
+		fitted.setName("Fitted Path [" + path.getID() + "]");
+		fitted.setCTposition(path.getChannel(), path.getFrame());
+		fitted.setColor(path.getColor());
+		fitted.setSWCType(path.getSWCType());
+		fitted.setOrder(path.getOrder());
+		fitted.setCanvasOffset(path.getCanvasOffset());
 		path.setFitted(fitted);
 		path.setUseFitted(true);
 		return fitted;
@@ -225,13 +259,6 @@ public class PathFitter implements Callable<Path> {
 
 		fitted = new Path(path.x_spacing, path.y_spacing, path.z_spacing,
 			path.spacing_units);
-		fitted.setCTposition(path.getChannel(), path.getFrame());
-		fitted.setName("Fitted Path [" + path.getID() + "]");
-		fitted.setColor(path.getColor());
-		fitted.setSWCType(path.getSWCType());
-		fitted.setOrder(path.getOrder());
-		fitted.setCanvasOffset(path.getCanvasOffset());
-
 		SNTUtils.log("  Generating cross-section stack (" + totalPoints +
 			"slices/nodes)");
 		final int width = imp.getWidth();
@@ -594,13 +621,15 @@ public class PathFitter implements Callable<Path> {
 			++added;
 		}
 
-//		if (added != fittedPoints)
-//			throw new IllegalArgumentException(
-//					"Mismatch of lengths, added=" + added + " and fittedLength=" + fittedPoints);
-
-		fitted.setFittedCircles(fittedPoints, fitted_ts_x, fitted_ts_y, fitted_ts_z,
-			fitted_rs, //
-			fitted_optimized_x, fitted_optimized_y, fitted_optimized_z);
+		if (fitInPlace) {
+			path.setFittedCircles(fittedPoints, fitted_ts_x, fitted_ts_y, fitted_ts_z,
+					fitted_rs, //
+					fitted_optimized_x, fitted_optimized_y, fitted_optimized_z);
+		} else {
+			fitted.setFittedCircles(fittedPoints, fitted_ts_x, fitted_ts_y, fitted_ts_z,
+					fitted_rs, //
+					fitted_optimized_x, fitted_optimized_y, fitted_optimized_z);
+		}
 
 		SNTUtils.log("Done. With " + fittedPoints + "/" + totalPoints +
 			" accepted fits");

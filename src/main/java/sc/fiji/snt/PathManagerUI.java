@@ -554,7 +554,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	}
 
 	private void fitPaths(final List<PathFitter> pathsToFit, final int fitType,
-		final int maxRadius)
+		final int maxRadius, final boolean fitInPlace)
 	{
 		assert SwingUtilities.isEventDispatchThread();
 
@@ -586,10 +586,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 						final PathFitter pf = pathsToFit.get(i);
 						pf.setScope(fitType);
 						pf.setMaxRadius(maxRadius);
+						pf.setReplaceNodes(fitInPlace);
 						pf.setProgressCallback(i, progress);
 					}
 					for (final Future<Path> future : es.invokeAll(pathsToFit)) {
-						pathAndFillManager.addPath(future.get());
+						final Path path = future.get();
+						if (!fitInPlace) pathAndFillManager.addPath(path);
 					}
 				}
 				catch (InterruptedException | ExecutionException | RuntimeException e) {
@@ -1330,7 +1332,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 						// Compute verbose fit using settings from previous PathFitterCmd
 						// runs
-						final PathFitter fitter = new PathFitter(plugin, p, true);
+						final PathFitter fitter = new PathFitter(plugin, p);
+						fitter.setShowAnnotatedView(true);
 						final PrefService prefService = plugin.getContext().getService(
 							PrefService.class);
 						final String rString = prefService.get(PathFitterCmd.class,
@@ -1990,6 +1993,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 					// If the fitted version is already being used. Do nothing
 					if (p.getUseFitted()) {
+						continue;
 					}
 
 					// A fitted version does not exist
@@ -2000,7 +2004,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 						}
 						else {
 							// Prepare for computation
-							final PathFitter pathFitter = new PathFitter(plugin, p, false);
+							final PathFitter pathFitter = new PathFitter(plugin, p);
 							pathsToFit.add(pathFitter);
 						}
 					}
@@ -2029,8 +2033,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 							try {
 								final int[] userOptions = get();
 								if (userOptions == null) return; // user dismissed prompt
-								fitPaths(pathsToFit, userOptions[0], userOptions[1]); // call
-																																			// refreshManager
+								fitPaths(pathsToFit, userOptions[0], userOptions[1], false); // call refreshManager
 								if (finalSkippedFits > 0) {
 									guiUtils.centeredMsg("Since no image data is available, " +
 										finalSkippedFits + "/" + selectedPaths.size() +

@@ -610,7 +610,6 @@ public class Viewer3D {
 	 * @param label  the (optional) annotation identifier. If null or empty, a
 	 *               unique label will be generated.
 	 * @return the {@link Annotation3D}
-	 * @see #addSurface(Collection)
 	 */
 	public Annotation3D annotateSurface(final Collection<? extends SNTPoint> points, final String label)
 	{

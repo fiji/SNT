@@ -1802,7 +1802,8 @@ public class Path implements Comparable<Path> {
 
 	protected void setOrder(final int order) {
 		this.order = order;
-		if (fitted != null) fitted.setOrder(order);
+		if (fitted != null) fitted.order = order;
+		else if (fittedVersionOf != null) fittedVersionOf.order = order;
 	}
 
 	/*

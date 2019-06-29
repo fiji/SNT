@@ -1685,10 +1685,7 @@ public class SNT extends MultiDThreePanes implements
 				x_spacing, world_y / y_spacing, world_z / z_spacing);
 		}
 
-		if (ui == null) return;
-
 		// FIXME: in some of the states this doesn't make sense; check for them:
-
 		if (currentSearchThread != null) return;
 
 		if (temporaryPath != null) return;

@@ -127,7 +127,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	private final PathAndFillManager pathAndFillManager;
 	private DefaultGenericTable table;
 	private boolean tableSaved;
-	protected SwingWorker<Object, Object> fitWorker;
 
 	protected static final String TABLE_TITLE = "SNT Measurements";
 	protected final GuiUtils guiUtils;
@@ -140,6 +139,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	private ButtonGroup swcTypeButtonGroup;
 	private final ColorMenu colorMenu;
 	private final JMenuItem fitVolumeMenuItem;
+	private FitHelper fittingHelper;
 
 	/**
 	 * Instantiates a new Path Manager Dialog.
@@ -266,10 +266,16 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.EXPLORE));
 		jmi.addActionListener(singlePathListener);
 		fitMenu.add(jmi);
-		fitMenu.addSeparator();
 		jmi = new JMenuItem(MultiPathActionListener.RESET_FITS, IconFactory.getMenuIcon(
 			IconFactory.GLYPH.BROOM));
 		jmi.addActionListener(multiPathListener);
+		fitMenu.add(jmi);
+		fitMenu.addSeparator();
+		jmi = new JMenuItem("Parameters...", IconFactory.getMenuIcon(IconFactory.GLYPH.SLIDERS));
+		jmi.addActionListener(e -> {
+			if (fittingHelper == null) fittingHelper = new FitHelper();
+			fittingHelper.showPrompt();
+		});
 		fitMenu.add(jmi);
 
 		final JMenu fillMenu = new JMenu("Fill");
@@ -517,115 +523,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		});
 	}
 
-	private int[] getFittingOptionsFromUser() {
-		final int[] options = new int[] { PathFitter.RADII,
-			PathFitter.DEFAULT_MAX_RADIUS };
-		String fitTypeString = null;
-		String maxRadiustring = null;
-		final PrefService prefService = plugin.getContext().getService(
-			PrefService.class);
-		final CommandService cmdService = plugin.getContext().getService(
-			CommandService.class);
-		try {
-			final CommandModule cm = cmdService.run(PathFitterCmd.class, true).get();
-			if (cm.isCanceled()) return null;
-			fitTypeString = prefService.get(PathFitterCmd.class,
-				PathFitterCmd.FITCHOICE_KEY);
-			maxRadiustring = prefService.get(PathFitterCmd.class,
-				PathFitterCmd.MAXRADIUS_KEY);
-		}
-		catch (final InterruptedException | ExecutionException e) {
-			return null;
-		}
-
-		if (fitTypeString == null || fitTypeString.isEmpty() ||
-			maxRadiustring == null || maxRadiustring.isEmpty())
-		{
-			return null;
-		}
-		try {
-			options[0] = Integer.parseInt(fitTypeString);
-			options[1] = Integer.parseInt(maxRadiustring);
-		}
-		catch (final NumberFormatException ex) {
-			SNTUtils.error("Could not parse settings. Adopting Defaults...", ex);
-		}
-		return options;
-	}
-
-	private void fitPaths(final List<PathFitter> pathsToFit, final int fitType,
-		final int maxRadius, final boolean fitInPlace)
-	{
-		assert SwingUtilities.isEventDispatchThread();
-
-		if (pathsToFit.isEmpty()) return; // nothing to fit
-
-		final SNTUI ui = plugin.getUI();
-		final int preFittingState = ui.getState();
-		ui.changeState(SNTUI.FITTING_PATHS);
-		final int numberOfPathsToFit = pathsToFit.size();
-		final int processors = Math.min(numberOfPathsToFit, Runtime.getRuntime()
-			.availableProcessors());
-		final String statusMsg = (processors == 1) ? "Fitting 1 path..."
-			: "Fitting " + numberOfPathsToFit + " paths (" + processors +
-				" threads)...";
-		ui.showStatus(statusMsg, false);
-		setEnabledCommands(false);
-		final JDialog msg = guiUtils.floatingMsg(statusMsg, false);
-
-		fitWorker = new SwingWorker<Object, Object>() {
-
-			@Override
-			protected Object doInBackground() {
-
-				final ExecutorService es = Executors.newFixedThreadPool(processors);
-				final FittingProgress progress = new FittingProgress(plugin.getUI(),
-					plugin.statusService, numberOfPathsToFit);
-				try {
-					for (int i = 0; i < numberOfPathsToFit; ++i) {
-						final PathFitter pf = pathsToFit.get(i);
-						pf.setScope(fitType);
-						pf.setMaxRadius(maxRadius);
-						pf.setReplaceNodes(fitInPlace);
-						pf.setProgressCallback(i, progress);
-					}
-					for (final Future<Path> future : es.invokeAll(pathsToFit)) {
-						final Path path = future.get();
-						if (!fitInPlace) pathAndFillManager.addPath(path);
-					}
-				}
-				catch (InterruptedException | ExecutionException | RuntimeException e) {
-					msg.dispose();
-					guiUtils.error(
-						"Unfortunately an Exception occured. See Console for details");
-					e.printStackTrace();
-				}
-				finally {
-					progress.done();
-				}
-				return null;
-			}
-
-			@Override
-			protected void done() {
-				refreshManager(true, false);
-				msg.dispose();
-				plugin.changeUIState(preFittingState);
-				setEnabledCommands(true);
-				ui.showStatus(null, false);
-			}
-		};
-		fitWorker.execute();
-	}
-
 	synchronized protected void cancelFit(final boolean updateUIState) {
-		if (fitWorker != null) {
-			synchronized (fitWorker) {
-				fitWorker.cancel(true);
-				if (updateUIState) plugin.getUI().resetState();
-				fitWorker = null;
-			}
-		}
+		if (fittingHelper != null) fittingHelper.cancelFit(updateUIState);
 	}
 
 	private void exportSelectedPaths(final Collection<Path> selectedPaths) {
@@ -939,6 +838,151 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	 */
 	@Override
 	public void setFillList(final String[] fillList) {}
+
+	private class FitHelper {
+
+		private boolean promptHasBeenDisplayed = false;
+		private int fitType = PathFitter.RADII;
+		private int maxRadius = PathFitter.DEFAULT_MAX_RADIUS;
+		private boolean fitInPlace = false;
+		private SwingWorker<Object, Object> fitWorker;
+		private List<PathFitter> pathsToFit;
+
+		public void showPrompt() {
+			new FittingOptionsWorker(this, false).execute();
+		}
+
+		private boolean displayPromptRequired() {
+			return !promptHasBeenDisplayed && plugin.getUI() != null && plugin.getUI().askUserConfirmation
+					&& guiUtils.getConfirmation("You have not yet adjusted the fitting parameters. "
+							+ "It is recommended that you do so at least once. Adjust them now?",
+							"Adjust Parameters?", "Yes. Adjust Parameters...", "No. Use Defaults.");
+		}
+
+		synchronized protected void cancelFit(final boolean updateUIState) {
+			if (fitWorker != null) {
+				synchronized (fitWorker) {
+					fitWorker.cancel(true);
+					if (updateUIState) plugin.getUI().resetState();
+					fitWorker = null;
+				}
+			}
+		}
+
+		public void fitUsingPrompAsNeeded() {
+			if (pathsToFit == null || pathsToFit.isEmpty()) return; // nothing to fit
+			if (displayPromptRequired()) {
+				new FittingOptionsWorker(this, true).execute();
+			} else {
+				fit();
+			}
+		}
+
+		public void fit() {
+			assert SwingUtilities.isEventDispatchThread();
+			final SNTUI ui = plugin.getUI();
+			final int preFittingState = ui.getState();
+			ui.changeState(SNTUI.FITTING_PATHS);
+			final int numberOfPathsToFit = pathsToFit.size();
+			final int processors = Math.min(numberOfPathsToFit, Runtime.getRuntime()
+				.availableProcessors());
+			final String statusMsg = (processors == 1) ? "Fitting 1 path..."
+				: "Fitting " + numberOfPathsToFit + " paths (" + processors +
+					" threads)...";
+			ui.showStatus(statusMsg, false);
+			setEnabledCommands(false);
+			final JDialog msg = guiUtils.floatingMsg(statusMsg, false);
+
+			fitWorker = new SwingWorker<Object, Object>() {
+
+				@Override
+				protected Object doInBackground() {
+
+					final ExecutorService es = Executors.newFixedThreadPool(processors);
+					final FittingProgress progress = new FittingProgress(plugin.getUI(),
+						plugin.statusService, numberOfPathsToFit);
+					try {
+						for (int i = 0; i < numberOfPathsToFit; ++i) {
+							final PathFitter pf = pathsToFit.get(i);
+							pf.setScope(fitType);
+							pf.setMaxRadius(maxRadius);
+							pf.setReplaceNodes(fitInPlace);
+							pf.setProgressCallback(i, progress);
+						}
+						for (final Future<Path> future : es.invokeAll(pathsToFit)) {
+							final Path path = future.get();
+							if (!fitInPlace) pathAndFillManager.addPath(path);
+						}
+					}
+					catch (InterruptedException | ExecutionException | RuntimeException e) {
+						msg.dispose();
+						guiUtils.error(
+							"Unfortunately an Exception occured. See Console for details");
+						e.printStackTrace();
+					}
+					finally {
+						progress.done();
+						pathsToFit = null;
+					}
+					return null;
+				}
+
+				@Override
+				protected void done() {
+					refreshManager(true, false);
+					msg.dispose();
+					plugin.changeUIState(preFittingState);
+					setEnabledCommands(true);
+					ui.showStatus(null, false);
+				}
+			};
+			fitWorker.execute();
+		}
+
+	}
+
+	private class FittingOptionsWorker extends SwingWorker<String, Object> {
+
+		private final FitHelper fitHelper;
+		private final boolean fit;
+
+		public FittingOptionsWorker(final FitHelper fitHelper, final boolean fit) {
+			this.fitHelper = fitHelper;
+			this.fit = fit;
+		}
+	
+		@Override
+		public String doInBackground() {
+			final PrefService prefService = plugin.getContext().getService(PrefService.class);
+			final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+			try {
+				final CommandModule cm = cmdService.run(PathFitterCmd.class, true).get();
+				if (cm.isCanceled())
+					return null;
+				final String fitTypeString = prefService.get(PathFitterCmd.class, PathFitterCmd.FITCHOICE_KEY);
+				fitHelper.fitType = Integer.parseInt(fitTypeString);
+				final String maxRadiustring = prefService.get(PathFitterCmd.class, PathFitterCmd.MAXRADIUS_KEY);
+				fitHelper.maxRadius = Integer.parseInt(maxRadiustring);
+				fitHelper.fitInPlace = prefService.getBoolean(PathFitterCmd.class, PathFitterCmd.FITINPLACE_KEY, false);
+			} catch (final InterruptedException | ExecutionException ignored) {
+				return null;
+			} catch (final NumberFormatException ex) {
+				SNTUtils.error("Could not parse settings. Adopting Defaults...", ex);
+			}
+			return "";
+		}
+
+		@Override
+		protected void done() {
+			try {
+				fitHelper.promptHasBeenDisplayed = get() != null;
+			} catch (final InterruptedException | ExecutionException ex) {
+				SNTUtils.error(ex.getMessage(), ex);
+				fitHelper.promptHasBeenDisplayed = false;
+			}
+			if (fit) fitHelper.fit();
+		}
+	}
 
 	/** This class defines the JTree hosting traced paths */
 	private class HelpfulJTree extends JTree {
@@ -2021,34 +2065,13 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				else if (pathsToFit.size() > 0) {
 
 					final int finalSkippedFits = skippedFits;
-					class GetOptions extends SwingWorker<int[], Object> {
-
-						@Override
-						public int[] doInBackground() {
-							return getFittingOptionsFromUser();
-						}
-
-						@Override
-						protected void done() {
-							try {
-								final int[] userOptions = get();
-								if (userOptions == null) return; // user dismissed prompt
-								fitPaths(pathsToFit, userOptions[0], userOptions[1], false); // call refreshManager
-								if (finalSkippedFits > 0) {
-									guiUtils.centeredMsg("Since no image data is available, " +
-										finalSkippedFits + "/" + selectedPaths.size() +
-										" fits could not be computed", "Valid Image Data Unavailable");
-								}
-							}
-							catch (final NullPointerException | InterruptedException
-									| ExecutionException e)
-							{
-								e.printStackTrace();
-							}
-						}
+					if (fittingHelper == null) fittingHelper = new FitHelper();
+					fittingHelper.pathsToFit = pathsToFit;
+					fittingHelper.fitUsingPrompAsNeeded(); // call refreshManager
+					if (finalSkippedFits > 0) {
+						guiUtils.centeredMsg("Since no image data is available, " + finalSkippedFits + "/"
+								+ selectedPaths.size() + " fits could not be computed", "Valid Image Data Unavailable");
 					}
-					(new GetOptions()).execute();
-
 				}
 				else {
 					refreshManager(true, false);

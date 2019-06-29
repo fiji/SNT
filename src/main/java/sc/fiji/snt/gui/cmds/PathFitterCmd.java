@@ -48,6 +48,7 @@ public class PathFitterCmd extends ContextCommand {
 
 	public static final String FITCHOICE_KEY = "choice";
 	public static final String MAXRADIUS_KEY = "maxrad";
+	public static final String FITINPLACE_KEY = "inplace";
 
 	private static final String EMPTY_LABEL = "<html>&nbsp;";
 	private static final String CHOICE_RADII =
@@ -96,6 +97,17 @@ public class PathFitterCmd extends ContextCommand {
 	@Parameter(required = false, label = EMPTY_LABEL)
 	private int maxRadius = PathFitter.DEFAULT_MAX_RADIUS;
 
+	@Parameter(required = false, visibility = ItemVisibility.MESSAGE)
+	private final String spacer2 = EMPTY_LABEL;
+
+	@Parameter(required = false, visibility = ItemVisibility.MESSAGE)
+	private final String msg3 = HEADER +
+		"<b>Replace nodes:</b> (Advanced setting) Defines wether fitted "//
+		+ "nodes should immediately replace those of input path(s):";
+	@Parameter(required = false, label = EMPTY_LABEL, choices = {
+			"Keep original path(s)", "Replace existing nodes (undoable operation)" })
+	private String fitInPlaceChoice;
+
 	@Parameter(required = false, label = "Reset Defaults", callback = "reset")
 	private Button reset;
 
@@ -120,12 +132,14 @@ public class PathFitterCmd extends ContextCommand {
 				break;
 		}
 		prefService.put(PathFitterCmd.class, MAXRADIUS_KEY, maxRadius);
+		prefService.put(PathFitterCmd.class, FITINPLACE_KEY, fitInPlaceChoice.toLowerCase().contains("replace"));
 	}
 
 	@SuppressWarnings("unused")
 	private void reset() {
 		fitChoice = PathFitterCmd.CHOICE_RADII;
 		maxRadius = PathFitter.DEFAULT_MAX_RADIUS;
+		fitInPlaceChoice = null;
 		prefService.clear(PathFitterCmd.class); // useful if user dismisses dialog
 																						// after pressing "Reset"
 	}

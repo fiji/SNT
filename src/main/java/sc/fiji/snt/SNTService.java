@@ -335,6 +335,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 *         running without GUI
 	 */
 	public SNTUI getUI() {
+		plugin = SNTUtils.getPluginInstance();
 		return (plugin==null) ? null : plugin.getUI();
 	}
 

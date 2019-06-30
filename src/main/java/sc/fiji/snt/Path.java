@@ -686,6 +686,32 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
+	 * Gets the closest node associated with the specified node.
+	 *
+	 * @param node   location to be searched for
+	 * @param within sets the search sensitivity. E.g., Setting it to
+	 *               Double.MAX_VALUE (or the image's largest dimension) will always
+	 *               return a valid node.
+	 * @return the closest node to the specified one or null if no such node was
+	 *         found.
+	 */
+	public PointInImage nearestNodeTo(final PointInImage node,
+		final double within)
+	{
+		double minimumDistanceSquared = within * within;
+		PointInImage closestNode = null;
+		for (int i = 0; i < size(); ++i) {
+			final PointInImage cNode = getNode(i);
+			final double thisDistanceSquared = cNode.distanceSquaredTo(node);
+			if (thisDistanceSquared < minimumDistanceSquared) {
+				closestNode = cNode;
+				minimumDistanceSquared = thisDistanceSquared;
+			}
+		}
+		return closestNode;
+	}
+
+	/**
 	 * Gets the index of the closest node associated with the specified world
 	 * coordinates.
 	 *

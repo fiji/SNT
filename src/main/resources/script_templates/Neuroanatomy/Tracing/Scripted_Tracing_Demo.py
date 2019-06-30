@@ -11,7 +11,7 @@
 """
 file:       Scripted_Tracing_Demo.py
 author:     Tiago Ferreira
-version:    20180820
+version:    20190629
 info:       Exemplifies how to programmatically interact with a running
             instance of SNT to perform auto-tracing tasks.
 """
@@ -27,10 +27,10 @@ from sc.fiji.snt.viewer import(Viewer2D, Viewer3D)
 def run():
 
     # Exit if SNT is not running
-    if not snt.isActive():
+    if not (snt.isActive() or snt.getUI()):
         ui.showDialog("SNT does not seem to be running. Exiting..", "Error")
         return
-    if not snt.isUIReady():
+    if not snt.getUI().isReady():
         ui.showDialog("Demo cannot run in current state: UI not ready", "Error")
         return
     # Ensure tracing functions are not paused

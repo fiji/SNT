@@ -191,6 +191,16 @@ public class Tree {
 	}
 
 	/**
+	 * Returns the index of the specified Path in this Tree.
+	 *
+	 * @param path the Path to be searched for
+	 * @return the path index, or -1 if it was not found
+	 */
+	public int indexOf(final Path path) {
+		return tree.indexOf(path);
+	}
+
+	/**
 	 * Removes a path from this tree.
 	 *
 	 * @param p the Path to be removed

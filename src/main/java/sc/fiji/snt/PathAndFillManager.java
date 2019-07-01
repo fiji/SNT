@@ -781,7 +781,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @param tree the collection of paths to be added
 	 */
 	public void addTree(final Tree tree) {
-		tree.list().stream().forEach(p -> addPath(p, true));
+		tree.list().stream().forEach(p -> addPath(p, true, true));
 	}
 
 	/**
@@ -790,16 +790,16 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @param p the Path to be added
 	 */
 	public void addPath(final Path p) {
-		addPath(p, false);
+		addPath(p, false, false);
 	}
 
 	@SuppressWarnings("deprecation")
 	protected synchronized void addPath(final Path p,
-		final boolean forceNewName)
+		final boolean forceNewName, final boolean forceNewId)
 	{
-		if (getPathFromID(p.getID()) != null) throw new IllegalArgumentException(
-			"Attempted to add a path with an ID that was already added");
-		if (p.getID() < 0) {
+		if (!forceNewId && getPathFromID(p.getID()) != null) throw new IllegalArgumentException(
+				"Attempted to add a path with an ID that was already added");
+		if (forceNewId || p.getID() < 0) {
 			p.setID(++maxUsedID);
 		}
 		if (maxUsedID < p.getID()) maxUsedID = p.getID();

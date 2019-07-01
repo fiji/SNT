@@ -1654,7 +1654,7 @@ public class SNT extends MultiDThreePanes implements
 
 		removeSphere(targetBallName);
 		if (pathAndFillManager.getPathFromID(currentPath.getID()) == null)
-			pathAndFillManager.addPath(currentPath, true);
+			pathAndFillManager.addPath(currentPath, true, false);
 		unsavedPaths = true;
 		lastStartPointSet = false;
 		selectPath(currentPath, false);

@@ -3634,11 +3634,11 @@ public class Viewer3D {
 			return tube;
 		}
 
-		private Sphere sphere(final SWCPoint center, final Color color) {
+		private Sphere sphere(final PointInImage center, final Color color) {
 			final Sphere s = new Sphere();
 			s.setPosition(new Coord3d(center.x, center.y, center.z));
-			final float radius = (float) Math.max(center.radius, SOMA_SCALING_FACTOR *
-				defThickness);
+			final double r = (center instanceof SWCPoint) ? ((SWCPoint) center).radius : center.v;
+			final float radius = (float) Math.max(r, SOMA_SCALING_FACTOR * defThickness);
 			s.setVolume(radius);
 			setWireFrame(s, radius, color);
 			return s;

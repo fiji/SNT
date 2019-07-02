@@ -86,16 +86,22 @@ public class SciViewSNT {
 	 */
 	public void add(final Tree tree, final String label) {
 		final ShapeTree shapeTree;
+//		if( !plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL) ) {
+//            shapeTree = new ShapeTree(tree);
+//            plottedTrees.put(label, shapeTree);
+//        } else {
+//		    shapeTree = (ShapeTree) plottedTrees.get(PATH_MANAGER_TREE_LABEL);
+//        }
+        shapeTree = new ShapeTree(tree);
+        plottedTrees.put(label, shapeTree);
+
 		if( !plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL) ) {
-            shapeTree = new ShapeTree(tree);
-            plottedTrees.put(label, shapeTree);
-        } else {
-		    shapeTree = (ShapeTree) plottedTrees.get(PATH_MANAGER_TREE_LABEL);
+            addItemToManager(label);
         }
-		addItemToManager(label);
+
 		for( Node node : shapeTree.get().getChildren() ) {
-		    //System.out.println("addTree: node " + node.getMetadata().get("pathID"));
-		    sciView.addNode(node, false);
+            Node n = sciView.addNode(node, false);
+            //System.out.println("addTree: node " + node.getMetadata().get("pathID") + " node " + n);
         }
 		//sciView.getCamera().setPosition(treeCenter.minus(new GLVector(0,0,-10f)));
         shapeTree.setName("SNT");
@@ -110,17 +116,25 @@ public class SciViewSNT {
                 .getPathsFiltered());
         if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {// PATH_MANAGER_TREE_LABEL, the value of this is the *new* tree to add
             // TODO If the Node exists, then remove and add new one to replace
-            System.out.println("Tree exists, updating current name: " + tree.getLabel() + " next label: " + PATH_MANAGER_TREE_LABEL);
+            //System.out.println("Tree exists, updating current name: " + tree.getLabel() + " next label: " + PATH_MANAGER_TREE_LABEL);
+            //System.out.println("Deleting nodes: " + plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren().size());
             for( Node node : plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren() ) {
                 //syncNode(tree,node);
                 plottedTrees.get(PATH_MANAGER_TREE_LABEL).removeChild(node);
                 sciView.deleteNode(node, false);
             }
+            sciView.deleteNode(plottedTrees.get(PATH_MANAGER_TREE_LABEL));
+            //System.out.println("Num remaining nodes: " + sciView.getSceneNodes().length);
 
 
             // Dont create a new SNT node each time
+
             tree.setLabel(PATH_MANAGER_TREE_LABEL);
-			add(tree, PATH_MANAGER_TREE_LABEL);
+			add(tree);
+
+			//System.out.println("Num remaining nodes: " + sciView.getSceneNodes().length);
+			//sciView.centerOnNode( plottedTrees.get(PATH_MANAGER_TREE_LABEL) );
+            //sciView.centerOnNode( sciView.getSceneNodes()[(int)(Math.random()*sciView.getSceneNodes().length)] );
         }
         else {
             tree.setLabel(PATH_MANAGER_TREE_LABEL);
@@ -259,8 +273,8 @@ public class SciViewSNT {
             sciView.addNode(this, true);
 
             this.setPosition(this.getMaximumBoundingBox().getBoundingSphere().getOrigin());
-            sciView.setActiveNode(this);
-            sciView.surroundLighting();
+            //sciView.setActiveNode(this);
+            //sciView.surroundLighting();
             // shape.setFaceDisplayed(true);
             // shape.setWireframeDisplayed(true);
         }

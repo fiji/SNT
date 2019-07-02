@@ -20,32 +20,33 @@ info:       Exemplifies how to programmatically interact with a running instance
 
 import math
 
-from sc.fiji.snt import (Path, PathAndFillManager, SNT, SNTUI, SNTUtils,Tree)
+from sc.fiji.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
 from sc.fiji.snt.util import PointInImage
 from sc.fiji.snt.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
     TreeStatistics)
-from sc.fiji.snt.viewer import(Viewer2D, Viewer3D)
+from sc.fiji.snt.viewer import (Viewer2D, Viewer3D)
 
 
 def run():
 
     # The SNTService contains convenience methods that will simplify
     # our script. For more advanced features we'll script other classes
-    # directly, but we'll use SNTService whenever pertinent. Now, lets
-    # ensure SNT is currently running
+    # directly, but we'll use SNTService whenever pertinent.
     # https://javadoc.scijava.org/Fiji/sc/fiji/tracing/SNTService.html
-    if not snt.isActive():
-        ui.showDialog("SNT does not seem to be running. Exiting..", "Error")
-        return
+    # Let's start SNT's GUI if it is currently not running
+    if not snt.getUI():
+        snt.initialize(True)  # display GUI?
 
-    # Let's import some demo data
-    demo_tree = snt.loadDemoTree()
+    # Let's import some demo data. See Scripted_Tracing_Demo.py for how
+    # to retrieve the demo image associated with this data
+    demo_tree = snt.demoTree()
     if not demo_tree:
         ui.showDialog("Somehow could not load bundled file.", "Error")
         return
 
-    # Pause tracing functions
+    # Pause tracing functions and load demo data
     snt.getUI().changeState(SNTUI.TRACING_PAUSED)
+    snt.loadTree(demo_tree)
 
     # Almost all SNT analyses are performed on a Tree, i.e., a collection
     # of Paths. We can immediately retrieve TreeAnalyzer (responsible for
@@ -89,9 +90,10 @@ def run():
 
     # To render both the downsampled tree and the original:
     tree.setColor("cyan")
-    tree = snt.loadDemoTree()
+    tree = snt.demoTree()
     tree.setColor("yellow")
-    snt.getReconstructionViewer().show() # open Rec. viewer
+    snt.loadTree(tree)
+    snt.getRecViewer().show()
     snt.getPlugin().updateAllViewers()
 
 run()

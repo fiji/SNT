@@ -13,7 +13,7 @@
 file:       Measure_Multiple_Files.py
 author:     Tiago Ferreira
 version:    20180531
-info:       Bulk measurements of SWC files using SNT
+info:       Bulk measurements of reconstruction files using SNT
 """
 
 import os, sys
@@ -25,8 +25,8 @@ from org.scijava.table import DefaultGenericTable
 
 def get_swc_files(directory, filtering_string):
     """Returns a list containing the paths of files in the specified
-       directory. The list will only include SWC and TRACES files
-       whose filename contains the specified string."""
+       directory. The list will only include SWC, TRACES and JSON
+       files whose filename contains the specified string."""
     files = []
     for (dirpath, dirnames, filenames) in os.walk(directory):
         for f in filenames:

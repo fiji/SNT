@@ -26,15 +26,12 @@ from sc.fiji.snt.viewer import(Viewer2D, Viewer3D)
 
 def run():
 
-    # Exit if SNT is not running
-    if not (snt.isActive() or snt.getUI()):
-        ui.showDialog("SNT does not seem to be running. Exiting..", "Error")
-        return
-    if not snt.getUI().isReady():
+    # Let's start SNT's GUI if it is currently not running
+    if not snt.getUI():
+        snt.initialize("demo", True)  # Image file path/identifier, display GUI?
+    elif not snt.getUI().isReady():
         ui.showDialog("Demo cannot run in current state: UI not ready", "Error")
         return
-    # Ensure tracing functions are not paused
-    snt.getUI().changeState(SNTUI.READY)
 
     # For basic functionality we can call SNTService directly: E.g.:
     # https://javadoc.scijava.org/Fiji/sc/fiji/snt/SNTService.html
@@ -47,11 +44,22 @@ def run():
     # https://javadoc.scijava.org/Fiji/sc/fiji/snt/PathAndFillManager.html
     plugin = snt.getPlugin()
     pafm = snt.getPathAndFillManager()
+    imp = plugin.getImagePlus()
 
     # Now let's do some auto-tracing. But first let's remember the current
     # status of the plugin so that we can restore things at the end
     state = plugin.getUI().getState()
+    snt.getUI().changeState(SNTUI.READY)
     astar_enabled = plugin.isAstarEnabled()
+
+    # We need an image: if none exists, we'll create a placeholder display
+    # canvas. If that is not possible, we'll defaut to SNT's "demo" image
+    if imp is None and pafm.size() > 0:
+        plugin.rebuildDisplayCanvases()
+        imp = plugin.getImagePlus()
+    if imp is None:
+        plugin.initialize(snt.demoTreeImage())
+        imp = plugin.getImagePlus()
 
     # Let's first announce (discretely) our scripting intentions
     msg = "SNT is being scripted!"
@@ -65,17 +73,9 @@ def run():
     # demo knows nothing about the current image (and this center voxel), we'll
     # tur-off the A* Search algorithm
     plugin.enableAstar(False)
-    imp = plugin.getImagePlus()
-
-    # Create a placeholder display canvas if no image currently exists
-    if imp is None:
-        plugin.rebuildDisplayCanvases()
-        imp = plugin.getImagePlus()
-
-    dim = imp.getDimensions()
-    sx = imp.getCalibration().getX(dim[0]) / 2
-    sy = imp.getCalibration().getY(dim[1]) / 2
-    z = imp.getCalibration().getZ(imp.getCurrentSlice() - 1)  # 1-based index
+    sx = imp.getCalibration().getX(imp.getWidth()) / 2
+    sy = imp.getCalibration().getY(imp.getHeight()) / 2
+    z = imp.getCalibration().getZ(imp.getZ() - 1)  # 1-based index
 
     # Define a Tree (a collection of Paths) to hold all the paths we'll create
     tree = Tree()

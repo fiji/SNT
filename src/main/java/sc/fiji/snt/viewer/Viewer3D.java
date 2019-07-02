@@ -676,12 +676,20 @@ public class Viewer3D {
 		return annotation;
 	}
 
-	public Annotation3D mergeAnnotations(final Collection<Annotation3D> collection, final String label) {
+	/**
+	 * Merges a collection of annotations into a single object.
+	 *
+	 * @param annotations the collection of annotations.
+	 * @param label       the (optional) identifier for the merged annotation. If
+	 *                    null or empty, a unique label will be generated.
+	 * @return the merged {@link Annotation3D}
+	 */
+	public Annotation3D mergeAnnotations(final Collection<Annotation3D> annotations, final String label) {
 		final boolean updateFlag = viewUpdatesEnabled;
 		viewUpdatesEnabled = false;
-		collection.forEach(annot -> removeDrawable(plottedAnnotations, annot.getLabel()));
+		annotations.forEach(annot -> removeDrawable(plottedAnnotations, annot.getLabel()));
 		viewUpdatesEnabled = updateFlag;
-		final Annotation3D annotation = new Annotation3D(this, collection);
+		final Annotation3D annotation = new Annotation3D(this, annotations);
 		final String uniqueLabel = getUniqueLabel(plottedAnnotations, "Merged Annot.", label);
 		annotation.setLabel(uniqueLabel);
 		plottedAnnotations.put(uniqueLabel, annotation.getDrawable());

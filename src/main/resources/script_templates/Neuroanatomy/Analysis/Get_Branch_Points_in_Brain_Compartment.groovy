@@ -129,12 +129,13 @@ annot = viewer.annotatePoints(bps, "Thalamic BPs")
 annot.setSize(10)
 
 // Annotate centroids of soma and BPs
-annot = viewer.annotatePoint(somaCentroid, "Soma")
-annot.setColor("white", 10) // color, transparency
-annot.setSize(30)
-annot = viewer.annotatePoint(bpsCentroid, "BPs Barycenter")
-annot.setColor("white", 25)
-annot.setSize(30)
+miscAnnotations = []
+miscAnnotations << viewer.annotatePoint(somaCentroid, "Soma")
+miscAnnotations << viewer.annotatePoint(bpsCentroid, "BPs Barycenter")
+for (annot in miscAnnotations) {
+	annot.setColor("white", 10) // color, transparency
+	annot.setSize(30)
+}
 
 // Display scene
 viewer.show()

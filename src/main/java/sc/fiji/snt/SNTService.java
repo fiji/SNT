@@ -123,7 +123,10 @@ public class SNTService extends AbstractService implements ImageJService {
 	 */
 	public SNT initialize(final boolean startUI) {
 		accessActiveInstance(true);
-		if (startUI && plugin.getUI() == null) plugin.startUI();
+		if (startUI && plugin.getUI() == null) {
+			plugin.initialize(true, 1, 1);
+			plugin.startUI();
+		}
 		return plugin;
 	}
 
@@ -347,14 +350,24 @@ public class SNTService extends AbstractService implements ImageJService {
 	 */
 	public Viewer3D getRecViewer() {
 		accessActiveInstance(false);
-		final HashMap<Integer, Viewer3D> viewerMap = SNTUtils.getViewers();
-		if (viewerMap == null || viewerMap.isEmpty()) return null;
-		for (final Viewer3D viewer: viewerMap.values()) {
-			if (viewer.isSNTInstance()) return viewer;
+		if (getUI() != null) {
+			return getUI().getReconstructionViewer(true);
 		}
-		if (isActive() && getUI() != null)
-			return  getUI().getReconstructionViewer(true);
-		return  null;
+		final HashMap<Integer, Viewer3D> viewerMap = SNTUtils.getViewers();
+		if (viewerMap == null || viewerMap.isEmpty()) {
+			class SNTViewer3D extends Viewer3D {
+				private SNTViewer3D() {
+					super(plugin);
+				}
+			}
+			return new SNTViewer3D();
+		}
+		for (final Viewer3D viewer : viewerMap.values()) {
+			if (viewer.isSNTInstance()) {
+				return viewer;
+			}
+		}
+		return null;
 	}
 
 	/**

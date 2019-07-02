@@ -3,7 +3,7 @@
 
 """
 file:    Scripted_Tracing_Demo.py
-author:  Tiago Ferreira
+author:  Tiago Ferreira, Cameron Arshadi
 version: 20190629
 info:    Exemplifies how to programmatically perform A* tracing between two
          points without GUI interaction, which allows for automated tracing

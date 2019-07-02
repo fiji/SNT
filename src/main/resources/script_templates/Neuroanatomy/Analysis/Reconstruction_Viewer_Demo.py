@@ -1,7 +1,7 @@
 # @Context context
-# @UIService ui
 # @LUTService lut
-
+# @SNTService snt
+# @UIService ui
 
 """
 file:       Reconstruction_Viewer_Demo.py
@@ -15,7 +15,7 @@ from sc.fiji.snt.io import MouseLightLoader
 from sc.fiji.snt.analysis import TreeColorMapper
 from sc.fiji.snt.annotation import AllenCompartment
 from sc.fiji.snt.annotation import AllenUtils
-from sc.fiji.snt.viewer import OBJMesh, Viewer3D
+from sc.fiji.snt.viewer import Viewer3D
 from sc.fiji.snt.viewer.Viewer3D import ViewMode
 
 from org.scijava.util import Colors
@@ -48,7 +48,7 @@ def run():
 
     # Assemble 3D scene in Reconstruction Viewer
     print("... Done. Preparing Reconstruction Viewer...")
-    viewer = Viewer3D(context) # Initialize viewer with GUI controls
+    viewer = snt.newRecViewer(True)  # viewer with GUI controls?
 
     # Add reconstructions and color map legend
     viewer.add(dend_tree)
@@ -68,6 +68,8 @@ def run():
     viewer.show()
     viewer.setAnimationEnabled(True)
     print("... Done. With Viewer active, Press 'H' or 'F1' for help")
+    print("    To programmatically access the Viewer at a later time point:")
+    print("    viewer = snt.getRecViewer(%s)" % viewer.getID())
 
 
 run()

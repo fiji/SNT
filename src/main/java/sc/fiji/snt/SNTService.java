@@ -353,14 +353,23 @@ public class SNTService extends AbstractService implements ImageJService {
 		if (getUI() != null) {
 			return getUI().getReconstructionViewer(true);
 		}
-		final HashMap<Integer, Viewer3D> viewerMap = SNTUtils.getViewers();
-		if (viewerMap == null || viewerMap.isEmpty()) {
+		final Viewer3D viewer = getInstanceViewer();
+		if (viewer == null) {
 			class SNTViewer3D extends Viewer3D {
 				private SNTViewer3D() {
 					super(plugin);
 				}
 			}
 			return new SNTViewer3D();
+		} else {
+			return viewer;
+		}
+	}
+
+	private Viewer3D getInstanceViewer() {
+		final HashMap<Integer, Viewer3D> viewerMap = SNTUtils.getViewers();
+		if (viewerMap == null || viewerMap.isEmpty()) {
+			return null;
 		}
 		for (final Viewer3D viewer : viewerMap.values()) {
 			if (viewer.isSNTInstance()) {
@@ -513,6 +522,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	/**
 	 * Quits SNT. Does nothing if SNT is currently not running.
 	 */
+	@Override
 	public void dispose() {
 		if (plugin == null) return;
 		if (getUI() == null) {
@@ -520,7 +530,7 @@ public class SNTService extends AbstractService implements ImageJService {
 			plugin.cancelSearch(true);
 			plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
 			plugin.prefs.savePluginPrefs(true);
-			if (getRecViewer() != null) getRecViewer().dispose();
+			if (getInstanceViewer() != null) getRecViewer().dispose();
 			plugin.closeAndResetAllPanes();
 			if (plugin.getImagePlus() != null) plugin.getImagePlus().close();
 			SNTUtils.setPlugin(null);

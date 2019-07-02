@@ -540,7 +540,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			return;
 		}
 
-		final File saveFile = plugin.getUI().saveFile("Save SNT Measurements...", null, "swc");
+		final File saveFile = plugin.getUI().saveFile("Save Paths as SWC...", null, ".swc");
 		if (saveFile == null) {
 			return; // user pressed cancel
 		}

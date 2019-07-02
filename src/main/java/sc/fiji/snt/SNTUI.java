@@ -3163,7 +3163,7 @@ public class SNTUI extends JDialog {
 				enableHessian(activate);
 			} else if (source == saveMenuItem && !noPathsError()) {
 
-				final File saveFile = saveFile("Save Traces As...", null, "traces");
+				final File saveFile = saveFile("Save Traces As...", null, ".traces");
 				if (saveFile != null) saveToXML(saveFile);
 
 			} else if (source == loadTracesMenuItem) {

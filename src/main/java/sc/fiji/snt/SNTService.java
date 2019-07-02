@@ -216,7 +216,7 @@ public class SNTService extends AbstractService implements ImageJService {
 			return false;
 		File saveFile;
 		if (filePath == null || filePath.trim().isEmpty() && getUI() != null) {
-			saveFile = getUI().saveFile("Save Traces As...", null, "traces");
+			saveFile = getUI().saveFile("Save As Traces...", null, ".traces");
 		} else {
 			saveFile = new File(filePath);
 		}

@@ -646,7 +646,7 @@ public class SNT extends MultiDThreePanes implements
 		}
 	}
 
-	public boolean isChangesUnsaved() {
+	protected boolean isChangesUnsaved() {
 		return unsavedPaths;
 	}
 
@@ -746,7 +746,7 @@ public class SNT extends MultiDThreePanes implements
 		discardFill(true);
 	}
 
-	synchronized public void discardFill(final boolean updateState) {
+	synchronized protected void discardFill(final boolean updateState) {
 		if (filler != null) {
 			synchronized (filler) {
 				filler.requestStop();
@@ -1250,7 +1250,7 @@ public class SNT extends MultiDThreePanes implements
 		return currentPath;
 	}
 
-	public void setPathUnfinished(final boolean unfinished) {
+	protected void setPathUnfinished(final boolean unfinished) {
 
 		this.pathUnfinished = unfinished;
 		xy_tracer_canvas.setPathUnfinished(unfinished);
@@ -1458,6 +1458,9 @@ public class SNT extends MultiDThreePanes implements
 		updateAllViewers();
 	}
 
+	/**
+	 * Cancels the temporary path.
+	 */
 	synchronized public void cancelPath() {
 
 		// Is there an unconfirmed path? If so, warn people about it...
@@ -1666,7 +1669,7 @@ public class SNT extends MultiDThreePanes implements
 		updateAllViewers();
 	}
 
-	synchronized public void clickForTrace(final Point3d p, final boolean join) {
+	synchronized protected void clickForTrace(final Point3d p, final boolean join) {
 		final double x_unscaled = p.x / x_spacing;
 		final double y_unscaled = p.y / y_spacing;
 		final double z_unscaled = p.z / z_spacing;
@@ -1674,7 +1677,7 @@ public class SNT extends MultiDThreePanes implements
 		clickForTrace(p.x, p.y, p.z, join);
 	}
 
-	synchronized public void clickForTrace(final double world_x,
+	synchronized protected void clickForTrace(final double world_x,
 		final double world_y, final double world_z, final boolean join)
 	{
 
@@ -1710,7 +1713,7 @@ public class SNT extends MultiDThreePanes implements
 
 	}
 
-	synchronized public void clickForTrace(final double x_in_pane_precise,
+	synchronized protected void clickForTrace(final double x_in_pane_precise,
 		final double y_in_pane_precise, final int plane, final boolean join)
 	{
 
@@ -1832,8 +1835,8 @@ public class SNT extends MultiDThreePanes implements
 		return filler.fillAsImagePlus(!asMask);
 	}
 
-	public int guessResamplingFactor() {
-		if (width == 0 || height == 0 || depth == 0) throw new RuntimeException(
+	protected int guessResamplingFactor() {
+		if (width == 0 || height == 0 || depth == 0) throw new IllegalArgumentException(
 			"Can't call guessResamplingFactor() before width, height and depth are set...");
 		/*
 		 * This is about right for me, but probably should be related to the free memory

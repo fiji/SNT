@@ -27,7 +27,7 @@ def run():
     plugin = snt.initialize("demo", False) # image, whether UI should be shown
     plugin.enableAstar(True)
     plugin.getPathAndFillManager().clear();
-    #plugin.startHessian("primary", 1.15, 14)
+    #plugin.startHessian("primary", 1.0, 25.0, True)
 
     ref_tree = snt.demoTree()
     new_tree = Tree()
@@ -36,7 +36,7 @@ def run():
         end_point = path.getNode(path.size() - 1)
         fork_point = path.getStartJoinsPoint()
 
-        if path.getStartJoinsPoint() is None:
+        if fork_point is None:
             # We're creating a primary Path
             start_point = path.getNode(0)
             primary_path = plugin.autoTrace(start_point, end_point, None)

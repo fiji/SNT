@@ -381,28 +381,6 @@ public class SNTService extends AbstractService implements ImageJService {
 	}
 
 	/**
-	 * Returns a reference to SNT's SciView instance
-	 *
-	 * @return SNT's {@link SciView} instance.
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
-	 */
-	public SciView getSciView() {
-		accessActiveInstance(false);
-		return plugin.getUI().getSciView();
-	}
-
-
-	/**
-	 * Sets SNT's SciView instance
-	 *
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
-	 */
-	public void setSciView(final SciView sciView) {
-		accessActiveInstance(false);
-		plugin.getUI().setSciView(sciView);
-	}
-
-	/**
 	 * Returns a reference to an opened Reconstruction Viewer (standalone instance).	 *
 	 *
 	 * @param id the unique numeric ID of the Reconstruction Viewer to be retrieved

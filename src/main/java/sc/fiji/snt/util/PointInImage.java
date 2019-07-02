@@ -143,8 +143,8 @@ public class PointInImage implements SNTPoint {
 	 * Converts the coordinates of this point into pixel units if this point is
 	 * associated with a Path.
 	 *
-	 * @param view {@link MultiDThreePanes.XY_PLANE},
-	 *             {@link MultiDThreePanes.ZY_PLANE}, etc.
+	 * @param view {@link MultiDThreePanes#XY_PLANE},
+	 *             {@link MultiDThreePanes#ZY_PLANE}, etc.
 	 * @return this point in pixel coordinates
 	 * @throws IllegalArgumentException if this point is not associated with a Path,
 	 *                                  or view was not recognized

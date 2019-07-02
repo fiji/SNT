@@ -45,7 +45,7 @@ import sc.fiji.snt.viewer.Viewer3D.Utils;
 /**
  * An Annotation3D is a triangulated surface or a cloud of points (scatter)
  * rendered in {@link Viewer3D} that can be used to highlight nodes in a
- * {@link Tree} or locations in a mesh.
+ * {@link sc.fiji.snt.Tree Tree} or locations in a {@link sc.fiji.snt.viewer.OBJMesh mesh}.
  *
  * @author Tiago Ferreira
  */

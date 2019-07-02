@@ -1818,7 +1818,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * Deletes all paths and fills.
 	 */
 	public void clear() {
-		maxUsedID = -1;
+		resetIDs();
 		if (plugin != null && plugin.use3DViewer) {
 			for (final Path p : allPaths)
 				p.removeFrom3DViewer(plugin.univ);
@@ -1826,6 +1826,10 @@ public class PathAndFillManager extends DefaultHandler implements
 		allPaths.clear();
 		allFills.clear();
 		resetListeners(null);
+	}
+
+	protected void resetIDs() {
+		maxUsedID = -1;
 	}
 
 	/**

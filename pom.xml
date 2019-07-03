@@ -201,9 +201,9 @@
 			<artifactId>imagej-legacy</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.jidesoft</groupId>
+			<groupId>com.github.jidesoft</groupId>
 			<artifactId>jide-oss</artifactId>
-			<version>3.6.18</version>
+			<version>3.7.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>

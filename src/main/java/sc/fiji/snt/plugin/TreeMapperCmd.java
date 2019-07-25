@@ -87,7 +87,7 @@ public class TreeMapperCmd extends DynamicCommand {
 	private ColorTable colorTable;
 
 	@Parameter(required = false, label = "Rec. Viewer Color Map")
-	private boolean showInRecViewer = true;
+	private boolean showInRecViewer = false;
 
 	@Parameter(required = false, label = "Rec. Plotter Color Map")
 	private boolean showPlot = false;

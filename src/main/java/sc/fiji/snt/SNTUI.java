@@ -359,10 +359,9 @@ public class SNTUI extends JDialog {
 			tabbedPane.addTab(" 3D ", tab3);
 			GuiUtils.addSeparator(tab3, "Reconstruction Viewer:", true, c3);
 			c3.gridy++;
-			final String msg = "The Reconstruction Viewer is an advanced OpenGL " +
-				"visualization tool. For performance reasons, some Path " +
-				"Manager changes may need to be synchronized manually from " +
-				"RV Controls";
+			final String msg = "An OpenGL visualization tool specialized in " +
+				"Neuroanatomy. For performance reasons, some Path Manager " +
+				"changes may need to be synchronized manually from RV Controls.";
 			tab3.add(largeMsg(msg), c3);
 			c3.gridy++;
 			tab3.add(reconstructionViewerPanel(), c3);
@@ -371,9 +370,9 @@ public class SNTUI extends JDialog {
 			GuiUtils.addSeparator(tab3, "SciView", true, c3);
 			++c3.gridy;
 			final String msg3 =
-				"SciView is IJ2's modern replacement for the Legacy 3D " +
-					"Viewer providing 3D visualization and virtual reality capabilities " +
-					"for both images and meshes. It is not yet available in SNT.";
+				"IJ2's modern 3D visualization framework supporting volumetric " +
+				"data and virtual reality. For performance reasons, some Path Manager " +
+				"changes may need to be manually synchronized.";
 			tab3.add(largeMsg(msg3), c3);
 			c3.gridy++;
 			tab3.add(sciViewerPanel(), c3);
@@ -2732,7 +2731,7 @@ public class SNTUI extends JDialog {
 						.append("'>available online</a>. ");
 				sb.append("For batch processing, run <a href='").append(url1)
 						.append("'>Analyze>Sholl>Sholl Analysis (From Tracings)...</a>. ");
-				GuiUtils.showHTMLDialog("Sholl Analysis How-to", sb.toString());
+				GuiUtils.showHTMLDialog(sb.toString(), "Sholl Analysis How-to");
 			});
 			newThread.start();
 		});

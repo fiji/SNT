@@ -106,11 +106,18 @@
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
 
+		<sciview.version>8c7fa91</sciview.version>
+		<scenery.version>2a5c712</scenery.version>
+
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
 	</properties>
 
 	<repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
 		<repository>
 			<id>scijava.public</id>
 			<url>https://maven.scijava.org/content/groups/public</url>
@@ -170,6 +177,28 @@
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>vecmath</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jzy3d</groupId>
+			<artifactId>jzy3d-api</artifactId>
+			<version>1.0.3-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<!-- NB: Exclude problematic uber-JAR that bundles miglayout -->
+					<groupId>com.miglayout</groupId>
+					<artifactId>miglayout</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>sc.iview</groupId>
+			<artifactId>sciview</artifactId>
+			<version>${sciview.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>graphics.scenery</groupId>
+			<artifactId>scenery</artifactId>
+			<version>${scenery.version}</version>
 		</dependency>
 
 		<!-- Third party dependencies -->
@@ -232,18 +261,6 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij1-patcher</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.jzy3d</groupId>
-			<artifactId>jzy3d-api</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<!-- NB: Exclude problematic uber-JAR that bundles miglayout -->
-					<groupId>com.miglayout</groupId>
-					<artifactId>miglayout</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.scijava</groupId>

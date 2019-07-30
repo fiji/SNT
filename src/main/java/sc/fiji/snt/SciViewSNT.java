@@ -3,9 +3,6 @@ package sc.fiji.snt;
 import cleargl.GLVector;
 import graphics.scenery.*;
 import net.imagej.ImageJ;
-import net.imglib2.display.ColorTable;
-import org.jzy3d.colors.ISingleColorable;
-import org.jzy3d.plot3d.primitives.AbstractWireframeable;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 import sc.fiji.snt.gui.GuiUtils;
@@ -100,7 +97,7 @@ public class SciViewSNT {
         }
 
 		for( Node node : shapeTree.get().getChildren() ) {
-            Node n = sciView.addNode(node, false);
+            sciView.addNode(node, false);
             //System.out.println("addTree: node " + node.getMetadata().get("pathID") + " node " + n);
         }
 		//sciView.getCamera().setPosition(treeCenter.minus(new GLVector(0,0,-10f)));
@@ -160,12 +157,10 @@ public class SciViewSNT {
 
     private class ShapeTree extends Node {
 
-        private static final float SOMA_SCALING_FACTOR = 2.5f;
-        private static final float SOMA_SLICES = 15f; // Sphere default;
-        private static final float DEF_NODE_RADIUS = 3f;
+		private static final long serialVersionUID = 1L;
+		private static final float DEF_NODE_RADIUS = 3f;
 
         private final Tree tree;
-        private Node treeSubShape;
         private Node somaSubShape;
         private Vector3 translationReset;
 
@@ -175,21 +170,14 @@ public class SciViewSNT {
             translationReset = new FloatVector3(0f,0f,0f);
         }
 
-        public void setSomaDisplayed(final boolean displayed) {
-            //if (somaSubShape != null) somaSubShape.setDisplayed(displayed);
-        }
-
-        public void setArborDisplayed(final boolean displayed) {
-            //if (treeSubShape != null) treeSubShape.setDisplayed(displayed);
-        }
-
         public Node get() {
             //if (components == null || components.isEmpty()) assembleShape();
             assembleShape();
             return this;
         }
 
-        public void translateTo(final Vector3 destination) {
+        @SuppressWarnings("unused")
+        private void translateTo(final Vector3 destination) {
             translationReset.setPosition(destination);
         }
 
@@ -203,8 +191,6 @@ public class SciViewSNT {
             final List<Node> lines = new ArrayList<>();
             final List<PointInImage> somaPoints = new ArrayList<>();
             final List<Color> somaColors = new ArrayList<>();
-
-            float defThickness = 3f;
 
             for (final Path p : tree.list()) {
 
@@ -323,83 +309,6 @@ public class SciViewSNT {
             return new ColorRGB(average.getRed(),average.getGreen(),average.getBlue());
         }
 
-        private <T extends AbstractWireframeable & ISingleColorable> void
-        setWireFrame(final T t, final float r, final Color color)
-        {
-
-        }
-
-//        private Cylinder tube(final PointInImage bottom, final PointInImage top,
-//                          final Color color)
-//        {
-//            final Tube tube = new Tube();
-//            tube.setPosition(new Coord3d((bottom.x + top.x) / 2, (bottom.y + top.y) /
-//                    2, (bottom.z + top.z) / 2));
-//            final float height = (float) bottom.distanceTo(top);
-//            tube.setVolume((float) bottom.v, (float) top.v, height);
-//            return tube;
-//        }
-//
-//        private Sphere sphere(final PointInImage center, final Color color) {
-//            final Sphere s = new Sphere();
-//            s.setPosition(new Coord3d(center.x, center.y, center.z));
-//            final float radius = (float) Math.max(center.v, SOMA_SCALING_FACTOR *
-//                    defThickness);
-//            s.setVolume(radius);
-//            setWireFrame(s, radius, color);
-//            return s;
-//        }
-
-        public void rebuildShape() {
-//            if (isDisplayed()) {
-//                clear();
-//                assembleShape();
-//            }
-        }
-
-        public void setThickness(final float thickness) {
-            //treeSubShape.setWireframeWidth(thickness);
-        }
-
-        private void setArborColor(final ColorRGB color) {
-            //setArborColor(fromColorRGB(color));
-        }
-
-        private void setArborColor(final Color color) {
-            //treeSubShape.setWireframeColor(color);
-//			for (int i = 0; i < treeSubShape.size(); i++) {
-//				((LineStrip) treeSubShape.get(i)).setColor(color);
-//			}
-        }
-
-        private Color getArborWireFrameColor() {
-            //return (treeSubShape == null) ? null : treeSubShape.getWireframeColor();
-            return null;
-        }
-
-        private Color getSomaColor() {
-            //return (somaSubShape == null) ? null : somaSubShape.getWireframeColor();
-            return null;
-        }
-
-        private void setSomaColor(final Color color) {
-            //if (somaSubShape != null) somaSubShape.setWireframeColor(color);
-        }
-
-        public void setSomaColor(final ColorRGB color) {
-            //setSomaColor(fromColorRGB(color));
-        }
-
-        public double[] colorize(final String measurement,
-                                 final ColorTable colorTable)
-        {
-//            final TreeColorMapper colorizer = new TreeColorMapper();
-//            colorizer.map(tree, measurement, colorTable);
-//            rebuildShape();
-            //return colorizer.getMinMax();
-            return null;
-        }
-
         /**
          * Generates an [OrientedBoundingBox] for this [Node]. This will take
          * geometry information into consideration if this Node implements [HasGeometry].
@@ -423,27 +332,5 @@ public class SciViewSNT {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-
-
-
-		//SciView sciView = ij.context().getService(SciViewService.class).getOrCreateActiveSciView();
-		//final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
-//		final Tree tree = new Tree("/home/kharrington/Dropbox/quickGitBackup/instar-superstar/data/pair/A02m_a3l Pseudolooper-3_406883.swc");
-//		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
-//		colorizer.map(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);
-//		final double[] bounds = colorizer.getMinMax();
-//		SNT.setDebugMode(true);
-//		final Viewer3D jzy3D = new Viewer3D(ij.context());
-//		jzy3D.addColorBarLegend(ColorTables.ICE, (float) bounds[0],
-//			(float) bounds[1], new Font("Arial", Font.PLAIN, 24), 3, 4);
-//		jzy3D.add(tree);
-//		//final OBJMesh brainMesh = jzy3D.loadMouseRefBrain();
-//		//brainMesh.setBoundingBoxColor(Colors.RED);
-//		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-//		jzy3D.addSurface(analyzer.getTips());
-//		jzy3D.show();
-//		jzy3D.setAnimationEnabled(true);
-//		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);
-//		jzy3D.updateColorBarLegend(-8, 88);
 	}
 }

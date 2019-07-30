@@ -4,6 +4,7 @@ import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import sc.fiji.snt.SNTService;
+import sc.fiji.snt.SNTUtils;
 import sc.iview.SciView;
 
 /**
@@ -21,7 +22,7 @@ public class OpenSciViewCmd implements Command {
 
     @Override
     public void run() {
-        System.out.println("SetSciView in OpenSciViewCmd");
+        SNTUtils.log("Setting SciView in OpenSciViewCmd");
         sntService.setSciView(sciView);
         sciView.getFloor().setVisible(false);
     }

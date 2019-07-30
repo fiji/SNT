@@ -228,7 +228,6 @@ public class SNTLoaderCmd extends DynamicCommand {
 		}
 	}
 
-	
 	@SuppressWarnings("unused")
 	private void resetPrefs() {
 		// There have been lots of reports of bugs caused simplify by persisting

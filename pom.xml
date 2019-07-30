@@ -13,9 +13,9 @@
 	<artifactId>Simple_Neurite_Tracer</artifactId>
 	<version>3.1.98-SNAPSHOT</version>
 
-	<name>Simple Neurite Tracer</name>
+	<name>SNT</name>
 	<description>The ImageJ framework for semi-automated tracing of neurons and other tube-like structures.</description>
-	<url>https://imagej.net/Simple_Neurite_Tracer</url>
+	<url>https://imagej.net/SNT</url>
 	<inceptionYear>2010</inceptionYear>
 	<organization>
 		<name>Fiji</name>
@@ -36,6 +36,15 @@
 			<roles>
 				<role>lead</role>
 				<role>maintainer</role>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>kephale</id>
+			<name>Kyle IS Harrington</name>
+			<url>https://imagej.net/User:Kharrington</url>
+			<roles>
+				<role>developer</role>
 			</roles>
 		</developer>
 		<developer>
@@ -48,6 +57,11 @@
 		</developer>
 	</developers>
 	<contributors>
+		<contributor>
+			<name>Cameron Arshadi</name>
+			<url>https://imagej.net/User:Arshadi</url>
+			<properties><id>carshadi</id></properties>
+		</contributor>
 		<contributor>
 			<name>Mark Longair</name>
 			<url>https://imagej.net/User:Mark</url>

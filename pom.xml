@@ -106,8 +106,11 @@
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
 
-		<sciview.version>8c7fa91</sciview.version>
-		<scenery.version>2a5c712</scenery.version>
+		<!-- Dependency versions for JitPack -->
+		<sciview.version>a0ce5f338c </sciview.version>
+		<scenery.version>44abefd</scenery.version>
+		<jzy3d.version>4bb4999</jzy3d.version>
+		<jide-oss.version>3.7.7</jide-oss.version>
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
@@ -115,16 +118,12 @@
 
 	<repositories>
 		<repository>
-		    <id>jitpack.io</id>
-		    <url>https://jitpack.io</url>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
 		</repository>
 		<repository>
 			<id>scijava.public</id>
 			<url>https://maven.scijava.org/content/groups/public</url>
-		</repository>
-		<repository>
-			<id>Jzy3D.releases</id>
-			<url>http://maven.jzy3d.org/releases/</url>
 		</repository>
 	</repositories>
 
@@ -157,10 +156,6 @@
 
 		<!-- ImageJ dependencies -->
 		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
 		</dependency>
@@ -179,9 +174,9 @@
 			<artifactId>vecmath</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.jzy3d</groupId>
+			<groupId>com.github.jzy3d.jzy3d-api</groupId>
 			<artifactId>jzy3d-api</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${jzy3d.version}</version>
 			<exclusions>
 				<exclusion>
 					<!-- NB: Exclude problematic uber-JAR that bundles miglayout -->
@@ -230,9 +225,12 @@
 			<artifactId>imagej-legacy</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.github.jidesoft</groupId>
+			<groupId>com.github.tferr</groupId>
 			<artifactId>jide-oss</artifactId>
-			<version>3.7.4</version>
+			<version>${jide-oss.version}</version>
+			<!-- use unofficial build while multi-java version is fixed (jidesoft/jide-oss/issues/27) -->
+			<scope>system</scope>
+			<systemPath>${basedir}/jars/jide-oss-${jide-oss.version}.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>

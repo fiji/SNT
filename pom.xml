@@ -11,7 +11,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>3.1.98-SNAPSHOT</version>
+	<version>3.1.99-SNAPSHOT</version>
 
 	<name>SNT</name>
 	<description>The ImageJ framework for semi-automated tracing of neurons and other tube-like structures.</description>
@@ -120,6 +120,10 @@
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
 
+		<!-- Required since pom-scijava 27.0.1? -->
+		<main-class>sc.iview.Main</main-class>
+		<package-name>sciview</package-name>
+
 		<!-- Dependency versions for JitPack -->
 		<sciview.version>a0ce5f338c </sciview.version>
 		<scenery.version>44abefd</scenery.version>
@@ -147,11 +151,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij</artifactId>
-		</dependency>
-		<!-- Fiji dependencies -->
-		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Viewer</artifactId>
 		</dependency>
@@ -175,14 +174,10 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>VIB-lib</artifactId>
 		</dependency>
-
-		<!-- ImageJ dependencies -->
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
 		</dependency>
-
-		<!-- Java 3D dependencies -->
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>j3dcore</artifactId>
@@ -218,7 +213,6 @@
 			<version>${scenery.version}</version>
 		</dependency>
 
-		<!-- Third party dependencies -->
 		<dependency>
 			<groupId>ca.mcgill</groupId>
 			<artifactId>Sholl_Analysis</artifactId>
@@ -235,8 +229,6 @@
 			<groupId>org.apache.xmlgraphics</groupId>
 			<artifactId>batik-svggen</artifactId>
 		</dependency>
-
-		<!-- Test dependencies -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -290,6 +282,10 @@
 		<dependency>
 			<groupId>org.jgrapht</groupId>
 			<artifactId>jgrapht-ext</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-ui-swing</artifactId>
 		</dependency>
 	</dependencies>
 </project>

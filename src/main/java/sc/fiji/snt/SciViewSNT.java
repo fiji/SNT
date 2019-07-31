@@ -105,10 +105,19 @@ public class SciViewSNT {
 		sciView.centerOnNode( shapeTree );
 	}
 
-
+	/**
+	 * (Re)loads the current list of Paths in the Path Manager list.
+	 *
+	 * @return true, if Path Manager list is not empty and synchronization was
+	 *         successful
+	 * @throws IllegalArgumentException if SNT is not running
+	 */
 	public boolean syncPathManagerList() {
 		if (SNTUtils.getPluginInstance() == null) throw new IllegalArgumentException(
 				"SNT is not running.");
+		if (SNTUtils.getPluginInstance().getPathAndFillManager().size() == 0) {
+			return false;
+		}
 		final Tree tree = new Tree(SNTUtils.getPluginInstance().getPathAndFillManager()
 				.getPathsFiltered());
 		if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {// PATH_MANAGER_TREE_LABEL, the value of this is the *new* tree to add

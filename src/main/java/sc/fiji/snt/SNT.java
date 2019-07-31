@@ -2346,9 +2346,15 @@ public class SNT extends MultiDThreePanes implements
 	public void updateAllViewers() {
 		repaintAllPanes();
 		update3DViewerContents();
-		if (getUI() != null && getUI().recViewer != null) {
+		if (getUI() == null) return;
+		if (getUI().recViewer != null) {
 			new Thread(() -> {
 				getUI().recViewer.syncPathManagerList();
+			}).start();
+		}
+		if (getUI().sciViewSNT != null) {
+			new Thread(() -> {
+				getUI().sciViewSNT.syncPathManagerList();
 			}).start();
 		}
 	}

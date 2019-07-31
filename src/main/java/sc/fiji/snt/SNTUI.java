@@ -115,7 +115,6 @@ import sc.fiji.snt.plugin.PlotterCmd;
 import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.iview.SciView;
-import sc.iview.SciViewService;
 import sholl.ShollUtils;
 import sc.fiji.snt.gui.cmds.ChooseDatasetCmd;
 import sc.fiji.snt.gui.cmds.CommonDynamicCmd;
@@ -1523,13 +1522,15 @@ public class SNTUI extends JDialog {
 	}
 
 	public void setSciView(final SciView sciView) {
-		System.out.println("Setting SciView in SNTUI");
+		SNTUtils.log("Setting SciView in SNTUI");
 		this.sciView = sciView;
 		if( this.sciViewSNT == null ) {
 			this.sciViewSNT = new SciViewSNT();
 		}
 		this.sciViewSNT.sciView = sciView;
-		openSciView.setEnabled(this.sciView==null);
+		sciViewSNT.syncPathManagerList();
+		if (openSciView != null) openSciView.setEnabled(this.sciView==null);
+		if (svSyncPathManager != null) svSyncPathManager.setEnabled(this.sciView!=null);
 	}
 
 	public void setSciViewSNT(SciViewSNT sciViewSNT) {
@@ -1546,8 +1547,8 @@ public class SNTUI extends JDialog {
 		openSciView.addActionListener(e -> {
 			// if (noPathsError()) return;
 			if (sciView == null) {
-				final SciViewService sciViewService = plugin.getContext().getService(
-					SciViewService.class);
+				//final SciViewService sciViewService = plugin.getContext().getService(
+				//	SciViewService.class);
 				//sciViewViewer.setDefaultColor(new ColorRGB(plugin.deselectedColor.getRed(),
 				//	plugin.deselectedColor.getGreen(), plugin.deselectedColor.getBlue()));
 				sciViewSNT = new SciViewSNT();
@@ -1579,13 +1580,17 @@ public class SNTUI extends JDialog {
 			}
 		});
 
-		svSyncPathManager = new JButton("Sync PathManager to SciView");
-
+		svSyncPathManager = new JButton("Sync Changes");
+		svSyncPathManager.setToolTipText("Refreshes Viewer contents to reflect Path Manager changes");
 		svSyncPathManager.addActionListener(e -> {
 			// if (noPathsError()) return;
-			if (sciView != null) {
+			if (sciView == null) {
+				guiUtils.error("The SciView Viewer is not open.");
+			} else {
 				sciViewSNT.sciView = sciView;
-				if (pathAndFillManager.size() > 0) sciViewSNT.syncPathManagerList();
+				sciViewSNT.syncPathManagerList();
+				final String msg = (pathAndFillManager.size() == 0) ? "There are no traced paths" : "SciView Viewer synchronized";
+				showStatus(msg, true);
 			}
 		});
 

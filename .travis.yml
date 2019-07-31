@@ -3,6 +3,7 @@ jdk: oraclejdk8
 branches:
   only:
   - master
+  - scijava
   - "/.*-[0-9]+\\..*/"
 install: true
 script: ".travis/build.sh"

@@ -20,5 +20,8 @@
 # Binaries #
 *.jar
 *.class
+/bin/
+!jars/*
 
+# Notebooks #
 notebooks/\.ipynb_checkpoints/

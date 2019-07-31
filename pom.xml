@@ -123,8 +123,8 @@
 		<!-- Dependency versions for JitPack -->
 		<sciview.version>a0ce5f338c </sciview.version>
 		<scenery.version>44abefd</scenery.version>
-		<jzy3d.version>4bb4999</jzy3d.version>
-		<jide-oss.version>3.7.7</jide-oss.version>
+		<jzy3d.version>1.0.3-SNAPSHOT</jzy3d.version>
+		<jide-oss.version>3.6.8</jide-oss.version>
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
@@ -139,9 +139,17 @@
 			<id>scijava.public</id>
 			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
+		<repository>
+			<id>Jzy3D.releases</id>
+			<url>http:/maven.jzy3d.org/releases/</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
 		<!-- Fiji dependencies -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -188,7 +196,7 @@
 			<artifactId>vecmath</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.github.jzy3d.jzy3d-api</groupId>
+			<groupId>org.jzy3d</groupId>
 			<artifactId>jzy3d-api</artifactId>
 			<version>${jzy3d.version}</version>
 			<exclusions>
@@ -239,12 +247,9 @@
 			<artifactId>imagej-legacy</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.github.tferr</groupId>
+			<groupId>com.jidesoft</groupId>
 			<artifactId>jide-oss</artifactId>
 			<version>${jide-oss.version}</version>
-			<!-- use unofficial build while multi-java version is fixed (jidesoft/jide-oss/issues/27) -->
-			<scope>system</scope>
-			<systemPath>${basedir}/jars/jide-oss-${jide-oss.version}.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>

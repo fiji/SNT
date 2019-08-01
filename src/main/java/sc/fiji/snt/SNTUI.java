@@ -364,7 +364,7 @@ public class SNTUI extends JDialog {
 			c3.gridwidth = GridBagConstraints.REMAINDER;
 
 			tabbedPane.addTab(" 3D ", tab3);
-			GuiUtils.addSeparator(tab3, "Reconstruction Viewer:", true, c3);
+			addSeparatorWithURL(tab3, "Reconstruction Viewer:", true, c3);
 			c3.gridy++;
 			final String msg = "An OpenGL visualization tool specialized in " +
 				"Neuroanatomy. For performance reasons, some Path Manager " +
@@ -374,18 +374,18 @@ public class SNTUI extends JDialog {
 			tab3.add(reconstructionViewerPanel(), c3);
 			c3.gridy++;
 			addSpacer(tab3, c3);
-			GuiUtils.addSeparator(tab3, "SciView", true, c3);
+			addSeparatorWithURL(tab3, "SciView:", true, c3);
 			++c3.gridy;
 			final String msg3 =
-				"IJ2's modern 3D visualization framework supporting volumetric " +
-				"data and virtual reality. For performance reasons, some Path Manager " +
-				"changes may need to be manually synchronized.";
+				"EXPERIMENTAL: IJ2's modern 3D visualization framework supporting volumetric " +
+				"data and virtual reality. Discrete graphics card recommended. " +
+				"For performance reasons, some Path Manager changes may need to be manually synchronized.";
 			tab3.add(largeMsg(msg3), c3);
 			c3.gridy++;
 			tab3.add(sciViewerPanel(), c3);
 			c3.gridy++;
 			addSpacer(tab3, c3);
-			GuiUtils.addSeparator(tab3, "Legacy 3D Viewer:", true, c3);
+			addSeparatorWithURL(tab3, "Legacy 3D Viewer:", true, c3);
 			++c3.gridy;
 			final String msg2 =
 				"The Legacy 3D Viewer is a functional tracing canvas " +
@@ -1466,7 +1466,7 @@ public class SNTUI extends JDialog {
 	private JPanel largeMsg(final String msg) {
 		final JTextArea ta = new JTextArea();
 		final Font defFont = new JLabel().getFont();
-		final Font font = defFont.deriveFont(defFont.getSize() * .8f);
+		final Font font = defFont.deriveFont(defFont.getSize() * .85f);
 		ta.setBackground(getBackground());
 		ta.setEditable(false);
 		ta.setMargin(null);

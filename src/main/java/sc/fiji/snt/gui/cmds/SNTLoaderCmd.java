@@ -31,8 +31,10 @@ import java.util.Arrays;
 import net.imagej.ImageJ;
 import net.imagej.display.ImageDisplayService;
 import net.imagej.legacy.LegacyService;
+import net.imagej.ui.swing.updater.ImageJUpdater;
 
 import org.scijava.ItemVisibility;
+import org.scijava.command.CommandService;
 import org.scijava.command.DynamicCommand;
 import org.scijava.convert.ConvertService;
 import org.scijava.display.DisplayService;
@@ -40,6 +42,7 @@ import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
+import org.scijava.util.Types;
 import org.scijava.widget.FileWidget;
 
 import ij.IJ;
@@ -64,6 +67,8 @@ public class SNTLoaderCmd extends DynamicCommand {
 
 	@Parameter
 	private SNTService sntService;
+	@Parameter
+	private CommandService cmdService;
 	@Parameter
 	private DatasetIOService datasetIOService;
 	@Parameter
@@ -124,6 +129,8 @@ public class SNTLoaderCmd extends DynamicCommand {
 		if (sntService.isActive() && sntService.getUI() != null) {
 			cancel("SNT seems to be already running.");
 		}
+		if (!isSciViewAvailable()) cancel("");
+
 		GuiUtils.setSystemLookAndFeel();
 		// TODO: load defaults from prefService?
 		sourceImp = legacyService.getImageMap().lookupImagePlus(imageDisplayService
@@ -140,6 +147,24 @@ public class SNTLoaderCmd extends DynamicCommand {
 			imageChoiceInput.setValue(this, sourceImp.getTitle());
 			adjustChannelInput();
 		}
+	}
+
+	private boolean isSciViewAvailable() {
+		final boolean available = Types.load("sc.iview.SciView") != null;
+		if (!available) {
+			final String msg = "SNT now requires you to subscribe to the <i>SciView</i> update site. To do so:" +
+					"<ol>" +
+					"<li>Run <i>Help>Update...</i> (the second last menu entry in the Help menu. This step is currently being done for you)</li>" +
+					"<li>Click on the <i>Manage update sites</i> button</li>" +
+					"<li>Select the <i>SciView</i> checkbox</li> in the sites list" +
+					"<li>Click on <i>Apply changes</i>, dismiss this dialog, and restart ImageJ</li>" +
+					"</ol>" +
+					"<b>This inconvenience is just temporary and will no longer be required once SNT is " +
+					"officially release. Thank you for your patience!";
+			GuiUtils.showHTMLDialog(msg, "Please Subscribe to the SciView Update Site");
+			cmdService.run(ImageJUpdater.class, true);
+		}
+		return available;
 	}
 
 	private void adjustChannelInput() {

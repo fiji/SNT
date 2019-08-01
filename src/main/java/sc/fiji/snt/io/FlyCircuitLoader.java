@@ -41,7 +41,9 @@ import sc.fiji.snt.Tree;
 public class FlyCircuitLoader implements RemoteSWCLoader {
 
 	private static final String BASE_URL =
-		"http://www.flycircuit.tw/download/swc/";
+		"http://flycircuit.tw/flycircuitSourceData/NeuronData_v1.2/";
+	private static final String SWC_PREFIX = "_seg001_linesetTransformRelease.swc";
+
 
 	/**
 	 * Checks whether a connection to the FlyCircuit database can be established.
@@ -79,8 +81,8 @@ public class FlyCircuitLoader implements RemoteSWCLoader {
 	@Override
 	public String getReconstructionURL(final String cellId) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(BASE_URL).append(cellId.replaceAll(" ", "%20"));
-		if (!cellId.endsWith(".swc")) sb.append(".swc");
+		sb.append(BASE_URL).append(cellId).append("/").append(cellId.replaceAll(" ", "%20"));
+		sb.append(SWC_PREFIX);
 		return sb.toString();
 	}
 

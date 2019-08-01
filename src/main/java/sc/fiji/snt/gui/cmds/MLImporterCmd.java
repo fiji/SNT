@@ -84,9 +84,6 @@ public class MLImporterCmd extends CommonDynamicCmd {
 	@Parameter(required = false, label = "<HTML>&nbsp;")
 	private ColorRGB commonColor;
 
-	@Parameter(required = false, persist = true, label = "Load brain mesh")
-	private boolean meshViewer = false;
-
 	@Parameter(required = false, persist = true, label = "Replace existing paths")
 	private boolean clearExisting;
 
@@ -175,26 +172,9 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			result.forEach((id, tree) -> {
 				if (tree != null) recViewer.addTree(tree);
 			});
-			if (meshViewer) {
-				recViewer.loadRefBrain("Allen CCF");
-			}
 			recViewer.setSceneUpdatesEnabled(true);
 			recViewer.validate();
 		}
-		else if (meshViewer) {
-			// Load the cells on SNT UI's Viewer. The consequence here is
-			// that all Trees will be grouped together under the common
-			// "Path Manager Contents" checkbox. Not sure if this is a
-			// feature or a logical flaw in the way Path Manager and
-			// Reconstruction Viewer synchronize
-			recViewer = sntService.getRecViewer();
-			recViewer.setSceneUpdatesEnabled(false);
-			recViewer.loadRefBrain("Allen CCF");
-			recViewer.syncPathManagerList();
-			recViewer.show();
-			recViewer.setSceneUpdatesEnabled(true);
-		}
-
 		if (failures > 0) {
 			error(String.format("%d/%d reconstructions could not be retrieved.",
 				failures, result.size()));
@@ -260,9 +240,6 @@ public class MLImporterCmd extends CommonDynamicCmd {
 		if (recViewer != null) {
 			// If a stand-alone viewer was specified, customize options specific
 			// to the SNT UI
-			final MutableModuleItem<Boolean> meshViewerInput = getInfo()
-				.getMutableInput("meshViewer", Boolean.class);
-			meshViewerInput.setLabel("Load Allen Brain contour");
 			final MutableModuleItem<Boolean> clearExistingInput = getInfo()
 				.getMutableInput("clearExisting", Boolean.class);
 			clearExistingInput.setLabel("Clear existing reconstructions");

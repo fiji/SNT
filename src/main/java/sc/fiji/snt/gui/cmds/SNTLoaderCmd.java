@@ -154,9 +154,10 @@ public class SNTLoaderCmd extends DynamicCommand {
 		if (!available) {
 			final String msg = "SNT now requires you to subscribe to the <i>SciView</i> update site. To do so:" +
 					"<ol>" +
-					"<li>Run <i>Help>Update...</i> (the second last menu entry in the Help menu. This step is currently being done for you)</li>" +
+					"<li>Run <i>Help>Update...</i> (the second last menu entry in the Help menu)</li>" +
+					"(!! This step is currently being done for you !!)" +
 					"<li>Click on the <i>Manage update sites</i> button</li>" +
-					"<li>Select the <i>SciView</i> checkbox</li> in the sites list" +
+					"<li>Select the <i>SciView</i> checkbox in the sites list</li> " +
 					"<li>Click on <i>Apply changes</i>, dismiss this dialog, and restart ImageJ</li>" +
 					"</ol>" +
 					"<b>This inconvenience is just temporary and will no longer be required once SNT is " +

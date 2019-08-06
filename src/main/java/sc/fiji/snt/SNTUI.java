@@ -3471,18 +3471,6 @@ public class SNTUI extends JDialog {
 						"Please finish editing " + plugin.getEditingPath().getName() + " before running this command.");
 				return false;
 			}
-			final boolean rebuildCanvas = inputs != null && inputs.get("rebuildCanvas") == (Boolean) true;
-			final boolean dataCouldBeLost = plugin.accessToValidImageData()
-					|| (plugin.getImagePlus() != null && plugin.getImagePlus().changes);
-			final boolean rebuild = rebuildCanvas && dataCouldBeLost && guiUtils.getConfirmation("<HTML><div WIDTH=500>" //
-					+ "Coordinates of external reconstructions <i>may</i> fall outside the boundaries " //
-					+ "of current image. Would you like to close active image and use a display canvas " //
-					+ "with computed dimensions containing all the nodes of the imported file?", //
-					"Change to Display Canvas?", "Yes. Use Display Canvas", "No. Use Current Image");
-			if (inputs != null)
-				inputs.put("rebuildCanvas", rebuild);
-			if (rebuild)
-				plugin.tracingHalted = true;
 			return true;
 		}
 

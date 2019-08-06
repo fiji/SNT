@@ -982,7 +982,7 @@ public class SNT extends MultiDThreePanes implements
 		}
 		else {
 			if (xy != null && xy.isLocked() && ui != null && !getConfirmation(
-				"Image appears to be locked by other process. Activate SNT nevertheless?",
+				"Image appears to be locked by another process. Activate SNT nevertheless?",
 				"Image Locked")) {
 				return;
 			}

@@ -147,7 +147,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		final long failures = result.stream().filter(tree -> tree == null || tree
 			.isEmpty()).count();
 		if (failures == result.size()) {
-			error("No reconstructions could be retrieved. Invalid Query?");
+			error("No reconstructions could be retrieved. Invalid ID(s)?");
 			status("Error... No reconstructions imported", true);
 			return;
 		}
@@ -164,9 +164,6 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			}
 		}
 
-//		if (loadMesh && loader instanceof FlyCircuitLoader) {
-//			recViewer.loadDrosoRefBrain("FCWB");
-//		}
 		if (standAloneViewer) {
 			recViewer.setSceneUpdatesEnabled(false);
 			result.forEach(tree -> {
@@ -197,6 +194,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 				true);
 		}
 		resetUI();
+
 	}
 
 	private ColorRGB getColor() {
@@ -234,7 +232,6 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		if (loader instanceof NeuroMorphoLoader) {
 			placeholderQuery = "cnic_001";
 			database = "NeuroMorpho.org";
-//			resolveInput("loadMesh");
 		}
 		else if (loader instanceof FlyCircuitLoader) {
 			placeholderQuery = "VGlut-F-400787";
@@ -242,6 +239,8 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			resolveInput("version");
 		}
 		getInfo().setLabel("Import " + database + " Reconstructions");
+		final MutableModuleItem<String> queryInput = getInfo().getMutableInput("query", String.class);
+		queryInput.setDescription("Cell id(s). E.g., " + placeholderQuery);
 	}
 
 	@SuppressWarnings("unused")

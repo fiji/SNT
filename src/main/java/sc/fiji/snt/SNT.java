@@ -988,7 +988,7 @@ public class SNT extends MultiDThreePanes implements
 			}
 			disableEventsAllPanes(false);
 			pauseTracing(tracingHalted, false);
-			if (xy != null && accessToValidImageData()) {
+			if (xy != null && accessToValidImageData() && xy.getProperty("snt-changes") != null) {
 				final boolean changes = (boolean) xy.getProperty("snt-changes");
 				if (!changes && xy.changes && ui != null) {
 					ui.guiUtils.centeredMsg(

@@ -989,13 +989,14 @@ public class SNT extends MultiDThreePanes implements
 			disableEventsAllPanes(false);
 			pauseTracing(tracingHalted, false);
 			if (xy != null && accessToValidImageData() && xy.getProperty("snt-changes") != null) {
-				final boolean changes = (boolean) xy.getProperty("snt-changes");
-				if (!changes && xy.changes && ui != null) {
-					ui.guiUtils.centeredMsg(
-							"Image seems to have been modified since you last paused SNT. You may want to reload it so that SNT can access the modified pixel data.",
-							"Changes in Image Detected");
-					xy.setProperty("snt-changes", null);
+				final boolean changes = (boolean) xy.getProperty("snt-changes") && xy.changes;
+				if (!changes && xy.changes && ui != null && guiUtils.getConfirmation("<HTML><div WIDTH=500>" //
+							+ "Image seems to have been modified since you last paused SNT. "
+							+ "Would you like to reload it so that SNT can access the modified pixel data?", //
+							"Changes Detected. Reload Image?", "Yes. Reload Image", "No. Use Cached Data")) {
+					ui.loadImagefromGUI(channel, frame);
 				}
+				xy.setProperty("snt-changes", false);
 			}
 		}
 	}

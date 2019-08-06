@@ -853,7 +853,7 @@ public class SNTUI extends JDialog {
 		return sourcePanel;
 	}
 
-	private void loadImagefromGUI(final int newC, final int newT) {
+	protected void loadImagefromGUI(final int newC, final int newT) {
 		final boolean reload = newC == plugin.channel && newT == plugin.frame;
 		if (!reload && askUserConfirmation
 				&& !guiUtils

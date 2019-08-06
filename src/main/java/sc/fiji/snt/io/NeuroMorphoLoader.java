@@ -50,6 +50,7 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 	private static final String BASE_URL = "http://neuromorpho.org/api/";
 	private final static String NEURON_BASE_URL = BASE_URL + "neuron/name/";
 	private String lastKnownStatus;
+	private boolean sourceVersion;
 
 	private JSONObject getJSon(final String url, final String anchor) {
 		Response response = null;
@@ -100,9 +101,16 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 		sb.append("http://neuromorpho.org/dableFiles/");
 		final String archive = (String) json.get("archive");
 		sb.append(archive.toLowerCase().replaceAll(" ", "%20"));
-		sb.append("/CNG%20version/");
-		sb.append(cellId.replaceAll(" ", "%20"));
-		sb.append(".CNG.swc");
+		final String filename = cellId.replaceAll(" ", "%20");
+		if (sourceVersion) {
+			sb.append("/Source-Version/");
+			sb.append(filename);
+			sb.append(".swc");
+		} else {
+			sb.append("/CNG%20version/");
+			sb.append(filename);
+			sb.append(".CNG.swc");
+		}
 		return sb.toString();
 	}
 
@@ -124,6 +132,10 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 		catch (final IOException e) {
 			return null;
 		}
+	}
+
+	public void enableSourceVersion(final boolean enable) {
+		sourceVersion = enable;
 	}
 
 	/**
@@ -161,7 +173,11 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 		System.out.println("Neuromorpho available: " + loader
 			.isDatabaseAvailable());
 		System.out.println("# Getting neuron " + cellId);
-		final String urlPath = loader.getReconstructionURL(cellId);
+		String urlPath = loader.getReconstructionURL(cellId);
+		System.out.println("URL: " + urlPath);
+		pafm.importSWC(urlPath);
+		loader.enableSourceVersion(true);
+		urlPath = loader.getReconstructionURL(cellId);
 		System.out.println("URL :" + urlPath);
 		pafm.importSWC(urlPath);
 		final SNT snt = new SNT(ij.context(), pafm);

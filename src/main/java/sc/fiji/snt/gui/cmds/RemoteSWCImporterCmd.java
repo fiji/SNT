@@ -62,6 +62,10 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		label = "IDs (comma- or space- separated list)")
 	private String query;
 
+	@Parameter(required = false, persist = true, label = "Version",
+			choices= {"CNG", "Source"})
+	private String version;
+
 	@Parameter(required = false, label = "Colors", choices = {
 		"Distinct (each cell labelled uniquely)", "Common color specified below" })
 	private String colorChoice;
@@ -109,6 +113,9 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			return;
 		}
 
+		if (loader instanceof NeuroMorphoLoader) {
+			((NeuroMorphoLoader)loader).enableSourceVersion(version.toLowerCase().contains("source"));
+		}
 		final LinkedHashMap<String, String> urlsMap = getURLmapFromQuery(query);
 		if (urlsMap == null || urlsMap.isEmpty()) {
 			error("Invalid query. No reconstructions retrieved.");
@@ -232,6 +239,7 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		else if (loader instanceof FlyCircuitLoader) {
 			placeholderQuery = "VGlut-F-400787";
 			database = "FlyCircuit.tw";
+			resolveInput("version");
 		}
 		getInfo().setLabel("Import " + database + " Reconstructions");
 	}

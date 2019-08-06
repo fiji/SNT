@@ -358,6 +358,23 @@ public class SNT extends MultiDThreePanes implements
 	public void rebuildDisplayCanvases() throws IllegalArgumentException {
 		if (accessToValidImageData()) throw new IllegalArgumentException(
 			"Attempting to rebuild canvas(es) when valid data exists");
+		rebuildDisplayCanvasesInternal();
+	}
+
+	/**
+	 * Rebuilds display canvas(es) to ensure all paths are contained in the image.
+	 * Does nothing if placeholder canvas(es) are not being used.
+	 * 
+	 * @see #rebuildDisplayCanvases()
+	 */
+	public void updateDisplayCanvases() {
+		if (!accessToValidImageData() && getImagePlus() != null) {
+			SNTUtils.log("Rebuilding canvases...");
+			rebuildDisplayCanvasesInternal();
+		}
+	}
+
+	private void rebuildDisplayCanvasesInternal() {
 		initialize(getSinglePane(), 1, 1);
 		updateUIFromInitializedImp(xy.isVisible());
 		pauseTracing(true, false);

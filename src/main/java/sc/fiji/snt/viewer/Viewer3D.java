@@ -1424,7 +1424,7 @@ public class Viewer3D {
 		}
 		objMesh.setLabel(label);
 		objMesh.drawable.setColor(getNonUserDefColor());
-		if (addMesh(objMesh)) validate();
+		if (addMesh(objMesh) && viewUpdatesEnabled) validate();
 		return objMesh;
 	}
 
@@ -2855,21 +2855,17 @@ public class Viewer3D {
 			mi.addActionListener(e -> {
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("loader", new FlyCircuitLoader());
-				inputs.put("rebuildCanvas", false);
 				runCmd(RemoteSWCImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			remoteMenu.add(mi);
 			mi = new JMenuItem("MouseLight...", 'm');
 			mi.addActionListener(e -> {
-				final Map<String, Object> inputs = new HashMap<>();
-				inputs.put("rebuildCanvas", false);
-				runCmd(MLImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
+				runCmd(MLImporterCmd.class, null, CmdWorker.DO_NOTHING);
 			});
 			remoteMenu.add(mi);
 			mi = new JMenuItem("NeuroMorpho...", 'n');
 			mi.addActionListener(e -> {
 				final Map<String, Object> inputs = new HashMap<>();
-				inputs.put("rebuildCanvas", false);
 				inputs.put("loader", new NeuroMorphoLoader());
 				runCmd(RemoteSWCImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});

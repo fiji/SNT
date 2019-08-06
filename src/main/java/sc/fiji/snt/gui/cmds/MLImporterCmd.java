@@ -44,7 +44,6 @@ import org.scijava.widget.Button;
 import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.PathAndFillManager;
-import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.SNTUI;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.gui.GuiUtils;
@@ -103,10 +102,6 @@ public class MLImporterCmd extends CommonDynamicCmd {
 		visibility = ItemVisibility.INVISIBLE)
 	private Viewer3D recViewer;
 
-	@Parameter(persist = false, required = true,
-		visibility = ItemVisibility.INVISIBLE)
-	private boolean rebuildCanvas;
-
 	private PathAndFillManager pafm;
 
 	/*
@@ -160,11 +155,8 @@ public class MLImporterCmd extends CommonDynamicCmd {
 			}
 		}
 
-		rebuildCanvas = false;
-		if (rebuildCanvas && snt != null) {
-			SNTUtils.log("Rebuilding canvases...");
-			snt.rebuildDisplayCanvases();
-		}
+		// If a display canvas is being used, resize it as needed
+		sntService.getPlugin().updateDisplayCanvases();
 
 		if (recViewer != null) {
 			// A 'stand-alone' Reconstruction Viewer was specified

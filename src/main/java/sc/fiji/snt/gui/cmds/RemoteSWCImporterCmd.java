@@ -89,9 +89,6 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		visibility = ItemVisibility.INVISIBLE)
 	private RemoteSWCLoader loader;
 
-	@Parameter(persist = false, required = true,
-		visibility = ItemVisibility.INVISIBLE)
-	private boolean rebuildCanvas;
 
 	private PathAndFillManager pafm;
 	private String placeholderQuery;
@@ -170,15 +167,15 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 			});
 			recViewer.setSceneUpdatesEnabled(true);
 		}
-		else if (snt != null) {
-			if (rebuildCanvas) {
-				SNTUtils.log("Rebuilding canvases...");
-				snt.rebuildDisplayCanvases();
-			}
+
+		if (snt != null) {
 			if (recViewer != null) recViewer.syncPathManagerList();
+			// If a display canvas is being used, resize it as needed
+			snt.updateDisplayCanvases();
 		}
 
 		if (recViewer != null) recViewer.validate();
+
 		if (failures > 0) {
 			error(String.format("%d/%d reconstructions could not be retrieved.",
 				failures, result.size()));

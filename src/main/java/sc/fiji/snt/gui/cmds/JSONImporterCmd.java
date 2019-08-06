@@ -29,7 +29,6 @@ import java.util.TreeSet;
 import java.util.stream.IntStream;
 
 import org.json.JSONException;
-import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -65,10 +64,6 @@ public class JSONImporterCmd extends CommonDynamicCmd {
 	@Parameter(required = false, label = "Replace existing paths")
 	private boolean clearExisting;
 
-	@Parameter(persist = false, required = false,
-		visibility = ItemVisibility.INVISIBLE)
-	private boolean rebuildCanvas;
-
 	/*
 	 * (non-Javadoc)
 	 *
@@ -99,10 +94,8 @@ public class JSONImporterCmd extends CommonDynamicCmd {
 				pafm.deletePaths(indices);
 			}
 
-			if (rebuildCanvas) {
-				SNTUtils.log("Rebuilding canvases...");
-				snt.rebuildDisplayCanvases();
-			}
+			// If a display canvas is being used, resize it as needed
+			sntService.getPlugin().updateDisplayCanvases();
 
 			status("Successful imported " + result.size() + " reconstruction(s)...", true);
 	

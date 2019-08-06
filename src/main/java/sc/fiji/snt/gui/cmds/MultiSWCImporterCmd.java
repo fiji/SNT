@@ -30,7 +30,6 @@ import java.util.stream.IntStream;
 
 import net.imagej.ImageJ;
 
-import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
@@ -41,7 +40,6 @@ import sc.fiji.snt.PathAndFillManager;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUI;
-import sc.fiji.snt.SNT;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.gui.GuiUtils;
 
@@ -75,9 +73,6 @@ public class MultiSWCImporterCmd extends ContextCommand {
 	@Parameter(required = false, label = "Replace existing paths")
 	private boolean clearExisting;
 
-	@Parameter(persist = false, required = false,
-		visibility = ItemVisibility.INVISIBLE)
-	private boolean rebuildCanvas;
 
 	/*
 	 * (non-Javadoc)
@@ -87,7 +82,6 @@ public class MultiSWCImporterCmd extends ContextCommand {
 	@Override
 	public void run() {
 
-		final SNT snt = sntService.getPlugin();
 		final SNTUI ui = sntService.getUI();
 		final PathAndFillManager pafm = sntService.getPathAndFillManager();
 
@@ -116,10 +110,8 @@ public class MultiSWCImporterCmd extends ContextCommand {
 			pafm.deletePaths(indices);
 		}
 
-		if (rebuildCanvas) {
-			SNTUtils.log("Rebuilding canvases...");
-			snt.rebuildDisplayCanvases();
-		}
+		// If a display canvas is being used, resize it as needed
+		sntService.getPlugin().updateDisplayCanvases();
 
 		if (failures > 0) {
 			ui.error(String.format("%d/%d reconstructions could not be retrieved.",

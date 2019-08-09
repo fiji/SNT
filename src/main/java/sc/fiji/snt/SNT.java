@@ -132,15 +132,17 @@ public class SNT extends MultiDThreePanes implements
 	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
 	private int paths3DDisplay = 1;
 
-	/* UI preferences */
+	/* UI and tracing preferences */
 	volatile protected int cursorSnapWindowXY;
 	volatile protected int cursorSnapWindowZ;
 	volatile protected boolean autoCanvasActivation;
 	volatile protected boolean panMode;
 	volatile protected boolean snapCursor;
 	volatile protected boolean unsavedPaths = false;
-	protected volatile boolean showOnlySelectedPaths;
-	protected volatile boolean showOnlyActiveCTposPaths;
+	volatile protected boolean showOnlySelectedPaths;
+	volatile protected boolean showOnlyActiveCTposPaths;
+	private boolean manualOverride = false;
+
 
 	/*
 	 * Just for convenience, keep casted references to the superclass's
@@ -195,32 +197,26 @@ public class SNT extends MultiDThreePanes implements
 	 * finished it (in the sense of moving on to a new path with a differen starting
 	 * point.) FIXME: this may be redundant - check that.
 	 */
-	volatile boolean pathUnfinished = false;
+	volatile private boolean pathUnfinished = false;
 	private Path editingPath; // Path being edited when in 'Edit Mode'
 
 	/* Labels */
-	protected String[] materialList;
-	byte[][] labelData;
+	private String[] materialList;
+	private byte[][] labelData;
 
-	volatile boolean loading = false;
-	volatile boolean lastStartPointSet = false;
+	protected volatile boolean loading = false;
+	private volatile boolean lastStartPointSet = false;
 
-	double last_start_point_x;
-	double last_start_point_y;
-	double last_start_point_z;
+	protected double last_start_point_x;
+	protected double last_start_point_y;
+	protected double last_start_point_z;
 
-	Path endJoin;
-	PointInImage endJoinPoint;
-
-	/*
-	 * If we've finished searching for a path, but the user hasn't confirmed that
-	 * they want to keep it yet, temporaryPath is non-null and holds the Path we
-	 * just searched out.
-	 */
+	private Path endJoin;
+	private PointInImage endJoinPoint;
 
 	// Any method that deals with these two fields should be synchronized.
-	Path temporaryPath = null;
-	Path currentPath = null;
+	protected Path temporaryPath = null; // result of A* search that hasn't yet been confirmed 
+	protected Path currentPath = null;
 
 	/* GUI */
 	protected SNTUI ui;
@@ -2785,15 +2781,12 @@ public class SNT extends MultiDThreePanes implements
 		autoCanvasActivation = enable;
 	}
 
-	// TODO: Use prefsService
-	private boolean manualOverride = false;
-
 	protected boolean isTracingOnSecondaryImageActive() {
 		return doSearchOnSecondaryData && isSecondaryImageLoaded();
 	}
 
 	/**
-	 * Enables (or disables) the A* search algorithm (enabled by default)
+	 * Toggles the A* search algorithm (enabled by default)
 	 *
 	 * @param enable true to enable A* search, false otherwise
 	 */

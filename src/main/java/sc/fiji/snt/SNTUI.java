@@ -1615,6 +1615,10 @@ public class SNTUI extends JDialog {
 		abortButton.addActionListener(e -> abortCurrentOperation());
 
 		// Build panel
+		return buttonPanel(keepSegment, junkSegment, completePath, abortButton);
+	}
+
+	protected static JPanel buttonPanel(final JButton... buttons) {
 		final JPanel p = new JPanel();
 		p.setLayout(new GridBagLayout());
 		final GridBagConstraints c = new GridBagConstraints();
@@ -1625,14 +1629,10 @@ public class SNTUI extends JDialog {
 		c.gridy = 0;
 		c.gridx = 0;
 		c.weightx = 0.1;
-		p.add(keepSegment, c);
-		c.gridx++;
-		p.add(junkSegment, c);
-		c.gridx++;
-		p.add(completePath, c);
-		c.gridx++;
-		c.weightx = 0;
-		p.add(abortButton, c);
+		for (final JButton button: buttons) {
+			p.add(button, c);
+			c.gridx++;
+		}
 		return p;
 	}
 
@@ -2722,10 +2722,14 @@ public class SNTUI extends JDialog {
 		}
 	}
 
-	protected void toggleFillListVisibility() {
+	private void toggleFillListVisibility() {
 		assert SwingUtilities.isEventDispatchThread();
-		synchronized (fmUI) {
-			setFillListVisible(!fmUI.isVisible());
+		if (!plugin.accessToValidImageData()) {
+			guiUtils.error("Paths can only be filled when valid image data is available.");
+		} else {
+			synchronized (fmUI) {
+				setFillListVisible(!fmUI.isVisible());
+			}
 		}
 	}
 
@@ -2815,7 +2819,7 @@ public class SNTUI extends JDialog {
 		return mi;
 	}
 
-	private JMenuItem menuItemTriggeringURL(final String label, final String URL) {
+	protected static JMenuItem menuItemTriggeringURL(final String label, final String URL) {
 		final JMenuItem mi = new JMenuItem(label);
 		mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", URL));
 		return mi;

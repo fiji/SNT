@@ -23,6 +23,7 @@
 package sc.fiji.snt;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -40,6 +41,7 @@ import java.util.HashSet;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -97,6 +99,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 	private final GuiUtils gUtils;
 
 	private final int MARGIN = 10;
+	protected static final String FILLING_URI = "https://imagej.net/SNT:_Step-By-Step_Instructions#Filling";
 
 	/**
 	 * Instantiates a new Fill Manager Dialog
@@ -115,11 +118,12 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		gUtils = new GuiUtils(this);
 		listModel = new DefaultListModel<>();
 		fillList = new JList<>(listModel);
+		fillList.setCellRenderer(new FMCellRenderer());
 
 		assert SwingUtilities.isEventDispatchThread();
 
 		fillList.setVisibleRowCount(5);
-		fillList.setPrototypeCellValue("Fill (90) from Path (90)");
+		fillList.setPrototypeCellValue(FMCellRenderer.LIST_PLACEHOLDER);
 		setLocationRelativeTo(plugin.getUI());
 		setLayout(new GridBagLayout());
 		final GridBagConstraints c = GuiUtils.defaultGbc();
@@ -242,10 +246,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 			discardFill.addActionListener(this);
 			saveFill = new JButton("Stash Progress");
 			saveFill.addActionListener(this);
-			fillControlPanel = centerAlignedPanel();
-			fillControlPanel.add(pauseOrRestartFilling);
-			fillControlPanel.add(discardFill);
-			fillControlPanel.add(saveFill);
+			fillControlPanel = SNTUI.buttonPanel(pauseOrRestartFilling, discardFill, saveFill);
 			add(fillControlPanel, c);
 			++c.gridy;
 		}
@@ -266,12 +267,10 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 					viewFillsMenu.show(e.getComponent(), e.getX(), e.getY());
 				}
 			});
-			final JPanel exportPanel = centerAlignedPanel();
-			exportPanel.add(exportAsCSV);
-			exportPanel.add(view3D);
-			add(exportPanel, c);
+			add(SNTUI.buttonPanel(exportAsCSV, view3D), c);
 			c.gridy++;
 		}
+		adjustListPlaceholder();
 		pack();
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -281,23 +280,43 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		});
 	}
 
+	private class FMCellRenderer extends DefaultListCellRenderer {
+
+		private static final long serialVersionUID = 1L;
+		static final String LIST_PLACEHOLDER = "To start filling, run \"Fill Out\" from Path Manager";
+
+		public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+				boolean cellHasFocus) {
+			if (LIST_PLACEHOLDER.equals(value.toString())) {
+				isSelected = false;
+				return GuiUtils.leftAlignedLabel(LIST_PLACEHOLDER, false);
+			} else {
+				return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+			}
+		}
+	}
+
+	private boolean fillerHasNotRun() {
+		return (plugin.filler == null || !plugin.filler.isAlive());
+	}
+
+	protected void adjustListPlaceholder() {
+		if (fillerHasNotRun()) {
+			if (!listModel.contains(FMCellRenderer.LIST_PLACEHOLDER))
+				listModel.addElement(FMCellRenderer.LIST_PLACEHOLDER);
+		} else {
+			listModel.removeElement(FMCellRenderer.LIST_PLACEHOLDER);
+		}
+	}
+
 	private void addSeparator(final String label, final GridBagConstraints c) {
-		final String URI = "https://imagej.net/SNT:_Step-By-Step_Instructions#Filling";
-		final JLabel jLabel = GuiUtils.leftAlignedLabel(label, URI, true);
+		final JLabel jLabel = GuiUtils.leftAlignedLabel(label, FILLING_URI, true);
 		GuiUtils.addSeparator((JComponent) getContentPane(), jLabel, true, c);
 		++c.gridy;
 	}
 
 	private JPanel leftAlignedPanel() {
-		return getPanel(FlowLayout.LEADING);
-	}
-
-	private JPanel centerAlignedPanel() {
-		return getPanel(FlowLayout.CENTER);
-	}
-
-	private JPanel getPanel(final int alignment) {
-		final JPanel panel = new JPanel(new FlowLayout(alignment));
+		final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		panel.setBorder(BorderFactory.createEmptyBorder(0, MARGIN, 0, MARGIN));
 		return panel;
 	}
@@ -381,7 +400,9 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 	public void setFillList(final String[] newList) {
 		SwingUtilities.invokeLater(() -> {
 			listModel.removeAllElements();
-			for (String s : newList) listModel.addElement(s);
+			if (newList != null && newList.length > 0)
+				for (String s : newList) listModel.addElement(s);
+			adjustListPlaceholder();
 		});
 	}
 
@@ -407,7 +428,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		if (source == deleteFills) {
 
 			final int[] selectedIndices = fillList.getSelectedIndices();
-			if (selectedIndices.length < 1) {
+			if (selectedIndices.length < 1 || fillerHasNotRun()) {
 				gUtils.error("No fill was selected for deletion.");
 				return;
 			}
@@ -418,7 +439,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 		else if (source == reloadFill) {
 
 			final int[] selectedIndices = fillList.getSelectedIndices();
-			if (selectedIndices.length != 1) {
+			if (selectedIndices.length != 1 || fillerHasNotRun()) {
 				gUtils.error(
 					"You must have a single fill selected in order to reload.");
 				return;

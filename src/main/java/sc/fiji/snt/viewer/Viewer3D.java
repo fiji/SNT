@@ -3243,6 +3243,13 @@ public class Viewer3D {
 			tree.getCheckBoxTreeSelectionModel().setDigIn(false);
 			tree.setExpandsSelectedPaths(true);
 			tree.setRootVisible(true);
+
+			// Remove default folder/file icons on Windows L&F
+			final DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) tree.getActualCellRenderer();
+			renderer.setLeafIcon(null);
+			renderer.setClosedIcon(null);
+			renderer.setOpenIcon(null);
+
 			GuiUtils.expandAllTreeNodes(tree);
 			tree.setClickInCheckBoxOnly(false);
 			searchableBar = new SNTSearchableBar(new TreeSearchable(tree));

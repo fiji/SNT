@@ -121,6 +121,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 {
 
 	private static final long serialVersionUID = 1L;
+	private static final String FIT_URI = "https://imagej.net/SNT:_Overview#Refine.2FFit";
 	private final HelpfulJTree tree;
 	private DefaultMutableTreeNode root;
 	private final SNT plugin;
@@ -276,6 +277,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			if (fittingHelper == null) fittingHelper = new FitHelper();
 			fittingHelper.showPrompt();
 		});
+		jmi = SNTUI.menuItemTriggeringURL("<HTML>Help on <i>Fitting", FIT_URI);
+		jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.QUESTION));
 		fitMenu.add(jmi);
 
 		final JMenu fillMenu = new JMenu("Fill");
@@ -283,6 +286,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		jmi = new JMenuItem(MultiPathActionListener.FILL_OUT_CMD);
 		jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.FILL));
 		jmi.addActionListener(multiPathListener);
+		fillMenu.add(jmi);
+		fillMenu.addSeparator();
+		jmi = SNTUI.menuItemTriggeringURL("<HTML>Help on <i>Filling", FillManagerUI.FILLING_URI);
+		jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.QUESTION));
 		fillMenu.add(jmi);
 
 		final JMenu advanced = new JMenu("Analyze");

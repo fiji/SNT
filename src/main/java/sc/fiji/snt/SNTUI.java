@@ -1063,7 +1063,7 @@ public class SNTUI extends JDialog {
 				plugin.getXZCanvas().setNodeDiameter(value);
 				plugin.getZYCanvas().setNodeDiameter(value);
 			}
-			plugin.updateAllViewers();
+			plugin.updateTracingViewers(false);
 		});
 		final JButton defaultsButton = new JButton("Default");
 		defaultsButton.addActionListener(e -> {
@@ -1118,6 +1118,7 @@ public class SNTUI extends JDialog {
 			switch (selectedKey1) {
 			case "Canvas annotations":
 				plugin.setAnnotationsColorAllPanes(newColor);
+				plugin.updateTracingViewers(false);
 				break;
 			case "Fills":
 				plugin.getXYCanvas().setFillColor(newColor);
@@ -1125,6 +1126,7 @@ public class SNTUI extends JDialog {
 					plugin.getZYCanvas().setFillColor(newColor);
 					plugin.getXZCanvas().setFillColor(newColor);
 				}
+				plugin.updateTracingViewers(false);
 				break;
 			case "Unconfirmed paths":
 				plugin.getXYCanvas().setUnconfirmedPathColor(newColor);
@@ -1132,6 +1134,7 @@ public class SNTUI extends JDialog {
 					plugin.getZYCanvas().setUnconfirmedPathColor(newColor);
 					plugin.getXZCanvas().setUnconfirmedPathColor(newColor);
 				}
+				plugin.updateTracingViewers(true);
 				break;
 			case "Temporary paths":
 				plugin.getXYCanvas().setTemporaryPathColor(newColor);
@@ -1139,11 +1142,11 @@ public class SNTUI extends JDialog {
 					plugin.getZYCanvas().setTemporaryPathColor(newColor);
 					plugin.getXZCanvas().setTemporaryPathColor(newColor);
 				}
+				plugin.updateTracingViewers(true);
 				break;
 			default:
 				throw new IllegalArgumentException("Unrecognized option");
 			}
-			plugin.updateAllViewers();
 		});
 
 		final JPanel p = new JPanel();
@@ -2264,7 +2267,7 @@ public class SNTUI extends JDialog {
 			plugin.displayCustomPathColors = !jcheckbox.isSelected();
 			// colorChooser1.setEnabled(!plugin.displayCustomPathColors);
 			// colorChooser2.setEnabled(!plugin.displayCustomPathColors);
-			plugin.updateAllViewers();
+			plugin.updateTracingViewers(true);
 		});
 		colorOptionsPanel.add(jcheckbox, cop_f);
 

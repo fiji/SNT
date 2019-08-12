@@ -960,7 +960,7 @@ public class SNT extends MultiDThreePanes implements
 			xz_tracer_canvas.setEditMode(enable);
 			zy_tracer_canvas.setEditMode(enable);
 		}
-		updateAllViewers();
+		updateTracingViewers(false);
 	}
 
 	protected void pause(final boolean pause) {
@@ -1428,7 +1428,7 @@ public class SNT extends MultiDThreePanes implements
 		if (currentPath.endJoins == null) {
 			setTemporaryPath(null);
 			changeUIState(SNTUI.PARTIAL_PATH);
-			updateAllViewers();
+			updateTracingViewers(true);
 		}
 		else {
 			setTemporaryPath(null);
@@ -1469,7 +1469,7 @@ public class SNT extends MultiDThreePanes implements
 		endJoin = null;
 		endJoinPoint = null;
 
-		updateAllViewers();
+		updateTracingViewers(false);
 	}
 
 	/**
@@ -1498,7 +1498,7 @@ public class SNT extends MultiDThreePanes implements
 		lastStartPointSet = false;
 		setPathUnfinished(false);
 
-		updateAllViewers();
+		updateTracingViewers(true);
 	}
 
 	/**
@@ -1680,7 +1680,7 @@ public class SNT extends MultiDThreePanes implements
 
 		// ... and change the state of the UI
 		changeUIState(SNTUI.WAITING_TO_START_PATH);
-		updateAllViewers();
+		updateTracingViewers(true);
 	}
 
 	synchronized protected void clickForTrace(final Point3d p, final boolean join) {
@@ -2272,7 +2272,7 @@ public class SNT extends MultiDThreePanes implements
 	{
 		this.showOnlySelectedPaths = showOnlySelectedPaths;
 		if (updateGUI) {
-			updateAllViewers();
+			updateTracingViewers(true);
 		}
 	}
 
@@ -2281,7 +2281,7 @@ public class SNT extends MultiDThreePanes implements
 	{
 		this.showOnlyActiveCTposPaths = showOnlyActiveCTposPaths;
 		if (updateGUI) {
-			updateAllViewers();
+			updateTracingViewers(true);
 		}
 	}
 
@@ -2455,7 +2455,7 @@ public class SNT extends MultiDThreePanes implements
 	protected void setSelectedColor(final Color newColor) {
 		selectedColor = newColor;
 		selectedColor3f = new Color3f(newColor);
-		updateAllViewers();
+		updateTracingViewers(true);
 	}
 
 	protected void setDeselectedColor(final Color newColor) {
@@ -2465,7 +2465,7 @@ public class SNT extends MultiDThreePanes implements
 			getUI().recViewer.setDefaultColor(new ColorRGB(newColor.getRed(), newColor
 				.getGreen(), newColor.getBlue()));
 		}
-		updateAllViewers();
+		updateTracingViewers(true);
 	}
 
 	/*

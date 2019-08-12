@@ -304,7 +304,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				pafl.setSelectedPaths(selectedPathsSet, this);
 		}
 		if (plugin != null) {
-			plugin.updateAllViewers();
+			plugin.updateTracingViewers(true);
 		}
 	}
 

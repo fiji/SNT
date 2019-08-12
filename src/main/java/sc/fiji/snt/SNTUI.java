@@ -794,7 +794,7 @@ public class SNTUI extends JDialog {
 			}
 			currentState = newState;
 			SNTUtils.log("UI state: " + getState(currentState));
-			plugin.updateAllViewers();
+			plugin.updateTracingViewers(true);
 		});
 
 	}

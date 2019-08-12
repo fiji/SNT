@@ -325,8 +325,8 @@ public class SNTService extends AbstractService implements ImageJService {
 	}
 
 	/**
-	 * Updates (refreshes) all viewers currently in use by SNT. Does nothing if no
-	 * SNT instance exists.
+	 * Script-friendly method for updating (refreshing) all viewers currently in use
+	 * by SNT. Does nothing if no SNT instance exists.
 	 */
 	public void updateViewers() {
 		if (plugin != null) plugin.updateAllViewers();

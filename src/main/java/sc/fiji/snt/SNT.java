@@ -374,7 +374,7 @@ public class SNT extends MultiDThreePanes implements
 		initialize(getSinglePane(), 1, 1);
 		updateUIFromInitializedImp(xy.isVisible());
 		pauseTracing(true, false);
-		updateAllViewers();
+		updateTracingViewers(false);
 	}
 
 	private void updateUIFromInitializedImp(final boolean showImp) {
@@ -845,7 +845,7 @@ public class SNT extends MultiDThreePanes implements
 		}
 
 		removeThreadToDraw(source);
-		updateAllViewers();
+		updateTracingViewers(false);
 
 	}
 
@@ -855,7 +855,7 @@ public class SNT extends MultiDThreePanes implements
 	{
 		// Just use this signal to repaint the canvas, in case there's
 		// been no mouse movement.
-		updateAllViewers();
+		updateTracingViewers(false);
 	}
 
 	public void justDisplayNearSlices(final boolean value, final int eitherSide) {
@@ -872,7 +872,7 @@ public class SNT extends MultiDThreePanes implements
 			zy_tracer_canvas.eitherSide = eitherSide;
 		}
 
-		updateAllViewers();
+		updateTracingViewers(false);
 
 	}
 
@@ -1409,7 +1409,7 @@ public class SNT extends MultiDThreePanes implements
 
 		}
 
-		updateAllViewers();
+		updateTracingViewers(true);
 	}
 
 	synchronized public void confirmTemporary() {
@@ -2357,9 +2357,12 @@ public class SNT extends MultiDThreePanes implements
 		return showOnlySelectedPaths;
 	}
 
-	public void updateAllViewers() {
+	protected void updateTracingViewers(final boolean includeLegacy3Dviewer) {
 		repaintAllPanes();
-		update3DViewerContents();
+		if (includeLegacy3Dviewer) update3DViewerContents();
+	}
+
+	protected void updateNonTracingViewers() {
 		if (getUI() == null) return;
 		if (getUI().recViewer != null) {
 			new Thread(() -> {
@@ -2371,6 +2374,11 @@ public class SNT extends MultiDThreePanes implements
 				getUI().sciViewSNT.syncPathManagerList();
 			}).start();
 		}
+	}
+
+	public void updateAllViewers() {
+		updateTracingViewers(true);
+		updateNonTracingViewers();
 	}
 
 	/*

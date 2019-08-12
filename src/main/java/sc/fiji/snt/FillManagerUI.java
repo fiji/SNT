@@ -433,7 +433,7 @@ public class FillManagerUI extends JDialog implements PathAndFillListener,
 				return;
 			}
 			pathAndFillManager.deleteFills(selectedIndices);
-			plugin.updateAllViewers();
+			plugin.updateTracingViewers(false);
 
 		}
 		else if (source == reloadFill) {

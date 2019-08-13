@@ -130,8 +130,8 @@ public class SciViewSNT {
 				sciView.deleteNode(node, false);
 			}
 			sciView.deleteNode(plottedTrees.get(PATH_MANAGER_TREE_LABEL));
+			plottedTrees.remove(PATH_MANAGER_TREE_LABEL);
 			//System.out.println("Num remaining nodes: " + sciView.getSceneNodes().length);
-
 
 			// Dont create a new SNT node each time
 

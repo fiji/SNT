@@ -105,7 +105,7 @@ public class ComputeSecondaryImg extends CommonDynamicCmd {
 
 	@SuppressWarnings("unused")
 	private void help() {
-		final String url = "https://imagej.net/SNT:_Overview#Tracing_on_Secondary_Image";
+		final String url = "https://imagej.net/SNT:_Manual#Tracing_on_Secondary_Image";
 		try {
 			platformService.open(new URL(url));
 		} catch (final IOException e) {

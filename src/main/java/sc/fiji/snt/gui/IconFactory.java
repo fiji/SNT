@@ -51,6 +51,7 @@ public class IconFactory {
 			ATLAS('\uf558', true), //
 			//ATOM('\uf5d2', true), //
 			BINOCULARS('\uf1e5', true), //
+			BOOK_READER('\uf5da', true), //
 			//BRAIN('\uf5dc', true), //
 			BRANCH_CODE('\uf126', true), //
 			BROOM('\uf51a', true), //
@@ -116,6 +117,7 @@ public class IconFactory {
 			ROCKET('\uf135', true), //
 			RULER('\uf546', true), //
 			SAVE('\uf0c7', false), //
+			SCROLL('\uf70e', true), //
 			SEARCH('\uf002', true), //
 			SLIDERS('\uf1de', true), //
 			SORT('\uf15d', true), //

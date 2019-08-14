@@ -59,6 +59,7 @@ import java.util.stream.IntStream;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
@@ -73,6 +74,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -92,8 +94,6 @@ import org.scijava.command.CommandService;
 import org.scijava.table.DefaultGenericTable;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Types;
-
-import com.jidesoft.swing.JideTabbedPane;
 
 import ij.IJ;
 import ij.ImageListener;
@@ -283,10 +283,7 @@ public class SNTUI extends JDialog {
 		});
 
 		assert SwingUtilities.isEventDispatchThread();
-		final JideTabbedPane tabbedPane = new JideTabbedPane(JideTabbedPane.TOP);
-		tabbedPane.setBoldActiveTab(true);
-		tabbedPane.setScrollSelectedTabOnWheel(true);
-		tabbedPane.setTabResizeMode(JideTabbedPane.RESIZE_MODE_NONE);
+		final JTabbedPane tabbedPane = getTabbedPane();
 
 		{ // Main tab
 			final GridBagConstraints c1 = GuiUtils.defaultGbc();
@@ -319,7 +316,7 @@ public class SNTUI extends JDialog {
 				c1.fill = GridBagConstraints.HORIZONTAL;
 				c1.insets = new Insets(0, 0, 0, 0);
 				tab1.add(hideWindowsPanel(), c1);
-				tabbedPane.addTab(" Main ", tab1);
+				tabbedPane.addTab("<HTML>Main ", tab1);
 			}
 		}
 
@@ -355,7 +352,7 @@ public class SNTUI extends JDialog {
 			++c2.gridy;
 			c2.weighty = 1;
 			tab2.add(miscPanel(), c2);
-			tabbedPane.addTab(" Options ", tab2);
+			tabbedPane.addTab("<HTML>Options ", tab2);
 		}
 
 		{ // 3D tab
@@ -366,7 +363,7 @@ public class SNTUI extends JDialog {
 			c3.anchor = GridBagConstraints.NORTHEAST;
 			c3.gridwidth = GridBagConstraints.REMAINDER;
 
-			tabbedPane.addTab(" 3D ", tab3);
+			tabbedPane.addTab("<HTML> 3D ", tab3);
 			addSeparatorWithURL(tab3, "Reconstruction Viewer:", true, c3);
 			c3.gridy++;
 			final String msg = "A dedicated OpenGL visualization tool specialized in Neuroanatomy, " +
@@ -406,14 +403,6 @@ public class SNTUI extends JDialog {
 			}
 		}
 
-		tabbedPane.addChangeListener(e -> {
-			if (tabbedPane.getSelectedIndex() == 1 && getState() > WAITING_TO_START_PATH
-					&& getState() < EDITING) {
-				tabbedPane.setSelectedIndex(0);
-				guiUtils.blinkingError(statusText,
-						"Please complete current task before selecting the \"Options\" tab.");
-			}
-		});
 		setJMenuBar(createMenuBar());
 		setLayout(new GridBagLayout());
 		final GridBagConstraints dialogGbc = GuiUtils.defaultGbc();
@@ -474,6 +463,81 @@ public class SNTUI extends JDialog {
 		}
 	}
 
+	private JTabbedPane getTabbedPane() {
+
+		/*
+		 * TF: This is an effort at improving the tabbed interface. JIDE provides such
+		 * functionality by default, but causes some weird looking L&F overrides (at
+		 * least on macOS). Since I have no idea on how to stop JIDE from injecting
+		 * such weirdness, we'll implement the customization ourselves.
+		 */
+		// final JideTabbedPane tabbedPane = new JideTabbedPane(JTabbedPane.TOP);
+		// tabbedPane.setBoldActiveTab(true);
+		// tabbedPane.setScrollSelectedTabOnWheel(true);
+		// tabbedPane.setTabResizeMode(JideTabbedPane.RESIZE_MODE_NONE);
+
+		final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.addChangeListener(e -> {
+			final JTabbedPane source = (JTabbedPane) e.getSource();
+			final int selectedTab = source.getSelectedIndex();
+
+			// Do not allow secondary tabs to be selected while operations are pending 
+			if (selectedTab > 0 && getState() > WAITING_TO_START_PATH && getState() < EDITING) {
+				tabbedPane.setSelectedIndex(0);
+				guiUtils.blinkingError(statusText,
+						"Please complete current task before selecting the "+ source.getTitleAt(selectedTab) +" tab.");
+				return;
+			}
+
+			// Highlight active tab. This assumes tab's title contains "HTML"
+			for (int i = 0; i < source.getTabCount(); i++) {
+				final String existingTile = source.getTitleAt(i);
+				final String newTitle = (i == selectedTab) ? existingTile.replace("<HTML>", "<HTML><b>")
+						: existingTile.replace("<HTML><b>", "<HTML>");
+				source.setTitleAt(i, newTitle);
+			}
+		});
+		tabbedPane.addMouseWheelListener(e -> {
+			//https://stackoverflow.com/a/38463104
+			final JTabbedPane pane = (JTabbedPane) e.getSource();
+			final int units = e.getWheelRotation();
+			final int oldIndex = pane.getSelectedIndex();
+			final int newIndex = oldIndex + units;
+			if (newIndex < 0)
+				pane.setSelectedIndex(0);
+			else if (newIndex >= pane.getTabCount())
+				pane.setSelectedIndex(pane.getTabCount() - 1);
+			else
+				pane.setSelectedIndex(newIndex);
+		});
+
+		final JPopupMenu popup = new JPopupMenu();
+		tabbedPane.setComponentPopupMenu(popup);
+		final ButtonGroup group = new ButtonGroup();
+		for (final String pos : new String[] { "Top", "Bottom", "Left", "Right" }) {
+			final JMenuItem jcbmi = new JCheckBoxMenuItem("Place on " + pos, "Top".equals(pos));
+			jcbmi.addItemListener(e -> {
+				switch (pos) {
+				case "Top":
+					tabbedPane.setTabPlacement(JTabbedPane.TOP);
+					break;
+				case "Bottom":
+					tabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
+					break;
+				case "Left":
+					tabbedPane.setTabPlacement(JTabbedPane.LEFT);
+					break;
+				case "Right":
+					tabbedPane.setTabPlacement(JTabbedPane.RIGHT);
+					break;
+				}
+			});
+			group.add(jcbmi);
+			popup.add(jcbmi);
+		}
+		return tabbedPane;
+	}
+
 	/**
 	 * Gets the current UI state.
 	 *
@@ -515,7 +579,7 @@ public class SNTUI extends JDialog {
 	private void addSeparatorWithURL(final JComponent component, final String label, final boolean vgap,
 			final GridBagConstraints c) {
 		final String anchor = label.replace(" ", "_").replace(":", "");
-		final String uri = "https://imagej.net/SNT:_Overview#" + anchor;
+		final String uri = "https://imagej.net/SNT:_Manual#" + anchor;
 		JLabel jLabel = GuiUtils.leftAlignedLabel(label, uri, true);
 		GuiUtils.addSeparator(component, jLabel, vgap, c);
 	}
@@ -619,13 +683,15 @@ public class SNTUI extends JDialog {
 	}
 
 	/**
-	 * Changes this UI to a new state.
+	 * Changes this UI to a new state. Does nothing if {@code newState} is the
+	 * current UI state
 	 *
 	 * @param newState the new state, e.g., {@link SNTUI#READY},
 	 *                 {@link SNTUI#TRACING_PAUSED}, etc.
 	 */
 	public void changeState(final int newState) {
 
+		if (newState == currentState) return;
 		SwingUtilities.invokeLater(() -> {
 			switch (newState) {
 
@@ -2753,14 +2819,16 @@ public class SNTUI extends JDialog {
 	private JMenu helpMenu() {
 		final JMenu helpMenu = new JMenu("Help");
 		final String URL = "https://imagej.net/SNT";
-		JMenuItem mi = menuItemTriggeringURL("Main documentation page", URL);
+		JMenuItem mi = menuItemTriggeringURL("Main Documentation Page", URL);
 		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.HOME));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 
-		mi = menuItemTriggeringURL("User Manual", URL + ":_Overview");
+		mi = menuItemTriggeringURL("User Manual", URL + ":_Manual");
+		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BOOK_READER));
 		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Tutorials", URL + "#Tutorials");
+		mi = menuItemTriggeringURL("Screencasts", URL + ":_Screencasts");
+		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.VIDEO));
 		helpMenu.add(mi);
 		mi = menuItemTriggeringURL("Step-by-step Instructions", URL + ":_Step-By-Step_Instructions");
 		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.FOOTPRINTS));
@@ -2769,7 +2837,7 @@ public class SNTUI extends JDialog {
 		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.CUBE));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
-		mi = menuItemTriggeringURL("List of shortcuts", URL + ":_Key_Shortcuts");
+		mi = menuItemTriggeringURL("List of Shortcuts", URL + ":_Key_Shortcuts");
 		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.KEYBOARD));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
@@ -2777,18 +2845,24 @@ public class SNTUI extends JDialog {
 		mi = menuItemTriggeringURL("FAQs", URL + ":_FAQ");
 		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.QUESTION));
 		helpMenu.add(mi);
-		mi = menuItemTriggeringURL("Ask a question", "https://forum.image.sc/tags/snt");
+		mi = menuItemTriggeringURL("Ask a Question", "https://forum.image.sc/tags/snt");
 		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.COMMENTS));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 
+		mi = menuItemTriggeringURL("Analysis", URL + ":_Analysis");
+		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.CHART));
+		helpMenu.add(mi);
 		mi = menuItemTriggeringURL("Scripting", URL + ":_Scripting");
+		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.CODE));
 		helpMenu.add(mi);
 		mi = menuItemTriggeringURL("Python Notebooks", URL + ":_Scripting#Python_Notebooks");
+		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.SCROLL));
 		helpMenu.add(mi);
 		helpMenu.addSeparator();
 
 		mi = menuItemTriggeringURL("Citing SNT", URL + ":_FAQ#citing");
+		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.PEN));
 		helpMenu.add(mi);
 		return helpMenu;
 	}
@@ -2802,7 +2876,7 @@ public class SNTUI extends JDialog {
 					return;
 				final String modKey = "Alt+Shift";
 				final String url1 = ShollUtils.URL + "#Analysis_of_Traced_Cells";
-				final String url2 = "https://imagej.net/Simple_Neurite_Tracer:_Sholl_analysis";
+				final String url2 = "https://imagej.net/SNT:_Analysis#Sholl_Analysis";
 				final StringBuilder sb = new StringBuilder();
 				sb.append("<html>");
 				sb.append("<div WIDTH=500>");

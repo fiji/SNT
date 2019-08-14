@@ -73,7 +73,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -93,6 +92,8 @@ import org.scijava.command.CommandService;
 import org.scijava.table.DefaultGenericTable;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Types;
+
+import com.jidesoft.swing.JideTabbedPane;
 
 import ij.IJ;
 import ij.ImageListener;
@@ -282,7 +283,10 @@ public class SNTUI extends JDialog {
 		});
 
 		assert SwingUtilities.isEventDispatchThread();
-		final JTabbedPane tabbedPane = new JTabbedPane();
+		final JideTabbedPane tabbedPane = new JideTabbedPane(JideTabbedPane.TOP);
+		tabbedPane.setBoldActiveTab(true);
+		tabbedPane.setScrollSelectedTabOnWheel(true);
+		tabbedPane.setTabResizeMode(JideTabbedPane.RESIZE_MODE_NONE);
 
 		{ // Main tab
 			final GridBagConstraints c1 = GuiUtils.defaultGbc();
@@ -365,9 +369,10 @@ public class SNTUI extends JDialog {
 			tabbedPane.addTab(" 3D ", tab3);
 			addSeparatorWithURL(tab3, "Reconstruction Viewer:", true, c3);
 			c3.gridy++;
-			final String msg = "An OpenGL visualization tool specialized in " +
-				"Neuroanatomy. For performance reasons, some Path Manager " +
-				"changes may need to be synchronized manually from RV Controls.";
+			final String msg = "A dedicated OpenGL visualization tool specialized in Neuroanatomy, " +
+				"supporting morphometric annotations, reconstructions and meshes. For " +
+				"performance reasons, some Path Manager changes may need to be synchronized " +
+				"manually from the \"Scene Controls\" menu.";
 			tab3.add(largeMsg(msg), c3);
 			c3.gridy++;
 			tab3.add(reconstructionViewerPanel(), c3);
@@ -376,8 +381,8 @@ public class SNTUI extends JDialog {
 			addSeparatorWithURL(tab3, "SciView:", true, c3);
 			++c3.gridy;
 			final String msg3 =
-				"EXPERIMENTAL: IJ2's modern 3D visualization framework supporting volumetric " +
-				"data and virtual reality. Discrete graphics card recommended. " +
+				"IJ2's modern 3D visualization framework supporting (large) image volumes, " +
+				"reconstructions, meshes, and virtual reality. Discrete graphics card recommended. " +
 				"For performance reasons, some Path Manager changes may need to be manually synchronized.";
 			tab3.add(largeMsg(msg3), c3);
 			c3.gridy++;

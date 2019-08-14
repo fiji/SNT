@@ -368,8 +368,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 	private void filterHelpMsg() {
 		final String key = GuiUtils.ctrlKey();
 		final String msg = "<HTML><body><div style='width:500;'><ol>" +
-			"<li>"
-			+ " case-insensitive by default. Wildcards " +
+			"<li>Search is case-insensitive by default. Wildcards " +
 			"<b>?</b> (any character), and <b>*</b> (any string) can also be used</li>" +
 			"<li>Press the <i>Highlight All</i> button or " + key +
 			"+A to select all the paths filtered by the search string</li>" +

@@ -1430,7 +1430,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		}).start();
 	}
 
-	public void refreshManager(final boolean refreshCmds,
+	private void refreshManager(final boolean refreshCmds,
 		final boolean refreshViewers)
 	{
 		pathAndFillManager.resetListeners(null);
@@ -1443,11 +1443,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	}
 
 	/**
-	 * Refreshes viewers and rebuilds Menus to reflect new contents in the Path
-	 * Manager.
+	 * Refreshes (Repaints) the Path Manager JTree to reflect changes in Path
+	 * names/colors.
 	 */
 	public void update() {
-		if (!pathAndFillManager.enableUIupdates) refreshManager(true, true);
+		final DefaultTreeModel model = ((DefaultTreeModel)tree.getModel());
+		model.nodeChanged((TreeNode) model.getRoot());
 	}
 
 	protected void closeTable() {

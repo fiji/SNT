@@ -2379,6 +2379,7 @@ public class SNT extends MultiDThreePanes implements
 	public void updateAllViewers() {
 		updateTracingViewers(true);
 		updateNonTracingViewers();
+		if (getUI()!=null) getUI().getPathManager().update();
 	}
 
 	/*
@@ -2464,6 +2465,7 @@ public class SNT extends MultiDThreePanes implements
 		if (getUI() != null && getUI().recViewer != null) {
 			getUI().recViewer.setDefaultColor(new ColorRGB(newColor.getRed(), newColor
 				.getGreen(), newColor.getBlue()));
+			if (pathAndFillManager.size() > 0) getUI().recViewer.syncPathManagerList();
 		}
 		updateTracingViewers(true);
 	}

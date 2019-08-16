@@ -139,8 +139,8 @@ public class TreeMapperCmd extends DynamicCommand {
 		if (showInRecViewer) {
 			final Viewer3D recViewer = sntService.getRecViewer();
 			recViewer.addColorBarLegend(colorTable, (float) minMax[0], (float) minMax[1]);
-			recViewer.syncPathManagerList();
 		}
+		sntService.updateViewers();
 		SNTUtils.log("Finished...");
 		statusService.clearStatus();
 	}

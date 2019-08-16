@@ -329,6 +329,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * by SNT. Does nothing if no SNT instance exists.
 	 */
 	public void updateViewers() {
+		accessActiveInstance(false);
 		if (plugin != null) plugin.updateAllViewers();
 	}
 

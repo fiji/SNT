@@ -156,7 +156,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 				guiUtils.error("Replacement pattern not valid: " + ex.getMessage());
 				return;
 			}
-			pmui.refreshManager(false, false);
+			pmui.update();
 		});
 		optionsMenu.add(mi);
 		mi = new JMenuItem("Clear History");

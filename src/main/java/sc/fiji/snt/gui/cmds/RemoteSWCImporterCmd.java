@@ -173,9 +173,9 @@ public class RemoteSWCImporterCmd extends CommonDynamicCmd {
 		}
 
 		if (snt != null) {
-			if (recViewer != null) recViewer.syncPathManagerList();
 			// If a display canvas is being used, resize it as needed
 			snt.updateDisplayCanvases();
+			snt.updateAllViewers();
 		}
 
 		if (recViewer != null) recViewer.validate();

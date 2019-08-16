@@ -255,17 +255,17 @@
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>okhttp</artifactId>
-			<version>3.14.2</version>
+			<version>4.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20180813</version>
+			<version>20190722</version>
 		</dependency>
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>font-awesome</artifactId>
-			<version>5.8.2</version>
+			<version>5.10.1</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>

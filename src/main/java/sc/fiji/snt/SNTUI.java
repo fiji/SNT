@@ -252,6 +252,7 @@ public class SNTUI extends JDialog {
 	protected boolean finishOnDoubleConfimation = true;
 	protected boolean discardOnDoubleCancellation = true;
 	protected boolean askUserConfirmation = true;
+	private boolean openingSciView;
 
 	/**
 	 * Instantiates SNT's main UI and associated {@link PathManagerUI} and
@@ -1618,15 +1619,18 @@ public class SNTUI extends JDialog {
 		openSciView = new JButton("Open SciView Viewer");
 
 		openSciView.addActionListener(e -> {
-			// if (noPathsError()) return;
-			if (sciView == null) {
-				//final SciViewService sciViewService = plugin.getContext().getService(
-				//	SciViewService.class);
-				//sciViewViewer.setDefaultColor(new ColorRGB(plugin.deselectedColor.getRed(),
-				//	plugin.deselectedColor.getGreen(), plugin.deselectedColor.getBlue()));
+			if( sciView != null && openingSciView ) {
+				openingSciView = false;
+			}
+
+			if (!openingSciView && sciView == null) {
+
+				openingSciView = true;
+
 				sciViewSNT = new SciViewSNT();
 				CmdRunner cmdRunner = (new CmdRunner(sc.fiji.snt.gui.cmds.OpenSciViewCmd.class));
 				cmdRunner.execute();
+
 //				while( sciViewSNT == null || sciViewSNT.sciView == null || !sciViewSNT.sciView.isInitialized()  ) {
 //					try {
 //						Thread.sleep(20);

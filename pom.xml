@@ -125,7 +125,8 @@
 		<package-name>sciview</package-name>
 
 		<!-- Dependency versions for JitPack -->
-		<sciview.version>a0ce5f338c </sciview.version>
+		<sciview.version>140b17e</sciview.version>
+<!--		<sciview.version>0.2.0-beta-2-SNAPSHOT</sciview.version>-->
 		<scenery.version>44abefd</scenery.version>
 		<jzy3d.version>1.0.3-SNAPSHOT</jzy3d.version>
 		<jide-oss.version>3.6.8</jide-oss.version>

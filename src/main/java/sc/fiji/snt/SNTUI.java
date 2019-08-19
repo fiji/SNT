@@ -1661,7 +1661,7 @@ public class SNTUI extends JDialog {
 		svSyncPathManager.setToolTipText("Refreshes Viewer contents to reflect Path Manager changes");
 		svSyncPathManager.addActionListener(e -> {
 			// if (noPathsError()) return;
-			if (sciView == null) {
+			if (sciView == null || sciView.isClosed()) {
 				guiUtils.error("The SciView Viewer is not open.");
 			} else {
 				sciViewSNT.sciView = sciView;

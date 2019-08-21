@@ -53,6 +53,7 @@ class TreeGraphAdapter<V, E> extends JGraphXAdapter<V, E> {
 		vertexStyle.put(mxConstants.STYLE_FONTCOLOR, DARK_GRAY);
 		vertexStyle.put(mxConstants.STYLE_STROKECOLOR, DARK_GRAY);
 		vertexStyle.put(mxConstants.STYLE_FILLCOLOR, vColor);
+		setEnableVertexLabels(true);
 	}
 
 	@Override
@@ -60,10 +61,12 @@ class TreeGraphAdapter<V, E> extends JGraphXAdapter<V, E> {
 		return ((mxCell)cell).getId();
 	}
 
+	protected boolean isVertexLabelsEnabled() {
+		return !(boolean)stylesheet.getDefaultVertexStyle().get(mxConstants.STYLE_NOLABEL);
+	}
+
 	protected void setEnableVertexLabels(final boolean enable) {
-		super.getModel().beginUpdate();
-		getStylesheet().getDefaultVertexStyle().put(mxConstants.STYLE_NOLABEL, !enable);
-		super.getModel().endUpdate();
+		stylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_NOLABEL, !enable);
 	}
 
 }

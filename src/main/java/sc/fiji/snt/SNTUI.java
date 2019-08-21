@@ -652,6 +652,7 @@ public class SNTUI extends JDialog {
 			GuiUtils.enableComponents(hessianPanel, enable);
 			GuiUtils.enableComponents(preprocess.getParent(), enable);
 			GuiUtils.enableComponents(aStarCheckBox.getParent(), enableAstar);
+			secondaryImgActivateCheckbox.setEnabled(enable);
 		}
 		updateFilteredImgFields(false);
 	}
@@ -3162,7 +3163,12 @@ public class SNTUI extends JDialog {
 			secondaryImgActivateCheckbox.setSelected(enable);
 			if (preprocess.isSelected()) updateHessianPanel();
 		} else if (enable) {
-			noSecondaryImgAvailableError();
+			if (!plugin.accessToValidImageData()) {
+				noValidImageDataError();
+			} else {
+				noSecondaryImgAvailableError();
+			}
+			secondaryImgActivateCheckbox.setSelected(false);
 		}
 		//refreshHessianPanelState();
 	}

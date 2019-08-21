@@ -144,11 +144,16 @@ class TreeGraphComponent extends mxGraphComponent {
 		popup.add(mItem);
 		popup.addSeparator();
 
-//		final JCheckBoxMenuItem jcbmi = new JCheckBoxMenuItem("Label Vertices", false);
-//		adapter.setEnabled(false);
-//		jcbmi.addActionListener(e -> adapter.setEnableVertexLabels(jcbmi.isSelected()));
-//		popup.add(jcbmi);
-//		popup.addSeparator();
+		final JCheckBoxMenuItem jcbmi = new JCheckBoxMenuItem("Label Vertices", adapter.isVertexLabelsEnabled());
+		jcbmi.addActionListener(e -> {
+			adapter.getModel().beginUpdate();
+			adapter.setEnableVertexLabels(jcbmi.isSelected());
+			adapter.getModel().endUpdate();
+			//HACK: This is the only thing I could come up with to repainting the canvas
+			zoomIn(); zoomOut();
+		});
+		popup.add(jcbmi);
+		popup.addSeparator();
 
 		panMenuItem = new JCheckBoxMenuItem("Pan Mode (Shift + Click & Drag)");
 		panMenuItem.addActionListener(e -> setPanMode(panMenuItem.isSelected()));

@@ -28,7 +28,9 @@ import org.jgrapht.Graph;
 import org.jgrapht.ext.JGraphXAdapter;
 import org.scijava.util.ColorRGB;
 
+import com.mxgraph.model.mxCell;
 import com.mxgraph.util.mxConstants;
+
 
 class TreeGraphAdapter<V, E> extends JGraphXAdapter<V, E> {
 
@@ -51,6 +53,17 @@ class TreeGraphAdapter<V, E> extends JGraphXAdapter<V, E> {
 		vertexStyle.put(mxConstants.STYLE_FONTCOLOR, DARK_GRAY);
 		vertexStyle.put(mxConstants.STYLE_STROKECOLOR, DARK_GRAY);
 		vertexStyle.put(mxConstants.STYLE_FILLCOLOR, vColor);
+	}
+
+	@Override
+	public String convertValueToString(final Object cell) {
+		return ((mxCell)cell).getId();
+	}
+
+	protected void setEnableVertexLabels(final boolean enable) {
+		super.getModel().beginUpdate();
+		getStylesheet().getDefaultVertexStyle().put(mxConstants.STYLE_NOLABEL, !enable);
+		super.getModel().endUpdate();
 	}
 
 }

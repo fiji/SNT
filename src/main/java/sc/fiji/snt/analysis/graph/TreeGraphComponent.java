@@ -143,6 +143,13 @@ class TreeGraphComponent extends mxGraphComponent {
 		mItem.addActionListener(e -> zoomActual());
 		popup.add(mItem);
 		popup.addSeparator();
+
+//		final JCheckBoxMenuItem jcbmi = new JCheckBoxMenuItem("Label Vertices", false);
+//		adapter.setEnabled(false);
+//		jcbmi.addActionListener(e -> adapter.setEnableVertexLabels(jcbmi.isSelected()));
+//		popup.add(jcbmi);
+//		popup.addSeparator();
+
 		panMenuItem = new JCheckBoxMenuItem("Pan Mode (Shift + Click & Drag)");
 		panMenuItem.addActionListener(e -> setPanMode(panMenuItem.isSelected()));
 		popup.add(panMenuItem);

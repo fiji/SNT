@@ -48,7 +48,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.jgrapht.ext.JGraphXAdapter;
 import org.w3c.dom.Document;
 
 import com.mxgraph.swing.mxGraphComponent;
@@ -63,11 +62,11 @@ import sc.fiji.snt.gui.GuiUtils;
 class TreeGraphComponent extends mxGraphComponent {
 	private static final long serialVersionUID = 1L;
 	private boolean panMode;
-	private final JGraphXAdapter<?, ?> adapter;
+	private final TreeGraphAdapter<?, ?> adapter;
 	private JCheckBoxMenuItem panMenuItem;
 	private File saveDir;
 
-	protected TreeGraphComponent(final JGraphXAdapter<?, ?> adapter) {
+	protected TreeGraphComponent(final TreeGraphAdapter<?, ?> adapter) {
 		super(adapter);
 		this.adapter = adapter;
 		addMouseWheelListener(new ZoomMouseWheelListener());

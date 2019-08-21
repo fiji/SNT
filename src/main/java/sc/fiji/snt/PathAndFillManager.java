@@ -375,7 +375,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 			List<SWCPoint> swcPoints = null;
 			try {
-				swcPoints = getSWCFor(new ArrayList<>(connectedPaths));
+				swcPoints = getSWCFor(connectedPaths);
 			}
 			catch (final SWCExportException see) {
 				error("" + see.getMessage());

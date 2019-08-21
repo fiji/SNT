@@ -28,10 +28,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.scijava.util.ColorRGB;
 
 import ij.IJ;
@@ -43,6 +46,7 @@ import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SWCPoint;
 import sholl.UPoint;
 import sc.fiji.snt.analysis.TreeStatistics;
+import sc.fiji.snt.analysis.graph.GraphUtils;
 import sc.fiji.snt.analysis.sholl.TreeParser;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 
@@ -633,6 +637,33 @@ public class Tree {
 	 */
 	public String getLabel() {
 		return label;
+	}
+
+	public Collection<SWCPoint> getNodes() throws IllegalArgumentException {
+		if (pafm == null) pafm = new PathAndFillManager();
+		if (pafm.size() == 0) for (final Path p : list()) pafm.addPath(p);
+		final Path[] primaryPaths = pafm.getPathsStructured();
+		if (primaryPaths.length != 1) throw new IllegalArgumentException("Tree contains multiple roots!");
+		final HashSet<Path> connectedPaths = new HashSet<>();
+		final LinkedList<Path> nextPathsToConsider = new LinkedList<>();
+		nextPathsToConsider.add(primaryPaths[0]);
+		while (nextPathsToConsider.size() > 0) {
+			final Path currentPath = nextPathsToConsider.removeFirst();
+			connectedPaths.add(currentPath);
+			for (final Path joinedPath : currentPath.somehowJoins) {
+				if (!connectedPaths.contains(joinedPath)) nextPathsToConsider.add(
+					joinedPath);
+			}
+		}
+		try {
+			return pafm.getSWCFor(connectedPaths);
+		} catch (final SWCExportException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
+	}
+
+	public DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> getGraph() {
+		return GraphUtils.createGraph(this);
 	}
 
 	/**

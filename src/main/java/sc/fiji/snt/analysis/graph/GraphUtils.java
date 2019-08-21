@@ -25,12 +25,10 @@ package sc.fiji.snt.analysis.graph;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeSet;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -40,13 +38,18 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.scijava.util.Colors;
 
 import com.mxgraph.layout.mxCompactTreeLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 
+import net.imagej.ImageJ;
+import sc.fiji.snt.SNTService;
+import sc.fiji.snt.SNTUtils;
+import sc.fiji.snt.Tree;
 import sc.fiji.snt.gui.GuiUtils;
-import sc.fiji.snt.io.MouseLightLoader;
 import sc.fiji.snt.util.SWCPoint;
+import sc.fiji.snt.viewer.Viewer3D;
 
 public class GraphUtils {
 
@@ -57,11 +60,11 @@ public class GraphUtils {
 	 * Creates a DirectedGraph from a collection of reconstruction nodes.
 	 *
 	 * @param nodes                    the collections of SWC nodes
-	 * @param assignDistancesToWeights if true, inter-node Eucledian distances are
+	 * @param assignDistancesToWeights if true, inter-node Euclidean distances are
 	 *                                 used as edge weights
 	 * @return the created graph
 	 */
-	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final TreeSet<SWCPoint> nodes,
+	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final Collection<SWCPoint> nodes,
 	                                                                              final boolean assignDistancesToWeights) {
 		final Map<Integer, SWCPoint> map = new HashMap<>();
 		final DefaultDirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> graph = new DefaultDirectedWeightedGraph<SWCPoint, DefaultWeightedEdge>(
@@ -87,6 +90,27 @@ public class GraphUtils {
 			}
 		}
 		return graph;
+	}
+
+	/**
+	 * Creates a DirectedGraph from a Tree.
+	 *
+	 * @param tree the Tree to be converted
+	 * @return the created graph with edge weights corresponding to inter-node
+	 *         Euclidean distances
+	 */
+	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final Tree tree) {
+		return createGraph(tree.getNodes(), true);
+	}
+
+	/**
+	 * Creates a {@link Tree} from a graph.
+	 *
+	 * @param graph the graph to be converted.
+	 * @return the Tree, assembled from from the graph vertices
+	 */
+	public static Tree createTree(final DefaultDirectedGraph<SWCPoint, ?> graph) {
+		return new Tree(graph.vertexSet(), "");
 	}
 
 	/**
@@ -118,15 +142,18 @@ public class GraphUtils {
 	}
 
 	public static void main(final String[] args) {
-		try {
-			final File file = new File("/home/tferr/Downloads/AA0001.json");
-			final Map<String, TreeSet<SWCPoint>> map = MouseLightLoader.extractNodes(file, "dendrite");
-			final String firstCell = map.keySet().iterator().next();
-			final DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> graph = GraphUtils.createGraph(map.get(firstCell),
-					true);
-			GraphUtils.show(graph);
-		} catch (final FileNotFoundException e) {
-			e.printStackTrace();
-		}
+		final ImageJ ij = new ImageJ();
+		SNTUtils.setDebugMode(true);
+		SNTService sntService = ij.context().getService(SNTService.class);
+		final Tree tree = sntService.demoTree();
+		tree.setColor(Colors.RED);
+		DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> graph = tree.getGraph();
+		final Viewer3D recViewer = new Viewer3D(ij.context());
+		final Tree convertedTree = GraphUtils.createTree(graph);
+		convertedTree.setColor(Colors.CYAN);
+		recViewer.add(tree);
+		recViewer.add(convertedTree);
+		recViewer.show();
+		GraphUtils.show(graph);
 	}
 }

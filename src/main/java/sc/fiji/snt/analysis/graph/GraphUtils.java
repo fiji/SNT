@@ -36,7 +36,6 @@ import javax.swing.SwingUtilities;
 
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.scijava.util.Colors;
 
@@ -66,9 +65,13 @@ public class GraphUtils {
 	 */
 	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final Collection<SWCPoint> nodes,
 	                                                                              final boolean assignDistancesToWeights) {
+		return createGraphInternal(nodes, assignDistancesToWeights);
+	}
+
+	private static DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> createGraphInternal(final Collection<SWCPoint> nodes,
+            final boolean assignDistancesToWeights) {
 		final Map<Integer, SWCPoint> map = new HashMap<>();
-		final DefaultDirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> graph = new DefaultDirectedWeightedGraph<SWCPoint, DefaultWeightedEdge>(
-				null);
+		final DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> graph = new DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge>();
 		for (final SWCPoint node : nodes) {
 			map.put(node.id, node);
 			graph.addVertex(node);
@@ -100,7 +103,9 @@ public class GraphUtils {
 	 *         Euclidean distances
 	 */
 	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final Tree tree) {
-		return createGraph(tree.getNodes(), true);
+		final DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> graph = createGraphInternal(tree.getNodes(), true);
+		graph.setLabel(tree.getLabel());
+		return graph;
 	}
 
 	/**
@@ -110,7 +115,10 @@ public class GraphUtils {
 	 * @return the Tree, assembled from from the graph vertices
 	 */
 	public static Tree createTree(final DefaultDirectedGraph<SWCPoint, ?> graph) {
-		return new Tree(graph.vertexSet(), "");
+		String label = "";
+		if (graph instanceof DirectedWeightedGraph)
+			label = ((DirectedWeightedGraph<SWCPoint, ?>)graph).getLabel();
+		return new Tree(graph.vertexSet(), label);
 	}
 
 	/**

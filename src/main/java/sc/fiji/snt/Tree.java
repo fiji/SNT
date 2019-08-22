@@ -640,8 +640,7 @@ public class Tree {
 	}
 
 	public Collection<SWCPoint> getNodes() throws IllegalArgumentException {
-		if (pafm == null) pafm = new PathAndFillManager();
-		if (pafm.size() == 0) for (final Path p : list()) pafm.addPath(p);
+		initPathAndFillManager();
 		final Path[] primaryPaths = pafm.getPathsStructured();
 		if (primaryPaths.length != 1) throw new IllegalArgumentException("Tree contains multiple roots!");
 		final HashSet<Path> connectedPaths = new HashSet<>();
@@ -662,6 +661,12 @@ public class Tree {
 		}
 	}
 
+	/**
+	 * Assembles a DirectedGraph from this Tree.
+	 *
+	 * @return the Tree's graph with edge weights corresponding to inter-node
+	 *         Euclidean distances
+	 */
 	public DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> getGraph() {
 		return GraphUtils.createGraph(this);
 	}
@@ -694,12 +699,16 @@ public class Tree {
 	public boolean saveAsSWC(final String filePath) {
 		if (list() == null || list().isEmpty() || filePath == null || filePath.isEmpty())
 			return false;
-		if (pafm == null) pafm = new PathAndFillManager();
-		if (pafm.size() == 0) for (final Path p : list()) pafm.addPath(p);
+		initPathAndFillManager();
 		File file = new File(filePath);
 		if (file.isDirectory() && getLabel() != null)
 			file = new File(file.getAbsolutePath(), getLabel());
 		return pafm.exportAllPathsAsSWC(file.getAbsolutePath());
+	}
+
+	private void initPathAndFillManager() {
+		if (pafm == null) pafm = new PathAndFillManager();
+		if (pafm.size() == 0) for (final Path p : list()) pafm.addPath(p);
 	}
 
 	@Override

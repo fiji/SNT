@@ -1663,6 +1663,7 @@ public class SNTUI extends JDialog {
 		svSyncPathManager.addActionListener(e -> {
 			// if (noPathsError()) return;
 			if (sciView == null || sciView.isClosed()) {
+				SNTUtils.getPluginInstance().getUI().setOpenSciViewButtonEnabled(true);
 				guiUtils.error("The SciView Viewer is not open.");
 			} else {
 				sciViewSNT.sciView = sciView;
@@ -3253,6 +3254,10 @@ public class SNTUI extends JDialog {
 			return true;
 		}
 		return false;
+	}
+
+	public void setOpenSciViewButtonEnabled(boolean b) {
+		if( openSciView != null ) openSciView.setEnabled(b);
 	}
 
 	private class GuiListener

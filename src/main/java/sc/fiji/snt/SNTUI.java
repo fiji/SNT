@@ -37,14 +37,7 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -1603,6 +1596,44 @@ public class SNTUI extends JDialog {
 			this.sciViewSNT = new SciViewSNT();
 		}
 		this.sciViewSNT.sciView = sciView;
+		sciView.addWindowListener(new WindowListener() {
+
+            @Override
+            public void windowOpened(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
+                if (openSciView != null) openSciView.setEnabled(true);
+            }
+
+            @Override
+            public void windowIconified(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowDeiconified(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowActivated(WindowEvent e) {
+
+            }
+
+            @Override
+            public void windowDeactivated(WindowEvent e) {
+
+            }
+        });
+
 		sciViewSNT.syncPathManagerList();
 		if (openSciView != null) openSciView.setEnabled(this.sciView==null);
 		if (svSyncPathManager != null) svSyncPathManager.setEnabled(this.sciView!=null);
@@ -1631,6 +1662,16 @@ public class SNTUI extends JDialog {
 				sciViewSNT = new SciViewSNT();
 				CmdRunner cmdRunner = (new CmdRunner(sc.fiji.snt.gui.cmds.OpenSciViewCmd.class));
 				cmdRunner.execute();
+
+				// Block until we can register a window closed callback
+//				while( !cmdRunner.isDone() ) {
+//                    try {
+//                        Thread.sleep(10);
+//                    } catch (InterruptedException ex) {
+//                        ex.printStackTrace();
+//                    }
+//                }
+
 
 //				while( sciViewSNT == null || sciViewSNT.sciView == null || !sciViewSNT.sciView.isInitialized()  ) {
 //					try {

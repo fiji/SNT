@@ -1655,7 +1655,7 @@ public class SNTUI extends JDialog {
 				openingSciView = false;
 			}
 
-			if (!openingSciView && sciView == null) {
+			if (!openingSciView && (sciView == null || sciView.isClosed())) {
 
 				openingSciView = true;
 

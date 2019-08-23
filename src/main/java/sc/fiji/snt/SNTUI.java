@@ -1596,44 +1596,16 @@ public class SNTUI extends JDialog {
 			this.sciViewSNT = new SciViewSNT();
 		}
 		this.sciViewSNT.sciView = sciView;
-		sciView.addWindowListener(new WindowListener() {
+		this.sciView.addWindowListener(new WindowAdapter() {
 
-            @Override
-            public void windowOpened(WindowEvent e) {
-
-            }
-
-            @Override
-            public void windowClosing(WindowEvent e) {
-
-            }
-
-            @Override
-            public void windowClosed(WindowEvent e) {
-                if (openSciView != null) openSciView.setEnabled(true);
-            }
-
-            @Override
-            public void windowIconified(WindowEvent e) {
-
-            }
-
-            @Override
-            public void windowDeiconified(WindowEvent e) {
-
-            }
-
-            @Override
-            public void windowActivated(WindowEvent e) {
-
-            }
-
-            @Override
-            public void windowDeactivated(WindowEvent e) {
-
-            }
-        });
-
+			@Override
+			public void windowClosing(final WindowEvent e) {
+				if (openSciView != null) openSciView.setEnabled(true);
+				SNTUI.this.sciView.dispose();
+				SNTUI.this.sciView = null;
+				openingSciView = false;
+			}
+		});
 		sciViewSNT.syncPathManagerList();
 		if (openSciView != null) openSciView.setEnabled(this.sciView==null);
 		if (svSyncPathManager != null) svSyncPathManager.setEnabled(this.sciView!=null);
@@ -1654,57 +1626,19 @@ public class SNTUI extends JDialog {
 			if( sciView != null && openingSciView ) {
 				openingSciView = false;
 			}
-
 			if (!openingSciView && sciView == null) {
-
 				openingSciView = true;
-
 				sciViewSNT = new SciViewSNT();
-				CmdRunner cmdRunner = (new CmdRunner(sc.fiji.snt.gui.cmds.OpenSciViewCmd.class));
+				final CmdRunner cmdRunner = (new CmdRunner(sc.fiji.snt.gui.cmds.OpenSciViewCmd.class));
 				cmdRunner.execute();
-
-				// Block until we can register a window closed callback
-//				while( !cmdRunner.isDone() ) {
-//                    try {
-//                        Thread.sleep(10);
-//                    } catch (InterruptedException ex) {
-//                        ex.printStackTrace();
-//                    }
-//                }
-
-
-//				while( sciViewSNT == null || sciViewSNT.sciView == null || !sciViewSNT.sciView.isInitialized()  ) {
-//					try {
-//						Thread.sleep(20);
-//					} catch (InterruptedException ex) {
-//						ex.printStackTrace();
-//					}
-//				}
-                // TODO can we get to the SNT service?
-//				sciView = sciViewService.getOrCreateActiveSciView();
-//                System.out.println( "SciView: " + sciView );
-//                while( !cmdRunner.isDone() ) {
-//                //while( sciView == null || !sciView.isInitialized() ) {
-//                    try {
-//                        Thread.sleep(20);
-//                    } catch (InterruptedException e2) {
-//                        e2.printStackTrace();
-//                    }
-//                }
-//                System.out.println( "SciView: " + sciView );
-//				if (pathAndFillManager.size() > 0) sciViewSNT.syncPathManagerList();
-//				SciViewService sciViewService = SNT.getContext().getService(SciViewService.class);
-//				sciView = sciViewService.getOrCreateActiveSciView();
-//				sciViewSNT.sciView = sciView;
 			}
 		});
 
 		svSyncPathManager = new JButton("Sync Changes");
 		svSyncPathManager.setToolTipText("Refreshes Viewer contents to reflect Path Manager changes");
 		svSyncPathManager.addActionListener(e -> {
-			// if (noPathsError()) return;
 			if (sciView == null || sciView.isClosed()) {
-				SNTUtils.getPluginInstance().getUI().setOpenSciViewButtonEnabled(true);
+				setOpenSciViewButtonEnabled(true);
 				guiUtils.error("The SciView Viewer is not open.");
 			} else {
 				sciViewSNT.sciView = sciView;

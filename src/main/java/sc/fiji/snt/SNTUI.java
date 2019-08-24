@@ -1626,7 +1626,9 @@ public class SNTUI extends JDialog {
 			if( sciView != null && openingSciView ) {
 				openingSciView = false;
 			}
-			if (!openingSciView && sciView == null) {
+
+			if (!openingSciView && (sciView == null || sciView.isClosed())) {
+
 				openingSciView = true;
 				sciViewSNT = new SciViewSNT();
 				final CmdRunner cmdRunner = (new CmdRunner(sc.fiji.snt.gui.cmds.OpenSciViewCmd.class));

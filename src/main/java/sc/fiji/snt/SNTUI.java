@@ -194,10 +194,10 @@ public class SNTUI extends JDialog {
 	private JButton openRecViewer;
 
 	/* SciView */
-	protected SciView sciView;
-	private JButton openSciView;
 	protected SciViewSNT sciViewSNT;
+	private JButton openSciView;
 	private JButton svSyncPathManager;
+
 
 	protected final GuiListener listener;
 
@@ -1585,65 +1585,25 @@ public class SNTUI extends JDialog {
 		return panel;
 	}
 
-	public SciView getSciView() {
-		return sciView;
-	}
-
-	public void setSciView(final SciView sciView) {
-		SNTUtils.log("Setting SciView in SNTUI");
-		this.sciView = sciView;
-		if( this.sciViewSNT == null ) {
-			this.sciViewSNT = new SciViewSNT();
-		}
-		this.sciViewSNT.sciView = sciView;
-		this.sciView.addWindowListener(new WindowAdapter() {
-
-			@Override
-			public void windowClosing(final WindowEvent e) {
-				if (openSciView != null) openSciView.setEnabled(true);
-				SNTUI.this.sciView.dispose();
-				SNTUI.this.sciView = null;
-				openingSciView = false;
-			}
-		});
-		sciViewSNT.syncPathManagerList();
-		if (openSciView != null) openSciView.setEnabled(this.sciView==null);
-		if (svSyncPathManager != null) svSyncPathManager.setEnabled(this.sciView!=null);
-	}
-
-	public void setSciViewSNT(SciViewSNT sciViewSNT) {
-		this.sciViewSNT = sciViewSNT;
-	}
-
-	public SciViewSNT getSciViewSNT() {
-		return sciViewSNT;
-	}
-
 	private JPanel sciViewerPanel() {
 		openSciView = new JButton("Open SciView Viewer");
-
 		openSciView.addActionListener(e -> {
-			if( sciView != null && openingSciView ) {
+			if (openingSciView && sciViewSNT != null) {
 				openingSciView = false;
 			}
-
-			if (!openingSciView && (sciView == null || sciView.isClosed())) {
-
+			if (!openingSciView && sciViewSNT == null || (sciViewSNT.getSciView() == null || sciViewSNT.getSciView().isClosed())) {
 				openingSciView = true;
-				sciViewSNT = new SciViewSNT();
-				final CmdRunner cmdRunner = (new CmdRunner(sc.fiji.snt.gui.cmds.OpenSciViewCmd.class));
-				cmdRunner.execute();
+				new Thread(() -> new SciViewSNT(plugin).getSciView()).start();
 			}
 		});
 
 		svSyncPathManager = new JButton("Sync Changes");
 		svSyncPathManager.setToolTipText("Refreshes Viewer contents to reflect Path Manager changes");
 		svSyncPathManager.addActionListener(e -> {
-			if (sciView == null || sciView.isClosed()) {
-				setOpenSciViewButtonEnabled(true);
+			if (sciViewSNT == null || sciViewSNT.getSciView() == null || sciViewSNT.getSciView().isClosed()) {
 				guiUtils.error("The SciView Viewer is not open.");
+				openSciView.setEnabled(true);
 			} else {
-				sciViewSNT.sciView = sciView;
 				sciViewSNT.syncPathManagerList();
 				final String msg = (pathAndFillManager.size() == 0) ? "There are no traced paths" : "SciView Viewer synchronized";
 				showStatus(msg, true);
@@ -2939,9 +2899,32 @@ public class SNTUI extends JDialog {
 		return recViewer;
 	}
 
-	public void setReconstructionViewer(final Viewer3D recViewer) {
+	/**
+	 * Gets the SciView Viewer.
+	 *
+	 * @param initializeIfNull it true, initializes the Viewer if it has not yet
+	 *                         been initialized
+	 * @return the SciView viewer
+	 */
+	public SciView getSciViewViewer(final boolean initializeIfNull) {
+		if (initializeIfNull && sciViewSNT == null) {
+			openSciView.doClick();
+		}
+		return (sciViewSNT == null) ? null : sciViewSNT.getSciView();
+	}
+
+	protected void setReconstructionViewer(final Viewer3D recViewer) {
 		this.recViewer = recViewer;
 		openRecViewer.setEnabled(recViewer == null);
+	}
+
+	protected void setSciViewSNT(final SciViewSNT sciViewSNT) {
+		this.sciViewSNT = sciViewSNT;
+		SwingUtilities.invokeLater(() -> {
+			openingSciView = openingSciView && this.sciViewSNT != null;
+			openSciView.setEnabled(this.sciViewSNT == null);
+			svSyncPathManager.setEnabled(this.sciViewSNT != null);
+		});
 	}
 
 	protected void reset() {
@@ -3231,10 +3214,6 @@ public class SNTUI extends JDialog {
 			return true;
 		}
 		return false;
-	}
-
-	public void setOpenSciViewButtonEnabled(boolean b) {
-		if( openSciView != null ) openSciView.setEnabled(b);
 	}
 
 	private class GuiListener

@@ -55,7 +55,7 @@ import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.event.SNTEvent;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
-import sc.iview.SciView;
+import sc.iview.SciViewService;
 
 /**
  * Service for accessing and scripting the active instance of
@@ -72,7 +72,11 @@ public class SNTService extends AbstractService implements ImageJService {
 	@Parameter
 	private LogService logService;
 
+	@Parameter
+	private SciViewService sciViewService;
+
 	private static SNT plugin;
+
 
 	private void accessActiveInstance(final boolean createInstanceIfNull) {
 		plugin = SNTUtils.getPluginInstance();
@@ -401,34 +405,26 @@ public class SNTService extends AbstractService implements ImageJService {
 	}
 
 	/**
-	 * Returns a reference to SNT's SciView instance
-	 *
-	 * @return SNT's {@link SciView} instance.
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
-	 */
-	public SciView getSciView() {
-		accessActiveInstance(true);
-		return plugin.getUI().getSciView();
-	}
-
-
-	/**
-	 * Sets SNT's SciView instance
-	 *
-	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
-	 */
-	public void setSciView(final SciView sciView) {
-		accessActiveInstance(false);
-		plugin.getUI().setSciView(sciView);
-	}
-
-	/**
 	 * Instantiates a new standalone Reconstruction Viewer.
 	 *
 	 * @return The standalone {@link Viewer3D} instance
 	 */
 	public Viewer3D newRecViewer(final boolean guiControls) {
 		return (guiControls) ? new Viewer3D(getContext()) : new Viewer3D();
+	}
+
+	public SciViewSNT getOrCreateSciViewSNT() {
+		if (SNTUtils.getPluginInstance() == null) {
+			return new SciViewSNT(getContext());
+		}
+		return getSciViewSNT();
+	}
+
+	public SciViewSNT getSciViewSNT() {
+		accessActiveInstance(false);
+		if (getUI() != null && getUI().sciViewSNT != null)
+			return getUI().sciViewSNT;
+		return new SciViewSNT(plugin);
 	}
 
 	/**

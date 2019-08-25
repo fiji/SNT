@@ -3,12 +3,17 @@ package sc.fiji.snt;
 import cleargl.GLVector;
 import graphics.scenery.*;
 import net.imagej.ImageJ;
+
+import org.scijava.Context;
+import org.scijava.NullContextException;
+import org.scijava.plugin.Parameter;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.iview.SciView;
+import sc.iview.SciViewService;
 import sc.iview.shape.Line3D;
 import sc.iview.vector.ClearGLVector3;
 import sc.iview.vector.DoubleVector3;
@@ -16,25 +21,82 @@ import sc.iview.vector.FloatVector3;
 import sc.iview.vector.Vector3;
 
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.List;
+
+import javax.swing.SwingUtilities;
+
 import java.util.*;
 
 public class SciViewSNT {
 	private final static String PATH_MANAGER_TREE_LABEL = "Path Manager Contents";
 
-	protected SciView sciView;
+	@Parameter
+	private SciViewService sciViewService;
+
+	private SNT snt;
+	private SciView sciView;
+
 	private Map<String, Node> plottedTrees;
 
-	public SciViewSNT() {
+	/**
+	 * Instantiates SciViewSNT.
+	 *
+	 * @param context the SciJava application context providing the services
+	 *          required by the class
+	 * @throws NullContextException If context is null
+	 */
+	public SciViewSNT(final Context context) {
+		if (context == null) throw new NullContextException();
+		context.inject(this);
 		plottedTrees = new TreeMap<String,Node>();
+		snt = null;
+	}
+
+	protected SciViewSNT(final SNT snt) {
+		this(snt.getContext());
+		this.snt = snt;
+		if (snt.getUI() != null) snt.getUI().setSciViewSNT(this);
+		initSciView();
+	}
+
+	private void initSciView() {
+		if (sciView == null) {
+			if (SwingUtilities.isEventDispatchThread())
+				SNTUtils.log("Initializing active SciView from EDT");
+			setSciView(sciViewService.getOrCreateActiveSciView());
+		}
 	}
 
 	public SciView getSciView() {
+		initSciView();
 		return sciView;
 	}
 
-	public void setSciView(SciView sciView) {
-		this.sciView = sciView;
+	public void setSciView(final SciView sciView) {
+		if (sciView == null) {
+			nullifySciView();
+		} else {
+			this.sciView = sciView;
+			this.sciView.addWindowListener(new WindowAdapter() {
+
+				@Override
+				public void windowClosing(final WindowEvent e) {
+					nullifySciView();
+				}
+			});
+			this.sciView.getFloor().setVisible(false);
+			if (snt != null) syncPathManagerList();
+		}
+	}
+
+	private void nullifySciView() {
+		if (sciView == null) return;
+		sciView.dispose(); // unnecessary?
+		sciView.close();
+		sciView = null;
+		if (snt != null && snt.getUI() != null) snt.getUI().setSciViewSNT(null);
 	}
 
 	private void addItemToManager(final String label) {
@@ -82,6 +144,7 @@ public class SciViewSNT {
 	 * @see Tree#getLabel()
 	 */
 	public void add(final Tree tree, final String label) {
+		initSciView();
 		final ShapeTree shapeTree;
 		//		if( !plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL) ) {
 		//            shapeTree = new ShapeTree(tree);
@@ -102,7 +165,7 @@ public class SciViewSNT {
 		}
 		//sciView.getCamera().setPosition(treeCenter.minus(new GLVector(0,0,-10f)));
 		shapeTree.setName("SNT");
-		sciView.centerOnNode( shapeTree );
+
 	}
 
 	/**
@@ -113,13 +176,14 @@ public class SciViewSNT {
 	 * @throws IllegalArgumentException if SNT is not running
 	 */
 	public boolean syncPathManagerList() {
-		if (SNTUtils.getPluginInstance() == null) throw new IllegalArgumentException(
-				"SNT is not running.");
-		if (SNTUtils.getPluginInstance().getPathAndFillManager().size() == 0) {
-			return false;
-		}
-		if( sciView.isClosed() ) {
-			SNTUtils.getPluginInstance().getUI().setOpenSciViewButtonEnabled(true);
+		if (snt == null) throw new IllegalArgumentException("Unknown SNT instance. SNT not running?");
+		if (snt.getPathAndFillManager().size() == 0) return false;
+
+		if( sciView == null || sciView.isClosed() ) {
+
+			// If we cannot sync, let's ensure the UI is not in some unexpected state
+			if (snt.getUI() != null) snt.getUI().setSciViewSNT(null);
+
 		} else {
 
 			final Tree tree = new Tree(SNTUtils.getPluginInstance().getPathAndFillManager()
@@ -344,5 +408,13 @@ public class SciViewSNT {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
+		SNTService sntService = ij.context().getService(SNTService.class);
+		SciViewSNT sciViewSNT = sntService.getOrCreateSciViewSNT();
+		Tree tree = sntService.demoTree();
+		tree.setColor(Colors.AZURE);
+		sciViewSNT.add(tree, "");
+		Tree tree2 = Tree.fromFile("/home/tferr/code/OP_1/OP_1.swc");
+		tree2.setColor(Colors.RED);
+		sciViewSNT.add(tree2, "");
 	}
 }

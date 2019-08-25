@@ -3478,7 +3478,6 @@ public class Viewer3D {
 	 * Closes and releases all the resources used by this viewer.
 	 */
 	public void dispose() {
-		if (isSNTInstance()) sntService.getUI().setReconstructionViewer(null);
 		frame.disposeFrame();
 		SNTUtils.removeViewer(this);
 	}

@@ -361,6 +361,11 @@ public class SNTService extends AbstractService implements ImageJService {
 				private SNTViewer3D() {
 					super(plugin);
 				}
+				@Override
+				public void dispose() {
+					super.dispose();
+					if (getUI() != null) getUI().setReconstructionViewer(null);
+				}
 			}
 			return new SNTViewer3D();
 		} else {

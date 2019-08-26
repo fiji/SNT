@@ -1,3 +1,25 @@
+/*-
+ * #%L
+ * Fiji distribution of ImageJ for the life sciences.
+ * %%
+ * Copyright (C) 2010 - 2019 Fiji developers.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * #L%
+ */
+
 package sc.fiji.snt;
 
 import cleargl.GLVector;
@@ -38,7 +60,7 @@ public class SciViewSNT {
 	private SNT snt;
 	private SciView sciView;
 
-	private Map<String, Node> plottedTrees;
+	private Map<String, ShapeTree> plottedTrees;
 
 	/**
 	 * Instantiates SciViewSNT.
@@ -50,7 +72,7 @@ public class SciViewSNT {
 	public SciViewSNT(final Context context) {
 		if (context == null) throw new NullContextException();
 		context.inject(this);
-		plottedTrees = new TreeMap<String,Node>();
+		plottedTrees = new TreeMap<String,ShapeTree>();
 		snt = null;
 	}
 
@@ -99,10 +121,6 @@ public class SciViewSNT {
 		if (snt != null && snt.getUI() != null) snt.getUI().setSciViewSNT(null);
 	}
 
-	private void addItemToManager(final String label) {
-
-	}
-
 	private String makeUniqueKey(final Map<String, ?> map, final String key) {
 		for (int i = 2; i <= 100; i++) {
 			final String candidate = key + " (" + i + ")";
@@ -127,45 +145,40 @@ public class SciViewSNT {
 	 *          Trees, if not (or no label exists) a unique label will be
 	 *          generated.
 	 * @see Tree#getLabel()
+	 * @see Tree#setColor(ColorRGB)
 	 */
-	public void add(final Tree tree) {
+	public void addTree(final Tree tree) {
+		initSciView();
 		final String label = getUniqueLabel(plottedTrees, "Tree ", tree.getLabel());
 		add(tree, label);
+		//sciView.centerOnNode(plottedTrees.get(label));
 	}
 
+	public Node getTreeAsSceneryNode(final Tree tree) {
+		final String treeLabel = getLabel(tree);
+		final ShapeTree shapeTree = plottedTrees.get(treeLabel);
+		return (shapeTree == null) ? null : shapeTree.get();
+	}
 
-	/**
-	 * Adds a tree to this viewer.
-	 *
-	 * @param tree the {@link Tree} to be added. The Tree's label will be used as
-	 *          identifier. It is expected to be unique when rendering multiple
-	 *          Trees, if not (or no label exists) a unique label will be
-	 *          generated.
-	 * @see Tree#getLabel()
-	 */
-	public void add(final Tree tree, final String label) {
-		initSciView();
-		final ShapeTree shapeTree;
-		//		if( !plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL) ) {
-		//            shapeTree = new ShapeTree(tree);
-		//            plottedTrees.put(label, shapeTree);
-		//        } else {
-		//		    shapeTree = (ShapeTree) plottedTrees.get(PATH_MANAGER_TREE_LABEL);
-		//        }
-		shapeTree = new ShapeTree(tree);
+	public boolean removeTree(final Tree tree) {
+		final String treeLabel = getLabel(tree);
+		final ShapeTree shapeTree = plottedTrees.get(treeLabel);
+		if (shapeTree == null) return false;
+		removeTree(treeLabel);
+		return  plottedTrees.containsKey(treeLabel);
+	}
+
+	private void add(final Tree tree, final String label) {
+		final ShapeTree shapeTree = new ShapeTree(tree);
+		shapeTree.setName(label);
 		plottedTrees.put(label, shapeTree);
-
-		if( !plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL) ) {
-			addItemToManager(label);
-		}
-
-		for( Node node : shapeTree.get().getChildren() ) {
-			sciView.addNode(node, false);
-			//System.out.println("addTree: node " + node.getMetadata().get("pathID") + " node " + n);
-		}
-		//sciView.getCamera().setPosition(treeCenter.minus(new GLVector(0,0,-10f)));
-		shapeTree.setName("SNT");
-
+		sciView.addNode(shapeTree.get(), true);
+//		for( Node node : shapeTree.get().getChildren() ) {
+//			sciView.addChild(node);
+//			//System.out.println("addTree: node " + node.getMetadata().get("pathID") + " node " + n);
+//		}
+//		//sciView.getCamera().setPosition(treeCenter.minus(new GLVector(0,0,-10f)));
+//		sciView.centerOnNode( shapeTree );
 	}
 
 	/**
@@ -175,46 +188,49 @@ public class SciViewSNT {
 	 *         successful
 	 * @throws IllegalArgumentException if SNT is not running
 	 */
-	public boolean syncPathManagerList() {
-		if (snt == null) throw new IllegalArgumentException("Unknown SNT instance. SNT not running?");
-		if (snt.getPathAndFillManager().size() == 0) return false;
+	protected boolean syncPathManagerList() {
+		if (snt == null)
+			throw new IllegalArgumentException("Unknown SNT instance. SNT not running?");
+		if (snt.getPathAndFillManager().size() == 0)
+			return false;
 
-		if( sciView == null || sciView.isClosed() ) {
-
+		if (sciView == null || sciView.isClosed()) {
 			// If we cannot sync, let's ensure the UI is not in some unexpected state
+			nullifySciView();
 			if (snt.getUI() != null) snt.getUI().setSciViewSNT(null);
-
-		} else {
-
-			final Tree tree = new Tree(SNTUtils.getPluginInstance().getPathAndFillManager()
-					.getPathsFiltered());
-			if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {// PATH_MANAGER_TREE_LABEL, the value of this is the *new* tree to add
-				// TODO If the Node exists, then remove and add new one to replace
-				//System.out.println("Tree exists, updating current name: " + tree.getLabel() + " next label: " + PATH_MANAGER_TREE_LABEL);
-				//System.out.println("Deleting nodes: " + plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren().size());
-				for (Node node : plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren()) {
-					//syncNode(tree,node);
-					plottedTrees.get(PATH_MANAGER_TREE_LABEL).removeChild(node);
-					sciView.deleteNode(node, false);
-				}
-				sciView.deleteNode(plottedTrees.get(PATH_MANAGER_TREE_LABEL));
-				plottedTrees.remove(PATH_MANAGER_TREE_LABEL);
-				//System.out.println("Num remaining nodes: " + sciView.getSceneNodes().length);
-
-				// Dont create a new SNT node each time
-
-				tree.setLabel(PATH_MANAGER_TREE_LABEL);
-				add(tree);
-
-				//System.out.println("Num remaining nodes: " + sciView.getSceneNodes().length);
-				//sciView.centerOnNode( plottedTrees.get(PATH_MANAGER_TREE_LABEL) );
-				//sciView.centerOnNode( sciView.getSceneNodes()[(int)(Math.random()*sciView.getSceneNodes().length)] );
-			} else {
-				tree.setLabel(PATH_MANAGER_TREE_LABEL);
-				add(tree);
-			}
+			return false;
 		}
+
+		final Tree tree = new Tree(snt.getPathAndFillManager().getPathsFiltered());
+		tree.setLabel(PATH_MANAGER_TREE_LABEL);
+		if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {
+			// If the "Path Manager" Node exists, remove it so that it can be replaced
+			removeTree(PATH_MANAGER_TREE_LABEL);
+		}
+		add(tree, PATH_MANAGER_TREE_LABEL);
+		sciView.centerOnNode(plottedTrees.get(PATH_MANAGER_TREE_LABEL));
+		// sciView.getCamera().setPosition(treeCenter.minus(new GLVector(0,0,-10f)));
+		// sciView.centerOnNode(sciView.getSceneNodes()[(int)(Math.random()*sciView.getSceneNodes().length)]);
 		return true;
+	}
+
+	private void removeTree(final String label) {
+		final Node treeToRemove = plottedTrees.get(label);
+		if (treeToRemove != null && sciView != null) {
+			for (final Node node : treeToRemove.getChildren()) {
+				plottedTrees.get(label).removeChild(node);
+				sciView.deleteNode(node, false);
+			}
+			sciView.deleteNode(treeToRemove);
+			plottedTrees.remove(label);
+		}
+	}
+
+	private String getLabel(final Tree tree) {
+		for (final Map.Entry<String, ShapeTree> entry : plottedTrees.entrySet()) {
+			if (entry.getValue().tree == tree) return entry.getKey();
+		}
+		return null;
 	}
 
 	@SuppressWarnings("unused")
@@ -248,8 +264,7 @@ public class SciViewSNT {
 		}
 
 		public Node get() {
-			//if (components == null || components.isEmpty()) assembleShape();
-			assembleShape();
+			if (getChildren().size() == 0) assembleShape();
 			return this;
 		}
 
@@ -288,12 +303,8 @@ public class SciViewSNT {
 				}
 
 				// Assemble arbor(s)
-				//final Line line = new Line();
-				//line.setCapacity(p.size());
-				//points = new
 				List<Vector3> points = new ArrayList<>();
 				List<ColorRGB> colors = new ArrayList<>();
-				//ColorRGB color = new ColorRGB(255,0,0);
 				float scaleFactor = 0.1f;
 				for (int i = 0; i < p.size(); ++i) {
 					final PointInImage pim = p.getNode(i);
@@ -306,39 +317,28 @@ public class SciViewSNT {
 					//System.out.println( "(point " + i + " " + coord.source() + ")" );
 					points.add( new FloatVector3(coord.source().x()*scaleFactor,coord.source().y()*scaleFactor,coord.source().z()*scaleFactor) );
 					colors.add( color );
-
-					//line.addPoint(coord.source());
-					//                    if( i > 0 ) {
-					//                        Cylinder c = Cylinder.betweenPoints(ClearGLVector3.convert(points[i - 1]), ClearGLVector3.convert(points[i]), 0.05f, 1f, 18);
-					//                        line.addLine(c);
-					//                    }
 				}
 
 				Line3D line = new Line3D(points, colors, 0.05);
 				line.getMetadata().put("pathID",p.getID());
+				line.setName(p.getName());
 				//sciView.addNode(line,false );
 				lines.add(line);
 			}
 
-			// Group all lines into a Composite. BY default the composite
-			// will have no wireframe color, to allow colors for Paths/
-			// nodes to be revealed. Once a wireframe color is explicit
-			// set it will be applied to all the paths in the composite
+			// Group all lines
 			if (!lines.isEmpty()) {
 				for( Node line : lines ) {
 					addChild( line );
+					//sciView.addNode(line, false);
 				}
 			}
 			assembleSoma(somaPoints, somaColors);
 			if (somaSubShape != null) addChild(somaSubShape);
 
-			sciView.addNode(this, true);
-
 			this.setPosition(this.getMaximumBoundingBox().getBoundingSphere().getOrigin());
 			//sciView.setActiveNode(this);
 			//sciView.surroundLighting();
-			// shape.setFaceDisplayed(true);
-			// shape.setWireframeDisplayed(true);
 		}
 
 		private void assembleSoma(final List<PointInImage> somaPoints,
@@ -411,10 +411,13 @@ public class SciViewSNT {
 		SNTService sntService = ij.context().getService(SNTService.class);
 		SciViewSNT sciViewSNT = sntService.getOrCreateSciViewSNT();
 		Tree tree = sntService.demoTree();
-		tree.setColor(Colors.AZURE);
-		sciViewSNT.add(tree, "");
-		Tree tree2 = Tree.fromFile("/home/tferr/code/OP_1/OP_1.swc");
-		tree2.setColor(Colors.RED);
-		sciViewSNT.add(tree2, "");
+		tree.setColor(Colors.RED);
+		sciViewSNT.addTree(tree);
+		//Tree tree2 = Tree.fromFile("/home/tferr/code/OP_1/OP_1.swc");
+		//tree2.setColor(Colors.YELLOW);
+		//sciViewSNT.addTree(tree2);
+		sciViewSNT.getSciView().centerOnScene();
+		sciViewSNT.getSciView().fitCameraToScene();
+		sciViewSNT.getSciView().centerOnNode(sciViewSNT.getTreeAsSceneryNode(tree));
 	}
 }

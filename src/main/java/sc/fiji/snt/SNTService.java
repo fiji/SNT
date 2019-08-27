@@ -55,7 +55,6 @@ import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.event.SNTEvent;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
-import sc.iview.SciViewService;
 
 /**
  * Service for accessing and scripting the active instance of
@@ -71,9 +70,6 @@ public class SNTService extends AbstractService implements ImageJService {
 
 	@Parameter
 	private LogService logService;
-
-	@Parameter
-	private SciViewService sciViewService;
 
 	private static SNT plugin;
 

@@ -473,6 +473,16 @@ public class Viewer3D {
 	}
 
 	/**
+	 * Enables/disables "Dark Mode" mode
+	 *
+	 * @param enable true to enable "Dark Mode", "Light Mode" otherwise
+	 */
+	public void setEnableDarkMode(final boolean enable) {
+		final boolean toggle = keyController != null && isDarkModeOn() != enable;
+		if (toggle) keyController.toggleDarkMode();
+	}
+
+	/**
 	 * Rotates the scene.
 	 *
 	 * @param degrees the angle, in degrees
@@ -514,7 +524,12 @@ public class Viewer3D {
 		mouseController.recordRotation(angle, frames, destinationDirectory);
 	}
 
-	private boolean isDarkModeOn() {
+	/**
+	 * Checks if scene is being rendered under dark or light background.
+	 *
+	 * @return true, if "Dark Mode" is active
+	 */
+	public boolean isDarkModeOn() {
 		return view.getBackgroundColor() == Color.BLACK;
 	}
 
@@ -818,6 +833,18 @@ public class Viewer3D {
 			: 	new ViewerFrame(chart, width, height, managerList != null);
 		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
+	}
+
+	/**
+	 * Resizes the viewer to the specified dimensions. Useful when generating scene
+	 * animations programmatically. Does nothing if viewer's frame does not exist.
+	 * 
+	 * @param width  the width of the frame
+	 * @param height the height of the frame
+	 * @see #show(int, int)
+	 */
+	public void resizeFrame(final int width, final int height) {
+		if (frame != null) frame.setSize(width, height);
 	}
 
 	private void displayMsg(final String msg) {
@@ -1244,12 +1271,22 @@ public class Viewer3D {
 	 * @param r the radial coordinate
 	 * @param t the angle coordinate (in radians)
 	 */
-	public void setViewPoint(final float r, final float t) {
+	public void setViewPoint(final double r, final double t) {
 		if (!chartExists()) {
 			throw new IllegalArgumentException("View was not initialized?");
 		}
 		chart.getView().setViewPoint(new Coord3d(r, t, Float.NaN));
 		if (viewUpdatesEnabled) chart.getView().shoot();
+	}
+
+	/**
+	 * Calls {@link #setViewPoint(double, double)} using Cartesian coordinates.
+	 * 
+	 * @param x the X coordinate
+	 * @param Y the Y coordinate
+	 */
+	public void setViewPointCC(final double x, final double y) {
+		setViewPoint((float) Math.sqrt(x * x + y * y), (float) Math.atan2(y, x));
 	}
 
 	/**
@@ -1305,9 +1342,8 @@ public class Viewer3D {
 		try {
 			final File f = new File(prefs.snapshotDir, file);
 			SNTUtils.log("Saving snapshot to " + f);
-			if (SNTUtils.isDebugMode() && frame != null) {
-				SNTUtils.log("Frame size: (" + frame.getWidth() + ", " + frame.getHeight() + ");");
-				((AView)view).logViewPoint();
+			if (SNTUtils.isDebugMode() && frame != null && keyController != null) {
+				keyController.logPosition();
 			}
 			chart.screenshot(f);
 		}
@@ -1465,6 +1501,14 @@ public class Viewer3D {
 
 	protected Color getDefColor() {
 		return (defColor == null) ? getNonUserDefColor() : defColor;
+	}
+
+	private void logInAnyState(final String msg) {
+		if (SNTUtils.isDebugMode()) {
+			SNTUtils.log(msg);
+		} else {
+			System.out.println(msg);
+		}
 	}
 
 //	/**
@@ -1669,10 +1713,21 @@ public class Viewer3D {
 		}
 
 		private void logViewPoint() {
-			final StringBuilder sb = new StringBuilder("setViewPoint(");
-			sb.append(viewpoint.x).append("f, ");
-			sb.append(viewpoint.y).append("f);");
-			SNTUtils.log(sb.toString());
+			final StringBuilder sb = new StringBuilder("viewer.setViewPoint(");
+			sb.append(viewpoint.x).append(", ");
+			sb.append(viewpoint.y).append(");");
+			logInAnyState(sb.toString());
+		}
+
+		private void logBounds(final BoundingBox3d bounds) {
+			final StringBuilder sb = new StringBuilder("viewer.setBounds(");
+			sb.append(bounds.getXmin()).append(", ");
+			sb.append(bounds.getXmax()).append(", ");
+			sb.append(bounds.getYmin()).append(", ");
+			sb.append(bounds.getYmax()).append(", ");
+			sb.append(bounds.getZmin()).append(", ");
+			sb.append(bounds.getZmax()).append(");");
+			logInAnyState(sb.toString());
 		}
 
 		public void setBoundManual(final BoundingBox3d bounds,
@@ -1680,14 +1735,7 @@ public class Viewer3D {
 		{
 			super.setBoundManual(bounds);
 			if (logInDebugMode && SNTUtils.isDebugMode()) {
-				final StringBuilder sb = new StringBuilder("setBounds(");
-				sb.append(bounds.getXmin()).append("f, ");
-				sb.append(bounds.getXmax()).append("f, ");
-				sb.append(bounds.getYmin()).append("f, ");
-				sb.append(bounds.getYmax()).append("f, ");
-				sb.append(bounds.getZmin()).append("f, ");
-				sb.append(bounds.getZmax()).append("f);");
-				SNTUtils.log(sb.toString());
+				logBounds(bounds);
 			}
 		}
 
@@ -3983,6 +4031,10 @@ public class Viewer3D {
 				case 'H':
 					showHelp(false);
 					break;
+				case 'l':
+				case 'L':
+					logPosition();
+					break;
 				case 'r':
 				case 'R':
 					resetView();
@@ -4035,6 +4087,12 @@ public class Viewer3D {
 			final boolean empty = view.getScene().getGraph().getAll().size() == 0;
 			if (empty) displayMsg("Scene is empty");
 			return empty;
+		}
+
+		private void logPosition() {
+			logInAnyState("viewer.resizeFrame(" + frame.getWidth() + ", " + frame.getHeight() + ");");
+			((AView)view).logViewPoint();
+			((AView)view).logBounds(view.getBounds());
 		}
 
 		private void saveScreenshot() {
@@ -4180,6 +4238,7 @@ public class Viewer3D {
 			sb.append("    <td>Snap to Top/Side View</td>");
 			sb.append("    <td>Ctrl + left-click</td>");
 			sb.append("  </tr>");
+			if (showInDialog) sb.append("  <tr>");
 			sb.append("  <tr>");
 			sb.append("    <td>Toggle <u>A</u>xes</td>");
 			sb.append("    <td>Press 'A'</td>");
@@ -4197,6 +4256,9 @@ public class Viewer3D {
 			sb.append("    <td>Press 'F'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
+			sb.append("    <td><u>L</u>og View Point, Bounds, etc. &nbsp;&nbsp;</td>");
+			sb.append("    <td>Press 'L'</td>");
+			sb.append("  </tr>");
 			sb.append("    <td><u>R</u>eset View</td>");
 			sb.append("    <td>Press 'R'</td>");
 			sb.append("  </tr>");
@@ -4205,6 +4267,7 @@ public class Viewer3D {
 			sb.append("    <td>Press 'S'</td>");
 			sb.append("  </tr>");
 			if (showInDialog) {
+				sb.append("  <tr>");
 				sb.append("  <tr>");
 				sb.append("    <td><u>H</u>elp</td>");
 				sb.append("    <td>Press 'H' (notification) or F1 (list)</td>");
@@ -4578,6 +4641,7 @@ public class Viewer3D {
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);
 		jzy3D.updateColorBarLegend(-8, 88);
+		jzy3D.setEnableDarkMode(false);
 	}
 
 }

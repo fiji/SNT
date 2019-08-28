@@ -280,10 +280,10 @@ public class SciViewSNT {
 	}
 
 	@SuppressWarnings("unused")
-	private void syncNode(Tree tree, Node node) {
+	private void syncNode(final Tree tree, final Node node) {
 		// Every Path in tree has a unique getID()
 		// Node should know this ID for syncing
-		Integer pathID = (Integer) node.getMetadata().get("pathID");
+		final Integer pathID = (Integer) node.getMetadata().get("pathID");
 		if( pathID != null ) {
 			for (final Path p : tree.list()) {
 				if (p.getID() == pathID) {
@@ -349,15 +349,15 @@ public class SciViewSNT {
 				}
 
 				// Assemble arbor(s)
-				List<Vector3> points = new ArrayList<>();
-				List<ColorRGB> colors = new ArrayList<>();
-				float scaleFactor = 0.1f;
+				final List<Vector3> points = new ArrayList<>();
+				final List<ColorRGB> colors = new ArrayList<>();
+				final float scaleFactor = 0.1f;
 				for (int i = 0; i < p.size(); ++i) {
 					final PointInImage pim = p.getNode(i);
 					final ClearGLVector3 coord = new ClearGLVector3((float)pim.x, (float)pim.y, (float)pim.z);
 					final Material mat = new Material();
-					Color c = p.hasNodeColors() ? p.getNodeColor(i) : p.getColor();
-					ColorRGB color = c == null ? Colors.ANTIQUEWHITE : fromAWTColor(c);
+					final Color c = p.hasNodeColors() ? p.getNodeColor(i) : p.getColor();
+					final ColorRGB color = c == null ? Colors.ANTIQUEWHITE : fromAWTColor(c);
 					mat.setDiffuse(new GLVector(color.getRed(),color.getGreen(),color.getBlue()));
 					//final float width = Math.max((float) p.getNodeRadius(i), DEF_NODE_RADIUS);
 					//System.out.println( "(point " + i + " " + coord.source() + ")" );
@@ -365,7 +365,7 @@ public class SciViewSNT {
 					colors.add( color );
 				}
 
-				Line3D line = new Line3D(points, colors, 0.05);
+				final Line3D line = new Line3D(points, colors, 0.05);
 				line.getMetadata().put("pathID",p.getID());
 				line.setName(p.getName());
 				//sciView.addNode(line,false );
@@ -374,7 +374,7 @@ public class SciViewSNT {
 
 			// Group all lines
 			if (!lines.isEmpty()) {
-				for( Node line : lines ) {
+				for( final Node line : lines ) {
 					addChild( line );
 					//sciView.addNode(line, false);
 				}
@@ -391,7 +391,7 @@ public class SciViewSNT {
 				final List<Color> somaColors)
 		{
 			//ColorRGB col = fromAWTColor(SNTColor.average(somaColors));
-			ColorRGB col = new ColorRGB(0,255,0);
+			final ColorRGB col = new ColorRGB(0,255,0);
 			switch (somaPoints.size()) {
 			case 0:
 				//SNT.log(tree.getLabel() + ": No soma attribute");
@@ -422,12 +422,12 @@ public class SciViewSNT {
 			}
 		}
 
-		private Vector3 convertPIIToVector3(PointInImage sCenter) {
-			Vector3 v = new DoubleVector3(sCenter.x,sCenter.y,sCenter.z);
+		private Vector3 convertPIIToVector3(final PointInImage sCenter) {
+			final Vector3 v = new DoubleVector3(sCenter.x,sCenter.y,sCenter.z);
 			return v;
 		}
 
-		private ColorRGB fromAWTColor(Color average) {
+		private ColorRGB fromAWTColor(final Color average) {
 			return new ColorRGB(average.getRed(),average.getGreen(),average.getBlue());
 		}
 
@@ -439,8 +439,8 @@ public class SciViewSNT {
 		public OrientedBoundingBox generateBoundingBox() {
 			OrientedBoundingBox bb = new OrientedBoundingBox(this, 0.0f, 0.0f, 0.0f,
 					0.0f, 0.0f, 0.0f);
-			for( Node n : getChildren() ) {
-				OrientedBoundingBox cBB = n.generateBoundingBox();
+			for( final Node n : getChildren() ) {
+				final OrientedBoundingBox cBB = n.generateBoundingBox();
 				if( cBB != null )
 					bb = bb.expand(bb, cBB);
 			}

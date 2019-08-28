@@ -31,7 +31,6 @@ import org.scijava.NullContextException;
 import org.scijava.plugin.Parameter;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
-import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.iview.SciView;
@@ -42,7 +41,7 @@ import sc.iview.vector.DoubleVector3;
 import sc.iview.vector.FloatVector3;
 import sc.iview.vector.Vector3;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
@@ -51,6 +50,12 @@ import javax.swing.SwingUtilities;
 
 import java.util.*;
 
+/**
+ * Bridges SNT to {@link SciView}, allowing {@link Tree}s to be rendered as Scenery objects
+ *
+ * @author Kyle Harrington
+ * @author Tiago Ferreira
+ */
 public class SciViewSNT {
 	private final static String PATH_MANAGER_TREE_LABEL = "Path Manager Contents";
 
@@ -60,18 +65,33 @@ public class SciViewSNT {
 	private SNT snt;
 	private SciView sciView;
 
-	private Map<String, ShapeTree> plottedTrees;
+	private final Map<String, ShapeTree> plottedTrees;
 
 	/**
-	 * Instantiates SciViewSNT.
+	 * Instantiates a new SciViewSNT instance.
 	 *
 	 * @param context the SciJava application context providing the services
-	 *          required by the class
+	 *                required by the class
 	 * @throws NullContextException If context is null
 	 */
 	public SciViewSNT(final Context context) {
 		if (context == null) throw new NullContextException();
 		context.inject(this);
+		plottedTrees = new TreeMap<String,ShapeTree>();
+		snt = null;
+	}
+
+	/**
+	 * Instantiates SciViewSNT from an existing SciView instance.
+	 *
+	 * @param sciView the SciView instance to be associated with this SciViewSNT
+	 *                instance
+	 * @throws NullPointerException If sciView is null
+	 */
+	public SciViewSNT(final SciView sciView) {
+		if (sciView == null) throw new NullPointerException();
+		this.sciView = sciView;
+		sciView.getScijavaContext().inject(this);
 		plottedTrees = new TreeMap<String,ShapeTree>();
 		snt = null;
 	}
@@ -91,11 +111,22 @@ public class SciViewSNT {
 		}
 	}
 
+	/**
+	 * Gets the SciView instance currently in use.
+	 *
+	 * @return the SciView instance. It is never null: A new instance is created if
+	 *         none has been specified
+	 */
 	public SciView getSciView() {
 		initSciView();
 		return sciView;
 	}
 
+	/**
+	 * Sets the SciView to be used.
+	 *
+	 * @param sciView the SciView instance. Null allowed.
+	 */
 	public void setSciView(final SciView sciView) {
 		if (sciView == null) {
 			nullifySciView();
@@ -138,12 +169,14 @@ public class SciViewSNT {
 	}
 
 	/**
-	 * Adds a tree to this viewer.
+	 * Adds a tree to the associated SciView instance. A new SciView instance is
+	 * automatically instantiated if {@link setSciView(SciView)} has not been
+	 * called.
 	 *
 	 * @param tree the {@link Tree} to be added. The Tree's label will be used as
-	 *          identifier. It is expected to be unique when rendering multiple
-	 *          Trees, if not (or no label exists) a unique label will be
-	 *          generated.
+	 *             identifier. It is expected to be unique when rendering multiple
+	 *             Trees, if not (or no label exists) a unique label will be
+	 *             generated.
 	 * @see Tree#getLabel()
 	 * @see Tree#setColor(ColorRGB)
 	 */
@@ -154,12 +187,25 @@ public class SciViewSNT {
 		//sciView.centerOnNode(plottedTrees.get(label));
 	}
 
+	/**
+	 * Gets the specified Tree as a Scenery Node.
+	 *
+	 * @param tree the tree previously added to SciView using {@link #addTree(Tree)}
+	 * @return the scenery Node
+	 */
 	public Node getTreeAsSceneryNode(final Tree tree) {
 		final String treeLabel = getLabel(tree);
 		final ShapeTree shapeTree = plottedTrees.get(treeLabel);
 		return (shapeTree == null) ? null : shapeTree.get();
 	}
 
+	/**
+	 * Removes the specified Tree.
+	 *
+	 * @param tree the tree previously added to SciView using {@link #addTree(Tree)}
+	 * @return true, if tree was successfully removed.
+	 * @see #addTree(Tree)
+	 */
 	public boolean removeTree(final Tree tree) {
 		final String treeLabel = getLabel(tree);
 		final ShapeTree shapeTree = plottedTrees.get(treeLabel);
@@ -405,19 +451,19 @@ public class SciViewSNT {
 	/* IDE debug method */
 	public static void main(final String[] args) throws InterruptedException {
 		SceneryBase.xinitThreads();
-		GuiUtils.setSystemLookAndFeel();
+		//GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		SNTService sntService = ij.context().getService(SNTService.class);
-		SciViewSNT sciViewSNT = sntService.getOrCreateSciViewSNT();
-		Tree tree = sntService.demoTree();
+		final SNTService sntService = ij.context().getService(SNTService.class);
+		final SciViewSNT sciViewSNT = sntService.getOrCreateSciViewSNT();
+		final Tree tree = sntService.demoTree();
 		tree.setColor(Colors.RED);
+		final Tree tree2 = Tree.fromFile("/home/tferr/code/OP_1/OP_1.swc");
+		tree2.setColor(Colors.YELLOW);
+		sciViewSNT.addTree(tree2);
+		//sciViewSNT.getSciView().centerOnScene();
 		sciViewSNT.addTree(tree);
-		//Tree tree2 = Tree.fromFile("/home/tferr/code/OP_1/OP_1.swc");
-		//tree2.setColor(Colors.YELLOW);
-		//sciViewSNT.addTree(tree2);
-		sciViewSNT.getSciView().centerOnScene();
-		sciViewSNT.getSciView().fitCameraToScene();
-		sciViewSNT.getSciView().centerOnNode(sciViewSNT.getTreeAsSceneryNode(tree));
+		//sciViewSNT.getSciView().addVolume(sntService.demoTreeDataset());
+		sciViewSNT.getSciView().centerOnNode(sciViewSNT.getTreeAsSceneryNode(tree2));
 	}
 }

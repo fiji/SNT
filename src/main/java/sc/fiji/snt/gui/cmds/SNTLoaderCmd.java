@@ -163,8 +163,8 @@ public class SNTLoaderCmd extends DynamicCommand {
 					"<b>This inconvenience is just temporary and will no longer be required once SNT is " +
 					"officially release. Thank you for your patience!";
 			GuiUtils.showHTMLDialog(msg, "Please Subscribe to the SciView Update Site");
-			//cmdService.run(ImageJUpdater.class, true);
-			cmdService.run(EnableSciViewUpdateSiteCmd.class, true);
+			cmdService.run(ImageJUpdater.class, true);
+			//cmdService.run(EnableSciViewUpdateSiteCmd.class, true); // TF: this is currently not working
 		}
 		return available;
 	}

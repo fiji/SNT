@@ -84,7 +84,7 @@ public class TreeColorMapper extends ColorMapper {
 	/** Flag for {@value #PATH_DISTANCE} mapping. */
 	public static final String PATH_DISTANCE = "Path distance to soma";
 	/** Flag for {@value #TAG_FILENAME} mapping. */
-	public static final String TAG_FILENAME = "Tags/Filename";
+	public static final String TAG_FILENAME = "Tags/filename";
 	private static final String INTERNAL_COUNTER = "Id";
 
 

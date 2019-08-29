@@ -25,4 +25,5 @@ import sc.fiji.snt.plugin.*
 import sc.fiji.snt.util.*
 import sc.fiji.snt.viewer.*
 
-// See https://javadoc.scijava.org/Fiji/index.html?sc/fiji/snt/package-summary.html
+// Documentation Resources: https://imagej.net/SNT:_Scripting
+// SNT API: https://javadoc.scijava.org/Fiji/index.html?sc/fiji/snt/package-summary.html

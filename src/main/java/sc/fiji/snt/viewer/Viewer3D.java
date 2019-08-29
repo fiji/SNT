@@ -54,6 +54,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -843,7 +844,7 @@ public class Viewer3D {
 	 * @param height the height of the frame
 	 * @see #show(int, int)
 	 */
-	public void resizeFrame(final int width, final int height) {
+	public void setFrameSize(final int width, final int height) {
 		if (frame != null) frame.setSize(width, height);
 	}
 
@@ -1151,18 +1152,22 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Toggles the visibility of a rendered Tree or a loaded OBJ mesh.
+	 * Toggles the visibility of a rendered Tree, a loaded OBJ mesh, or an
+	 * annotation.
 	 *
-	 * @param treeOrObjLabel the unique identifier of the Tree (as per
-	 *          {@link #addTree(Tree)}), or the filename of the loaded OBJ
-	 *          {@link #loadMesh(String, ColorRGB, double)}
+	 * @param label   the unique identifier of the Tree (as per
+	 *                {@link #addTree(Tree)}), the filename/identifier of the loaded
+	 *                OBJ {@link #loadMesh(String, ColorRGB, double)}, or annotation
+	 *                label.
 	 * @param visible whether the Object should be displayed
 	 */
-	public void setVisible(final String treeOrObjLabel, final boolean visible) {
-		final ShapeTree treeShape = plottedTrees.get(treeOrObjLabel);
+	public void setVisible(final String label, final boolean visible) {
+		final ShapeTree treeShape = plottedTrees.get(label);
 		if (treeShape != null) treeShape.get().setDisplayed(visible);
-		final DrawableVBO obj = plottedObjs.get(treeOrObjLabel);
+		final DrawableVBO obj = plottedObjs.get(label);
 		if (obj != null) obj.setDisplayed(visible);
+		final AbstractDrawable annot = plottedAnnotations.get(label);
+		if (annot != null) annot.setDisplayed(visible);
 	}
 
 	/**
@@ -1265,8 +1270,7 @@ public class Viewer3D {
 	 * Renders the scene from a specified camera angle using polar coordinates
 	 * relative to the the center of the scene. Only X and Y dimensions are
 	 * required, as the distance to center is automatically computed. Current
-	 * view point is logged to the Console when interacting with the
-	 * Reconstruction Viewer in debug mode.
+	 * view point is logged to the Console by calling {@link #logPosition()}
 	 * 
 	 * @param r the radial coordinate
 	 * @param t the angle coordinate (in radians)
@@ -1342,8 +1346,8 @@ public class Viewer3D {
 		try {
 			final File f = new File(prefs.snapshotDir, file);
 			SNTUtils.log("Saving snapshot to " + f);
-			if (SNTUtils.isDebugMode() && frame != null && keyController != null) {
-				keyController.logPosition();
+			if (SNTUtils.isDebugMode() && frame != null) {
+				logSceneControls();
 			}
 			chart.screenshot(f);
 		}
@@ -1503,12 +1507,57 @@ public class Viewer3D {
 		return (defColor == null) ? getNonUserDefColor() : defColor;
 	}
 
-	private void logInAnyState(final String msg) {
-		if (SNTUtils.isDebugMode()) {
-			SNTUtils.log(msg);
-		} else {
-			System.out.println(msg);
+	/**
+	 * Logs API calls controlling the scene (view point, bounds, etc.) to Console.
+	 * Useful for programmatic control of animations.
+	 */
+	public void logSceneControls() {
+		SNTUtils.log("Logging scene controls:");
+		final StringBuilder sb = new StringBuilder("\n");
+		final HashSet<String> visibleActors = new HashSet<>();
+		final HashSet<String> hiddenActors = new HashSet<>();
+		plottedTrees.forEach((k, shapeTree) -> {
+			if (shapeTree.isDisplayed()) visibleActors.add("\"" + k +"\"");
+			else hiddenActors.add("\"" + k +"\"");
+		});
+		plottedObjs.forEach((k, drawableVBO) -> {
+			if (drawableVBO.isDisplayed()) visibleActors.add("\"" + k +"\"");
+			else hiddenActors.add("\"" + k +"\"");
+		});
+		plottedAnnotations.forEach((k, drawable) -> {
+			if (drawable.isDisplayed()) visibleActors.add("\"" + k +"\"");
+			else hiddenActors.add("\"" + k +"\"");
+		});
+		if (!visibleActors.isEmpty()) {
+			sb.append("Visible objects: ").append(visibleActors.toString());
+			sb.append("\n");
 		}
+		if (!hiddenActors.isEmpty()) {
+			sb.append("Hidden  objects: ").append(hiddenActors.toString());
+			sb.append("\n");
+		}
+		sb.append("viewer.setFrameSize(");
+		sb.append(frame.getWidth()).append(", ").append(frame.getHeight()).append(");");
+		sb.append("\n");
+		if (currentView == ViewMode.TOP) {
+			sb.append("viewer.setViewPoint(ViewMode.TOP);");
+		} else {
+			final Coord3d viewPoint = view.getViewPoint();
+			sb.append("viewer.setViewPoint(");
+			sb.append(viewPoint.x).append(", ");
+			sb.append(viewPoint.y).append(");");
+		}
+		sb.append("\n");
+		final BoundingBox3d bounds = view.getBounds();
+		sb.append("viewer.setBounds(");
+		sb.append(bounds.getXmin()).append(", ");
+		sb.append(bounds.getXmax()).append(", ");
+		sb.append(bounds.getYmin()).append(", ");
+		sb.append(bounds.getYmax()).append(", ");
+		sb.append(bounds.getZmin()).append(", ");
+		sb.append(bounds.getZmax()).append(");");
+		sb.append("\n");
+		System.out.println(sb.toString());
 	}
 
 //	/**
@@ -1710,33 +1759,6 @@ public class Viewer3D {
 			//super.DISPLAY_AXE_WHOLE_BOUNDS = true;
 			//super.MAINTAIN_ALL_OBJECTS_IN_VIEW = true;
 			//setBoundMode(ViewBoundMode.AUTO_FIT);
-		}
-
-		private void logViewPoint() {
-			final StringBuilder sb = new StringBuilder("viewer.setViewPoint(");
-			sb.append(viewpoint.x).append(", ");
-			sb.append(viewpoint.y).append(");");
-			logInAnyState(sb.toString());
-		}
-
-		private void logBounds(final BoundingBox3d bounds) {
-			final StringBuilder sb = new StringBuilder("viewer.setBounds(");
-			sb.append(bounds.getXmin()).append(", ");
-			sb.append(bounds.getXmax()).append(", ");
-			sb.append(bounds.getYmin()).append(", ");
-			sb.append(bounds.getYmax()).append(", ");
-			sb.append(bounds.getZmin()).append(", ");
-			sb.append(bounds.getZmax()).append(");");
-			logInAnyState(sb.toString());
-		}
-
-		public void setBoundManual(final BoundingBox3d bounds,
-			final boolean logInDebugMode)
-		{
-			super.setBoundManual(bounds);
-			if (logInDebugMode && SNTUtils.isDebugMode()) {
-				logBounds(bounds);
-			}
 		}
 
 		@Override
@@ -2744,9 +2766,22 @@ public class Viewer3D {
 			mi = new JMenuItem("Script This Viewer...", IconFactory.getMenuIcon(GLYPH.CODE));
 			mi.addActionListener(e -> {
 				final TextEditor editor = new TextEditor(context);
-				final String text = prefs.getBoilerplateScript() + "\nviewer = snt.getRecViewer("
-						+ (isSNTInstance() ? ")" : getID() + ")\n");
-				editor.createNewDocument("RecViewerScript" + prefs.getScriptExtension(), text);
+				final String extension = prefs.getScriptExtension();
+				final boolean needsSemiColon = extension.endsWith("bsh");
+				final String commentPrefix = (extension.endsWith("py")) ? "# " : "// ";
+				final StringBuilder sb = new StringBuilder(prefs.getBoilerplateScript());
+				sb.append("\n").append(commentPrefix);
+				sb.append("Rec. Viewer's API: https://javadoc.scijava.org/Fiji/sc/fiji/snt/viewer/Viewer3D.html");
+				sb.append("\n").append(commentPrefix);
+				sb.append("Tip: Programmatic control of the Viewer's scene can be set using the Console info");
+				sb.append("\n").append(commentPrefix);
+				sb.append("produced when calling viewer.logSceneControls() or pressing 'L' when viewer is frontmost");
+				sb.append("\n");
+				sb.append("\n").append("viewer = snt.getRecViewer(");
+				sb.append(isSNTInstance() ? ")" : getID()).append(")");
+				if (needsSemiColon) sb.append(";");
+				sb.append("\n");
+				editor.createNewDocument("RecViewerScript" + prefs.getScriptExtension(), sb.toString());
 				//editor.newTab(text, prefs.getScriptExtension());
 				editor.setVisible(true);
 			});
@@ -3548,9 +3583,8 @@ public class Viewer3D {
 
 		@Override
 		public boolean isDisplayed() {
-			return (super.isDisplayed()) || ((somaSubShape != null) && somaSubShape
-				.isDisplayed()) || ((treeSubShape != null) && treeSubShape
-					.isDisplayed());
+			return ((somaSubShape != null) && somaSubShape.isDisplayed()) ||
+					((treeSubShape != null) && treeSubShape.isDisplayed());
 		}
 
 		@Override
@@ -3909,7 +3943,7 @@ public class Viewer3D {
 			final BoundingBox3d viewBounds = view.getBounds();
 			final Coord3d offset = to.sub(from).div(-panStep);
 			final BoundingBox3d newBounds = viewBounds.shift(offset);
-			((AView)view).setBoundManual(newBounds, true);
+			view.setBoundManual(newBounds);
 			view.shoot();
 			fireControllerEvent(ControllerType.PAN, offset);
 		}
@@ -3920,7 +3954,7 @@ public class Viewer3D {
 				factor));
 			newBounds = newBounds.shift((viewBounds.getCenter().sub(newBounds
 				.getCenter())));
-			((AView) view).setBoundManual(newBounds, true);
+			view.setBoundManual(newBounds);
 			view.shoot();
 			fireControllerEvent(ControllerType.ZOOM, factor);
 		}
@@ -4033,7 +4067,7 @@ public class Viewer3D {
 					break;
 				case 'l':
 				case 'L':
-					logPosition();
+					logSceneControls();
 					break;
 				case 'r':
 				case 'R':
@@ -4087,12 +4121,6 @@ public class Viewer3D {
 			final boolean empty = view.getScene().getGraph().getAll().size() == 0;
 			if (empty) displayMsg("Scene is empty");
 			return empty;
-		}
-
-		private void logPosition() {
-			logInAnyState("viewer.resizeFrame(" + frame.getWidth() + ", " + frame.getHeight() + ");");
-			((AView)view).logViewPoint();
-			((AView)view).logBounds(view.getBounds());
 		}
 
 		private void saveScreenshot() {

@@ -3122,7 +3122,12 @@ public class SNTUI extends JDialog {
 		if (plugin.isTracingOnSecondaryImageAvailable()) {
 			plugin.doSearchOnSecondaryData = enable;
 			secondaryImgActivateCheckbox.setSelected(enable);
-			if (preprocess.isSelected()) updateHessianPanel();
+			if (preprocess.isSelected()) {
+				if (plugin.getHessianCaller("secondary").hessian == null)
+					preprocess.setSelected(false);
+				else
+					updateHessianPanel();
+			}
 		} else if (enable) {
 			if (!plugin.accessToValidImageData()) {
 				noValidImageDataError();

@@ -55,6 +55,9 @@ public class TracerThread extends SearchThread {
 		if (useHessian) {
 			final boolean secondary = snt.isTracingOnSecondaryImageActive();
 			hessian = (secondary) ? snt.secondaryHessian.hessian : snt.primaryHessian.hessian;
+			if (hessian == null) {
+				throw new IllegalArgumentException("Hessian enabled but settings are invalid.");
+			}
 			multiplier = (secondary) ? snt.secondaryHessian.getMultiplier() : snt.primaryHessian.getMultiplier();
 			cachedTubeness = (secondary) ? snt.secondaryHessian.cachedTubeness : snt.primaryHessian.cachedTubeness;
 		} else {

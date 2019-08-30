@@ -1716,8 +1716,18 @@ public class SNT extends MultiDThreePanes implements
 			/*
 			 * Then this is a succeeding point, and we should start a search.
 			 */
-			testPathTo(world_x, world_y, world_z, joinPoint);
-			changeUIState(SNTUI.SEARCHING);
+			try {
+				testPathTo(world_x, world_y, world_z, joinPoint);
+				changeUIState(SNTUI.SEARCHING);
+			} catch (final IllegalArgumentException ex) {
+				if (getUI() != null) {
+					getUI().error(ex.getMessage());
+					getUI().enableHessian(false);
+					getUI().reset();
+				} else {
+					ex.printStackTrace();
+				}
+			}
 		}
 		else {
 			/* This is an initial point. */
@@ -2071,7 +2081,13 @@ public class SNT extends MultiDThreePanes implements
 			file = new File(imp.getFileInfo().directory, imp.getFileInfo().fileName);
 		}
 		setSecondaryImage(file);
-		if (changeUIState) changeUIState(SNTUI.WAITING_TO_START_PATH);
+		if (changeUIState) {
+			changeUIState(SNTUI.WAITING_TO_START_PATH);
+			if (getUI() != null) {
+				getUI().enableHessian(false);
+				getUI().enableSecondaryImgTracing(true);
+			}
+		}
 	}
 
 	public void loadTubenessImage(final String type, final File file) throws IOException, IllegalArgumentException {

@@ -180,7 +180,7 @@ public class SNTUI extends JDialog {
 	private JMenuItem secondaryImgLoadFlushMenuItem;
 
 	private ActiveWorker activeWorker;
-	private volatile int currentState;
+	private volatile int currentState = -1;
 
 	private final SNT plugin;
 	private final PathAndFillManager pathAndFillManager;

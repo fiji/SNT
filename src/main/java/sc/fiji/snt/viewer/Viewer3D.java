@@ -1270,7 +1270,7 @@ public class Viewer3D {
 	 * Renders the scene from a specified camera angle using polar coordinates
 	 * relative to the the center of the scene. Only X and Y dimensions are
 	 * required, as the distance to center is automatically computed. Current
-	 * view point is logged to the Console by calling {@link #logPosition()}
+	 * view point is logged to the Console by calling {@link #logSceneControls()}.
 	 * 
 	 * @param r the radial coordinate
 	 * @param t the angle coordinate (in radians)
@@ -1287,7 +1287,7 @@ public class Viewer3D {
 	 * Calls {@link #setViewPoint(double, double)} using Cartesian coordinates.
 	 * 
 	 * @param x the X coordinate
-	 * @param Y the Y coordinate
+	 * @param y the Y coordinate
 	 */
 	public void setViewPointCC(final double x, final double y) {
 		setViewPoint((float) Math.sqrt(x * x + y * y), (float) Math.atan2(y, x));
@@ -1540,7 +1540,7 @@ public class Viewer3D {
 		sb.append(frame.getWidth()).append(", ").append(frame.getHeight()).append(");");
 		sb.append("\n");
 		if (currentView == ViewMode.TOP) {
-			sb.append("viewer.setViewPoint(ViewMode.TOP);");
+			sb.append("viewer.setViewMode(Viewer3D.ViewMode.TOP);");
 		} else {
 			final Coord3d viewPoint = view.getViewPoint();
 			sb.append("viewer.setViewPoint(");
@@ -2778,7 +2778,8 @@ public class Viewer3D {
 				sb.append("produced when calling viewer.logSceneControls() or pressing 'L' when viewer is frontmost");
 				sb.append("\n");
 				sb.append("\n").append("viewer = snt.getRecViewer(");
-				sb.append(isSNTInstance() ? ")" : getID()).append(")");
+				if (!isSNTInstance()) sb.append(getID());
+				sb.append(")");
 				if (needsSemiColon) sb.append(";");
 				sb.append("\n");
 				editor.createNewDocument("RecViewerScript" + prefs.getScriptExtension(), sb.toString());

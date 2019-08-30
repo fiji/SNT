@@ -170,7 +170,7 @@ public class SciViewSNT {
 
 	/**
 	 * Adds a tree to the associated SciView instance. A new SciView instance is
-	 * automatically instantiated if {@link setSciView(SciView)} has not been
+	 * automatically instantiated if {@link #setSciView(SciView)} has not been
 	 * called.
 	 *
 	 * @param tree the {@link Tree} to be added. The Tree's label will be used as

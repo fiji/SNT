@@ -86,7 +86,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	@Override
 	public void initialize() {
 		scriptService.addAlias(this.getClass());
-		scriptService.addAlias("Tree", Tree.class);
+		scriptService.addAlias("sc.fiji.snt.Tree", Tree.class);
 	}
 
 	/**

@@ -83,10 +83,11 @@ public class SNTService extends AbstractService implements ImageJService {
 		}
 	}
 
-	// @Override
-	// public void initialize() {
-	// scriptService.addAlias(this.getClass());
-	// }
+	@Override
+	public void initialize() {
+		scriptService.addAlias(this.getClass());
+		scriptService.addAlias("Tree", Tree.class);
+	}
 
 	/**
 	 * Gets whether SNT is running.

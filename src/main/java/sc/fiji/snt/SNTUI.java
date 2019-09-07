@@ -105,6 +105,7 @@ import sc.fiji.snt.gui.IconFactory;
 import sc.fiji.snt.gui.SigmaPalette;
 import sc.fiji.snt.io.FlyCircuitLoader;
 import sc.fiji.snt.io.NeuroMorphoLoader;
+import sc.fiji.snt.plugin.LocalThicknessCmd;
 import sc.fiji.snt.plugin.PlotterCmd;
 import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.viewer.Viewer3D;
@@ -2389,7 +2390,15 @@ public class SNTUI extends JDialog {
 		JMenuItem jmiManual = new JMenuItem(GuiListener.EDIT_SIGMA_MANUALLY);
 		jmiManual.addActionListener(listener);
 		optionsMenu.add(jmiManual);
+		final JMenuItem thicknessCmdItem = new JMenuItem("Estimate Radii (Local Thickness)...");
+		thicknessCmdItem.setToolTipText("<HTML><div WIDTH=500>Computes the distribution of the radii of all the structures across the image");
+		//thicknessCmdItem.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.DOTCIRCLE));
+		optionsMenu.add(thicknessCmdItem);
+		thicknessCmdItem.addActionListener(e -> {
+			(new DynamicCmdRunner(LocalThicknessCmd.class, null, RUNNING_CMD)).run();
+		});
 		optionsMenu.addSeparator();
+
 		optionsMenu.add(hessianCompMenu("Cached Computations (Main Image)", "primary"));
 		optionsMenu.add(hessianCompMenu("Cached Computations (Secondary Image)", "secondary"));
 		hessianPanel = new JPanel(new BorderLayout());

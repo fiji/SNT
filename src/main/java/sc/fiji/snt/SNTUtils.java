@@ -148,7 +148,7 @@ public class SNTUtils {
 			new StackConverter(imp).convertToGray32();
 	}
 
-	protected static void convertTo8bit(final ImagePlus imp) {
+	public static void convertTo8bit(final ImagePlus imp) {
 		if (imp.getType() != ImagePlus.GRAY8) {
 			final boolean doScaling = ImageConverter.getDoScaling();
 			ImageConverter.setDoScaling(true);
@@ -157,7 +157,7 @@ public class SNTUtils {
 		}
 	}
 
-	protected static ImagePlus getMIP(final ImagePlus imp) {
+	public static ImagePlus getMIP(final ImagePlus imp) {
 		final ImagePlus mip = ZProjector.run(imp, "max");
 		new ContrastEnhancer().stretchHistogram(mip, 0.35);
 		return mip;

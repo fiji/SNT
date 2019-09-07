@@ -61,7 +61,7 @@ import sc.fiji.snt.SNTUtils;
  * @author Tiago Ferreira
  */
 @Plugin(type = DynamicCommand.class, visible = true,
-	menuPath = "Plugins>NeuroAnatomy>SNT...",
+	menuPath = "Plugins>NeuroAnatomy>SNT...", label ="SNT Startup Prompt",
 	initializer = "initialize")
 public class SNTLoaderCmd extends DynamicCommand {
 
@@ -87,15 +87,15 @@ public class SNTLoaderCmd extends DynamicCommand {
 	private static final String UI_SIMPLE = "Memory saving: Only XY view";
 	private static final String UI_DEFAULT = "Default: XY, ZY and XZ views";
 	private static final String DEF_DESCRIPTION =
-		"Ignored when a display canvas is used";
+		"Optional. Ignored when a display canvas is used";
 
 	@Parameter(required = true, label = "Image", //
-			description = "The image to be traced", //
+			description = "The image to be traced (optional)", //
 			callback = "imageChoiceChanged")
 	private String imageChoice;
 
 	@Parameter(required = false, label = "Image file",
-			description = "<HTML>Image file, when <i>Image</i> choice is <i>"+ IMAGE_FILE +"</i>",
+			description = "<HTML>Image file, when <i>Image</i> choice is <i>"+ IMAGE_FILE +"</i> (optional)",
 		style = FileWidget.OPEN_STYLE, callback = "imageFileChanged")
 	private File imageFile;
 
@@ -104,7 +104,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 	private String SPACER1;
 
 	@Parameter(required = false, label = "Reconstruction file", //
-			description="The reconstruction file to be loaded (.traces, .(e)swc or .json)",
+			description="The reconstruction file to be loaded (.traces, .(e)swc or .json) (optional)",
 		style = FileWidget.OPEN_STYLE, callback = "tracesFileChanged")
 	private File tracesFile;
 
@@ -203,7 +203,8 @@ public class SNTLoaderCmd extends DynamicCommand {
 			default: // imageChoice is now the title of frontmost image
 				loadActiveImage();
 				if (sourceImp != null) {
-					clearImageFileChoice();
+					currentImageFile = imageFile;
+					imageFile = null;
 					if (sourceImp.getNSlices() == 1) uiChoice = UI_SIMPLE;
 					adjustChannelInput();
 				}

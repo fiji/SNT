@@ -58,13 +58,21 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 			description = "Last Z-slice to be considered in the estimation", min = "1")
 	private int maxZ = 0;
 
-	@Parameter(required = false, label = "Signal dimmest intensity (approx.)",
-			description = "Pixel values below this value are treated as background when computing the distance map")
-	private double thres ;
+	@Parameter(required = false, label = "Dimmest intensity (approx.)",
+			description = "<HTML>Pixel values below this value are treated as background when<br>"
+					+ "computing the distance map. Use -1 to adopt the default cutoff<br>"
+					+ "value (half of image max)")
+	private double thres;
+
+	@Parameter(required = false, label = "Defaults", callback="applyDefaults")
+	private Button defaults;
 
 	@Parameter(required = false, label = "Image", choices = { "Primary (Main)", "Secondary" },
 			description = "Estimate radii on the primary (main) or the secondary image?")
 	private String imgChoice ;
+
+	@Parameter(label = "<HTML>&nbsp;", persist = false, visibility = ItemVisibility.MESSAGE)
+	private String SPACER = "<HTML>&nbsp;";
 
 	@Parameter(label = "<HTML>&nbsp;", persist = false, visibility = ItemVisibility.MESSAGE)
 	private String msg = "<HTML>This command runs Fiji's \"Local Thickness\" plugin<br>"
@@ -99,23 +107,23 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 //		}
 		// adjust prompt:
 		if (imp.getNSlices() == 1) {
-			minZ = maxZ = 1;
 			resolveInput("minZ");
 			resolveInput("maxZ");
 		} else {
-			maxZ = imp.getNSlices();
 			final MutableModuleItem<Integer> maxZinput = getInfo().getMutableInput("maxZ",
 					Integer.class);
 			maxZinput.setMaximumValue(maxZ);
 		}
 		if (!snt.isSecondaryImageLoaded()) {
-			final MutableModuleItem<Double> threshInput = getInfo().getMutableInput("thres", Double.class);
-			threshInput.setMinimumValue(1d);
-			final double absMax = Math.pow(2, imp.getBitDepth()) - 1;
-			if (imp.getBitDepth() != 32) thres = 0.5 * absMax;
-			threshInput.setMaximumValue(absMax);
 			resolveInput("imgChoice");
 		}
+		if (minZ == 0 || maxZ == 0) applyDefaults();
+	}
+
+	private void applyDefaults() {
+		minZ = 1;
+		maxZ = imp.getNSlices();
+		thres = -1;
 	}
 
 	@SuppressWarnings("unused")
@@ -129,6 +137,9 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 		resolveInput("maxZ");
 		resolveInput("thres");
 		resolveInput("imgChoice");
+		resolveInput("msg");
+		resolveInput("defaults");
+		resolveInput("help");
 		super.error(msg);
 	}
 
@@ -159,6 +170,11 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 			final double scaledMax = imp.getStatistics(ImageStatistics.MIN_MAX).max;
 			thres = thres * scaledMax / originalMax;
 		}
+		// Use default value
+		if (thres <= 0) {
+			if (ui!= null) ui.showStatus("Applying default intensity cutoff", true);
+			thres = 128;
+		}
 		try {
 			IJ.run(imp, CMD_LABEL, "threshold=" + thres);
 			imp = IJ.getImage(); // may display a dialog if image not available
@@ -174,7 +190,7 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 		}
 	}
 
-	private void displayHistogram(final ImagePlus imp) {
+	private void displayHistogram(final ImagePlus imp) { // it is assumed imp is always 32-bit
 		final float[] pixels = (float[]) imp.getProcessor().getPixels();
 		final DescriptiveStatistics da = new DescriptiveStatistics(pixels.length);
 		for (int i = 0; i < pixels.length; i++) {
@@ -191,8 +207,8 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 		final double min = da.getMin();
 		final double max = da.getMax();
 		final int nBins = (int) Math.ceil((max - min) / binWidth);
-		IJ.run(imp, "Histogram", "bins=" + nBins + " x_min=" + min + " x_max=" + max + " y_max=Auto");
 		imp.setDisplayRange(min, max);
+		IJ.run(imp, "Histogram", "bins=" + nBins + " x_min=" + min + " x_max=" + max + " y_max=Auto");
 
 		// Now assign an ROI in case user wants to activate the Histogram live mode
 //		final int size = Math.min(imp.getWidth(), imp.getHeight()) / 8;

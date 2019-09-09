@@ -457,17 +457,10 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see #restrictToOrder(int...)
 	 */
 	public Set<Path> getTerminalPaths() {
-		if (tips == null) getTips();
 		terminals = new HashSet<>();
-		for (final PointInImage tip : tips) {
-			if (tip.onPath != null) {
-				terminals.add(tip.onPath);
-			}
-			else {
-				for (final Path p : tree.list()) {
-					if (p.contains(tip)) terminals.add(p);
-				}
-			}
+		final int rootNumber = getStrahlerRootNumber();
+		for (final Path p : tree.list()) {
+			if (p.getOrder() == rootNumber) terminals.add(p);
 		}
 		return terminals;
 	}
@@ -482,12 +475,8 @@ public class TreeAnalyzer extends ContextCommand {
 		// retrieve all start/end points
 		tips = new HashSet<>();
 		for (final Path p : tree.list()) {
-			IntStream.of(0, p.size() - 1).forEach(i -> {
-				tips.add(p.getNode(i)); // duplicated points (as in single-point
-																				// paths) will not be added
-			});
+			tips.add(p.getNode(p.size() - 1));
 		}
-
 		// now remove any joint-associated point
 		if (joints == null) getBranchPoints();
 		tips.removeAll(joints);
@@ -532,7 +521,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 *
 	 * @return the terminal length
 	 */
-	public double getTerminalLength() {
+	public double getTerminalLength() {		
 		if (terminals == null) getTerminalPaths();
 		return sumLength(terminals);
 	}
@@ -552,7 +541,7 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	private double sumLength(final Collection<Path> paths) {
-		return tree.list().stream().mapToDouble(p -> p.getLength()).sum();
+		return paths.stream().mapToDouble(p -> p.getLength()).sum();
 	}
 
 }

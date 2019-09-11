@@ -39,6 +39,7 @@ import sc.fiji.snt.SNTPrefs;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.plugin.CallLegacyShollPlugin;
+import sc.fiji.snt.plugin.LocalThicknessCmd;
 import sc.fiji.snt.plugin.PlotterCmd;
 import sc.fiji.snt.plugin.ROIExporterCmd;
 import sc.fiji.snt.plugin.ShollTracingsCmd;
@@ -115,6 +116,7 @@ public class PrefsCmd extends ContextCommand {
 		prefService.clear(CompareFilesCmd.class);
 		prefService.clear(ComputeSecondaryImg.class);
 		prefService.clear(ComputeTubenessImg.class);
+		prefService.clear(CustomizeObjCmd.class);
 		prefService.clear(DistributionCmd.class);
 		prefService.clear(JSONImporterCmd.class);
 		prefService.clear(LoadObjCmd.class);
@@ -134,6 +136,7 @@ public class PrefsCmd extends ContextCommand {
 
 		// tracing.plugin
 		prefService.clear(CallLegacyShollPlugin.class);
+		prefService.clear(LocalThicknessCmd.class);
 		prefService.clear(PlotterCmd.class);
 		prefService.clear(ROIExporterCmd.class);
 		prefService.clear(ShollTracingsCmd.class);

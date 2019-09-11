@@ -2687,8 +2687,8 @@ public class Viewer3D {
 				final List<String> keys = getSelectedTrees(true);
 				if (keys == null) return;
 				String msg = "<HTML><body><div style='width:500;'>" +
-					"Please specify a constant thickness to be applied " +
-					"to selected " + keys.size() + " reconstruction(s).";
+					"Please specify a constant thickness value [ranging from 1 (thinnest) to 8"
+					+ " (thickest)] to be applied to selected " + keys.size() + " reconstruction(s).";
 				if (isSNTInstance()) {
 					msg += " This value will only affect how Paths are displayed " +
 						"in the Reconstruction Viewer.";

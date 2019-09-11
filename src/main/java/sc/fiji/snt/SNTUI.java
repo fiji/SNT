@@ -688,6 +688,7 @@ public class SNTUI extends JDialog {
 	public void changeState(final int newState) {
 
 		if (newState == currentState) return;
+		currentState = newState;
 		SwingUtilities.invokeLater(() -> {
 			switch (newState) {
 
@@ -859,7 +860,6 @@ public class SNTUI extends JDialog {
 				SNTUtils.error("BUG: switching to an unknown state");
 				return;
 			}
-			currentState = newState;
 			SNTUtils.log("UI state: " + getState(currentState));
 			plugin.updateTracingViewers(true);
 		});
@@ -1051,8 +1051,9 @@ public class SNTUI extends JDialog {
 				plugin.rebuildDisplayCanvases(); // will change UI state
 				showStatus("Canvas rebuilt...", true);
 			} else {
-				guiUtils.error("Currently, this command is only available for display canvases. To resize "
-						+ "current image use IJ's command <i>Image> Adjust> Canvas Size...</i>");
+				guiUtils.error("This command is only available for display canvases. To resize "
+						+ "current image use IJ's command <i>Image> Adjust> Canvas Size...</i> and press "
+						+ "<i>Reload</i> in the Data Source widget.");
 				return;
 			}
 		});

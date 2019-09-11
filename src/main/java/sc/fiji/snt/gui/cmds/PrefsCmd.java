@@ -117,6 +117,7 @@ public class PrefsCmd extends ContextCommand {
 		prefService.clear(ComputeSecondaryImg.class);
 		prefService.clear(ComputeTubenessImg.class);
 		prefService.clear(CustomizeObjCmd.class);
+		prefService.clear(CustomizeTreeCmd.class);
 		prefService.clear(DistributionCmd.class);
 		prefService.clear(JSONImporterCmd.class);
 		prefService.clear(LoadObjCmd.class);

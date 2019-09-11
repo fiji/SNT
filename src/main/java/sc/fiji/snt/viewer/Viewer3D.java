@@ -187,6 +187,7 @@ import sc.fiji.snt.gui.IconFactory.GLYPH;
 import sc.fiji.snt.gui.SNTSearchableBar;
 import sc.fiji.snt.gui.cmds.ColorMapReconstructionCmd;
 import sc.fiji.snt.gui.cmds.CustomizeObjCmd;
+import sc.fiji.snt.gui.cmds.CustomizeTreeCmd;
 import sc.fiji.snt.gui.cmds.DistributionCmd;
 import sc.fiji.snt.gui.cmds.LoadObjCmd;
 import sc.fiji.snt.gui.cmds.LoadReconstructionCmd;
@@ -2634,7 +2635,65 @@ public class Viewer3D {
 			menu.setMnemonic('c');
 			menu.setIcon(IconFactory.getMenuIcon(GLYPH.TREE));
 
-			JMenuItem mi = new JMenuItem("Assign Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
+			JMenuItem mi = new JMenuItem("All Parameters...", IconFactory.getMenuIcon(GLYPH.SLIDERS));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(true);
+				if (keys == null) return;
+				if (cmdService == null) {
+					guiUtils.error(
+						"This command requires Reconstruction Viewer to be aware of a Scijava Context");
+					return;
+				}
+				class getTreeColors extends SwingWorker<Object, Object> {
+
+					CommandModule cmdModule;
+
+					@Override
+					public Object doInBackground() {
+						try {
+							cmdModule = cmdService.run(CustomizeTreeCmd.class, true).get();
+						}
+						catch (final InterruptedException | ExecutionException ignored) {
+							return null;
+						}
+						return null;
+					}
+
+					@Override
+					protected void done() {
+						if (cmdModule != null && cmdModule.isCanceled()) {
+							return; // user pressed cancel or chose nothing
+						}
+						@SuppressWarnings("unchecked")
+						final HashMap<String, ColorRGBA> colorMap = (HashMap<String, ColorRGBA>) cmdModule.getInput("colorMap");
+						@SuppressWarnings("unchecked")
+						final HashMap<String, Double> sizeMap = (HashMap<String, Double>) cmdModule.getInput("sizeMap");
+						if (colorMap == null || sizeMap == null) {
+							guiUtils.error("Command execution failed.");
+							return;
+						}
+						final Color sColor = fromColorRGB(colorMap.get("soma"));
+						final Color tColor = fromColorRGB(colorMap.get("tree"));
+						final double sSize = sizeMap.get("soma");
+						final double tSize = sizeMap.get("tree");
+						for (final String label : keys) {
+							final ShapeTree tree = plottedTrees.get(label);
+							if (tree.somaSubShape != null) {
+								if (sColor != null) tree.setSomaColor(sColor);
+								tree.setSomaRadius((float) sSize);
+							}
+							if (tree.treeSubShape != null) {
+								if (tColor != null) tree.setArborColor(tColor);
+								tree.setThickness((float) tSize);
+							}
+						}
+					}
+				}
+				(new getTreeColors()).execute();
+			});
+			menu.add(mi);
+	
+			mi = new JMenuItem("Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees(true);
 				if (keys == null || !okToApplyColor(keys)) return;
@@ -2646,6 +2705,40 @@ public class Viewer3D {
 				applyColorToPlottedTrees(keys, c);
 			});
 			menu.add(mi);
+			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.DOTCIRCLE));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(true);
+				if (keys == null) return;
+				String msg = "<HTML><body><div style='width:500;'>" +
+					"Please specify a constant thickness value [ranging from 1 (thinnest) to 8"
+					+ " (thickest)] to be applied to selected " + keys.size() + " reconstruction(s).";
+				if (isSNTInstance()) {
+					msg += " This value will only affect how Paths are displayed " +
+						"in the Reconstruction Viewer.";
+				}
+				final Double thickness = guiUtils.getDouble(msg, "Path Thickness",
+					getDefaultThickness());
+				if (thickness == null) {
+					return; // user pressed cancel
+				}
+				if (Double.isNaN(thickness) || thickness <= 0) {
+					guiUtils.error("Invalid thickness value.");
+					return;
+				}
+				setTreesThickness(keys, thickness.floatValue());
+			});
+			menu.add(mi);
+
+			mi = new JMenuItem("Translate...", IconFactory.getMenuIcon(GLYPH.MOVE));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(prefs.retrieveAllIfNoneSelected);
+				if (keys == null) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("treeLabels", keys);
+				runCmd(TranslateReconstructionsCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
+			menu.add(mi);
+			menu.addSeparator();
 
 			mi = new JMenuItem("Color Coding (Individual Cells)...");
 			mi.addActionListener(e -> {
@@ -2680,41 +2773,7 @@ public class Viewer3D {
 				displayMsg("Unique colors assigned");
 			});
 			menu.add(mi);
-			menu.addSeparator();
 
-			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.DOTCIRCLE));
-			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
-				if (keys == null) return;
-				String msg = "<HTML><body><div style='width:500;'>" +
-					"Please specify a constant thickness value [ranging from 1 (thinnest) to 8"
-					+ " (thickest)] to be applied to selected " + keys.size() + " reconstruction(s).";
-				if (isSNTInstance()) {
-					msg += " This value will only affect how Paths are displayed " +
-						"in the Reconstruction Viewer.";
-				}
-				final Double thickness = guiUtils.getDouble(msg, "Path Thickness",
-					getDefaultThickness());
-				if (thickness == null) {
-					return; // user pressed cancel
-				}
-				if (Double.isNaN(thickness) || thickness <= 0) {
-					guiUtils.error("Invalid thickness value.");
-					return;
-				}
-				setTreesThickness(keys, thickness.floatValue());
-			});
-			menu.add(mi);
-
-			mi = new JMenuItem("Translate...", IconFactory.getMenuIcon(GLYPH.MOVE));
-			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(prefs.retrieveAllIfNoneSelected);
-				if (keys == null) return;
-				final Map<String, Object> inputs = new HashMap<>();
-				inputs.put("treeLabels", keys);
-				runCmd(TranslateReconstructionsCmd.class, inputs, CmdWorker.DO_NOTHING);
-			});
-			menu.add(mi);
 			return menu;
 		}
 
@@ -3731,7 +3790,8 @@ public class Viewer3D {
 			final Sphere s = new Sphere();
 			s.setPosition(new Coord3d(center.x, center.y, center.z));
 			final double r = (center instanceof SWCPoint) ? ((SWCPoint) center).radius : center.v;
-			final float radius = (float) Math.max(r, SOMA_SCALING_FACTOR * defThickness);
+			final float treeThickness = (treeSubShape == null) ? defThickness : treeSubShape.getWireframeWidth();
+			final float radius = (float) Math.max(r, SOMA_SCALING_FACTOR * treeThickness);
 			s.setVolume(radius);
 			setWireFrame(s, radius, color);
 			return s;
@@ -3744,6 +3804,11 @@ public class Viewer3D {
 			}
 		}
 
+		public void setSomaRadius(final float radius) {
+			if (somaSubShape != null && somaSubShape instanceof Sphere)
+				((Sphere)somaSubShape).setVolume(radius);
+		}
+	
 		public void setThickness(final float thickness) {
 			treeSubShape.setWireframeWidth(thickness);
 		}

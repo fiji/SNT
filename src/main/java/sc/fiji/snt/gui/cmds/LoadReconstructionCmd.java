@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
@@ -70,6 +71,10 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 		description = "Rendering color of imported file(s)")
 	private ColorRGB color;
 
+	@Parameter(label = "Sub-compartments as separate objects", required = false,
+		description = "If the file contains multiple compartments (e.g., axons, dendrites, soma, etc.), load each one individually.")
+	private boolean splitByType;
+
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
 	private String msg;
 
@@ -88,6 +93,8 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 			fileMitem.setDescription(
 				"<HTML>Path to directory containing multiple files." +
 					"<br>Supported extensions: traces, (e)SWC, json");
+			splitByType = false;
+			resolveInput("splitByType");
 		}
 		else {
 			final MutableModuleItem<String> colorChoiceMitem = getInfo()
@@ -144,10 +151,17 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 		if (file.isFile()) {
 			try {
 				final Tree tree = new Tree(file.getAbsolutePath());
-				tree.setColor(color);
 				if (tree.isEmpty()) cancel(
 					"No Paths could be extracted from file. Invalid path?");
-				recViewer.addTree(tree);
+				tree.setColor(color);
+				final Set<Integer> types = tree.getSWCtypes();
+				if (splitByType && types.size() > 1) {
+					for (final int type : types) {
+						recViewer.addTree(tree.subTree(type));
+					}
+				} else {
+					recViewer.addTree(tree);
+				}
 				recViewer.validate();
 				return;
 			}

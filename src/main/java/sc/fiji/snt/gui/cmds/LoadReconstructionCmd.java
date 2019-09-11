@@ -41,6 +41,7 @@ import org.scijava.widget.FileWidget;
 import net.imagej.ImageJ;
 import sc.fiji.snt.util.SNTColor;
 import sc.fiji.snt.viewer.Viewer3D;
+import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 
@@ -154,14 +155,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 				if (tree.isEmpty()) cancel(
 					"No Paths could be extracted from file. Invalid path?");
 				tree.setColor(color);
-				final Set<Integer> types = tree.getSWCtypes();
-				if (splitByType && types.size() > 1) {
-					for (final int type : types) {
-						recViewer.addTree(tree.subTree(type));
-					}
-				} else {
-					recViewer.addTree(tree);
-				}
+				importTree(tree);
 				recViewer.validate();
 				return;
 			}
@@ -190,7 +184,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 					continue;
 				}
 				tree.setColor((colors == null) ? color : colors[idx++]);
-				recViewer.addTree(tree);
+				importTree(tree);
 			}
 			if (failures == files.length) {
 				error("No files imported. Invalid Directory?");
@@ -201,6 +195,20 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 				" files successfully imported.";
 			msg(msg, (failures == 0) ? "All Reconstructions Imported"
 				: "Partially Successful Import");
+		}
+	}
+
+	private void importTree(final Tree tree) {
+		final Set<Integer> types = tree.getSWCtypes();
+		if (splitByType && types.size() > 1) {
+			final String label = tree.getLabel();
+			for (final int type : types) {
+				final Tree subTree = tree.subTree(type);
+				subTree.setLabel(label + " (" + Path.getSWCtypeName(type, true) + ")");
+				recViewer.addTree(subTree);
+			}
+		} else {
+			recViewer.addTree(tree);
 		}
 	}
 

@@ -52,11 +52,11 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 
 	@Parameter(required = false, label = "First Z-slice",
 		description = "First Z-slice to be considered in the estimation", min = "1")
-	private int minZ = 0;
+	private int minZ;
 
 	@Parameter(required = false, label = "Last Z-slice",
 			description = "Last Z-slice to be considered in the estimation", min = "1")
-	private int maxZ = 0;
+	private int maxZ;
 
 	@Parameter(required = false, label = "Dimmest intensity (approx.)",
 			description = "<HTML>Pixel values below this value are treated as background when<br>"
@@ -117,7 +117,7 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 		if (!snt.isSecondaryImageLoaded()) {
 			resolveInput("imgChoice");
 		}
-		if (minZ == 0 || maxZ == 0) applyDefaults();
+		if (thres == 0) applyDefaults();
 	}
 
 	private void applyDefaults() {
@@ -136,9 +136,10 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 		resolveInput("minZ");
 		resolveInput("maxZ");
 		resolveInput("thres");
-		resolveInput("imgChoice");
-		resolveInput("msg");
 		resolveInput("defaults");
+		resolveInput("imgChoice");
+		resolveInput("SPACER");
+		resolveInput("msg");
 		resolveInput("help");
 		super.error(msg);
 	}

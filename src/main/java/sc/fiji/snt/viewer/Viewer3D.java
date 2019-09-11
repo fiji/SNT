@@ -1164,11 +1164,14 @@ public class Viewer3D {
 	 */
 	public void setVisible(final String label, final boolean visible) {
 		final ShapeTree treeShape = plottedTrees.get(label);
-		if (treeShape != null) treeShape.get().setDisplayed(visible);
+		if (treeShape != null) treeShape.setDisplayed(visible);
 		final DrawableVBO obj = plottedObjs.get(label);
 		if (obj != null) obj.setDisplayed(visible);
 		final AbstractDrawable annot = plottedAnnotations.get(label);
 		if (annot != null) annot.setDisplayed(visible);
+		if (frame != null && frame.managerPanel != null) {
+			frame.managerPanel.setVisible(label, visible);
+		}
 	}
 
 	/**
@@ -2420,6 +2423,17 @@ public class Viewer3D {
 			managerList.setCheckBoxListSelectedIndices(indices);
 		}
 
+		private void setVisible(final String key, final boolean visible) {
+			final int index =  managerModel.indexOf(key);
+			if (index == - 1) return;
+			SwingUtilities.invokeLater(() -> {
+			if (visible)
+				managerList.addCheckBoxListSelectedIndex(index);
+			else
+				managerList.removeCheckBoxListSelectedIndex(index);
+			});
+		}
+
 		private void hide(final Map<String, ?> map) {
 			final List<String> selectedKeys = new ArrayList<String>(getLabelsCheckedInManager());
 			selectedKeys.removeAll(map.keySet());
@@ -3649,8 +3663,8 @@ public class Viewer3D {
 
 		@Override
 		public void setDisplayed(final boolean displayed) {
-			setArborDisplayed(displayed);
-			// setSomaDisplayed(displayed);
+			get();
+			super.setDisplayed(displayed);
 		}
 
 		public void setSomaDisplayed(final boolean displayed) {
@@ -3810,7 +3824,7 @@ public class Viewer3D {
 		}
 	
 		public void setThickness(final float thickness) {
-			treeSubShape.setWireframeWidth(thickness);
+			if (treeSubShape != null) treeSubShape.setWireframeWidth(thickness);
 		}
 
 		private void setArborColor(final ColorRGB color) {
@@ -3818,7 +3832,7 @@ public class Viewer3D {
 		}
 
 		private void setArborColor(final Color color) {
-			treeSubShape.setWireframeColor(color);
+			if (treeSubShape != null) treeSubShape.setWireframeColor(color);
 //			for (int i = 0; i < treeSubShape.size(); i++) {
 //				((LineStrip) treeSubShape.get(i)).setColor(color);
 //			}
@@ -4603,7 +4617,13 @@ public class Viewer3D {
 		final boolean displayed)
 	{
 		plottedTrees.forEach((k, shapeTree) -> {
-			if (labels.contains(k)) setSomaDisplayed(k, displayed);
+			if (labels.contains(k)) {
+				setSomaDisplayed(k, displayed);
+				// if this tree is only composed of soma
+				if (shapeTree.treeSubShape == null) {
+					setVisible(k, displayed);
+				}
+			}
 		});
 	}
 

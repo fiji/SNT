@@ -110,13 +110,21 @@ public class TreeStatistics extends TreeAnalyzer {
 		final double q3 = lastDstats.dStats.getPercentile(75);
 		final double min = lastDstats.dStats.getMin();
 		final double max = lastDstats.dStats.getMax();
-		final double binWidth = 2 * (q3 - q1) / Math.cbrt(n); // Freedman-Diaconis
-																													// rule
-		final int nBins = (int) Math.ceil((max - min) / binWidth);
-
+		int nBins;
+		if (n == 0) {
+			nBins = 1;
+		} else {
+			final double binWidth = 2 * (q3 - q1) / Math.cbrt(n); // Freedman-Diaconis rule
+			if (binWidth == 0) {
+				nBins = (int) Math.round(Math.sqrt(n));
+			} else {
+				nBins = (int) Math.ceil((max - min) / binWidth);
+			}
+			nBins = Math.max(1, nBins);
+		}
 		final HistogramDataset dataset = new HistogramDataset();
 		dataset.setType(HistogramType.RELATIVE_FREQUENCY);
-		dataset.addSeries(measurement, values, Math.max(1, nBins));
+		dataset.addSeries(measurement, values, nBins);
 		final JFreeChart chart = ChartFactory.createHistogram(null, measurement,
 			"Rel. Frequency", dataset);
 
@@ -137,17 +145,20 @@ public class TreeStatistics extends TreeAnalyzer {
 		// Append descriptive label
 		chart.removeLegend();
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Q1: ").append(SNTUtils.formatDouble(q1, 2));
+		final double mean = lastDstats.dStats.getMean();
+		final int nDecimals = (mean < 0.51) ? 3 : 2;
+		sb.append("Q1: ").append(SNTUtils.formatDouble(q1, nDecimals));
 		sb.append("  Median: ").append(SNTUtils.formatDouble(lastDstats.dStats
-			.getPercentile(50), 2));
-		sb.append("  Q3: ").append(SNTUtils.formatDouble(q3, 2));
-		sb.append("  IQR: ").append(SNTUtils.formatDouble(q3 - q1, 2));
+			.getPercentile(50), nDecimals));
+		sb.append("  Q3: ").append(SNTUtils.formatDouble(q3, nDecimals));
+		sb.append("  IQR: ").append(SNTUtils.formatDouble(q3 - q1, nDecimals));
+		sb.append("  Bins: ").append(nBins);
 		sb.append("\nN: ").append(n);
-		sb.append("  Min: ").append(SNTUtils.formatDouble(min, 2));
-		sb.append("  Max: ").append(SNTUtils.formatDouble(max, 2));
+		sb.append("  Min: ").append(SNTUtils.formatDouble(min, nDecimals));
+		sb.append("  Max: ").append(SNTUtils.formatDouble(max, nDecimals));
 		sb.append("  Mean\u00B1").append("SD: ").append(SNTUtils.formatDouble(
-			lastDstats.dStats.getMean(), 2)).append("\u00B1").append(SNTUtils.formatDouble(
-				lastDstats.dStats.getStandardDeviation(), 2));
+			mean, nDecimals)).append("\u00B1").append(SNTUtils.formatDouble(
+				lastDstats.dStats.getStandardDeviation(), nDecimals));
 		final TextTitle label = new TextTitle(sb.toString());
 		label.setFont(label.getFont().deriveFont(Font.PLAIN));
 		label.setPosition(RectangleEdge.BOTTOM);

@@ -207,7 +207,12 @@ public class LocalThicknessCmd extends CommonDynamicCmd {
 		final double binWidth = 2 * iqr / Math.cbrt(n);
 		final double min = da.getMin();
 		final double max = da.getMax();
-		final int nBins = (int) Math.ceil((max - min) / binWidth);
+		final int nBins;
+		if (binWidth == 0) {
+			nBins = (int) Math.round(Math.sqrt(n));
+		} else {
+			nBins = (int) Math.ceil((max - min) / binWidth);
+		}
 		imp.setDisplayRange(min, max);
 		IJ.run(imp, "Histogram", "bins=" + nBins + " x_min=" + min + " x_max=" + max + " y_max=Auto");
 

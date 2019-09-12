@@ -88,6 +88,7 @@ import javax.swing.border.Border;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import org.jzy3d.bridge.awt.FrameAWT;
@@ -3467,10 +3468,10 @@ public class Viewer3D {
 
 		private DefaultMutableTreeNode getNode(final String nodeLabel) {
 			@SuppressWarnings("unchecked")
-			final Enumeration<DefaultMutableTreeNode> e = ((DefaultMutableTreeNode) tree.getModel().getRoot())
+			final Enumeration<TreeNode> e = ((DefaultMutableTreeNode) tree.getModel().getRoot())
 					.depthFirstEnumeration();
 			while (e.hasMoreElements()) {
-				final DefaultMutableTreeNode node = e.nextElement();
+				final DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
 				final AllenCompartment compartment = (AllenCompartment) node.getUserObject();
 				if (nodeLabel.equals(compartment.name())) {
 					return node;

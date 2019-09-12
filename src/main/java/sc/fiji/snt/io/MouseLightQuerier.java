@@ -65,6 +65,8 @@ class MouseLightQuerier {
 	/** The Constant SOMA. */
 	public static final String SOMA = "soma";
 
+	private final static MediaType MEDIA_TYPE = MediaType.parse("application/json");
+
 	private final static String TRACINGS_URL =
 		"https://ml-neuronbrowser.janelia.org/tracings";
 	private final static String GRAPHQL_URL =
@@ -137,9 +139,8 @@ class MouseLightQuerier {
 	private void initialize() {
 		try {
 			final OkHttpClient client = new OkHttpClient();
-			final MediaType mediaType = MediaType.parse("application/json");
-			final RequestBody body = RequestBody.create(mediaType, String.format(
-				GRAPHQL_BODY, publicID));
+			final RequestBody body = RequestBody.create(String.format(
+				GRAPHQL_BODY, publicID), MEDIA_TYPE);
 			final Request request = new Request.Builder().url(GRAPHQL_URL).post(body)
 				.addHeader("Content-Type", "application/json").addHeader(
 					"Cache-Control", "no-cache").build();
@@ -273,9 +274,8 @@ class MouseLightQuerier {
 			"Structure name not recognized: " + structure);
 
 		final OkHttpClient client = new OkHttpClient();
-		final MediaType mediaType = MediaType.parse("application/json");
-		final RequestBody body = RequestBody.create(mediaType, "{\n\"ids\": [\n\"" +
-			structureID + "\"\n]\n}");
+		final RequestBody body = RequestBody.create("{\n\"ids\": [\n\"" +
+			structureID + "\"\n]\n}", MEDIA_TYPE);
 		try {
 			final Request request = new Request.Builder().url(TRACINGS_URL).post(body)
 				.addHeader("Content-Type", "application/json").addHeader(

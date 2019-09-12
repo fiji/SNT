@@ -74,6 +74,7 @@ public class MouseLightLoader {
 	private static final String JSON_URL = "https://ml-neuronbrowser.janelia.org/json";
 	private static final String SWC_URL = "https://ml-neuronbrowser.janelia.org/swc";
 	private static final int MIN_CHARS_IN_VALID_RESPONSE_BODY = 150;
+	private final static MediaType MEDIA_TYPE = MediaType.parse("application/json");
 
 	private final String id;
 	private JSONObject jsonData;
@@ -89,8 +90,7 @@ public class MouseLightLoader {
 
 	private Response getResponse(final String url) throws IOException {
 		final OkHttpClient client = new OkHttpClient();
-		final MediaType mediaType = MediaType.parse("application/json");
-		final RequestBody body = RequestBody.create(mediaType, "{\"ids\": [\"" + id + "\"]}");
+		final RequestBody body = RequestBody.create("{\"ids\": [\"" + id + "\"]}", MEDIA_TYPE);
 		final Request request = new Request.Builder() //
 				.url(url) //
 				.post(body).addHeader("Content-Type", "application/json") //
@@ -402,8 +402,7 @@ public class MouseLightLoader {
 	public static int getNeuronCount() {
 		int count = -1;
 		final OkHttpClient client = new OkHttpClient();
-		final MediaType mediaType = MediaType.parse("application/json");
-		final RequestBody body = RequestBody.create(mediaType, "{\"query\":\"{systemSettings{neuronCount}}\"}");
+		final RequestBody body = RequestBody.create("{\"query\":\"{systemSettings{neuronCount}}\"}", MEDIA_TYPE);
 		final Request request = new Request.Builder() //
 				.url("https://ml-neuronbrowser.janelia.org/graphql") //
 				.post(body) //

@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -265,9 +266,9 @@ public class AllenUtils {
 
 		private DefaultMutableTreeNode getParentNode(final AllenCompartment parentStructure) {
 			@SuppressWarnings("unchecked")
-			final Enumeration<DefaultMutableTreeNode> en = root.depthFirstEnumeration();
+			final Enumeration<TreeNode> en = root.depthFirstEnumeration();
 			while (en.hasMoreElements()) {
-				DefaultMutableTreeNode node = en.nextElement();
+				DefaultMutableTreeNode node = (DefaultMutableTreeNode) en.nextElement();
 				final AllenCompartment structure = (AllenCompartment)node.getUserObject();
 				if (structure.equals(parentStructure)) {
 					return node;

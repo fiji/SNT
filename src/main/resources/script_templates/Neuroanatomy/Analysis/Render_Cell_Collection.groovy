@@ -18,26 +18,11 @@ import sc.fiji.snt.viewer.Viewer3D
  * @author Tiago Ferreira
  */
 
-/** Returns a list of Trees from the SWC files in the specified directory */
-def getSWClist(dir) {
-	list = []
-	dir.eachFileMatch(FileType.ANY, ~/.*.swc/) {
-		tree = Tree.fromFile(it.getAbsolutePath())
-		if (tree) {
-			println("Importing "+ it)
-			list << tree
-		} else {
-			println("Skipping invalid file: "+ it)
-		}
-	}
-	list
-}
-
 // Keep track of current time
 start = new Date()
 
-// Retrieve the Tree list
-trees = getSWClist(dir)
+// Retrieve the list of Trees from the reconstruction files in the directory
+trees = Tree.listFromDir(dir)
 if (trees.isEmpty()) {
 	println("No files found in "+ dir)
 	return
@@ -71,4 +56,3 @@ td = TimeCategory.minus(new Date(), start)
 println("Length range: " + limits[0] + "---" + limits[1])
 println("Rendered " + trees.size() + " files in "+ td)
 println("With Viewer active, Press 'H' for a list of Viewer's shortcuts")
-

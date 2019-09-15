@@ -23,6 +23,7 @@
 package sc.fiji.snt;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -687,7 +688,57 @@ public class Tree {
 	}
 
 	/**
-	 * Saves this Tree to an as SWC file.
+	 * Retrieves a list of {@link Tree}s from reconstruction files stored in a
+	 * common directory.
+	 *
+	 * @param dir the directory containg the reconstruction files (.(e)swc, .traces,
+	 *            .json extension)
+	 * @return the list of imported {@link Tree}s. An empty list is retrieved if
+	 *         {@code dir} is not a valid, readable directory.
+	 */
+	public static List<Tree> listFromDir(final String dir) {
+		return listFromDir(dir, "");
+	}
+
+	/**
+	 * Retrieves a list of {@link Tree}s from reconstruction files stored in a
+	 * common directory matching the specified criteria.
+	 *
+	 * @param dir     the directory containing the reconstruction files (.(e)swc,
+	 *                .traces, .json extension)
+	 * @param pattern the filename substring (case sensitive) to be matched. Only
+	 *                filenames containing {@code pattern} will be imported from the
+	 *                directory
+	 * @return the list of imported {@link Tree}s. An empty list is retrieved if
+	 *         {@code dir} is not a valid, readable directory.
+	 */
+	public static List<Tree> listFromDir(final String dir, final String pattern) {
+		final FileFilter filter = (file) -> {
+			final String name = file.getName();
+			if (!name.contains(pattern))
+				return false;
+			final String lName = name.toLowerCase();
+			return file.canRead() && (lName.endsWith("swc") || lName.endsWith(".traces") || lName.endsWith(".json"));
+		};
+		final List<Tree> trees = new ArrayList<>();
+		final File dirFile = new File(dir);
+		if (!dirFile.isDirectory() || !dirFile.exists() || !dirFile.canRead()) {
+			return trees;
+		}
+		final File treeFiles[] = dirFile.listFiles(filter);
+		if (treeFiles == null || treeFiles.length == 0) {
+			return trees;
+		}
+		for (final File treeFile : treeFiles) {
+			final Tree tree = Tree.fromFile(treeFile.getAbsolutePath());
+			if (tree != null)
+				trees.add(tree);
+		}
+		return trees;
+	}
+
+	/**
+	 * Saves this Tree to an SWC file.
 	 *
 	 * @param filePath the absolute path of the output file. {@code .swc} is
 	 *                 automatically appended if {@code filePath} does not include

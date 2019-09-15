@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -440,8 +441,12 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * @return a reference to the loaded tree, or null if data could no be retrieved
 	 */
 	public Tree demoTree() {
+		return getResourceTree("tests/TreeV.swc");
+	}
+
+	private Tree getResourceTree(final String resourcePath) {
 		final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-		final InputStream is = classloader.getResourceAsStream("tests/TreeV.swc");
+		final InputStream is = classloader.getResourceAsStream(resourcePath);
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);
 		Tree tree;
@@ -475,6 +480,17 @@ public class SNTService extends AbstractService implements ImageJService {
 		final ImagePlus imp = new Opener().openTiff(is, "TreeV.tif");
 		IJ.redirectErrorMessages(redirecting);
 		return imp;
+	}
+
+	public List<Tree> demoTrees() {
+		final String[] cells = {"AA0001", "AA0002", "AA0003", "AA0004"};
+		final List<Tree> trees = new ArrayList<>();
+		for (final String cell : cells) {
+			final Tree tree = getResourceTree("ml/demo-trees/" + cell + ".swc");
+			if (tree != null) tree.setLabel(cell);
+			trees.add(tree);
+		}
+		return trees;
 	}
 
 	/**

@@ -29,15 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import net.imagej.ImageJ;
-import net.imagej.plot.LineStyle;
-import net.imagej.plot.MarkerStyle;
-import net.imagej.plot.PlotService;
-import net.imagej.plot.XYPlot;
-import net.imagej.plot.XYSeries;
-import net.imagej.ui.swing.viewer.plot.jfreechart.XYPlotConverter;
-import net.imglib2.display.ColorTable;
-
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.AxisLocation;
@@ -51,10 +42,18 @@ import org.scijava.plugin.Parameter;
 import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
 
-import sc.fiji.snt.analysis.TreeColorMapper;
+import net.imagej.ImageJ;
+import net.imagej.plot.LineStyle;
+import net.imagej.plot.MarkerStyle;
+import net.imagej.plot.PlotService;
+import net.imagej.plot.XYPlot;
+import net.imagej.plot.XYSeries;
+import net.imagej.ui.swing.viewer.plot.jfreechart.XYPlotConverter;
+import net.imglib2.display.ColorTable;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.util.PointInImage;
 
 /**
@@ -71,10 +70,13 @@ public class Viewer2D extends TreeColorMapper {
 	@Parameter
 	private UIService uiService;
 
-	private XYPlot plot;
+	protected XYPlot plot;
 	private String title;
 	private JFreeChart chart;
 	private ColorRGB defaultColor = new ColorRGB("black");
+	private boolean visibleAxes;
+	private boolean visibleGridLines;
+	private boolean visibleOutline;
 
 	/**
 	 * Instantiates an empty 2D viewer.
@@ -84,6 +86,9 @@ public class Viewer2D extends TreeColorMapper {
 	 */
 	public Viewer2D(final Context context) {
 		super(context);
+		setAxesVisible(true);
+		setGridlinesVisible(true);
+		setOutlineVisible(true);
 	}
 
 	private void addPaths(final ArrayList<Path> paths) {
@@ -142,6 +147,12 @@ public class Viewer2D extends TreeColorMapper {
 		}
 	}
 
+	protected void addColorBarLegend(final String colorTable, final double min,
+			final double max)
+		{
+		addColorBarLegend(getColorTable(colorTable), min, max);
+		}
+
 	/**
 	 * Adds a color bar legend (LUT ramp).
 	 *
@@ -171,15 +182,27 @@ public class Viewer2D extends TreeColorMapper {
 	 * measurement.
 	 */
 	public void addColorBarLegend() {
+		if (min >= max || colorTable == null) {
+			return;
+		}
+		chart = getChart();
+		chart.addSubtitle(getPaintScaleLegend(colorTable, min, max));
+	}
 
-		if (min >= max || colorTable == null) return;
+	protected PaintScaleLegend getPaintScaleLegend(final String colorTable, double min, double max) {
+		return getPaintScaleLegend(getColorTable(colorTable), min, max);
+	}
 
-		final LookupPaintScale paintScale = new LookupPaintScale(min, max,
-			Color.BLACK);
+	protected PaintScaleLegend getPaintScaleLegend(final ColorTable colorTable, double min, double max) {
+
+		if (min >= max || colorTable == null) {
+			throw new IllegalArgumentException("Invalid scale: min must be smaller than max and colorTable not null");
+		}
+
+		final LookupPaintScale paintScale = new LookupPaintScale(min, max, Color.BLACK);
 		for (int i = 0; i < colorTable.getLength(); i++) {
-			final Color color = new Color(colorTable.get(ColorTable.RED, i),
-				colorTable.get(ColorTable.GREEN, i), colorTable.get(ColorTable.BLUE,
-					i));
+			final Color color = new Color(colorTable.get(ColorTable.RED, i), colorTable.get(ColorTable.GREEN, i),
+					colorTable.get(ColorTable.BLUE, i));
 			final double value = i * (max - min) / colorTable.getLength();
 			paintScale.add(value, color);
 		}
@@ -190,12 +213,12 @@ public class Viewer2D extends TreeColorMapper {
 			numberAxis.setNumberFormatOverride(new DecimalFormat("#"));
 		}
 		final PaintScaleLegend psl = new PaintScaleLegend(paintScale, numberAxis);
+		psl.setBackgroundPaint(null); // transparent
 		psl.setPosition(RectangleEdge.RIGHT);
 		psl.setAxisLocation(AxisLocation.TOP_OR_RIGHT);
 		psl.setHorizontalAlignment(HorizontalAlignment.CENTER);
 		psl.setMargin(50, 5, 50, 5);
-		chart = getChart();
-		chart.addSubtitle(psl);
+		return psl;
 	}
 
 	/**
@@ -315,7 +338,17 @@ public class Viewer2D extends TreeColorMapper {
 				uiService.show((title == null) ? "SNT Path Plot" : title, plot);
 			}
 			else {
+				((org.jfree.chart.plot.XYPlot)chart.getPlot()).getDomainAxis().setVisible(visibleAxes);
+				((org.jfree.chart.plot.XYPlot)chart.getPlot()).getRangeAxis().setVisible(visibleAxes);
+				((org.jfree.chart.plot.XYPlot)chart.getPlot()).setDomainGridlinesVisible(visibleGridLines);
+				((org.jfree.chart.plot.XYPlot)chart.getPlot()).setRangeGridlinesVisible(visibleGridLines);
+				((org.jfree.chart.plot.XYPlot)chart.getPlot()).setOutlineVisible(visibleOutline);
+				((org.jfree.chart.plot.XYPlot)chart.getPlot()).setOutlineVisible(visibleOutline);
 				final ChartFrame frame = new ChartFrame(title, chart);
+				chart.setBackgroundPaint(null); // transparent
+				chart.getPlot().setBackgroundPaint(null); // transparent
+				frame.getChartPanel().setBackground(null); // transparent
+				frame.setBackground(Color.WHITE);
 				frame.setPreferredSize(new Dimension(600, 450));
 				frame.pack();
 				frame.setVisible(true);
@@ -367,6 +400,19 @@ public class Viewer2D extends TreeColorMapper {
 		getPlot(true);
 	}
 
+
+	public void setGridlinesVisible(final boolean visible) {
+		visibleGridLines = visible;
+	}
+
+	public void setAxesVisible(final boolean visible) {
+		visibleAxes = visible;
+	}
+
+	public void setOutlineVisible(final boolean visible) {
+		visibleOutline = visible;
+	}
+
 	/* IDE debug method */
 	public static void main(final String... args) {
 		final ImageJ ij = new ImageJ();
@@ -380,6 +426,7 @@ public class Viewer2D extends TreeColorMapper {
 		}
 		pplot.addTrees(trees, "Ice.lut");
 		pplot.addColorBarLegend();
+		pplot.setOutlineVisible(false);
 		pplot.showPlot();
 	}
 

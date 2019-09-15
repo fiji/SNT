@@ -129,9 +129,11 @@ public class TreeStatistics extends TreeAnalyzer {
 			"Rel. Frequency", dataset);
 
 		// Customize plot
-		final Color bColor = Color.WHITE; // SNTColor.alphaColor(Color.WHITE, 100);
+		final Color bColor = null; //Color.WHITE; make graph transparent so that it can be exported without background
 		final XYPlot plot = chart.getXYPlot();
 		plot.setBackgroundPaint(bColor);
+		plot.setDomainGridlinesVisible(false);
+		plot.setRangeGridlinesVisible(false);
 		final XYBarRenderer bar_renderer = (XYBarRenderer) plot.getRenderer();
 		bar_renderer.setBarPainter(new StandardXYBarPainter());
 		bar_renderer.setDrawBarOutline(true);
@@ -164,7 +166,9 @@ public class TreeStatistics extends TreeAnalyzer {
 		label.setPosition(RectangleEdge.BOTTOM);
 		chart.addSubtitle(label);
 		final ChartFrame frame = new ChartFrame("Hist. " + tree.getLabel(), chart);
+		frame.getChartPanel().setBackground(bColor);
 		frame.setPreferredSize(new Dimension(400, 400));
+		frame.setBackground(Color.WHITE); // provided contrast to otherwise transparent background
 		frame.pack();
 		return frame;
 	}

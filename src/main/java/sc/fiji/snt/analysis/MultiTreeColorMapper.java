@@ -24,7 +24,11 @@ package sc.fiji.snt.analysis;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+
+import org.scijava.Context;
 
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
@@ -32,6 +36,8 @@ import net.imglib2.display.ColorTable;
 
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.viewer.MultiViewer2D;
+import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.viewer.Viewer3D;
 
 /**
@@ -70,7 +76,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 		ID, TOTAL_LENGTH, TOTAL_N_BRANCH_POINTS, TOTAL_N_TIPS, ROOT_NUMBER//
 	};
 
-	private final Collection<MappedTree> mappedTrees;
+	private final List<MappedTree> mappedTrees;
 	private int internalCounter = 1;
 
 	/**
@@ -127,6 +133,18 @@ public class MultiTreeColorMapper extends ColorMapper {
 		}
 	}
 
+	public List<Tree> sortedMappedTrees() {
+		Collections.sort(mappedTrees, new Comparator<MappedTree>() {
+			@Override
+			public int compare(final MappedTree t1, final MappedTree t2) {
+				return Double.compare(t1.value, t2.value);
+			}
+		});
+		final List<Tree> sortedTrees = new ArrayList<>(mappedTrees.size());
+		mappedTrees.forEach(mp -> sortedTrees.add(mp.tree));
+		return sortedTrees;
+	}
+
 	private void assignMinMax() {
 		if (Double.isNaN(min) || Double.isNaN(max) || min > max) {
 			min = Double.MAX_VALUE;
@@ -136,6 +154,19 @@ public class MultiTreeColorMapper extends ColorMapper {
 				if (mt.value > max) max = mt.value;
 			}
 		}
+	}
+
+	public MultiViewer2D getMultiViewer() {
+		final List<Viewer2D> viewers = new ArrayList<>(mappedTrees.size());
+		sortedMappedTrees().forEach(tree -> {
+			final Viewer2D viewer = new Viewer2D(new Context());
+			viewer.addTree(tree);
+			viewers.add(viewer);
+		});
+		final MultiViewer2D multiViewer = new MultiViewer2D(viewers);
+		if (colorTable != null && !mappedTrees.isEmpty())
+			multiViewer.setColorBarLegend(colorTable, min, max);
+		return multiViewer;
 	}
 
 	private class MappedTree {

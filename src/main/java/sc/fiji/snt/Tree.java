@@ -44,6 +44,7 @@ import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.util.SWCPoint;
 import sholl.UPoint;
 import sc.fiji.snt.analysis.TreeStatistics;
@@ -68,7 +69,7 @@ public class Tree {
 
 	private ArrayList<Path> tree;
 	private String label;
-	private BoundingBox box;
+	private TreeBoundingBox box;
 	private PathAndFillManager pafm;
 
 	/**
@@ -379,6 +380,30 @@ public class Tree {
 	}
 
 	/**
+	 * Gets the first node of the main primary path of this tree
+	 *
+	 * @return the root node, or null if the main primary path is undefined for this
+	 *         tree.
+	 */
+	public PointInImage getRoot() {
+		Path rootPath = get(0);
+		if (!rootPath.isPrimary()) { // how would this ever happen?
+			rootPath = null;
+			for (final Path p : list()) {
+				if (p.isPrimary()) {
+					rootPath = p;
+					break;
+				}
+			}
+		}
+		return (rootPath == null) ? null : rootPath.getNode(0);
+	}
+
+	public SNTPoint getCentroid() {
+		return SNTPoint.average(getNodes());
+	}
+
+	/**
 	 * Specifies the offset to be used when rendering this Path in a
 	 * {@link TracerCanvas}. Path coordinates remain unaltered.
 	 *
@@ -410,6 +435,14 @@ public class Tree {
 				p.precise_z_positions[node] += zOffset;
 			}
 		});
+		if (box != null) {
+			box.origin().x += xOffset;
+			box.origin().y += yOffset;
+			box.origin().z += zOffset;
+			box.originOpposite().x += xOffset;
+			box.originOpposite().y += yOffset;
+			box.originOpposite().z += zOffset;
+		}
 	}
 
 	/**
@@ -429,6 +462,14 @@ public class Tree {
 				p.precise_z_positions[node] *= zScale;
 			}
 		});
+		if (box != null) {
+			box.origin().x *= xScale;
+			box.origin().y *= yScale;
+			box.origin().z *= zScale;
+			box.originOpposite().x *= xScale;
+			box.originOpposite().y *= yScale;
+			box.originOpposite().z *= zScale;
+		}
 	}
 
 	/**
@@ -479,6 +520,7 @@ public class Tree {
 			default:
 				throw new IllegalArgumentException("Unrecognized rotation axis" + axis);
 		}
+		if (box != null) box.setComputationNeeded(true);
 	}
 
 	/**
@@ -515,7 +557,16 @@ public class Tree {
 	 *          with this tree
 	 */
 	public void setBoundingBox(final BoundingBox box) {
-		this.box = box;
+		this.box = (box == null) ? null : new TreeBoundingBox(box);
+	}
+
+	/**
+	 * Gets the bounding box associated with this tree.
+	 *
+	 * @return the BoundingBox. It will be computed if no boundaries have been set.
+	 */
+	public BoundingBox getBoundingBox() {
+		return getBoundingBox(box == null);
 	}
 
 	/**
@@ -527,10 +578,9 @@ public class Tree {
 	 * @return the BoundingBox
 	 */
 	public BoundingBox getBoundingBox(final boolean computeIfUnset) {
-		if (box == null && computeIfUnset) {
-			box = new BoundingBox();
-			box.compute(getPoints().iterator());
-		}
+		final boolean compute = computeIfUnset || box.isComputationNeeded();
+		if (compute && box == null) box = new TreeBoundingBox();
+		if (compute) box.compute(getPoints().iterator());
 		return box;
 	}
 
@@ -769,5 +819,33 @@ public class Tree {
 		clone.setBoundingBox(box);
 		for (final Path path : list()) clone.add(path.clone());
 		return clone;
+	}
+	
+	private class TreeBoundingBox extends BoundingBox {
+
+		private boolean dimensionsNeedToBeComputed;
+
+		private TreeBoundingBox(final BoundingBox box) {
+			this.origin = box.origin();
+			this.originOpposite = box.originOpposite();
+			this.xSpacing = box.xSpacing;
+			this.ySpacing = box.ySpacing;
+			this.zSpacing = box.zSpacing;
+			this.info = box.info;
+			this.spacingUnit = box.getUnit();
+		}
+
+		private TreeBoundingBox() {
+			super();
+		}
+
+		private void setComputationNeeded(final boolean bool) {
+			dimensionsNeedToBeComputed = bool;
+			if (bool) reset();
+		}
+
+		private boolean isComputationNeeded() {
+			return dimensionsNeedToBeComputed;
+		}
 	}
 }

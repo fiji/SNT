@@ -57,22 +57,27 @@ public class BoundingBox {
 	/** Used to store information about this bounding box. Default is null */
 	public String info = null;
 
-	private String spacingUnit = DEF_SPACING_UNIT;
+	protected String spacingUnit = DEF_SPACING_UNIT;
 
 	/** The bounding box origin (SE, lower left corner) */
-	private PointInImage origin = new PointInImage(Double.NaN, Double.NaN,
-		Double.NaN);
+	protected PointInImage origin;
 
 	/** The origin opposite (NW, upper right corner of bounding box) */
-	private PointInImage originOpposite = new PointInImage(Double.NaN, Double.NaN,
-		Double.NaN);
+	protected PointInImage originOpposite;
 
 	/**
 	 * Constructs an 'empty' BoundingBox using default values, with the box origin
 	 * defined as a point with {@link Double#NaN} coordinates and
 	 * {@link Double#NaN} dimensions
 	 */
-	public BoundingBox() {}
+	public BoundingBox() {
+		reset();
+	}
+
+	protected void reset() {
+		origin = new PointInImage(Double.NaN, Double.NaN, Double.NaN);
+		originOpposite = new PointInImage(Double.NaN, Double.NaN, Double.NaN);
+	}
 
 	/**
 	 * Sets the voxel spacing.
@@ -108,6 +113,12 @@ public class BoundingBox {
 			if (point.getZ() < origin.z) origin.z = point.getZ();
 			else if (point.getZ() > originOpposite.z) originOpposite.z = point.getZ();
 		});
+	}
+
+	public SNTPoint getCentroid() {
+		return new PointInImage((origin.x + originOpposite.x) / 2,
+				(origin.y + originOpposite.y) / 2,
+				(origin.z + originOpposite.z) / 2);
 	}
 
 	/**
@@ -235,6 +246,25 @@ public class BoundingBox {
 	}
 
 	/**
+	 * Retrieves the origin of this box.
+	 *
+	 * @return the origin
+	 */
+	public PointInImage origin() {
+		return origin;
+	}
+
+	/**
+	 * Retrieves the origin opposite of this box.
+	 *
+	 * @return the origin
+	 */
+	public PointInImage originOpposite() {
+		return originOpposite;
+	}
+
+
+	/**
 	 * Retrieves the origin of this box in unscaled ("pixel" units)
 	 *
 	 * @return the unscaled origin
@@ -242,6 +272,28 @@ public class BoundingBox {
 	public PointInImage unscaledOrigin() {
 		return new PointInImage(origin.x / xSpacing, origin.y / ySpacing, origin.z /
 			zSpacing);
+	}
+
+	/**
+	 * Retrieves the origin opposite of this box in unscaled ("pixel" units)
+	 *
+	 * @return the unscaled origin opposite
+	 */
+	public PointInImage unscaledOriginOpposite() {
+		return new PointInImage(originOpposite.x / xSpacing, originOpposite.y / ySpacing, originOpposite.z /
+			zSpacing);
+	}
+
+	public double width() {
+		return originOpposite.x - origin.x;
+	}
+
+	public double height() {
+		return originOpposite.y - origin.y;
+	}
+
+	public double depth() {
+		return originOpposite.z - origin.z;
 	}
 
 	/**
@@ -290,4 +342,16 @@ public class BoundingBox {
 		return originOpposite.equals(box.originOpposite);
 	}
 
+	@Override
+	public BoundingBox clone() {
+		final BoundingBox clone = new BoundingBox();
+		clone.origin = this.origin;
+		clone.originOpposite = this.originOpposite;
+		clone.xSpacing = this.xSpacing;
+		clone.ySpacing = this.ySpacing;
+		clone.zSpacing = this.zSpacing;
+		clone.info = this.info;
+		clone.spacingUnit = this.spacingUnit;
+		return clone;
+	}
 }

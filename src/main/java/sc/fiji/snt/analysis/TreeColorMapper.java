@@ -50,6 +50,7 @@ import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.sholl.TreeParser;
 import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.viewer.MultiViewer2D;
 import sc.fiji.snt.viewer.Viewer2D;
 
 /**
@@ -94,6 +95,7 @@ public class TreeColorMapper extends ColorMapper {
 	protected ArrayList<Path> paths;
 	private Map<String, URL> luts;
 	private int internalCounter = 1;
+	private final List<Tree> mappedTrees;
 
 	/**
 	 * Instantiates the Colorizer.
@@ -102,6 +104,7 @@ public class TreeColorMapper extends ColorMapper {
 	 *          required by the class
 	 */
 	public TreeColorMapper(final Context context) {
+		this();
 		context.inject(this);
 	}
 
@@ -110,7 +113,9 @@ public class TreeColorMapper extends ColorMapper {
 	 * any context, script-friendly methods that use string as arguments may fail
 	 * to retrieve referenced Scijava objects.
 	 */
-	public TreeColorMapper() {}
+	public TreeColorMapper() {
+		mappedTrees = new ArrayList<>();
+	}
 
 	private void initLuts() {
 		if (luts == null) luts = lutService.findLUTs();
@@ -375,6 +380,7 @@ public class TreeColorMapper extends ColorMapper {
 				}
 			}
 		}
+		mappedTrees.add(tree);
 	}
 
 	/**
@@ -391,6 +397,7 @@ public class TreeColorMapper extends ColorMapper {
 	{
 		this.paths = tree.list();
 		mapToProperty(measurement, colorTable);
+		mappedTrees.add(tree);
 	}
 
 	/**
@@ -418,6 +425,7 @@ public class TreeColorMapper extends ColorMapper {
 			map(it.next(), INTERNAL_COUNTER, lut);
 			internalCounter = it.nextIndex();
 		}
+		mappedTrees.addAll(trees);
 	}
 
 	/**
@@ -428,6 +436,19 @@ public class TreeColorMapper extends ColorMapper {
 	public Set<String> getAvalailableLuts() {
 		initLuts();
 		return luts.keySet();
+	}
+
+	public MultiViewer2D getMultiViewer() {
+		final List<Viewer2D> viewers = new ArrayList<>(mappedTrees.size());
+		mappedTrees.forEach(tree -> {
+			final Viewer2D viewer = new Viewer2D(new Context());
+			viewer.addTree(tree);
+			viewers.add(viewer);
+		});
+		final MultiViewer2D multiViewer = new MultiViewer2D(viewers);
+		if (colorTable != null && !mappedTrees.isEmpty())
+			multiViewer.setColorBarLegend(colorTable, min, max);
+		return multiViewer;
 	}
 
 	private class MappedPath {

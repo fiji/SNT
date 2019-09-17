@@ -41,6 +41,7 @@ import org.scijava.Context;
 import org.scijava.plugin.Parameter;
 import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
+import org.scijava.util.Colors;
 
 import net.imagej.ImageJ;
 import net.imagej.plot.LineStyle;
@@ -51,10 +52,11 @@ import net.imagej.plot.XYSeries;
 import net.imagej.ui.swing.viewer.plot.jfreechart.XYPlotConverter;
 import net.imglib2.display.ColorTable;
 import sc.fiji.snt.Path;
-import sc.fiji.snt.SNTUtils;
+import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SNTPoint;
 
 /**
  * Class for rendering {@link Tree}s as 2D plots that can be exported as SVG,
@@ -418,15 +420,12 @@ public class Viewer2D extends TreeColorMapper {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Viewer2D pplot = new Viewer2D(ij.context());
-		final List<Tree> trees = new ArrayList<>();
-		for (int i = 0; i < 10; i++) {
-			final Tree tree = new Tree(SNTUtils.randomPaths());
-			tree.rotate(Tree.Z_AXIS, i * 20);
-			trees.add(tree);
-		}
-		pplot.addTrees(trees, "Ice.lut");
-		pplot.addColorBarLegend();
-		pplot.setOutlineVisible(false);
+		final Tree tree = new SNTService().demoTree();
+		tree.rotate(Tree.Z_AXIS, 180);
+		final SNTPoint root = tree.getRoot();
+		tree.translate(-root.getX(), -root.getY(), -root.getZ());
+		pplot.addTree(tree, Colors.RED);
+		pplot.setOutlineVisible(true);
 		pplot.showPlot();
 	}
 

@@ -47,13 +47,14 @@ import org.jfree.chart.title.PaintScaleLegend;
 import org.scijava.Context;
 import org.scijava.ui.UIService;
 
-import net.imagej.display.ColorTables;
+import net.imagej.ImageJ;
 import net.imagej.lut.LUTService;
 import net.imagej.plot.PlotService;
 import net.imglib2.display.ColorTable;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
-import sc.fiji.snt.analysis.MultiTreeColorMapper;
+import sc.fiji.snt.analysis.TreeColorMapper;
+import sc.fiji.snt.util.PointInImage;
 
 /**
  * Class for rendering {@link Tree}s as 2D plots that can be exported as SVG,
@@ -145,6 +146,7 @@ public class MultiViewer2D {
 
 	public JFrame show() {
 		frame = getJFrame();
+		frame.setTitle("Multi-Pane Reconstruction Plotter");
 		frame.setVisible(true);
 		return frame;
 	}
@@ -236,10 +238,15 @@ public class MultiViewer2D {
 
 	/* IDE debug method */
 	public static void main(final String... args) {
+		final ImageJ ij = new ImageJ();
 		final List<Tree> trees = new SNTService().demoTrees();
-		trees.forEach(tree -> tree.rotate(Tree.X_AXIS, 180));
-		final MultiTreeColorMapper mapper = new MultiTreeColorMapper(trees);
-		mapper.map(MultiTreeColorMapper.TOTAL_N_BRANCH_POINTS, ColorTables.ICE);
+		TreeColorMapper mapper = new TreeColorMapper(ij.context());
+		for (Tree tree : trees) {
+			tree.rotate(Tree.Z_AXIS, 210);
+			final PointInImage root = tree.getRoot();
+			tree.translate(-root.getX(), -root.getY(), -root.getZ());
+			mapper.map(tree, TreeColorMapper.TAG_FILENAME, "Ice.lut");
+		}
 		final MultiViewer2D viewer = mapper.getMultiViewer();
 		viewer.setLayoutColumns(2);
 		viewer.setGridlinesVisible(false);

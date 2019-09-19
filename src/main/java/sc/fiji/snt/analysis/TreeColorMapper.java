@@ -121,7 +121,7 @@ public class TreeColorMapper extends ColorMapper {
 		if (luts == null) luts = lutService.findLUTs();
 	}
 
-	protected ColorTable getColorTable(final String lut) {
+	public ColorTable getColorTable(final String lut) {
 		initLuts();
 		for (final Map.Entry<String, URL> entry : luts.entrySet()) {
 			if (entry.getKey().contains(lut)) {

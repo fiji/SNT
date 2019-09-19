@@ -23,14 +23,11 @@
 package sc.fiji.snt.viewer;
 
 import java.awt.GridLayout;
-import java.awt.color.ColorSpace;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -39,20 +36,20 @@ import org.jfree.chart.ChartFrame;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.CombinedRangeXYPlot;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.title.ImageTitle;
 import org.jfree.chart.title.PaintScaleLegend;
+import org.jfree.chart.ui.RectangleEdge;
 import org.scijava.Context;
-import org.scijava.ui.UIService;
 
-import net.imagej.ImageJ;
+import net.imagej.display.ColorTables;
 import net.imagej.lut.LUTService;
-import net.imagej.plot.PlotService;
 import net.imglib2.display.ColorTable;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.analysis.MultiTreeColorMapper;
 import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.util.PointInImage;
 
@@ -69,11 +66,12 @@ public class MultiViewer2D {
 	private int gridCols;
 	private Viewer2D colorLegendViewer;
 	private PaintScaleLegend legend;
-	private ImageTitle legendSpacer;
 	private JFrame frame;
 	private boolean gridVisible;
 	private boolean axesVisible;
 	private boolean outlineVisible;
+	private double legendMin = Double.MAX_VALUE;
+	private double legendMax = Double.MIN_VALUE;
 
 	public MultiViewer2D(final List<Viewer2D> viewers) {
 		if (viewers == null)
@@ -90,10 +88,10 @@ public class MultiViewer2D {
 	}
 
 	public void setLayoutColumns(final int cols) {
-		if (cols < 0) {
+		if (cols <= 0) {
 			guessLayout();
 		} else {
-			gridCols = cols;
+			gridCols = Math.min(cols, viewers.size());
 		}
 	}
 
@@ -109,20 +107,31 @@ public class MultiViewer2D {
 		outlineVisible = visible;
 	}
 
-	public void setColorBarLegend(final ColorTable colorTable, final double min, final double max) {
-		colorLegendViewer = viewers.get(viewers.size() - 1);
-		final Viewer2D colorLegendViewer = new Viewer2D(
-				new Context(PlotService.class, LUTService.class, UIService.class));
-		legend = colorLegendViewer.getPaintScaleLegend(colorTable, min, max);
-		legendSpacer = getLegendSpacer(legend);
+	public void setColorBarLegend(final String lut, final double min, final double max) {
+		final TreeColorMapper lutRetriever = new TreeColorMapper(new Context(LUTService.class));
+		final ColorTable colorTable = lutRetriever.getColorTable(lut);
+		setColorBarLegend(colorTable, min, max);
 	}
 
-	public void setColorBarLegend(final String colorTable, final double min, final double max) {
+	public void setColorBarLegend(final ColorTable colorTable, final double min, final double max) {
+		if (colorTable == null || viewers == null) {
+			throw new IllegalArgumentException("Cannot set legend from null viewers or null colorTable");
+		}
+		if (min >=max) {
+			legendMin = Double.MAX_VALUE;
+			legendMax = Double.MIN_VALUE;
+			for (Viewer2D viewer: viewers) {
+				final double[] minMax = viewer.getMinMax();
+				legendMin = Math.min(minMax[0], legendMin);
+				legendMax = Math.max(minMax[1], legendMax);
+			}
+			if (min >= max) return; //range determination failed. Do not add legend
+		} else {
+			legendMin = min;
+			legendMax = max;
+		}
 		colorLegendViewer = viewers.get(viewers.size() - 1);
-		final Viewer2D colorLegendViewer = new Viewer2D(
-				new Context(PlotService.class, LUTService.class, UIService.class));
-		legend = colorLegendViewer.getPaintScaleLegend(colorTable, min, max);
-		legendSpacer = getLegendSpacer(legend);
+		legend = colorLegendViewer.getPaintScaleLegend(colorTable, legendMin, legendMax);
 	}
 
 	public void save(final String filePath) {
@@ -184,7 +193,7 @@ public class MultiViewer2D {
 		return frame;
 	}
 
-	private JFreeChart getMergedChart(final Collection<Viewer2D> viewers, final String style) {
+	private JFreeChart getMergedChart(final List<Viewer2D> viewers, final String style) {
 		JFreeChart result;
 		if (style != null && style.toLowerCase().startsWith("c")) { // column
 			final CombinedRangeXYPlot mergedPlot = new CombinedRangeXYPlot();
@@ -205,27 +214,17 @@ public class MultiViewer2D {
 			}
 			result = new JFreeChart(null, mergedPlot);
 		}
-		if (legend != null && legendSpacer != null) {
-			if (viewers.contains(colorLegendViewer)) {
-				result.addSubtitle(legend);
+		if (legend != null && viewers.contains(colorLegendViewer)) {
+			if (gridCols >= this.viewers.size()) {
+				legend.setPosition(RectangleEdge.RIGHT);
+				legend.setMargin(50, 5, 50, 5);
 			} else {
-				result.addSubtitle(legendSpacer);
+				legend.setPosition(RectangleEdge.BOTTOM);
+				legend.setMargin(5, 50, 5, 50);
 			}
+			result.addSubtitle(legend);
 		}
 		return result;
-	}
-
-	private ImageTitle getLegendSpacer(final PaintScaleLegend legend) {
-		final int LEGEND_BAR_WIDTH = 35; // HACK: empirically determined!
-		final ImageTitle spacer = new ImageTitle(new BufferedImage(LEGEND_BAR_WIDTH, 2, ColorSpace.TYPE_RGB));
-		spacer.setVisible(legend.isVisible());
-		spacer.setPosition(legend.getPosition());
-		spacer.setBounds(legend.getBounds());
-		spacer.setMargin(legend.getMargin());
-		spacer.setPadding(legend.getPadding());
-		spacer.setWidth(legend.getWidth());
-		spacer.setHeight(legend.getHeight());
-		return spacer;
 	}
 
 	private ChartPanel getChartPanel(final JFreeChart chart) {
@@ -238,17 +237,20 @@ public class MultiViewer2D {
 
 	/* IDE debug method */
 	public static void main(final String... args) {
-		final ImageJ ij = new ImageJ();
 		final List<Tree> trees = new SNTService().demoTrees();
-		TreeColorMapper mapper = new TreeColorMapper(ij.context());
-		for (Tree tree : trees) {
+		for (final Tree tree : trees) {
 			tree.rotate(Tree.Z_AXIS, 210);
 			final PointInImage root = tree.getRoot();
 			tree.translate(-root.getX(), -root.getY(), -root.getZ());
-			mapper.map(tree, TreeColorMapper.TAG_FILENAME, "Ice.lut");
 		}
+
+		// Color code each cell and assign a hue ramp to the group
+		MultiTreeColorMapper mapper = new MultiTreeColorMapper(trees);
+		mapper.map(MultiTreeColorMapper.TOTAL_LENGTH, ColorTables.FIRE);
+
+		// Assemble a multi-panel Viewer2D from the color mapper
 		final MultiViewer2D viewer = mapper.getMultiViewer();
-		viewer.setLayoutColumns(2);
+		viewer.setLayoutColumns(0);
 		viewer.setGridlinesVisible(false);
 		viewer.setOutlineVisible(false);
 		viewer.setAxesVisible(false);

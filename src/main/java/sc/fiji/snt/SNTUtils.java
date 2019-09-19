@@ -219,6 +219,10 @@ public class SNTUtils {
 	}
 
 	public static String formatDouble(final double value, final int digits) {
+		return getDecimalFormat(value, digits).format(value);
+	}
+
+	public static DecimalFormat getDecimalFormat(final double value, final int digits) {
 		StringBuilder pattern = new StringBuilder("0.");
 		while (pattern.length() < digits + 2)
 			pattern.append("0");
@@ -226,8 +230,7 @@ public class SNTUtils {
 		if ((absValue > 0 && absValue < 0.01) || absValue >= 1000) pattern.append("E0");
 		final NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
 		final DecimalFormat df = (DecimalFormat)nf;
-		df.applyPattern(pattern.toString());
-		return df.format(value);
+		return df;
 	}
 
 	/**

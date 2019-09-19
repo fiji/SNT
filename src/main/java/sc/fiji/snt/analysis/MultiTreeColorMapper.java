@@ -164,8 +164,15 @@ public class MultiTreeColorMapper extends ColorMapper {
 			viewers.add(viewer);
 		});
 		final MultiViewer2D multiViewer = new MultiViewer2D(viewers);
-		if (colorTable != null && !mappedTrees.isEmpty())
-			multiViewer.setColorBarLegend(colorTable, min, max);
+		if (colorTable != null && !mappedTrees.isEmpty()) {
+			double groupMin = Double.MAX_VALUE;
+			double groupMax = Double.MIN_VALUE;
+			for (final MappedTree mt : mappedTrees) {
+				if (mt.value < groupMin) groupMin = mt.value;
+				if (mt.value > groupMax) groupMax = mt.value;
+			}
+			multiViewer.setColorBarLegend(colorTable, groupMin, groupMax);
+		}
 		return multiViewer;
 	}
 

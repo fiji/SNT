@@ -53,6 +53,7 @@ import net.imagej.ui.swing.viewer.plot.jfreechart.XYPlotConverter;
 import net.imglib2.display.ColorTable;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
+import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.util.PointInImage;
@@ -196,16 +197,15 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	protected PaintScaleLegend getPaintScaleLegend(final ColorTable colorTable, double min, double max) {
-
 		if (min >= max || colorTable == null) {
 			throw new IllegalArgumentException("Invalid scale: min must be smaller than max and colorTable not null");
 		}
-
 		final LookupPaintScale paintScale = new LookupPaintScale(min, max, Color.BLACK);
 		for (int i = 0; i < colorTable.getLength(); i++) {
 			final Color color = new Color(colorTable.get(ColorTable.RED, i), colorTable.get(ColorTable.GREEN, i),
 					colorTable.get(ColorTable.BLUE, i));
-			final double value = i * (max - min) / colorTable.getLength();
+
+			final double value = min + (i * (max - min)  / colorTable.getLength());
 			paintScale.add(value, color);
 		}
 
@@ -213,7 +213,12 @@ public class Viewer2D extends TreeColorMapper {
 		if (integerScale) {
 			numberAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
 			numberAxis.setNumberFormatOverride(new DecimalFormat("#"));
+		} else {
+			numberAxis.setNumberFormatOverride(SNTUtils.getDecimalFormat(max, 2));
 		}
+		numberAxis.setAutoRangeIncludesZero(min <=0 && max >= 0);
+		numberAxis.setRange(min, max);
+		numberAxis.centerRange((max+min)/2);
 		final PaintScaleLegend psl = new PaintScaleLegend(paintScale, numberAxis);
 		psl.setBackgroundPaint(null); // transparent
 		psl.setPosition(RectangleEdge.RIGHT);

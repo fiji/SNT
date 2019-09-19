@@ -24,7 +24,7 @@ from sc.fiji.snt.annotation import (AllenCompartment, AllenUtils, VFBUtils, ZBAt
 from sc.fiji.snt.io import (FlyCircuitLoader, MouseLightLoader, NeuroMorphoLoader)
 from sc.fiji.snt.plugin import (SkeletonizerCmd, StrahlerCmd)
 from sc.fiji.snt.util import (BoundingBox, PointInImage, SNTColor, SWCPoint)
-from sc.fiji.snt.viewer import (Annotation3D, OBJMesh, Viewer2D, Viewer3D)
+from sc.fiji.snt.viewer import (Annotation3D, OBJMesh, MultiViewer2D, Viewer2D, Viewer3D)
 
 # Documentation Resources: https://imagej.net/SNT:_Scripting
 # SNT API: https://javadoc.scijava.org/Fiji/index.html?sc/fiji/snt/package-summary.html

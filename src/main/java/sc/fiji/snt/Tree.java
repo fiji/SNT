@@ -771,6 +771,7 @@ public class Tree {
 			return file.canRead() && (lName.endsWith("swc") || lName.endsWith(".traces") || lName.endsWith(".json"));
 		};
 		final List<Tree> trees = new ArrayList<>();
+		if (dir == null) return trees;
 		final File dirFile = new File(dir);
 		if (!dirFile.isDirectory() || !dirFile.exists() || !dirFile.canRead()) {
 			return trees;

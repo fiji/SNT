@@ -395,9 +395,34 @@ public class TreeColorMapper extends ColorMapper {
 	public void map(final Tree tree, final String measurement,
 		final ColorTable colorTable)
 	{
-		this.paths = tree.list();
-		mapToProperty(measurement, colorTable);
-		mappedTrees.add(tree);
+		try {
+			this.paths = tree.list();
+			mapToProperty(measurement, colorTable);
+			mappedTrees.add(tree);
+		} catch (final IllegalArgumentException ignored) {
+			final String educatedGuess = tryReallyHardToGuessMetric(measurement);
+			System.out.println("Mapping to \""+ measurement +"\" failed. Assuming \""+ educatedGuess+"\"");
+			if ("unknown".equals(educatedGuess))
+				throw new IllegalArgumentException("Unknown parameter: "+ measurement);
+			else {
+				mapToProperty(educatedGuess, colorTable);
+				mappedTrees.add(tree);
+			}
+		}
+	}
+
+	private String tryReallyHardToGuessMetric(final String guess) {
+		final String normGuess = guess.toLowerCase();
+		if (normGuess.indexOf("length") != -1) {
+			return LENGTH;
+		}
+		if (normGuess.indexOf("branch points") != -1 || normGuess.indexOf("bps") != -1) {
+			return N_BRANCH_POINTS;
+		}
+		if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("horton") != -1 || normGuess.indexOf("order") != -1) {
+			return BRANCH_ORDER;
+		}
+		return guess;
 	}
 
 	/**

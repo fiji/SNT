@@ -34,7 +34,7 @@ if (trees.isEmpty()) {
 // _any_ LUT currently installed in Fiji
 colorTable = lut.loadLUT(lut.findLUTs().get("Ice.lut"))
 colorMapper = new MultiTreeColorMapper(trees)
-colorMapper.map(MultiTreeColorMapper.TOTAL_LENGTH, colorTable)
+colorMapper.map("total length", colorTable)
 
 // Initialize a non-interactive Reconstruction Viewer
 viewer = (trees.size > 100) ? new Viewer3D() : new Viewer3D(ij.context())

@@ -58,10 +58,10 @@ public class MultiTreeColorMapper extends ColorMapper {
 
 	/** Mapping property: Count of all branch points */
 	public static final String TOTAL_N_BRANCH_POINTS =
-		"Total no. of branch points";
+		"No. of branch points";
 
 	/** Mapping property: Count of all tips (end points) */
-	public static final String TOTAL_N_TIPS = "Total no. of tips";
+	public static final String TOTAL_N_TIPS = "No. of tips";
 
 	/** Mapping property: Strahler root number */
 	public static final String ROOT_NUMBER = "Strahler root number";
@@ -99,11 +99,24 @@ public class MultiTreeColorMapper extends ColorMapper {
 	 */
 	@Override
 	public void map(final String measurement, final ColorTable colorTable) {
+		try {
+			final String cMeasurement = super.normalizedMeasurement(measurement);
+			mapInternal(cMeasurement, colorTable);
+		} catch (final IllegalArgumentException ignored) {
+			final String educatedGuess = tryToGuessMetric(measurement);
+			System.out.println("Mapping to \""+ measurement +"\" failed. Assuming \""+ educatedGuess+"\"... ");
+			if ("unknown".equals(educatedGuess))
+				throw new IllegalArgumentException("Unknown parameter: "+ measurement);
+			else
+				mapInternal(educatedGuess, colorTable);
+		}
+	}
+
+	private void mapInternal(final String measurement, final ColorTable colorTable) {
 		super.map(measurement, colorTable);
-		final String cMeasurement = super.normalizedMeasurement(measurement);
 		for (final MappedTree mt : mappedTrees) {
 			final TreeAnalyzer analyzer = new TreeAnalyzer(mt.tree);
-			switch (cMeasurement) {
+			switch (measurement) {
 				case ROOT_NUMBER:
 					integerScale = true;
 					mt.value = analyzer.getStrahlerRootNumber();
@@ -124,13 +137,32 @@ public class MultiTreeColorMapper extends ColorMapper {
 					mt.value = internalCounter++;
 					break;
 				default:
-					throw new IllegalArgumentException("Unknown parameter: "+ cMeasurement);
+					throw new IllegalArgumentException("Unknown parameter: "+ measurement);
 			}
 		}
 		assignMinMax();
 		for (final MappedTree mt : mappedTrees) {
 			mt.tree.setColor(getColorRGB(mt.value));
 		}
+	}
+
+	private String tryToGuessMetric(final String guess) {
+		String normGuess = guess.toLowerCase();
+		if (normGuess.contains("length")) {
+			normGuess = TOTAL_LENGTH;
+		}
+		else if (normGuess.indexOf("branch points") > -1 || normGuess.indexOf("bps") > -1) {
+			normGuess = TOTAL_N_BRANCH_POINTS;
+		}
+		else if (normGuess.indexOf("tips") != -1 || normGuess.indexOf("endings") != -1 || normGuess.indexOf("terminals") != -1) {
+			normGuess = TOTAL_N_TIPS;
+		}
+		else if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("horton") != -1 || normGuess.indexOf("order") != -1) {
+			normGuess = ROOT_NUMBER;
+		} else {
+			normGuess = "unknown";
+		}
+		return normGuess;
 	}
 
 	public List<Tree> sortedMappedTrees() {
@@ -197,7 +229,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 			trees.add(tree);
 		}
 		final MultiTreeColorMapper mapper = new MultiTreeColorMapper(trees);
-		mapper.map(MultiTreeColorMapper.TOTAL_LENGTH, ColorTables.ICE);
+		mapper.map("length", ColorTables.ICE);
 		final Viewer3D viewer = new Viewer3D();
 		for (final Tree tree : trees)
 			viewer.addTree(tree);

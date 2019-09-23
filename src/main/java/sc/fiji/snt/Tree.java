@@ -578,7 +578,7 @@ public class Tree {
 	 * @return the BoundingBox
 	 */
 	public BoundingBox getBoundingBox(final boolean computeIfUnset) {
-		final boolean compute = computeIfUnset || box.isComputationNeeded();
+		final boolean compute = computeIfUnset || (box != null && box.isComputationNeeded());
 		if (compute && box == null) box = new TreeBoundingBox();
 		if (compute) box.compute(getPoints().iterator());
 		return box;

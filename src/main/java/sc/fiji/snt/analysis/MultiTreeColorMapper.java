@@ -91,7 +91,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 	public MultiTreeColorMapper(final Collection<Tree> trees) {
 		mappedTrees = new ArrayList<>();
 		for (final Tree tree : trees) {
-			mappedTrees.add(new MappedTree(tree));
+			if (tree.size() > 0) mappedTrees.add(new MappedTree(tree));
 		}
 	}
 

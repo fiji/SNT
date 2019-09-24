@@ -36,6 +36,10 @@ import net.imglib2.display.ColorTable;
 
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.annotation.AllenCompartment;
+import sc.fiji.snt.annotation.AllenUtils;
+import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.viewer.MultiViewer2D;
 import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.viewer.Viewer3D;
@@ -109,6 +113,22 @@ public class MultiTreeColorMapper extends ColorMapper {
 				throw new IllegalArgumentException("Unknown parameter: "+ measurement);
 			else
 				mapInternal(educatedGuess, colorTable);
+		}
+	}
+
+	public void mapRootDistanceToCentroid(final AllenCompartment compartment, final ColorTable colorTable) {
+		if (compartment == null || colorTable == null) throw new IllegalArgumentException("compartment/colorTable cannot be null");
+		integerScale = false;
+		this.colorTable = colorTable;
+		for (final MappedTree mt : mappedTrees) {
+			final PointInImage root = mt.tree.getRoot();
+			final SNTPoint centroid =  compartment.getMesh().getBarycentre( (AllenUtils.isLeftHemisphere(root)) ? "left" : "right");
+			final PointInImage pimCentroid = new PointInImage(centroid.getX(),centroid.getY(), centroid.getZ());
+			mt.value = root.distanceTo(pimCentroid);
+		}
+		assignMinMax();
+		for (final MappedTree mt : mappedTrees) {
+			mt.tree.setColor(getColorRGB(mt.value));
 		}
 	}
 

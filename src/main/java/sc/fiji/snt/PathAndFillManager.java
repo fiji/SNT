@@ -2392,12 +2392,6 @@ public class PathAndFillManager extends DefaultHandler implements
 		return result;
 	}
 
-	synchronized void setPathPointsInVolume(final byte[][] slices,
-		final int width, final int height, final int depth)
-	{
-		setPathPointsInVolume(allPaths, slices, width, height, depth);
-	}
-
 	/*
 	 * This method will set all the points in array that correspond to points on one
 	 * of the paths to 255, leaving everything else as it is. This is useful for
@@ -2405,7 +2399,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * stack of this kind.
 	 */
 	synchronized void setPathPointsInVolume(final Collection<Path> paths,
-		final byte[][] slices, final int width, final int height, final int depth)
+		final short[][] slices, final int pixelIntensity, final int width, final int height, final int depth)
 	{
 		for (final Path topologyPath : paths) {
 			Path p = topologyPath;
@@ -2449,7 +2443,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				 * If we don't actually need to draw a line, just put a point:
 				 */
 				if (current.diagonallyAdjacentOrEqual(previous)) {
-					slices[current.z][current.y * width + current.x] = (byte) 255;
+					slices[current.z][current.y * width + current.x] = (short) pixelIntensity;
 				}
 				else {
 					/*
@@ -2459,7 +2453,7 @@ public class PathAndFillManager extends DefaultHandler implements
 						.bresenham3D(previous, current);
 					for (final Bresenham3D.IntegerPoint ip : pointsToDraw) {
 						try {
-							slices[ip.z][ip.y * width + ip.x] = (byte) 255;
+							slices[ip.z][ip.y * width + ip.x] = (short) pixelIntensity;
 						}
 						catch (final ArrayIndexOutOfBoundsException ignored) {
 							final int x = Math.min(width - 1, Math.max(0, ip.x));

@@ -1293,26 +1293,25 @@ public class SNT extends MultiDThreePanes implements
 	int[] selectedPaths = null;
 
 	/*
-	 * Create a new 8 bit ImagePlus of the same dimensions as this image, but with
+	 * Create a new 8-bit ImagePlus of the same dimensions as this image, but with
 	 * values set to either 255 (if there's a point on a path there) or 0
 	 */
-
 	synchronized public ImagePlus makePathVolume(final Collection<Path> paths) {
 
-		final byte[][] snapshot_data = new byte[depth][];
+		final short[][] snapshot_data = new short[depth][];
 
 		for (int i = 0; i < depth; ++i)
-			snapshot_data[i] = new byte[width * height];
+			snapshot_data[i] = new short[width * height];
 
-		pathAndFillManager.setPathPointsInVolume(paths, snapshot_data, width,
+		pathAndFillManager.setPathPointsInVolume(paths, snapshot_data, (short) 255, width,
 			height, depth);
 
 		final ImageStack newStack = new ImageStack(width, height);
 
 		for (int i = 0; i < depth; ++i) {
-			final ByteProcessor thisSlice = new ByteProcessor(width, height);
+			final ShortProcessor thisSlice = new ShortProcessor(width, height);
 			thisSlice.setPixels(snapshot_data[i]);
-			newStack.addSlice(null, thisSlice);
+			newStack.addSlice(null, thisSlice.convertToByteProcessor(false));
 		}
 
 		final ImagePlus newImp = new ImagePlus(xy.getShortTitle() +

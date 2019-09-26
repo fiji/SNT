@@ -40,6 +40,7 @@ import org.scijava.util.ColorRGB;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
@@ -623,6 +624,25 @@ public class Tree {
 		if (d < 1) d = 1;
 		if (d > 1) d += zPadding;
 		return IJ.createImage(null, w, h, d, 8);
+	}
+
+	public void skeletonize(final ImagePlus destinationImp, final int value) {
+		if (destinationImp.getType() != ImagePlus.GRAY16) {
+			throw new IllegalArgumentException("Only 16-bit images supported");
+		}
+		initPathAndFillManager();
+		final int width = destinationImp.getWidth();
+		final int height = destinationImp.getHeight();
+		final int depth = destinationImp.getNSlices();
+		final int channel = destinationImp.getC();
+		final int frame = destinationImp.getT();
+		final ImageStack s = destinationImp.getStack();
+		final short[][] slices_data = new short[depth][];
+		for (int z = 0; z < depth; ++z) {
+			slices_data[z] = (short[]) s.getPixels(destinationImp.getStackIndex(channel, z +
+				1, frame));
+		}
+		pafm.setPathPointsInVolume(list(), slices_data, value, width, height, depth);
 	}
 
 	/**

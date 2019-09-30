@@ -1343,13 +1343,26 @@ public class Viewer3D {
 	 * @throws IllegalArgumentException if Viewer is not available
 	 */
 	public boolean saveSnapshot() throws IllegalArgumentException {
+		final String file = new SimpleDateFormat("'SNT 'yyyy-MM-dd HH-mm-ss'.png'")
+			.format(new Date());
+		final File f = new File(prefs.snapshotDir, file);
+		return saveSnapshot(f);
+	}
+
+	/**
+	 * Saves a snapshot of current scene as a PNG image. Image is saved using an
+	 * unique time stamp as a file name in the directory specified in the
+	 * preferences dialog or through {@link #setSnapshotDir(String)}
+	 *
+	 * @param f a file to be used as destination for the saved snapshot
+	 * @return true, if successful
+	 * @throws IllegalArgumentException if Viewer is not available
+	 */
+	public boolean saveSnapshot(File f) throws IllegalArgumentException {
 		if (!chartExists()) {
 			throw new IllegalArgumentException("Viewer is not visible");
 		}
-		final String file = new SimpleDateFormat("'SNT 'yyyy-MM-dd HH-mm-ss'.png'")
-			.format(new Date());
 		try {
-			final File f = new File(prefs.snapshotDir, file);
 			SNTUtils.log("Saving snapshot to " + f);
 			if (SNTUtils.isDebugMode() && frame != null) {
 				logSceneControls();

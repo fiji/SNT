@@ -30,10 +30,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.stream.IntStream;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -417,6 +421,21 @@ public class MouseLightLoader {
 			// do nothing
 		}
 		return count;
+	}
+
+	/**
+	 * Gets the IDs of all the cells publicly available in the MouseLight database.
+	 *
+	 * @return the list of cell IDs or an empty list if no database could not be reached.
+	 */
+	public List<String> getAllNeuronIDs() {
+		final List<String> list = new ArrayList<>();
+		IntStream.rangeClosed(0, getNeuronCount()).forEach( neuron -> {
+			final String id = "AA" + new DecimalFormat("0000").format(neuron);
+			if (new MouseLightLoader(id).idExists()) list.add(id);
+
+		});
+		return list;
 	}
 
 	/* IDE debug method */

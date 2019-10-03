@@ -27,9 +27,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.IntStream;
 import java.util.TreeSet;
 import java.util.UUID;
 
@@ -37,6 +42,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import me.tongfei.progressbar.ProgressBar;
+import me.tongfei.progressbar.ProgressBarBuilder;
+import me.tongfei.progressbar.ProgressBarStyle;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -46,6 +54,7 @@ import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.annotation.AllenCompartment;
+import sc.fiji.snt.annotation.AllenUtils;
 
 /**
  * Importer for retrieving reconstructions from MouseLight's online database at
@@ -137,6 +146,10 @@ class MouseLightQuerier {
 	}
 
 	private void initialize() {
+		initialize(true);
+	}
+
+	private void initialize(final boolean assembleSwcTypeMap) {
 		try {
 			final OkHttpClient client = new OkHttpClient();
 			final RequestBody body = RequestBody.create(String.format(
@@ -170,6 +183,7 @@ class MouseLightQuerier {
 						final double sRadius = jsonSoma.getDouble("radius");
 						final int parent = jsonSoma.getInt("parentNumber"); // always -1
 						soma = new SWCPoint(0, Path.SWC_SOMA, sX, sY, sZ, sRadius, parent);
+						soma.setAnnotation(new AllenCompartment(UUID.fromString(jsonSoma.getString("brainAreaId"))));
 					}
 					final JSONObject tracingStructure = compartment.getJSONObject(
 						"tracingStructure");
@@ -179,14 +193,14 @@ class MouseLightQuerier {
 					nameMap.put(name, compartmentID);
 				}
 			}
-			assembleSwcTypeMap();
+			if (assembleSwcTypeMap) assembleSwcTypeMap();
 		}
 		catch (final IOException | JSONException exc) {
 			SNTUtils.error("Failed to initialize loader", exc);
 			initialized = false;
 		}
 		initialized = true;
-		if (SNTUtils.isDebugMode()) {
+		if (assembleSwcTypeMap && SNTUtils.isDebugMode()) {
 			SNTUtils.log("Retrieving compartment UUIDs for ML neuron " + publicID);
 			if (nameMap == null) {
 				SNTUtils.log("Failed... " + publicID + " does not exist?");
@@ -405,6 +419,18 @@ class MouseLightQuerier {
 		return soma;
 	}
 
+	private AllenCompartment getSomaCompartment() {
+		if (!initialized) {
+			try {
+				initialize(false);
+			} catch (final IllegalArgumentException ignored) {
+				return null;
+			}
+		}
+		final AllenCompartment comp = (initialized && soma != null) ? (AllenCompartment) soma.getAnnotation(): null;
+		return comp;
+	}
+
 	private void assignNodes(final JSONObject compartment,
 		final TreeSet<SWCPoint> points)
 	{
@@ -454,28 +480,52 @@ class MouseLightQuerier {
 		}
 	}
 
+	/**
+	 * Gets the IDs of the cells publicly available in the MouseLight database having
+	 * the soma associated with the specified compartment.
+	 *
+	 * @return the list of cell IDs associated with {@code compartment} or an empty
+	 *         list if no cells were found
+	 */
+	public static List<String> getIDs(final AllenCompartment compartment) {
+		final List<String> list = Collections.synchronizedList(new ArrayList<>());
+		final ProgressBarBuilder pbb = new ProgressBarBuilder();
+		pbb.setStyle(ProgressBarStyle.ASCII);
+		pbb.setTaskName("Retrieving IDs");
+		ProgressBar.wrap(IntStream.rangeClosed(0, MouseLightLoader.getNeuronCount()).parallel(), pbb).forEach(neuron -> {
+			final String id = "AA" + new DecimalFormat("0000").format(neuron);
+			final MouseLightQuerier querier = new MouseLightQuerier(id);
+			final AllenCompartment sCompartment = querier.getSomaCompartment();
+			if (sCompartment != null && (sCompartment.equals(compartment) || sCompartment.containedBy(compartment))) {
+				list.add(id);
+			}
+		});
+		if (!list.isEmpty()) list.sort(String.CASE_INSENSITIVE_ORDER);
+		return list;
+	}
+
 	/* IDE debug method */
 	public static void main(final String... args) {
 		System.out.println("# Retrieving neuron");
-		final String id = "10.25378/janelia.5527672"; // 10.25378/janelia.5527672";
-		final MouseLightLoader loader = new MouseLightLoader(id);
-		try (PrintWriter out = new PrintWriter("/home/tferr/Desktop/" + id
-			.replaceAll("/", "-") + ".swc"))
-		{
-			final StringReader reader = SWCPoint.collectionAsReader(loader
-				.getNodes());
-			try (BufferedReader br = new BufferedReader(reader)) {
-				br.lines().forEach(out::println);
-			}
-			catch (final IOException e) {
-				e.printStackTrace();
-			}
-			out.println("# End of Tree ");
-		}
-		catch (final FileNotFoundException | IllegalArgumentException e) {
-			e.printStackTrace();
-		}
-		System.out.println("# All done");
+		getIDs(AllenUtils.getCompartment("Isocortex"));
+//		final String id = "10.25378/janelia.5527672"; // 10.25378/janelia.5527672";
+//		final MouseLightLoader loader = new MouseLightLoader(id);
+//		try (PrintWriter out = new PrintWriter("/home/tferr/Desktop/" + id
+//			.replaceAll("/", "-") + ".swc"))
+//		{
+//			final StringReader reader = SWCPoint.collectionAsReader(loader
+//				.getNodes());
+//			try (BufferedReader br = new BufferedReader(reader)) {
+//				br.lines().forEach(out::println);
+//			}
+//			catch (final IOException e) {
+//				e.printStackTrace();
+//			}
+//			out.println("# End of Tree ");
+//		}
+//		catch (final FileNotFoundException | IllegalArgumentException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 }

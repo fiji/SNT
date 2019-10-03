@@ -387,6 +387,7 @@ public class Tree {
 	 *         tree.
 	 */
 	public PointInImage getRoot() {
+		if (isEmpty()) return null;
 		Path rootPath = get(0);
 		if (!rootPath.isPrimary()) { // how would this ever happen?
 			rootPath = null;

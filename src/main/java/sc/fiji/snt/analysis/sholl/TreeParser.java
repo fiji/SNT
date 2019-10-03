@@ -125,6 +125,8 @@ public class TreeParser implements Parser {
 		switch (choice) {
 			case PRIMARY_NODES_ANY:
 				center = getCenter(-1);
+				if (center == null && !tree.isEmpty())
+					center = tree.list().get(0).getNode(0);
 				break;
 			case PRIMARY_NODES_UNDEFINED:
 				center = getCenter(Path.SWC_UNDEFINED);

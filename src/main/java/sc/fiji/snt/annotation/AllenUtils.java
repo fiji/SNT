@@ -44,11 +44,9 @@ import org.json.JSONTokener;
 import org.scijava.util.ColorRGB;
 
 import sc.fiji.snt.Tree;
-import sc.fiji.snt.analysis.sholl.TreeParser;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.viewer.OBJMesh;
-import sholl.UPoint;
 
 /**
  * Utility methods for accessing/handling {@link AllenCompartment}s
@@ -138,17 +136,16 @@ public class AllenUtils {
 		return null;
 	}
 
-	private static PointInImage getSoma(final Tree tree) {
-		final TreeParser parser = new TreeParser(tree);
-		try {
-			parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
-		}
-		catch (final IllegalArgumentException ignored) {
-			parser.setCenter(TreeParser.PRIMARY_NODES_ANY);
-		}
-		final UPoint center = parser.getCenter();
-		return (center == null) ? null : new PointInImage(center.x, center.y,
-			center.z);
+	public static void assignToLeftHemisphere(final Tree tree) {
+		final PointInImage root = tree.getRoot();
+		if (root == null || isLeftHemisphere(root)) return;
+		tree.translate(-2 * (root.getX() - BRAIN_BARYCENTRE.x), 0, 0);
+	}
+
+	public static void assignToRightHemisphere(final Tree tree) {
+		final PointInImage root = tree.getRoot();
+		if (root == null || !isLeftHemisphere(root)) return;
+		tree.translate(2 * (BRAIN_BARYCENTRE.x - root.getX()), 0, 0);
 	}
 
 	/**
@@ -159,7 +156,7 @@ public class AllenUtils {
 	 *         otherwise
 	 */
 	public static boolean isLeftHemisphere(final Tree tree) {
-		return isLeftHemisphere(getSoma(tree));
+		return isLeftHemisphere(tree.getRoot());
 	}
 
 	/**
@@ -177,7 +174,7 @@ public class AllenUtils {
 	 *
 	 * @return the SNT point defining the (X,Y,Z) center of the ARA
 	 */
-	public static SNTPoint brainBarycentre() {
+	public static SNTPoint brainCenter() {
 		return BRAIN_BARYCENTRE;
 	}
 

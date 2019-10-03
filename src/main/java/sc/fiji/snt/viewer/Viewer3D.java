@@ -4739,7 +4739,7 @@ public class Viewer3D {
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
 		final ArrayList<SNTPoint >selectedTips = new ArrayList<>();
 		selectedTips.add(SNTPoint.average(analyzer.getTips()));
-		selectedTips.add(AllenUtils.brainBarycentre());
+		selectedTips.add(AllenUtils.brainCenter());
 		final Annotation3D annotation1 = jzy3D.annotateLine(selectedTips, "dummy");
 		annotation1.setColor("orange");
 		annotation1.setSize(10);

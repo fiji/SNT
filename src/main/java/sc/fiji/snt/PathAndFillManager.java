@@ -150,13 +150,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		allFills = new ArrayList<>();
 		listeners = new ArrayList<>();
 		selectedPathsSet = new HashSet<>();
-		boundingBox = new BoundingBox();
-		x_spacing = boundingBox.xSpacing;
-		y_spacing = boundingBox.ySpacing;
-		z_spacing = boundingBox.zSpacing;
-		spacing_units = boundingBox.getUnit();
-		plugin = null;
-		spacingIsUnset = true;
+		resetSpatialSettings();
 	}
 
 	protected PathAndFillManager(final SNT plugin) {
@@ -199,6 +193,29 @@ public class PathAndFillManager extends DefaultHandler implements
 			spacing_units);
 		boundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
 		spacingIsUnset = false;
+	}
+
+	protected void assignSpatialSettings(final ImagePlus imp) {
+		final Calibration cal = imp.getCalibration();
+		x_spacing = cal.pixelWidth;
+		y_spacing = cal.pixelHeight;
+		z_spacing = cal.pixelDepth;
+		spacing_units = SNTUtils.getSanitizedUnit(cal.getUnit());
+		boundingBox.setOrigin(new PointInImage(0, 0, 0));
+		boundingBox.setSpacing(x_spacing, y_spacing, z_spacing,
+			spacing_units);
+		boundingBox.setDimensions(imp.getWidth(), imp.getHeight(), imp.getNSlices());
+		spacingIsUnset = false;
+	}
+
+	protected void resetSpatialSettings() {
+		boundingBox = new BoundingBox();
+		x_spacing = boundingBox.xSpacing;
+		y_spacing = boundingBox.ySpacing;
+		z_spacing = boundingBox.zSpacing;
+		spacing_units = boundingBox.getUnit();
+		plugin = null;
+		spacingIsUnset = true;
 	}
 
 	/**
@@ -2443,7 +2460,16 @@ public class PathAndFillManager extends DefaultHandler implements
 				 * If we don't actually need to draw a line, just put a point:
 				 */
 				if (current.diagonallyAdjacentOrEqual(previous)) {
-					slices[current.z][current.y * width + current.x] = (short) pixelIntensity;
+					try {
+						slices[current.z][current.y * width + current.x] = (short) pixelIntensity;
+					} catch (final ArrayIndexOutOfBoundsException ignored) {
+						final int x = Math.min(width - 1, Math.max(0, current.x));
+						final int y = Math.min(height - 1, Math.max(0, current.y));
+						final int z = Math.min(depth - 1, Math.max(0, current.z));
+						slices[z][y * width + x] = (short) pixelIntensity;
+						SNTUtils.warn(String.format("Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]", z,
+								y, width, x));
+					}
 				}
 				else {
 					/*
@@ -2459,7 +2485,7 @@ public class PathAndFillManager extends DefaultHandler implements
 							final int x = Math.min(width - 1, Math.max(0, ip.x));
 							final int y = Math.min(height - 1, Math.max(0, ip.y));
 							final int z = Math.min(depth - 1, Math.max(0, ip.z));
-							slices[z][y * width + x] = (byte) 255;
+							slices[z][y * width + x] = (short) pixelIntensity;
 							SNTUtils.warn(String.format(
 								"Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]",
 								z, y, width, x));

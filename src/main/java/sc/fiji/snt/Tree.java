@@ -643,7 +643,9 @@ public class Tree {
 			slices_data[z] = (short[]) s.getPixels(destinationImp.getStackIndex(channel, z +
 				1, frame));
 		}
+		pafm.assignSpatialSettings(destinationImp);
 		pafm.setPathPointsInVolume(list(), slices_data, value, width, height, depth);
+		pafm.resetSpatialSettings(); // do not tether this tree to destinationImp
 	}
 
 	/**

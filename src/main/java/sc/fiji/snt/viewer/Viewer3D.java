@@ -1340,26 +1340,43 @@ public class Viewer3D {
 	 * preferences dialog or through {@link #setSnapshotDir(String)}
 	 *
 	 * @return true, if successful
-	 * @throws IllegalArgumentException if Viewer is not available
 	 */
-	public boolean saveSnapshot() throws IllegalArgumentException {
-		if (!chartExists()) {
-			throw new IllegalArgumentException("Viewer is not visible");
-		}
-		final String file = new SimpleDateFormat("'SNT 'yyyy-MM-dd HH-mm-ss'.png'")
-			.format(new Date());
+	public boolean saveSnapshot() {
+		final String filename = new SimpleDateFormat("'SNT 'yyyy-MM-dd HH-mm-ss'.png'")
+				.format(new Date());
+		final File file = new File(prefs.snapshotDir, filename);
 		try {
-			final File f = new File(prefs.snapshotDir, file);
-			SNTUtils.log("Saving snapshot to " + f);
-			if (SNTUtils.isDebugMode() && frame != null) {
-				logSceneControls();
-			}
-			chart.screenshot(f);
-		}
-		catch (final IOException e) {
+			return saveSnapshot(file);
+		} catch (final IllegalArgumentException | IOException e) {
 			SNTUtils.error("IOException", e);
 			return false;
 		}
+	}
+
+	/**
+	 * Saves a snapshot of current scene as a PNG image to the specified path.
+	 *
+	 * @param filePath the absolute path of the destination file
+	 * @return true, if file was successfully saved
+	 */
+	public boolean saveSnapshot(final String filePath) {
+		try {
+			return saveSnapshot(new File(filePath));
+		} catch (final IllegalArgumentException | IOException e) {
+			SNTUtils.error("IOException", e);
+			return false;
+		}
+	}
+
+	protected boolean saveSnapshot(final File file) throws IllegalArgumentException, IOException {
+		if (!chartExists()) {
+			throw new IllegalArgumentException("Viewer is not visible");
+		}
+		SNTUtils.log("Saving snapshot to " + file);
+		if (SNTUtils.isDebugMode() && frame != null) {
+			logSceneControls();
+		}
+		chart.screenshot(file);
 		return true;
 	}
 

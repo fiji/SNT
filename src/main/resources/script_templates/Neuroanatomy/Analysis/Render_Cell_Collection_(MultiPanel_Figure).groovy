@@ -6,11 +6,10 @@
 /**
  * Exemplifies how to generate a publication-quality multi-panel figure in which
  * multiple reconstructions are sorted and color-coded by a specified morphometric
- * trait.
- * In these example, the analyzed trait is cable length: The script prompts for a
- * directory containing the reconstruction files to be analyzed. If no directory
- * is specified, the script will parse a collection of dendritic arbors from the
- * MouseLight database instead.
+ * trait (cable length in this example).
+ * The script prompts for a directory containing the reconstruction files to be
+ * analyzed. If no directory is specified, the script will parse a collection of
+ * dendritic arbors from the MouseLight database instead.
  * TF 20190919
  */
 

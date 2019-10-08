@@ -208,7 +208,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 
 				@Override
 				public Object doInBackground() {
-					final CommandService cmdService = pmui.getSimpleNeuriteTracer()
+					final CommandService cmdService = pmui.getSNT()
 						.getContext().getService(CommandService.class);
 					try {
 						cmdModule = cmdService.run(SWCTypeFilterCmd.class, true).get();
@@ -222,7 +222,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 				@Override
 				protected void done() {
 					final Set<Integer> types = SWCTypeFilterCmd.getChosenTypes(pmui
-						.getSimpleNeuriteTracer().getContext());
+						.getSNT().getContext());
 					if ((cmdModule != null && cmdModule.isCanceled()) || types == null ||
 						types.isEmpty())
 					{

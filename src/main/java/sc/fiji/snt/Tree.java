@@ -406,7 +406,7 @@ public class Tree {
 	}
 
 	/**
-	 * Specifies the offset to be used when rendering this Path in a
+	 * Specifies the offset to be used when rendering this Tree in a
 	 * {@link TracerCanvas}. Path coordinates remain unaltered.
 	 *
 	 * @param xOffset the x offset (in pixels)
@@ -448,7 +448,7 @@ public class Tree {
 	}
 
 	/**
-	 * Scales the tree by the specified scaling factors.
+	 * Scales the tree by the specified factors.
 	 *
 	 * @param xScale the scaling factor for x coordinates
 	 * @param yScale the scaling factor for y coordinates

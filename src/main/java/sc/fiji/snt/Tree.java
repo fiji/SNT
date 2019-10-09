@@ -436,6 +436,12 @@ public class Tree {
 				p.precise_y_positions[node] += yOffset;
 				p.precise_z_positions[node] += zOffset;
 			}
+			final List<PointInImage> sePoints = p.startEndJoinPoints();
+			sePoints.forEach(pim -> {
+				pim.x += xOffset;
+				pim.y += yOffset;
+				pim.z += zOffset;
+			});
 		});
 		if (box != null) {
 			box.origin().x += xOffset;
@@ -463,6 +469,8 @@ public class Tree {
 				p.precise_y_positions[node] *= yScale;
 				p.precise_z_positions[node] *= zScale;
 			}
+			final List<PointInImage> sePoints = p.startEndJoinPoints();
+			sePoints.forEach(pim -> pim.scale(xScale, yScale, zScale));
 		});
 		if (box != null) {
 			box.origin().x *= xScale;
@@ -497,6 +505,11 @@ public class Tree {
 						final double y = pim.y * cos + pim.x * sin;
 						p.moveNode(node, new PointInImage(x, y, pim.z));
 					}
+					final List<PointInImage> sePoints = p.startEndJoinPoints();
+					sePoints.forEach(pim -> {
+						pim.x = pim.x * cos - pim.y * sin;
+						pim.y = pim.y * cos + pim.x * sin;
+					});
 				});
 				break;
 			case Y_AXIS:
@@ -507,6 +520,11 @@ public class Tree {
 						final double z = pim.z * cos + pim.x * sin;
 						p.moveNode(node, new PointInImage(x, pim.y, z));
 					}
+					final List<PointInImage> sePoints = p.startEndJoinPoints();
+					sePoints.forEach(pim -> {
+						pim.x = pim.x * cos - pim.z * sin;
+						pim.z = pim.z * cos + pim.x * sin;
+					});
 				});
 				break;
 			case X_AXIS:
@@ -517,6 +535,11 @@ public class Tree {
 						final double z = pim.z * cos + pim.y * sin;
 						p.moveNode(node, new PointInImage(pim.x, y, z));
 					}
+					final List<PointInImage> sePoints = p.startEndJoinPoints();
+					sePoints.forEach(pim -> {
+						pim.y = pim.y * cos - pim.z * sin;
+						pim.z = pim.z * cos + pim.y * sin;;
+					});
 				});
 				break;
 			default:

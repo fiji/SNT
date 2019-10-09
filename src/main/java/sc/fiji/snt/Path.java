@@ -2371,6 +2371,17 @@ public class Path implements Comparable<Path> {
 		return result;
 	}
 
+	protected List<PointInImage> startEndJoinPoints() {
+		final ArrayList<PointInImage> result = new ArrayList<>();
+		if (startJoinsPoint != null) {
+			result.add(startJoinsPoint);
+		}
+		if (endJoinsPoint != null) {
+			result.add(endJoinsPoint);
+		}
+		return result;
+	}
+
 	/**
 	 * Returns the points which are indicated to be a join, either in this Path
 	 * object, or any other that starts or ends on it.

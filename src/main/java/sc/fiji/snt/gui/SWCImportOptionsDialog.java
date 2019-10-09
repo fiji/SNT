@@ -56,12 +56,12 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener,
 		"Replace existing paths?");
 
 	private final JCheckBox ignoreCalibrationCheckbox = new JCheckBox(
-		"Ignore calibration: assume SWC uses pixel coordinates");
+		"File uses pixel coordinates");
 
 	private final JCheckBox applyOffsetCheckbox = new JCheckBox(
-		"Apply offset to SWC file coordinates");
+		"Apply offset to file coordinates");
 	private final JCheckBox applyScaleCheckbox = new JCheckBox(
-		"Apply scale to SWC file coordinates");
+		"Apply scale to file coordinates");
 
 	private final String offsetDefault = "0.0";
 	private final String scaleDefault = "1.0";
@@ -260,7 +260,10 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener,
 
 		c.gridy++;
 		add(ignoreCalibrationCheckbox, c);
-
+		ignoreCalibrationCheckbox.setToolTipText("<HTML><div WIDTH=500>"
+				+ "Select this checkbox if the imported data uses pixel "
+				+ "coordinates (N.B.: The SWC specification details that "
+				+ "data must be stored in real world coordinates)");
 		c.gridy++;
 		add(applyOffsetCheckbox, c);
 

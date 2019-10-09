@@ -1465,7 +1465,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		return table;
 	}
 
-	public SNT getSimpleNeuriteTracer() {
+	public SNT getSNT() {
 		return plugin;
 	}
 
@@ -1708,7 +1708,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				for (final Path cp : p.children) addChildrenToCollection(cp, collection);
 			}
 		}
-	
+
 		@Override
 		public void actionPerformed(final ActionEvent e) {
 

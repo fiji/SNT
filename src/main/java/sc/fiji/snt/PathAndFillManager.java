@@ -497,8 +497,11 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * The paths actually form a graph, of course, but most UIs will want to display
 	 * the graph as a tree.
 	 */
-
 	public synchronized Path[] getPathsStructured() {
+		return getPathsStructured(allPaths);
+	}
+
+	public synchronized Path[] getPathsStructured(final Collection<Path> paths) {
 
 		final ArrayList<Path> primaryPaths = new ArrayList<>();
 
@@ -510,7 +513,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 		final TreeSet<Path> pathsLeft = new TreeSet<>();
 
-		for (final Path p : allPaths) {
+		for (final Path p : paths) {
 			if (!p.isFittedVersionOfAnotherPath()) pathsLeft.add(p);
 		}
 
@@ -580,7 +583,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		 * Path.children and Path.somehowJoins relationships are set up correctly:
 		 */
 		final Set<Path> structuredPathSet = new HashSet<>(Arrays.asList(
-			getPathsStructured()));
+			getPathsStructured(paths)));
 
 		/*
 		 * Check that there's only one primary path in selectedPaths by taking the

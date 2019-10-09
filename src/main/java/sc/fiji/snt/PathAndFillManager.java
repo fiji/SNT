@@ -449,12 +449,14 @@ public class PathAndFillManager extends DefaultHandler implements
 				.now()));
 		pw.println("# https://imagej.net/SNT");
 		pw.println("#");
-		pw.println("# All positions and radii in " + spacing_units);
-		if (usingNonPhysicalUnits()) pw.println(
-			"# WARNING: Usage of pixel coordinates does not respect the SWC specification");
-		else pw.println("# Voxel separation (x,y,z): " + x_spacing + ", " +
-			y_spacing + ", " + z_spacing);
-		pw.println("#");
+		if (plugin != null && plugin.accessToValidImageData()) {
+			pw.println("# All positions and radii in " + spacing_units);
+			if (usingNonPhysicalUnits())
+				pw.println("# WARNING: Usage of pixel coordinates does not respect the SWC specification");
+			else
+				pw.println("# Voxel separation (x,y,z): " + x_spacing + ", " + y_spacing + ", " + z_spacing);
+			pw.println("#");
+		}
 		SWCPoint.flush(swcPoints, pw);
 		pw.close();
 	}

@@ -24,6 +24,7 @@ package sc.fiji.snt;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -839,8 +840,8 @@ public class Tree {
 	 *
 	 * @param filePath the absolute path of the output file. {@code .swc} is
 	 *                 automatically appended if {@code filePath} does not include
-	 *                 an extension. Also, if a label has been assigned,
-	 *                 {@code filePath} can also be a directory.
+	 *                 an extension. If a label has been assigned, {@code filePath}
+	 *                 can also be a directory.
 	 * @return true, if file successfully saved.
 	 * @see #setLabel(String)
 	 */
@@ -849,9 +850,43 @@ public class Tree {
 			return false;
 		initPathAndFillManager();
 		File file = new File(filePath);
-		if (file.isDirectory() && getLabel() != null)
-			file = new File(file.getAbsolutePath(), getLabel());
+		if (file.isDirectory() && getLabel() != null) {
+			final String fName = (getLabel().toLowerCase().endsWith(".swc")) ? getLabel() : getLabel() + ".swc";
+			file = new File(file.getAbsolutePath(), fName);
+		} else if (!filePath.toLowerCase().endsWith(".swc")) {
+			file = new File(filePath + ".swc");
+		}
 		return pafm.exportAllPathsAsSWC(file.getAbsolutePath());
+	}
+
+	/**
+	 * Saves this Tree to a .TRACES (XML, compressed) file.
+	 *
+	 * @param filePath the absolute path of the output file. {@code .traces} is
+	 *                 automatically appended if {@code filePath} does not include
+	 *                 an extension. If a label has been assigned, {@code filePath}
+	 *                 can also be a directory.
+	 * @return true, if file successfully saved.
+	 * @see #setLabel(String)
+	 */
+	public boolean save(final String filePath) {
+		if (list() == null || list().isEmpty() || filePath == null || filePath.isEmpty())
+			return false;
+		initPathAndFillManager();
+		File file = new File(filePath);
+		if (file.isDirectory() && getLabel() != null) {
+			final String fName = (getLabel().toLowerCase().endsWith(".traces")) ? getLabel() : getLabel() + ".traces";
+			file = new File(file.getAbsolutePath(), fName);
+		} else if (!filePath.toLowerCase().endsWith(".traces")) {
+			file = new File(filePath + ".traces");
+		}
+		try {
+			pafm.writeXML(file.getAbsolutePath(), true);
+		} catch (final IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 
 	private void initPathAndFillManager() {

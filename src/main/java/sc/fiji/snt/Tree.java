@@ -484,6 +484,27 @@ public class Tree {
 	}
 
 	/**
+	 * Scales the tree by the specified factors.
+	 *
+	 * @param xScale the scaling factor for x coordinates
+	 * @param yScale the scaling factor for y coordinates
+	 * @param zScale the scaling factor for z coordinates
+	 * @param radiusScale the scaling factor for node radii.
+	 */
+	public void scale(final double xScale, final double yScale,
+		final double zScale, final double radiusScale)
+	{
+		scale(xScale, yScale, zScale);
+		tree.parallelStream().forEach(p -> {
+			if (p.hasRadii()) {
+				for (int node = 0; node < p.size(); node++) {
+					p.radii[node] *= radiusScale;
+				}
+			}
+		});
+	}
+
+	/**
 	 * Rotates the tree.
 	 *
 	 * @param axis the rotation axis. Either {@link #X_AXIS}, {@link #Y_AXIS}, or

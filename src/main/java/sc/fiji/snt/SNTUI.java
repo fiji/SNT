@@ -40,6 +40,7 @@ import java.awt.Rectangle;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -134,6 +135,7 @@ public class SNTUI extends JDialog {
 
 	/* UI */
 	private static final int MARGIN = 4;
+	private final JMenuBar menuBar;
 	private JCheckBox showPathsSelected;
 	protected JCheckBox showPartsNearby;
 	protected JCheckBox useSnapWindow;
@@ -398,7 +400,7 @@ public class SNTUI extends JDialog {
 			}
 		}
 
-		setJMenuBar(createMenuBar());
+		setJMenuBar(menuBar = createMenuBar());
 		setLayout(new GridBagLayout());
 		final GridBagConstraints dialogGbc = GuiUtils.defaultGbc();
 		add(statusPanel(), dialogGbc);
@@ -571,6 +573,36 @@ public class SNTUI extends JDialog {
 		}
 	}
 
+	public void runCommand(final String cmd) throws IllegalArgumentException {
+		if (cmd == null || cmd.isEmpty()
+				|| (Character.isAlphabetic(cmd.charAt(0)) && !Character.isUpperCase(cmd.charAt(0)))) {
+			throw new IllegalArgumentException("Not a recognizable command: " + cmd);
+		}
+		final List<JMenuItem> list = new ArrayList<>();
+		for (int i = 0; i < menuBar.getMenuCount(); i++) {
+			final JMenu menu = menuBar.getMenu(i);
+			getMenuItems(menu, list);
+		}
+		for (final JMenuItem jmi : list) {
+			if (cmd.equals(jmi.getText()) || cmd.equals(jmi.getActionCommand())) {
+				jmi.doClick();
+				return;
+			}
+		}
+		throw new IllegalArgumentException("Not a recognizable command: " + cmd);
+	}
+
+	private void getMenuItems(final JMenu menu, final List<JMenuItem> holdingList) {
+		for (int j = 0; j < menu.getItemCount(); j++) {
+			final JMenuItem jmi = menu.getItem(j);
+			if (jmi == null) continue;
+			if (jmi instanceof JMenu) {
+				getMenuItems((JMenu)jmi, holdingList);
+			} else {
+				holdingList.add(jmi);
+			}
+		}
+	}
 	private void addSeparatorWithURL(final JComponent component, final String label, final boolean vgap,
 			final GridBagConstraints c) {
 		final String anchor = label.replace(" ", "_").replace(":", "");

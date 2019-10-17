@@ -146,7 +146,7 @@
 		</repository>
 		<repository>
 			<id>Jzy3D.releases</id>
-			<url>https:/maven.jzy3d.org/releases/</url>
+			<url>https://maven.jzy3d.org/releases/</url>
 		</repository>
 	</repositories>
 

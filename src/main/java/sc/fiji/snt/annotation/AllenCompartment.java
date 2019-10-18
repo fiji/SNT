@@ -266,8 +266,8 @@ public class AllenCompartment implements BrainAnnotation {
 
 	@Override
 	public boolean equals(final Object o) {
-		if (o == this)
-			return true;
+		if (o == this) return true;
+		if (o == null) return false;
 		if (!(o instanceof AllenCompartment))
 			return false;
 		return uuid.equals(((AllenCompartment) o).uuid) 

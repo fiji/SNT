@@ -59,7 +59,7 @@ import sc.fiji.snt.annotation.AllenUtils;
  *
  * @author Tiago Ferreira
  */
-class MouseLightQuerier {
+public class MouseLightQuerier {
 
 	/** The Constant AXON. */
 	public static final String AXON = "axon";

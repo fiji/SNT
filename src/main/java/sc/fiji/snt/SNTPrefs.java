@@ -219,6 +219,14 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		setPref(STORE_WIN_LOCATIONS, value);
 	}
 
+	public void setThreads(int n) {
+		Prefs.setThreads(n);
+	}
+
+	public int getThreads() {
+		return Prefs.getThreads();
+	}
+
 	private void setPref(final int key, final boolean value) {
 		if (value) currentBooleans |= key;
 		else currentBooleans &= ~key;
@@ -239,6 +247,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 
 	public static void clearAll() {
 		clearLegacyPrefs();
+		Prefs.setThreads(Runtime.getRuntime().availableProcessors());
 		Prefs.set(BOOLEANS, null);
 		Prefs.set(SNAP_XY, null);
 		Prefs.set(SNAP_Z, null);

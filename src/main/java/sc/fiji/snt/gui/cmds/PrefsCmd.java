@@ -70,6 +70,10 @@ public class PrefsCmd extends ContextCommand {
 	@Parameter(label="Use compression when saving traces", description="Wheter Gzip compression should be use when saving .traces files")
 	private boolean compressTraces;
 
+	@Parameter(label="No. parallel threads",
+			description="<HTML><div WIDTH=400>The max. no. of parallel threads to be used by SNT, as specified in IJ's Edit>Options>Memory &amp; Threads...")
+	private int nThreads;
+
 	@Parameter(label="Reset All Preferences...", callback="reset")
 	private Button reset;
 
@@ -83,6 +87,7 @@ public class PrefsCmd extends ContextCommand {
 	public void run() {
 		snt.getPrefs().setSaveWinLocations(persistentWinLoc);
 		snt.getPrefs().setSaveCompressedTraces(compressTraces);
+		snt.getPrefs().setThreads(nThreads);
 	}
 
 	private void init() {
@@ -90,7 +95,8 @@ public class PrefsCmd extends ContextCommand {
 			snt = sntService.getPlugin();
 			persistentWinLoc = snt.getPrefs().isSaveWinLocations();
 			compressTraces = snt.getPrefs().isSaveCompressedTraces();
-		} catch (NullPointerException npe) {
+			nThreads = snt.getPrefs().getThreads();
+		} catch (final NullPointerException npe) {
 			cancel("SNT is not running.");
 		}
 	}

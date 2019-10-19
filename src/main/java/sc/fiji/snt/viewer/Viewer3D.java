@@ -1436,11 +1436,18 @@ public class Viewer3D {
 	}
 
 	/**
-	 * Loads the surface meshes for the Allen Mouse Brain Atlas (CCF). It will
-	 * simply make the mesh visible if has already been loaded.
+	 * Loads the surface mesh of a supported reference brain/neuropil. Internet
+	 * connection may be required.
 	 *
+	 * @param template the reference brain to be loaded (case-insensitive). E.g.,
+	 *                 "zebrafish" (MP ZBA); "mouse" (Allen CCF); "JFRC2", "JFRC3"
+	 *                 "FCWB" (adult), "L1", "L3", "VNC" (Drosophila)
+	 * 
 	 * @return a reference to the loaded mesh
-	 * @throws IllegalArgumentException if Viewer is not available
+	 * @throws IllegalArgumentException if {@code template} is not recognized
+	 * @see AllenUtils
+	 * @see VFBUtils
+	 * @see ZBAtlasUtils
 	 */
 	public OBJMesh loadRefBrain(final String template) throws IllegalArgumentException {
 		final String normLabel = getNormalizedBrainLabel(template);

@@ -2892,7 +2892,7 @@ public class SNT extends MultiDThreePanes implements
 		}
 		// Restore main view
 		final Overlay overlay = (xy == null) ? null : xy.getOverlay();
-		if (overlay == null && !accessToValidImageData()) {
+		if (xy != null && overlay == null && !accessToValidImageData()) {
 			xy.close();
 			return;
 		}

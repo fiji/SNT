@@ -1421,7 +1421,7 @@ public class Viewer3D {
 	 * @throws IllegalArgumentException if mesh could not be compiled
 	 */
 	public boolean addMesh(final OBJMesh objMesh) throws IllegalArgumentException {
-		return loadOBJMesh(objMesh) != null;
+		return (objMesh == null) ? false : loadOBJMesh(objMesh) != null;
 	}
 
 	private OBJMesh loadOBJMesh(final OBJMesh objMesh) {
@@ -4746,19 +4746,21 @@ public class Viewer3D {
 		jzy3D.add(tree);
 		final OBJMesh brainMesh = jzy3D.loadRefBrain("Allen CCF");
 		OBJMesh mesh = AllenUtils.getCompartment("Thalamus").getMesh();
-		jzy3D.addMesh(mesh);
-		SNTPoint centroid = mesh.getBarycentre("l");
-		Annotation3D cAnnot = jzy3D.annotatePoint(centroid, "l");
-		cAnnot.setSize(30);
-		cAnnot.setColor("green");
-		centroid = mesh.getBarycentre("a");
-		cAnnot = jzy3D.annotatePoint(centroid, "a");
-		cAnnot.setSize(30);
-		cAnnot.setColor("cyan");
-		centroid = mesh.getBarycentre("r");
-		cAnnot = jzy3D.annotatePoint(centroid, "r");
-		cAnnot.setSize(30);
-		cAnnot.setColor("red");
+		if (mesh != null) { // server is online and reachable
+			jzy3D.addMesh(mesh);
+			SNTPoint centroid = mesh.getBarycentre("l");
+			Annotation3D cAnnot = jzy3D.annotatePoint(centroid, "l");
+			cAnnot.setSize(30);
+			cAnnot.setColor("green");
+			centroid = mesh.getBarycentre("a");
+			cAnnot = jzy3D.annotatePoint(centroid, "a");
+			cAnnot.setSize(30);
+			cAnnot.setColor("cyan");
+			centroid = mesh.getBarycentre("r");
+			cAnnot = jzy3D.annotatePoint(centroid, "r");
+			cAnnot.setSize(30);
+			cAnnot.setColor("red");
+		}
 		brainMesh.setBoundingBoxColor(Colors.RED);
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
 		final ArrayList<SNTPoint >selectedTips = new ArrayList<>();

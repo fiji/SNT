@@ -21,7 +21,7 @@
  */
 package sc.fiji.snt.annotation;
 
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +34,9 @@ import org.json.JSONObject;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.viewer.OBJMesh;
 
@@ -249,11 +252,16 @@ public class AllenCompartment implements BrainAnnotation {
 		final String file = jsonObj.getString("geometryFile");
 		if (file == null || !file.endsWith(".obj")) return null;
 		try {
-			final URL url = new URL("https://ml-neuronbrowser.janelia.org/static/allen/obj/" + file);
+			final String urlPath = "https://ml-neuronbrowser.janelia.org/static/allen/obj/";
+			final OkHttpClient client = new OkHttpClient();
+			final Request request = new Request.Builder().url(urlPath).build();
+			final Response response = client.newCall(request).execute();
+			if (!response.isSuccessful()) return null;
+			final URL url = new URL(urlPath + file);
 			mesh = new OBJMesh(url);
 			mesh.setColor(geometryColor, 87.5f);
 			mesh.setLabel(name);
-		} catch (final MalformedURLException | JSONException | IllegalArgumentException e) {
+		} catch (final JSONException | IllegalArgumentException | IOException e) {
 			SNTUtils.error("Could not retrieve mesh ", e);
 		}
 		return mesh;

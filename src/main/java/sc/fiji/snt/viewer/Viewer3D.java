@@ -2642,7 +2642,9 @@ public class Viewer3D {
 				}
 				final Color color = fromAWTColor(c);
 				for (final String label : keys) {
-					plottedObjs.get(label).setColor(color);
+					final RemountableDrawableVBO obj = plottedObjs.get(label);
+					color.a = obj.getColor().a;
+					obj.setColor(color);
 				}
 			});
 			meshMenu.add(mi);

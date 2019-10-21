@@ -688,6 +688,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			SWCPoint firstSWCPoint = null;
 
 			final boolean realRadius = pathToUse.hasRadii();
+			final boolean hasAnnotations = pathToUse.hasNodeAnnotations();
 			for (int i = indexToStartAt; i < pathToUse.size(); ++i) {
 				double radius = 0;
 				if (realRadius) radius = pathToUse.radii[i];
@@ -697,6 +698,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					radius, firstSWCPoint == null ? nearestParentSWCPointID
 						: currentPointID - 1);
 				swcPoint.setPath(currentPath);
+				if (hasAnnotations) swcPoint.setAnnotation(pathToUse.getNodeAnnotation(i));
 				result.add(swcPoint);
 				++currentPointID;
 				if (firstSWCPoint == null) firstSWCPoint = swcPoint;
@@ -716,6 +718,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					pathToUse.precise_y_positions[i], pathToUse.precise_z_positions[i],
 					radius, previousPointID);
 				swcPoint.setPath(currentPath);
+				if (hasAnnotations) swcPoint.setAnnotation(pathToUse.getNodeAnnotation(i));
 				result.add(swcPoint);
 				++currentPointID;
 			}

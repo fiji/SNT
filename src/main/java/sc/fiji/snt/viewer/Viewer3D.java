@@ -3515,17 +3515,17 @@ public class Viewer3D {
 			for (final AllenCompartment compartment : compartments) {
 				if (getOBJs().keySet().contains(compartment.name())) {
 					managerList.addCheckBoxListSelectedValue(compartment.name(), true);
-				} else
-					try {
-						final OBJMesh msh = loadOBJMesh(compartment.getMesh());
-						if (msh != null) {
-							meshLoaded(compartment.name());
-							loadedCompartments++;
-						}
-					} catch (final IllegalArgumentException ignored) {
+				} else {
+					final OBJMesh msh = compartment.getMesh();
+					if (msh == null) {
 						failedCompartments.add(compartment.name());
 						meshRemoved(compartment.name());
+					} else {
+						loadOBJMesh(msh);
+						meshLoaded(compartment.name());
+						loadedCompartments++;
 					}
+				}
 			}
 			if (loadedCompartments > 0)
 				Viewer3D.this.validate();
@@ -4750,15 +4750,15 @@ public class Viewer3D {
 		OBJMesh mesh = AllenUtils.getCompartment("Thalamus").getMesh();
 		if (mesh != null) { // server is online and reachable
 			jzy3D.addMesh(mesh);
-			SNTPoint centroid = mesh.getBarycentre("l");
+			SNTPoint centroid = mesh.getCentroid("l");
 			Annotation3D cAnnot = jzy3D.annotatePoint(centroid, "l");
 			cAnnot.setSize(30);
 			cAnnot.setColor("green");
-			centroid = mesh.getBarycentre("a");
+			centroid = mesh.getCentroid("a");
 			cAnnot = jzy3D.annotatePoint(centroid, "a");
 			cAnnot.setSize(30);
 			cAnnot.setColor("cyan");
-			centroid = mesh.getBarycentre("r");
+			centroid = mesh.getCentroid("r");
 			cAnnot = jzy3D.annotatePoint(centroid, "r");
 			cAnnot.setSize(30);
 			cAnnot.setColor("red");

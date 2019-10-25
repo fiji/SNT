@@ -62,6 +62,8 @@ import sc.fiji.snt.hyperpanes.MultiDThreePanes;
  * {@link SNT}.
  *
  * @author Tiago Ferreira
+ * @author Kyle Harrington
+ *
  */
 @Plugin(type = Service.class, priority = Priority.NORMAL)
 public class SNTService extends AbstractService implements ImageJService {
@@ -100,18 +102,23 @@ public class SNTService extends AbstractService implements ImageJService {
 	}
 
 	/**
-	 * Assigns pixel intensities at each Path node, storing them as Path
-	 * values. Assigned intensities are those of the channel and time point
-	 * currently being traced.
+	 * Assigns pixel intensities at each Path node, storing them as Path values.
+	 * Assigned intensities are those of the channel and time point currently being
+	 * traced. Assumes SNT has been initialized with a valid image.
 	 *
 	 * @param selectedPathsOnly If true, only selected paths will be assigned
-	 *          values, otherwise voxel intensities will be assigned to all paths
+	 *                          values, otherwise voxel intensities will be assigned
+	 *                          to all paths
 	 * @throws UnsupportedOperationException if SNT is not running
+	 * @throws IllegalArgumentException      If valid imaged data is not available
 	 * @see PathProfiler
 	 * @see Path#setNodeValues(double[])
 	 */
-	public void assignValues(final boolean selectedPathsOnly) {
+	public void assignValues(final boolean selectedPathsOnly) throws UnsupportedOperationException, IllegalArgumentException{
 		accessActiveInstance(false);
+		if (!plugin.accessToValidImageData()) {
+			throw new IllegalArgumentException("Valid image data is not available");
+		}
 		final PathProfiler profiler = new PathProfiler(getTree(selectedPathsOnly),
 			plugin.getLoadedDataAsImp());
 		profiler.assignValues();
@@ -439,6 +446,7 @@ public class SNTService extends AbstractService implements ImageJService {
 	 * Returns a toy reconstruction (fractal tree).
 	 *
 	 * @return a reference to the loaded tree, or null if data could no be retrieved
+	 * @see #demoTreeImage()
 	 */
 	public Tree demoTree() {
 		return getResourceTree("tests/TreeV.swc");
@@ -472,6 +480,12 @@ public class SNTService extends AbstractService implements ImageJService {
 		return tree;
 	}
 
+	/**
+	 * Returns the image associated with the demo (fractal) tree.
+	 *
+	 * @return a reference to the image tree, or null if data could no be retrieved
+	 * @see #demoTree()
+	 */
 	public ImagePlus demoTreeImage() {
 		final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 		final InputStream is = classloader.getResourceAsStream("tests/TreeV.tif");
@@ -482,6 +496,15 @@ public class SNTService extends AbstractService implements ImageJService {
 		return imp;
 	}
 
+	/**
+	 * Returns a collection of four demo reconstructions (dendrites from pyramidal
+	 * cells from the MouseLight database). NB: Data is cached locally. No internet
+	 * connection required.
+	 *
+	 * @return the list of {@link Tree}s, corresponding to the dendritic arbors of
+	 *         cells "AA0001", "AA0002", "AA0003", "AA0004" (MouseLight database
+	 *         IDs).
+	 */
 	public List<Tree> demoTrees() {
 		final String[] cells = {"AA0001", "AA0002", "AA0003", "AA0004"};
 		final List<Tree> trees = new ArrayList<>();

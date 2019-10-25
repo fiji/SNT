@@ -290,6 +290,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Returns the set of parsed Paths.
 	 *
 	 * @return the set of paths currently being considered for analysis.
+	 * @see #resetRestrictions()
 	 */
 	public Tree getParsedTree() {
 		return tree;
@@ -566,7 +567,7 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Gets the strahler root number of the analyzed tree
+	 * Gets the Strahler-Horton root number of the analyzed tree
 	 *
 	 * @return the Strahler root number, or -1 if tree has no defined order
 	 */

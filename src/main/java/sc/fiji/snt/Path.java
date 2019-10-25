@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.DoubleStream;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -831,6 +832,55 @@ public class Path implements Comparable<Path> {
 		return precise_z_positions[i] / z_spacing + canvasOffset.z;
 	}
 
+	/**
+	 * Gets a section between two nodes of this Path.
+	 *
+	 * @param startIndex the node index defining the first node of the section
+	 * @param endIndex   the node index defining the last node of the section
+	 * @return the section. Note that the sectioned Path will share of all of this
+	 *         Path's properties but will not contain any information on junction
+	 *         points or connectivity to other Paths.
+	 */
+	public Path getSection(final int startIndex, final int endIndex) {
+		if (startIndex < 0 || endIndex > size() || endIndex < startIndex) {
+			throw new IllegalArgumentException("Indices out of range!");
+		}
+		final Calibration cal = getCalibration();
+		final Path sub = new Path(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth, cal.getUnit(), size());
+		sub.points = endIndex - startIndex + 1;
+		sub.precise_x_positions = Arrays.copyOfRange(precise_x_positions, startIndex, endIndex + 1);
+		sub.precise_y_positions = Arrays.copyOfRange(precise_y_positions, startIndex, endIndex + 1);
+		sub.precise_z_positions = Arrays.copyOfRange(precise_z_positions, startIndex, endIndex + 1);
+		if (radii != null)
+			sub.radii = Arrays.copyOfRange(radii, startIndex, endIndex + 1);
+		if (tangents_x != null)
+			sub.tangents_x = Arrays.copyOfRange(tangents_x, startIndex, endIndex + 1);
+		if (tangents_y != null)
+			sub.tangents_y = Arrays.copyOfRange(tangents_y, startIndex, endIndex + 1);
+		if (tangents_z != null)
+			sub.tangents_z = Arrays.copyOfRange(tangents_z, startIndex, endIndex + 1);
+		if (nodeValues != null)
+			sub.nodeValues = Arrays.copyOfRange(nodeValues, startIndex, endIndex + 1);
+		if (nodeAnnotations != null)
+			sub.nodeAnnotations = Arrays.copyOfRange(nodeAnnotations, startIndex, endIndex + 1);
+		if (nodeColors != null)
+			sub.nodeColors = Arrays.copyOfRange(nodeColors, startIndex, endIndex + 1);
+		if (getFitted() != null)
+			sub.setFitted(getFitted().getSection(startIndex, endIndex));
+		applyCommonProperties(sub);
+		return sub;
+	}
+
+	private void applyCommonProperties(final Path other) {
+		other.setOrder(getOrder());
+		other.setIsPrimary(isPrimary());
+		other.setSWCType(getSWCType());
+		other.setCTposition(getChannel(), getFrame());
+		other.setEditableNode(getEditableNodeIndex());
+		other.setCanvasOffset(getCanvasOffset());
+		other.setColor(getColor());
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public Path clone() {
@@ -859,16 +909,9 @@ public class Path implements Comparable<Path> {
 			dup.endJoinsPoint = new PointInImage(endJoinsPoint.x, endJoinsPoint.y, endJoinsPoint.z);
 			dup.endJoinsPoint.onPath = dup;
 		}
-
 		if (getFitted() != null) dup.setFitted(getFitted().clone());
-		dup.setOrder(getOrder());
-		dup.setIsPrimary(isPrimary());
-		dup.setSWCType(getSWCType());
-		dup.setCTposition(getChannel(), getFrame());
-		dup.setEditableNode(getEditableNodeIndex());
-		dup.setCanvasOffset(getCanvasOffset());
-		dup.setColor(getColor());
 		dup.setNodeColors(getNodeColors());
+		applyCommonProperties(dup);
 		return dup;
 	}
 
@@ -2371,30 +2414,19 @@ public class Path implements Comparable<Path> {
 		return result;
 	}
 
-	protected List<PointInImage> startEndJoinPoints() {
+	/**
+	 * Returns the nodes which are indicated to be a join (junction/branch point), either in this Path
+	 * object, or any other that starts or ends on it.
+	 *
+	 * @return the list of nodes as {@link PointInImage} objects
+	 * @see #findJunctionIndices()
+	 */
+	public List<PointInImage> findJunctions() {
 		final ArrayList<PointInImage> result = new ArrayList<>();
 		if (startJoinsPoint != null) {
 			result.add(startJoinsPoint);
 		}
 		if (endJoinsPoint != null) {
-			result.add(endJoinsPoint);
-		}
-		return result;
-	}
-
-	/**
-	 * Returns the points which are indicated to be a join, either in this Path
-	 * object, or any other that starts or ends on it.
-	 *
-	 * @return the list of nodes as {@link PointInImage} objects
-	 * @see #findJoinedPointIndices()
-	 */
-	public List<PointInImage> findJoinedPoints() {
-		final ArrayList<PointInImage> result = new ArrayList<>();
-		if (startJoins != null) {
-			result.add(startJoinsPoint);
-		}
-		if (endJoins != null) {
 			result.add(endJoinsPoint);
 		}
 		for (final Path other : somehowJoins) {
@@ -2409,15 +2441,15 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Returns the indices of points which are indicated to be a join, either in
-	 * this path object, or any other that starts or ends on it.
+	 * Returns the indices of nodes which are indicated to be a join, either in this
+	 * Path object, or any other that starts or ends on it.
 	 *
-	 * @return the indices of points (Path nodes)
-	 * @see #findJoinedPoints()
+	 * @return the indices of junction nodes, naturally sorted
+	 * @see #findJunctions()
 	 */
-	public Set<Integer> findJoinedPointIndices() {
-		final HashSet<Integer> result = new HashSet<>();
-		for (final PointInImage point : findJoinedPoints()) {
+	public TreeSet<Integer> findJunctionIndices() {
+		final TreeSet<Integer> result = new TreeSet<>();
+		for (final PointInImage point : findJunctions()) {
 			result.add(indexNearestTo(point.x, point.y, point.z));
 		}
 		return result;
@@ -2426,12 +2458,10 @@ public class Path implements Comparable<Path> {
 	synchronized public void downsample(final double maximumAllowedDeviation) {
 		// We should only downsample between the fixed points, i.e.
 		// where this neuron joins others
-		final Set<Integer> fixedPointSet = findJoinedPointIndices();
+		final TreeSet<Integer> fixedPoints = findJunctionIndices();
 		// Add the start and end points:
-		fixedPointSet.add(0);
-		fixedPointSet.add(points - 1);
-		final Integer[] fixedPoints = fixedPointSet.toArray(new Integer[0]);
-		Arrays.sort(fixedPoints);
+		fixedPoints.add(0);
+		fixedPoints.add(points - 1);
 		int lastIndex = -1;
 		int totalDroppedPoints = 0;
 		for (final int fpi : fixedPoints) {

@@ -491,7 +491,7 @@ public class TreeAnalyzer extends ContextCommand {
 	public Set<PointInImage> getBranchPoints() {
 		joints = new HashSet<>();
 		for (final Path p : tree.list()) {
-			joints.addAll(p.findJoinedPoints());
+			joints.addAll(p.findJunctions());
 		}
 		return joints;
 	}

@@ -41,6 +41,7 @@ import sc.fiji.snt.annotation.AllenUtils;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.viewer.MultiViewer2D;
+import sc.fiji.snt.viewer.OBJMesh;
 import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.viewer.Viewer3D;
 
@@ -118,11 +119,13 @@ public class MultiTreeColorMapper extends ColorMapper {
 
 	public void mapRootDistanceToCentroid(final AllenCompartment compartment, final ColorTable colorTable) {
 		if (compartment == null || colorTable == null) throw new IllegalArgumentException("compartment/colorTable cannot be null");
+		final OBJMesh mesh = compartment.getMesh();
+		if (mesh == null) throw new IllegalArgumentException("Cannot proceed: compartment mesh is not available");
 		integerScale = false;
 		this.colorTable = colorTable;
 		for (final MappedTree mt : mappedTrees) {
 			final PointInImage root = mt.tree.getRoot();
-			final SNTPoint centroid =  compartment.getMesh().getBarycentre( (AllenUtils.isLeftHemisphere(root)) ? "left" : "right");
+			final SNTPoint centroid = mesh.getCentroid( (AllenUtils.isLeftHemisphere(root)) ? "left" : "right");
 			final PointInImage pimCentroid = new PointInImage(centroid.getX(),centroid.getY(), centroid.getZ());
 			mt.value = root.distanceTo(pimCentroid);
 		}

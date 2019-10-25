@@ -211,7 +211,7 @@ public class OBJMesh {
 	 *                 retrieved for both hemi-halves, i.e., the full mesh
 	 * @return the SNT point defining the (X,Y,Z) center of the (hemi)mesh.
 	 */
-	public SNTPoint getBarycentre(final String hemihalf) {
+	public SNTPoint getCentroid(final String hemihalf) {
 		final String normHemisphere = getHemisphere(hemihalf);
 		if ("both".contentEquals(normHemisphere)) {
 			return getBarycentre();

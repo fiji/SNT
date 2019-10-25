@@ -57,9 +57,9 @@ public class TreeAnalyzerTest {
 		final double cableLength =  analyzer.getCableLength();
 		assertTrue("569.34 > Sum length of all paths < 569.35um", cableLength > 569.34 && cableLength < 569.35);
 		final double primaryLength =  analyzer.getPrimaryLength();
-		assertTrue("152.39 > Sum length of I paths < 152.40um", primaryLength > 152.39 && primaryLength < 152.40);
+		assertTrue("50.99 > Sum length of I branches < 51.01um", primaryLength > 50.99 && primaryLength < 51.01);
 		final double terminalLength =  analyzer.getTerminalLength();
-		assertTrue("9.41um > Sum length of terminal paths < 9.42um", terminalLength > 9.41 && terminalLength < 9.42);
+		assertTrue("153.29um > Sum length of terminal paths < 153.30um", terminalLength > 153.29 && terminalLength < 153.30);
 	}
 
 }

@@ -28,8 +28,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.scijava.table.DefaultGenericTable;
+
+import net.imagej.ImageJ;
 
 import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;
@@ -39,6 +42,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import sc.fiji.snt.Path;
+import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.util.PointInImage;
 
@@ -113,8 +117,8 @@ public class TreeAnalyzer extends ContextCommand {
 		TreeColorMapper.Z_COORDINATES };
 	protected Tree tree;
 	private Tree unfilteredTree;
-	private HashSet<Path> primaries;
-	private HashSet<Path> terminals;
+	private HashSet<Path> primaryBranches;
+	private HashSet<Path> terminalBranches;
 	private HashSet<PointInImage> joints;
 	private HashSet<PointInImage> tips;
 	protected DefaultGenericTable table;
@@ -271,8 +275,8 @@ public class TreeAnalyzer extends ContextCommand {
 		if (unfilteredTree == null) return; // no filtering has occurred
 		tree.replaceAll(unfilteredTree.list());
 		joints = null;
-		primaries = null;
-		terminals = null;
+		primaryBranches = null;
+		terminalBranches = null;
 		tips = null;
 		fittedPathsCounter = unfilteredPathsFittedPathsCounter;
 	}
@@ -341,10 +345,10 @@ public class TreeAnalyzer extends ContextCommand {
 		table.set(getCol("# Branch Points"), row, getBranchPoints().size());
 		table.set(getCol("# Tips"), row, getTips().size());
 		table.set(getCol("Cable Length"), row, getCableLength());
-		table.set(getCol("# Primary Paths (PP)"), row, getPrimaryPaths().size());
-		table.set(getCol("# Terminal Paths (TP)"), row, getTerminalPaths().size());
-		table.set(getCol("Sum length PP"), row, getPrimaryLength());
-		table.set(getCol("Sum length TP"), row, getTerminalLength());
+		table.set(getCol("# Primary Branches (PB)"), row, getPrimaryBranches().size());
+		table.set(getCol("# Terminal Branches (TB)"), row, getTerminalBranches().size());
+		table.set(getCol("Sum length PB"), row, getPrimaryLength());
+		table.set(getCol("Sum length TB"), row, getTerminalLength());
 		table.set(getCol("Strahler Root No."), row, getStrahlerRootNumber());
 		table.set(getCol("# Fitted Paths"), row, fittedPathsCounter);
 		table.set(getCol("# Single-point Paths"), row, getSinglePointPaths());
@@ -437,37 +441,71 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Retrieves Paths tagged as primary.
+	 * Retrieves all the Paths in the analyzed Tree tagged as primary.
 	 *
-	 * @return the set of primary paths
+	 * @return the set of primary paths.
+	 * @see #getPrimaryBranches()
 	 */
 	public Set<Path> getPrimaryPaths() {
-		primaries = new HashSet<>();
+		final HashSet<Path> primaryPaths = new HashSet<>();
 		for (final Path p : tree.list()) {
-			if (p.isPrimary()) primaries.add(p);
+			if (p.isPrimary()) primaryPaths.add(p);
 		}
-		return primaries;
+		return primaryPaths;
 	}
 
 	/**
-	 * Retrieves Paths containing terminal points.
+	 * Retrieves the primary branches of the analyzed Tree. A primary branch
+	 * corresponds to the section of a primary Path between its origin and its
+	 * closest branch-point.
 	 *
-	 * @return the set containing Paths associated with terminal points
+	 * @return the set containing the primary branches. Note that as per
+	 *         {@link Path#getSection(int, int)}, these branches will not carry any
+	 *         connectivity information.
+	 * @see #getPrimaryPaths()
 	 * @see #restrictToOrder(int...)
 	 */
-	public Set<Path> getTerminalPaths() {
-		terminals = new HashSet<>();
-		final int rootNumber = getStrahlerRootNumber();
+	public Set<Path> getPrimaryBranches() {
+		primaryBranches = new HashSet<>();
 		for (final Path p : tree.list()) {
-			if (p.getOrder() == rootNumber) terminals.add(p);
+			if (!p.isPrimary()) continue;
+			final TreeSet<Integer> joinIndices = p.findJunctionIndices();
+			final int firstJointIdx = (joinIndices.isEmpty()) ? p.size() - 1 : joinIndices.first();
+			primaryBranches.add(p.getSection(0, firstJointIdx));
 		}
-		return terminals;
+		return primaryBranches;
+	}
+
+	/**
+	 * Retrieves the terminal branches of the analyzed Tree. A terminal branch
+	 * corresponds to the section of a terminal Path between its last branch-point
+	 * and its terminal point (tip).
+	 *
+	 * @return the set containing terminal branches. Note that as per
+	 *         {@link Path#getSection(int, int)}, these branches will not carry any
+	 *         connectivity information.
+	 * @see #getPrimaryBranches
+	 * @see #restrictToOrder(int...)
+	 */
+	public Set<Path> getTerminalBranches() {
+		terminalBranches = new HashSet<>();
+		if (joints == null) getBranchPoints();
+		for (final Path p : tree.list()) {
+			final int lastNodeIdx = p.size() - 1;
+			if (joints.contains(p.getNode(lastNodeIdx))) {
+				continue; // not a terminal branch
+			}
+			final TreeSet<Integer> joinIndices = p.findJunctionIndices();
+			final int lastJointIdx = (joinIndices.isEmpty()) ? 0 : joinIndices.last();
+			terminalBranches.add(p.getSection(lastJointIdx, lastNodeIdx));
+		}
+		return terminalBranches;
 	}
 
 	/**
 	 * Gets the position of all the tips in the analyzed tree.
 	 *
-	 * @return the set of tip points
+	 * @return the set of terminal points
 	 */
 	public Set<PointInImage> getTips() {
 
@@ -506,23 +544,25 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Gets the cable length of primary Paths
+	 * Gets the cable length of primary branches.
 	 *
-	 * @return the primary length
+	 * @return the length sum of all primary branches
+	 * @see #getPrimaryBranches()
 	 */
 	public double getPrimaryLength() {
-		if (primaries == null) getPrimaryPaths();
-		return sumLength(primaries);
+		if (primaryBranches == null) getPrimaryBranches();
+		return sumLength(primaryBranches);
 	}
 
 	/**
-	 * Gets the cable length of terminal Paths
+	 * Gets the cable length of terminal branches
 	 *
-	 * @return the terminal length
+	 * @return the length sum of all terminal branches
+	 * @see #getTerminalBranches()
 	 */
 	public double getTerminalLength() {		
-		if (terminals == null) getTerminalPaths();
-		return sumLength(terminals);
+		if (terminalBranches == null) getTerminalBranches();
+		return sumLength(terminalBranches);
 	}
 
 	/**
@@ -543,4 +583,19 @@ public class TreeAnalyzer extends ContextCommand {
 		return paths.stream().mapToDouble(p -> p.getLength()).sum();
 	}
 
+
+	/* IDE debug method */
+	public static void main(final String[] args) throws InterruptedException {
+		final ImageJ ij = new ImageJ();
+		ij.ui().showUI();
+		final SNTService sntService = ij.context().getService(SNTService.class);
+		sntService.initialize(sntService.demoTreeImage(), true);
+		final Tree tree = sntService.demoTree();
+		sntService.loadTree(tree);
+		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
+		for (Path p : analyzer.getPrimaryBranches()) {
+			sntService.getPlugin().getPathAndFillManager().addPath(p);
+		}
+		sntService.getPlugin().updateAllViewers();
+	}
 }

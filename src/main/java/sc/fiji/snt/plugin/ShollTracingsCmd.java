@@ -596,7 +596,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive,
 			// Linear profile stats
 			lStats = new LinearProfileStats(profile);
 			lStats.setLogger(logger);
-			lStats.setPrimaryBranches(new TreeAnalyzer(tree).getPrimaryPaths()
+			lStats.setPrimaryBranches(new TreeAnalyzer(tree).getPrimaryBranches()
 				.size());
 
 			if (polynomialChoice.contains("Best")) {

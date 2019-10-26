@@ -103,7 +103,7 @@ public class GraphUtils {
 	 *         Euclidean distances
 	 */
 	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final Tree tree) {
-		final DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> graph = createGraphInternal(tree.getNodes(), true);
+		final DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> graph = createGraphInternal(tree.getNodesAsSWCPoints(), true);
 		graph.setLabel(tree.getLabel());
 		return graph;
 	}

@@ -399,7 +399,7 @@ public class Tree {
 				}
 			}
 		}
-		return (rootPath == null) ? null : rootPath.getNode(0);
+		return (rootPath == null) ? null : rootPath.getNodeWithoutChecks(0);
 	}
 
 	public SNTPoint getCentroid() {
@@ -522,7 +522,7 @@ public class Tree {
 			case Z_AXIS:
 				tree.parallelStream().forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
-						final PointInImage pim = p.getNode(node);
+						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double x = pim.x * cos - pim.y * sin;
 						final double y = pim.y * cos + pim.x * sin;
 						p.moveNode(node, new PointInImage(x, y, pim.z));
@@ -537,7 +537,7 @@ public class Tree {
 			case Y_AXIS:
 				tree.parallelStream().forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
-						final PointInImage pim = p.getNode(node);
+						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double x = pim.x * cos - pim.z * sin;
 						final double z = pim.z * cos + pim.x * sin;
 						p.moveNode(node, new PointInImage(x, pim.y, z));
@@ -552,7 +552,7 @@ public class Tree {
 			case X_AXIS:
 				tree.parallelStream().forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
-						final PointInImage pim = p.getNode(node);
+						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double y = pim.y * cos - pim.z * sin;
 						final double z = pim.z * cos + pim.y * sin;
 						p.moveNode(node, new PointInImage(pim.x, y, z));
@@ -571,14 +571,16 @@ public class Tree {
 	}
 
 	/**
-	 * Gets the all the points (path nodes) forming this tree.
+	 * Gets all the nodes (path points) forming this tree.
 	 *
 	 * @return the points
 	 */
-	public List<PointInImage> getPoints() {
+	public List<PointInImage> getNodes() {
 		final List<PointInImage> list = new ArrayList<>();
 		for (final Path p : tree) {
-			list.addAll(p.getPointInImageList());
+			for (int i = 0; i < p.size(); ++i) {
+				list.add(p.getNodeWithoutChecks(i));
+			}
 		}
 		return list;
 	}
@@ -589,10 +591,11 @@ public class Tree {
 	 * @return true, if is 3D
 	 */
 	public boolean is3D() {
-		final List<PointInImage> points = getPoints();
-		final double zRef = points.get(0).z;
-		for (int i = 1; i < points.size(); i++) {
-			if (points.get(i).z != zRef) return true;
+		final double zRef = getRoot().getZ();
+		for (final Path p : tree) {
+			for (int i = 0; i < p.size(); ++i) {
+				if (p.getNodeWithoutChecks(i).getZ() != zRef) return true;
+			}
 		}
 		return false;
 	}
@@ -627,7 +630,7 @@ public class Tree {
 	public BoundingBox getBoundingBox(final boolean computeIfUnset) {
 		final boolean compute = computeIfUnset || (box != null && box.isComputationNeeded());
 		if (compute && box == null) box = new TreeBoundingBox();
-		if (compute) box.compute(getPoints().iterator());
+		if (compute) box.compute(getNodes().iterator());
 		return box;
 	}
 
@@ -758,7 +761,7 @@ public class Tree {
 		return label;
 	}
 
-	public Collection<SWCPoint> getNodes() throws IllegalArgumentException {
+	public Collection<SWCPoint> getNodesAsSWCPoints() throws IllegalArgumentException {
 		initPathAndFillManager();
 		final Path[] primaryPaths = pafm.getPathsStructured();
 		if (primaryPaths.length != 1) throw new IllegalArgumentException("Tree contains multiple roots!");

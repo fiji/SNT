@@ -1682,7 +1682,7 @@ public class PathAndFillManager extends DefaultHandler implements
 						final Path startPath = getPathFromID(startID);
 						if (startJoinPoint == null) {
 							// Then we have to get it from startIndexInteger:
-							startJoinPoint = startPath.getNode(startIndexInteger);
+							startJoinPoint = startPath.getNodeWithoutChecks(startIndexInteger);
 						}
 						p.setStartJoin(startPath, startJoinPoint);
 					}
@@ -1690,7 +1690,7 @@ public class PathAndFillManager extends DefaultHandler implements
 						final Path endPath = getPathFromID(endID);
 						if (endJoinPoint == null) {
 							// Then we have to get it from endIndexInteger:
-							endJoinPoint = endPath.getNode(endIndexInteger);
+							endJoinPoint = endPath.getNodeWithoutChecks(endIndexInteger);
 						}
 						p.setEndJoin(endPath, endJoinPoint);
 					}
@@ -2522,7 +2522,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			final int i = p.indexNearestTo(x * x_spacing, y * y_spacing, z *
 					z_spacing);
 
-			final PointInImage nearestOnPath = p.getNode(i);
+			final PointInImage nearestOnPath = p.getNodeWithoutChecks(i);
 
 			final double distanceSquared = nearestOnPath.distanceSquaredTo(x *
 					x_spacing, y * y_spacing, z * z_spacing);
@@ -3065,7 +3065,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				} while (currentPath.size() <= 0 || !currentPath.versionInUse());
 			}
 			else++currentPointIndex;
-			return currentPath.getNode(currentPointIndex);
+			return currentPath.getNodeWithoutChecks(currentPointIndex);
 		}
 
 		/* (non-Javadoc)

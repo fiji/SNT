@@ -542,6 +542,10 @@ public class Path implements Comparable<Path> {
 			throw new IndexOutOfBoundsException(
 				"getNode() was asked for an out-of-range point: " + pos);
 		}
+		return getNodeWithoutChecks(pos);
+	}
+
+	protected PointInImage getNodeWithoutChecks(final int pos) {
 		final PointInImage result = new PointInImage(precise_x_positions[pos],
 			precise_y_positions[pos], precise_z_positions[pos]);
 		result.onPath = this;
@@ -629,7 +633,7 @@ public class Path implements Comparable<Path> {
 		if (index < 0 || index >= points) throw new IllegalArgumentException(
 			"removeNode() asked for an out-of-range point: " + index);
 		// FIXME: This all would be much easier if we were using Collections/Lists
-		final PointInImage p = getNode(index);
+		final PointInImage p = getNodeWithoutChecks(index);
 		precise_x_positions = ArrayUtils.remove(precise_x_positions, index);
 		precise_y_positions = ArrayUtils.remove(precise_y_positions, index);
 		precise_z_positions = ArrayUtils.remove(precise_z_positions, index);
@@ -646,8 +650,8 @@ public class Path implements Comparable<Path> {
 		if (nodeValues != null) {
 			nodeValues = ArrayUtils.remove(nodeValues, index);
 		}
-		if (p.equals(startJoinsPoint)) startJoinsPoint = getNode(0);
-		if (p.equals(endJoinsPoint) && points > 0) endJoinsPoint = getNode(
+		if (p.equals(startJoinsPoint)) startJoinsPoint = getNodeWithoutChecks(0);
+		if (p.equals(endJoinsPoint) && points > 0) endJoinsPoint = getNodeWithoutChecks(
 			points - 1);
 	}
 
@@ -702,7 +706,7 @@ public class Path implements Comparable<Path> {
 		double minimumDistanceSquared = within * within;
 		PointInImage closestNode = null;
 		for (int i = 0; i < size(); ++i) {
-			final PointInImage cNode = getNode(i);
+			final PointInImage cNode = getNodeWithoutChecks(i);
 			final double thisDistanceSquared = cNode.distanceSquaredTo(node);
 			if (thisDistanceSquared < minimumDistanceSquared) {
 				closestNode = cNode;
@@ -2034,15 +2038,6 @@ public class Path implements Comparable<Path> {
 			univ.removeContent(nameWhenAddedToViewerExtra);
 			content3DExtra = null;
 		}
-	}
-
-	protected List<PointInImage> getPointInImageList() {
-		final ArrayList<PointInImage> linePoints = new ArrayList<>();
-		for (int i = 0; i < points; ++i) {
-			linePoints.add(new PointInImage(precise_x_positions[i],
-				precise_y_positions[i], precise_z_positions[i]));
-		}
-		return linePoints;
 	}
 
 	public java.util.List<Point3f> getPoint3fList() {

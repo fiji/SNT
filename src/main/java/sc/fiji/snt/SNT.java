@@ -1161,7 +1161,7 @@ public class SNT extends MultiDThreePanes implements
 			final int eNode = editingPath.indexNearestToCanvasPosition2D(x, y,
 				xy_tracer_canvas.nodeDiameter());
 			if (eNode != -1) {
-				pim = editingPath.getNode(eNode);
+				pim = editingPath.getNodeWithoutChecks(eNode);
 				editingPath.setEditableNode(eNode);
 			}
 		}

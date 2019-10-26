@@ -335,7 +335,7 @@ public class SciViewSNT {
 				// Stash soma coordinates
 				if (Path.SWC_SOMA == p.getSWCType()) {
 					for (int i = 0; i < p.size(); i++) {
-						final PointInImage pim = p.getNode(i);
+						final PointInImage pim = p.getNodeWithoutChecks(i);
 						pim.v = p.getNodeRadius(i);
 						somaPoints.add(pim);
 					}
@@ -353,7 +353,7 @@ public class SciViewSNT {
 				final List<ColorRGB> colors = new ArrayList<>();
 				final float scaleFactor = 0.1f;
 				for (int i = 0; i < p.size(); ++i) {
-					final PointInImage pim = p.getNode(i);
+					final PointInImage pim = p.getNodeWithoutChecks(i);
 					final ClearGLVector3 coord = new ClearGLVector3((float)pim.x, (float)pim.y, (float)pim.z);
 					final Material mat = new Material();
 					final Color c = p.hasNodeColors() ? p.getNodeColor(i) : p.getColor();

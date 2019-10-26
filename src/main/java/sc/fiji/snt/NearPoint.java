@@ -72,7 +72,7 @@ public class NearPoint implements Comparable<NearPoint> {
 	}
 
 	public PointInImage getNode() {
-		return path.getNode(indexInPath);
+		return path.getNodeWithoutChecks(indexInPath);
 	}
 
 	public PointInCanvas getNodeUnscaled() {
@@ -82,7 +82,7 @@ public class NearPoint implements Comparable<NearPoint> {
 	private PointInImage getPathPoint(final int index) {
 		PointInImage node;
 		node = (unScaledPositions) ? path.getPointInCanvas(index) : path
-			.getNode(index);
+			.getNodeWithoutChecks(index);
 		if (ignoreZ) node.z = 0;
 		return node;
 	}

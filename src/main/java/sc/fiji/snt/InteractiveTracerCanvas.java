@@ -190,7 +190,7 @@ class InteractiveTracerCanvas extends TracerCanvas {
 						"Paths Cannot Contain Loops");
 					return;
 				}
-				final PointInImage tPim = p.getNode(nodeIndexP);
+				final PointInImage tPim = p.getNodeWithoutChecks(nodeIndexP);
 				source1.moveNode(source1.getEditableNodeIndex(), tPim);
 				if (startJoins) {
 					if (source1.getStartJoins() != null) source1.unsetStartJoin();

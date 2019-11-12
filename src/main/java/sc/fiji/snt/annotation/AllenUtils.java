@@ -179,6 +179,19 @@ public class AllenUtils {
 	}
 
 	/**
+	 * Gets the maximum number of ontology levels in the Allen CCF.
+	 * 
+	 * @return the max number of ontology levels.
+	 */
+	public static int getHighestOntologyDepth() {
+		int maxLevel = 0;
+		for (final AllenCompartment c : getOntologies()) {
+			maxLevel = Math.max(maxLevel, c.getOntologyDepth());
+		}
+		return maxLevel;
+	}
+
+	/**
 	 * Retrieves the Allen CCF hierarchical tree data.
 	 *
 	 * @param meshesOnly Whether only compartments with known meshes should be included

@@ -59,6 +59,7 @@ public class AllenCompartment implements BrainAnnotation {
 	private int structureId;
 	private UUID uuid;
 	private JSONObject jsonObj;
+	private ArrayList<AllenCompartment> parentStructure;
 
 	/**
 	 * Instantiates a new ARA annotation from an UUID (as used by MouseLight's
@@ -165,14 +166,50 @@ public class AllenCompartment implements BrainAnnotation {
 	 *         the CCF ontologies tree
 	 */
 	public List<AllenCompartment> getTreePath() {
+		if (parentStructure != null) return parentStructure;
 		final String path = getStructureIdPath();
-		final ArrayList<AllenCompartment> parentStructure = new ArrayList<>();
+		parentStructure = new ArrayList<>();
 		for (final String structureID : path.split("/")) {
 			if (structureID.isEmpty())
 				continue;
 			parentStructure.add(AllenUtils.getCompartment(Integer.parseInt(structureID)));
 		}
 		return parentStructure;
+	}
+
+	/**
+	 * Gets the ontology depth of this compartment.
+	 *
+	 * @return the ontological depth of this compartment, i.e., its ontological
+	 *         distance relative to the root (e.g., a compartment of hierarchical
+	 *         level {@code 9}, has a depth of {@code 8}).
+	 */
+	public int getOntologyDepth() {
+		return depth();
+	}
+
+	/**
+	 * Gets the parent of this compartment
+	 *
+	 * @return the parent of this compartment, of null if this compartment is root.
+	 */
+	public AllenCompartment getParent() {
+		if (getTreePath().isEmpty()) return null;
+		final int lastIdx = Math.max(0, parentStructure.size() - 2);
+		return parentStructure.get(lastIdx);
+	}
+
+	/**
+	 * Gets the ancestor ontologies of this compartment as a flat (non-hierarchical)
+	 * list.
+	 *
+	 * @param level maximum depth that should be considered.
+	 * @return the "flattened" ontologies list
+	 */
+	public List<AllenCompartment> getAncestors(final int level) {
+		final int fromIdx = Math.max(0, getTreePath().size() - level - 1); // inclusive
+		final int toIdx = Math.max(0, getTreePath().size() - 1); // exclusive
+		return getTreePath().subList(fromIdx, toIdx);
 	}
 
 	/**
@@ -184,7 +221,7 @@ public class AllenCompartment implements BrainAnnotation {
 	public List<AllenCompartment> getChildren() {
 		final ArrayList<AllenCompartment> children = new ArrayList<>();
 		final Collection<AllenCompartment> allCompartments = AllenUtils.getOntologies();
-		for (AllenCompartment c :  allCompartments) {
+		for (final AllenCompartment c : allCompartments) {
 			if (this.contains(c)) children.add(c);
 		}
 		return children;

@@ -71,6 +71,9 @@ public class MultiTreeColorMapper extends ColorMapper {
 	/** Mapping property: Strahler root number */
 	public static final String ROOT_NUMBER = "Strahler root number";
 
+	/** Mapping property: Assigned Tree value */
+	public static final String ASSIGNED_VALUE = "Assigned value";
+
 	/**
 	 * Mapping property (dummy): Each Tree in the collection is assigned an
 	 * incremental LUT entry
@@ -140,6 +143,9 @@ public class MultiTreeColorMapper extends ColorMapper {
 		for (final MappedTree mt : mappedTrees) {
 			final TreeAnalyzer analyzer = new TreeAnalyzer(mt.tree);
 			switch (measurement) {
+				case ASSIGNED_VALUE:
+					mt.value = mt.tree.getAssignedValue();
+					break;
 				case ROOT_NUMBER:
 					integerScale = true;
 					mt.value = analyzer.getStrahlerRootNumber();

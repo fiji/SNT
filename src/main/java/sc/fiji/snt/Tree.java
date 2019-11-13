@@ -73,6 +73,7 @@ public class Tree {
 	private String label;
 	private TreeBoundingBox box;
 	private PathAndFillManager pafm;
+	private double value;
 
 	/**
 	 * Instantiates a new empty Tree.
@@ -911,6 +912,26 @@ public class Tree {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Assigns a numeric property to this Tree.
+	 * 
+	 * @param value the value to be assigned to this Tree.
+	 * @see #getAssignedValue()
+	 */
+	public void assignValue(final double value) {
+		this.value = value;
+	}
+
+	/**
+	 * Retrieves the numeric property assigned to this Tree.
+	 * 
+	 * @return the assigned value.
+	 * @see #assignValue(double)
+	 */
+	public double getAssignedValue() {
+		return value;
 	}
 
 	private void initPathAndFillManager() {

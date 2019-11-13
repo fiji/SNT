@@ -160,7 +160,8 @@ public class AllenCompartment implements BrainAnnotation {
 	 * Gets the tree path of this compartment. The TreePath is the list of parent
 	 * compartments that uniquely identify this compartment in the ontologies
 	 * hierarchical tree. The elements of the list are ordered with the root ('Whole
-	 * Brain") as the first element of the list.
+	 * Brain") as the first element of the list. In practice, this is equivalent to
+	 * appending this compartment to the the list returned by {@link #getAncestors()}.
 	 *
 	 * @return the tree path that uniquely identifies this compartment as a node in
 	 *         the CCF ontologies tree
@@ -203,13 +204,24 @@ public class AllenCompartment implements BrainAnnotation {
 	 * Gets the ancestor ontologies of this compartment as a flat (non-hierarchical)
 	 * list.
 	 *
+	 * @return the "flattened" list of ancestors
+	 * @see #getTreePath()
+	 */
+	public List<AllenCompartment> getAncestors() {
+		return getAncestors(Integer.MIN_VALUE);
+	}
+
+	/**
+	 * Gets the ancestor ontologies of this compartment as a flat (non-hierarchical)
+	 * list.
+	 *
 	 * @param level maximum depth that should be considered.
-	 * @return the "flattened" ontologies list
+	 * @return the "flattened" ontologies list of ancestors
 	 */
 	public List<AllenCompartment> getAncestors(final int level) {
 		final int fromIdx = Math.max(0, getTreePath().size() - level - 1); // inclusive
-		final int toIdx = Math.max(0, getTreePath().size() - 1); // exclusive
-		return getTreePath().subList(fromIdx, toIdx);
+		final int toIdx = Math.max(0, parentStructure.size() - 1); // exclusive
+		return parentStructure.subList(fromIdx, toIdx);
 	}
 
 	/**

@@ -76,11 +76,28 @@ public class OBJMesh {
 
 	public OBJMesh(final URL url) {
 		loader = new OBJFileLoaderPlus(url);
-		if (!loader.compileModel()) {
+		if (!loader.compileModel(null)) {
 			throw new IllegalArgumentException(
 				"Mesh could not be compiled. Invalid file?");
 		}
 		drawable = new RemountableDrawableVBO(loader, this);
+	}
+
+	/**
+	 * Translates the vertices of this mesh by the specified offset. If mesh is
+	 * displayed, changes may only occur once scene is rebuilt.
+	 *
+	 * @param offset the translation offset
+	 */
+	public void translate(final SNTPoint offset) {
+		if (drawable.hasMountedOnce()) {
+			drawable.unmount();
+			SNTUtils.log("If mesh is displayed, changes may only occur once scene is rebuilt");
+		}
+		loader.compileModel(offset);
+		// drawable.updateBounds();
+//		final Transform tTransform = new Transform(new Translate(new Coord3d(offset.getX(), offset.getY(), offset.getZ())));
+//		drawable.applyGeometryTransform(tTransform);
 	}
 
 	private static URL getURL(final String filePath) {
@@ -278,13 +295,14 @@ public class OBJMesh {
 			return label;
 		}
 
-		private boolean compileModel() {
+		private boolean compileModel(final SNTPoint offset) {
 			obj = new OBJFilePlus();
 			SNTUtils.log("Loading OBJ file '" + new File(url.getPath()).getName() + "'");
 			if (!obj.loadModelFromURL(url)) {
 				SNTUtils.log("Loading failed. Invalid file?");
 				return false;
 			}
+			if (offset != null) obj.translate(offset);
 			obj.compileModel();
 			SNTUtils.log(String.format("Mesh compiled: %d vertices and %d triangles", obj
 				.getPositionCount(), (obj.getIndexCount() / 3)));
@@ -403,6 +421,14 @@ public class OBJMesh {
 			return new PointInImage(sumX / nPoints, sumY / nPoints, sumZ / nPoints);
 		}
 
+		private void translate(final SNTPoint offset) {
+			if (positions_.isEmpty()) return;
+			for (int i = 0; i < positions_.size(); i += 3) {
+				positions_.set(i, (float) (positions_.get(i) + offset.getX()));
+				positions_.set(i + 1, (float) (positions_.get(i + 1) + offset.getY()));
+				positions_.set(i + 2, (float) (positions_.get(i + 2) + offset.getZ()));
+			}
+		}
 	}
 
 }

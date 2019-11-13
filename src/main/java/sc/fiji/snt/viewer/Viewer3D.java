@@ -4589,6 +4589,13 @@ public class Viewer3D {
 		if (treeLabel != null) this.translate(Collections.singletonList(treeLabel), offset);
 	}
 
+//	private void translate(final OBJMesh mesh, final SNTPoint offset) {
+//		mesh.drawable.unmount();
+//		final TranslateDrawable td = new TranslateDrawable(mesh.drawable, false);
+//		td.compute(new Coord3d(offset.getX(), offset.getY(), offset.getZ()));
+//		td.execute(view.getCurrentGL());
+//	}
+
 	/**
 	 * Translates the specified collection of {@link Tree}s.
 	 *
@@ -4780,11 +4787,18 @@ public class Viewer3D {
 		Annotation3D a = jzy3D.mergeAnnotations(list, "");
 		a.setSize(4);
 		a.setColor("pink");
+		brainMesh.translate(new PointInImage(800,0,0));
+		if (jzy3D.viewUpdatesEnabled) {
+			jzy3D.view.shoot();
+			jzy3D.fitToVisibleObjects(true);
+		}
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);
 		jzy3D.updateColorBarLegend(-8, 88);
 		jzy3D.setEnableDarkMode(false);
+		brainMesh.translate(new PointInImage(20000,0,0));
+
 	}
 
 }

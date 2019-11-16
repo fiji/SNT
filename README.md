@@ -1,4 +1,4 @@
-[![](https://travis-ci.org/fiji/Simple_Neurite_Tracer.svg?branch=master)](https://travis-ci.org/fiji/Simple_Neurite_Tracer)
+[![](https://travis-ci.org/fiji/SNT.svg?branch=scijava)](https://travis-ci.org/fiji/SNT)
 
 ## SNT
 

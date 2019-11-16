@@ -3,16 +3,16 @@
 ## SNT
 
 The [ImageJ](http://imagej.net/) framework for semi-automated tracing of neurons
-and other tube-like structures. SNT stems from the [rewrite of Simple Neurite Tracer basecode](https://imagej.net/SNT:_FAQ#snt), following Scijava and ImageJ2 design principles. It is part of the [Fiji distribution](https://imagej.net/Fiji)
-of ImageJ. For details, please see http://imagej.net/SNT.
+and other tube-like structures. It is part of the [Fiji distribution](http://imagej.net/Fiji)
+of ImageJ. For details, please see http://imagej.net/Simple_Neurite_Tracer
 
-SNT is currently under heavy development ([scijava](https://github.com/fiji/SNT/tree/scijava) branch).
+SNT is currently under heavy development ([scijava](https://github.com/fiji/Simple_Neurite_Tracer/tree/scijava) branch).
 Because the ongoing work does not guaranty full backwards compatibility with previous versions, the latest pre-releases
 are not yet made available through Fiji's main update site but through the [Neuroanatomy](http://imagej.net/Neuroanatomy)
-update site. Bugs are expected during this period, please report them [here](https://github.com/fiji/SNT/issues)
+update site. Bugs are expected during this period, please report them [here](https://github.com/fiji/Simple_Neurite_Tracer/issues)
 below is a list of some of the latest SNT features:
 
-### Features ([scijava](https://github.com/fiji/SNT/tree/scijava) branch)
+### Features ([scijava](https://github.com/fiji/Simple_Neurite_Tracer/tree/scijava) branch)
 
 #### Tracing
 * Support for multidimensional images (including multichannel, and those with a time axis).

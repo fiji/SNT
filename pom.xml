@@ -5,17 +5,17 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>26.0.0</version>
+		<version>27.0.1</version>
 		<relativePath />
 	</parent>
 
 	<groupId>sc.fiji</groupId>
-	<artifactId>Simple_Neurite_Tracer</artifactId>
-	<version>3.1.7-SNAPSHOT</version>
+	<artifactId>SNT</artifactId>
+	<version>3.1.101-SNAPSHOT</version>
 
-	<name>Simple Neurite Tracer</name>
+	<name>SNT</name>
 	<description>The ImageJ framework for semi-automated tracing of neurons and other tube-like structures.</description>
-	<url>https://imagej.net/Simple_Neurite_Tracer</url>
+	<url>https://imagej.net/SNT</url>
 	<inceptionYear>2010</inceptionYear>
 	<organization>
 		<name>Fiji</name>
@@ -36,6 +36,15 @@
 			<roles>
 				<role>lead</role>
 				<role>maintainer</role>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>kephale</id>
+			<name>Kyle IS Harrington</name>
+			<url>https://imagej.net/User:Kharrington</url>
+			<roles>
+				<role>developer</role>
 			</roles>
 		</developer>
 		<developer>
@@ -48,6 +57,11 @@
 		</developer>
 	</developers>
 	<contributors>
+		<contributor>
+			<name>Cameron Arshadi</name>
+			<url>https://imagej.net/User:Arshadi</url>
+			<properties><id>carshadi</id></properties>
+		</contributor>
 		<contributor>
 			<name>Mark Longair</name>
 			<url>https://imagej.net/User:Mark</url>
@@ -82,23 +96,23 @@
 	<mailingLists>
 		<mailingList>
 			<name>Image.sc Forum</name>
-			<archive>https://forum.image.sc/tags/fiji</archive>
+			<archive>https://forum.image.sc/</archive>
 		</mailingList>
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/fiji/Simple_Neurite_Tracer</connection>
-		<developerConnection>scm:git:git@github.com:fiji/Simple_Neurite_Tracer</developerConnection>
+		<connection>scm:git:git://github.com/fiji/SNT</connection>
+		<developerConnection>scm:git:git@github.com:fiji/SNT</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/fiji/Simple_Neurite_Tracer</url>
+		<url>https://github.com/fiji/SNT</url>
 	</scm>
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>https://github.com/fiji/Simple_Neurite_Tracer/issues</url>
+		<url>https://github.com/fiji/SNT/issues</url>
 	</issueManagement>
 	<ciManagement>
 		<system>Travis CI</system>
-		<url>https://travis-ci.org/fiji/Simple_Neurite_Tracer</url>
+		<url>https://travis-ci.org/fiji/SNT</url>
 	</ciManagement>
 
 	<properties>
@@ -106,19 +120,37 @@
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
 
+		<!-- Required since pom-scijava 27.0.1? -->
+		<main-class>sc.iview.Main</main-class>
+		<package-name>sciview</package-name>
+
+		<!-- Dependency versions for JitPack -->
+		<sciview.version>7b5befb</sciview.version>
+<!--		<sciview.version>0.2.0-beta-2-SNAPSHOT</sciview.version>-->
+		<scenery.version>6965d73a</scenery.version>
+		<jzy3d.version>1.0.3-SNAPSHOT</jzy3d.version>
+		<jide-oss.version>3.6.18</jide-oss.version>
+
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
 	</properties>
 
 	<repositories>
 		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
+		<repository>
 			<id>scijava.public</id>
 			<url>https://maven.scijava.org/content/groups/public</url>
+		</repository>
+		<repository>
+			<id>Jzy3D.releases</id>
+			<url>https://maven.jzy3d.org/releases/</url>
 		</repository>
 	</repositories>
 
 	<dependencies>
-		<!-- Fiji dependencies -->
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Viewer</artifactId>
@@ -143,18 +175,10 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>VIB-lib</artifactId>
 		</dependency>
-
-		<!-- ImageJ dependencies -->
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij</artifactId>
-		</dependency>
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
 		</dependency>
-
-		<!-- Java 3D dependencies -->
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>j3dcore</artifactId>
@@ -167,8 +191,29 @@
 			<groupId>org.scijava</groupId>
 			<artifactId>vecmath</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.jzy3d</groupId>
+			<artifactId>jzy3d-api</artifactId>
+			<version>${jzy3d.version}</version>
+			<exclusions>
+				<exclusion>
+					<!-- NB: Exclude problematic uber-JAR that bundles miglayout -->
+					<groupId>com.miglayout</groupId>
+					<artifactId>miglayout</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>sc.iview</groupId>
+			<artifactId>sciview</artifactId>
+			<version>${sciview.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>graphics.scenery</groupId>
+			<artifactId>scenery</artifactId>
+			<version>${scenery.version}</version>
+		</dependency>
 
-		<!-- Third party dependencies -->
 		<dependency>
 			<groupId>ca.mcgill</groupId>
 			<artifactId>Sholl_Analysis</artifactId>
@@ -185,12 +230,78 @@
 			<groupId>org.apache.xmlgraphics</groupId>
 			<artifactId>batik-svggen</artifactId>
 		</dependency>
-
-		<!-- Test dependencies -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-legacy</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.jidesoft</groupId>
+			<artifactId>jide-oss</artifactId>
+			<version>${jide-oss.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-plot-service</artifactId>
+			<version>0.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>4.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20190722</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>font-awesome</artifactId>
+			<version>5.10.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij1-patcher</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-table</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jgrapht</groupId>
+			<artifactId>jgrapht-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jgrapht</groupId>
+			<artifactId>jgrapht-ext</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-ui-swing</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-stdlib</artifactId>
+			<version>1.3.50</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-stdlib-common</artifactId>
+			<version>1.3.50</version>
+		</dependency>
+		<dependency>
+			<groupId>me.tongfei</groupId>
+			<artifactId>progressbar</artifactId>
+			<version>0.7.4</version>
 		</dependency>
 	</dependencies>
 </project>

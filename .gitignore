@@ -3,5 +3,25 @@
 /.project
 /.settings/
 
+# IntelliJ #
+*.iml
+*.iws
+*.ipr
+\.idea/
+
 # Maven #
 /target/
+/doc/
+/natives/
+
+# Misc #
+.checksums
+
+# Binaries #
+*.jar
+*.class
+/bin/
+!jars/*
+
+# Notebooks #
+notebooks/\.ipynb_checkpoints/

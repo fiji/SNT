@@ -1,0 +1,41 @@
+{
+  "data": {
+    "structureIdentifiers": [
+      {
+        "id": "9b2cf056-1fba-468f-a877-04169dd9f708",
+        "name": "path",
+        "value": 0
+      },
+      {
+        "id": "d8eb210f-65fe-4983-bdcb-e34de5ca2e13",
+        "name": "(basal) dendrite",
+        "value": 3
+      },
+      {
+        "id": "a1df739e-f4a8-4b88-9a25-2cd6b9a7563c",
+        "name": "axon",
+        "value": 2
+      },
+      {
+        "id": "6afcafa5-ec7f-4899-8941-3e1f812682ce",
+        "name": "soma",
+        "value": 1
+      },
+      {
+        "id": "a3dec6a1-7484-45a7-bc05-cf3d6014c44d",
+        "name": "apical dendrite",
+        "value": 4
+      },
+      {
+        "id": "2a8efa78-1067-4ce8-8e4f-cfcf9cf7d315",
+        "name": "branch point",
+        "value": 5
+      },
+      {
+        "id": "c37953e1-a1e9-4b9a-847e-08d9566ced65",
+        "name": "end point",
+        "value": 6
+      }
+    ]
+  }
+}

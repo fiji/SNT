@@ -35,7 +35,7 @@ import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.iview.SciView;
 import sc.iview.SciViewService;
-import sc.iview.shape.Line3D;
+import sc.iview.node.Line3D;
 import sc.iview.vector.ClearGLVector3;
 import sc.iview.vector.DoubleVector3;
 import sc.iview.vector.FloatVector3;
@@ -458,12 +458,12 @@ public class SciViewSNT {
 		final SciViewSNT sciViewSNT = sntService.getOrCreateSciViewSNT();
 		final Tree tree = sntService.demoTree();
 		tree.setColor(Colors.RED);
-		final Tree tree2 = Tree.fromFile("/home/tferr/code/OP_1/OP_1.swc");
-		tree2.setColor(Colors.YELLOW);
-		sciViewSNT.addTree(tree2);
+//		final Tree tree2 = Tree.fromFile("/home/tferr/code/OP_1/OP_1.swc");
+//		tree2.setColor(Colors.YELLOW);
+//		sciViewSNT.addTree(tree2);
 		//sciViewSNT.getSciView().centerOnScene();
 		sciViewSNT.addTree(tree);
 		//sciViewSNT.getSciView().addVolume(sntService.demoTreeDataset());
-		sciViewSNT.getSciView().centerOnNode(sciViewSNT.getTreeAsSceneryNode(tree2));
+//		sciViewSNT.getSciView().centerOnNode(sciViewSNT.getTreeAsSceneryNode(tree2));
 	}
 }

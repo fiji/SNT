@@ -46,7 +46,7 @@ import sc.fiji.snt.util.SNTColor;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of a
- * {@link Tree}.
+ * {@link Tree}. For analysis of groups of Trees use {@link #MultiTreeStatistics}.
  *
  * @author Tiago Ferreira
  */
@@ -182,12 +182,20 @@ public class TreeStatistics extends TreeAnalyzer {
 			.append(measurement.substring(1)).toString();
 	}
 
-	private void assembleStats(final StatisticsInstance stat,
+	protected void assembleStats(final StatisticsInstance stat,
 		final String measurement)
 	{
 		switch (measurement) {
 			case TreeAnalyzer.LENGTH:
 				for (final Path p : tree.list())
+					stat.addValue(p.getLength());
+				break;
+			case TreeAnalyzer.PRIMARY_LENGTH:
+				for (final Path p : getPrimaryBranches())
+					stat.addValue(p.getLength());
+				break;
+			case TreeAnalyzer.TERMINAL_LENGTH:
+				for (final Path p : getTerminalBranches())
 					stat.addValue(p.getLength());
 				break;
 			case TreeAnalyzer.N_NODES:
@@ -290,25 +298,25 @@ public class TreeStatistics extends TreeAnalyzer {
 		}
 	}
 
-	private class StatisticsInstance {
+	class StatisticsInstance {
 
 		private SummaryStatistics sStatistics;
 		private DescriptiveStatistics dStatistics;
 
-		private StatisticsInstance(final SummaryStatistics sStatistics) {
+		StatisticsInstance(final SummaryStatistics sStatistics) {
 			this.sStatistics = sStatistics;
 		}
 
-		private StatisticsInstance(final DescriptiveStatistics dStatistics) {
+		StatisticsInstance(final DescriptiveStatistics dStatistics) {
 			this.dStatistics = dStatistics;
 		}
 
-		private void addValue(final double value) {
+		void addValue(final double value) {
 			if (sStatistics != null) sStatistics.addValue(value);
 			else dStatistics.addValue(value);
 		}
 
-		private long getN() {
+		long getN() {
 			return (sStatistics != null) ? sStatistics.getN() : dStatistics.getN();
 		}
 

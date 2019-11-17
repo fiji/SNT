@@ -66,6 +66,12 @@ public class TreeAnalyzer extends ContextCommand {
 	/** Flag for {@value #INTER_NODE_DISTANCE} analysis. */
 	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
 
+	/** Flag for {@value #TERMINAL_LENGTH} analysis. */
+	public static final String TERMINAL_LENGTH = "Length of terminal branches";
+
+	/** Flag for {@value #PRIMARY_LENGTH} analysis. */
+	public static final String PRIMARY_LENGTH = "Length of primary branches";
+
 	/** Flag for {@value #INTER_NODE_DISTANCE_SQUARED} analysis. */
 	public static final String INTER_NODE_DISTANCE_SQUARED =
 		"Inter-node distance (squared)";
@@ -106,15 +112,17 @@ public class TreeAnalyzer extends ContextCommand {
 	public static final String VALUES = "Node intensity values";
 
 	public static final String[] COMMON_MEASUREMENTS = { //
-		TreeColorMapper.BRANCH_ORDER, //
-		TreeColorMapper.LENGTH, //
-		TreeColorMapper.N_BRANCH_POINTS, //
-		TreeColorMapper.N_NODES, //
-		TreeColorMapper.MEAN_RADIUS, //
-		TreeColorMapper.NODE_RADIUS, //
-		TreeColorMapper.X_COORDINATES, //
-		TreeColorMapper.Y_COORDINATES, //
-		TreeColorMapper.Z_COORDINATES };
+		BRANCH_ORDER, //
+		LENGTH, //
+		PRIMARY_LENGTH, //
+		TERMINAL_LENGTH, //
+		N_BRANCH_POINTS, //
+		N_NODES, //
+		MEAN_RADIUS, //
+		NODE_RADIUS, //
+		X_COORDINATES, //
+		Y_COORDINATES, //
+		Z_COORDINATES };
 	protected Tree tree;
 	private Tree unfilteredTree;
 	private HashSet<Path> primaryBranches;
@@ -319,7 +327,7 @@ public class TreeAnalyzer extends ContextCommand {
 	public void summarize(final String rowHeader, final boolean groupByType) {
 		if (table == null) table = new DefaultGenericTable();
 		if (groupByType) {
-			final int[] types = tree.getSWCtypes().stream().mapToInt(v -> v)
+			final int[] types = tree.getSWCTypes().stream().mapToInt(v -> v)
 				.toArray();
 			for (final int type : types) {
 				restrictToSWCType(type);
@@ -399,7 +407,7 @@ public class TreeAnalyzer extends ContextCommand {
 		}
 		statusService.showStatus("Measuring Paths...");
 		summarize(true);
-		if (tree.getSWCtypes().size() > 1) summarize(false);
+		if (tree.getSWCTypes().size() > 1) summarize(false);
 		updateAndDisplayTable();
 		statusService.clearStatus();
 	}

@@ -1182,8 +1182,8 @@ public class Viewer3D {
 	 * @param treeLabels the collection of Tree identifiers (as per
 	 *          {@link #addTree(Tree)}) specifying the Trees to be color mapped
 	 * @param measurement the mapping measurement e.g.,
-	 *          {@link MultiTreeColorMapper#TOTAL_LENGTH}
-	 *          {@link MultiTreeColorMapper#TOTAL_N_TIPS}, etc.
+	 *          {@link MultiTreeColorMapper#LENGTH}
+	 *          {@link MultiTreeColorMapper#N_TIPS}, etc.
 	 * @param colorTable the mapping color table (LUT), e.g.,
 	 *          {@link ColorTables#ICE}), or any other known to LutService
 	 * @return the double[] the limits (min and max) of the mapped values

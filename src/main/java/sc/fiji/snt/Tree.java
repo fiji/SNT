@@ -353,7 +353,7 @@ public class Tree {
 	 * @return the set of SWC type(s) (e.g., {@link Path#SWC_AXON},
 	 *         {@link Path#SWC_DENDRITE}, etc.) present in the tree
 	 */
-	public Set<Integer> getSWCtypes() {
+	public Set<Integer> getSWCTypes() {
 		final HashSet<Integer> types = new HashSet<>();
 		final Iterator<Path> it = tree.iterator();
 		while (it.hasNext()) {

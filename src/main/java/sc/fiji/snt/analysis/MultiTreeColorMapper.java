@@ -59,17 +59,16 @@ import sc.fiji.snt.viewer.Viewer3D;
 public class MultiTreeColorMapper extends ColorMapper {
 
 	/** Mapping property: Cable length */
-	public static final String TOTAL_LENGTH = "Total length";
+	public static final String LENGTH = TreeAnalyzer.LENGTH;
 
 	/** Mapping property: Count of all branch points */
-	public static final String TOTAL_N_BRANCH_POINTS =
-		"No. of branch points";
+	public static final String N_BRANCH_POINTS = TreeAnalyzer.N_BRANCH_POINTS;
 
 	/** Mapping property: Count of all tips (end points) */
-	public static final String TOTAL_N_TIPS = "No. of tips";
+	public static final String N_TIPS = MultiTreeStatistics.N_TIPS;
 
 	/** Mapping property: Strahler root number */
-	public static final String ROOT_NUMBER = "Strahler root number";
+	public static final String ROOT_NUMBER = MultiTreeStatistics.ROOT_NUMBER;
 
 	/** Mapping property: Assigned Tree value */
 	public static final String ASSIGNED_VALUE = "Assigned value";
@@ -81,7 +80,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 	public static final String ID = "Cell/id";
 
 	public static final String[] PROPERTIES = { //
-		ID, TOTAL_LENGTH, TOTAL_N_BRANCH_POINTS, TOTAL_N_TIPS, ROOT_NUMBER//
+		ID, LENGTH, N_BRANCH_POINTS, N_TIPS, ROOT_NUMBER//
 	};
 
 	private final List<MappedTree> mappedTrees;
@@ -150,14 +149,14 @@ public class MultiTreeColorMapper extends ColorMapper {
 					integerScale = true;
 					mt.value = analyzer.getStrahlerRootNumber();
 					break;
-				case TOTAL_LENGTH:
+				case LENGTH:
 					mt.value = analyzer.getCableLength();
 					break;
-				case TOTAL_N_BRANCH_POINTS:
+				case N_BRANCH_POINTS:
 					integerScale = true;
 					mt.value = analyzer.getBranchPoints().size();
 					break;
-				case TOTAL_N_TIPS:
+				case N_TIPS:
 					integerScale = true;
 					mt.value = analyzer.getTips().size();
 					break;
@@ -178,13 +177,13 @@ public class MultiTreeColorMapper extends ColorMapper {
 	private String tryToGuessMetric(final String guess) {
 		String normGuess = guess.toLowerCase();
 		if (normGuess.contains("length")) {
-			normGuess = TOTAL_LENGTH;
+			normGuess = LENGTH;
 		}
 		else if (normGuess.indexOf("branch points") > -1 || normGuess.indexOf("bps") > -1) {
-			normGuess = TOTAL_N_BRANCH_POINTS;
+			normGuess = N_BRANCH_POINTS;
 		}
 		else if (normGuess.indexOf("tips") != -1 || normGuess.indexOf("endings") != -1 || normGuess.indexOf("terminals") != -1) {
-			normGuess = TOTAL_N_TIPS;
+			normGuess = N_TIPS;
 		}
 		else if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("horton") != -1 || normGuess.indexOf("order") != -1) {
 			normGuess = ROOT_NUMBER;

@@ -199,7 +199,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 	}
 
 	private void importTree(final Tree tree) {
-		final Set<Integer> types = tree.getSWCtypes();
+		final Set<Integer> types = tree.getSWCTypes();
 		if (splitByType && types.size() > 1) {
 			final String label = tree.getLabel();
 			for (final int type : types) {

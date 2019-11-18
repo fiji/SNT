@@ -77,7 +77,7 @@ public class DistributionCmd extends CommonDynamicCmd {
 		Collections.sort(choices);
 		measurementChoiceInput.setChoices(choices);
 		measurementChoiceInput.setValue(this, prefService.get(getClass(),
-			"measurementChoice", TreeAnalyzer.BRANCH_ORDER));
+			"measurementChoice", TreeAnalyzer.PATH_ORDER));
 		resolveInput("setValuesFromSNTService");
 	}
 

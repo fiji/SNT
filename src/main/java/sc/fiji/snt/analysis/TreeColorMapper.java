@@ -62,8 +62,8 @@ public class TreeColorMapper extends ColorMapper {
 
 	/* For convenience keep references to TreeAnalyzer fields */
 
-	/** Flag for {@value #BRANCH_ORDER} mapping. */
-	public static final String BRANCH_ORDER = TreeAnalyzer.BRANCH_ORDER;
+	/** Flag for {@value #PATH_ORDER} mapping. */
+	public static final String PATH_ORDER = TreeAnalyzer.PATH_ORDER;
 	/** Flag for {@value #LENGTH} mapping. */
 	public static final String LENGTH = TreeAnalyzer.LENGTH;
 	/** Flag for {@value #N_BRANCH_POINTS} mapping. */
@@ -157,7 +157,7 @@ public class TreeColorMapper extends ColorMapper {
 					center.z);
 				mapPathDistances(root);
 				break;
-			case BRANCH_ORDER:
+			case PATH_ORDER:
 			case LENGTH:
 			case MEAN_RADIUS:
 			case N_NODES:
@@ -183,7 +183,7 @@ public class TreeColorMapper extends ColorMapper {
 	{
 		final List<MappedPath> mappedPaths = new ArrayList<>();
 		switch (measurement) {
-			case BRANCH_ORDER:
+			case PATH_ORDER:
 				integerScale = true;
 				for (final Path p : paths)
 					mappedPaths.add(new MappedPath(p, (double) p.getOrder()));
@@ -387,7 +387,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * Colorizes a tree after the specified measurement.
 	 *
 	 * @param tree the tree to be colorized
-	 * @param measurement the measurement ({@link #BRANCH_ORDER} }{@link #LENGTH},
+	 * @param measurement the measurement ({@link #PATH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param colorTable the color table specifying the color mapping. Null not
 	 *          allowed.
@@ -419,8 +419,8 @@ public class TreeColorMapper extends ColorMapper {
 		if (normGuess.indexOf("branch points") != -1 || normGuess.indexOf("bps") != -1) {
 			return N_BRANCH_POINTS;
 		}
-		if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("horton") != -1 || normGuess.indexOf("order") != -1) {
-			return BRANCH_ORDER;
+		if (normGuess.indexOf("order") != -1) {
+			return PATH_ORDER;
 		}
 		return guess;
 	}
@@ -430,7 +430,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * automatically determined.
 	 *
 	 * @param tree the tree to be plotted
-	 * @param measurement the measurement ({@link #BRANCH_ORDER} }{@link #LENGTH},
+	 * @param measurement the measurement ({@link #PATH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param lut the lookup table specifying the color mapping
 	 */

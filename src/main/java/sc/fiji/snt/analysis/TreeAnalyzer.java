@@ -60,8 +60,8 @@ public class TreeAnalyzer extends ContextCommand {
 	@Parameter
 	protected DisplayService displayService;
 
-	/** Flag for {@value #BRANCH_ORDER} analysis. */
-	public static final String BRANCH_ORDER = "Branch order";
+	/** Flag for {@value #PATH_ORDER} analysis. */
+	public static final String PATH_ORDER = "Path order";
 
 	/** Flag for {@value #INTER_NODE_DISTANCE} analysis. */
 	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
@@ -112,13 +112,13 @@ public class TreeAnalyzer extends ContextCommand {
 	public static final String VALUES = "Node intensity values";
 
 	public static final String[] COMMON_MEASUREMENTS = { //
-		BRANCH_ORDER, //
 		LENGTH, //
 		PRIMARY_LENGTH, //
 		TERMINAL_LENGTH, //
 		N_BRANCH_POINTS, //
 		N_NODES, //
 		MEAN_RADIUS, //
+		PATH_ORDER, //
 		NODE_RADIUS, //
 		X_COORDINATES, //
 		Y_COORDINATES, //

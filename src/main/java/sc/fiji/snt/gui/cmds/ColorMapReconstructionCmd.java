@@ -63,7 +63,7 @@ public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 	private PrefService prefService;
 
 	@Parameter(required = true, label = "Measurement", choices = { //
-		TreeColorMapper.BRANCH_ORDER, TreeColorMapper.LENGTH,
+		TreeColorMapper.PATH_ORDER, TreeColorMapper.LENGTH,
 		TreeColorMapper.N_BRANCH_POINTS, //
 		TreeColorMapper.N_NODES, TreeColorMapper.PATH_DISTANCE,
 		TreeColorMapper.MEAN_RADIUS, //

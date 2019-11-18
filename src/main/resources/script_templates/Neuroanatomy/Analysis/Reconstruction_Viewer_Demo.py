@@ -39,11 +39,11 @@ def run():
     axon_tree = loader.getTree('axon', None)
     axon_tree.setLabel("AA0100 (Axon)")
 
-    # Color code axons: map branch order to color table
+    # Color code axons: map path order to color table
     print("... Done. Assigning LUT to axonal arbor...")
     mapper = TreeColorMapper(context)
     color_table = lut.loadLUT(lut.findLUTs().get("Ice.lut"))
-    mapper.map(axon_tree, "branch order", color_table)
+    mapper.map(axon_tree, "path order", color_table)
     bounds = mapper.getMinMax()
 
     # Assemble 3D scene in Reconstruction Viewer

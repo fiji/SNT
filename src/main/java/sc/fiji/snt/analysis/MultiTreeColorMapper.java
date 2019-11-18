@@ -67,8 +67,8 @@ public class MultiTreeColorMapper extends ColorMapper {
 	/** Mapping property: Count of all tips (end points) */
 	public static final String N_TIPS = MultiTreeStatistics.N_TIPS;
 
-	/** Mapping property: Strahler root number */
-	public static final String ROOT_NUMBER = MultiTreeStatistics.ROOT_NUMBER;
+	/** Mapping property: Highest {@link Path#getOrder() path order} */
+	public static final String HIGHEST_PATH_ORDER = MultiTreeStatistics.HIGHEST_PATH_ORDER;
 
 	/** Mapping property: Assigned Tree value */
 	public static final String ASSIGNED_VALUE = "Assigned value";
@@ -80,7 +80,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 	public static final String ID = "Cell/id";
 
 	public static final String[] PROPERTIES = { //
-		ID, LENGTH, N_BRANCH_POINTS, N_TIPS, ROOT_NUMBER//
+		ID, LENGTH, N_BRANCH_POINTS, N_TIPS, HIGHEST_PATH_ORDER//
 	};
 
 	private final List<MappedTree> mappedTrees;
@@ -145,9 +145,9 @@ public class MultiTreeColorMapper extends ColorMapper {
 				case ASSIGNED_VALUE:
 					mt.value = mt.tree.getAssignedValue();
 					break;
-				case ROOT_NUMBER:
+				case HIGHEST_PATH_ORDER:
 					integerScale = true;
-					mt.value = analyzer.getStrahlerRootNumber();
+					mt.value = analyzer.getHighestPathOrder();
 					break;
 				case LENGTH:
 					mt.value = analyzer.getCableLength();
@@ -185,8 +185,8 @@ public class MultiTreeColorMapper extends ColorMapper {
 		else if (normGuess.indexOf("tips") != -1 || normGuess.indexOf("endings") != -1 || normGuess.indexOf("terminals") != -1) {
 			normGuess = N_TIPS;
 		}
-		else if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("horton") != -1 || normGuess.indexOf("order") != -1) {
-			normGuess = ROOT_NUMBER;
+		else if (normGuess.indexOf("order") != -1) {
+			normGuess = HIGHEST_PATH_ORDER;
 		} else {
 			normGuess = "unknown";
 		}

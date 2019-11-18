@@ -1244,7 +1244,7 @@ public class Viewer3D {
 	 * @param treeLabel the identifier of the Tree (as per {@link #addTree(Tree)})to
 	 *          be color mapped
 	 * @param measurement the mapping measurement e.g.,
-	 *          {@link TreeColorMapper#BRANCH_ORDER}
+	 *          {@link TreeColorMapper#PATH_ORDER}
 	 *          {@link TreeColorMapper#PATH_DISTANCE}, etc.
 	 * @param colorTable the mapping color table (LUT), e.g.,
 	 *          {@link ColorTables#ICE}), or any other known to LutService
@@ -4746,7 +4746,7 @@ public class Viewer3D {
 		final ImageJ ij = new ImageJ();
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
-		colorizer.map(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);
+		colorizer.map(tree, TreeColorMapper.PATH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();
 		SNTUtils.setDebugMode(true);
 		final Viewer3D jzy3D = new Viewer3D(ij.context());

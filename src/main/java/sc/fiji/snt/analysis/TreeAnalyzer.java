@@ -60,8 +60,8 @@ public class TreeAnalyzer extends ContextCommand {
 	@Parameter
 	protected DisplayService displayService;
 
-	/** Flag for {@value #BRANCH_ORDER} analysis. */
-	public static final String BRANCH_ORDER = "Branch order";
+	/** Flag for {@value #PATH_ORDER} analysis. */
+	public static final String PATH_ORDER = "Path order";
 
 	/** Flag for {@value #INTER_NODE_DISTANCE} analysis. */
 	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
@@ -112,13 +112,13 @@ public class TreeAnalyzer extends ContextCommand {
 	public static final String VALUES = "Node intensity values";
 
 	public static final String[] COMMON_MEASUREMENTS = { //
-		BRANCH_ORDER, //
 		LENGTH, //
 		PRIMARY_LENGTH, //
 		TERMINAL_LENGTH, //
 		N_BRANCH_POINTS, //
 		N_NODES, //
 		MEAN_RADIUS, //
+		PATH_ORDER, //
 		NODE_RADIUS, //
 		X_COORDINATES, //
 		Y_COORDINATES, //
@@ -351,16 +351,16 @@ public class TreeAnalyzer extends ContextCommand {
 	private void measureTree(final int row, final String type) {
 		table.set(getCol("SWC Type"), row, type);
 		table.set(getCol("# Paths"), row, getNPaths());
-		table.set(getCol("# Branch Points"), row, getBranchPoints().size());
+		table.set(getCol("# Branch points"), row, getBranchPoints().size());
 		table.set(getCol("# Tips"), row, getTips().size());
-		table.set(getCol("Cable Length"), row, getCableLength());
-		table.set(getCol("# Primary Branches (PB)"), row, getPrimaryBranches().size());
-		table.set(getCol("# Terminal Branches (TB)"), row, getTerminalBranches().size());
+		table.set(getCol("Cable length"), row, getCableLength());
+		table.set(getCol("# Primary branches (PB)"), row, getPrimaryBranches().size());
+		table.set(getCol("# Terminal branches (TB)"), row, getTerminalBranches().size());
 		table.set(getCol("Sum length PB"), row, getPrimaryLength());
 		table.set(getCol("Sum length TB"), row, getTerminalLength());
-		table.set(getCol("Strahler Root No."), row, getStrahlerRootNumber());
-		table.set(getCol("# Fitted Paths"), row, fittedPathsCounter);
-		table.set(getCol("# Single-point Paths"), row, getSinglePointPaths());
+		table.set(getCol("Highest path order"), row, getHighestPathOrder());
+		table.set(getCol("# Fitted paths"), row, fittedPathsCounter);
+		table.set(getCol("# Single-point paths"), row, getSinglePointPaths());
 	}
 
 	/**
@@ -575,11 +575,12 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Gets the Strahler-Horton root number of the analyzed tree
+	 * Gets the highest {@link Path#getOrder() path order} of the analyzed tree
 	 *
-	 * @return the Strahler root number, or -1 if tree has no defined order
+	 * @return the highest Path order, or -1 if Paths in the Tree have no defined
+	 *         order
 	 */
-	public int getStrahlerRootNumber() {
+	public int getHighestPathOrder() {
 		int root = -1;
 		for (final Path p : tree.list()) {
 			final int order = p.getOrder();

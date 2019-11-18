@@ -102,7 +102,7 @@ for (bp in bps) { branches.add(bp.getPath()) }
 bpsTree = new Tree(branches)
 bpsTree.setLabel("BPs in ${thalamus.acronym()}")
 bpsStats = new TreeStatistics(bpsTree)
-bpsStats.getHistogram("branch order").show()
+bpsStats.getHistogram("path order").show()
 
 // What about their length?
 bpsStats.getHistogram("length").show()

@@ -232,7 +232,7 @@ public class TreeStatistics extends TreeAnalyzer {
 					stat.addValue(p.getMeanRadius());
 				}
 				break;
-			case TreeAnalyzer.BRANCH_ORDER:
+			case TreeAnalyzer.PATH_ORDER:
 				for (final Path p : tree.list()) {
 					stat.addValue(p.getOrder());
 				}
@@ -326,10 +326,10 @@ public class TreeStatistics extends TreeAnalyzer {
 	public static void main(final String[] args) {
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeStatistics treeStats = new TreeStatistics(tree);
-		treeStats.getHistogram(TreeAnalyzer.BRANCH_ORDER).setVisible(true);
+		treeStats.getHistogram(TreeAnalyzer.PATH_ORDER).setVisible(true);
 		treeStats.restrictToOrder(1);
-		treeStats.getHistogram(TreeAnalyzer.BRANCH_ORDER).setVisible(true);
+		treeStats.getHistogram(TreeAnalyzer.PATH_ORDER).setVisible(true);
 		treeStats.resetRestrictions();
-		treeStats.getHistogram(TreeAnalyzer.BRANCH_ORDER).setVisible(true);
+		treeStats.getHistogram(TreeAnalyzer.PATH_ORDER).setVisible(true);
 	}
 }

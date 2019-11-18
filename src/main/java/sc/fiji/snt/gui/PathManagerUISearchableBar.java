@@ -177,8 +177,8 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 		final JMenu morphoFilteringMenu = new JMenu("Morphology Filters");
 		morphoFilteringMenu.setIcon(IconFactory.getMenuIcon(
 			IconFactory.GLYPH.RULER));
-		JMenuItem mi1 = new JMenuItem("Branch Order...");
-		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.BRANCH_ORDER,
+		JMenuItem mi1 = new JMenuItem("Path Order...");
+		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.PATH_ORDER,
 			""));
 		morphoFilteringMenu.add(mi1);
 		mi1 = new JMenuItem("Length...");
@@ -338,7 +338,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 				case TreeAnalyzer.MEAN_RADIUS:
 					value = p.getMeanRadius();
 					break;
-				case TreeAnalyzer.BRANCH_ORDER:
+				case TreeAnalyzer.PATH_ORDER:
 					value = p.getOrder();
 					break;
 				default:

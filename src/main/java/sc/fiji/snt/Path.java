@@ -143,7 +143,7 @@ public class Path implements Comparable<Path> {
 	private int id = -1;
 	// NB: The leagacy 3D viewer requires always a unique name
 	private String name;
-	// Reverse Horton-Strahler number of this path
+	// Path based ordering akin of reverse Horton-Strahler numbers
 	private int order = 1;
 	// The SWC-type flag of this path
 	int swcType = SWC_UNDEFINED;
@@ -1864,10 +1864,14 @@ public class Path implements Comparable<Path> {
 	 */
 
 	/**
-	 * Gets the branching order of this Path
+	 * Gets the "bifurcation" (branching) order of this Path. If registered in the
+	 * GUI, this would correspond to the level of this Path in
+	 * {@link PathManagerUI}'s JTree: E.g., a Path connected to a primary Path
+	 * (order 1) will be assigned order 2, etc.. N.B.: Albeit related to reverse
+	 * Horton-Strahler classification, Path ordering is formally distinct, as it
+	 * classifies <i>Paths</i> instead of <i>branches</i>.
 	 *
-	 * @return the branching order (reverse Horton-Strahler order) of this path or
-	 *         A primary path is always of order 1.
+	 * @return the order of this path. A primary path is always of order 1.
 	 */
 	public int getOrder() {
 		return order;

@@ -177,11 +177,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 		final JMenu morphoFilteringMenu = new JMenu("Morphology Filters");
 		morphoFilteringMenu.setIcon(IconFactory.getMenuIcon(
 			IconFactory.GLYPH.RULER));
-		JMenuItem mi1 = new JMenuItem("Path Order...");
-		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.PATH_ORDER,
-			""));
-		morphoFilteringMenu.add(mi1);
-		mi1 = new JMenuItem("Length...");
+		JMenuItem mi1 = new JMenuItem("Length...");
 		mi1.addActionListener(e -> {
 			final String unit = pmui.getPathAndFillManager().getBoundingBox(false)
 				.getUnit();
@@ -194,9 +190,12 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 		mi1 = new JMenuItem("No. of Nodes...");
 		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.N_NODES, ""));
 		morphoFilteringMenu.add(mi1);
+		mi1 = new JMenuItem("Path Order...");
+		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.PATH_ORDER,
+			""));
+		morphoFilteringMenu.add(mi1);
 		mi1 = new JMenuItem("SWC Type...");
 		mi1.addActionListener(e -> {
-
 			final List<Path> paths = pmui.getPathAndFillManager().getPathsFiltered();
 			if (paths.size() == 0) {
 				guiUtils.error("There are no traced paths.");

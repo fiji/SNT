@@ -107,6 +107,7 @@ import sc.fiji.snt.gui.SigmaPalette;
 import sc.fiji.snt.io.FlyCircuitLoader;
 import sc.fiji.snt.io.NeuroMorphoLoader;
 import sc.fiji.snt.plugin.LocalThicknessCmd;
+import sc.fiji.snt.plugin.PathOrderAnalysisCmd;
 import sc.fiji.snt.plugin.PlotterCmd;
 import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.viewer.Viewer3D;
@@ -2160,16 +2161,25 @@ public class SNTUI extends JDialog {
 		quitMenuItem.addActionListener(listener);
 		fileMenu.add(quitMenuItem);
 
-		measureMenuItem = new JMenuItem("Quick Measurements", IconFactory.getMenuIcon(IconFactory.GLYPH.ROCKET));
+		measureMenuItem = new JMenuItem("Summary Measurements", IconFactory.getMenuIcon(IconFactory.GLYPH.TABLE));
 		measureMenuItem.addActionListener(listener);
 		strahlerMenuItem = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(IconFactory.GLYPH.BRANCH_CODE));
 		strahlerMenuItem.addActionListener(listener);
 		plotMenuItem = new JMenuItem("Reconstruction Plotter...", IconFactory.getMenuIcon(IconFactory.GLYPH.DRAFT));
 		plotMenuItem.addActionListener(listener);
 
-		analysisMenu.add(measureMenuItem);
+		final JMenuItem pathOrderAnalysis = new JMenuItem("Path Order Analysis",
+				IconFactory.getMenuIcon(IconFactory.GLYPH.BRANCH_CODE));
+		pathOrderAnalysis.addActionListener(e -> {
+			final PathOrderAnalysisCmd pa = new PathOrderAnalysisCmd(new Tree(pathAndFillManager.getPathsFiltered()));
+			pa.setContext(plugin.getContext());
+			pa.setTable(new DefaultGenericTable(), "SNT: Path Order Analysis (All Paths)");
+			pa.run();
+		});
+		analysisMenu.add(pathOrderAnalysis);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
+		analysisMenu.add(measureMenuItem);
 
 		analysisMenu.addSeparator();
 		analysisMenu.add(plotMenuItem);

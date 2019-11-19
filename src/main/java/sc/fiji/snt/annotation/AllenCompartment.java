@@ -312,7 +312,7 @@ public class AllenCompartment implements BrainAnnotation {
 				return null;
 			}
 			final URL url = new URL(urlPath);
-			mesh = new OBJMesh(url);
+			mesh = new OBJMesh(url, "um");
 			mesh.setColor(geometryColor, 87.5f);
 			mesh.setLabel(name);
 		} catch (final JSONException | IllegalArgumentException | IOException e) {

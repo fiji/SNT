@@ -45,6 +45,7 @@ import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 
 import sc.fiji.snt.SNTUtils;
+import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 
@@ -61,6 +62,7 @@ public class OBJMesh {
 	protected final RemountableDrawableVBO drawable;
 	private double xMirrorCoord = Double.NaN;
 	private String label;
+	protected String unit;
 
 	/**
 	 * Instantiates a new wavefront OBJ mesh from a file path/URL.
@@ -71,16 +73,17 @@ public class OBJMesh {
 	 *           contain a compilable mesh
 	 */
 	public OBJMesh(final String filePath) {
-		this(getURL(filePath));
+		this(getURL(filePath), null);
 	}
 
-	public OBJMesh(final URL url) {
+	public OBJMesh(final URL url, final String meshUnit) {
 		loader = new OBJFileLoaderPlus(url);
 		if (!loader.compileModel(null)) {
 			throw new IllegalArgumentException(
 				"Mesh could not be compiled. Invalid file?");
 		}
 		drawable = new RemountableDrawableVBO(loader, this);
+		unit = meshUnit;
 	}
 
 	/**
@@ -167,6 +170,16 @@ public class OBJMesh {
 				.getBlue(), boundingBoxColor.getAlpha());
 		drawable.setBoundingBoxColor(c);
 		drawable.setBoundingBoxDisplayed(c != null);
+	}
+
+	public BoundingBox getBoundingBox() {
+		drawable.updateBounds();
+		final BoundingBox3d bBox3d = drawable.getBounds();
+		final BoundingBox bbox = new BoundingBox();
+		bbox.info = this.label + " (BBox)";
+		bbox.setOrigin(new PointInImage(bBox3d.getXmin(), bBox3d.getYmin(), bBox3d.getZmin()));
+		bbox.setOriginOpposite(new PointInImage(bBox3d.getXmax(), bBox3d.getYmax(), bBox3d.getZmax()));
+		return bbox;
 	}
 
 	protected String getLabel() {

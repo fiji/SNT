@@ -319,12 +319,21 @@ public class BoundingBox {
 	}
 
 	/**
-	 * Sets the origin for this box, i.e., the Box's SE vertex (lower left corner)
+	 * Sets the origin for this box, i.e., its (xMin, yMin, zMin) vertex.
 	 *
 	 * @param origin the new origin
 	 */
 	public void setOrigin(final PointInImage origin) {
 		this.origin = origin;
+	}
+
+	/**
+	 * Sets the origin opposite for this box, i.e., its (xMax, yMax, zMax) vertex.
+	 *
+	 * @param originOpposite the new origin opposite.
+	 */
+	public void setOriginOpposite(final PointInImage originOpposite) {
+		this.originOpposite = originOpposite;
 	}
 
 	/**

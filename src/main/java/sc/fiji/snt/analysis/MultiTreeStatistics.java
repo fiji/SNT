@@ -31,7 +31,7 @@ import sc.fiji.snt.Tree;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of
- * {@link Tree} groups. For analysis of individual Trees use {@link #TreeStatistics}.
+ * {@link Tree} groups. For analysis of individual Trees use {@link TreeStatistics}.
  *
  * @author Tiago Ferreira
  */
@@ -73,7 +73,7 @@ public class MultiTreeStatistics extends TreeStatistics {
 	/**
 	 * Instantiates a new instance from a collection of Trees.
 	 *
-	 * @param tree the collection of Trees to be analyzed
+	 * @param group the collection of Trees to be analyzed
 	 */
 	public MultiTreeStatistics(final Collection<Tree> group) {
 		super(new Tree());
@@ -83,7 +83,7 @@ public class MultiTreeStatistics extends TreeStatistics {
 	/**
 	 * Sets an identifying label for the group of Trees being analyzed.
 	 *
-	 * @param label the identifying string for the group.
+	 * @param groupLabel the identifying string for the group.
 	 */
 	public void setLabel(final String groupLabel) {
 		tree.setLabel(groupLabel);

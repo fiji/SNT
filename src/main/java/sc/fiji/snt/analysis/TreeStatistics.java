@@ -46,7 +46,7 @@ import sc.fiji.snt.util.SNTColor;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of a
- * {@link Tree}. For analysis of groups of Trees use {@link #MultiTreeStatistics}.
+ * {@link Tree}. For analysis of groups of Trees use {@link MultiTreeStatistics}.
  *
  * @author Tiago Ferreira
  */

@@ -113,6 +113,8 @@ public class TreeStatistics extends TreeAnalyzer {
 		int nBins;
 		if (n == 0) {
 			nBins = 1;
+		} if (n <= 10) {
+			nBins = (int) n;
 		} else {
 			final double binWidth = 2 * (q3 - q1) / Math.cbrt(n); // Freedman-Diaconis rule
 			if (binWidth == 0) {

@@ -179,7 +179,8 @@ public class MouseLightQuerier {
 						final double sRadius = jsonSoma.getDouble("radius");
 						final int parent = jsonSoma.getInt("parentNumber"); // always -1
 						soma = new SWCPoint(0, Path.SWC_SOMA, sX, sY, sZ, sRadius, parent);
-						soma.setAnnotation(new AllenCompartment(UUID.fromString(jsonSoma.getString("brainAreaId"))));
+						final String areaId = jsonSoma.optString("brainAreaId");
+						if (!areaId.isEmpty()) soma.setAnnotation(new AllenCompartment(UUID.fromString(areaId)));
 					}
 					final JSONObject tracingStructure = compartment.getJSONObject(
 						"tracingStructure");

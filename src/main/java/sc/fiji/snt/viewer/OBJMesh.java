@@ -172,13 +172,27 @@ public class OBJMesh {
 		drawable.setBoundingBoxDisplayed(c != null);
 	}
 
-	public BoundingBox getBoundingBox() {
-		drawable.updateBounds();
-		final BoundingBox3d bBox3d = drawable.getBounds();
+	/**
+	 * Gets the minimum bounding box of this mesh.
+	 * 
+	 * @param hemiHalf either "left", "l", "right", "r" otherwise bounding box is
+	 *                 retrieved for both hemi-halves, i.e., the full mesh. It is
+	 *                 ignored if a hemisphere was already specified in the
+	 *                 constructor.
+	 * @return the minimum bounding box
+	 */
+	public BoundingBox getBoundingBox(final String hemiHalf) {
+		final String normHemisphere = getHemisphere(hemiHalf);
 		final BoundingBox bbox = new BoundingBox();
-		bbox.info = this.label + " (BBox)";
-		bbox.setOrigin(new PointInImage(bBox3d.getXmin(), bBox3d.getYmin(), bBox3d.getZmin()));
-		bbox.setOriginOpposite(new PointInImage(bBox3d.getXmax(), bBox3d.getYmax(), bBox3d.getZmax()));
+		bbox.info = label + " (BBox)";
+		if ("both".equals(normHemisphere) && drawable.getBounds() != null) {
+			drawable.updateBounds();
+			final BoundingBox3d bBox3d = drawable.getBounds();
+			bbox.setOrigin(new PointInImage(bBox3d.getXmin(), bBox3d.getYmin(), bBox3d.getZmin()));
+			bbox.setOriginOpposite(new PointInImage(bBox3d.getXmax(), bBox3d.getYmax(), bBox3d.getZmax()));
+			return bbox;
+		}
+		bbox.compute(getVertices(normHemisphere).iterator());
 		return bbox;
 	}
 

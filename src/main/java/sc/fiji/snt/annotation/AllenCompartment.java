@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -190,12 +191,12 @@ public class AllenCompartment implements BrainAnnotation {
 	}
 
 	/**
-	 * Gets the parent of this compartment
+	 * Gets the parent of this compartment.
 	 *
 	 * @return the parent of this compartment, of null if this compartment is root.
 	 */
 	public AllenCompartment getParent() {
-		if (getTreePath().isEmpty()) return null;
+		if (getTreePath().size() < 2) return null;
 		final int lastIdx = Math.max(0, parentStructure.size() - 2);
 		return parentStructure.get(lastIdx);
 	}
@@ -208,20 +209,26 @@ public class AllenCompartment implements BrainAnnotation {
 	 * @see #getTreePath()
 	 */
 	public List<AllenCompartment> getAncestors() {
-		return getAncestors(Integer.MIN_VALUE);
+		return parentStructure.subList(0, parentStructure.size()-1);
 	}
 
 	/**
-	 * Gets the ancestor ontologies of this compartment as a flat (non-hierarchical)
-	 * list.
+	 * Gets the nth ancestor of this compartment.
 	 *
-	 * @param level maximum depth that should be considered.
-	 * @return the "flattened" ontologies list of ancestors
+	 * @param level the ancestor level as negative 1-based index. E.g., {@code -1}
+	 *              retrieves the last ancestor (parent), {@code -2} retrieves the
+	 *              second to last, etc, all the way down to
+	 *              {@code -getOntologyDepth()}, which retrieves the root ontology
+	 *              ("Whole Brain")
+	 * @return the nth ancestor
 	 */
-	public List<AllenCompartment> getAncestors(final int level) {
-		final int fromIdx = Math.max(0, getTreePath().size() - level - 1); // inclusive
-		final int toIdx = Math.max(0, parentStructure.size() - 1); // exclusive
-		return parentStructure.subList(fromIdx, toIdx);
+	public AllenCompartment getAncestor(final int level) {
+		if (level == 0) return getParent();
+		int normLevel = (level > 0) ? -level : level;
+		final int idx = getTreePath().size() - 1 + normLevel;
+		if (idx < 0 || idx >=  parentStructure.size() - 1)
+			throw new IllegalArgumentException ("Ancestor level out of range. Compartment has "+ getOntologyDepth() + " ancestors.");
+		return parentStructure.get(idx);
 	}
 
 	/**
@@ -336,4 +343,18 @@ public class AllenCompartment implements BrainAnnotation {
 				|| uuid.equals(((AllenCompartment) o).uuid);
 	}
 
+	/* IDE Debug method */
+	public static void main(final String[] args) {
+		final AllenCompartment comp = AllenUtils.getCompartment("CA3");
+		System.out.println(comp);
+		System.out.println("treePath: " + comp.getTreePath());
+		System.out.println("depth: " + comp.getOntologyDepth());
+		System.out.println("# ancestors: " + comp.getAncestors().size());
+		IntStream.rangeClosed(-comp.getOntologyDepth(), 0).forEach(level -> {
+			System.out.println("ancestor " + level + ": " + comp.getAncestor(level));
+		});
+		IntStream.rangeClosed(0, comp.getOntologyDepth()).forEach(level -> {
+			System.out.println("ancestor " + level + ": " + comp.getAncestor(level));
+		});
+	}
 }

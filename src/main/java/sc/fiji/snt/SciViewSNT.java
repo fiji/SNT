@@ -351,7 +351,7 @@ public class SciViewSNT {
 				// Assemble arbor(s)
 				final List<Vector3> points = new ArrayList<>();
 				final List<ColorRGB> colors = new ArrayList<>();
-				final float scaleFactor = 0.1f;
+				final float scaleFactor = 1f;
 				for (int i = 0; i < p.size(); ++i) {
 					final PointInImage pim = p.getNodeWithoutChecks(i);
 					final ClearGLVector3 coord = new ClearGLVector3((float)pim.x, (float)pim.y, (float)pim.z);
@@ -365,7 +365,7 @@ public class SciViewSNT {
 					colors.add( color );
 				}
 
-				final Line3D line = new Line3D(points, colors, 0.05);
+				final Line3D line = new Line3D(points, colors, 0.25);
 				line.getMetadata().put("pathID",p.getID());
 				line.setName(p.getName());
 				//sciView.addNode(line,false );

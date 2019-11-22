@@ -303,5 +303,10 @@
 			<artifactId>progressbar</artifactId>
 			<version>0.7.4</version>
 		</dependency>
+		<dependency>
+			<groupId>org.jline</groupId>
+			<artifactId>jline</artifactId>
+			<version>3.13.1</version>
+		</dependency>
 	</dependencies>
 </project>

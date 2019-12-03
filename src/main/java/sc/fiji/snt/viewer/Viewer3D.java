@@ -973,7 +973,7 @@ public class Viewer3D {
 			final Map.Entry<String, RemountableDrawableVBO> entry = it.next();
 			chart.getScene().getGraph().remove(entry.getValue(), false);
 			deleteItemFromManager(entry.getKey());
-			if (frame.allenNavigator != null)
+			if (frame != null && frame.allenNavigator != null)
 				frame.allenNavigator.meshRemoved(entry.getKey());
 			it.remove();
 		}
@@ -1453,6 +1453,7 @@ public class Viewer3D {
 		if (frame != null && frame.allenNavigator != null) {
 			frame.allenNavigator.meshLoaded(label);
 		}
+		if (objMesh != null && viewUpdatesEnabled) validate();
 		return objMesh;
 	}
 
@@ -1637,6 +1638,7 @@ public class Viewer3D {
 
 		private final Coord3d TOP_VIEW = new Coord3d(Math.PI / 2, 0.5, 3000);
 		private final Coord3d PERSPECTIVE_VIEW = new Coord3d(Math.PI / 2, 0.5, 3000);
+		private final Coord3d SIDE_VIEW = new Coord3d(Math.PI, 0, 3000);
 
 		private Coord3d previousViewPointPerspective;
 		private OverlayAnnotation overlayAnnotation;
@@ -1675,7 +1677,7 @@ public class Viewer3D {
 			else if (view == ViewMode.SIDE) {
 				getView().setViewPositionMode(ViewPositionMode.PROFILE);
 				getView().setViewPoint(previousViewPointProfile == null
-					? View.DEFAULT_VIEW.clone() : previousViewPointProfile);
+					? SIDE_VIEW.clone() : previousViewPointProfile);
 			}
 			else if (view == ViewMode.PERSPECTIVE) {
 				getView().setViewPositionMode(ViewPositionMode.FREE);

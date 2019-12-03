@@ -32,6 +32,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -798,15 +799,15 @@ public class Viewer3D {
 	 * @return the frame containing the viewer.
 	 */
 	public Frame show() {
-		return show(-1, -1);
+		return show(0, 0);
 	}
 
 	/**
 	 * Displays the viewer under specified dimensions. Useful when generating
 	 * scene animations programmatically.
 	 * 
-	 * @param width the width of the frame
-	 * @param height the height of the frame
+	 * @param width the width of the frame. {@code -1} will set width to its maximum.
+	 * @param height the height of the frame. {@code -1} will set height to its maximum.
 	 * @return the frame containing the viewer.
 	 * @see #show()
 	 */
@@ -815,9 +816,7 @@ public class Viewer3D {
 		if (!viewInitialized && frame != null) {
 			updateView();
 			frame.setVisible(true);
-			if (width > 0 || height > 0) {
-				frame.setSize(width, height);
-			}
+			setFrameSize(width, height);
 			return frame;
 		}
 		else if (viewInitialized) {
@@ -831,9 +830,14 @@ public class Viewer3D {
 				chart.add(drawable, viewUpdatesEnabled);
 			});
 		}
-		frame = (width < 0 || height < 0) ? 
-			new ViewerFrame(chart, managerList != null)
-			: 	new ViewerFrame(chart, width, height, managerList != null);
+		if (width == 0 || height == 0) {
+			frame = new ViewerFrame(chart, managerList != null);
+		} else {
+			final Dimension sSize = Toolkit.getDefaultToolkit().getScreenSize();
+			final int w = (width < 0) ? sSize.width : width;
+			final int h = (height < 0) ? sSize.height : height;
+			frame = new ViewerFrame(chart, w, h, managerList != null);
+		}
 		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
 	}
@@ -842,12 +846,26 @@ public class Viewer3D {
 	 * Resizes the viewer to the specified dimensions. Useful when generating scene
 	 * animations programmatically. Does nothing if viewer's frame does not exist.
 	 * 
-	 * @param width  the width of the frame
-	 * @param height the height of the frame
+	 * @param width the width of the frame. {@code -1} will set width to its maximum.
+	 * @param height the height of the frame. {@code -1} will set height to its maximum.
 	 * @see #show(int, int)
 	 */
 	public void setFrameSize(final int width, final int height) {
-		if (frame != null) frame.setSize(width, height);
+		if (frame == null) return;
+		if (width == -1 && height == -1) {
+			frame.setLocation(0, 0);
+			frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+		} else if (width == -1 ) {
+			frame.setExtendedState(Frame.MAXIMIZED_HORIZ);
+			frame.setSize(frame.getWidth(), height);
+		} else if (height == -1 ) {
+			frame.setExtendedState(Frame.MAXIMIZED_VERT);
+			frame.setSize(width, frame.getHeight());
+		}
+		else {
+			frame.setSize(width, height);
+		}
+		frame.setSize(width, height);
 	}
 
 	private void displayMsg(final String msg) {
@@ -1361,7 +1379,10 @@ public class Viewer3D {
 	 */
 	public boolean saveSnapshot(final String filePath) {
 		try {
-			return saveSnapshot(new File(filePath));
+			final File file = new File(filePath);
+			final File parent = file.getParentFile();
+			if (parent != null && !parent.exists()) parent.mkdirs();
+			return saveSnapshot(file);
 		} catch (final IllegalArgumentException | IOException e) {
 			SNTUtils.error("IOException", e);
 			return false;

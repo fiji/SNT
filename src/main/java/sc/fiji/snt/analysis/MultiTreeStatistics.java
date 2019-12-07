@@ -27,6 +27,7 @@ import java.util.Collection;
 import net.imagej.ImageJ;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
+import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 
 /**
@@ -134,9 +135,17 @@ public class MultiTreeStatistics extends TreeStatistics {
 				stat.addValue(sum / t.size());
 				break;
 			default:
-				throw new IllegalArgumentException("Unrecognized MultiTreeStatistics parameter " + measurement);
+				SNTUtils.log("Unrecognized MultiTreeStatistics parameter... Defaulting to TreeStatistics analysis");
+				dumpStats(stat, measurement);
+				return;
 			}
 		}
+	}
+
+	private void dumpStats(final StatisticsInstance stat, final String measurement) {
+		for (final Tree tree : groupOfTrees)
+			super.tree.list().addAll(tree.list());
+		super.assembleStats(stat, measurement);
 	}
 
 	/* IDE debug method */

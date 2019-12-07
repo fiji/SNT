@@ -103,32 +103,10 @@ public class TreeStatistics extends TreeAnalyzer {
 	 * @return the frame holding the histogram
 	 */
 	public ChartFrame getHistogram(final String measurement) {
-		getDescriptiveStats(measurement);
-		final double[] values = lastDstats.dStats.getValues();
-		final long n = lastDstats.dStats.getN();
-		final double q1 = lastDstats.dStats.getPercentile(25);
-		final double q3 = lastDstats.dStats.getPercentile(75);
-		final double min = lastDstats.dStats.getMin();
-		final double max = lastDstats.dStats.getMax();
-		int nBins;
-		if (n == 0) {
-			nBins = 1;
-		} if (n <= 10) {
-			nBins = (int) n;
-		} else {
-			final double binWidth = 2 * (q3 - q1) / Math.cbrt(n); // Freedman-Diaconis rule
-			if (binWidth == 0) {
-				nBins = (int) Math.round(Math.sqrt(n));
-			} else {
-				nBins = (int) Math.ceil((max - min) / binWidth);
-			}
-			nBins = Math.max(1, nBins);
-		}
-		final HistogramDataset dataset = new HistogramDataset();
-		dataset.setType(HistogramType.RELATIVE_FREQUENCY);
-		dataset.addSeries(measurement, values, nBins);
+
+		final HistogramDatasetPlus datasetPlus = new HistogramDatasetPlus(measurement);
 		final JFreeChart chart = ChartFactory.createHistogram(null, measurement,
-			"Rel. Frequency", dataset);
+			"Rel. Frequency", datasetPlus.getDataset());
 
 		// Customize plot
 		final Color bColor = null; //Color.WHITE; make graph transparent so that it can be exported without background
@@ -151,15 +129,15 @@ public class TreeStatistics extends TreeAnalyzer {
 		final StringBuilder sb = new StringBuilder();
 		final double mean = lastDstats.dStats.getMean();
 		final int nDecimals = (mean < 0.51) ? 3 : 2;
-		sb.append("Q1: ").append(SNTUtils.formatDouble(q1, nDecimals));
+		sb.append("Q1: ").append(SNTUtils.formatDouble(datasetPlus.q1, nDecimals));
 		sb.append("  Median: ").append(SNTUtils.formatDouble(lastDstats.dStats
 			.getPercentile(50), nDecimals));
-		sb.append("  Q3: ").append(SNTUtils.formatDouble(q3, nDecimals));
-		sb.append("  IQR: ").append(SNTUtils.formatDouble(q3 - q1, nDecimals));
-		sb.append("  Bins: ").append(nBins);
-		sb.append("\nN: ").append(n);
-		sb.append("  Min: ").append(SNTUtils.formatDouble(min, nDecimals));
-		sb.append("  Max: ").append(SNTUtils.formatDouble(max, nDecimals));
+		sb.append("  Q3: ").append(SNTUtils.formatDouble(datasetPlus.q3, nDecimals));
+		sb.append("  IQR: ").append(SNTUtils.formatDouble(datasetPlus.q3 - datasetPlus.q1, nDecimals));
+		sb.append("  Bins: ").append(datasetPlus.nBins);
+		sb.append("\nN: ").append(datasetPlus.n);
+		sb.append("  Min: ").append(SNTUtils.formatDouble(datasetPlus.min, nDecimals));
+		sb.append("  Max: ").append(SNTUtils.formatDouble(datasetPlus.max, nDecimals));
 		sb.append("  Mean\u00B1").append("SD: ").append(SNTUtils.formatDouble(
 			mean, nDecimals)).append("\u00B1").append(SNTUtils.formatDouble(
 				lastDstats.dStats.getStandardDeviation(), nDecimals));
@@ -320,6 +298,51 @@ public class TreeStatistics extends TreeAnalyzer {
 
 		long getN() {
 			return (sStatistics != null) ? sStatistics.getN() : dStatistics.getN();
+		}
+
+	}
+
+	class HistogramDatasetPlus {
+		String measurement;
+		double[] values;
+		int nBins;
+		long n;
+		double q1, q3, min, max;
+
+		HistogramDatasetPlus(final String measurement) {
+			this.measurement = measurement;
+			getDescriptiveStats(measurement);
+			values = lastDstats.dStats.getValues();
+		}
+
+		void compute() {
+			n = lastDstats.dStats.getN();
+			q1 = lastDstats.dStats.getPercentile(25);
+			q3 = lastDstats.dStats.getPercentile(75);
+			min = lastDstats.dStats.getMin();
+			max = lastDstats.dStats.getMax();
+			if (n == 0) {
+				nBins = 1;
+			}
+			if (n <= 10) {
+				nBins = (int) n;
+			} else {
+				final double binWidth = 2 * (q3 - q1) / Math.cbrt(n); // Freedman-Diaconis rule
+				if (binWidth == 0) {
+					nBins = (int) Math.round(Math.sqrt(n));
+				} else {
+					nBins = (int) Math.ceil((max - min) / binWidth);
+				}
+				nBins = Math.max(1, nBins);
+			}
+		}
+
+		HistogramDataset getDataset() {
+			compute();
+			final HistogramDataset dataset = new HistogramDataset();
+			dataset.setType(HistogramType.RELATIVE_FREQUENCY);
+			dataset.addSeries(measurement, values, nBins);
+			return dataset;
 		}
 
 	}

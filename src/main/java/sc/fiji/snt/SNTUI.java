@@ -117,6 +117,7 @@ import sc.fiji.snt.gui.cmds.ChooseDatasetCmd;
 import sc.fiji.snt.gui.cmds.CompareFilesCmd;
 import sc.fiji.snt.gui.cmds.ComputeSecondaryImg;
 import sc.fiji.snt.gui.cmds.ComputeTubenessImg;
+import sc.fiji.snt.gui.cmds.GraphGeneratorCmd;
 import sc.fiji.snt.gui.cmds.JSONImporterCmd;
 import sc.fiji.snt.gui.cmds.MLImporterCmd;
 import sc.fiji.snt.gui.cmds.MultiSWCImporterCmd;
@@ -1900,7 +1901,7 @@ public class SNTUI extends JDialog {
 		return openFile(promptMsg, suggestedFile);
 	}
 
-	private File openFile(final String promptMsg, final File suggestedFile) {
+	protected File openFile(final String promptMsg, final File suggestedFile) {
 		final boolean focused = hasFocus(); //HACK: On MacOS this seems to help to ensure prompt is displayed as frontmost
 		if (focused) toBack();
 		final File openedFile = plugin.legacyService.getIJ1Helper().openDialog(promptMsg, suggestedFile);
@@ -2057,8 +2058,10 @@ public class SNTUI extends JDialog {
 		importSubmenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.IMPORT));
 		final JMenu exportSubmenu = new JMenu("Export (All Paths)");
 		exportSubmenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.EXPORT));
-		final JMenu analysisMenu = new JMenu("Utilities");
+		final JMenu analysisMenu = new JMenu("Analysis");
 		menuBar.add(analysisMenu);
+		final JMenu utilitiesMenu = new JMenu("Utilities");
+		menuBar.add(utilitiesMenu);
 		final ScriptInstaller installer = new ScriptInstaller(plugin.getContext(), this);
 		menuBar.add(installer.getScriptsMenu());
 		final JMenu viewMenu = new JMenu("View");
@@ -2181,20 +2184,25 @@ public class SNTUI extends JDialog {
 		analysisMenu.add(strahlerMenuItem);
 		analysisMenu.add(measureMenuItem);
 
-		analysisMenu.addSeparator();
-		analysisMenu.add(plotMenuItem);
+		utilitiesMenu.add(plotMenuItem);
 		final JMenuItem compareFiles = new JMenuItem("Compare Reconstructions...");
 		compareFiles.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BINOCULARS));
-		analysisMenu.add(compareFiles);
+		utilitiesMenu.add(compareFiles);
 		compareFiles.addActionListener(e -> {
 			(new CmdRunner(CompareFilesCmd.class)).execute();
 		});
-		analysisMenu.addSeparator();
-
+		utilitiesMenu.addSeparator();
+		final JMenuItem graphGenerator = new JMenuItem("Create Dendrogram",
+				IconFactory.getMenuIcon(IconFactory.GLYPH.DIAGRAM));
+		utilitiesMenu.add(graphGenerator);
+		graphGenerator.addActionListener(e -> {
+			(new DynamicCmdRunner(GraphGeneratorCmd.class, null, getState(), false)).run();
+		});
+		utilitiesMenu.addSeparator();
 		final JMenu scriptUtilsMenu = installer.getUtilScriptsMenu();
 		scriptUtilsMenu.setText("Utility Scripts");
 		scriptUtilsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.PLUS));
-		analysisMenu.add(scriptUtilsMenu);
+		utilitiesMenu.add(scriptUtilsMenu);
 
 		// View menu
 		final JMenuItem arrangeWindowsMenuItem = new JMenuItem("Arrange Views");
@@ -3546,7 +3554,7 @@ public class SNTUI extends JDialog {
 				cmdService.run(cmd, true, inputs);
 			} catch (final OutOfMemoryError e) {
 				e.printStackTrace();
-				guiUtils.error("It seems there is not enough memory comple command. See Console for details.");
+				guiUtils.error("There is not enough memory to complete command. See Console for details.");
 			} finally {
 				if (preRunState != getState())
 					changeState(preRunState);

@@ -60,6 +60,8 @@ public class TreeAnalyzerTest {
 		assertTrue("50.99 > Sum length of I branches < 51.01um", primaryLength > 50.99 && primaryLength < 51.01);
 		final double terminalLength =  analyzer.getTerminalLength();
 		assertTrue("153.29um > Sum length of terminal paths < 153.30um", terminalLength > 153.29 && terminalLength < 153.30);
+		assertTrue("Strahler number: 5", analyzer.getStrahlerNumber() == 5);
+		assertTrue("Strahler bif. ratio: 2", analyzer.getStrahlerBifurcationRatio() == 2);
 	}
 
 }

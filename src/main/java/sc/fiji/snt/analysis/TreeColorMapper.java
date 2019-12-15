@@ -62,6 +62,8 @@ public class TreeColorMapper extends ColorMapper {
 
 	/* For convenience keep references to TreeAnalyzer fields */
 
+	/** Flag for {@value #STRAHLER_ORDER} mapping. */
+	public static final String STRAHLER_ORDER = "Strahler order";
 	/** Flag for {@value #PATH_ORDER} mapping. */
 	public static final String PATH_ORDER = TreeAnalyzer.PATH_ORDER;
 	/** Flag for {@value #LENGTH} mapping. */
@@ -142,6 +144,11 @@ public class TreeColorMapper extends ColorMapper {
 		map(measurement, colorTable);
 		final String cMeasurement = normalizedMeasurement(measurement);
 		switch (cMeasurement) {
+			case STRAHLER_ORDER:
+				assignStrahlerOrderToNodeValues();
+				integerScale = true;
+				mapToNodeProperty(VALUES, colorTable);
+				break;
 			case PATH_DISTANCE:
 				final TreeParser parser = new TreeParser(new Tree(paths));
 				try {
@@ -176,6 +183,25 @@ public class TreeColorMapper extends ColorMapper {
 			default:
 				throw new IllegalArgumentException("Unknown parameter");
 		}
+	}
+
+	private void assignStrahlerOrderToNodeValues() {
+		final StrahlerAnalyzer sa = new StrahlerAnalyzer(new Tree(paths));
+		sa.getNodes().forEach((order, nodeList) -> {
+			for (final SWCPoint node : nodeList) {
+				for (final Path p : paths) {
+					if (!p.equals(node.getPath())) {
+						continue;
+					}
+					for (int i = 0; i < p.size(); i++) {
+						if (node.isSameLocation(p.getNode(i))) {
+							p.setNodeValue(order, i);
+							continue;
+						}
+					}
+				}
+			}
+		});
 	}
 
 	private void mapToPathProperty(final String measurement,
@@ -416,13 +442,13 @@ public class TreeColorMapper extends ColorMapper {
 		if (normGuess.indexOf("length") != -1) {
 			return LENGTH;
 		}
+		if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("order") != -1) {
+			return STRAHLER_ORDER;
+		}
 		if (normGuess.indexOf("branch points") != -1 || normGuess.indexOf("bps") != -1) {
 			return N_BRANCH_POINTS;
 		}
-		if (normGuess.indexOf("order") != -1) {
-			return PATH_ORDER;
-		}
-		return guess;
+		return "unknown";
 	}
 
 	/**

@@ -131,6 +131,7 @@ public class TreeAnalyzer extends ContextCommand {
 	private HashSet<PointInImage> tips;
 	protected DefaultGenericTable table;
 	private String tableTitle;
+	private StrahlerAnalyzer sAnalyzer;
 
 	private int fittedPathsCounter = 0;
 	private int unfilteredPathsFittedPathsCounter = 0;
@@ -188,9 +189,10 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Restricts analysis to Paths sharing the specified branching order(s).
+	 * Restricts analysis to Paths sharing the specified Path {@link Path#getOrder()
+	 * order}(s).
 	 *
-	 * @param orders the allowed branching orders
+	 * @param orders the allowed Path orders
 	 */
 	public void restrictToOrder(final int... orders) {
 		initializeSnapshotTree();
@@ -272,6 +274,7 @@ public class TreeAnalyzer extends ContextCommand {
 			unfilteredTree = new Tree(tree.list());
 			unfilteredTree.setLabel(tree.getLabel());
 		}
+		sAnalyzer = null; // reset Strahler analyzer
 	}
 
 	/**
@@ -286,6 +289,7 @@ public class TreeAnalyzer extends ContextCommand {
 		primaryBranches = null;
 		terminalBranches = null;
 		tips = null;
+		sAnalyzer = null;
 		fittedPathsCounter = unfilteredPathsFittedPathsCounter;
 	}
 
@@ -579,6 +583,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 *
 	 * @return the highest Path order, or -1 if Paths in the Tree have no defined
 	 *         order
+	 * @see #getStrahlerRootOrder()
 	 */
 	public int getHighestPathOrder() {
 		int root = -1;
@@ -587,6 +592,30 @@ public class TreeAnalyzer extends ContextCommand {
 			if (order > root) root = order;
 		}
 		return root;
+	}
+
+	/**
+	 * Gets the highest {@link StrahlerAnalyzer#getRootNumber() Strahler number} of
+	 * the analyzed tree.
+	 *
+	 * @return the highest Strahler (root) number order
+	 * @throws IllegalArgumentException if tree contains multiple roots or loops
+	 */
+	public int getStrahlerNumber() throws IllegalArgumentException {
+		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
+		return sAnalyzer.getRootNumber();
+	}
+
+	/**
+	 * Gets the average {@link StrahlerAnalyzer#getAvgBifurcationRatio() Strahler
+	 * bifurcation ratio} of the analyzed tree.
+	 *
+	 * @return the average bifurcation ratio
+	 * @throws IllegalArgumentException if tree contains multiple roots or loops
+	 */
+	public double getStrahlerBifurcationRatio() throws IllegalArgumentException {
+		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
+		return sAnalyzer.getAvgBifurcationRatio();
 	}
 
 	private double sumLength(final Collection<Path> paths) {

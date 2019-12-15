@@ -200,7 +200,7 @@ public class TreeMapperCmd extends DynamicCommand {
 	@SuppressWarnings("unused")
 	private void removeColorCoding() {
 		for (final Path p : tree.list()) {
-			p.setColor(null);
+			p.setColor((java.awt.Color)null);
 			p.setNodeColors(null);
 		}
 		statusService.showStatus("Color code removed...");
@@ -211,7 +211,8 @@ public class TreeMapperCmd extends DynamicCommand {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
-		final Tree tree = new Tree(SNTUtils.randomPaths());
+		final SNTService sntService = ij.context().getService(SNTService.class);
+		final Tree tree = sntService.demoTrees().get(0);
 		input.put("tree", tree);
 		ij.command().run(TreeMapperCmd.class, true, input);
 	}

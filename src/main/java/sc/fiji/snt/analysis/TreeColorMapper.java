@@ -46,12 +46,15 @@ import sholl.ProfileEntry;
 import sholl.UPoint;
 import sholl.math.LinearProfileStats;
 import sc.fiji.snt.Path;
+import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.sholl.TreeParser;
 import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.MultiViewer2D;
 import sc.fiji.snt.viewer.Viewer2D;
+import sc.fiji.snt.viewer.Viewer3D;
 
 /**
  * Class for color coding {@link Tree}s.
@@ -111,7 +114,7 @@ public class TreeColorMapper extends ColorMapper {
 	}
 
 	/**
-	 * Instantiates the Colorizer. Note that because the instance is not aware of
+	 * Instantiates the mapper. Note that because the instance is not aware of
 	 * any context, script-friendly methods that use string as arguments may fail
 	 * to retrieve referenced Scijava objects.
 	 */
@@ -484,11 +487,17 @@ public class TreeColorMapper extends ColorMapper {
 	 *
 	 * @return the set of keys, corresponding to the set of LUTs available
 	 */
-	public Set<String> getAvalailableLuts() {
+	public Set<String> getAvailableLuts() {
 		initLuts();
 		return luts.keySet();
 	}
 
+	/**
+	 * Assembles a {@link MultiViewer2D Multi-pane viewer} using all the Trees
+	 * mapped so far.
+	 *
+	 * @return the multi-viewer instance
+	 */
 	public MultiViewer2D getMultiViewer() {
 		final List<Viewer2D> viewers = new ArrayList<>(mappedTrees.size());
 		mappedTrees.forEach(tree -> {
@@ -532,16 +541,31 @@ public class TreeColorMapper extends ColorMapper {
 	public static void main(final String... args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		final List<Tree> trees = new ArrayList<>();
-		for (int i = 0; i < 10; i++) {
-			final Tree tree = new Tree(SNTUtils.randomPaths());
-			tree.rotate(Tree.Z_AXIS, i * 20);
-			trees.add(tree);
+//		final List<Tree> trees = new ArrayList<>();
+//		for (int i = 0; i < 10; i++) {
+//			final Tree tree = new Tree(SNTUtils.randomPaths());
+//			tree.rotate(Tree.Z_AXIS, i * 20);
+//			trees.add(tree);
+//		}
+//		final Viewer2D plot = new Viewer2D(ij.context());
+//		plot.addTrees(trees, "Ice.lut");
+//		plot.addColorBarLegend();
+//		plot.showPlot();
+//		
+		final SNTService sntService = ij.context().getService(SNTService.class);
+		final List<Tree> trees = sntService.demoTrees();
+		TreeColorMapper mapper = new TreeColorMapper(ij.context());
+		//mapper.setMinMax(1000, 20000);
+		final Viewer3D viewer = new Viewer3D(ij.context());
+		final Viewer2D viewer2 = new Viewer2D(ij.context());
+
+		for (Tree tree : trees) {
+			mapper.map(tree, "Strahler order", "Ice.lut");
+			viewer.add(tree);
+			viewer2.add(tree);
 		}
-		final Viewer2D plot = new Viewer2D(ij.context());
-		plot.addTrees(trees, "Ice.lut");
-		plot.addColorBarLegend();
-		plot.showPlot();
+		viewer.show();
+		viewer2.show();
 	}
 
 }

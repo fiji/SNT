@@ -470,7 +470,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					.getSWCType())));
 			}
 			else {
-				pathAndFillManager.getPathsFiltered().forEach(p -> p.setColor(null));
+				pathAndFillManager.getPathsFiltered().forEach(p -> p.setColor((Color)null));
 			}
 			refreshManager(false, true);
 		}
@@ -487,7 +487,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 	private void resetPathsColor(final Collection<Path> paths) {
 		for (final Path p : paths) {
-			p.setColor(null);
+			p.setColor((Color)null);
 		}
 		refreshManager(true, true);
 	}

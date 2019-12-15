@@ -104,7 +104,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 	/*
 	 * (non-Javadoc)
 	 *
-	 * @see ColorMapper#colorize(java.lang.String,
+	 * @see ColorMapper#map(java.lang.String,
 	 * net.imglib2.display.ColorTable)
 	 */
 	@Override

@@ -715,7 +715,7 @@ public class Tree {
 	 */
 	public void setColor(final ColorRGB color) {
 		tree.stream().forEach(p -> {
-			p.setColorRGB(color);
+			p.setColor(color);
 			if (color != null) p.setNodeColors(null);
 		});
 	}

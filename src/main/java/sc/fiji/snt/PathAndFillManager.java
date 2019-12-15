@@ -1928,7 +1928,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				p.setName(p.getName() + "{" + id + "}"); // This is just for PathManager
 																									// inability to deal with
 																									// Trees
-				p.setColorRGB(colors[colorIdx[0]]);
+				p.setColor(colors[colorIdx[0]]);
 				tree.add(p);
 			}
 			colorIdx[0]++;
@@ -2141,7 +2141,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			final SWCPoint swcPoint = pathStartsOnSWCPoint.get(p);
 			if (descriptor != null) {
 				p.setName(p.getName() + "{" + descriptor + "}");
-				p.setColorRGB(color);
+				p.setColor(color);
 			}
 			if (swcPoint == null) {
 				p.setIsPrimary(true);

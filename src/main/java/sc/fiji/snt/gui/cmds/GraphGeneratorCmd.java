@@ -76,7 +76,7 @@ public class GraphGeneratorCmd extends CommonDynamicCmd {
 			resetUI();
 			status("Righ-click on canvas for options", true);
 		} catch (final IllegalArgumentException exc) { // multiple roots, etc..
-			error(exc.getMessage());
+			error("Could not generate graph: " + exc.getMessage());
 		}
 	}
 

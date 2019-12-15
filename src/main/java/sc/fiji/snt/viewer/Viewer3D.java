@@ -1457,6 +1457,7 @@ public class Viewer3D {
 	}
 
 	private OBJMesh loadOBJMesh(final OBJMesh objMesh) {
+		setAnimationEnabled(false);
 		chart.add(objMesh.drawable, false); // GLException if true
 		final String label = getUniqueLabel(plottedObjs, "Mesh", objMesh.getLabel());
 		plottedObjs.put(label, objMesh.drawable);

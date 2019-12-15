@@ -1338,6 +1338,16 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
+	 * Sets the node color.
+	 *
+	 * @param color the node color
+	 * @param pos the node position
+	 */
+	public void setNodeColor(final ColorRGB color, final int pos) {
+		setNodeColor((color == null) ? null : new Color(color.getARGB()), pos);
+	}
+
+	/**
 	 * Assigns the "value" property to this node.
 	 *
 	 * @param value the node value
@@ -1452,8 +1462,9 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Sets this path color.
 	 *
-	 * @param color the path color. Set it to null, to have SNT rendered using
-	 *          default settings.
+	 * @param color the path color. Set it to null, to have SNT render this Path
+	 *              using default settings. You may need to cast the null reference
+	 *              to {@code Color} to avoid ambiguous method overload
 	 */
 	public void setColor(final Color color) {
 		this.color = color;
@@ -1464,11 +1475,19 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Sets this path color.
 	 *
-	 * @param colorRGB the path color. Set it to null, to have SNT rendered using
-	 *          default settings.
+	 * @param color the path color. Set it to null, to have SNT render this Path
+	 *              using default settings. You may need to cast the null reference
+	 *              to {@code ColorRGB} to avoid ambiguous method overload
 	 */
-	public void setColorRGB(final ColorRGB colorRGB) {
-		setColor((colorRGB == null) ? null : new Color(colorRGB.getARGB()));
+	public void setColor(final ColorRGB color) {
+		setColor((color == null) ? null : new Color(color.getARGB()));
+	}
+
+	/**
+	 * Resets this path color, forcing SNT to render it under default settings.
+	 */
+	public void resetColor() {
+		setColor((Color)null);
 	}
 
 	/**
@@ -1872,6 +1891,7 @@ public class Path implements Comparable<Path> {
 	 * classifies <i>Paths</i> instead of <i>branches</i>.
 	 *
 	 * @return the order of this path. A primary path is always of order 1.
+	 * @see sc.fiji.snt.analysis.StrahlerAnalyzer
 	 */
 	public int getOrder() {
 		return order;
@@ -2602,4 +2622,12 @@ public class Path implements Comparable<Path> {
 		}
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		final Path other = (Path) obj;
+		if (obj == this) return true;
+		return (this.id == other.id) && (this.size() == other.size());
+	}
 }

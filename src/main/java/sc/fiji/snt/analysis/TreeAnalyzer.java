@@ -102,7 +102,7 @@ public class TreeAnalyzer extends ContextCommand {
 
 	/**
 	 * Flag for analysis of {@value #VALUES}, an optional numeric property that
-	 * can be assigned to Path nodes (typically voxel intensities, assigned via
+	 * can be assigned to Path nodes (e.g., voxel intensities, assigned via
 	 * {@link PathProfiler}. Note that an {@link IllegalArgumentException} is
 	 * triggered if no values have been assigned to the tree being analyzed.
 	 * 

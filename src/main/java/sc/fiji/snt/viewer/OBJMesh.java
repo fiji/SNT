@@ -159,6 +159,18 @@ public class OBJMesh {
 	}
 
 	/**
+	 * Changes the transparency of this mesh.
+	 * 
+	 * @param transparencyPercent the mesh transparency (in percentage).
+	 */
+	public void setTransparency(final double transparencyPercent) {
+		final Color existing = drawable.getColor();
+		final Color adjusted = new Color(existing.r, existing.g, existing.b,
+				(int) Math.round((100 - transparencyPercent) * 255 / 100));
+		drawable.setColor(adjusted);
+	}
+
+	/**
 	 * Determines whether the mesh bounding box should be displayed.
 	 * 
 	 * @param boundingBoxColor the color of the mesh bounding box. If null, no

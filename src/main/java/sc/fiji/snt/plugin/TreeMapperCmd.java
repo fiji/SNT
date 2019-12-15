@@ -132,9 +132,9 @@ public class TreeMapperCmd extends DynamicCommand {
 		if (showPlot) {
 			SNTUtils.log("Creating 2D plot...");
 			plot = new Viewer2D(context());
-			plot.addTree(tree);
+			plot.add(tree);
 			plot.addColorBarLegend(colorTable, minMax[0], minMax[1]);
-			plot.showPlot();
+			plot.show();
 		}
 		if (showInRecViewer) {
 			final Viewer3D recViewer = sntService.getRecViewer();

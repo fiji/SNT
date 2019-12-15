@@ -745,6 +745,17 @@ public class Viewer3D {
 	}
 
 	/**
+	 * Adds a color bar legend (LUT ramp) from a {@link ColorMapper}.
+	 *
+	 * @param colorMapper the class extending ColorMapper ({@link TreeColorMapper}, etc.)
+	 */
+	public <T extends sc.fiji.snt.analysis.ColorMapper> void addColorBarLegend(final T colorMapper)
+	{
+		final double[] minMax = colorMapper.getMinMax();
+		addColorBarLegend(colorMapper.getColorTable(), minMax[0], minMax[1]);
+	}
+
+	/**
 	 * Adds a color bar legend (LUT ramp) using default settings.
 	 *
 	 * @param colorTable the color table

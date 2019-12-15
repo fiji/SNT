@@ -55,6 +55,7 @@ import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.analysis.ColorMapper;
 import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
@@ -179,6 +180,17 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	/**
+	 * Adds a color bar legend (LUT ramp) from a {@link ColorMapper}.
+	 *
+	 * @param colorMapper the class extending ColorMapper ({@link TreeColorMapper}, etc.)
+	 */
+	public <T extends ColorMapper> void addColorBarLegend(final T colorMapper)
+	{
+		final double[] minMax = colorMapper.getMinMax();
+		addColorBarLegend(colorMapper.getColorTable(), minMax[0], minMax[1]);
+	}
+
+	/**
 	 * Adds a color bar legend (LUT ramp) to the viewer. Does nothing if no
 	 * measurement mapping occurred successfully. Note that when performing
 	 * mapping to different measurements, the legend reflects only the last mapped
@@ -230,10 +242,21 @@ public class Viewer2D extends TreeColorMapper {
 
 	/**
 	 * Appends a tree to the viewer using default options.
-	 *
+	 * 
+	 * @deprecated Use {@link #add(Tree)} instead
 	 * @param tree the Collection of paths to be plotted
 	 */
+	@Deprecated 
 	public void addTree(final Tree tree) {
+		add(tree);
+	}
+
+	/**
+	 * Appends a tree to the viewer using default options.
+	 * 
+	 * @param tree the Collection of paths to be plotted
+	 */
+	public void add(final Tree tree) {
 		addPaths(tree.list());
 	}
 
@@ -243,7 +266,7 @@ public class Viewer2D extends TreeColorMapper {
 	 * @param trees the list of trees to be plotted
 	 * @param lut the lookup table specifying the color mapping
 	 */
-	public void addTrees(final List<Tree> trees, final String lut) {
+	public void add(final List<Tree> trees, final String lut) {
 		mapTrees(trees, lut);
 		for (final ListIterator<Tree> it = trees.listIterator(); it.hasNext();) {
 			addTree(it.next());
@@ -256,7 +279,7 @@ public class Viewer2D extends TreeColorMapper {
 	 * @param tree the Collection of paths to be plotted
 	 * @param color the color to render the Tree
 	 */
-	public void addTree(final Tree tree, final ColorRGB color) {
+	public void add(final Tree tree, final ColorRGB color) {
 		final ColorRGB prevDefaultColor = defaultColor;
 		setDefaultColor(color);
 		addPaths(tree.list());
@@ -275,7 +298,7 @@ public class Viewer2D extends TreeColorMapper {
 	 * @param max the mapping upper bound (i.e., the highest measurement value for
 	 *          the LUT scale)
 	 */
-	public void addTree(final Tree tree, final String measurement,
+	public void add(final Tree tree, final String measurement,
 		final ColorTable colorTable, final double min, final double max)
 	{
 		this.paths = tree.list();
@@ -293,10 +316,10 @@ public class Viewer2D extends TreeColorMapper {
 	 *          etc.)
 	 * @param lut the lookup table specifying the color mapping
 	 */
-	public void addTree(final Tree tree, final String measurement,
+	public void add(final Tree tree, final String measurement,
 		final String lut)
 	{
-		addTree(tree, measurement, getColorTable(lut), Double.NaN, Double.NaN);
+		add(tree, measurement, getColorTable(lut), Double.NaN, Double.NaN);
 	}
 
 	/**
@@ -311,10 +334,10 @@ public class Viewer2D extends TreeColorMapper {
 	 * @param max the mapping upper bound (i.e., the highest measurement value for
 	 *          the LUT scale)
 	 */
-	public void addTree(final Tree tree, final String measurement,
+	public void add(final Tree tree, final String measurement,
 		final String lut, final double min, final double max)
 	{
-		addTree(tree, measurement, getColorTable(lut), min, max);
+		add(tree, measurement, getColorTable(lut), min, max);
 	}
 
 	/**
@@ -402,11 +425,18 @@ public class Viewer2D extends TreeColorMapper {
 		return title;
 	}
 
-	/** Displays the current plot on a dedicated frame */
+	/**
+	 * @deprecated Use {@link #show()} instead.
+	 */
+	@Deprecated
 	public void showPlot() {
-		getPlot(true);
+		show();
 	}
 
+	/** Displays the current plot on a dedicated frame */
+	public void show() {
+		getPlot(true);
+	}
 
 	public void setGridlinesVisible(final boolean visible) {
 		visibleGridLines = visible;
@@ -429,9 +459,9 @@ public class Viewer2D extends TreeColorMapper {
 		tree.rotate(Tree.Z_AXIS, 180);
 		final SNTPoint root = tree.getRoot();
 		tree.translate(-root.getX(), -root.getY(), -root.getZ());
-		pplot.addTree(tree, Colors.RED);
+		pplot.add(tree, Colors.RED);
 		pplot.setOutlineVisible(true);
-		pplot.showPlot();
+		pplot.show();
 	}
 
 }

@@ -124,13 +124,13 @@ def run():
     tree_stats.updateAndDisplayTable()
 
     # Remaining analysis classes can be access using the same scripting
-    # pattern. E.g., to plot paths colored by rotation angle:
+    # pattern. E.g., for a 2D view of paths colored by rotation angle:
     # https://javadoc.scijava.org/Fiji/sc/fiji/snt/viewer/Viewer2D.html
-    plot = Viewer2D(context)
-    plot.addTree(tree, "y coordinates", "Ice.lut")
-    plot.addColorBarLegend()
-    plot.setTitle("Scripted Paths Rotation Plot")
-    plot.showPlot()
+    viewer = Viewer2D(context)
+    viewer.add(tree, "y coordinates", "Ice.lut")
+    viewer.addColorBarLegend()
+    viewer.setTitle("Scripted Paths Rotation Plot")
+    viewer.show()
 
     # Finally, we restore the plugin to its initial status
     ui.showDialog("Press OK to clear scripted paths", "Script Terminated")

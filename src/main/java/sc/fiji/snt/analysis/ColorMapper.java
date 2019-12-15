@@ -107,4 +107,8 @@ public class ColorMapper {
 		return new double[] { min, max };
 	}
 
+	public ColorTable getColorTable() {
+		return colorTable;
+	}
+
 }

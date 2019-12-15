@@ -276,7 +276,7 @@ public class MultiViewer2D {
 			max = Math.max(stats.getMax(), max);
 			tmapper.map(tree, stats, ColorTables.CYAN);
 			final Viewer2D treeViewer = new Viewer2D(ij.getContext());
-			treeViewer.addTree(tree);
+			treeViewer.add(tree);
 			viewers.add(treeViewer);
 		}
 

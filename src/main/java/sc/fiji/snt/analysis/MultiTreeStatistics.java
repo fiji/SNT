@@ -50,6 +50,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 	/** Flag specifying the total number of end points in a Tree */
 	public static final String N_TIPS = "No. of tips";
 
+	/** Flag specifying the {@link StrahlerAnalyzer#getRootNumber() Horton-Strahler number} of a Tree */
+	public static final String STRAHLER_NUMBER = "Horton-Strahler number";
+
 	/** Flag specifying the highest {@link Path#getOrder() path order} of a Tree */
 	public static final String HIGHEST_PATH_ORDER = "Highest path order";
 
@@ -121,6 +124,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 				break;
 			case PRIMARY_LENGTH:
 				stat.addValue(ta.getPrimaryLength());
+				break;
+			case STRAHLER_NUMBER:
+				stat.addValue(ta.getStrahlerNumber());
 				break;
 			case HIGHEST_PATH_ORDER:
 				stat.addValue(ta.getHighestPathOrder());

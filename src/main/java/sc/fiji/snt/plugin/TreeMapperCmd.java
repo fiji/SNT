@@ -153,11 +153,12 @@ public class TreeMapperCmd extends DynamicCommand {
 		Collections.addAll(choices, TreeAnalyzer.COMMON_MEASUREMENTS);
 		choices.add(TreeColorMapper.PATH_DISTANCE);
 		choices.add(TreeColorMapper.TAG_FILENAME);
+		choices.add(TreeColorMapper.STRAHLER_ORDER);
 		if (setValuesFromSNTService) choices.add(TreeColorMapper.VALUES);
 		Collections.sort(choices);
 		measurementChoiceInput.setChoices(choices);
 		measurementChoiceInput.setValue(this, prefService.get(getClass(),
-			"measurementChoice", TreeColorMapper.PATH_ORDER));
+			"measurementChoice", TreeColorMapper.STRAHLER_ORDER));
 		resolveInput("setValuesFromSNTService");
 		if (lutChoice == null) lutChoice = prefService.get(getClass(), "lutChoice",
 			"mpl-viridis.lut");

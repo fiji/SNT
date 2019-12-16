@@ -25,11 +25,11 @@ package sc.fiji.snt.analysis;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
-
 import org.scijava.table.DefaultGenericTable;
 
 import net.imagej.ImageJ;
@@ -43,6 +43,7 @@ import org.scijava.plugin.Plugin;
 
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
+import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.util.PointInImage;
 
@@ -54,75 +55,69 @@ import sc.fiji.snt.util.PointInImage;
 @Plugin(type = ContextCommand.class, visible = false)
 public class TreeAnalyzer extends ContextCommand {
 
+	/** @deprecated Use {@link TreeStatistics#PATH_ORDER} instead */
+	@Deprecated
+	public static final String PATH_ORDER = TreeStatistics.PATH_ORDER;
+
+	/** @deprecated Use {@link TreeStatistics#INTER_NODE_DISTANCE} instead */
+	@Deprecated
+	public static final String INTER_NODE_DISTANCE = TreeStatistics.INTER_NODE_DISTANCE;
+
+	/** @deprecated Use {@link TreeStatistics#TERMINAL_LENGTH} instead */
+	@Deprecated
+	public static final String TERMINAL_LENGTH = TreeStatistics.TERMINAL_LENGTH;
+
+	/** @deprecated Use {@link TreeStatistics#PRIMARY_LENGTH} instead */
+	@Deprecated
+	public static final String PRIMARY_LENGTH = TreeStatistics.PRIMARY_LENGTH;
+
+	/** @deprecated Use {@link TreeStatistics#INTER_NODE_DISTANCE_SQUARED} instead */
+	@Deprecated
+	public static final String INTER_NODE_DISTANCE_SQUARED = TreeStatistics.INTER_NODE_DISTANCE_SQUARED;
+
+	/** @deprecated Use {@link TreeStatistics#LENGTH} instead */
+	@Deprecated
+	public static final String LENGTH = TreeStatistics.LENGTH;
+
+	/** @deprecated Use {@link TreeStatistics#N_BRANCH_POINTS} instead */
+	@Deprecated
+	public static final String N_BRANCH_POINTS = TreeStatistics.N_BRANCH_POINTS;
+
+	/** @deprecated Use {@link TreeStatistics#N_NODES} instead */
+	@Deprecated
+	public static final String N_NODES = TreeStatistics.N_NODES;
+
+	/** @deprecated Use {@link TreeStatistics#NODE_RADIUS} instead */
+	@Deprecated
+	public static final String NODE_RADIUS = TreeStatistics.NODE_RADIUS;
+
+	/** @deprecated Use {@link TreeStatistics#MEAN_RADIUS} instead */
+	@Deprecated
+	public static final String MEAN_RADIUS = TreeStatistics.MEAN_RADIUS;
+
+	/** @deprecated Use {@link TreeStatistics#X_COORDINATES} instead */
+	@Deprecated
+	public static final String X_COORDINATES = TreeStatistics.X_COORDINATES;
+
+	/** @deprecated Use {@link TreeStatistics#X_COORDINATES} instead */
+	@Deprecated
+	public static final String Y_COORDINATES = TreeStatistics.Y_COORDINATES;
+
+	/** @deprecated Use {@link TreeStatistics#X_COORDINATES} instead */
+	@Deprecated
+	public static final String Z_COORDINATES = TreeStatistics.Z_COORDINATES;
+
+	/** @deprecated Use {@link TreeStatistics#VALUES} instead */
+	@Deprecated
+	public static final String VALUES = TreeStatistics.VALUES;
+
 	@Parameter
 	protected StatusService statusService;
 
 	@Parameter
 	protected DisplayService displayService;
 
-	/** Flag for {@value #PATH_ORDER} analysis. */
-	public static final String PATH_ORDER = "Path order";
 
-	/** Flag for {@value #INTER_NODE_DISTANCE} analysis. */
-	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
-
-	/** Flag for {@value #TERMINAL_LENGTH} analysis. */
-	public static final String TERMINAL_LENGTH = "Length of terminal branches";
-
-	/** Flag for {@value #PRIMARY_LENGTH} analysis. */
-	public static final String PRIMARY_LENGTH = "Length of primary branches";
-
-	/** Flag for {@value #INTER_NODE_DISTANCE_SQUARED} analysis. */
-	public static final String INTER_NODE_DISTANCE_SQUARED =
-		"Inter-node distance (squared)";
-
-	/** Flag for {@value #LENGTH} analysis. */
-	public static final String LENGTH = "Length";
-
-	/** Flag for {@value #N_BRANCH_POINTS} analysis. */
-	public static final String N_BRANCH_POINTS = "No. of branch points";
-
-	/** Flag for {@value #N_NODES} analysis. */
-	public static final String N_NODES = "No. of nodes";
-
-	/** Flag for {@value #NODE_RADIUS} analysis. */
-	public static final String NODE_RADIUS = "Node radius";
-
-	/** Flag for {@value #MEAN_RADIUS} analysis. */
-	public static final String MEAN_RADIUS = "Path mean radius";
-
-	/** Flag for {@value #X_COORDINATES} analysis. */
-	public static final String X_COORDINATES = "X coordinates";
-
-	/** Flag for {@value #Y_COORDINATES} analysis. */
-	public static final String Y_COORDINATES = "Y coordinates";
-
-	/** Flag for {@value #Z_COORDINATES} analysis. */
-	public static final String Z_COORDINATES = "Z coordinates";
-
-	/**
-	 * Flag for analysis of {@value #VALUES}, an optional numeric property that
-	 * can be assigned to Path nodes (e.g., voxel intensities, assigned via
-	 * {@link PathProfiler}. Note that an {@link IllegalArgumentException} is
-	 * triggered if no values have been assigned to the tree being analyzed.
-	 * 
-	 * @see Path#hasNodeValues()
-	 * @see PathProfiler#assignValues()
-	 */
-	public static final String VALUES = "Node intensity values";
-
-	public static final String[] COMMON_MEASUREMENTS = { //
-		LENGTH, //
-		PRIMARY_LENGTH, //
-		TERMINAL_LENGTH, //
-		N_BRANCH_POINTS, //
-		N_NODES, //
-		MEAN_RADIUS, //
-		PATH_ORDER, //
-		NODE_RADIUS, //
-		X_COORDINATES, //
-		Y_COORDINATES, //
-		Z_COORDINATES };
 	protected Tree tree;
 	private Tree unfilteredTree;
 	private HashSet<Path> primaryBranches;
@@ -329,42 +324,110 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see #setTable(DefaultGenericTable)
 	 */
 	public void summarize(final String rowHeader, final boolean groupByType) {
-		if (table == null) table = new DefaultGenericTable();
-		if (groupByType) {
-			final int[] types = tree.getSWCTypes().stream().mapToInt(v -> v)
-				.toArray();
-			for (final int type : types) {
-				restrictToSWCType(type);
-				final String label = Path.getSWCtypeName(type, true);
-				final int row = getNextRow(rowHeader);
-				measureTree(row, label);
-				table.set(getCol("SWC Type"), row, label);
-				resetRestrictions();
-			}
-		}
-		else {
-			measureTree(getNextRow(rowHeader), "All types");
-		}
+		measure(rowHeader, Arrays.asList(MultiTreeStatistics.COMMON_FLAGS), true);
 	}
 
 	private int getNextRow(final String rowHeader) {
-		table.appendRow(rowHeader);
+		table.appendRow((rowHeader==null)?"":rowHeader);
 		return table.getRowCount() - 1;
 	}
 
-	private void measureTree(final int row, final String type) {
-		table.set(getCol("SWC Type"), row, type);
-		table.set(getCol("# Paths"), row, getNPaths());
-		table.set(getCol("# Branch points"), row, getBranchPoints().size());
-		table.set(getCol("# Tips"), row, getTips().size());
-		table.set(getCol("Cable length"), row, getCableLength());
-		table.set(getCol("# Primary branches (PB)"), row, getPrimaryBranches().size());
-		table.set(getCol("# Terminal branches (TB)"), row, getTerminalBranches().size());
-		table.set(getCol("Sum length PB"), row, getPrimaryLength());
-		table.set(getCol("Sum length TB"), row, getTerminalLength());
-		table.set(getCol("Highest path order"), row, getHighestPathOrder());
-		table.set(getCol("# Fitted paths"), row, fittedPathsCounter);
-		table.set(getCol("# Single-point paths"), row, getSinglePointPaths());
+	protected Number getMetric(final String metric) {
+		switch (metric) {
+		case MultiTreeStatistics.ASSIGNED_VALUE:
+			return tree.getAssignedValue();
+		case MultiTreeStatistics.DEPTH:
+			return getDepth();
+		case MultiTreeStatistics.HEIGHT:
+			return getHeight();
+		case MultiTreeStatistics.HIGHEST_PATH_ORDER:
+			return getHighestPathOrder();
+		case MultiTreeStatistics.LENGTH:
+			return getCableLength();
+		case MultiTreeStatistics.MEAN_RADIUS:
+			final MultiTreeStatistics treeStats = new MultiTreeStatistics(Collections.singleton(tree));
+			return treeStats.getSummaryStats(MultiTreeStatistics.MEAN_RADIUS).getMean();
+		case MultiTreeStatistics.N_BRANCH_POINTS:
+			return getBranchPoints().size();
+		case MultiTreeStatistics.N_BRANCHES:
+			try {
+				return (int)getStrahlerAnalyzer().getBranchCounts().values().stream().mapToDouble(f -> f).sum();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
+		case MultiTreeStatistics.N_NODES:
+			return tree.getNodes().size();
+		case MultiTreeStatistics.N_PRIMARY_BRANCHES:
+			return getPrimaryBranches().size();
+		case MultiTreeStatistics.N_TERMINAL_BRANCHES:
+			return getTerminalBranches().size();
+		case MultiTreeStatistics.N_TIPS:
+			return getTips().size();
+		case MultiTreeStatistics.N_PATHS:
+			return getNPaths();
+		case MultiTreeStatistics.N_FITTED_PATHS:
+			return getNFittedPaths();
+		case MultiTreeStatistics.PRIMARY_LENGTH:
+			return getPrimaryLength();
+		case MultiTreeStatistics.STRAHLER_NUMBER:
+			try {
+				return getStrahlerNumber();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
+		case MultiTreeStatistics.STRAHLER_RATIO:
+			try {
+				return getStrahlerBifurcationRatio();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
+		case MultiTreeStatistics.TERMINAL_LENGTH:
+			return getTerminalLength();
+		case MultiTreeStatistics.WIDTH:
+			return getWidth();
+		default:
+			throw new IllegalArgumentException("Unrecognizable measurement \"" + metric + "\". "
+					+ "Maybe you meant one of the following?: " + Arrays.toString(MultiTreeStatistics.ALL_FLAGS));
+		}
+	}
+
+	public void measure(final Collection<String> metrics, final boolean groupByType) {
+		measure(tree.getLabel(), metrics, groupByType);
+	}
+
+	public void measure(final String rowHeader, final Collection<String> metrics, final boolean groupByType) {
+		if (table == null) table = new DefaultGenericTable();
+		final int lastRow = table.getRowCount() - 1;
+		if (groupByType) {
+			for (final int type : tree.getSWCTypes()) {
+				if (type == Path.SWC_SOMA) continue;
+				restrictToSWCType(type);
+				final int row = getNextRow(rowHeader);
+				table.set(getCol("SWC Type"), row, Path.getSWCtypeName(type, true));
+				metrics.forEach(metric -> table.set(getCol(metric), row, getMetric(metric)));
+				resetRestrictions();
+			}
+		} else {
+			int row = getNextRow(rowHeader);
+			table.set(getCol("SWC Types"), row, getSWCTypesAsString());
+			metrics.forEach(metric -> table.set(getCol(metric), row, getMetric(metric)));
+		}
+		if (getContext() == null) {
+			System.out.println(SNTUtils.tableToString(table, lastRow + 1, table.getRowCount() - 1));
+		} else
+			updateAndDisplayTable();
+	}
+
+	protected String getSWCTypesAsString() {
+		final StringBuilder sb = new StringBuilder();
+		final Set<Integer> types = tree.getSWCTypes();
+		for (int type: types) {
+			sb.append(Path.getSWCtypeName(type, true)).append(" ");
+		}
+		return sb.toString().trim();
 	}
 
 	/**
@@ -411,8 +474,6 @@ public class TreeAnalyzer extends ContextCommand {
 		}
 		statusService.showStatus("Measuring Paths...");
 		summarize(true);
-		if (tree.getSWCTypes().size() > 1) summarize(false);
-		updateAndDisplayTable();
 		statusService.clearStatus();
 	}
 
@@ -420,6 +481,10 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Updates and displays the Analyzer table.
 	 */
 	public void updateAndDisplayTable() {
+		if (getContext() == null) {
+			System.out.println(SNTUtils.tableToString(table, 0, table.getRowCount() - 1));
+			return;
+		}
 		final String displayName = (tableTitle == null) ? "Path Measurements"
 			: tableTitle;
 		final Display<?> display = displayService.getDisplay(displayName);
@@ -440,7 +505,7 @@ public class TreeAnalyzer extends ContextCommand {
 		return idx;
 	}
 
-	private int getSinglePointPaths() {
+	protected int getSinglePointPaths() {
 		return (int) tree.list().stream().filter(p -> p.size() == 1).count();
 	}
 
@@ -451,6 +516,22 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public int getNPaths() {
 		return tree.list().size();
+	}
+
+	protected int getNFittedPaths() {
+		return fittedPathsCounter;
+	}
+
+	public double getWidth() {
+		return tree.getBoundingBox(true).width();
+	}
+
+	public double getHeight() {
+		return tree.getBoundingBox(true).height();
+	}
+
+	public double getDepth() {
+		return tree.getBoundingBox(true).depth();
 	}
 
 	/**
@@ -579,11 +660,11 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Gets the highest {@link Path#getOrder() path order} of the analyzed tree
+	 * Gets the highest {@link sc.fiji.snt.Path#getOrder() path order} of the analyzed tree
 	 *
 	 * @return the highest Path order, or -1 if Paths in the Tree have no defined
 	 *         order
-	 * @see #getStrahlerRootOrder()
+	 * @see #getStrahlerNumber()
 	 */
 	public int getHighestPathOrder() {
 		int root = -1;
@@ -605,6 +686,18 @@ public class TreeAnalyzer extends ContextCommand {
 		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
 		return sAnalyzer.getRootNumber();
 	}
+
+	/**
+	 * Gets the {@link StrahlerAnalyzer} instance associated with this analyzer
+	 *
+	 * @return the StrahlerAnalyzer instance associated with this analyzer
+	 * @throws IllegalArgumentException if tree contains multiple roots or loops
+	 */
+	public StrahlerAnalyzer getStrahlerAnalyzer() throws IllegalArgumentException {
+		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
+		return sAnalyzer;
+	}
+
 
 	/**
 	 * Gets the average {@link StrahlerAnalyzer#getAvgBifurcationRatio() Strahler

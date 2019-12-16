@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -39,6 +40,7 @@ import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.text.WordUtils;
 import org.scijava.Context;
 import org.scijava.plugin.Parameter;
 
@@ -65,34 +67,48 @@ public class TreeColorMapper extends ColorMapper {
 
 	/* For convenience keep references to TreeAnalyzer fields */
 
-	/** Flag for {@value #STRAHLER_ORDER} mapping. */
-	public static final String STRAHLER_ORDER = "Strahler order";
+	/** Flag for {@value #STRAHLER_NUMBER} mapping. */
+	public static final String STRAHLER_NUMBER = MultiTreeStatistics.STRAHLER_NUMBER;
 	/** Flag for {@value #PATH_ORDER} mapping. */
-	public static final String PATH_ORDER = TreeAnalyzer.PATH_ORDER;
+	public static final String PATH_ORDER = TreeStatistics.PATH_ORDER;
 	/** Flag for {@value #LENGTH} mapping. */
-	public static final String LENGTH = TreeAnalyzer.LENGTH;
+	public static final String LENGTH = TreeStatistics.LENGTH;
 	/** Flag for {@value #N_BRANCH_POINTS} mapping. */
-	public static final String N_BRANCH_POINTS = TreeAnalyzer.N_BRANCH_POINTS;
+	public static final String N_BRANCH_POINTS = TreeStatistics.N_BRANCH_POINTS;
 	/** Flag for {@value #N_NODES} mapping. */
-	public static final String N_NODES = TreeAnalyzer.N_NODES;
+	public static final String N_NODES = TreeStatistics.N_NODES;
 	/** Flag for {@value #MEAN_RADIUS} mapping. */
-	public static final String MEAN_RADIUS = TreeAnalyzer.MEAN_RADIUS;
+	public static final String MEAN_RADIUS = TreeStatistics.MEAN_RADIUS;
 	/** Flag for {@value #NODE_RADIUS} mapping. */
-	public static final String NODE_RADIUS = TreeAnalyzer.NODE_RADIUS;
+	public static final String NODE_RADIUS = TreeStatistics.NODE_RADIUS;
 	/** Flag for {@value #X_COORDINATES} mapping. */
-	public static final String X_COORDINATES = TreeAnalyzer.X_COORDINATES;
+	public static final String X_COORDINATES = TreeStatistics.X_COORDINATES;
 	/** Flag for {@value #Y_COORDINATES} mapping. */
-	public static final String Y_COORDINATES = TreeAnalyzer.Y_COORDINATES;
+	public static final String Y_COORDINATES = TreeStatistics.Y_COORDINATES;
 	/** Flag for {@value #Z_COORDINATES} mapping. */
-	public static final String Z_COORDINATES = TreeAnalyzer.Z_COORDINATES;
+	public static final String Z_COORDINATES = TreeStatistics.Z_COORDINATES;
 	/** See {@link TreeAnalyzer#VALUES}. */
-	public static final String VALUES = TreeAnalyzer.VALUES;
+	public static final String VALUES = TreeStatistics.VALUES;
 	/** Flag for {@value #PATH_DISTANCE} mapping. */
 	public static final String PATH_DISTANCE = "Path distance to soma";
 	/** Flag for {@value #TAG_FILENAME} mapping. */
 	public static final String TAG_FILENAME = "Tags/filename";
 	private static final String INTERNAL_COUNTER = "Id";
 
+	private static final String[] ALL_FLAGS = { //
+			STRAHLER_NUMBER,//
+			PATH_ORDER, //
+			LENGTH, //
+			N_BRANCH_POINTS, //
+			N_NODES, //
+			MEAN_RADIUS, //
+			NODE_RADIUS, //
+			X_COORDINATES, //
+			Y_COORDINATES, //
+			Z_COORDINATES, //
+			VALUES, //
+			PATH_DISTANCE, //
+			TAG_FILENAME};
 
 	@Parameter
 	private LUTService lutService;
@@ -145,9 +161,9 @@ public class TreeColorMapper extends ColorMapper {
 		final ColorTable colorTable)
 	{
 		map(measurement, colorTable);
-		final String cMeasurement = normalizedMeasurement(measurement);
+		final String cMeasurement = getNormalizedMeasurement(measurement);
 		switch (cMeasurement) {
-			case STRAHLER_ORDER:
+			case STRAHLER_NUMBER:
 				assignStrahlerOrderToNodeValues();
 				integerScale = true;
 				mapToNodeProperty(VALUES, colorTable);
@@ -440,18 +456,67 @@ public class TreeColorMapper extends ColorMapper {
 		}
 	}
 
-	private String tryReallyHardToGuessMetric(final String guess) {
+	protected String tryReallyHardToGuessMetric(final String guess) {
 		final String normGuess = guess.toLowerCase();
-		if (normGuess.indexOf("length") != -1) {
+		if (normGuess.indexOf("soma") != -1 || normGuess.indexOf("path d") != -1) {
+			return PATH_DISTANCE;
+		}
+		if (normGuess.indexOf("length") != -1 || normGuess.indexOf("cable") != -1) {
 			return LENGTH;
 		}
-		if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("order") != -1) {
-			return STRAHLER_ORDER;
+		if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("horton") != -1 || normGuess.indexOf("h-s") != -1) {
+			return STRAHLER_NUMBER;
 		}
-		if (normGuess.indexOf("branch points") != -1 || normGuess.indexOf("bps") != -1) {
+		if (normGuess.indexOf("path") != -1 && normGuess.indexOf("order") != -1) {
+			return PATH_ORDER;
+		}
+		if (normGuess.indexOf("bp") != -1 || normGuess.indexOf("branch points") != -1 || normGuess.indexOf("junctions") != -1) {
 			return N_BRANCH_POINTS;
 		}
+		if (normGuess.indexOf("nodes") != -1) {
+			return N_NODES;
+		}
+		if (normGuess.indexOf("radi") != -1 ) {
+			if (normGuess.indexOf("mean") != -1 || normGuess.indexOf("avg") != -1 || normGuess.indexOf("average") != -1) {
+				return MEAN_RADIUS;
+			}
+			else {
+				return NODE_RADIUS;
+			}
+		}
+		if (normGuess.indexOf("values") != -1 || normGuess.indexOf("intensit") > -1) {
+			return VALUES;
+		}
+		if (normGuess.indexOf("tag") != -1 || normGuess.indexOf("name") > -1 || normGuess.indexOf("label") > -1) {
+			return TAG_FILENAME;
+		}
+		if (normGuess.matches(".*\\bx\\b.*")) {
+			return X_COORDINATES;
+		}
+		if (normGuess.matches(".*\\by\\b.*")) {
+			return Y_COORDINATES;
+		}
+		if (normGuess.matches(".*\\bz\\b.*")) {
+			return Z_COORDINATES;
+		}
 		return "unknown";
+	}
+
+	protected String getNormalizedMeasurement(final String measurement) {
+		if (Arrays.stream(ALL_FLAGS).anyMatch(measurement::equalsIgnoreCase)) {
+			// This is just so that we can use capitalized strings in the GUI
+			// and lower case strings in scripts
+			return WordUtils.capitalize(measurement, '-');
+		}
+		final String normMeasurement = tryReallyHardToGuessMetric(measurement);
+		if (!measurement.equals(normMeasurement)) {
+			SNTUtils.log("\"" + normMeasurement + "\" assumed");
+			if ("unknonwn".equals(normMeasurement)) {
+				throw new IllegalArgumentException("Unrecognizable measurement! "
+						+ "Maybe you meant one of the following?: " + Arrays.toString(ALL_FLAGS));
+			}
+		}
+		return normMeasurement;
 	}
 
 	/**

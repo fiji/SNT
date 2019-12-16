@@ -45,8 +45,8 @@ import org.scijava.prefs.PrefService;
 import org.scijava.widget.Button;
 
 import sc.fiji.snt.analysis.PathProfiler;
-import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.TreeColorMapper;
+import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.Path;
@@ -150,15 +150,15 @@ public class TreeMapperCmd extends DynamicCommand {
 		final MutableModuleItem<String> measurementChoiceInput = getInfo()
 			.getMutableInput("measurementChoice", String.class);
 		final List<String> choices = new ArrayList<>();
-		Collections.addAll(choices, TreeAnalyzer.COMMON_MEASUREMENTS);
+		Collections.addAll(choices, TreeStatistics.COMMON_MEASUREMENTS);
 		choices.add(TreeColorMapper.PATH_DISTANCE);
 		choices.add(TreeColorMapper.TAG_FILENAME);
-		choices.add(TreeColorMapper.STRAHLER_ORDER);
+		choices.add(TreeColorMapper.STRAHLER_NUMBER);
 		if (setValuesFromSNTService) choices.add(TreeColorMapper.VALUES);
 		Collections.sort(choices);
 		measurementChoiceInput.setChoices(choices);
 		measurementChoiceInput.setValue(this, prefService.get(getClass(),
-			"measurementChoice", TreeColorMapper.STRAHLER_ORDER));
+			"measurementChoice", TreeColorMapper.STRAHLER_NUMBER));
 		resolveInput("setValuesFromSNTService");
 		if (lutChoice == null) lutChoice = prefService.get(getClass(), "lutChoice",
 			"mpl-viridis.lut");

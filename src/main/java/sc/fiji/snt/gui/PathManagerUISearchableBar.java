@@ -47,7 +47,6 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.command.CommandModule;
 import org.scijava.command.CommandService;
 
-import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.gui.cmds.SWCTypeFilterCmd;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.PathManagerUI;
@@ -181,17 +180,17 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 		mi1.addActionListener(e -> {
 			final String unit = pmui.getPathAndFillManager().getBoundingBox(false)
 				.getUnit();
-			doMorphoFiltering(TreeAnalyzer.LENGTH, unit);
+			doMorphoFiltering(TreeStatistics.LENGTH, unit);
 		});
 		morphoFilteringMenu.add(mi1);
 		mi1 = new JMenuItem("Mean Radius...");
-		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.MEAN_RADIUS, ""));
+		mi1.addActionListener(e -> doMorphoFiltering(TreeStatistics.MEAN_RADIUS, ""));
 		morphoFilteringMenu.add(mi1);
 		mi1 = new JMenuItem("No. of Nodes...");
-		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.N_NODES, ""));
+		mi1.addActionListener(e -> doMorphoFiltering(TreeStatistics.N_NODES, ""));
 		morphoFilteringMenu.add(mi1);
 		mi1 = new JMenuItem("Path Order...");
-		mi1.addActionListener(e -> doMorphoFiltering(TreeAnalyzer.PATH_ORDER,
+		mi1.addActionListener(e -> doMorphoFiltering(TreeStatistics.PATH_ORDER,
 			""));
 		morphoFilteringMenu.add(mi1);
 		mi1 = new JMenuItem("SWC Type...");
@@ -328,16 +327,16 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 			final Path p = iterator.next();
 			double value;
 			switch (property) {
-				case TreeAnalyzer.LENGTH:
+				case TreeStatistics.LENGTH:
 					value = p.getLength();
 					break;
-				case TreeAnalyzer.N_NODES:
+				case TreeStatistics.N_NODES:
 					value = p.size();
 					break;
-				case TreeAnalyzer.MEAN_RADIUS:
+				case TreeStatistics.MEAN_RADIUS:
 					value = p.getMeanRadius();
 					break;
-				case TreeAnalyzer.PATH_ORDER:
+				case TreeStatistics.PATH_ORDER:
 					value = p.getOrder();
 					break;
 				default:

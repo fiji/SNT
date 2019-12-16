@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.NoSuchElementException;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -116,6 +117,15 @@ public class GroupedTreeStatistics {
 		return groups.keySet();
 	}
 
+	private String getNormalizedMeasurement(final String measurement) {
+		try {
+			final MultiTreeStatistics firstGroupStats = groups.values().iterator().next();
+			return firstGroupStats.getNormalizedMeasurement(measurement);
+		} catch (final NoSuchElementException ex) {
+			throw new IllegalArgumentException("No group(s) have yet been added");
+		}
+	}
+
 	/**
 	 * Gets the relative frequencies histogram for a univariate measurement. The
 	 * number of bins is determined using the Freedman-Diaconis rule.
@@ -127,11 +137,12 @@ public class GroupedTreeStatistics {
 	 */
 	public ChartFrame getHistogram(final String measurement) {
 
+		final String normMeasurement = getNormalizedMeasurement(measurement);
 		final int[] nBins = new int[] { 0 };
 		// Retrieve all HistogramDatasetPlus instances
 		final LinkedHashMap<String, HistogramDatasetPlus> hdpMap = new LinkedHashMap<>();
 		groups.forEach((label, mstats) -> {
-			final HistogramDatasetPlus hdp = mstats.new HistogramDatasetPlus(measurement);
+			final HistogramDatasetPlus hdp = mstats.new HistogramDatasetPlus(normMeasurement);
 			hdp.compute();
 			nBins[0] += hdp.nBins;
 			hdpMap.put(label, hdp);
@@ -145,7 +156,7 @@ public class GroupedTreeStatistics {
 			dataset.addSeries(label, hdp.values, nBins[0]);
 		});
 
-		final JFreeChart chart = ChartFactory.createHistogram(null, measurement, "Rel. Frequency", dataset);
+		final JFreeChart chart = ChartFactory.createHistogram(null, normMeasurement, "Rel. Frequency", dataset);
 
 		// Customize plot
 		final Color bColor = null; // Color.WHITE; make graph transparent so that it can be exported without
@@ -170,12 +181,13 @@ public class GroupedTreeStatistics {
 
 	public ChartFrame getBoxPlot(final String measurement) {
 
+		final String normMeasurement = getNormalizedMeasurement(measurement);
 		final DefaultBoxAndWhiskerCategoryDataset dataset = new DefaultBoxAndWhiskerCategoryDataset();
 		groups.forEach((label, mstats) -> {
-			final HistogramDatasetPlus hdp = mstats.new HistogramDatasetPlus(measurement);
-			dataset.add(createValueList(hdp.values), measurement, label);
+			final HistogramDatasetPlus hdp = mstats.new HistogramDatasetPlus(normMeasurement);
+			dataset.add(createValueList(hdp.values), normMeasurement, label);
 		});
-		final JFreeChart chart = ChartFactory.createBoxAndWhiskerChart(null, null, measurement, dataset, false);
+		final JFreeChart chart = ChartFactory.createBoxAndWhiskerChart(null, null, normMeasurement, dataset, false);
 		final CategoryPlot plot = (CategoryPlot) chart.getPlot();
 		plot.setBackgroundPaint(null);
 		plot.setRangePannable(true);
@@ -424,7 +436,7 @@ public class GroupedTreeStatistics {
 		groupedStats.addGroup(sntService.demoTrees().subList(0, 4), "Group 1");
 		groupedStats.addGroup(sntService.demoTrees().subList(2, 4), "Group 2");
 		/// groupedStats.getHistogram(TreeStatistics.INTER_NODE_DISTANCE).setVisible(true);
-		groupedStats.getBoxPlot(TreeStatistics.INTER_NODE_DISTANCE).setVisible(true);
+		groupedStats.getBoxPlot("node dx sq").setVisible(true);
 
 	}
 }

@@ -38,7 +38,6 @@ import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
 import sc.fiji.snt.analysis.PathProfiler;
-import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
@@ -72,12 +71,12 @@ public class DistributionCmd extends CommonDynamicCmd {
 		final MutableModuleItem<String> measurementChoiceInput = getInfo()
 			.getMutableInput("measurementChoice", String.class);
 		final List<String> choices = new ArrayList<>();
-		Collections.addAll(choices, TreeAnalyzer.COMMON_MEASUREMENTS);
-		if (setValuesFromSNTService) choices.add(TreeAnalyzer.VALUES);
+		Collections.addAll(choices, TreeStatistics.COMMON_MEASUREMENTS);
+		if (setValuesFromSNTService) choices.add(TreeStatistics.VALUES);
 		Collections.sort(choices);
 		measurementChoiceInput.setChoices(choices);
 		measurementChoiceInput.setValue(this, prefService.get(getClass(),
-			"measurementChoice", TreeAnalyzer.PATH_ORDER));
+			"measurementChoice", TreeStatistics.PATH_ORDER));
 		resolveInput("setValuesFromSNTService");
 	}
 

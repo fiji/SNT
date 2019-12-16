@@ -35,9 +35,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 import org.scijava.Context;
 import org.scijava.log.LogService;
+import org.scijava.table.GenericTable;
 import org.scijava.ui.UIService;
 import org.scijava.ui.console.ConsolePane;
 import org.scijava.util.VersionUtils;
@@ -161,6 +163,24 @@ public class SNTUtils {
 		final ImagePlus mip = ZProjector.run(imp, "max");
 		new ContrastEnhancer().stretchHistogram(mip, 0.35);
 		return mip;
+	}
+
+	public static String tableToString(final GenericTable table, final int firstRow, final int lastRow) {
+		final int fRow = Math.max(0, firstRow);
+		final int lRow = Math.min(table.getRowCount() - 1, lastRow);
+		final String sep = "\t";
+		final StringBuilder sb = new StringBuilder();
+		IntStream.range(0, table.getColumnCount()).forEach( col -> {
+			sb.append(table.getColumnHeader(col)).append(sep);
+		});
+		sb.append("\n\r");
+		IntStream.rangeClosed(fRow, lRow).forEach( row -> {
+			IntStream.range(0, table.getColumnCount()).forEach( col -> {
+				sb.append(table.get(col, row)).append(sep);
+			});
+			sb.append("\n\r");
+		});
+		return sb.toString().replaceAll("null", " ");
 	}
 
 	public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {

@@ -42,8 +42,8 @@ import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
 import sc.fiji.snt.analysis.MultiTreeColorMapper;
-import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.TreeColorMapper;
+import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.gui.GuiUtils;
 
@@ -148,7 +148,7 @@ public class ColorMapReconstructionCmd extends CommonDynamicCmd {
 		}
 		else if (treeMappingLabels != null) {
 			// Color code single trees
-			mChoices = new ArrayList<>(Arrays.asList(TreeAnalyzer.COMMON_MEASUREMENTS));
+			mChoices = new ArrayList<>(Arrays.asList(TreeStatistics.COMMON_MEASUREMENTS));
 			mChoices.add(TreeColorMapper.PATH_DISTANCE);
 			Collections.sort(mChoices);
 			resolveInput("multiTreeMappingLabels");

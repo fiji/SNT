@@ -2215,8 +2215,8 @@ public class SNTUI extends JDialog {
 			(new DynamicCmdRunner(GraphGeneratorCmd.class, null)).run();
 		});
 		utilitiesMenu.addSeparator();
-		final JMenu scriptUtilsMenu = installer.getUtilScriptsMenu();
-		scriptUtilsMenu.setText("Utility Scripts");
+		final JMenu scriptUtilsMenu = installer.getBatchScriptsMenu();
+		scriptUtilsMenu.setText("Batch Scripts");
 		scriptUtilsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.PLUS));
 		utilitiesMenu.add(scriptUtilsMenu);
 

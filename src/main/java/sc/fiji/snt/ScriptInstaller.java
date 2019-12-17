@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.Future;
@@ -46,7 +47,9 @@ import org.scijava.script.ScriptService;
 import org.scijava.ui.swing.script.TextEditor;
 import org.scijava.util.FileUtils;
 
+import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.gui.IconFactory;
+import sc.fiji.snt.gui.IconFactory.GLYPH;
 
 /**
  * Utility class for discovery of scripts scripting SNT
@@ -160,9 +163,9 @@ class ScriptInstaller implements MenuKeyListener {
 		return sMenu;
 	}
 
-	/** Returns a UI list of the SNT 'Utilities' scripts **/
-	protected JMenu getUtilScriptsMenu() {
-		final JMenu menu = getMenu("Utilities");
+	/** Returns a UI list of the SNT 'Batch' scripts **/
+	protected JMenu getBatchScriptsMenu() {
+		final JMenu menu = getMenu("Batch");
 		for (int i = 0; i < menu.getItemCount(); i++) {
 			final JMenuItem mItem = menu.getItem(i);
 			mItem.setText(SNTUtils.stripExtension(mItem.getText()) + "...");
@@ -174,8 +177,27 @@ class ScriptInstaller implements MenuKeyListener {
 	protected JMenu getScriptsMenu() {
 		final JMenu sMenu = new JMenu("Scripts");
 		sMenu.add(getMenu("Analysis"));
+		sMenu.add(getMenu("Batch"));
 		sMenu.add(getMenu("Tracing"));
-		sMenu.add(getMenu("Utilities"));
+		sMenu.addSeparator();
+		final JMenuItem mi = new JMenuItem("New...", IconFactory.getMenuIcon(GLYPH.CODE));
+		mi.addActionListener(e -> {
+			final TextEditor editor = new TextEditor(context);
+			final HashMap<String, String> map = new HashMap<>();
+			map.put("BeanShell", "BSH.bsh");
+			map.put("Groovy", "GVY.groovy");
+			map.put("Python", "PY.py");
+			final String choice = new GuiUtils(ui).getChoice("Language:", "New Script", map.keySet().toArray(new String[map.keySet().size()]), "");
+			final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+			try {
+				editor.loadTemplate(classloader.getResource("script_templates/Neuroanatomy/Boilerplate/"+ map.get(choice)));
+			} catch (final NullPointerException ignored) {
+				ui.error("Boilerpate script could not be retrieved. Use Templates>Neuroanatomy> instead");
+			} finally {
+				editor.setVisible(true);
+			}
+		});
+		sMenu.add(mi);
 		sMenu.addSeparator();
 		final JMenu listMenu = getMenu(null);
 		listMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.LIST));

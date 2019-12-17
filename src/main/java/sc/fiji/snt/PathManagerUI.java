@@ -499,7 +499,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			p.disconnectFromAll();
 			pathAndFillManager.deletePath(p);
 		}
-		if (resetIDs) pathAndFillManager.resetIDs();
+		if (resetIDs) {
+			pathAndFillManager.resetIDs();
+			plugin.unsavedPaths = false;
+		}
 		refreshManager(false, true);
 	}
 
@@ -1460,7 +1463,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		if (table == null) table = new DefaultGenericTable();
 		// we will assume that immediately after being retrieved,
 		// the table will contain unsaved data. //FIXME: sloppy
-		tableSaved = false;
+		tableSaved = table.getRowCount() > 0;
 		return table;
 	}
 
@@ -1784,7 +1787,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					}
 					ta.setTable(getTable(), TABLE_TITLE);
 					ta.summarize(getDescription(selectedPaths), true);
-					ta.updateAndDisplayTable();
 					return;
 				}
 				catch (final IllegalArgumentException ignored) {

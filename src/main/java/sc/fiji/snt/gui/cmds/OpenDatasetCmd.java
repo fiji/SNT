@@ -74,6 +74,8 @@ public class OpenDatasetCmd extends CommonDynamicCmd implements Command {
 			error("Loading of image failed (" + ex.getMessage() +
 				" error). See Console for details.");
 			ex.printStackTrace();
+		} finally {
+			resetUI();
 		}
 	}
 

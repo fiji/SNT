@@ -660,7 +660,7 @@ public class SNT extends MultiDThreePanes implements
 	}
 
 	protected boolean isChangesUnsaved() {
-		return unsavedPaths;
+		return unsavedPaths && pathAndFillManager.size() > 0;
 	}
 
 	public PathAndFillManager getPathAndFillManager() {

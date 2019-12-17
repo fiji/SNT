@@ -92,6 +92,7 @@ public class DistributionCmd extends CommonDynamicCmd {
 		}
 		final TreeStatistics treeStats = new TreeStatistics(tree);
 		treeStats.getHistogram(measurementChoice).setVisible(true);
+		resetUI();
 	}
 
 	/* IDE debug method **/

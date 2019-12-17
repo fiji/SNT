@@ -117,6 +117,7 @@ import sc.fiji.snt.gui.cmds.ChooseDatasetCmd;
 import sc.fiji.snt.gui.cmds.CompareFilesCmd;
 import sc.fiji.snt.gui.cmds.ComputeSecondaryImg;
 import sc.fiji.snt.gui.cmds.ComputeTubenessImg;
+import sc.fiji.snt.gui.cmds.DetailedMeasurementsCmd;
 import sc.fiji.snt.gui.cmds.GraphGeneratorCmd;
 import sc.fiji.snt.gui.cmds.JSONImporterCmd;
 import sc.fiji.snt.gui.cmds.MLImporterCmd;
@@ -2164,7 +2165,7 @@ public class SNTUI extends JDialog {
 		quitMenuItem.addActionListener(listener);
 		fileMenu.add(quitMenuItem);
 
-		measureMenuItem = new JMenuItem("Summary Measurements", IconFactory.getMenuIcon(IconFactory.GLYPH.TABLE));
+		measureMenuItem = new JMenuItem("Quick Measurements", IconFactory.getMenuIcon(IconFactory.GLYPH.ROCKET));
 		measureMenuItem.addActionListener(listener);
 		strahlerMenuItem = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(IconFactory.GLYPH.BRANCH_CODE));
 		strahlerMenuItem.addActionListener(listener);
@@ -2182,8 +2183,23 @@ public class SNTUI extends JDialog {
 		analysisMenu.add(pathOrderAnalysis);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
+		analysisMenu.addSeparator();
+	
+		// Measuring options
+		final JMenuItem measureWithPrompt = new JMenuItem("Measure...",
+				IconFactory.getMenuIcon(IconFactory.GLYPH.TABLE));
+		measureWithPrompt.addActionListener(e -> {
+			if (noPathsError()) return;
+			final HashMap<String, Object> inputs = new HashMap<>();
+			final Tree tree = new Tree(pathAndFillManager.getPathsFiltered());
+			tree.setLabel("All Paths");
+			inputs.put("tree", tree);
+			(new DynamicCmdRunner(DetailedMeasurementsCmd.class, inputs)).run();
+		});
+		analysisMenu.add(measureWithPrompt);
 		analysisMenu.add(measureMenuItem);
 
+		// Utilities
 		utilitiesMenu.add(plotMenuItem);
 		final JMenuItem compareFiles = new JMenuItem("Compare Reconstructions...");
 		compareFiles.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BINOCULARS));
@@ -2196,7 +2212,7 @@ public class SNTUI extends JDialog {
 				IconFactory.getMenuIcon(IconFactory.GLYPH.DIAGRAM));
 		utilitiesMenu.add(graphGenerator);
 		graphGenerator.addActionListener(e -> {
-			(new DynamicCmdRunner(GraphGeneratorCmd.class, null, getState(), false)).run();
+			(new DynamicCmdRunner(GraphGeneratorCmd.class, null)).run();
 		});
 		utilitiesMenu.addSeparator();
 		final JMenu scriptUtilsMenu = installer.getUtilScriptsMenu();
@@ -3505,21 +3521,25 @@ public class SNTUI extends JDialog {
 		private HashMap<String, Object> inputs;
 		private boolean rebuildCanvas;
 
+		public DynamicCmdRunner(final Class<? extends Command> cmd, final HashMap<String, Object> inputs) {
+			this(cmd, inputs, getState(), false);
+		}
+	
 		public DynamicCmdRunner(final Class<? extends Command> cmd, final HashMap<String, Object> inputs,
-				final int uiStateduringRun) {
-			this(cmd, inputs, uiStateduringRun, false);
+				final int uiStateDuringRun) {
+			this(cmd, inputs, uiStateDuringRun, false);
 		}
 
 		public DynamicCmdRunner(final Class<? extends Command> cmd, final HashMap<String, Object> inputs,
-				final int uiStateduringRun, final boolean rebuildCanvas) {
+				final int uiStateDuringRun, final boolean rebuildCanvas) {
 			assert SwingUtilities.isEventDispatchThread();
 			this.cmd = cmd;
 			this.preRunState = getState();
 			this.inputs = inputs;
 			this.rebuildCanvas = rebuildCanvas;
 			run = initialize();
-			if (run && preRunState != uiStateduringRun)
-				changeState(uiStateduringRun);
+			if (run && preRunState != uiStateDuringRun)
+				changeState(uiStateDuringRun);
 		}
 	
 		private boolean initialize() {

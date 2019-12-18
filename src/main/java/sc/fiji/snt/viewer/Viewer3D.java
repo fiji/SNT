@@ -281,7 +281,7 @@ public class Viewer3D {
 	/* Maps for plotted objects */
 	private final Map<String, ShapeTree> plottedTrees;
 	private final Map<String, RemountableDrawableVBO> plottedObjs;
-	private final Map<String, AbstractDrawable> plottedAnnotations;
+	private final Map<String, Annotation3D> plottedAnnotations;
 
 	/* Settings */
 	private Color defColor;
@@ -546,8 +546,8 @@ public class Viewer3D {
 			drawableVBO.unmount();
 			chart.add(drawableVBO, false);
 		});
-		plottedAnnotations.forEach((k, drawable) -> {
-			chart.add(drawable, false);
+		plottedAnnotations.forEach((k, annot) -> {
+			chart.add(annot.getDrawable(), false);
 		});
 		plottedTrees.values().forEach(shapeTree -> chart.add(shapeTree.get(),
 			false));
@@ -566,8 +566,8 @@ public class Viewer3D {
 				plottedObjs.forEach((k2, drawableVBO) -> {
 					drawableVBO.setDisplayed(selectedKeys.contains(k2));
 				});
-				plottedAnnotations.forEach((k2, drawable) -> {
-					drawable.setDisplayed(selectedKeys.contains(k2));
+				plottedAnnotations.forEach((k2, annot) -> {
+					annot.getDrawable().setDisplayed(selectedKeys.contains(k2));
 				});
 				// view.shoot();
 			}
@@ -622,6 +622,69 @@ public class Viewer3D {
 	}
 
 	/**
+	 * Gets the tree associated with the specified label.
+	 *
+	 * @param label the (unique) label as displayed in Viewer's list
+	 * @return the Tree or null if no Tree is associated with the specified label
+	 */
+	public Tree getTree(final String label) {
+		final ShapeTree shapeTree = plottedTrees.get(label);
+		return (shapeTree == null) ? null : shapeTree.tree;
+	}
+
+	/**
+	 * Gets the annotation associated with the specified label.
+	 *
+	 * @param label the (unique) label as displayed in Viewer's list
+	 * @return the annotation or null if no annotation is associated with the specified label
+	 */
+	public Annotation3D getAnnotation(final String label) {
+		return plottedAnnotations.get(label);
+	}
+
+	/**
+	 * Gets the mesh associated with the specified label.
+	 *
+	 * @param label the (unique) label as displayed in Viewer's list
+	 * @return the mesh or null if no mesh is associated with the specified label
+	 */
+	public OBJMesh getMesh(final String label) {
+		final RemountableDrawableVBO vbo = plottedObjs.get(label);
+		return (vbo == null) ? null : vbo.objMesh;
+	}
+
+	/**
+	 * Returns all trees added to this viewer.
+	 *
+	 * @return the Tree list
+	 */
+	public List<Tree> getTrees() {
+		final ArrayList<Tree> trees = new ArrayList<>(plottedTrees.values().size());
+		plottedTrees.values().forEach( shapeTree -> trees.add(shapeTree.tree));
+		return trees;
+	}
+
+	/**
+	 * Returns all meshes added to this viewer.
+	 *
+	 * @return the mesh list
+	 */
+	public List<OBJMesh> getMeshes() {
+		final ArrayList<OBJMesh> meshes = new ArrayList<>(plottedObjs.values().size());
+		plottedObjs.values().forEach( vbo -> meshes.add(vbo.objMesh));
+		return meshes;
+	}
+
+	/**
+	 * Returns all annotations added to this viewer.
+	 *
+	 * @return the annotation list
+	 */
+	public List<Annotation3D> getAnnotations() {
+		return new ArrayList<>(plottedAnnotations.values());
+	}
+
+	/**
 	 * Computes a Delaunay surface from a collection of points and adds it to the
 	 * scene as an annotation.
 	 *
@@ -635,7 +698,7 @@ public class Viewer3D {
 		final Annotation3D annotation = new Annotation3D(this, points, Annotation3D.SURFACE);
 		final String uniquelabel = getUniqueLabel(plottedAnnotations, "Point Annot.", label);
 		annotation.setLabel(uniquelabel);
-		plottedAnnotations.put(uniquelabel, annotation.getDrawable());
+		plottedAnnotations.put(uniquelabel, annotation);
 		addItemToManager(uniquelabel);
 		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
 		return annotation;
@@ -666,7 +729,7 @@ public class Viewer3D {
 		final Annotation3D annotation = new Annotation3D(this, points, Annotation3D.SCATTER);
 		final String uniqueLabel = getUniqueLabel(plottedAnnotations, "Surf. Annot.", label);
 		annotation.setLabel(uniqueLabel);
-		plottedAnnotations.put(uniqueLabel, annotation.getDrawable());
+		plottedAnnotations.put(uniqueLabel, annotation);
 		addItemToManager(uniqueLabel);
 		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
 		return annotation;
@@ -689,7 +752,7 @@ public class Viewer3D {
 		final Annotation3D annotation = new Annotation3D(this, points, type);
 		final String uniqueLabel = getUniqueLabel(plottedAnnotations, "Line Annot.", label);
 		annotation.setLabel(uniqueLabel);
-		plottedAnnotations.put(uniqueLabel, annotation.getDrawable());
+		plottedAnnotations.put(uniqueLabel, annotation);
 		addItemToManager(uniqueLabel);
 		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
 		return annotation;
@@ -706,12 +769,12 @@ public class Viewer3D {
 	public Annotation3D mergeAnnotations(final Collection<Annotation3D> annotations, final String label) {
 		final boolean updateFlag = viewUpdatesEnabled;
 		viewUpdatesEnabled = false;
-		annotations.forEach(annot -> removeDrawable(plottedAnnotations, annot.getLabel()));
+		annotations.forEach(annot -> removeDrawable(getAnnotationDrawables(), annot.getLabel()));
 		viewUpdatesEnabled = updateFlag;
 		final Annotation3D annotation = new Annotation3D(this, annotations);
 		final String uniqueLabel = getUniqueLabel(plottedAnnotations, "Merged Annot.", label);
 		annotation.setLabel(uniqueLabel);
-		plottedAnnotations.put(uniqueLabel, annotation.getDrawable());
+		plottedAnnotations.put(uniqueLabel, annotation);
 		addItemToManager(uniqueLabel);
 		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
 		return annotation;
@@ -837,8 +900,8 @@ public class Viewer3D {
 			plottedObjs.forEach((k, drawableVBO) -> {
 				chart.add(drawableVBO, viewUpdatesEnabled);
 			});
-			plottedAnnotations.forEach((k, drawable) -> {
-				chart.add(drawable, viewUpdatesEnabled);
+			plottedAnnotations.forEach((k, annot) -> {
+				chart.add(annot.getDrawable(), viewUpdatesEnabled);
 			});
 		}
 		if (width == 0 || height == 0) {
@@ -899,10 +962,18 @@ public class Viewer3D {
 	 * @return the rendered Trees (keys being the Tree identifier as per
 	 *         {@link #addTree(Tree)})
 	 */
-	private Map<String, Shape> getTrees() {
+	private Map<String, Shape> getTreeDrawables() {
 		final Map<String, Shape> map = new HashMap<>();
 		plottedTrees.forEach((k, shapeTree) -> {
 			map.put(k, shapeTree.get());
+		});
+		return map;
+	}
+
+	private Map<String, AbstractDrawable> getAnnotationDrawables() {
+		final Map<String, AbstractDrawable> map = new HashMap<>();
+		plottedAnnotations.forEach((k, annot) -> {
+			map.put(k, annot.getDrawable());
 		});
 		return map;
 	}
@@ -1010,11 +1081,11 @@ public class Viewer3D {
 	 * Removes all the Annotations from current viewer
 	 */
 	protected void removeAllAnnotations() {
-		final Iterator<Entry<String, AbstractDrawable>> it = plottedAnnotations.entrySet()
+		final Iterator<Entry<String, Annotation3D>> it = plottedAnnotations.entrySet()
 			.iterator();
 		while (it.hasNext()) {
-			final Map.Entry<String, AbstractDrawable> entry = it.next();
-			chart.getScene().getGraph().remove(entry.getValue(), false);
+			final Map.Entry<String, Annotation3D> entry = it.next();
+			chart.getScene().getGraph().remove(entry.getValue().getDrawable(), false);
 			deleteItemFromManager(entry.getKey());
 			it.remove();
 		}
@@ -1024,7 +1095,7 @@ public class Viewer3D {
 	private void removeSceneObject(final String label) {
 		if (!removeTree(label)) {
 			if (!removeMesh(label))
-				removeDrawable(plottedAnnotations, label);
+				removeDrawable(getAnnotationDrawables(), label);
 		}
 	}
 
@@ -1160,8 +1231,8 @@ public class Viewer3D {
 		final List<String> selectedKeys = getLabelsCheckedInManager();
 		final BoundingBox3d viewBounds = chart.view().getBounds();
 		return allDrawablesRendered(viewBounds, plottedObjs, selectedKeys) &&
-			allDrawablesRendered(viewBounds, getTrees(), selectedKeys) &&
-			allDrawablesRendered(viewBounds, plottedAnnotations, selectedKeys);
+			allDrawablesRendered(viewBounds, getTreeDrawables(), selectedKeys) &&
+			allDrawablesRendered(viewBounds, getAnnotationDrawables(), selectedKeys);
 	}
 
 	/** returns true if a drawable was removed */
@@ -1197,8 +1268,8 @@ public class Viewer3D {
 		if (treeShape != null) treeShape.setDisplayed(visible);
 		final DrawableVBO obj = plottedObjs.get(label);
 		if (obj != null) obj.setDisplayed(visible);
-		final AbstractDrawable annot = plottedAnnotations.get(label);
-		if (annot != null) annot.setDisplayed(visible);
+		final Annotation3D annot = plottedAnnotations.get(label);
+		if (annot != null) annot.getDrawable().setDisplayed(visible);
 		if (frame != null && frame.managerPanel != null) {
 			frame.managerPanel.setVisible(label, visible);
 		}
@@ -1587,8 +1658,8 @@ public class Viewer3D {
 			if (drawableVBO.isDisplayed()) visibleActors.add("\"" + k +"\"");
 			else hiddenActors.add("\"" + k +"\"");
 		});
-		plottedAnnotations.forEach((k, drawable) -> {
-			if (drawable.isDisplayed()) visibleActors.add("\"" + k +"\"");
+		plottedAnnotations.forEach((k, annot) -> {
+			if (annot.getDrawable().isDisplayed()) visibleActors.add("\"" + k +"\"");
 			else hiddenActors.add("\"" + k +"\"");
 		});
 		if (!visibleActors.isEmpty()) {

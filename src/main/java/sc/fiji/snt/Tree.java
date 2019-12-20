@@ -789,7 +789,7 @@ public class Tree {
 	 * @return the Tree's graph with edge weights corresponding to inter-node
 	 *         Euclidean distances
 	 */
-	public DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> getGraph() {
+	public DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> getGraph() throws IllegalArgumentException {
 		return GraphUtils.createGraph(this);
 	}
 
@@ -829,14 +829,34 @@ public class Tree {
 	 *                .traces, .json extension)
 	 * @param pattern the filename substring (case sensitive) to be matched. Only
 	 *                filenames containing {@code pattern} will be imported from the
-	 *                directory
+	 *                directory. {@code null} allowed.
 	 * @return the list of imported {@link Tree}s. An empty list is retrieved if
 	 *         {@code dir} is not a valid, readable directory.
 	 */
 	public static List<Tree> listFromDir(final String dir, final String pattern) {
+		return listFromDir(dir, pattern, (String[])null);
+	}
+
+	/**
+	 * Retrieves a list of {@link Tree}s from reconstruction files stored in a
+	 * common directory matching the specified criteria.
+	 *
+	 * @param dir     the directory containing the reconstruction files (.(e)swc,
+	 *                .traces, .json extension)
+	 * @param pattern the filename substring (case sensitive) to be matched. Only
+	 *                filenames containing {@code pattern} will be imported from the
+	 *                directory. {@code null} allowed.
+	 * @param swcTypes SWC type(s) a string with at least 2 characters describing
+	 *                 the SWC type allowed in the subtree (e.g., 'soma', 'axn', or
+	 *                 'dendrite'). Ignored when {@code null}
+	 * @return the list of imported {@link Tree}s. An empty list is retrieved if
+	 *         {@code dir} is not a valid, readable directory.
+	 */
+	public static List<Tree> listFromDir(final String dir, final String pattern, final String... swcTypes) {
+		final String validatedPattern = (pattern == null) ? "" : pattern;
 		final FileFilter filter = (file) -> {
 			final String name = file.getName();
-			if (!name.contains(pattern))
+			if (!name.contains(validatedPattern))
 				return false;
 			final String lName = name.toLowerCase();
 			return file.canRead() && (lName.endsWith("swc") || lName.endsWith(".traces") || lName.endsWith(".json"));
@@ -853,8 +873,12 @@ public class Tree {
 		}
 		for (final File treeFile : treeFiles) {
 			final Tree tree = Tree.fromFile(treeFile.getAbsolutePath());
-			if (tree != null)
-				trees.add(tree);
+			if (tree != null) {
+				if (swcTypes == null)
+					trees.add(tree);
+				else
+					trees.add(tree.subTree(swcTypes));
+			}
 		}
 		return trees;
 	}

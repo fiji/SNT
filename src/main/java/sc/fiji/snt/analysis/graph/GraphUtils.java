@@ -103,7 +103,7 @@ public class GraphUtils {
 	 * @return the created graph with edge weights corresponding to inter-node
 	 *         Euclidean distances
 	 */
-	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final Tree tree) {
+	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final Tree tree) throws IllegalArgumentException {
 		final DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> graph = createGraphInternal(tree.getNodesAsSWCPoints(), true);
 		graph.setLabel(tree.getLabel());
 		return graph;

@@ -71,7 +71,7 @@ public class StrahlerAnalyzer {
 	private void compute() {
 
 		SNTUtils.log("Retrieving graph...");
-		graph = tree.getGraph(); // IllegalArgument Exception if i.e, tree has multiple roots
+		graph = tree.getGraph(); // IllegalArgumentException if i.e, tree has multiple roots
 		if (graph == null)
 			return;
 

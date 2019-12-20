@@ -485,7 +485,7 @@ public class TreeAnalyzer extends ContextCommand {
 			System.out.println(SNTUtils.tableToString(table, 0, table.getRowCount() - 1));
 			return;
 		}
-		final String displayName = (tableTitle == null) ? "Path Measurements"
+		final String displayName = (tableTitle == null) ? "SNT Measurements"
 			: tableTitle;
 		final Display<?> display = displayService.getDisplay(displayName);
 		if (display != null && display.isDisplaying(table)) {

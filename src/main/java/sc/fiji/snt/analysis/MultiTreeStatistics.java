@@ -127,6 +127,15 @@ public class MultiTreeStatistics extends TreeStatistics {
 	}
 
 	/**
+	 * Gets the collection of Trees being analyzed.
+	 *
+	 * @return the Tree group
+	 */
+	public Collection<Tree> getGroup() {
+		return groupOfTrees;
+	}
+
+	/**
 	 * Sets an identifying label for the group of Trees being analyzed.
 	 *
 	 * @param groupLabel the identifying string for the group.

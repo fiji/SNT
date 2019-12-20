@@ -74,6 +74,7 @@ public class MultiViewer2D {
 	private boolean outlineVisible;
 	private double legendMin = Double.MAX_VALUE;
 	private double legendMax = Double.MIN_VALUE;
+	private String label;
 
 	public MultiViewer2D(final List<Viewer2D> viewers) {
 		if (viewers == null)
@@ -155,9 +156,13 @@ public class MultiViewer2D {
 		}
 	}
 
+	public void setLabel(final String label) {
+		this.label = label;
+	}
+
 	public JFrame show() {
 		frame = getJFrame();
-		frame.setTitle("Multi-Pane Reconstruction Plotter");
+		frame.setTitle((label==null)?"Multi-Pane Reconstruction Plotter":label);
 		frame.setVisible(true);
 		return frame;
 	}

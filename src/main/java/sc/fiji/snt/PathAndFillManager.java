@@ -121,7 +121,8 @@ public class PathAndFillManager extends DefaultHandler implements
 	private final ArrayList<Fill> allFills;
 	private final ArrayList<PathAndFillListener> listeners;
 	private final HashSet<Path> selectedPathsSet;
-	private int maxUsedID = -1;
+	private int maxUsedPathID = -1;
+	private int maxUsedTreeID = 0;
 
 	private Fill current_fill;
 	private Path current_path;
@@ -503,6 +504,34 @@ public class PathAndFillManager extends DefaultHandler implements
 		return getPathsStructured(allPaths);
 	}
 
+	public Collection<Tree> getTrees() {
+		final HashMap<String, Tree> map = new HashMap<>();
+		allPaths.stream().forEach(p->{
+			final String treeID = p.getTreeLabel();
+			if (map.get(treeID) == null) {
+				final Tree tree = new Tree();
+				tree.setLabel(treeID);
+				tree.add(p);
+				map.put(treeID, tree);
+			} else {
+				map.get(treeID).add(p);
+			}
+		});
+		map.values().forEach( tree -> renameTreeAfterPrimaryPath(tree));
+		return map.values();
+	}
+
+	private void renameTreeAfterPrimaryPath(final Tree tree) {
+		for (final Path p : tree.list()) {
+			if (p.isPrimary()) {
+				final String label = tree.getLabel(); // never null here
+				if (label.startsWith("Cell "))
+					tree.setLabel(tree.getLabel() + " rooted in " + p.getName());
+				break;
+			}
+		}
+	}
+
 	public synchronized Path[] getPathsStructured(final Collection<Path> paths) {
 
 		final ArrayList<Path> primaryPaths = new ArrayList<>();
@@ -822,12 +851,13 @@ public class PathAndFillManager extends DefaultHandler implements
 	protected synchronized void addPath(final Path p,
 		final boolean forceNewName, final boolean forceNewId)
 	{
+		if (p.isPrimary()) ++maxUsedTreeID;
 		if (!forceNewId && getPathFromID(p.getID()) != null) throw new IllegalArgumentException(
 				"Attempted to add a path with an ID that was already added");
 		if (forceNewId || p.getID() < 0) {
-			p.setID(++maxUsedID);
+			p.setIDs(++maxUsedPathID, maxUsedTreeID);
 		}
-		if (maxUsedID < p.getID()) maxUsedID = p.getID();
+		if (maxUsedPathID < p.getID()) maxUsedPathID = p.getID();
 		if (p.getName() == null || forceNewName) {
 			final String suggestedName = getDefaultName(p);
 			p.setName(suggestedName);
@@ -1367,10 +1397,6 @@ public class PathAndFillManager extends DefaultHandler implements
 
 				Integer fittedIDInteger = null;
 				Integer fittedVersionOfIDInteger = null;
-
-				if (primaryString != null && primaryString.equals("true")) current_path
-						.setIsPrimary(true);
-
 				int id = -1;
 
 				try {
@@ -1380,8 +1406,6 @@ public class PathAndFillManager extends DefaultHandler implements
 						throw new TracesFileFormatException(
 								"There is more than one path with ID " + id);
 					}
-					current_path.setID(id);
-					if (id > maxUsedID) maxUsedID = id;
 
 					if (swcTypeString != null) {
 						final int swcType = Integer.parseInt(swcTypeString);
@@ -1438,8 +1462,14 @@ public class PathAndFillManager extends DefaultHandler implements
 							"There was an invalid attribute in <path/>: " + e);
 				}
 
+				// Assign ID
+				if (startsOnInteger == null || (primaryString != null && primaryString.equals("true"))) {
+					current_path.setIsPrimary(true);
+					++maxUsedTreeID;
+				}
+				current_path.setIDs(id, maxUsedTreeID);
+				if (id > maxUsedPathID) maxUsedPathID = id;
 				current_path.setName(nameString); // default name if null
-
 
 				if (startsOnInteger != null) startJoins.put(id, startsOnInteger);
 				if (endsOnInteger != null) endJoins.put(id, endsOnInteger);
@@ -1854,12 +1884,12 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	protected void resetIDs() {
-		maxUsedID = -1;
+		maxUsedPathID = -1;
 	}
 
 	/**
 	 * Imports an SWC file using default settings.
-	 *
+	 * @param descriptor the identifier for the imported data
 	 * @param urlOrFilePath the URL pointing to the SWC file or the absolute file
 	 *          path of a local file. Note that with URLs, https may not be
 	 *          supported.
@@ -1869,12 +1899,12 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @see #importSWC(BufferedReader, boolean, double, double, double, double,
 	 *      double, double, boolean)
 	 */
-	public boolean importSWC(final String urlOrFilePath) {
+	public boolean importSWC(final String descriptor, final String urlOrFilePath) {
 		if (SNTUtils.isValidURL(urlOrFilePath)) {
 			try {
 				final URL url = new URL(urlOrFilePath);
 				final InputStream is = url.openStream();
-				return importSWC(new BufferedReader(new InputStreamReader(is)));
+				return importSWC(descriptor, new BufferedReader(new InputStreamReader(is)));
 			}
 			catch (final IOException e) {
 				return false;
@@ -1920,15 +1950,14 @@ public class PathAndFillManager extends DefaultHandler implements
 			tree.setLabel(id);
 			result.add(tree);
 			final int firstImportedPathIdx = size();
-			if (!importSWC(path)) {
+			if (!importSWC(id, path)) {
 				return; // here means 'continue;'
 			}
 			for (int i = firstImportedPathIdx; i < size(); i++) {
 				final Path p = getPath(i);
-				p.setName(p.getName() + "{" + id + "}"); // This is just for PathManager
-																									// inability to deal with
-																									// Trees
+				//p.setTreeLabel(id);
 				p.setColor(colors[colorIdx[0]]);
+				p.setIDs(p.getID(), ++maxUsedTreeID);
 				tree.add(p);
 			}
 			colorIdx[0]++;
@@ -1937,9 +1966,9 @@ public class PathAndFillManager extends DefaultHandler implements
 		return result;
 	}
 
-	private boolean importSWC(final BufferedReader br) throws IOException
+	private boolean importSWC(final String descriptor, final BufferedReader br) throws IOException
 	{
-		return importSWC(br, false, 0, 0, 0, 1, 1, 1, false);
+		return importSWC(br, descriptor, false, 0, 0, 0, 1, 1, 1, false);
 	}
 
 	/**
@@ -1957,7 +1986,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * latter seems to part of the DIADEM Challenge data set). In addition, it's
 	 * not clear what the "radius" column is meant to mean in such files.
 	 * </p>
-	 *
+	 * @param descriptor the label describing the Tree associated with the data
 	 * @param br the character stream containing the data
 	 * @param assumeCoordinatesInVoxels If true, the SWC coordinates are assumed
 	 *          to be in image coordinates ("pixels"). Note that in this case,
@@ -1983,6 +2012,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @return true, if import was successful
 	 */
 	protected boolean importSWC(final BufferedReader br,
+		final String descriptor,
 		final boolean assumeCoordinatesInVoxels, final double xOffset,
 		final double yOffset, final double zOffset, final double xScale,
 		final double yScale, final double zScale, final boolean replaceAllPaths)
@@ -2032,7 +2062,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			SNTUtils.error("IO ERROR", exc);
 			return false;
 		}
-		return importNodes(null, nodes, null, assumeCoordinatesInVoxels);
+		return importNodes(descriptor, nodes, null, assumeCoordinatesInVoxels);
 	}
 
 	private boolean importNodes(final String descriptor,
@@ -2140,7 +2170,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			final Path p = getPath(i);
 			final SWCPoint swcPoint = pathStartsOnSWCPoint.get(p);
 			if (descriptor != null) {
-				p.setName(p.getName() + "{" + descriptor + "}");
+				p.setTreeLabel(descriptor);
 				p.setColor(color);
 			}
 			if (swcPoint == null) {
@@ -2292,7 +2322,7 @@ public class PathAndFillManager extends DefaultHandler implements
 			final BufferedReader br = new BufferedReader(new InputStreamReader(is,
 					StandardCharsets.UTF_8));
 
-			result = importSWC(br, assumeCoordinatesInVoxels, xOffset, yOffset,
+			result = importSWC(br, SNTUtils.stripExtension(f.getName()), assumeCoordinatesInVoxels, xOffset, yOffset,
 				zOffset, xScale, yScale, zScale, replaceAllPaths);
 
 			if (is != null) is.close();

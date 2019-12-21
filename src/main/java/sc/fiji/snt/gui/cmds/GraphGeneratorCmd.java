@@ -73,10 +73,12 @@ public class GraphGeneratorCmd extends CommonDynamicCmd {
 //				tree.downSample(dFactor);
 //			}
 			GraphUtils.show(tree.getGraph());
-			resetUI();
 			status("Righ-click on canvas for options", true);
 		} catch (final IllegalArgumentException exc) { // multiple roots, etc..
-			error("Could not generate graph: " + exc.getMessage());
+			error("Graph could not be created: " + exc.getLocalizedMessage() + "\n"
+			+ "Please ensure you select a single set of connected paths (one root exclusively)");
+		} finally {
+			resetUI();
 		}
 	}
 

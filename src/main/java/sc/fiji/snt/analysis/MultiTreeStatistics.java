@@ -257,10 +257,20 @@ public class MultiTreeStatistics extends TreeStatistics {
 				stat.addValue(ta.getNFittedPaths());
 				break;
 			case STRAHLER_NUMBER:
-				stat.addValue(ta.getStrahlerNumber());
+				try {
+					stat.addValue(ta.getStrahlerNumber());
+				} catch (final IllegalArgumentException ignored) {
+					SNTUtils.log("Error: " + ignored.getMessage());
+					stat.addValue(Double.NaN);
+				}
 				break;
 			case STRAHLER_RATIO:
-				stat.addValue(ta.getStrahlerBifurcationRatio());
+				try {
+					stat.addValue(ta.getStrahlerBifurcationRatio());
+				} catch (final IllegalArgumentException ignored) {
+					SNTUtils.log("Error: " + ignored.getMessage());
+					stat.addValue(Double.NaN);
+				}
 				break;
 			case HIGHEST_PATH_ORDER:
 				stat.addValue(ta.getHighestPathOrder());

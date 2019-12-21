@@ -45,6 +45,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -104,6 +105,7 @@ import sc.fiji.snt.gui.SwingSafeResult;
 import sc.fiji.snt.gui.cmds.DistributionCmd;
 import sc.fiji.snt.gui.cmds.PathFitterCmd;
 import sc.fiji.snt.gui.cmds.SWCTypeOptionsCmd;
+import sc.fiji.snt.plugin.AnalyzerCmd;
 import sc.fiji.snt.plugin.ROIExporterCmd;
 import sc.fiji.snt.plugin.SkeletonizerCmd;
 import sc.fiji.snt.plugin.TreeMapperCmd;
@@ -231,6 +233,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 		morphoTagsMenu = new JMenu("Morphology");
 		morphoTagsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.RULER));
+		final JCheckBoxMenuItem tagTreeCbmi = new JCheckBoxMenuItem(
+				MultiPathActionListener.TREE_TAG_CMD, false);
+		tagTreeCbmi.addItemListener(multiPathListener);
+		morphoTagsMenu.add(tagTreeCbmi);
 		final JCheckBoxMenuItem tagLengthCbmi = new JCheckBoxMenuItem(
 			MultiPathActionListener.LENGTH_TAG_CMD, false);
 		tagLengthCbmi.addItemListener(multiPathListener);
@@ -302,8 +308,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.CHART));
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
-		jmi = new JMenuItem(MultiPathActionListener.MEASURE_CMD);
+		jmi = new JMenuItem(MultiPathActionListener.MEASURE_CMD_OPTIONS);
 		jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.TABLE));
+		jmi.addActionListener(multiPathListener);
+		advanced.add(jmi);
+		jmi = new JMenuItem(MultiPathActionListener.MEASURE_CMD_SUMMARY);
+		jmi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.ROCKET));
 		jmi.addActionListener(multiPathListener);
 		advanced.add(jmi);
 		advanced.addSeparator();
@@ -843,6 +853,32 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		model.insertNodeInto(newNode, parent, parent.getChildCount());
 		for (final Path p : childPath.children)
 			addNode(newNode, p, model);
+	}
+
+	protected Tree getSingleTree() {
+		return getTreesPrompt(false).iterator().next();
+	}
+
+	protected Collection<Tree> getTrees() {
+		return getTreesPrompt(true);
+	}
+
+	private Collection<Tree> getTreesPrompt(final boolean includeAll) {
+		final Collection<Tree> trees = pathAndFillManager.getTrees();
+		if (trees.size() == 1) return Collections.singleton(trees.iterator().next());
+		final ArrayList<String> treeLabels = new ArrayList<>(trees.size());
+		if (includeAll)
+			treeLabels.add("   -- All --  ");
+		trees.forEach(t -> treeLabels.add(t.getLabel()));
+		final String choice = guiUtils.getChoice("Multiple rooted structures exist. Which one should be analyzed?",
+				"Which Structure?", treeLabels.toArray(new String[trees.size()]), treeLabels.get(0));
+		if (includeAll && "   -- All --  ".equals(choice))
+			return trees;
+		for (final Tree t : trees) {
+			if (t.getLabel().equals(choice)) return Collections.singleton(t);
+		}
+		
+		return null; // user pressed canceled prompt
 	}
 
 	/* (non-Javadoc)
@@ -1683,6 +1719,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		private final static String LENGTH_TAG_CMD = "Length";
 		private final static String MEAN_RADIUS_TAG_CMD = "Mean Radius";
 		private final static String ORDER_TAG_CMD = "Path Order";
+		private final static String TREE_TAG_CMD = "Cell ID";
 		private final static String CHANNEL_TAG_CMD = "Traced Channel";
 		private final static String FRAME_TAG_CMD = "Traced Frame";
 		private final static String SLICE_LABEL_TAG_CMD = "Slice Labels";
@@ -1691,18 +1728,21 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		private static final String FILL_OUT_CMD = "Fill Out...";
 		private static final String RESET_FITS = "Discard Fit(s)...";
 		private final static String SPECIFY_RADIUS_CMD = "Specify Radius...";
-		private final static String MEASURE_CMD = "Measure";
+		private final static String MEASURE_CMD_SUMMARY = "Quick Measurements";
+		private final static String MEASURE_CMD_OPTIONS = "Measure...";
+
 		private final static String CONVERT_TO_ROI_CMD = "Convert to ROIs...";
 		private final static String COLORIZE_PATH_CMD = "Color Coding...";
 		private final static String HISTOGRAM_CMD = "Distribution Analysis...";
 		private final static String CONVERT_TO_SKEL_CMD = "Skeletonize...";
-		private final static String CONVERT_TO_SWC_CMD = "Save as SWC...";
+		private final static String CONVERT_TO_SWC_CMD = "Save Subset as SWC...";
 		private final static String PLOT_PROFILE_CMD = "Plot Profile";
 
 		private final static String TAG_LENGTH_PATTERN =
 			" ?\\[L:\\d+\\.?\\d+\\s?.+\\w+\\]";
 		private final static String TAG_RADIUS_PATTERN =
 			" ?\\[MR:\\d+\\.?\\d+\\s?.+\\w+\\]";
+		private final static String TAG_TREE_PATTERN = " ?\\|.*\\|";
 		private final static String TAG_ORDER_PATTERN = " ?\\[Order \\d+\\]";
 		private final static String TAG_CHANNEL_PATTERN = " ?\\[C:\\d+\\]";
 		private final static String TAG_FRAME_PATTERN = " ?\\[T:\\d+\\]";
@@ -1777,7 +1817,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				});
 				return;
 			}
-			else if (MEASURE_CMD.equals(cmd)) {
+			else if (MEASURE_CMD_SUMMARY.equals(cmd)) {
 				try {
 					final TreeAnalyzer ta = new TreeAnalyzer(new Tree(selectedPaths));
 					ta.setContext(plugin.getContext());
@@ -1787,13 +1827,20 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					}
 					ta.setTable(getTable(), TABLE_TITLE);
 					ta.summarize(getDescription(selectedPaths), true);
-					return;
 				}
 				catch (final IllegalArgumentException ignored) {
 					guiUtils.error(
 						"Selected paths do not fullfill requirements for measurements");
 				}
-
+				return;
+			}
+			else if (MEASURE_CMD_OPTIONS.equals(cmd)) {
+				final Collection<Tree> trees = (assumeAll) ? getTrees() : Collections.singleton(new Tree(selectedPaths));
+				if (trees == null) return;
+				final HashMap<String, Object> inputs = new HashMap<>();
+				inputs.put("trees", trees);
+				(plugin.getUI().new DynamicCmdRunner(AnalyzerCmd.class, inputs)).run();
+				return;
 			}
 			else if (CONVERT_TO_ROI_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
@@ -1806,8 +1853,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 			}
 			else if (COLORIZE_PATH_CMD.equals(cmd)) {
+				final Tree tree = (assumeAll) ? getSingleTree() : new Tree(selectedPaths);
+				if (tree == null) return;
 				final Map<String, Object> input = new HashMap<>();
-				input.put("tree", new Tree(selectedPaths));
+				input.put("tree", tree);
 				input.put("setValuesFromSNTService", !plugin.tracingHalted);
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
@@ -1950,6 +1999,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				{
 					return;
 				}
+				removeTags(selectedPaths, TAG_TREE_PATTERN);
 				removeTags(selectedPaths, TAG_ORDER_PATTERN);
 				removeTags(selectedPaths, TAG_CHANNEL_PATTERN);
 				removeTags(selectedPaths, TAG_FRAME_PATTERN);
@@ -2185,6 +2235,16 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					removeTags(selectedPaths, TAG_RADIUS_PATTERN);
 				}
 
+			}
+			else if (TREE_TAG_CMD.equals(cmd)) {
+				if (jcbmi.isSelected()) {
+					for (final Path p : selectedPaths) {
+						p.setName(p.getName() + " |" + p.getTreeLabel() + "|");
+					}
+				}
+				else {
+					removeTags(selectedPaths, TAG_TREE_PATTERN);
+				}
 			}
 			else if (ORDER_TAG_CMD.equals(cmd)) {
 				if (jcbmi.isSelected()) {

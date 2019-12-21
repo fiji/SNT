@@ -41,6 +41,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -106,9 +107,12 @@ import sc.fiji.snt.gui.IconFactory;
 import sc.fiji.snt.gui.SigmaPalette;
 import sc.fiji.snt.io.FlyCircuitLoader;
 import sc.fiji.snt.io.NeuroMorphoLoader;
+import sc.fiji.snt.plugin.AnalyzerCmd;
+import sc.fiji.snt.plugin.GroupAnalyzerCmd;
 import sc.fiji.snt.plugin.LocalThicknessCmd;
 import sc.fiji.snt.plugin.PathOrderAnalysisCmd;
 import sc.fiji.snt.plugin.PlotterCmd;
+import sc.fiji.snt.plugin.ShollTracingsCmd;
 import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.iview.SciView;
@@ -117,7 +121,6 @@ import sc.fiji.snt.gui.cmds.ChooseDatasetCmd;
 import sc.fiji.snt.gui.cmds.CompareFilesCmd;
 import sc.fiji.snt.gui.cmds.ComputeSecondaryImg;
 import sc.fiji.snt.gui.cmds.ComputeTubenessImg;
-import sc.fiji.snt.gui.cmds.DetailedMeasurementsCmd;
 import sc.fiji.snt.gui.cmds.GraphGeneratorCmd;
 import sc.fiji.snt.gui.cmds.JSONImporterCmd;
 import sc.fiji.snt.gui.cmds.MLImporterCmd;
@@ -155,9 +158,6 @@ public class SNTUI extends JDialog {
 	private JMenuItem exportCSVMenuItem;
 	private JMenuItem exportAllSWCMenuItem;
 	private JMenuItem quitMenuItem;
-	private JMenuItem measureMenuItem;
-	private JMenuItem strahlerMenuItem;
-	private JMenuItem plotMenuItem;
 	private JMenuItem sendToTrakEM2;
 	private JLabel statusText;
 	private JLabel statusBarText;
@@ -700,7 +700,6 @@ public class SNTUI extends JDialog {
 		loadSWCMenuItem.setEnabled(false);
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
-		measureMenuItem.setEnabled(false);
 		sendToTrakEM2.setEnabled(false);
 		saveMenuItem.setEnabled(false);
 		quitMenuItem.setEnabled(false);
@@ -747,7 +746,6 @@ public class SNTUI extends JDialog {
 
 				exportCSVMenuItem.setEnabled(true);
 				exportAllSWCMenuItem.setEnabled(true);
-				measureMenuItem.setEnabled(true);
 				sendToTrakEM2.setEnabled(plugin.anyListeners());
 				quitMenuItem.setEnabled(true);
 				showPathsSelected.setEnabled(true);
@@ -774,7 +772,6 @@ public class SNTUI extends JDialog {
 
 				exportCSVMenuItem.setEnabled(true);
 				exportAllSWCMenuItem.setEnabled(true);
-				measureMenuItem.setEnabled(true);
 				sendToTrakEM2.setEnabled(plugin.anyListeners());
 				quitMenuItem.setEnabled(true);
 				showPathsSelected.setEnabled(true);
@@ -2165,36 +2162,74 @@ public class SNTUI extends JDialog {
 		quitMenuItem.addActionListener(listener);
 		fileMenu.add(quitMenuItem);
 
-		measureMenuItem = new JMenuItem("Quick Measurements", IconFactory.getMenuIcon(IconFactory.GLYPH.ROCKET));
-		measureMenuItem.addActionListener(listener);
-		strahlerMenuItem = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(IconFactory.GLYPH.BRANCH_CODE));
-		strahlerMenuItem.addActionListener(listener);
-		plotMenuItem = new JMenuItem("Reconstruction Plotter...", IconFactory.getMenuIcon(IconFactory.GLYPH.DRAFT));
-		plotMenuItem.addActionListener(listener);
+		final JMenuItem measureMenuItem = new JMenuItem("Quick Measurements", IconFactory.getMenuIcon(IconFactory.GLYPH.ROCKET));
+		measureMenuItem.addActionListener(e -> {
+			if (noPathsError()) return;
+			final Tree tree = new Tree(pathAndFillManager.getPathsFiltered());
+			tree.setLabel("All Paths");
+			final TreeAnalyzer ta = new TreeAnalyzer(tree);
+			ta.setContext(plugin.getContext());
+			ta.setTable(pmUI.getTable(), PathManagerUI.TABLE_TITLE);
+			ta.run();
+		});
+		final JMenuItem plotMenuItem = new JMenuItem("Reconstruction Plotter...", IconFactory.getMenuIcon(IconFactory.GLYPH.DRAFT));
+		plotMenuItem.addActionListener( e -> {
+			if (noPathsError()) return;
+			final Tree tree = getPathManager().getSingleTree();
+			if (tree == null) return;
+			final Map<String, Object> input = new HashMap<>();
+			input.put("tree", tree);
+			final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+			cmdService.run(PlotterCmd.class, true, input);
+		});
 
 		final JMenuItem pathOrderAnalysis = new JMenuItem("Path Order Analysis",
 				IconFactory.getMenuIcon(IconFactory.GLYPH.BRANCH_CODE));
 		pathOrderAnalysis.addActionListener(e -> {
-			final PathOrderAnalysisCmd pa = new PathOrderAnalysisCmd(new Tree(pathAndFillManager.getPathsFiltered()));
+			if (noPathsError()) return;
+			final PathOrderAnalysisCmd pa = new PathOrderAnalysisCmd(new Tree(getPathManager().getSelectedPaths(true)));
 			pa.setContext(plugin.getContext());
-			pa.setTable(new DefaultGenericTable(), "SNT: Path Order Analysis (All Paths)");
+			pa.setTable(new DefaultGenericTable(), "SNT: Path Order Analysis");
 			pa.run();
 		});
 		analysisMenu.add(pathOrderAnalysis);
+		analysisMenu.addSeparator();
+		final JMenuItem shollMenuItem = new JMenuItem("Sholl Analysis...",
+				IconFactory.getMenuIcon(IconFactory.GLYPH.BULLSEYE));
+		shollMenuItem.addActionListener(e -> {
+			if (noPathsError()) return;
+			final Tree tree = getPathManager().getSingleTree();
+			if (tree == null) return;
+			final HashMap<String, Object> inputs = new HashMap<>();
+			inputs.put("tree", tree);
+			(new DynamicCmdRunner(ShollTracingsCmd.class, inputs, getState())).run();
+		});
+		analysisMenu.add(shollMenuItem);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
+		analysisMenu.addSeparator();
+		final JMenuItem strahlerMenuItem = new JMenuItem("Strahler Analysis",
+				IconFactory.getMenuIcon(IconFactory.GLYPH.BRANCH_CODE));
+		strahlerMenuItem.addActionListener(e -> {
+			if (noPathsError()) return;
+			final Tree tree = getPathManager().getSingleTree();
+			if (tree == null) return;
+			final HashMap<String, Object> inputs = new HashMap<>();
+			inputs.put("tree", tree);
+			(new CmdRunner(StrahlerCmd.class, inputs, getState())).execute();
+		});
 		analysisMenu.add(strahlerMenuItem);
 		analysisMenu.addSeparator();
 	
-		// Measuring options
+		// Measuring options : All Paths
 		final JMenuItem measureWithPrompt = new JMenuItem("Measure...",
 				IconFactory.getMenuIcon(IconFactory.GLYPH.TABLE));
 		measureWithPrompt.addActionListener(e -> {
 			if (noPathsError()) return;
+			final Collection<Tree> trees = getPathManager().getTrees();
+			if (trees == null) return;
 			final HashMap<String, Object> inputs = new HashMap<>();
-			final Tree tree = new Tree(pathAndFillManager.getPathsFiltered());
-			tree.setLabel("All Paths");
-			inputs.put("tree", tree);
-			(new DynamicCmdRunner(DetailedMeasurementsCmd.class, inputs)).run();
+			inputs.put("trees", trees);
+			(new DynamicCmdRunner(AnalyzerCmd.class, inputs)).run();
 		});
 		analysisMenu.add(measureWithPrompt);
 		analysisMenu.add(measureMenuItem);
@@ -2205,14 +2240,25 @@ public class SNTUI extends JDialog {
 		compareFiles.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BINOCULARS));
 		utilitiesMenu.add(compareFiles);
 		compareFiles.addActionListener(e -> {
-			(new CmdRunner(CompareFilesCmd.class)).execute();
+			final String[] choices = { "Compare two files", "Compare groups of cells (two or more)" };
+			final String choice = guiUtils.getChoice("Which kind of comparison would you like to perform?",
+					"Single or Group Comparison?", choices, choices[1]);
+			if (choices[0].equals(choice))
+				(new CmdRunner(CompareFilesCmd.class)).execute();
+			else
+				(new CmdRunner(GroupAnalyzerCmd.class)).execute();
 		});
 		utilitiesMenu.addSeparator();
 		final JMenuItem graphGenerator = new JMenuItem("Create Dendrogram",
 				IconFactory.getMenuIcon(IconFactory.GLYPH.DIAGRAM));
 		utilitiesMenu.add(graphGenerator);
 		graphGenerator.addActionListener(e -> {
-			(new DynamicCmdRunner(GraphGeneratorCmd.class, null)).run();
+			if (noPathsError()) return;
+			final Tree tree = getPathManager().getSingleTree();
+			if (tree == null) return;
+			final HashMap<String, Object> inputs = new HashMap<>();
+			inputs.put("tree", tree);
+			(new DynamicCmdRunner(GraphGeneratorCmd.class, inputs)).run();
 		});
 		utilitiesMenu.addSeparator();
 		final JMenu scriptUtilsMenu = installer.getBatchScriptsMenu();
@@ -2887,8 +2933,8 @@ public class SNTUI extends JDialog {
 	}
 
 	private JMenuItem shollAnalysisHelpMenuItem() {
-		final JMenuItem mi = new JMenuItem("Sholl Analysis...");
-		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BULLSEYE));
+		final JMenuItem mi = new JMenuItem("Sholl Analysis (by Focal Point)...");
+		mi.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.DOTCIRCLE));
 		mi.addActionListener(e -> {
 			final Thread newThread = new Thread(() -> {
 				if (noPathsError())
@@ -3429,28 +3475,6 @@ public class SNTUI extends JDialog {
 				showStatus("Export complete.", true);
 				changeState(preExportingState);
 
-			} else if (source == measureMenuItem && !noPathsError()) {
-				final Tree tree = new Tree(pathAndFillManager.getPathsFiltered());
-				tree.setLabel("All Paths");
-				final TreeAnalyzer ta = new TreeAnalyzer(tree);
-				ta.setContext(plugin.getContext());
-				ta.setTable(pmUI.getTable(), PathManagerUI.TABLE_TITLE);
-				ta.run();
-				return;
-			} else if (source == strahlerMenuItem && !noPathsError()) {
-				final StrahlerCmd sa = new StrahlerCmd(new Tree(pathAndFillManager.getPathsFiltered()));
-				sa.setContext(plugin.getContext());
-				sa.setTable(new DefaultGenericTable(), "SNT: Horton-Strahler Analysis (All Paths)");
-				sa.run();
-				return;
-			} else if (source == plotMenuItem && !noPathsError()) {
-				final Map<String, Object> input = new HashMap<>();
-				final Tree tree = new Tree(pathAndFillManager.getPathsFiltered());
-				tree.setLabel("SNT Plotter");
-				input.put("tree", tree);
-				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
-				cmdService.run(PlotterCmd.class, true, input);
-				return;
 			} else if (source == loadLabelsMenuItem) {
 
 				final File openFile = openFile("Select Labels File...", ".labels");
@@ -3513,7 +3537,7 @@ public class SNTUI extends JDialog {
 	}
 
 	/** Dynamic commands don't work well with CmdRunner. Use this class instead to run them */
-	private class DynamicCmdRunner {
+	class DynamicCmdRunner {
 
 		private final Class<? extends Command> cmd;
 		private final int preRunState;

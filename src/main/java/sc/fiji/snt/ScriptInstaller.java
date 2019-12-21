@@ -108,10 +108,12 @@ class ScriptInstaller implements MenuKeyListener {
 			final String name = file.getName();
 			return file.canRead() && (name.contains("SNT") || name.toLowerCase().contains("neuroanatomy"));
 		});
-		for (final File file : filteredScripts) {
-			final ScriptInfo si = scriptService.getScript(file);
-			if (si != null) {
-				scripts.add(si);
+		if (filteredScripts != null) {
+			for (final File file : filteredScripts) {
+				final ScriptInfo si = scriptService.getScript(file);
+				if (si != null) {
+					scripts.add(si);
+				}
 			}
 		}
 	}

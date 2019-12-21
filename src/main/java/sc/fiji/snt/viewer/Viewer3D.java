@@ -170,7 +170,6 @@ import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
 import sc.fiji.snt.analysis.MultiTreeColorMapper;
-import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNT;
@@ -199,6 +198,7 @@ import sc.fiji.snt.gui.cmds.RemoteSWCImporterCmd;
 import sc.fiji.snt.gui.cmds.TranslateReconstructionsCmd;
 import sc.fiji.snt.io.FlyCircuitLoader;
 import sc.fiji.snt.io.NeuroMorphoLoader;
+import sc.fiji.snt.plugin.AnalyzerCmd;
 import sc.fiji.snt.plugin.ShollTracingsCmd;
 import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.util.PointInImage;
@@ -2613,25 +2613,32 @@ public class Viewer3D {
 
 		private JPopupMenu measureMenu() {
 			final JPopupMenu measureMenu = new JPopupMenu();
-			JMenuItem mi = new JMenuItem("Measure", IconFactory.getMenuIcon(
-				GLYPH.TABLE));
+			JMenuItem mi = new JMenuItem("Measure...", IconFactory.getMenuIcon(GLYPH.TABLE));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTrees(true);
 				if (keys == null) return;
-				if (table == null) table = new DefaultGenericTable();
+				final List<Tree> trees = new ArrayList<>();
+				keys.forEach( k -> {
+					final ShapeTree sTree = plottedTrees.get(k);
+					if (sTree != null) trees.add(sTree.tree);
+				});
+				final Map<String, Object> input = new HashMap<>();
+				input.put("trees", trees);
+				runCmd(AnalyzerCmd.class, input, CmdWorker.DO_NOTHING, false);
+			});
+			measureMenu.add(mi);
+			mi = new JMenuItem("Quick Measurements", IconFactory.getMenuIcon(GLYPH.ROCKET));
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTrees(true);
+				if (keys == null) return;
+				if (table == null) table =  new DefaultGenericTable();
 				plottedTrees.forEach((k, shapeTree) -> {
 					if (!keys.contains(k)) return;
 					final TreeStatistics tStats = new TreeStatistics(shapeTree.tree);
+					tStats.setContext(context);
 					tStats.setTable(table);
-					tStats.summarize(k, true);
+					tStats.summarize(k, true); // will display table
 				});
-				final List<Display<?>> displays = displayService.getDisplays(table);
-				if (displays == null || displays.isEmpty()) {
-					displayService.createDisplay("RV Measurements", table);
-				}
-				else {
-					displays.forEach(d -> d.update());
-				}
 			});
 			measureMenu.add(mi);
 			mi = new JMenuItem("Distribution Analysis...", IconFactory.getMenuIcon(
@@ -2667,8 +2674,6 @@ public class Viewer3D {
 				if (tree == null) return;
 				final StrahlerCmd sa = new StrahlerCmd(tree);
 				sa.setContext(context);
-				sa.setTable(new DefaultGenericTable(),
-					"SNT: Horton-Strahler Analysis " + tree.getLabel());
 				SwingUtilities.invokeLater(() -> sa.run());
 			});
 			measureMenu.add(mi);

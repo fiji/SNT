@@ -50,19 +50,21 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 
+import com.mxgraph.layout.mxCompactTreeLayout;
+import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.mxGraphOutline;
 import com.mxgraph.swing.handler.mxKeyboardHandler;
 import com.mxgraph.swing.handler.mxPanningHandler;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.util.mxCellRenderer;
-
 import sc.fiji.snt.gui.GuiUtils;
 
 class TreeGraphComponent extends mxGraphComponent {
 	private static final long serialVersionUID = 1L;
 	private boolean panMode;
 	private final TreeGraphAdapter<?, ?> adapter;
+	private final mxCompactTreeLayout layout;
 	private JCheckBoxMenuItem panMenuItem;
 	private File saveDir;
 
@@ -75,14 +77,18 @@ class TreeGraphComponent extends mxGraphComponent {
 		new mxKeyboardHandler(this);
 		addRuberBandZoom();
 		setCenterZoom(true);
-		setCenterPage(true);
 		setAntiAlias(true);
 		setDoubleBuffered(true);
 		setConnectable(false);
 		setFoldingEnabled(true);
 		setKeepSelectionVisibleOnZoom(true);
 		setDragEnabled(false);
+		layout = new mxCompactTreeLayout(adapter);
+		layout.execute(adapter.getDefaultParent());
 		assignPopupMenu();
+		centerGraph();
+		zoomAndCenter();
+		requestFocusInWindow();
 	}
 
 	private void addRuberBandZoom() {
@@ -140,19 +146,31 @@ class TreeGraphComponent extends mxGraphComponent {
 		mItem.addActionListener(e -> zoomOut());
 		popup.add(mItem);
 		mItem = new JMenuItem("Reset Zoom");
-		mItem.addActionListener(e -> zoomActual());
+		mItem.addActionListener(e -> {zoomActual(); zoomAndCenter();});
 		popup.add(mItem);
 		popup.addSeparator();
 
-		final JCheckBoxMenuItem jcbmi = new JCheckBoxMenuItem("Label Vertices", adapter.isVertexLabelsEnabled());
-		jcbmi.addActionListener(e -> {
+		final JMenuItem jmi = new JMenuItem("Center");
+		jmi.addActionListener(e -> {
+			centerGraph();
+		});
+		popup.add(jmi);
+	
+		final JCheckBoxMenuItem jcbmi0 = new JCheckBoxMenuItem("Label Vertices", adapter.isVertexLabelsEnabled());
+		jcbmi0.addActionListener(e -> {
 			adapter.getModel().beginUpdate();
-			adapter.setEnableVertexLabels(jcbmi.isSelected());
+			adapter.setEnableVertexLabels(jcbmi0.isSelected());
 			adapter.getModel().endUpdate();
 			//HACK: This is the only thing I could come up with to repainting the canvas
 			zoomIn(); zoomOut();
 		});
-		popup.add(jcbmi);
+		popup.add(jcbmi0);
+		final JCheckBoxMenuItem jcbmi1 = new JCheckBoxMenuItem("Horizontal", layout.isHorizontal());
+		jcbmi1.addActionListener(e -> {
+			layout.setHorizontal(jcbmi1.isSelected());
+			layout.execute(adapter.getDefaultParent());
+		});
+		popup.add(jcbmi1);
 		popup.addSeparator();
 
 		panMenuItem = new JCheckBoxMenuItem("Pan Mode (Shift + Click & Drag)");
@@ -186,6 +204,16 @@ class TreeGraphComponent extends mxGraphComponent {
 				e.consume();
 			}
 		});
+	}
+
+	private void centerGraph() {
+		// https://stackoverflow.com/a/36947526
+		final double widthLayout = getPageFormat().getWidth();
+		final double heightLayout = getPageFormat().getHeight();
+		final double width = adapter.getGraphBounds().getWidth();
+		final double height = adapter.getGraphBounds().getHeight();
+		adapter.getModel().setGeometry(adapter.getDefaultParent(),
+				new mxGeometry((widthLayout - width) / 2, (heightLayout - height) / 2, widthLayout, heightLayout));
 	}
 
 	private JMenuItem saveAsMenuItem(final String label, final String extension) {

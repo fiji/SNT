@@ -31,42 +31,75 @@ import org.scijava.util.ColorRGB;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.util.mxConstants;
 
+import sc.fiji.snt.util.SWCPoint;
 
-class TreeGraphAdapter<V, E> extends JGraphXAdapter<V, E> {
+
+class TreeGraphAdapter extends JGraphXAdapter<SWCPoint, SWCWeightedEdge> {
 
 	private static final String DARK_GRAY = "#222222";
 	private static final String LIGHT_GRAY = "#eeeeee";
 
-	protected TreeGraphAdapter(final Graph<V, E> graph) {
+	protected TreeGraphAdapter(final Graph<SWCPoint, SWCWeightedEdge> graph) {
 		this(graph, LIGHT_GRAY);
 	}
 
-	protected TreeGraphAdapter(final Graph<V, E> graph, final String verticesColor) {
+	protected TreeGraphAdapter(final Graph<SWCPoint, SWCWeightedEdge> graph, final String verticesColor) {
 		super(graph);
 		final String vColor = (verticesColor == null) ? LIGHT_GRAY : new ColorRGB(verticesColor).toHTMLColor();
 		final Map<String, Object> edgeStyle = getStylesheet().getDefaultEdgeStyle();
-		edgeStyle.put(mxConstants.STYLE_NOLABEL, true);
+		edgeStyle.put(mxConstants.STYLE_ENDARROW, mxConstants.ARROW_BLOCK);
+		edgeStyle.put(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_TOP);
+		edgeStyle.put(mxConstants.STYLE_VERTICAL_LABEL_POSITION, mxConstants.ALIGN_MIDDLE);
+		edgeStyle.put(mxConstants.STYLE_LABEL_POSITION, mxConstants.ALIGN_CENTER);
 		edgeStyle.put(mxConstants.STYLE_STROKECOLOR, DARK_GRAY);
+
 		final Map<String, Object> vertexStyle = getStylesheet().getDefaultVertexStyle();
 		vertexStyle.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
+		vertexStyle.put(mxConstants.STYLE_LABEL_POSITION, mxConstants.ALIGN_CENTER);
 		vertexStyle.put(mxConstants.STYLE_VERTICAL_LABEL_POSITION, mxConstants.ALIGN_MIDDLE);
 		vertexStyle.put(mxConstants.STYLE_FONTCOLOR, DARK_GRAY);
 		vertexStyle.put(mxConstants.STYLE_STROKECOLOR, DARK_GRAY);
 		vertexStyle.put(mxConstants.STYLE_FILLCOLOR, vColor);
+		setLabelsVisible(true);
 		setEnableVertexLabels(true);
+		setEnableEdgeLabels(true);
+		setKeepEdgesInBackground(true); // Edges will not appear above vertices
+		setResetEdgesOnConnect(true);
+		setEdgeLabelsMovable(true);
 	}
 
 	@Override
 	public String convertValueToString(final Object cell) {
-		return ((mxCell)cell).getId();
+		final Object obj = ((mxCell)cell).getValue();
+		if (obj instanceof SWCPoint) {
+			return ""+ ((SWCPoint)obj).id;
+		}
+		if (obj instanceof SWCWeightedEdge) {
+			return ((SWCWeightedEdge)obj).toString();
+		}
+		return ((mxCell)cell).toString();
+	}
+
+	protected boolean isEdgeLabelsEnabled() {
+		return !(boolean)stylesheet.getDefaultEdgeStyle().get(mxConstants.STYLE_NOLABEL);
 	}
 
 	protected boolean isVertexLabelsEnabled() {
 		return !(boolean)stylesheet.getDefaultVertexStyle().get(mxConstants.STYLE_NOLABEL);
 	}
 
+	protected void setEnableEdgeLabels(final boolean enable) {
+		getModel().beginUpdate();
+		stylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, !enable);
+		getModel().endUpdate();
+		refresh();
+	}
+
 	protected void setEnableVertexLabels(final boolean enable) {
+		getModel().beginUpdate();
 		stylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_NOLABEL, !enable);
+		getModel().endUpdate();
+		refresh();
 	}
 
 }

@@ -37,7 +37,6 @@ import java.util.stream.IntStream;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import net.imagej.ImageJ;
@@ -45,6 +44,7 @@ import net.imagej.display.ColorTables;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.analysis.graph.SWCWeightedEdge;
 import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.Viewer3D;
 
@@ -62,7 +62,7 @@ public class StrahlerAnalyzer {
 	private final Map<Integer, Double> bPointsMap = new TreeMap<>();
 	private final Map<Integer, Double> bRatioMap = new TreeMap<>();
 	private final Map<Integer, Double> tLengthMap = new TreeMap<>();
-	private DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> graph;
+	private DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph;
 
 	public StrahlerAnalyzer(final Tree tree) {
 		this.tree = tree;
@@ -119,12 +119,12 @@ public class StrahlerAnalyzer {
 					.collect(Collectors.toCollection(HashSet::new)); // collect output in new list
 
 			// now measure the group
-			final AsSubgraph<SWCPoint, DefaultWeightedEdge> subGraph = new AsSubgraph<SWCPoint, DefaultWeightedEdge>(
+			final AsSubgraph<SWCPoint, SWCWeightedEdge> subGraph = new AsSubgraph<SWCPoint, SWCWeightedEdge>(
 					graph, nodes);
 
 			// Total length
 			double cableLength = 0;
-			for (final DefaultWeightedEdge edge : subGraph.edgeSet()) {
+			for (final SWCWeightedEdge edge : subGraph.edgeSet()) {
 				cableLength += subGraph.getEdgeWeight(edge);
 			}
 			tLengthMap.put(order, cableLength);
@@ -140,7 +140,7 @@ public class StrahlerAnalyzer {
 
 			// # N. branches
 			double nBranches = 0;
-			final TopologicalOrderIterator<SWCPoint, DefaultWeightedEdge> it = new TopologicalOrderIterator<SWCPoint, DefaultWeightedEdge>(
+			final TopologicalOrderIterator<SWCPoint, SWCWeightedEdge> it = new TopologicalOrderIterator<SWCPoint, SWCWeightedEdge>(
 					subGraph);
 			final List<SWCPoint> listedNodes = new ArrayList<>();
 			while (it.hasNext()) {
@@ -178,7 +178,7 @@ public class StrahlerAnalyzer {
 	/**
 	 * @return the graph of the tree being parsed.
 	 */
-	public DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> getGraph() {
+	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph() {
 		if (graph == null) compute();
 		return graph;
 	}

@@ -504,6 +504,12 @@ public class PathAndFillManager extends DefaultHandler implements
 		return getPathsStructured(allPaths);
 	}
 
+	/**
+	 * Returns all the paths associated with this PathAndFillManager instance,
+	 * grouped by Tree.
+	 *
+	 * @return the Trees associated with this PathAndFillManager instance
+	 */
 	public Collection<Tree> getTrees() {
 		final HashMap<String, Tree> map = new HashMap<>();
 		allPaths.stream().forEach(p->{
@@ -522,12 +528,13 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	private void renameTreeAfterPrimaryPath(final Tree tree) {
-		for (final Path p : tree.list()) {
-			if (p.isPrimary()) {
-				final String label = tree.getLabel(); // never null here
-				if (label.startsWith("Cell "))
+		final String label = tree.getLabel(); // never null here
+		if (label.startsWith("Cell ")) {
+			for (final Path p : tree.list()) {
+				if (p.isPrimary()) {
 					tree.setLabel(tree.getLabel() + " rooted in " + p.getName());
-				break;
+					return;
+				}
 			}
 		}
 	}

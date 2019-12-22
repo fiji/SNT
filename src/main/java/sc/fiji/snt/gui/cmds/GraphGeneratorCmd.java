@@ -42,11 +42,9 @@ import sc.fiji.snt.gui.GuiUtils;
 @Plugin(type = Command.class, visible = false, label = "Create Dendrogram", initializer = "init")
 public class GraphGeneratorCmd extends CommonDynamicCmd {
 
-//	@Parameter(label="Downsampling value", description="<HTML><div WIDTH=500>"
-//			+ "The max. permitted distance between nodes. "
-//			+ "This will reduce the number of nodes in the dendrogram to facilitate its navigation. "
-//			+ "Set it to zero to skip downsampling.")
-//	private double dFactor;
+//	@Parameter(required = false, label="Simplify", description="Whether dendrogram"
+//			+ "should only contain the root, junction points and end-points.")
+//	private boolean simplify;
 
 	@Parameter(required = false)
 	private Tree tree;
@@ -57,7 +55,6 @@ public class GraphGeneratorCmd extends CommonDynamicCmd {
 			tree = sntService.getTree(false);
 			if (tree.isEmpty()) cancel("There are no traced paths.");
 		}
-
 	}
 
 	/*
@@ -68,12 +65,8 @@ public class GraphGeneratorCmd extends CommonDynamicCmd {
 	@Override
 	public void run() {
 		try {
-//			if (dFactor > 0) {
-//				tree = tree.clone();
-//				tree.downSample(dFactor);
-//			}
+//			if (simplify) tree.downSample(Double.MAX_VALUE);
 			GraphUtils.show(tree.getGraph());
-			status("Righ-click on canvas for options", true);
 		} catch (final IllegalArgumentException exc) { // multiple roots, etc..
 			error("Graph could not be created: " + exc.getLocalizedMessage() + "\n"
 			+ "Please ensure you select a single set of connected paths (one root exclusively)");

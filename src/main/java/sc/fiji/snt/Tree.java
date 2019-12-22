@@ -36,7 +36,6 @@ import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultWeightedEdge;
 import org.scijava.util.ColorRGB;
 
 import ij.IJ;
@@ -50,6 +49,7 @@ import sc.fiji.snt.util.SWCPoint;
 import sholl.UPoint;
 import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.analysis.graph.GraphUtils;
+import sc.fiji.snt.analysis.graph.SWCWeightedEdge;
 import sc.fiji.snt.analysis.sholl.TreeParser;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 
@@ -790,7 +790,7 @@ public class Tree {
 	 *         Euclidean distances
 	 * @throws IllegalArgumentException if tree contains multiple roots or loops
 	 */
-	public DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> getGraph() throws IllegalArgumentException {
+	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph() throws IllegalArgumentException {
 		return GraphUtils.createGraph(this);
 	}
 

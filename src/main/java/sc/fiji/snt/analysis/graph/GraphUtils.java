@@ -22,21 +22,15 @@
 
 package sc.fiji.snt.analysis.graph;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.Window;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultWeightedEdge;
 import org.scijava.util.Colors;
 
 import net.imagej.ImageJ;
@@ -60,33 +54,28 @@ public class GraphUtils {
 	 *                                 used as edge weights
 	 * @return the created graph
 	 */
-	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final Collection<SWCPoint> nodes,
+	public static DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> createGraph(final Collection<SWCPoint> nodes,
 	                                                                              final boolean assignDistancesToWeights) {
 		return createGraphInternal(nodes, assignDistancesToWeights);
 	}
 
-	private static DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> createGraphInternal(final Collection<SWCPoint> nodes,
+	private static DirectedWeightedGraph<SWCPoint, SWCWeightedEdge> createGraphInternal(final Collection<SWCPoint> nodes,
             final boolean assignDistancesToWeights) {
 		final Map<Integer, SWCPoint> map = new HashMap<>();
-		final DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> graph = new DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge>();
+		final DirectedWeightedGraph<SWCPoint, SWCWeightedEdge> graph = new DirectedWeightedGraph<SWCPoint, SWCWeightedEdge>();
 		for (final SWCPoint node : nodes) {
 			map.put(node.id, node);
 			graph.addVertex(node);
 		}
-		for (final Entry<Integer, SWCPoint> entry : map.entrySet()) {
-			final SWCPoint point = entry.getValue();
-			if (point.parent == -1)
+		for (final SWCPoint node : nodes) {
+			if (node.parent == -1)
 				continue;
-			final SWCPoint previousPoint = map.get(point.parent);
-			point.setPreviousPoint(previousPoint);
-			final DefaultWeightedEdge edge = new DefaultWeightedEdge();
-			graph.addEdge(previousPoint, point, edge);
+			final SWCPoint previousPoint = map.get(node.parent);
+			node.setPreviousPoint(previousPoint);
+			final SWCWeightedEdge edge = new SWCWeightedEdge();
+			graph.addEdge(previousPoint, node, edge);
 			if (assignDistancesToWeights) {
-				final double xd = point.x - previousPoint.x;
-				final double yd = point.y - previousPoint.y;
-				final double zd = point.z - previousPoint.z;
-				final double sqDistance = xd * xd + yd * yd + zd * zd;
-				graph.setEdgeWeight(edge, Math.sqrt(sqDistance));
+				graph.setEdgeWeight(edge, node.distanceTo(previousPoint));
 			}
 		}
 		return graph;
@@ -99,8 +88,8 @@ public class GraphUtils {
 	 * @return the created graph with edge weights corresponding to inter-node
 	 *         Euclidean distances
 	 */
-	public static DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> createGraph(final Tree tree) throws IllegalArgumentException {
-		final DirectedWeightedGraph<SWCPoint, DefaultWeightedEdge> graph = createGraphInternal(tree.getNodesAsSWCPoints(), true);
+	public static DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> createGraph(final Tree tree) throws IllegalArgumentException {
+		final DirectedWeightedGraph<SWCPoint, SWCWeightedEdge> graph = createGraphInternal(tree.getNodesAsSWCPoints(), true);
 		graph.setLabel(tree.getLabel());
 		return graph;
 	}
@@ -119,31 +108,22 @@ public class GraphUtils {
 	}
 
 	/**
-	 * Displays a graph in a dedicated window featuring UI commands for interactive
-	 * visualization and export options.
+	 * Displays a graph in a SNT's "Dendrogram Viewer" featuring UI commands for
+	 * interactive visualization and export options.
 	 *
-	 * @param       <V> the graph vertex type
-	 * @param       <E> the graph edge type
+	 * @param <V>   the graph's vertex type
+	 * @param <E>   the graph's edge type
 	 * @param graph the graph to be displayed
 	 * @return the assembled window
 	 */
-	public static <V, E> Window show(final Graph<V, E> graph) {
+	public static Window show(final Graph<SWCPoint, SWCWeightedEdge> graph) {
 		GuiUtils.setSystemLookAndFeel();
-		final JDialog frame = new JDialog((JFrame) null, "SNT Graph Canvas");
-		final TreeGraphAdapter<?, ?> graphAdapter = new TreeGraphAdapter<>(graph);
+		final JDialog frame = new JDialog((JFrame) null, "SNT Dendrogram Viewer");
+		final TreeGraphAdapter graphAdapter = new TreeGraphAdapter(graph);
 		final TreeGraphComponent graphComponent = new TreeGraphComponent(graphAdapter);
-		frame.add(graphComponent);
-		// By default, frame dimensions are exaggerated. Curb frame size a bit
-		final Dimension maxDim = Toolkit.getDefaultToolkit().getScreenSize();
-		final Dimension prefDim = frame.getPreferredSize();
-		frame.setMinimumSize(new Dimension(500,500));
-		frame.setPreferredSize(new Dimension((int) Math.min(prefDim.getWidth(), maxDim.getWidth() / 2),
-				(int) Math.min(prefDim.getHeight(), maxDim.getHeight() / 2)));
+		frame.add(graphComponent.getJSplitPane());
 		frame.pack();
-		SwingUtilities.invokeLater(() -> {
-			frame.setVisible(true);
-			new GuiUtils(frame).tempMsg("Right-click on Canvas for Options & Controls");
-		});
+		SwingUtilities.invokeLater(() -> frame.setVisible(true));
 		return frame;
 	}
 
@@ -152,8 +132,9 @@ public class GraphUtils {
 		SNTUtils.setDebugMode(true);
 		SNTService sntService = ij.context().getService(SNTService.class);
 		final Tree tree = sntService.demoTree();
+		tree.downSample(Double.MAX_VALUE);
 		tree.setColor(Colors.RED);
-		DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> graph = tree.getGraph();
+		final DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph = tree.getGraph();
 		final Viewer3D recViewer = new Viewer3D(ij.context());
 		final Tree convertedTree = GraphUtils.createTree(graph);
 		convertedTree.setColor(Colors.CYAN);

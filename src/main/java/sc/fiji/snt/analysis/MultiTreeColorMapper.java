@@ -169,7 +169,7 @@ public class MultiTreeColorMapper extends ColorMapper {
 					break;
 				case N_BRANCHES:
 					integerScale = true;
-					mt.value = analyzer.getStrahlerAnalyzer().getBranchCounts().values().stream().mapToDouble(f -> f).sum();
+					mt.value = analyzer.getNBranches();
 					break;
 				case ID:
 					integerScale = true;

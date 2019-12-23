@@ -176,6 +176,14 @@ public class StrahlerAnalyzer {
 	}
 
 	/**
+	 * @return the graph of the tree being parsed.
+	 */
+	public DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> getGraph() {
+		if (graph == null) compute();
+		return graph;
+	}
+
+	/**
 	 * @return the highest Horton-Strahler number of the parsed tree.
 	 */
 	public int getRootNumber() {

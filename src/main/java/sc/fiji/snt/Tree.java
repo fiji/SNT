@@ -57,8 +57,8 @@ import sc.fiji.snt.hyperpanes.MultiDThreePanes;
  * Utility class to access a Collection of Paths. A Tree is the preferred way to
  * group, access and manipulate {@link Path}s that share something in common,
  * specially when scripting SNT. Most methods are multithreaded. Note that a
- * "Tree" here is literally a collection of {@link Path}s and it does not
- * reflect graph theory terminology.
+ * "Tree" here is literally a collection of {@link Path}s and no restrictions
+ * are imposed on its topology.
  *
  * @author Tiago Ferreira
  */
@@ -788,6 +788,7 @@ public class Tree {
 	 *
 	 * @return the Tree's graph with edge weights corresponding to inter-node
 	 *         Euclidean distances
+	 * @throws IllegalArgumentException if tree contains multiple roots or loops
 	 */
 	public DefaultDirectedGraph<SWCPoint, DefaultWeightedEdge> getGraph() throws IllegalArgumentException {
 		return GraphUtils.createGraph(this);

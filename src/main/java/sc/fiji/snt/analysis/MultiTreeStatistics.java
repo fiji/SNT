@@ -239,7 +239,7 @@ public class MultiTreeStatistics extends TreeStatistics {
 				stat.addValue(t.getNodes().size());
 				break;
 			case N_BRANCHES:
-				stat.addValue(ta.getStrahlerAnalyzer().getBranchCounts().values().stream().mapToDouble(f -> f).sum());
+				stat.addValue(ta.getNBranches());
 				break;
 			case N_PRIMARY_BRANCHES:
 				stat.addValue(ta.getPrimaryBranches().size());

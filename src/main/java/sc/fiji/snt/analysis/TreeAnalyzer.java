@@ -351,7 +351,7 @@ public class TreeAnalyzer extends ContextCommand {
 			return getBranchPoints().size();
 		case MultiTreeStatistics.N_BRANCHES:
 			try {
-				return (int)getStrahlerAnalyzer().getBranchCounts().values().stream().mapToDouble(f -> f).sum();
+				return getNBranches();
 			} catch (final IllegalArgumentException ignored) {
 				SNTUtils.log("Error: " + ignored.getMessage());
 				return Double.NaN;
@@ -676,6 +676,23 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
+	 * Checks whether this tree is topologically valid, i.e., contains only one root
+	 * and no loops.
+	 *
+	 * @return true, if Tree is valid, false otherwise
+	 */
+	public boolean isValid() {
+		if (sAnalyzer == null)
+			sAnalyzer = new StrahlerAnalyzer(tree);
+		try {
+			sAnalyzer.getGraph();
+			return true;
+		} catch (final IllegalArgumentException ignored) {
+			return false;
+		}
+	}
+
+	/**
 	 * Gets the highest {@link StrahlerAnalyzer#getRootNumber() Strahler number} of
 	 * the analyzed tree.
 	 *
@@ -698,7 +715,6 @@ public class TreeAnalyzer extends ContextCommand {
 		return sAnalyzer;
 	}
 
-
 	/**
 	 * Gets the average {@link StrahlerAnalyzer#getAvgBifurcationRatio() Strahler
 	 * bifurcation ratio} of the analyzed tree.
@@ -709,6 +725,17 @@ public class TreeAnalyzer extends ContextCommand {
 	public double getStrahlerBifurcationRatio() throws IllegalArgumentException {
 		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
 		return sAnalyzer.getAvgBifurcationRatio();
+	}
+
+	/**
+	 * Gets the number of branches in the analyzed tree.
+	 *
+	 * @return the number of branches
+	 * @throws IllegalArgumentException if tree contains multiple roots or loops
+	 */
+	public int getNBranches() throws IllegalArgumentException {
+		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
+		return (int) sAnalyzer.getBranchCounts().values().stream().mapToDouble(f -> f).sum();
 	}
 
 	private double sumLength(final Collection<Path> paths) {

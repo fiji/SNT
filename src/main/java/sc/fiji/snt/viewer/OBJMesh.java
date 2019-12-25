@@ -45,6 +45,7 @@ import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 
 import sc.fiji.snt.SNTUtils;
+import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 
@@ -61,6 +62,7 @@ public class OBJMesh {
 	protected final RemountableDrawableVBO drawable;
 	private double xMirrorCoord = Double.NaN;
 	private String label;
+	protected String unit;
 
 	/**
 	 * Instantiates a new wavefront OBJ mesh from a file path/URL.
@@ -71,16 +73,17 @@ public class OBJMesh {
 	 *           contain a compilable mesh
 	 */
 	public OBJMesh(final String filePath) {
-		this(getURL(filePath));
+		this(getURL(filePath), null);
 	}
 
-	public OBJMesh(final URL url) {
+	public OBJMesh(final URL url, final String meshUnit) {
 		loader = new OBJFileLoaderPlus(url);
 		if (!loader.compileModel(null)) {
 			throw new IllegalArgumentException(
 				"Mesh could not be compiled. Invalid file?");
 		}
 		drawable = new RemountableDrawableVBO(loader, this);
+		unit = meshUnit;
 	}
 
 	/**
@@ -156,6 +159,18 @@ public class OBJMesh {
 	}
 
 	/**
+	 * Changes the transparency of this mesh.
+	 * 
+	 * @param transparencyPercent the mesh transparency (in percentage).
+	 */
+	public void setTransparency(final double transparencyPercent) {
+		final Color existing = drawable.getColor();
+		final Color adjusted = new Color(existing.r, existing.g, existing.b,
+				(int) Math.round((100 - transparencyPercent) * 255 / 100));
+		drawable.setColor(adjusted);
+	}
+
+	/**
 	 * Determines whether the mesh bounding box should be displayed.
 	 * 
 	 * @param boundingBoxColor the color of the mesh bounding box. If null, no
@@ -167,6 +182,30 @@ public class OBJMesh {
 				.getBlue(), boundingBoxColor.getAlpha());
 		drawable.setBoundingBoxColor(c);
 		drawable.setBoundingBoxDisplayed(c != null);
+	}
+
+	/**
+	 * Gets the minimum bounding box of this mesh.
+	 * 
+	 * @param hemiHalf either "left", "l", "right", "r" otherwise bounding box is
+	 *                 retrieved for both hemi-halves, i.e., the full mesh. It is
+	 *                 ignored if a hemisphere was already specified in the
+	 *                 constructor.
+	 * @return the minimum bounding box
+	 */
+	public BoundingBox getBoundingBox(final String hemiHalf) {
+		final String normHemisphere = getHemisphere(hemiHalf);
+		final BoundingBox bbox = new BoundingBox();
+		bbox.info = label + " (BBox)";
+		if ("both".equals(normHemisphere) && drawable.getBounds() != null) {
+			drawable.updateBounds();
+			final BoundingBox3d bBox3d = drawable.getBounds();
+			bbox.setOrigin(new PointInImage(bBox3d.getXmin(), bBox3d.getYmin(), bBox3d.getZmin()));
+			bbox.setOriginOpposite(new PointInImage(bBox3d.getXmax(), bBox3d.getYmax(), bBox3d.getZmax()));
+			return bbox;
+		}
+		bbox.compute(getVertices(normHemisphere).iterator());
+		return bbox;
 	}
 
 	protected String getLabel() {

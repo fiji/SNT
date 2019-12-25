@@ -45,8 +45,8 @@ import org.scijava.prefs.PrefService;
 import org.scijava.widget.Button;
 
 import sc.fiji.snt.analysis.PathProfiler;
-import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.TreeColorMapper;
+import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.Path;
@@ -132,9 +132,9 @@ public class TreeMapperCmd extends DynamicCommand {
 		if (showPlot) {
 			SNTUtils.log("Creating 2D plot...");
 			plot = new Viewer2D(context());
-			plot.addTree(tree);
+			plot.add(tree);
 			plot.addColorBarLegend(colorTable, minMax[0], minMax[1]);
-			plot.showPlot();
+			plot.show();
 		}
 		if (showInRecViewer) {
 			final Viewer3D recViewer = sntService.getRecViewer();
@@ -150,14 +150,15 @@ public class TreeMapperCmd extends DynamicCommand {
 		final MutableModuleItem<String> measurementChoiceInput = getInfo()
 			.getMutableInput("measurementChoice", String.class);
 		final List<String> choices = new ArrayList<>();
-		Collections.addAll(choices, TreeAnalyzer.COMMON_MEASUREMENTS);
+		Collections.addAll(choices, TreeStatistics.COMMON_MEASUREMENTS);
 		choices.add(TreeColorMapper.PATH_DISTANCE);
 		choices.add(TreeColorMapper.TAG_FILENAME);
+		choices.add(TreeColorMapper.STRAHLER_NUMBER);
 		if (setValuesFromSNTService) choices.add(TreeColorMapper.VALUES);
 		Collections.sort(choices);
 		measurementChoiceInput.setChoices(choices);
 		measurementChoiceInput.setValue(this, prefService.get(getClass(),
-			"measurementChoice", TreeColorMapper.BRANCH_ORDER));
+			"measurementChoice", TreeColorMapper.STRAHLER_NUMBER));
 		resolveInput("setValuesFromSNTService");
 		if (lutChoice == null) lutChoice = prefService.get(getClass(), "lutChoice",
 			"mpl-viridis.lut");
@@ -199,7 +200,7 @@ public class TreeMapperCmd extends DynamicCommand {
 	@SuppressWarnings("unused")
 	private void removeColorCoding() {
 		for (final Path p : tree.list()) {
-			p.setColor(null);
+			p.setColor((java.awt.Color)null);
 			p.setNodeColors(null);
 		}
 		statusService.showStatus("Color code removed...");
@@ -210,7 +211,8 @@ public class TreeMapperCmd extends DynamicCommand {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
-		final Tree tree = new Tree(SNTUtils.randomPaths());
+		final SNTService sntService = ij.context().getService(SNTService.class);
+		final Tree tree = sntService.demoTrees().get(0);
 		input.put("tree", tree);
 		ij.command().run(TreeMapperCmd.class, true, input);
 	}

@@ -231,10 +231,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 		morphoTagsMenu = new JMenu("Morphology");
 		morphoTagsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.RULER));
-		final JCheckBoxMenuItem tagOrderCbmi = new JCheckBoxMenuItem(
-			MultiPathActionListener.ORDER_TAG_CMD, false);
-		tagOrderCbmi.addItemListener(multiPathListener);
-		morphoTagsMenu.add(tagOrderCbmi);
 		final JCheckBoxMenuItem tagLengthCbmi = new JCheckBoxMenuItem(
 			MultiPathActionListener.LENGTH_TAG_CMD, false);
 		tagLengthCbmi.addItemListener(multiPathListener);
@@ -244,6 +240,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		tagRadiusCbmi.addItemListener(multiPathListener);
 		morphoTagsMenu.add(tagRadiusCbmi);
 		tagsMenu.add(morphoTagsMenu);
+		final JCheckBoxMenuItem tagOrderCbmi = new JCheckBoxMenuItem(
+				MultiPathActionListener.ORDER_TAG_CMD, false);
+			tagOrderCbmi.addItemListener(multiPathListener);
+			morphoTagsMenu.add(tagOrderCbmi);
 		tagsMenu.addSeparator();
 
 		jmi = new JMenuItem(MultiPathActionListener.CUSTOM_TAG_CMD);
@@ -470,7 +470,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					.getSWCType())));
 			}
 			else {
-				pathAndFillManager.getPathsFiltered().forEach(p -> p.setColor(null));
+				pathAndFillManager.getPathsFiltered().forEach(p -> p.setColor((Color)null));
 			}
 			refreshManager(false, true);
 		}
@@ -487,7 +487,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 	private void resetPathsColor(final Collection<Path> paths) {
 		for (final Path p : paths) {
-			p.setColor(null);
+			p.setColor((Color)null);
 		}
 		refreshManager(true, true);
 	}
@@ -499,7 +499,10 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			p.disconnectFromAll();
 			pathAndFillManager.deletePath(p);
 		}
-		if (resetIDs) pathAndFillManager.resetIDs();
+		if (resetIDs) {
+			pathAndFillManager.resetIDs();
+			plugin.unsavedPaths = false;
+		}
 		refreshManager(false, true);
 	}
 
@@ -1460,7 +1463,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		if (table == null) table = new DefaultGenericTable();
 		// we will assume that immediately after being retrieved,
 		// the table will contain unsaved data. //FIXME: sloppy
-		tableSaved = false;
+		tableSaved = table.getRowCount() > 0;
 		return table;
 	}
 
@@ -1679,7 +1682,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		private final static String CUSTOM_TAG_CMD = "Custom...";
 		private final static String LENGTH_TAG_CMD = "Length";
 		private final static String MEAN_RADIUS_TAG_CMD = "Mean Radius";
-		private final static String ORDER_TAG_CMD = "Branch Order";
+		private final static String ORDER_TAG_CMD = "Path Order";
 		private final static String CHANNEL_TAG_CMD = "Traced Channel";
 		private final static String FRAME_TAG_CMD = "Traced Frame";
 		private final static String SLICE_LABEL_TAG_CMD = "Slice Labels";
@@ -1784,7 +1787,6 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					}
 					ta.setTable(getTable(), TABLE_TITLE);
 					ta.summarize(getDescription(selectedPaths), true);
-					ta.updateAndDisplayTable();
 					return;
 				}
 				catch (final IllegalArgumentException ignored) {

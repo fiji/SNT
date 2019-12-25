@@ -40,17 +40,6 @@ public class ColorMapper {
 	protected double min = Double.MAX_VALUE;
 	protected double max = Double.MIN_VALUE;
 
-	/*
-	 * This is just so that we can keep capitalized strings to use in the GUI while
-	 * allowing script-friendly lower-case arguments
-	 */
-	protected String normalizedMeasurement(final String measurement) {
-		String normMeasurement = measurement.toLowerCase().replace("_", " ");
-		normMeasurement = new StringBuilder().append(normMeasurement.substring(0, 1)
-			.toUpperCase()).append(normMeasurement.substring(1)).toString();
-		return normMeasurement;
-	}
-
 	public void map(final String measurement, final ColorTable colorTable) {
 		if (colorTable == null) throw new IllegalArgumentException(
 			"colorTable cannot be null");
@@ -105,6 +94,10 @@ public class ColorMapper {
 	 */
 	public double[] getMinMax() {
 		return new double[] { min, max };
+	}
+
+	public ColorTable getColorTable() {
+		return colorTable;
 	}
 
 }

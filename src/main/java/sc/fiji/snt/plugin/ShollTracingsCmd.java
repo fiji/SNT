@@ -434,7 +434,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive,
 			return new Tree(snt.getPathAndFillManager().getSelectedPaths());
 		}
 		boolean containsType = false;
-		final Set<Integer> existingTypes = tree.getSWCtypes();
+		final Set<Integer> existingTypes = tree.getSWCTypes();
 		final List<Integer> filteredTypes = new ArrayList<>();
 		if (choice.contains("none")) {
 			filteredTypes.addAll(Path.getSWCtypes());

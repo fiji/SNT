@@ -107,6 +107,7 @@ import sc.fiji.snt.gui.SigmaPalette;
 import sc.fiji.snt.io.FlyCircuitLoader;
 import sc.fiji.snt.io.NeuroMorphoLoader;
 import sc.fiji.snt.plugin.LocalThicknessCmd;
+import sc.fiji.snt.plugin.PathOrderAnalysisCmd;
 import sc.fiji.snt.plugin.PlotterCmd;
 import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.viewer.Viewer3D;
@@ -116,6 +117,8 @@ import sc.fiji.snt.gui.cmds.ChooseDatasetCmd;
 import sc.fiji.snt.gui.cmds.CompareFilesCmd;
 import sc.fiji.snt.gui.cmds.ComputeSecondaryImg;
 import sc.fiji.snt.gui.cmds.ComputeTubenessImg;
+import sc.fiji.snt.gui.cmds.DetailedMeasurementsCmd;
+import sc.fiji.snt.gui.cmds.GraphGeneratorCmd;
 import sc.fiji.snt.gui.cmds.JSONImporterCmd;
 import sc.fiji.snt.gui.cmds.MLImporterCmd;
 import sc.fiji.snt.gui.cmds.MultiSWCImporterCmd;
@@ -1899,7 +1902,7 @@ public class SNTUI extends JDialog {
 		return openFile(promptMsg, suggestedFile);
 	}
 
-	private File openFile(final String promptMsg, final File suggestedFile) {
+	protected File openFile(final String promptMsg, final File suggestedFile) {
 		final boolean focused = hasFocus(); //HACK: On MacOS this seems to help to ensure prompt is displayed as frontmost
 		if (focused) toBack();
 		final File openedFile = plugin.legacyService.getIJ1Helper().openDialog(promptMsg, suggestedFile);
@@ -2056,8 +2059,10 @@ public class SNTUI extends JDialog {
 		importSubmenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.IMPORT));
 		final JMenu exportSubmenu = new JMenu("Export (All Paths)");
 		exportSubmenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.EXPORT));
-		final JMenu analysisMenu = new JMenu("Utilities");
+		final JMenu analysisMenu = new JMenu("Analysis");
 		menuBar.add(analysisMenu);
+		final JMenu utilitiesMenu = new JMenu("Utilities");
+		menuBar.add(utilitiesMenu);
 		final ScriptInstaller installer = new ScriptInstaller(plugin.getContext(), this);
 		menuBar.add(installer.getScriptsMenu());
 		final JMenu viewMenu = new JMenu("View");
@@ -2167,24 +2172,53 @@ public class SNTUI extends JDialog {
 		plotMenuItem = new JMenuItem("Reconstruction Plotter...", IconFactory.getMenuIcon(IconFactory.GLYPH.DRAFT));
 		plotMenuItem.addActionListener(listener);
 
-		analysisMenu.add(measureMenuItem);
+		final JMenuItem pathOrderAnalysis = new JMenuItem("Path Order Analysis",
+				IconFactory.getMenuIcon(IconFactory.GLYPH.BRANCH_CODE));
+		pathOrderAnalysis.addActionListener(e -> {
+			final PathOrderAnalysisCmd pa = new PathOrderAnalysisCmd(new Tree(pathAndFillManager.getPathsFiltered()));
+			pa.setContext(plugin.getContext());
+			pa.setTable(new DefaultGenericTable(), "SNT: Path Order Analysis (All Paths)");
+			pa.run();
+		});
+		analysisMenu.add(pathOrderAnalysis);
 		analysisMenu.add(shollAnalysisHelpMenuItem());
 		analysisMenu.add(strahlerMenuItem);
-
 		analysisMenu.addSeparator();
-		analysisMenu.add(plotMenuItem);
+	
+		// Measuring options
+		final JMenuItem measureWithPrompt = new JMenuItem("Measure...",
+				IconFactory.getMenuIcon(IconFactory.GLYPH.TABLE));
+		measureWithPrompt.addActionListener(e -> {
+			if (noPathsError()) return;
+			final HashMap<String, Object> inputs = new HashMap<>();
+			final Tree tree = new Tree(pathAndFillManager.getPathsFiltered());
+			tree.setLabel("All Paths");
+			inputs.put("tree", tree);
+			(new DynamicCmdRunner(DetailedMeasurementsCmd.class, inputs)).run();
+		});
+		analysisMenu.add(measureWithPrompt);
+		analysisMenu.add(measureMenuItem);
+
+		// Utilities
+		utilitiesMenu.add(plotMenuItem);
 		final JMenuItem compareFiles = new JMenuItem("Compare Reconstructions...");
 		compareFiles.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.BINOCULARS));
-		analysisMenu.add(compareFiles);
+		utilitiesMenu.add(compareFiles);
 		compareFiles.addActionListener(e -> {
 			(new CmdRunner(CompareFilesCmd.class)).execute();
 		});
-		analysisMenu.addSeparator();
-
-		final JMenu scriptUtilsMenu = installer.getUtilScriptsMenu();
-		scriptUtilsMenu.setText("Utility Scripts");
+		utilitiesMenu.addSeparator();
+		final JMenuItem graphGenerator = new JMenuItem("Create Dendrogram",
+				IconFactory.getMenuIcon(IconFactory.GLYPH.DIAGRAM));
+		utilitiesMenu.add(graphGenerator);
+		graphGenerator.addActionListener(e -> {
+			(new DynamicCmdRunner(GraphGeneratorCmd.class, null)).run();
+		});
+		utilitiesMenu.addSeparator();
+		final JMenu scriptUtilsMenu = installer.getBatchScriptsMenu();
+		scriptUtilsMenu.setText("Batch Scripts");
 		scriptUtilsMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.PLUS));
-		analysisMenu.add(scriptUtilsMenu);
+		utilitiesMenu.add(scriptUtilsMenu);
 
 		// View menu
 		final JMenuItem arrangeWindowsMenuItem = new JMenuItem("Arrange Views");
@@ -3487,21 +3521,25 @@ public class SNTUI extends JDialog {
 		private HashMap<String, Object> inputs;
 		private boolean rebuildCanvas;
 
+		public DynamicCmdRunner(final Class<? extends Command> cmd, final HashMap<String, Object> inputs) {
+			this(cmd, inputs, getState(), false);
+		}
+	
 		public DynamicCmdRunner(final Class<? extends Command> cmd, final HashMap<String, Object> inputs,
-				final int uiStateduringRun) {
-			this(cmd, inputs, uiStateduringRun, false);
+				final int uiStateDuringRun) {
+			this(cmd, inputs, uiStateDuringRun, false);
 		}
 
 		public DynamicCmdRunner(final Class<? extends Command> cmd, final HashMap<String, Object> inputs,
-				final int uiStateduringRun, final boolean rebuildCanvas) {
+				final int uiStateDuringRun, final boolean rebuildCanvas) {
 			assert SwingUtilities.isEventDispatchThread();
 			this.cmd = cmd;
 			this.preRunState = getState();
 			this.inputs = inputs;
 			this.rebuildCanvas = rebuildCanvas;
 			run = initialize();
-			if (run && preRunState != uiStateduringRun)
-				changeState(uiStateduringRun);
+			if (run && preRunState != uiStateDuringRun)
+				changeState(uiStateDuringRun);
 		}
 	
 		private boolean initialize() {
@@ -3536,7 +3574,7 @@ public class SNTUI extends JDialog {
 				cmdService.run(cmd, true, inputs);
 			} catch (final OutOfMemoryError e) {
 				e.printStackTrace();
-				guiUtils.error("It seems there is not enough memory comple command. See Console for details.");
+				guiUtils.error("There is not enough memory to complete command. See Console for details.");
 			} finally {
 				if (preRunState != getState())
 					changeState(preRunState);

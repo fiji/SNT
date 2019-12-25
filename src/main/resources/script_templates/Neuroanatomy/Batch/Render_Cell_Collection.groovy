@@ -22,7 +22,7 @@ import sc.fiji.snt.viewer.Viewer3D
 start = new Date()
 
 // Retrieve the list of Trees from the reconstruction files in the directory
-trees = Tree.listFromDir(dir)
+trees = Tree.listFromDir(dir.getAbsolutePath())
 if (trees.isEmpty()) {
 	println("No files found in "+ dir)
 	return

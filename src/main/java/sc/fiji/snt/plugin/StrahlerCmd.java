@@ -22,25 +22,25 @@
 
 package sc.fiji.snt.plugin;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Comparator;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.scijava.plugin.Parameter;
+import org.scijava.table.DefaultGenericTable;
+import org.scijava.ui.UIService;
+import org.scijava.util.Colors;
+
+import net.imagej.ImageJ;
 import net.imagej.plot.CategoryChart;
 import net.imagej.plot.LineSeries;
+import net.imagej.plot.LineStyle;
+import net.imagej.plot.MarkerStyle;
 import net.imagej.plot.PlotService;
-import org.scijava.table.DefaultGenericTable;
-
-import org.scijava.plugin.Parameter;
-import org.scijava.ui.UIService;
-
-import sc.fiji.snt.analysis.TreeAnalyzer;
-import sc.fiji.snt.Path;
+import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.analysis.StrahlerAnalyzer;
+import sc.fiji.snt.analysis.TreeAnalyzer;
 
 /**
  * Command to perform Horton-Strahler analysis on a {@link Tree}.
@@ -55,15 +55,17 @@ public class StrahlerCmd extends TreeAnalyzer {
 	@Parameter
 	private UIService uiService;
 
-	private int maxBranchOrder;
-	private int nPathsPreviousOrder;
-	private final Map<Integer, Double> nPathsMap = new TreeMap<>();
-	private final Map<Integer, Double> bPointsMap = new TreeMap<>();
-	private final Map<Integer, Double> bRatioMap = new TreeMap<>();
-	private final Map<Integer, Double> tLengthMap = new TreeMap<>();
+	private final StrahlerAnalyzer sAnalyzer;
+	private Map<Integer, Double> tLengthMap;
+	private Map<Integer, Double> bPointsMap;
+	private Map<Integer, Double> nBranchesMap;
+	private Map<Integer, Double> bRatioMap;
+	private int maxOrder;
+
 
 	public StrahlerCmd(final Tree tree) {
 		super(tree);
+		sAnalyzer = new StrahlerAnalyzer(tree);
 	}
 
 	@Override
@@ -72,129 +74,65 @@ public class StrahlerCmd extends TreeAnalyzer {
 			cancel("No Paths to Measure");
 			return;
 		}
-		statusService.showStatus("Measuring Paths...");
-		compute();
+		statusService.showStatus("Classifying branches...");
+		maxOrder = sAnalyzer.getRootNumber();
+		tLengthMap = sAnalyzer.getLengths();
+		nBranchesMap = sAnalyzer.getBranchCounts();
+		bPointsMap = sAnalyzer.getBranchPointCounts();
+		bRatioMap = sAnalyzer.getBifurcationRatios();
 		updateAndDisplayTable();
 		displayPlot();
 		statusService.clearStatus();
 	}
 
-	public void compute() {
-		maxBranchOrder = 1;
-		for (final Path p : tree.list()) {
-			if (p.getOrder() > maxBranchOrder) maxBranchOrder = p.getOrder();
-		}
-		IntStream.rangeClosed(1, maxBranchOrder).forEach(order -> {
-
-			final ArrayList<Path> groupedPaths = tree.list().stream() // convert set
-																																// of paths to
-																																// stream
-				.filter(path -> path.getOrder() == order) // include only those of this
-																									// order
-				.collect(Collectors.toCollection(ArrayList::new)); // collect the output
-																														// in a new list
-
-			// now measure the group
-			final TreeAnalyzer analyzer = new TreeAnalyzer(new Tree(groupedPaths));
-			if (!analyzer.getParsedTree().isEmpty()) {
-				tLengthMap.put(order, analyzer.getCableLength());
-				final int nPaths = analyzer.getNPaths();
-				nPathsMap.put(order, (double) nPaths);
-				bPointsMap.put(order, (double) analyzer.getBranchPoints().size());
-				bRatioMap.put(order, (order > 1) ? (double) nPaths / nPathsPreviousOrder
-					: Double.NaN);
-				nPathsPreviousOrder = nPaths;
-			}
-		});
-	}
-
 	@Override
 	public void updateAndDisplayTable() {
-		if (table == null) setTable(new DefaultGenericTable(),
-			"Horton-Strahler Analysis");
-		IntStream.rangeClosed(1, maxBranchOrder).forEach(order -> {
+		if (table == null)
+			setTable(new DefaultGenericTable(), "Horton-Strahler Table");
+		IntStream.rangeClosed(1, maxOrder).forEach(order -> {
 			table.appendRow();
 			final int row = Math.max(0, table.getRowCount() - 1);
-			table.set(getCol("Branching order"), row, order);
-			table.set(getCol("Horton-Strahler #"), row, maxBranchOrder - order + 1);
+			table.set(getCol("Horton-Strahler #"), row, order);
+			table.set(getCol("Rev. Horton-Strahler #"), row, maxOrder - order + 1);
 			table.set(getCol("Length (Sum)"), row, tLengthMap.get(order));
-			table.set(getCol("# Paths"), row, (nPathsMap.get(order).intValue()));
-			table.set(getCol("# Branch Points"), row, bPointsMap.get(order)
-				.intValue());
+			table.set(getCol("# Branches"), row, nBranchesMap.get(order));
 			table.set(getCol("Bifurcation ratio"), row, bRatioMap.get(order));
+			table.set(getCol("# Branch Points"), row, bPointsMap.get(order));
 		});
 		super.updateAndDisplayTable();
 	}
 
 	public void displayPlot() {
 
-		final CategoryChart<Integer> chart = plotService.newCategoryChart(
-			Integer.class);
-		final List<Integer> categories = IntStream.rangeClosed(1, maxBranchOrder)
-				.boxed().sorted(Collections.reverseOrder()).collect(Collectors.toList());
-		chart.categoryAxis().setManualCategories(categories);
+		final CategoryChart<Integer> chart = plotService.newCategoryChart(Integer.class);
+		chart.categoryAxis().setLabel("Horton-Strahler order");
+		chart.categoryAxis().setOrder(Comparator.reverseOrder());
 
 		final LineSeries<Integer> series1 = chart.addLineSeries();
-		series1.setLabel("N. Paths");
-		series1.setValues(nPathsMap);
+		series1.setLabel("No. of branches");
+		series1.setValues(nBranchesMap);
+		series1.setStyle(chart.newSeriesStyle(Colors.BLUE, LineStyle.SOLID, MarkerStyle.CIRCLE));
 
 		final LineSeries<Integer> series2 = chart.addLineSeries();
-		series2.setLabel("N. Branch points");
-		series2.setValues(bPointsMap);
-
+		series2.setLabel("Length");
+		series2.setValues(tLengthMap);
+		series2.setStyle(chart.newSeriesStyle(Colors.RED, LineStyle.SOLID, MarkerStyle.CIRCLE));
+		
 		final LineSeries<Integer> series3 = chart.addLineSeries();
-		series3.setLabel("Length");
-		series3.setValues(tLengthMap);
+		series3.setLabel("Bifurcation ratio");
+		series3.setValues(bRatioMap);
+		series3.setStyle(chart.newSeriesStyle(Colors.BLACK, LineStyle.SOLID, MarkerStyle.CIRCLE));
 
-		chart.categoryAxis().setLabel("Horton-Strahler number");
 		uiService.show("SNT: Strahler Plot", chart);
 	}
 
-	/**
-	 * @return the map containing the number of paths on each order (reverse
-	 *         Horton-Strahler number as key and counts as value). Single-point
-	 *         paths are ignored. An empty map will be returned if
-	 *         {{@link #compute()} has not been called.
-	 */
-	public Map<Integer, Double> getCountMap() {
-		return nPathsMap;
+	public static void main(final String[] args) {
+		final ImageJ ij = new ImageJ();
+		ij.ui().showUI();
+		final SNTService sntService = ij.context().getService(SNTService.class);
+		final Tree tree = sntService.demoTree();
+		final StrahlerCmd cmd = new StrahlerCmd(tree);
+		cmd.setContext(ij.context());
+		cmd.run();
 	}
-
-	/**
-	 * @return the map containing the number of branch points on each order
-	 *         (reverse Horton-Strahler number as key and branch point count as
-	 *         value). Single-point paths are ignored. An empty map will be
-	 *         returned if {{@link #compute()} has not been called.
-	 */
-	public Map<Integer, Double> getBranchPointMap() {
-		return bPointsMap;
-	}
-
-	/**
-	 * @return the highest Horton-Strahler number of the parsed tree.
-	 */
-	public int getRootNumber() {
-		return this.maxBranchOrder;
-	}
-
-	/**
-	 * @return the map containing the total path lengh on each order (reverse
-	 *         Horton-Strahler number as key and sum length as value).
-	 *         Single-point paths are ignored. An empty map will be returned if
-	 *         {{@link #compute()} has not been called.
-	 */
-	public Map<Integer, Double> getLengthMap() {
-		return tLengthMap;
-	}
-
-	/**
-	 * @return the map containing th bifurcation ratios between orders (reverse
-	 *         Horton-Strahler numbers as key and ratios as value). Single-point
-	 *         paths are ignored. An empty map will be returned if
-	 *         {{@link #compute()} has not been called.
-	 */
-	public Map<Integer, Double> getRatioMap() {
-		return bRatioMap;
-	}
-
 }

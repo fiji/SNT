@@ -32,6 +32,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -744,6 +745,17 @@ public class Viewer3D {
 	}
 
 	/**
+	 * Adds a color bar legend (LUT ramp) from a {@link ColorMapper}.
+	 *
+	 * @param colorMapper the class extending ColorMapper ({@link TreeColorMapper}, etc.)
+	 */
+	public <T extends sc.fiji.snt.analysis.ColorMapper> void addColorBarLegend(final T colorMapper)
+	{
+		final double[] minMax = colorMapper.getMinMax();
+		addColorBarLegend(colorMapper.getColorTable(), minMax[0], minMax[1]);
+	}
+
+	/**
 	 * Adds a color bar legend (LUT ramp) using default settings.
 	 *
 	 * @param colorTable the color table
@@ -798,15 +810,15 @@ public class Viewer3D {
 	 * @return the frame containing the viewer.
 	 */
 	public Frame show() {
-		return show(-1, -1);
+		return show(0, 0);
 	}
 
 	/**
 	 * Displays the viewer under specified dimensions. Useful when generating
 	 * scene animations programmatically.
 	 * 
-	 * @param width the width of the frame
-	 * @param height the height of the frame
+	 * @param width the width of the frame. {@code -1} will set width to its maximum.
+	 * @param height the height of the frame. {@code -1} will set height to its maximum.
 	 * @return the frame containing the viewer.
 	 * @see #show()
 	 */
@@ -815,9 +827,7 @@ public class Viewer3D {
 		if (!viewInitialized && frame != null) {
 			updateView();
 			frame.setVisible(true);
-			if (width > 0 || height > 0) {
-				frame.setSize(width, height);
-			}
+			setFrameSize(width, height);
 			return frame;
 		}
 		else if (viewInitialized) {
@@ -831,9 +841,14 @@ public class Viewer3D {
 				chart.add(drawable, viewUpdatesEnabled);
 			});
 		}
-		frame = (width < 0 || height < 0) ? 
-			new ViewerFrame(chart, managerList != null)
-			: 	new ViewerFrame(chart, width, height, managerList != null);
+		if (width == 0 || height == 0) {
+			frame = new ViewerFrame(chart, managerList != null);
+		} else {
+			final Dimension sSize = Toolkit.getDefaultToolkit().getScreenSize();
+			final int w = (width < 0) ? sSize.width : width;
+			final int h = (height < 0) ? sSize.height : height;
+			frame = new ViewerFrame(chart, w, h, managerList != null);
+		}
 		displayMsg("Press 'H' or 'F1' for help", 3000);
 		return frame;
 	}
@@ -842,12 +857,26 @@ public class Viewer3D {
 	 * Resizes the viewer to the specified dimensions. Useful when generating scene
 	 * animations programmatically. Does nothing if viewer's frame does not exist.
 	 * 
-	 * @param width  the width of the frame
-	 * @param height the height of the frame
+	 * @param width the width of the frame. {@code -1} will set width to its maximum.
+	 * @param height the height of the frame. {@code -1} will set height to its maximum.
 	 * @see #show(int, int)
 	 */
 	public void setFrameSize(final int width, final int height) {
-		if (frame != null) frame.setSize(width, height);
+		if (frame == null) return;
+		if (width == -1 && height == -1) {
+			frame.setLocation(0, 0);
+			frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+		} else if (width == -1 ) {
+			frame.setExtendedState(Frame.MAXIMIZED_HORIZ);
+			frame.setSize(frame.getWidth(), height);
+		} else if (height == -1 ) {
+			frame.setExtendedState(Frame.MAXIMIZED_VERT);
+			frame.setSize(width, frame.getHeight());
+		}
+		else {
+			frame.setSize(width, height);
+		}
+		frame.setSize(width, height);
 	}
 
 	private void displayMsg(final String msg) {
@@ -955,7 +984,7 @@ public class Viewer3D {
 			final Map.Entry<String, RemountableDrawableVBO> entry = it.next();
 			chart.getScene().getGraph().remove(entry.getValue(), false);
 			deleteItemFromManager(entry.getKey());
-			if (frame.allenNavigator != null)
+			if (frame != null && frame.allenNavigator != null)
 				frame.allenNavigator.meshRemoved(entry.getKey());
 			it.remove();
 		}
@@ -1182,8 +1211,8 @@ public class Viewer3D {
 	 * @param treeLabels the collection of Tree identifiers (as per
 	 *          {@link #addTree(Tree)}) specifying the Trees to be color mapped
 	 * @param measurement the mapping measurement e.g.,
-	 *          {@link MultiTreeColorMapper#TOTAL_LENGTH}
-	 *          {@link MultiTreeColorMapper#TOTAL_N_TIPS}, etc.
+	 *          {@link MultiTreeColorMapper#LENGTH}
+	 *          {@link MultiTreeColorMapper#N_TIPS}, etc.
 	 * @param colorTable the mapping color table (LUT), e.g.,
 	 *          {@link ColorTables#ICE}), or any other known to LutService
 	 * @return the double[] the limits (min and max) of the mapped values
@@ -1244,7 +1273,7 @@ public class Viewer3D {
 	 * @param treeLabel the identifier of the Tree (as per {@link #addTree(Tree)})to
 	 *          be color mapped
 	 * @param measurement the mapping measurement e.g.,
-	 *          {@link TreeColorMapper#BRANCH_ORDER}
+	 *          {@link TreeColorMapper#PATH_ORDER}
 	 *          {@link TreeColorMapper#PATH_DISTANCE}, etc.
 	 * @param colorTable the mapping color table (LUT), e.g.,
 	 *          {@link ColorTables#ICE}), or any other known to LutService
@@ -1361,7 +1390,10 @@ public class Viewer3D {
 	 */
 	public boolean saveSnapshot(final String filePath) {
 		try {
-			return saveSnapshot(new File(filePath));
+			final File file = new File(filePath);
+			final File parent = file.getParentFile();
+			if (parent != null && !parent.exists()) parent.mkdirs();
+			return saveSnapshot(file);
 		} catch (final IllegalArgumentException | IOException e) {
 			SNTUtils.error("IOException", e);
 			return false;
@@ -1425,6 +1457,7 @@ public class Viewer3D {
 	}
 
 	private OBJMesh loadOBJMesh(final OBJMesh objMesh) {
+		setAnimationEnabled(false);
 		chart.add(objMesh.drawable, false); // GLException if true
 		final String label = getUniqueLabel(plottedObjs, "Mesh", objMesh.getLabel());
 		plottedObjs.put(label, objMesh.drawable);
@@ -1432,6 +1465,7 @@ public class Viewer3D {
 		if (frame != null && frame.allenNavigator != null) {
 			frame.allenNavigator.meshLoaded(label);
 		}
+		if (objMesh != null && viewUpdatesEnabled) validate();
 		return objMesh;
 	}
 
@@ -1616,6 +1650,7 @@ public class Viewer3D {
 
 		private final Coord3d TOP_VIEW = new Coord3d(Math.PI / 2, 0.5, 3000);
 		private final Coord3d PERSPECTIVE_VIEW = new Coord3d(Math.PI / 2, 0.5, 3000);
+		private final Coord3d SIDE_VIEW = new Coord3d(Math.PI, 0, 3000);
 
 		private Coord3d previousViewPointPerspective;
 		private OverlayAnnotation overlayAnnotation;
@@ -1654,7 +1689,7 @@ public class Viewer3D {
 			else if (view == ViewMode.SIDE) {
 				getView().setViewPositionMode(ViewPositionMode.PROFILE);
 				getView().setViewPoint(previousViewPointProfile == null
-					? View.DEFAULT_VIEW.clone() : previousViewPointProfile);
+					? SIDE_VIEW.clone() : previousViewPointProfile);
 			}
 			else if (view == ViewMode.PERSPECTIVE) {
 				getView().setViewPositionMode(ViewPositionMode.FREE);
@@ -4746,7 +4781,7 @@ public class Viewer3D {
 		final ImageJ ij = new ImageJ();
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
-		colorizer.map(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);
+		colorizer.map(tree, TreeColorMapper.PATH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();
 		SNTUtils.setDebugMode(true);
 		final Viewer3D jzy3D = new Viewer3D(ij.context());

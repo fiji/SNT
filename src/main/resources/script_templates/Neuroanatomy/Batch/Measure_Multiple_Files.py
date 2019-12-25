@@ -27,15 +27,12 @@ def get_swc_files(directory, filtering_string):
     """Returns a list containing the paths of files in the specified
        directory. The list will only include SWC, TRACES and JSON
        files whose filename contains the specified string."""
+    if not recursive:
+        return Tree.listFromDir(directory, filtering_string)
     files = []
     for (dirpath, dirnames, filenames) in os.walk(directory):
-        for f in filenames:
-            if os.path.basename(f).startswith('.'):
-                continue
-            if filtering_string in f and f.lower().endswith(('swc', 'traces', 'json')):
-                files.append(os.path.join(dirpath, f))
-        if not recursive:
-            break # do not process subdirectories
+        for subdir in dirnames:
+            files.append(Tree.listFromDir(directory, filtering_string)
     return files
 
 
@@ -69,11 +66,9 @@ def run():
         analyzer.setTable(table, ("SWC Measurements: %s" % input_dir))
 
         # Analyze the data grouping measurements by compartment (e.g., axon,
-        # dendrite). See TreeAnalyzer's API for more sophisticated analysis
+        # dendrite). See TreeAnalyzer's API for more sophisticated analysis.
+        # Table is automatically updated
         analyzer.summarize(True) # Split results by compartment?
-
-        # Update table before parsing next file
-        analyzer.updateAndDisplayTable()
 
     log.info('Done. %s file(s) analyzed...' % (counter + 1))  
     if table.getRowCount() == 0:

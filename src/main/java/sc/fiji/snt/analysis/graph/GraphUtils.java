@@ -41,6 +41,7 @@ import org.scijava.util.Colors;
 
 import com.mxgraph.layout.mxCompactTreeLayout;
 import com.mxgraph.layout.mxIGraphLayout;
+import com.mxgraph.model.mxGeometry;
 
 import net.imagej.ImageJ;
 import sc.fiji.snt.SNTService;
@@ -132,20 +133,31 @@ public class GraphUtils {
 	 */
 	public static <V, E> Window show(final Graph<V, E> graph) {
 		GuiUtils.setSystemLookAndFeel();
-		final JDialog frame = new JDialog((JFrame)null, "SNT Graph Canvas");
+		final JDialog frame = new JDialog((JFrame) null, "SNT Graph Canvas");
 		final TreeGraphAdapter<?, ?> graphAdapter = new TreeGraphAdapter<>(graph);
 		final mxIGraphLayout layout = new mxCompactTreeLayout(graphAdapter);
 		layout.execute(graphAdapter.getDefaultParent());
 		final TreeGraphComponent graphComponent = new TreeGraphComponent(graphAdapter);
 		frame.add(graphComponent);
-		frame.pack();
+
+		// Center graph: https://stackoverflow.com/a/36947526 
+		final double widthLayout = graphComponent.getLayoutAreaSize().getWidth();
+		final double heightLayout = graphComponent.getLayoutAreaSize().getHeight();
+		final double width = graphAdapter.getGraphBounds().getWidth();
+		final double height = graphAdapter.getGraphBounds().getHeight();
+		graphAdapter.getModel().setGeometry(graphAdapter.getDefaultParent(),
+				new mxGeometry((widthLayout - width) / 2, (heightLayout - height) / 2, widthLayout, heightLayout));
+
+		// By default, frame dimensions are exaggerated. Curb frame size a bit
 		final Dimension maxDim = Toolkit.getDefaultToolkit().getScreenSize();
 		final Dimension prefDim = frame.getPreferredSize();
 		frame.setPreferredSize(new Dimension((int) Math.min(prefDim.getWidth(), maxDim.getWidth() / 2),
 				(int) Math.min(prefDim.getHeight(), maxDim.getHeight() / 2)));
 		frame.pack();
-		graphComponent.zoomActual();
-		SwingUtilities.invokeLater(() -> frame.setVisible(true));
+		SwingUtilities.invokeLater(() -> {
+			frame.setVisible(true);
+			new GuiUtils(frame).tempMsg("Right-click on Canvas for Options & Controls");
+		});
 		return frame;
 	}
 

@@ -171,7 +171,7 @@ public class VFBUtils {
 		final URL url = loader.getResource(meshPath);
 		if (url == null)
 			throw new IllegalArgumentException(meshLabel + " not found");
-		final OBJMesh mesh = new OBJMesh(url);
+		final OBJMesh mesh = new OBJMesh(url, "um");
 		mesh.setColor(Colors.WHITE, 95f);
 		mesh.setLabel(meshLabel);
 		return mesh;
@@ -202,7 +202,7 @@ public class VFBUtils {
 				return null;
 			}
 			final URL url = new URL(pathAndLabel[0]);
-			final OBJMesh mesh = new OBJMesh(url);
+			final OBJMesh mesh = new OBJMesh(url, "um");
 			mesh.setColor(color, 95f);
 			mesh.setLabel(pathAndLabel[1]);
 			return mesh;

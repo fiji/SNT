@@ -42,7 +42,6 @@ import org.scijava.util.ColorRGB;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
@@ -353,7 +352,7 @@ public class Tree {
 	 * @return the set of SWC type(s) (e.g., {@link Path#SWC_AXON},
 	 *         {@link Path#SWC_DENDRITE}, etc.) present in the tree
 	 */
-	public Set<Integer> getSWCtypes() {
+	public Set<Integer> getSWCTypes() {
 		final HashSet<Integer> types = new HashSet<>();
 		final Iterator<Path> it = tree.iterator();
 		while (it.hasNext()) {
@@ -649,11 +648,11 @@ public class Tree {
 		// TODO: this should be handled by BoundingBox
 		final TreeStatistics tStats = new TreeStatistics(this);
 		final SummaryStatistics xCoordStats = tStats.getSummaryStats(
-			TreeAnalyzer.X_COORDINATES);
+				TreeStatistics.X_COORDINATES);
 		final SummaryStatistics yCoordStats = tStats.getSummaryStats(
-			TreeAnalyzer.Y_COORDINATES);
+				TreeStatistics.Y_COORDINATES);
 		final SummaryStatistics zCoordStats = tStats.getSummaryStats(
-			TreeAnalyzer.Z_COORDINATES);
+				TreeStatistics.Z_COORDINATES);
 		final PointInImage p1 = new PointInImage(xCoordStats.getMin(), yCoordStats
 			.getMin(), zCoordStats.getMin());
 		final PointInImage p2 = new PointInImage(xCoordStats.getMax(), yCoordStats
@@ -715,7 +714,7 @@ public class Tree {
 	 */
 	public void setColor(final ColorRGB color) {
 		tree.stream().forEach(p -> {
-			p.setColorRGB(color);
+			p.setColor(color);
 			if (color != null) p.setNodeColors(null);
 		});
 	}

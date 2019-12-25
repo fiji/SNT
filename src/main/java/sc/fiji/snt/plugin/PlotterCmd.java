@@ -46,6 +46,7 @@ import org.scijava.widget.NumberWidget;
 
 import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.Path;
+import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.gui.cmds.CommonDynamicCmd;
@@ -184,7 +185,7 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	private void buildPlot() {
 		plot = new Viewer2D(context());
 		plot.setDefaultColor(DEF_COLOR);
-		plot.addTree(plottingTree);
+		plot.add(plottingTree);
 	}
 
 	private void updatePlot() {
@@ -282,10 +283,10 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 		plot.setTitle("[X " + angleX + "deg Y " + angleY + "deg Z " + angleZ +
 			"deg]");
 		plot.setPreferredSize(frame.getWidth(), frame.getHeight());
-		plot.showPlot();
+		plot.show();
 		// make tree monochrome
 		for (final Path p : plottingTree.list()) {
-			p.setColor(null);
+			p.setColor((java.awt.Color)null);
 			p.setNodeColors(null);
 		}
 		msg = "";
@@ -294,9 +295,10 @@ public class PlotterCmd extends CommonDynamicCmd implements Interactive {
 	/* IDE debug method **/
 	public static void main(final String[] args) {
 		final ImageJ ij = new ImageJ();
+		final SNTService sntService = ij.context().getService(SNTService.class);
 		ij.ui().showUI();
 		final Map<String, Object> input = new HashMap<>();
-		final Tree tree = new Tree("/home/tferr/code/OP_1/OP_1.swc");
+		final Tree tree = sntService.demoTrees().get(0);
 		input.put("tree", tree);
 		ij.command().run(PlotterCmd.class, true, input);
 	}

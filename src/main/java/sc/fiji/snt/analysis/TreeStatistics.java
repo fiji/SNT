@@ -25,9 +25,11 @@ package sc.fiji.snt.analysis;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.Arrays;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.text.WordUtils;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
@@ -45,12 +47,94 @@ import sc.fiji.snt.Tree;
 import sc.fiji.snt.util.SNTColor;
 
 /**
- * Computes summary and descriptive statistics from univariate properties of a
- * {@link Tree}.
+ * Computes summary and descriptive statistics from univariate properties of
+ * Paths and Nodes in a {@link Tree}. For analysis of groups of Trees use
+ * {@link MultiTreeStatistics}.
  *
  * @author Tiago Ferreira
  */
 public class TreeStatistics extends TreeAnalyzer {
+
+	/** Flag for {@value #LENGTH} analysis. */
+	public static final String LENGTH = "Path length";
+
+	/** Flag for {@value #TERMINAL_LENGTH} analysis. */
+	public static final String TERMINAL_LENGTH = "Length of terminal branches";
+
+	/** Flag for {@value #PRIMARY_LENGTH} analysis. */
+	public static final String PRIMARY_LENGTH = "Length of primary branches";
+
+	/** Flag for {@value #PATH_ORDER} statistics. */
+	public static final String PATH_ORDER = "Path order";
+
+	/** Flag for {@value #INTER_NODE_DISTANCE} statistics. */
+	public static final String INTER_NODE_DISTANCE = "Inter-node distance";
+
+	/** Flag for {@value #INTER_NODE_DISTANCE_SQUARED} statistics. */
+	public static final String INTER_NODE_DISTANCE_SQUARED =
+		"Inter-node distance (squared)";
+
+	/** Flag for {@value #N_BRANCH_POINTS} statistics. */
+	public static final String N_BRANCH_POINTS = "No. of branch points";
+
+	/** Flag for {@value #N_BRANCH_POINTS} statistics. */
+	public static final String N_NODES = "No. of nodes";
+
+	/** Flag for {@value #NODE_RADIUS} statistics. */
+	public static final String NODE_RADIUS = "Node radius";
+
+	/** Flag for {@value #MEAN_RADIUS} statistics. */
+	public static final String MEAN_RADIUS = "Path mean radius";
+
+	/** Flag for {@value #X_COORDINATES} statistics. */
+	public static final String X_COORDINATES = "X coordinates";
+
+	/** Flag for {@value #Y_COORDINATES} statistics. */
+	public static final String Y_COORDINATES = "Y coordinates";
+
+	/** Flag for {@value #Z_COORDINATES} statistics. */
+	public static final String Z_COORDINATES = "Z coordinates";
+
+	/**
+	 * Flag for analysis of {@value #VALUES}, an optional numeric property that
+	 * can be assigned to Path nodes (e.g., voxel intensities, assigned via
+	 * {@link PathProfiler}. Note that an {@link IllegalArgumentException} is
+	 * triggered if no values have been assigned to the tree being analyzed.
+	 * 
+	 * @see Path#hasNodeValues()
+	 * @see PathProfiler#assignValues()
+	 */
+	public static final String VALUES = "Node intensity values";
+
+	public static final String[] COMMON_MEASUREMENTS = { //
+			LENGTH, //
+			PRIMARY_LENGTH, //
+			TERMINAL_LENGTH, //
+			N_BRANCH_POINTS, //
+			N_NODES, //
+			MEAN_RADIUS, //
+			PATH_ORDER, //
+			NODE_RADIUS, //
+			X_COORDINATES, //
+			Y_COORDINATES, //
+			Z_COORDINATES,
+			VALUES };
+
+	private static final String[] ALL_FLAGS = { //
+			LENGTH, //
+			TERMINAL_LENGTH, //
+			PRIMARY_LENGTH, //
+			PATH_ORDER, //
+			INTER_NODE_DISTANCE,//
+			INTER_NODE_DISTANCE_SQUARED,//
+			N_BRANCH_POINTS, //
+			N_NODES, //
+			NODE_RADIUS, //
+			MEAN_RADIUS, //
+			X_COORDINATES, //
+			Y_COORDINATES, //
+			Z_COORDINATES, //
+			VALUES };
 
 	private LastDstats lastDstats;
 
@@ -72,7 +156,7 @@ public class TreeStatistics extends TreeAnalyzer {
 	 */
 	public SummaryStatistics getSummaryStats(final String measurement) {
 		final SummaryStatistics sStats = new SummaryStatistics();
-		assembleStats(new StatisticsInstance(sStats), normalizedMeasurement(
+		assembleStats(new StatisticsInstance(sStats), getNormalizedMeasurement(
 			measurement));
 		return sStats;
 	}
@@ -86,7 +170,7 @@ public class TreeStatistics extends TreeAnalyzer {
 	 */
 	public DescriptiveStatistics getDescriptiveStats(final String measurement) {
 		final DescriptiveStatistics dStats = new DescriptiveStatistics();
-		final String normMeasurement = normalizedMeasurement(measurement);
+		final String normMeasurement = getNormalizedMeasurement(measurement);
 		if (!lastDstatsCanBeRecycled(normMeasurement)) {
 			assembleStats(new StatisticsInstance(dStats), normMeasurement);
 			lastDstats = new LastDstats(normMeasurement, dStats);
@@ -103,30 +187,11 @@ public class TreeStatistics extends TreeAnalyzer {
 	 * @return the frame holding the histogram
 	 */
 	public ChartFrame getHistogram(final String measurement) {
-		getDescriptiveStats(measurement);
-		final double[] values = lastDstats.dStats.getValues();
-		final long n = lastDstats.dStats.getN();
-		final double q1 = lastDstats.dStats.getPercentile(25);
-		final double q3 = lastDstats.dStats.getPercentile(75);
-		final double min = lastDstats.dStats.getMin();
-		final double max = lastDstats.dStats.getMax();
-		int nBins;
-		if (n == 0) {
-			nBins = 1;
-		} else {
-			final double binWidth = 2 * (q3 - q1) / Math.cbrt(n); // Freedman-Diaconis rule
-			if (binWidth == 0) {
-				nBins = (int) Math.round(Math.sqrt(n));
-			} else {
-				nBins = (int) Math.ceil((max - min) / binWidth);
-			}
-			nBins = Math.max(1, nBins);
-		}
-		final HistogramDataset dataset = new HistogramDataset();
-		dataset.setType(HistogramType.RELATIVE_FREQUENCY);
-		dataset.addSeries(measurement, values, nBins);
-		final JFreeChart chart = ChartFactory.createHistogram(null, measurement,
-			"Rel. Frequency", dataset);
+
+		final String normMeasurement = getNormalizedMeasurement(measurement);
+		final HistogramDatasetPlus datasetPlus = new HistogramDatasetPlus(normMeasurement);
+		final JFreeChart chart = ChartFactory.createHistogram(null, normMeasurement,
+			"Rel. Frequency", datasetPlus.getDataset());
 
 		// Customize plot
 		final Color bColor = null; //Color.WHITE; make graph transparent so that it can be exported without background
@@ -149,15 +214,15 @@ public class TreeStatistics extends TreeAnalyzer {
 		final StringBuilder sb = new StringBuilder();
 		final double mean = lastDstats.dStats.getMean();
 		final int nDecimals = (mean < 0.51) ? 3 : 2;
-		sb.append("Q1: ").append(SNTUtils.formatDouble(q1, nDecimals));
+		sb.append("Q1: ").append(SNTUtils.formatDouble(datasetPlus.q1, nDecimals));
 		sb.append("  Median: ").append(SNTUtils.formatDouble(lastDstats.dStats
 			.getPercentile(50), nDecimals));
-		sb.append("  Q3: ").append(SNTUtils.formatDouble(q3, nDecimals));
-		sb.append("  IQR: ").append(SNTUtils.formatDouble(q3 - q1, nDecimals));
-		sb.append("  Bins: ").append(nBins);
-		sb.append("\nN: ").append(n);
-		sb.append("  Min: ").append(SNTUtils.formatDouble(min, nDecimals));
-		sb.append("  Max: ").append(SNTUtils.formatDouble(max, nDecimals));
+		sb.append("  Q3: ").append(SNTUtils.formatDouble(datasetPlus.q3, nDecimals));
+		sb.append("  IQR: ").append(SNTUtils.formatDouble(datasetPlus.q3 - datasetPlus.q1, nDecimals));
+		sb.append("  Bins: ").append(datasetPlus.nBins);
+		sb.append("\nN: ").append(datasetPlus.n);
+		sb.append("  Min: ").append(SNTUtils.formatDouble(datasetPlus.min, nDecimals));
+		sb.append("  Max: ").append(SNTUtils.formatDouble(datasetPlus.max, nDecimals));
 		sb.append("  Mean\u00B1").append("SD: ").append(SNTUtils.formatDouble(
 			mean, nDecimals)).append("\u00B1").append(SNTUtils.formatDouble(
 				lastDstats.dStats.getStandardDeviation(), nDecimals));
@@ -173,28 +238,97 @@ public class TreeStatistics extends TreeAnalyzer {
 		return frame;
 	}
 
-	private String normalizedMeasurement(final String measurement) {
-		if (measurement == null) throw new IllegalArgumentException(
-			"Parameter cannot be null");
-		// This is just so that we can use capitalized strings in the GUI and lower
-		// case strings in scripts
-		return new StringBuilder().append(measurement.substring(0, 1).toUpperCase())
-			.append(measurement.substring(1)).toString();
+	protected String tryReallyHardToGuessMetric(final String guess) {
+		final String normGuess = guess.toLowerCase();
+		if (normGuess.indexOf("length") != -1 || normGuess.indexOf("cable") != -1) {
+			if (normGuess.indexOf("term") != -1) {
+				return TERMINAL_LENGTH;
+			}
+			else if (normGuess.indexOf("prim") != -1) {
+				return PRIMARY_LENGTH;
+			}
+			else {
+				return LENGTH;
+			}
+		}
+		if (normGuess.indexOf("path") != -1 && normGuess.indexOf("order") != -1) {
+			return PATH_ORDER;
+		}
+		if (normGuess.indexOf("bp") != -1 || normGuess.indexOf("branch points") != -1 || normGuess.indexOf("junctions") != -1) {
+			return N_BRANCH_POINTS;
+		}
+		if (normGuess.indexOf("nodes") != -1) {
+			return N_NODES;
+		}
+		if (normGuess.indexOf("node") != -1 && (normGuess.indexOf("dis") != -1 || normGuess.indexOf("dx") != -1)) {
+			if (normGuess.indexOf("sq") != -1) {
+				return INTER_NODE_DISTANCE_SQUARED;
+			}
+			else {
+				return INTER_NODE_DISTANCE;
+			}
+		}
+		if (normGuess.indexOf("radi") != -1 ) {
+			if (normGuess.indexOf("mean") != -1 || normGuess.indexOf("avg") != -1 || normGuess.indexOf("average") != -1) {
+				return MEAN_RADIUS;
+			}
+			else {
+				return NODE_RADIUS;
+			}
+		}
+		if (normGuess.indexOf("values") != -1 || normGuess.indexOf("intensit") > -1) {
+			return VALUES;
+		}
+		if (normGuess.matches(".*\\bx\\b.*")) {
+			return X_COORDINATES;
+		}
+		if (normGuess.matches(".*\\by\\b.*")) {
+			return Y_COORDINATES;
+		}
+		if (normGuess.matches(".*\\bz\\b.*")) {
+			return Z_COORDINATES;
+		}
+		return "unknown";
 	}
 
-	private void assembleStats(final StatisticsInstance stat,
+	protected String getNormalizedMeasurement(final String measurement) {
+		if (Arrays.stream(ALL_FLAGS).anyMatch(measurement::equalsIgnoreCase)) {
+			// This is just so that we can use capitalized strings in the GUI
+			// and lower case strings in scripts
+			return WordUtils.capitalize(measurement, new char[]{});
+		}
+		final String normMeasurement = tryReallyHardToGuessMetric(measurement);
+		if (!measurement.equals(normMeasurement)) {
+			SNTUtils.log("\"" + normMeasurement + "\" assumed");
+			if ("unknonwn".equals(normMeasurement)) {
+				throw new IllegalArgumentException("Unrecognizable measurement! "
+						+ "Maybe you meant one of the following?: " + Arrays.toString(ALL_FLAGS));
+			}
+		}
+		return normMeasurement;
+	}
+
+	protected void assembleStats(final StatisticsInstance stat,
 		final String measurement)
 	{
-		switch (measurement) {
-			case TreeAnalyzer.LENGTH:
+		switch (getNormalizedMeasurement(measurement)) {
+			case LENGTH:
 				for (final Path p : tree.list())
 					stat.addValue(p.getLength());
 				break;
-			case TreeAnalyzer.N_NODES:
+			case PRIMARY_LENGTH:
+				for (final Path p : getPrimaryBranches())
+					stat.addValue(p.getLength());
+				break;
+			case TERMINAL_LENGTH:
+				for (final Path p : getTerminalBranches())
+					stat.addValue(p.getLength());
+				break;
+			case N_NODES:
 				for (final Path p : tree.list())
 					stat.addValue(p.size());
 				break;
-			case TreeAnalyzer.INTER_NODE_DISTANCE:
+			case INTER_NODE_DISTANCE:
 				for (final Path p : tree.list()) {
 					if (p.size() < 2) continue;
 					for (int i = 1; i < p.size(); i += 1) {
@@ -203,7 +337,7 @@ public class TreeStatistics extends TreeAnalyzer {
 					}
 				}
 				break;
-			case TreeAnalyzer.INTER_NODE_DISTANCE_SQUARED:
+			case INTER_NODE_DISTANCE_SQUARED:
 				for (final Path p : tree.list()) {
 					if (p.size() < 2) continue;
 					for (int i = 1; i < p.size(); i += 1) {
@@ -212,42 +346,49 @@ public class TreeStatistics extends TreeAnalyzer {
 					}
 				}
 				break;
-			case TreeAnalyzer.NODE_RADIUS:
+			case NODE_RADIUS:
 				for (final Path p : tree.list()) {
 					for (int i = 0; i < p.size(); i++) {
 						stat.addValue(p.getNodeRadius(i));
 					}
 				}
 				break;
-			case TreeAnalyzer.MEAN_RADIUS:
+			case MEAN_RADIUS:
 				for (final Path p : tree.list()) {
 					stat.addValue(p.getMeanRadius());
 				}
 				break;
-			case TreeAnalyzer.BRANCH_ORDER:
+			case PATH_ORDER:
 				for (final Path p : tree.list()) {
 					stat.addValue(p.getOrder());
 				}
 				break;
-			case TreeAnalyzer.N_BRANCH_POINTS:
+			case N_BRANCH_POINTS:
 				for (final Path p : tree.list()) {
 					stat.addValue(p.findJunctions().size());
 				}
 				break;
-			case TreeAnalyzer.X_COORDINATES:
+			case X_COORDINATES:
 				for (final Path p : tree.list()) {
 					for (int i = 0; i < p.size(); i++) {
 						stat.addValue(p.getNode(i).x);
 					}
 				}
 				break;
-			case TreeAnalyzer.Y_COORDINATES:
+			case Y_COORDINATES:
 				for (final Path p : tree.list()) {
 					for (int i = 0; i < p.size(); i++) {
 						stat.addValue(p.getNode(i).y);
 					}
 				}
-			case TreeAnalyzer.VALUES:
+			case Z_COORDINATES:
+				for (final Path p : tree.list()) {
+					for (int i = 0; i < p.size(); i++) {
+						stat.addValue(p.getNode(i).z);
+					}
+				}
+				break;
+			case VALUES:
 				for (final Path p : tree.list()) {
 					if (!p.hasNodeValues()) continue;
 					for (int i = 0; i < p.size(); i++) {
@@ -256,13 +397,6 @@ public class TreeStatistics extends TreeAnalyzer {
 				}
 				if (stat.getN() == 0)
 					throw new IllegalArgumentException("Tree has no values assigned");
-				break;
-			case TreeAnalyzer.Z_COORDINATES:
-				for (final Path p : tree.list()) {
-					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getNode(i).z);
-					}
-				}
 				break;
 			default:
 				throw new IllegalArgumentException("Unrecognized parameter " +
@@ -290,26 +424,71 @@ public class TreeStatistics extends TreeAnalyzer {
 		}
 	}
 
-	private class StatisticsInstance {
+	class StatisticsInstance {
 
 		private SummaryStatistics sStatistics;
 		private DescriptiveStatistics dStatistics;
 
-		private StatisticsInstance(final SummaryStatistics sStatistics) {
+		StatisticsInstance(final SummaryStatistics sStatistics) {
 			this.sStatistics = sStatistics;
 		}
 
-		private StatisticsInstance(final DescriptiveStatistics dStatistics) {
+		StatisticsInstance(final DescriptiveStatistics dStatistics) {
 			this.dStatistics = dStatistics;
 		}
 
-		private void addValue(final double value) {
+		void addValue(final double value) {
 			if (sStatistics != null) sStatistics.addValue(value);
 			else dStatistics.addValue(value);
 		}
 
-		private long getN() {
+		long getN() {
 			return (sStatistics != null) ? sStatistics.getN() : dStatistics.getN();
+		}
+
+	}
+
+	class HistogramDatasetPlus {
+		String measurement;
+		double[] values;
+		int nBins;
+		long n;
+		double q1, q3, min, max;
+
+		HistogramDatasetPlus(final String measurement) {
+			this.measurement = measurement;
+			getDescriptiveStats(measurement);
+			values = lastDstats.dStats.getValues();
+		}
+
+		void compute() {
+			n = lastDstats.dStats.getN();
+			q1 = lastDstats.dStats.getPercentile(25);
+			q3 = lastDstats.dStats.getPercentile(75);
+			min = lastDstats.dStats.getMin();
+			max = lastDstats.dStats.getMax();
+			if (n == 0) {
+				nBins = 1;
+			}
+			if (n <= 10) {
+				nBins = (int) n;
+			} else {
+				final double binWidth = 2 * (q3 - q1) / Math.cbrt(n); // Freedman-Diaconis rule
+				if (binWidth == 0) {
+					nBins = (int) Math.round(Math.sqrt(n));
+				} else {
+					nBins = (int) Math.ceil((max - min) / binWidth);
+				}
+				nBins = Math.max(1, nBins);
+			}
+		}
+
+		HistogramDataset getDataset() {
+			compute();
+			final HistogramDataset dataset = new HistogramDataset();
+			dataset.setType(HistogramType.RELATIVE_FREQUENCY);
+			dataset.addSeries(measurement, values, nBins);
+			return dataset;
 		}
 
 	}
@@ -318,10 +497,10 @@ public class TreeStatistics extends TreeAnalyzer {
 	public static void main(final String[] args) {
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeStatistics treeStats = new TreeStatistics(tree);
-		treeStats.getHistogram(TreeAnalyzer.BRANCH_ORDER).setVisible(true);
+		treeStats.getHistogram(PATH_ORDER).setVisible(true);
 		treeStats.restrictToOrder(1);
-		treeStats.getHistogram(TreeAnalyzer.BRANCH_ORDER).setVisible(true);
+		treeStats.getHistogram(PATH_ORDER).setVisible(true);
 		treeStats.resetRestrictions();
-		treeStats.getHistogram(TreeAnalyzer.BRANCH_ORDER).setVisible(true);
+		treeStats.getHistogram(PATH_ORDER).setVisible(true);
 	}
 }

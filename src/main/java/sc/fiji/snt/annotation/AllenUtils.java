@@ -302,7 +302,7 @@ public class AllenUtils {
 		final URL url = loader.getResource(meshPath);
 		if (url == null)
 			throw new IllegalArgumentException(meshLabel + " not found");
-		final OBJMesh mesh = new OBJMesh(url);
+		final OBJMesh mesh = new OBJMesh(url, "um");
 		mesh.setColor(color, 95f);
 		mesh.setLabel(meshLabel);
 		return mesh;

@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -39,6 +40,7 @@ import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.text.WordUtils;
 import org.scijava.Context;
 import org.scijava.plugin.Parameter;
 
@@ -46,12 +48,15 @@ import sholl.ProfileEntry;
 import sholl.UPoint;
 import sholl.math.LinearProfileStats;
 import sc.fiji.snt.Path;
+import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.sholl.TreeParser;
 import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.MultiViewer2D;
 import sc.fiji.snt.viewer.Viewer2D;
+import sc.fiji.snt.viewer.Viewer3D;
 
 /**
  * Class for color coding {@link Tree}s.
@@ -62,32 +67,48 @@ public class TreeColorMapper extends ColorMapper {
 
 	/* For convenience keep references to TreeAnalyzer fields */
 
-	/** Flag for {@value #BRANCH_ORDER} mapping. */
-	public static final String BRANCH_ORDER = TreeAnalyzer.BRANCH_ORDER;
+	/** Flag for {@value #STRAHLER_NUMBER} mapping. */
+	public static final String STRAHLER_NUMBER = MultiTreeStatistics.STRAHLER_NUMBER;
+	/** Flag for {@value #PATH_ORDER} mapping. */
+	public static final String PATH_ORDER = TreeStatistics.PATH_ORDER;
 	/** Flag for {@value #LENGTH} mapping. */
-	public static final String LENGTH = TreeAnalyzer.LENGTH;
+	public static final String LENGTH = TreeStatistics.LENGTH;
 	/** Flag for {@value #N_BRANCH_POINTS} mapping. */
-	public static final String N_BRANCH_POINTS = TreeAnalyzer.N_BRANCH_POINTS;
+	public static final String N_BRANCH_POINTS = TreeStatistics.N_BRANCH_POINTS;
 	/** Flag for {@value #N_NODES} mapping. */
-	public static final String N_NODES = TreeAnalyzer.N_NODES;
+	public static final String N_NODES = TreeStatistics.N_NODES;
 	/** Flag for {@value #MEAN_RADIUS} mapping. */
-	public static final String MEAN_RADIUS = TreeAnalyzer.MEAN_RADIUS;
+	public static final String MEAN_RADIUS = TreeStatistics.MEAN_RADIUS;
 	/** Flag for {@value #NODE_RADIUS} mapping. */
-	public static final String NODE_RADIUS = TreeAnalyzer.NODE_RADIUS;
+	public static final String NODE_RADIUS = TreeStatistics.NODE_RADIUS;
 	/** Flag for {@value #X_COORDINATES} mapping. */
-	public static final String X_COORDINATES = TreeAnalyzer.X_COORDINATES;
+	public static final String X_COORDINATES = TreeStatistics.X_COORDINATES;
 	/** Flag for {@value #Y_COORDINATES} mapping. */
-	public static final String Y_COORDINATES = TreeAnalyzer.Y_COORDINATES;
+	public static final String Y_COORDINATES = TreeStatistics.Y_COORDINATES;
 	/** Flag for {@value #Z_COORDINATES} mapping. */
-	public static final String Z_COORDINATES = TreeAnalyzer.Z_COORDINATES;
+	public static final String Z_COORDINATES = TreeStatistics.Z_COORDINATES;
 	/** See {@link TreeAnalyzer#VALUES}. */
-	public static final String VALUES = TreeAnalyzer.VALUES;
+	public static final String VALUES = TreeStatistics.VALUES;
 	/** Flag for {@value #PATH_DISTANCE} mapping. */
 	public static final String PATH_DISTANCE = "Path distance to soma";
 	/** Flag for {@value #TAG_FILENAME} mapping. */
 	public static final String TAG_FILENAME = "Tags/filename";
 	private static final String INTERNAL_COUNTER = "Id";
 
+	private static final String[] ALL_FLAGS = { //
+			STRAHLER_NUMBER,//
+			PATH_ORDER, //
+			LENGTH, //
+			N_BRANCH_POINTS, //
+			N_NODES, //
+			MEAN_RADIUS, //
+			NODE_RADIUS, //
+			X_COORDINATES, //
+			Y_COORDINATES, //
+			Z_COORDINATES, //
+			VALUES, //
+			PATH_DISTANCE, //
+			TAG_FILENAME};
 
 	@Parameter
 	private LUTService lutService;
@@ -109,7 +130,7 @@ public class TreeColorMapper extends ColorMapper {
 	}
 
 	/**
-	 * Instantiates the Colorizer. Note that because the instance is not aware of
+	 * Instantiates the mapper. Note that because the instance is not aware of
 	 * any context, script-friendly methods that use string as arguments may fail
 	 * to retrieve referenced Scijava objects.
 	 */
@@ -140,8 +161,13 @@ public class TreeColorMapper extends ColorMapper {
 		final ColorTable colorTable)
 	{
 		map(measurement, colorTable);
-		final String cMeasurement = normalizedMeasurement(measurement);
+		final String cMeasurement = getNormalizedMeasurement(measurement);
 		switch (cMeasurement) {
+			case STRAHLER_NUMBER:
+				assignStrahlerOrderToNodeValues();
+				integerScale = true;
+				mapToNodeProperty(VALUES, colorTable);
+				break;
 			case PATH_DISTANCE:
 				final TreeParser parser = new TreeParser(new Tree(paths));
 				try {
@@ -157,7 +183,7 @@ public class TreeColorMapper extends ColorMapper {
 					center.z);
 				mapPathDistances(root);
 				break;
-			case BRANCH_ORDER:
+			case PATH_ORDER:
 			case LENGTH:
 			case MEAN_RADIUS:
 			case N_NODES:
@@ -178,12 +204,31 @@ public class TreeColorMapper extends ColorMapper {
 		}
 	}
 
+	private void assignStrahlerOrderToNodeValues() {
+		final StrahlerAnalyzer sa = new StrahlerAnalyzer(new Tree(paths));
+		sa.getNodes().forEach((order, nodeList) -> {
+			for (final SWCPoint node : nodeList) {
+				for (final Path p : paths) {
+					if (!p.equals(node.getPath())) {
+						continue;
+					}
+					for (int i = 0; i < p.size(); i++) {
+						if (node.isSameLocation(p.getNode(i))) {
+							p.setNodeValue(order, i);
+							continue;
+						}
+					}
+				}
+			}
+		});
+	}
+
 	private void mapToPathProperty(final String measurement,
 		final ColorTable colorTable)
 	{
 		final List<MappedPath> mappedPaths = new ArrayList<>();
 		switch (measurement) {
-			case BRANCH_ORDER:
+			case PATH_ORDER:
 				integerScale = true;
 				for (final Path p : paths)
 					mappedPaths.add(new MappedPath(p, (double) p.getOrder()));
@@ -387,7 +432,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * Colorizes a tree after the specified measurement.
 	 *
 	 * @param tree the tree to be colorized
-	 * @param measurement the measurement ({@link #BRANCH_ORDER} }{@link #LENGTH},
+	 * @param measurement the measurement ({@link #PATH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param colorTable the color table specifying the color mapping. Null not
 	 *          allowed.
@@ -411,18 +456,67 @@ public class TreeColorMapper extends ColorMapper {
 		}
 	}
 
-	private String tryReallyHardToGuessMetric(final String guess) {
+	protected String tryReallyHardToGuessMetric(final String guess) {
 		final String normGuess = guess.toLowerCase();
-		if (normGuess.indexOf("length") != -1) {
+		if (normGuess.indexOf("soma") != -1 || normGuess.indexOf("path d") != -1) {
+			return PATH_DISTANCE;
+		}
+		if (normGuess.indexOf("length") != -1 || normGuess.indexOf("cable") != -1) {
 			return LENGTH;
 		}
-		if (normGuess.indexOf("branch points") != -1 || normGuess.indexOf("bps") != -1) {
+		if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("horton") != -1 || normGuess.indexOf("h-s") != -1) {
+			return STRAHLER_NUMBER;
+		}
+		if (normGuess.indexOf("path") != -1 && normGuess.indexOf("order") != -1) {
+			return PATH_ORDER;
+		}
+		if (normGuess.indexOf("bp") != -1 || normGuess.indexOf("branch points") != -1 || normGuess.indexOf("junctions") != -1) {
 			return N_BRANCH_POINTS;
 		}
-		if (normGuess.indexOf("strahler") != -1 || normGuess.indexOf("horton") != -1 || normGuess.indexOf("order") != -1) {
-			return BRANCH_ORDER;
+		if (normGuess.indexOf("nodes") != -1) {
+			return N_NODES;
 		}
-		return guess;
+		if (normGuess.indexOf("radi") != -1 ) {
+			if (normGuess.indexOf("mean") != -1 || normGuess.indexOf("avg") != -1 || normGuess.indexOf("average") != -1) {
+				return MEAN_RADIUS;
+			}
+			else {
+				return NODE_RADIUS;
+			}
+		}
+		if (normGuess.indexOf("values") != -1 || normGuess.indexOf("intensit") > -1) {
+			return VALUES;
+		}
+		if (normGuess.indexOf("tag") != -1 || normGuess.indexOf("name") > -1 || normGuess.indexOf("label") > -1) {
+			return TAG_FILENAME;
+		}
+		if (normGuess.matches(".*\\bx\\b.*")) {
+			return X_COORDINATES;
+		}
+		if (normGuess.matches(".*\\by\\b.*")) {
+			return Y_COORDINATES;
+		}
+		if (normGuess.matches(".*\\bz\\b.*")) {
+			return Z_COORDINATES;
+		}
+		return "unknown";
+	}
+
+	protected String getNormalizedMeasurement(final String measurement) {
+		if (Arrays.stream(ALL_FLAGS).anyMatch(measurement::equalsIgnoreCase)) {
+			// This is just so that we can use capitalized strings in the GUI
+			// and lower case strings in scripts
+			return WordUtils.capitalize(measurement, '-');
+		}
+		final String normMeasurement = tryReallyHardToGuessMetric(measurement);
+		if (!measurement.equals(normMeasurement)) {
+			SNTUtils.log("\"" + normMeasurement + "\" assumed");
+			if ("unknonwn".equals(normMeasurement)) {
+				throw new IllegalArgumentException("Unrecognizable measurement! "
+						+ "Maybe you meant one of the following?: " + Arrays.toString(ALL_FLAGS));
+			}
+		}
+		return normMeasurement;
 	}
 
 	/**
@@ -430,7 +524,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * automatically determined.
 	 *
 	 * @param tree the tree to be plotted
-	 * @param measurement the measurement ({@link #BRANCH_ORDER} }{@link #LENGTH},
+	 * @param measurement the measurement ({@link #PATH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param lut the lookup table specifying the color mapping
 	 */
@@ -458,16 +552,22 @@ public class TreeColorMapper extends ColorMapper {
 	 *
 	 * @return the set of keys, corresponding to the set of LUTs available
 	 */
-	public Set<String> getAvalailableLuts() {
+	public Set<String> getAvailableLuts() {
 		initLuts();
 		return luts.keySet();
 	}
 
+	/**
+	 * Assembles a {@link MultiViewer2D Multi-pane viewer} using all the Trees
+	 * mapped so far.
+	 *
+	 * @return the multi-viewer instance
+	 */
 	public MultiViewer2D getMultiViewer() {
 		final List<Viewer2D> viewers = new ArrayList<>(mappedTrees.size());
 		mappedTrees.forEach(tree -> {
 			final Viewer2D viewer = new Viewer2D(new Context());
-			viewer.addTree(tree);
+			viewer.add(tree);
 			viewers.add(viewer);
 		});
 		final MultiViewer2D multiViewer = new MultiViewer2D(viewers);
@@ -506,16 +606,31 @@ public class TreeColorMapper extends ColorMapper {
 	public static void main(final String... args) {
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		final List<Tree> trees = new ArrayList<>();
-		for (int i = 0; i < 10; i++) {
-			final Tree tree = new Tree(SNTUtils.randomPaths());
-			tree.rotate(Tree.Z_AXIS, i * 20);
-			trees.add(tree);
+//		final List<Tree> trees = new ArrayList<>();
+//		for (int i = 0; i < 10; i++) {
+//			final Tree tree = new Tree(SNTUtils.randomPaths());
+//			tree.rotate(Tree.Z_AXIS, i * 20);
+//			trees.add(tree);
+//		}
+//		final Viewer2D plot = new Viewer2D(ij.context());
+//		plot.addTrees(trees, "Ice.lut");
+//		plot.addColorBarLegend();
+//		plot.showPlot();
+//		
+		final SNTService sntService = ij.context().getService(SNTService.class);
+		final List<Tree> trees = sntService.demoTrees();
+		TreeColorMapper mapper = new TreeColorMapper(ij.context());
+		//mapper.setMinMax(1000, 20000);
+		final Viewer3D viewer = new Viewer3D(ij.context());
+		final Viewer2D viewer2 = new Viewer2D(ij.context());
+
+		for (Tree tree : trees) {
+			mapper.map(tree, "Strahler order", "Ice.lut");
+			viewer.add(tree);
+			viewer2.add(tree);
 		}
-		final Viewer2D plot = new Viewer2D(ij.context());
-		plot.addTrees(trees, "Ice.lut");
-		plot.addColorBarLegend();
-		plot.showPlot();
+		viewer.show();
+		viewer2.show();
 	}
 
 }

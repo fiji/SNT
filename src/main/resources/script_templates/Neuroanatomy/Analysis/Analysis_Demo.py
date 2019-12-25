@@ -102,7 +102,7 @@ def run():
 
             # To build custom plots, we can use PlotService
             # https://github.com/maarzt/scijava-plot. E.g., we can see how
-            # radius changes with centrifugal branch order. For simplicity,
+            # radius changes with centrifugal path order. For simplicity,
             # we'll only consider the mean node radius of each path
             order_dict = defaultdict(list)
             for p in nm_tree.list():
@@ -110,7 +110,7 @@ def run():
                 order_dict[p.getOrder()].append(r)
             l = []
             for item in order_dict.items():
-                # average the mean path radius over each branch order
+                # average the mean path radius over each path order
                 mean_radius = sum(item[1]) / len(item[1])
                 l.append((item[0], mean_radius))
 
@@ -118,7 +118,7 @@ def run():
             xs, ys = zip(*l)
 
             plot = plotService.newXYPlot()
-            plot.setTitle("Mean path radius vs Branch Order")
+            plot.setTitle("Mean path radius vs Path Order")
             series = plot.addXYSeries()
             series.setLabel("Adol-20100419cell1")
             series.setValues(xs, ys)

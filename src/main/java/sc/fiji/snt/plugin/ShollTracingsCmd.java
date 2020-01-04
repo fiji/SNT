@@ -284,7 +284,7 @@ public class ShollTracingsCmd extends DynamicCommand implements Interactive,
 			analysisRunner = new AnalysisRunner(tree, centerChoice);
 			if (analysisRunner.parser.getCenter() == null) {
 				cancelAndFreezeUI(
-					"File does not seem to contain any path matching the center criteria.",
+					"No paths match the center criteria. Please choose a different option from the \"Center\" choice list.",
 					"Invalid Center");
 				return;
 			}

@@ -151,7 +151,7 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 		if (url == null) return null;
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);
-		if (pafm.importSWC(url)) {
+		if (pafm.importSWC(cellId, url)) {
 			final Tree tree = new Tree(pafm.getPaths());
 			tree.setLabel(cellId);
 			return tree;
@@ -175,11 +175,11 @@ public class NeuroMorphoLoader implements RemoteSWCLoader {
 		System.out.println("# Getting neuron " + cellId);
 		String urlPath = loader.getReconstructionURL(cellId);
 		System.out.println("URL: " + urlPath);
-		pafm.importSWC(urlPath);
+		pafm.importSWC(cellId, urlPath);
 		loader.enableSourceVersion(true);
 		urlPath = loader.getReconstructionURL(cellId);
 		System.out.println("URL :" + urlPath);
-		pafm.importSWC(urlPath);
+		pafm.importSWC(cellId, urlPath);
 		final SNT snt = new SNT(ij.context(), pafm);
 		snt.initialize(false, 1, 1);
 		snt.startUI();

@@ -177,7 +177,8 @@ public class Annotation3D {
 	/**
 	 * Sets the annotation width.
 	 *
-	 * @param size the new width.
+	 * @param size the new width. A negative value will set width to
+	 *             {@link Viewer3D}'s default.
 	 */
 	public void setSize(final float size) {
 		this.size = (size < 0) ? viewer.getDefaultThickness() : size;
@@ -308,6 +309,28 @@ public class Annotation3D {
 	 */
 	public String getLabel() {
 		return label;
+	}
+
+	/**
+	 * Gets the type of this annotation.
+	 *
+	 * @return the annotation type. Either {@code cloud} (point cloud),
+	 *         {@code surface}, {@code line}, or {@code mixed} (composite shape).
+	 */
+	public String getType() {
+		switch (type) {
+		case SCATTER:
+			return "cloud";
+		case SURFACE:
+			return "surface";
+		case STRIP:
+		case Q_TIP:
+			return "line";
+		case MERGE:
+			return "mixed";
+		default:
+			return "unknown";
+		}
 	}
 
 	protected void setLabel(final String label) {

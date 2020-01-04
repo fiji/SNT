@@ -20,20 +20,23 @@
  * #L%
  */
 
-package sc.fiji.snt.gui.cmds;
+package sc.fiji.snt.plugin;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
-import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.table.DefaultGenericTable;
+import org.scijava.widget.FileWidget;
 
 import net.imagej.ImageJ;
 import sc.fiji.snt.SNTService;
@@ -41,25 +44,36 @@ import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.MultiTreeStatistics;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.gui.GuiUtils;
+import sc.fiji.snt.gui.cmds.CommonDynamicCmd;
 
 /**
- * GUI Command for measuring Tree(s).
+ * Command for measuring Tree(s).
  *
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, label="Measure...", initializer = "init")
-public class DetailedMeasurementsCmd extends CommonDynamicCmd {
+public class AnalyzerCmd extends CommonDynamicCmd {
 
 	private static final String TABLE_TITLE = "SNT Measurements";
 
-	@Parameter(required=false, label="File/Directory:", description="<HTML><div WIDTH=500>Path to reonstruction "
-			+ "file(s) to be measured. If a directory is specified, all of its reconstructions files will be "
-			+ "measured. NB: The \"Browser\" prompt may not allow folders to be selected. In that case, select "
-			+ "a file inside the folder of interest, then edit its path in the text field.")
+	// I: Input options
+	@Parameter(label = "<HTML><b>Input Files:", persist = false, required = false, visibility = ItemVisibility.MESSAGE)
+	private String SPACER1;
+
+	@Parameter(required = false, style = FileWidget.DIRECTORY_STYLE, label = "Directory:",
+			description = "<HTML><div WIDTH=500>Path to directory containing files to be measured. "
+					+ "NB: A single file can also be specified but the \"Browser\" prompt "
+					+ "may not allow single files to be selected. In that case, you can "
+					+ "manually specify its path in the text field.")
 	private File file;
 
+	@Parameter(label = "File name contains", required = false, description = "<HTML><div WIDTH=500>"
+			+ "Only filenames containing this pattern will be imported from the directory")
+	private String pattern;
+
+	// II. Metrics
 	@Parameter(label = "<HTML>&nbsp;<br><b>Metrics:", persist = false, required = false, visibility = ItemVisibility.MESSAGE)
-	private String SPACER1;
+	private String SPACER2;
 
 	@Parameter(label = MultiTreeStatistics.LENGTH)
 	private boolean cableLength;
@@ -69,6 +83,12 @@ public class DetailedMeasurementsCmd extends CommonDynamicCmd {
 
 	@Parameter(label = MultiTreeStatistics.PRIMARY_LENGTH)
 	private boolean primaryLength;
+
+	@Parameter(label = MultiTreeStatistics.AVG_BRANCH_LENGTH)
+	private boolean avgBranchLength;
+
+	@Parameter(label = MultiTreeStatistics.AVG_CONTRACTION)
+	private boolean avgContraction;
 
 	@Parameter(label = MultiTreeStatistics.N_BRANCH_POINTS)
 	private boolean nBPs;
@@ -103,8 +123,9 @@ public class DetailedMeasurementsCmd extends CommonDynamicCmd {
 	@Parameter(label = MultiTreeStatistics.MEAN_RADIUS)
 	private boolean meanRadius;
 
+	// III. Options
 	@Parameter(label = "<HTML>&nbsp;<br><b>Options:", persist = false, required = false, visibility = ItemVisibility.MESSAGE)
-	private String SPACER2;
+	private String SPACER3;
 
 	@Parameter(label = "Action", choices = {"Choose", "Select All", "Select None"}, callback="actionChoiceSelected")
 	private String actionChoice;
@@ -113,21 +134,27 @@ public class DetailedMeasurementsCmd extends CommonDynamicCmd {
 			+ "should be grouped by cellular compartment (e.g., \"axon\", \"dendrites\", etc.)")
 	private boolean splitByType;
 
+	// IV. Skip input options?
 	@Parameter(required = false)
 	private Tree tree;
 
-	private ArrayList<String> metrics;
+	@Parameter(required = false)
+	private Collection<Tree> trees;
 
 
 	@SuppressWarnings("unused")
 	private void init() {
 		super.init(false);
-		final MutableModuleItem<File> fileInput = getInfo().getMutableInput("file", File.class);
-			resolveInput("multiTreeMappingLabels");
-		if (tree != null) {
-			fileInput.setLabel("");
+		if (tree != null || trees != null) {
+			resolveInput("SPACER1");
+			getInfo().getMutableInput("SPACER1", String.class).setLabel("");
 			resolveInput("file");
-		} 
+			getInfo().getMutableInput("file", File.class).setLabel("");
+			resolveInput("pattern");
+			getInfo().getMutableInput("pattern", String.class).setLabel("");
+		}
+		if (tree != null) resolveInput("trees");
+		if (trees != null) resolveInput("tree");
 	}
 
 	@SuppressWarnings("unused")
@@ -140,6 +167,8 @@ public class DetailedMeasurementsCmd extends CommonDynamicCmd {
 	}
 
 	private void setAllCheckboxesEnabled(final boolean enable) {
+		avgBranchLength = enable;
+		avgContraction = enable;
 		cableLength = enable;
 		depth = enable;
 		height = enable;
@@ -159,7 +188,10 @@ public class DetailedMeasurementsCmd extends CommonDynamicCmd {
 
 	@Override
 	public void run() {
-		metrics = new ArrayList<>();
+
+		final List<String> metrics = new ArrayList<>();
+		if (avgBranchLength) metrics.add(MultiTreeStatistics.AVG_BRANCH_LENGTH);
+		if (avgContraction) metrics.add(MultiTreeStatistics.AVG_CONTRACTION);
 		if(cableLength) metrics.add(MultiTreeStatistics.LENGTH);
 		if(terminalLength) metrics.add(MultiTreeStatistics.TERMINAL_LENGTH);
 		if(primaryLength) metrics.add(MultiTreeStatistics.PRIMARY_LENGTH);
@@ -176,47 +208,56 @@ public class DetailedMeasurementsCmd extends CommonDynamicCmd {
 		if(meanRadius) metrics.add(MultiTreeStatistics.MEAN_RADIUS);
 	
 		if (metrics.isEmpty()) {
-			cancel("No metrics chosen.");
+			error("No metrics chosen.");
 			return;
 		}
 
 		if (tree != null) {
-			measure(tree);
+			trees = Collections.singletonList(tree);
+		}
+
+		if (trees != null) {
+			measure(trees, metrics);
 			return;
 		}
 
 		if (file == null || !file.exists() || !file.canRead()) {
-			cancel("Specified path is not valid.");
+			error("Specified path is not valid.");
 			return;
 		}
 
-		final List<Tree> trees;
 		if (file.isDirectory()) {
-			trees = Tree.listFromDir(file.getAbsolutePath());
-		} else {
+			trees = Tree.listFromDir(file.getAbsolutePath(), pattern);
+		} else if (validFile(file)) {
 			trees = new ArrayList<>();
 			final Tree tree = Tree.fromFile(file.getAbsolutePath());
 			if (tree != null) trees.add(tree);
 		}
 		if (trees.isEmpty()) {
-			cancel("No reconstruction files could be retrieved from specified path");
+			error("No reconstruction file(s) could be retrieved from the specified path.");
 			return;
 		}
-		final int n = trees.size();
-		for (int i = 0; i < n; i++) {
-			final Tree tree = trees.get(i);
-			statusService.showStatus(i, n, tree.getLabel());
-			measure(tree);
-		}
+
 		resetUI();
 	}
 
-	private void measure(final Tree tree) {
-		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-		analyzer.setContext(getContext());
+	private boolean validFile(final File file) {
+		return (pattern == null || pattern.isEmpty()) ? true : file.getName().contains(pattern);
+	}
+
+	private void measure(final Collection<Tree> trees, final List<String> metrics) {
 		final DefaultGenericTable table = (sntService.isActive()) ? sntService.getTable() : new DefaultGenericTable();
-		analyzer.setTable(table, TABLE_TITLE);
-		analyzer.measure(metrics, splitByType);
+		final int n = trees.size();
+		final Iterator<Tree> it = trees.iterator();
+		int index = 0;
+		while (it.hasNext()) {
+			final Tree tree = it.next();
+			statusService.showStatus(index++, n, tree.getLabel());
+			final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
+			analyzer.setContext(getContext());
+			analyzer.setTable(table, TABLE_TITLE);
+			analyzer.measure(metrics, splitByType); // will display table
+		}
 	}
 
 
@@ -229,6 +270,6 @@ public class DetailedMeasurementsCmd extends CommonDynamicCmd {
 		final Tree tree = sntService.demoTrees().get(0);
 		final Map<String, Object> input = new HashMap<>();
 		input.put("tree", tree);
-		ij.command().run(DetailedMeasurementsCmd.class, true, input);
+		ij.command().run(AnalyzerCmd.class, true, input);
 	}
 }

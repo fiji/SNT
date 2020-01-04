@@ -22,10 +22,7 @@
 
 package sc.fiji.snt.analysis.graph;
 
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -33,13 +30,11 @@ import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 
 import javax.imageio.ImageIO;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
+import javax.swing.*;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -50,87 +45,174 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 
+import com.mxgraph.layout.mxCompactTreeLayout;
+import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.mxGraphOutline;
 import com.mxgraph.swing.handler.mxKeyboardHandler;
-import com.mxgraph.swing.handler.mxPanningHandler;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.util.mxCellRenderer;
-
 import sc.fiji.snt.gui.GuiUtils;
+
 
 class TreeGraphComponent extends mxGraphComponent {
 	private static final long serialVersionUID = 1L;
-	private boolean panMode;
-	private final TreeGraphAdapter<?, ?> adapter;
-	private JCheckBoxMenuItem panMenuItem;
+	private final TreeGraphAdapter  adapter;
+	private final mxCompactTreeLayout layout;
+	private final KeyboardHandler keyboardHandler;
+	private final JCheckBoxMenuItem panMenuItem;
+	private JButton flipButton;
 	private File saveDir;
 
-	protected TreeGraphComponent(final TreeGraphAdapter<?, ?> adapter) {
+	protected TreeGraphComponent(final TreeGraphAdapter adapter) {
 		super(adapter);
 		this.adapter = adapter;
 		addMouseWheelListener(new ZoomMouseWheelListener());
-		addKeyListener(new GraphKeyListener());
-		new mxPanningHandler(this);
-		new mxKeyboardHandler(this);
-		addRuberBandZoom();
+		setKeepSelectionVisibleOnZoom(true);
 		setCenterZoom(true);
-		setCenterPage(true);
+		addRubberBandZoom();
+		panningHandler = createPanningHandler();
+		setPanning(true);
+		keyboardHandler = new KeyboardHandler(this);
+		setEscapeEnabled(true);
+
 		setAntiAlias(true);
 		setDoubleBuffered(true);
-		setConnectable(false);
+		setConnectable(true);
 		setFoldingEnabled(true);
-		setKeepSelectionVisibleOnZoom(true);
 		setDragEnabled(false);
-		assignPopupMenu();
+		layout = new mxCompactTreeLayout(adapter);
+		layout.execute(adapter.getDefaultParent());
+		panMenuItem = new JCheckBoxMenuItem("Pan Mode");
 	}
 
-	private void addRuberBandZoom() {
+	protected Component getJSplitPane() {
+		// Default dimensions are exaggerated. Curb them a bit
+		setPreferredSize(getPreferredSize());
+		assignPopupMenu(this);
+		centerGraph();
+		requestFocusInWindow();
+		return new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, getControlPanel(), this);
+	}
+
+	private JComponent getControlPanel() {
+		final JPanel buttonPanel = new JPanel(new GridBagLayout());
+		final GridBagConstraints gbc = new GridBagConstraints();
+		gbc.weightx = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+		GuiUtils.addSeparator(buttonPanel, "Navigation:", true, gbc);
+		JButton button = new JButton("Zoom In");
+		button.setToolTipText("[+] or Shift + Mouse Wheel");
+		button.addActionListener(e -> { zoomIn(); });
+		buttonPanel.add(button, gbc);
+		button = new JButton("Zoom Out");
+		button.setToolTipText("[-] or Shift + Mouse Wheel");
+		button.addActionListener(e -> { zoomOut(); });
+		buttonPanel.add(button, gbc);
+		button = new JButton("Reset Zoom");
+		button.addActionListener(e -> {zoomActual(); zoomAndCenter();});
+		buttonPanel.add(button, gbc);
+		button = new JButton("Center");
+		button.addActionListener(e -> {centerGraph();});
+		buttonPanel.add(button, gbc);
+		panMenuItem.addActionListener(e -> getPanningHandler().setEnabled(panMenuItem.isSelected()));
+		buttonPanel.add(panMenuItem, gbc);
+
+		GuiUtils.addSeparator(buttonPanel, "Layout:", true, gbc);
+		flipButton = new JButton((layout.isHorizontal()?"Vertical":"Horizontal"));
+		flipButton.addActionListener(e -> flipGraphToHorizontal(!layout.isHorizontal()));
+		buttonPanel.add(flipButton, gbc);
+		button = new JButton("Reset");
+		button.addActionListener(e -> {
+			zoomActual();
+			zoomAndCenter();
+			flipGraphToHorizontal(true);
+		});
+		buttonPanel.add(button, gbc);
+		final JButton labelsButton = new JButton("Labels");
+		final JPopupMenu lPopup = new JPopupMenu();
+		final JCheckBox vCheckbox = new JCheckBox("Vertices (Node ID)", adapter.isVertexLabelsEnabled());
+		vCheckbox.addActionListener( e -> {
+			adapter.setEnableVertexLabels(vCheckbox.isSelected());
+		});
+		lPopup.add(vCheckbox);
+		final JCheckBox eCheckbox = new JCheckBox("Edges (Inter-node distance)", adapter.isEdgeLabelsEnabled());
+		eCheckbox.addActionListener( e -> {
+			adapter.setEnableEdgeLabels(eCheckbox.isSelected());
+		});
+		lPopup.add(eCheckbox);
+		labelsButton.addMouseListener(new MouseAdapter() {
+			public void mousePressed(final MouseEvent e) {
+				lPopup.show(labelsButton, e.getX(), e.getY());
+			}
+		});
+		buttonPanel.add(labelsButton, gbc);
+
+		GuiUtils.addSeparator(buttonPanel, "Export:", true, gbc);
+		final JButton ioButton = new JButton("Save As");
+		final JPopupMenu popup = new JPopupMenu();
+		popup.add(saveAsMenuItem("HTML...", ".html"));
+		popup.add(saveAsMenuItem("PNG...", ".png"));
+		popup.add(saveAsMenuItem("SVG...", ".svg"));
+		ioButton.addMouseListener(new MouseAdapter() {
+			public void mousePressed(final MouseEvent e) {
+				popup.show(ioButton, e.getX(), e.getY());
+			}
+		});
+		buttonPanel.add(ioButton, gbc);
+		final JPanel holder = new JPanel(new BorderLayout());
+		holder.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+		holder.add(buttonPanel, BorderLayout.CENTER);
+		return new JScrollPane(holder);
+	}
+
+	private void addRubberBandZoom() {
 		new mxRubberband(this) {
 
 			@Override
-			public boolean isRubberbandTrigger(final MouseEvent e) {
-				return e.isAltDown();
-			}
-
-			@Override
 			public void mouseReleased(final MouseEvent e) {
-				// get bounds before they are reset
-				final Rectangle rect = super.bounds;
+				if (e.isAltDown()) {
+					// get bounds before they are reset
+					final Rectangle rect = super.bounds;
 
-				super.mouseReleased(e);
-				if (rect == null)
-					return;
+					super.mouseReleased(e);
+					if (rect == null)
+						return;
 
-				double newScale = 1d;
-				final Dimension graphSize = new Dimension(rect.width, rect.height);
-				final Dimension viewPortSize = graphComponent.getViewport().getSize();
+					double newScale = 1d;
+					final Dimension graphSize = new Dimension(rect.width, rect.height);
+					final Dimension viewPortSize = graphComponent.getViewport().getSize();
 
-				final int gw = (int) graphSize.getWidth();
-				final int gh = (int) graphSize.getHeight();
+					final int gw = (int) graphSize.getWidth();
+					final int gh = (int) graphSize.getHeight();
 
-				if (gw > 0 && gh > 0) {
-					final int w = (int) viewPortSize.getWidth();
-					final int h = (int) viewPortSize.getHeight();
-					newScale = Math.min((double) w / gw, (double) h / gh);
+					if (gw > 0 && gh > 0) {
+						final int w = (int) viewPortSize.getWidth();
+						final int h = (int) viewPortSize.getHeight();
+						newScale = Math.min((double) w / gw, (double) h / gh);
+					}
+
+					// zoom to fit selected area
+					graphComponent.zoom(newScale);
+
+					// make selected area visible
+					graphComponent.getGraphControl().scrollRectToVisible(new Rectangle((int) (rect.x * newScale),
+							(int) (rect.y * newScale), (int) (rect.width * newScale), (int) (rect.height * newScale)));
+				} else {
+					super.mouseReleased(e);
 				}
-
-				// zoom to fit selected area
-				graphComponent.zoom(newScale);
-
-				// make selected area visible
-				graphComponent.getGraphControl().scrollRectToVisible(new Rectangle((int) (rect.x * newScale),
-						(int) (rect.y * newScale), (int) (rect.width * newScale), (int) (rect.height * newScale)));
 			}
 		};
 	}
 
-	private void assignPopupMenu() {
+	private void assignPopupMenu(final JComponent component) {
 		final JPopupMenu popup = new JPopupMenu();
-		setComponentPopupMenu(popup);
+		component.setComponentPopupMenu(popup);
 		JMenuItem mItem = new JMenuItem("Zoom to Selection (Alt + Click & Drag)");
 		mItem.addActionListener(e -> {
-			new GuiUtils(this).tempMsg("A Rectangular selection is required.");
+			new GuiUtils(this).error("Please draw a rectangular selection while holding \"Alt\".");
 		});
 		popup.add(mItem);
 		mItem = new JMenuItem("Zoom In ([+] or Shift + Mouse Wheel)");
@@ -140,30 +222,13 @@ class TreeGraphComponent extends mxGraphComponent {
 		mItem.addActionListener(e -> zoomOut());
 		popup.add(mItem);
 		mItem = new JMenuItem("Reset Zoom");
-		mItem.addActionListener(e -> zoomActual());
+		mItem.addActionListener(e -> {zoomActual(); zoomAndCenter();});
 		popup.add(mItem);
 		popup.addSeparator();
+		mItem = new JMenuItem("Available Shortcuts...");
+		mItem.addActionListener(e -> keyboardHandler.displayKeyMap());
+		popup.add(mItem);
 
-		final JCheckBoxMenuItem jcbmi = new JCheckBoxMenuItem("Label Vertices", adapter.isVertexLabelsEnabled());
-		jcbmi.addActionListener(e -> {
-			adapter.getModel().beginUpdate();
-			adapter.setEnableVertexLabels(jcbmi.isSelected());
-			adapter.getModel().endUpdate();
-			//HACK: This is the only thing I could come up with to repainting the canvas
-			zoomIn(); zoomOut();
-		});
-		popup.add(jcbmi);
-		popup.addSeparator();
-
-		panMenuItem = new JCheckBoxMenuItem("Pan Mode (Shift + Click & Drag)");
-		panMenuItem.addActionListener(e -> setPanMode(panMenuItem.isSelected()));
-		popup.add(panMenuItem);
-		popup.addSeparator();
-		final JMenu exportMenu = new JMenu("Save As");
-		exportMenu.add(saveAsMenuItem("HTML...", ".html"));
-		exportMenu.add(saveAsMenuItem("PNG...", ".png"));
-		exportMenu.add(saveAsMenuItem("SVG...", ".svg"));
-		popup.add(exportMenu);
 		getGraphControl().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(final MouseEvent e) {
@@ -180,12 +245,35 @@ class TreeGraphComponent extends mxGraphComponent {
 					return;
 				if (e.isPopupTrigger()) {
 					popup.show(getGraphControl(), e.getX(), e.getY());
-				} else {
-					setPanMode(e.isShiftDown());
 				}
 				e.consume();
 			}
 		});
+	}
+
+	@Override
+	public Dimension getPreferredSize() {
+		final double width = adapter.getGraphBounds().getWidth();
+		final double height = adapter.getGraphBounds().getHeight();
+		return new Dimension((int)Math.min(600, width), (int)Math.min(400, height));
+	}
+
+	private void centerGraph() {
+		// https://stackoverflow.com/a/36947526
+		final double widthLayout = getLayoutAreaSize().getWidth();
+		final double heightLayout = getLayoutAreaSize().getHeight();
+		final double width = adapter.getGraphBounds().getWidth();
+		final double height = adapter.getGraphBounds().getHeight();
+		adapter.getModel().setGeometry(adapter.getDefaultParent(),
+				new mxGeometry((widthLayout - width) / 2, (heightLayout - height) / 2, widthLayout, heightLayout));
+	}
+
+	private void flipGraphToHorizontal(final boolean horizontal) {
+		layout.setHorizontal(horizontal);
+		layout.execute(adapter.getDefaultParent());
+		centerGraph();
+		if (flipButton != null)
+			flipButton.setText((layout.isHorizontal())?"Vertical":"Horizontal");
 	}
 
 	private JMenuItem saveAsMenuItem(final String label, final String extension) {
@@ -240,16 +328,12 @@ class TreeGraphComponent extends mxGraphComponent {
 		transformer.transform(input, output);
 	}
 
-	private void setPanMode(final boolean panMode) {
-		this.panMode = panMode || panMenuItem.isSelected();
-	}
-
 	@Override
 	public boolean isPanningEvent(final MouseEvent event) {
-		return panMode;
+		return panMenuItem.isSelected();
 	}
 
-	class ZoomMouseWheelListener implements MouseWheelListener {
+	private class ZoomMouseWheelListener implements MouseWheelListener {
 		@Override
 		public void mouseWheelMoved(final MouseWheelEvent e) {
 			if (e.getSource() instanceof mxGraphOutline || e.isShiftDown()) {
@@ -263,16 +347,37 @@ class TreeGraphComponent extends mxGraphComponent {
 		}
 	};
 
-	class GraphKeyListener extends KeyAdapter {
+	private class KeyboardHandler extends mxKeyboardHandler {
 
-		@Override
-		public void keyPressed(final KeyEvent e) {
-			final int keyCode = e.getKeyCode();
-			if (keyCode == KeyEvent.VK_PLUS || keyCode == KeyEvent.VK_EQUALS) {
-				TreeGraphComponent.this.zoomIn();
-			} else if (keyCode == KeyEvent.VK_MINUS) {
-				TreeGraphComponent.this.zoomOut();
-			}
+		public KeyboardHandler(mxGraphComponent graphComponent) {
+			super(graphComponent);
 		}
-	};
+		protected InputMap getInputMap(int condition) {
+			final InputMap map = super.getInputMap(condition);
+			if (condition == JComponent.WHEN_FOCUSED) {
+				map.put(KeyStroke.getKeyStroke("EQUALS"), "zoomIn");
+				map.put(KeyStroke.getKeyStroke("control EQUALS"), "zoomIn");
+				map.put(KeyStroke.getKeyStroke("MINUS"), "zoomOut");
+				map.put(KeyStroke.getKeyStroke("control MINUS"), "zoomOut");
+			}
+			return map;
+		}
+
+		private void displayKeyMap() {
+			final InputMap inputMap = getInputMap(JComponent.WHEN_FOCUSED);
+			final KeyStroke[] keys = inputMap.allKeys();
+			final ArrayList<String> lines = new ArrayList<>();
+			final String common = "<span style='display:inline-block;width:100px;font-weight:bold'>";
+			if (keys != null) {
+				for (int i = 0; i < keys.length; i++) {
+					final KeyStroke key = keys[i];
+					final String keyString = key.toString().replace("pressed", "");
+					lines.add(common + keyString + "</span>&nbsp;&nbsp;" + inputMap.get(key));
+				}
+				Collections.sort(lines);
+			}
+			GuiUtils.showHTMLDialog("<HTML>" + String.join("<br>", lines), "Dendrogram Viewer Shortcuts");
+		}
+	}
+
 }

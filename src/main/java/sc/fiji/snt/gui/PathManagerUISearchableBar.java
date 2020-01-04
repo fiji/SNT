@@ -180,7 +180,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 		mi1.addActionListener(e -> {
 			final String unit = pmui.getPathAndFillManager().getBoundingBox(false)
 				.getUnit();
-			doMorphoFiltering(TreeStatistics.LENGTH, unit);
+			doMorphoFiltering(TreeStatistics.PATH_LENGTH, unit);
 		});
 		morphoFilteringMenu.add(mi1);
 		mi1 = new JMenuItem("Mean Radius...");
@@ -327,7 +327,7 @@ public class PathManagerUISearchableBar extends SNTSearchableBar {
 			final Path p = iterator.next();
 			double value;
 			switch (property) {
-				case TreeStatistics.LENGTH:
+				case TreeStatistics.PATH_LENGTH:
 					value = p.getLength();
 					break;
 				case TreeStatistics.N_NODES:

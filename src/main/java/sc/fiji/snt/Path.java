@@ -22,6 +22,7 @@
 
 package sc.fiji.snt;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -139,12 +140,18 @@ public class Path implements Comparable<Path> {
 	private double[] nodeValues;
 	// BrainAnnotations associated with this node;
 	private BrainAnnotation[] nodeAnnotations;
-	// NB: id should be assigned by PathAndFillManager
-	private int id = -1;
+
+	/*
+	 * Path identifiers: this Path's id is stored in (lower) bits 15-0. Tree id in
+	 * the (upper) bits 31-16. NB: should only be assigned by PathAndFillManager.
+	 */
+	private long id = -1l;
+	private String treeLabel;
+
 	// NB: The leagacy 3D viewer requires always a unique name
 	private String name;
 	// Path based ordering akin of reverse Horton-Strahler numbers
-	private int order = 1;
+	private int order = -1;
 	// The SWC-type flag of this path
 	int swcType = SWC_UNDEFINED;
 	// is this path selected in the UI?
@@ -196,6 +203,7 @@ public class Path implements Comparable<Path> {
 	private static final int PATH_END = 1;
 	private int maxPoints;
 
+
 	/**
 	 * Instantiates a new path.
 	 *
@@ -233,7 +241,7 @@ public class Path implements Comparable<Path> {
 	 */
 	@Override
 	public int compareTo(final Path o) {
-		return Integer.compare(id, o.id);
+		return Long.compare(id, o.id);
 	}
 
 	/**
@@ -242,11 +250,29 @@ public class Path implements Comparable<Path> {
 	 * @return the identifier
 	 */
 	public int getID() {
-		return id;
+		return (int) id; // (lower) bits 15-0
 	}
 
-	protected void setID(final int id) {
-		this.id = id;
+	/**
+	 * Gets the identifier of the {@link Tree} associated to this Path (if any).
+	 *
+	 * @return the Tree identifier
+	 */
+	public int getTreeID() {
+		return (int) (id >> 32); // (upper) bits 31-16
+	}
+
+	protected void setIDs(final int pathID, final int treeID) {
+		// pathID to fill lower bits, treeID to fill upper bits
+		id = (((long) treeID) << 32) | (pathID & 0xffffffffL);
+	}
+
+	protected void setTreeLabel(final String treeLabel) {
+		this.treeLabel = treeLabel;
+	}
+
+	protected String getTreeLabel() {
+		return (treeLabel == null) ? "Cell "+ getTreeID() : treeLabel;
 	}
 
 	/**
@@ -307,7 +333,7 @@ public class Path implements Comparable<Path> {
 	 * @see #setName(String)
 	 */
 	public String getName() {
-		if (name == null || name.isEmpty()) name = "Path " + id;
+		if (name == null || name.isEmpty()) name = "Path " + getID();
 		return name;
 	}
 
@@ -342,6 +368,20 @@ public class Path implements Comparable<Path> {
 		}
 		for (final Path c : children)
 			c.setChildren(pathsLeft);
+	}
+
+	/**
+	 * Returns the ratio between the "Euclidean distance" of this path and its
+	 * length. The Euclidean distance of this path is defined as the distance
+	 * between this Path's start and end point.
+	 *
+	 * @return the Contraction of this Path, or {@code NaN} if this Path has no length
+	 */
+	public double getContraction() {
+		final double length = getLength();
+		if (length == 0) return Double.NaN;
+		final double eDistance = getNode(size() - 1).distanceTo(getNode(0));
+		return eDistance / length;
 	}
 
 	/**
@@ -415,7 +455,7 @@ public class Path implements Comparable<Path> {
 		startJoinsPoint = null;
 		endJoins = null;
 		endJoinsPoint = null;
-		setOrder(1);
+		setIsPrimary(true);
 	}
 
 	public void setStartJoin(final Path other, final PointInImage joinPoint) {
@@ -880,9 +920,22 @@ public class Path implements Comparable<Path> {
 		other.setIsPrimary(isPrimary());
 		other.setSWCType(getSWCType());
 		other.setCTposition(getChannel(), getFrame());
-		other.setEditableNode(getEditableNodeIndex());
+		other.setEditableNode((getEditableNodeIndex() < other.size()) ? getEditableNodeIndex() : -1);
 		other.setCanvasOffset(getCanvasOffset());
 		other.setColor(getColor());
+		other.id = id;
+	}
+
+	/**
+	 * Returns a new Path with this Path's attributes (e.g. spatial scale), but no nodes.
+	 *
+	 * @return the empty path
+	 */
+	public Path createPath() {
+		final Calibration cal = getCalibration();
+		final Path dup = new Path(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth, cal.getUnit(), size());
+		applyCommonProperties(dup);
+		return dup;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1076,11 +1129,13 @@ public class Path implements Comparable<Path> {
 	public void addNode(final PointInImage point) {
 		addCommonPropertiesNode(point);
 		if (!Double.isNaN(point.v)) setNodeValue(point.v, size() - 1);
-	}
-
-	protected void addNode(final SWCPoint point) {
-		addCommonPropertiesNode(point);
-		radii[size() - 1] = point.radius;
+		if (point instanceof SWCPoint) {
+			final double radius = ((SWCPoint)point).radius;
+			if (radius > 0) {
+				if (!hasRadii()) createCircles();
+				radii[size() - 1] = ((SWCPoint)point).radius;
+			}
+		}
 	}
 
 	private void addCommonPropertiesNode(final SNTPoint point) {
@@ -1133,6 +1188,7 @@ public class Path implements Comparable<Path> {
 	{
 
 		g2.setColor(c);
+		g2.setStroke(new BasicStroke((float) (canvas.nodeDiameter() / 2.5), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		int startIndexOfLastDrawnLine = -1;
 
 		if (!hasRadii()) drawDiameter = false;
@@ -1810,7 +1866,7 @@ public class Path implements Comparable<Path> {
 
 	public String realToString() {
 		String name = getName();
-		if (name == null) name = "Path " + id;
+		if (name == null) name = "Path " + getID();
 		if (size() == 1) name += " [Single Point]";
 //		if (startJoins != null) {
 //			name += ", starts on " + startJoins.getName();
@@ -2628,6 +2684,6 @@ public class Path implements Comparable<Path> {
 		if (getClass() != obj.getClass()) return false;
 		final Path other = (Path) obj;
 		if (obj == this) return true;
-		return (this.id == other.id) && (this.size() == other.size());
+		return (this.id == other.id);
 	}
 }

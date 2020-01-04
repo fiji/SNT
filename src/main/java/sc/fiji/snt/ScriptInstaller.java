@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.Future;
@@ -39,9 +40,9 @@ import javax.swing.event.MenuKeyEvent;
 import javax.swing.event.MenuKeyListener;
 
 import org.scijava.Context;
-import org.scijava.app.AppService;
 import org.scijava.plugin.Parameter;
 import org.scijava.script.ScriptInfo;
+import org.scijava.script.ScriptLanguage;
 import org.scijava.script.ScriptModule;
 import org.scijava.script.ScriptService;
 import org.scijava.ui.swing.script.TextEditor;
@@ -64,9 +65,6 @@ class ScriptInstaller implements MenuKeyListener {
 	@Parameter
 	private ScriptService scriptService;
 
-	@Parameter
-	private AppService appService;
-
 	private final SNTUI ui;
 	private final TreeSet<ScriptInfo> scripts;
 	private boolean openInsteadOfRun;
@@ -79,9 +77,8 @@ class ScriptInstaller implements MenuKeyListener {
 		scripts = new TreeSet<>(Comparator.comparing(this::getScriptLabel));
 
 		// 1. Include script_templates that are not discovered by ScriptService
-		final File baseDir = appService.getApp().getBaseDirectory();
 		final Map<String, URL> map = FileUtils.findResources(null,
-			"script_templates/Neuroanatomy", baseDir);
+			"script_templates/Neuroanatomy", null);
 		if (map != null) {
 			map.forEach((k, v) -> {
 				try {
@@ -93,14 +90,53 @@ class ScriptInstaller implements MenuKeyListener {
 				}
 			});
 		}
+		// 2. Parse discovered scripts
+		addAllDiscoveredScripts();
 
-		// 2. Include discovered scripts
+		// 3. Include all other scripts
+		addLocalScripts();
+
+	}
+
+	private void addLocalScripts() {
+		// Do a second pass in case scripts outside the plugins directory are missing
+		final File dir = getScriptsDir();
+		if (dir == null) return;
+		final File[] filteredScripts = dir.listFiles((file) -> {
+			final ScriptLanguage lang = scriptService.getLanguageByExtension(FileUtils.getExtension(file));
+			if (lang == null) return false;
+			final String name = file.getName();
+			return file.canRead() && (name.contains("SNT") || name.toLowerCase().contains("neuroanatomy"));
+		});
+		if (filteredScripts != null) {
+			for (final File file : filteredScripts) {
+				final ScriptInfo si = scriptService.getScript(file);
+				if (si != null) {
+					scripts.add(si);
+				}
+			}
+		}
+	}
+
+	private String getScriptsDirPath() {
+		File dir = getScriptsDir();
+		return (dir==null) ? null : dir.getAbsolutePath();
+	}
+
+	private File getScriptsDir() {
+		final List<File> dirs = scriptService.getScriptDirectories();
+		for (final File dir : dirs) {
+			if (!dir.getAbsolutePath().contains("plugins")) return dir;
+		}
+		return null;
+	}
+
+	private void addAllDiscoveredScripts() {
 		for (final ScriptInfo si : scriptService.getScripts()) {
 			final boolean pathMatch = si.getPath() != null && (si.getPath().contains(
 				"SNT") || si.getPath().toLowerCase().contains("neuroanatomy"));
 			if (pathMatch) scripts.add(si);
 		}
-
 	}
 
 	private void runScript(final ScriptInfo si) {
@@ -139,18 +175,19 @@ class ScriptInstaller implements MenuKeyListener {
 		ui.showStatus("", false);
 	}
 
-	private JMenu getMenu(final String folder) {
+	private JMenu getMenu(final String folder, final boolean trimExtension) {
 		final JMenu sMenu = new JMenu((folder == null) ? "Full List" : folder);
 		sMenu.addMenuKeyListener(this);
 		for (final ScriptInfo si : scripts) {
 			final String path = si.getPath();
 			if (path == null || (folder != null && !path.contains(folder))) continue;
-			final JMenuItem mItem = new JMenuItem(getScriptLabel2(si));
+			final JMenuItem mItem = new JMenuItem(getScriptLabel(si,trimExtension));
 			sMenu.add(mItem);
 			mItem.addMenuKeyListener(this);
 			mItem.addActionListener(e -> {
-				if (openInsteadOfRun || (e.getModifiers() &
-					InputEvent.SHIFT_MASK) != 0)
+				final int mods = e.getModifiers();
+				if (openInsteadOfRun || (mods & InputEvent.SHIFT_MASK) != 0
+						|| (mods & InputEvent.SHIFT_DOWN_MASK) != 0)
 				{
 					openScript(si);
 				}
@@ -163,9 +200,9 @@ class ScriptInstaller implements MenuKeyListener {
 		return sMenu;
 	}
 
-	/** Returns a UI list of the SNT 'Batch' scripts **/
+	/** Returns a UI list of SNT's 'Batch' scripts **/
 	protected JMenu getBatchScriptsMenu() {
-		final JMenu menu = getMenu("Batch");
+		final JMenu menu = getMenu("Batch", true);
 		for (int i = 0; i < menu.getItemCount(); i++) {
 			final JMenuItem mItem = menu.getItem(i);
 			mItem.setText(SNTUtils.stripExtension(mItem.getText()) + "...");
@@ -176,9 +213,12 @@ class ScriptInstaller implements MenuKeyListener {
 	/** Returns a UI list with all available scripts scripting SNT **/
 	protected JMenu getScriptsMenu() {
 		final JMenu sMenu = new JMenu("Scripts");
-		sMenu.add(getMenu("Analysis"));
-		sMenu.add(getMenu("Batch"));
-		sMenu.add(getMenu("Tracing"));
+		sMenu.add(getMenu("Analysis", true));
+		sMenu.add(getMenu("Batch", true));
+		sMenu.add(getMenu("Tracing", true));
+		final JMenu listMenu = getFullListMenu();
+		final int listMenuPosition = sMenu.getItemCount();
+		sMenu.add(listMenu);
 		sMenu.addSeparator();
 		final JMenuItem mi = new JMenuItem("New...", IconFactory.getMenuIcon(GLYPH.CODE));
 		mi.addActionListener(e -> {
@@ -187,28 +227,53 @@ class ScriptInstaller implements MenuKeyListener {
 			map.put("BeanShell", "BSH.bsh");
 			map.put("Groovy", "GVY.groovy");
 			map.put("Python", "PY.py");
-			final String choice = new GuiUtils(ui).getChoice("Language:", "New Script", map.keySet().toArray(new String[map.keySet().size()]), "");
+			final String choice = new GuiUtils(ui).getChoice("Language:", "New Script",
+					map.keySet().toArray(new String[map.keySet().size()]), "");
 			final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+			boolean save = true;
 			try {
-				editor.loadTemplate(classloader.getResource("script_templates/Neuroanatomy/Boilerplate/"+ map.get(choice)));
+				editor.loadTemplate(
+						classloader.getResource("script_templates/Neuroanatomy/Boilerplate/" + map.get(choice)));
 			} catch (final NullPointerException ignored) {
-				ui.error("Boilerpate script could not be retrieved. Use Templates>Neuroanatomy> instead");
+				ui.error("Boilerpate script could not be retrieved. Use Script Editor's Templates>Neuroanatomy> instead.");
+				save = false;
 			} finally {
 				editor.setVisible(true);
+				if (save)
+					editor.saveAs(
+							getScriptsDir() + File.separator + "_SNT_script." + FileUtils.getExtension(map.get(choice)));
 			}
 		});
 		sMenu.add(mi);
-		sMenu.addSeparator();
-		final JMenu listMenu = getMenu(null);
-		listMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.LIST));
-		sMenu.add(listMenu);
+		final JMenuItem reloadMI = new JMenuItem("Reload...", IconFactory.getMenuIcon(GLYPH.REDO));
+		reloadMI.addActionListener(e -> {
+			final int oldCount = scripts.size();
+			addLocalScripts();
+			final int newCount = scripts.size();
+			if (oldCount == newCount) {
+				ui.guiUtils.centeredMsg("No new scripts detected.", "List Reloaded");
+				return;
+			}
+			sMenu.remove(listMenuPosition);
+			sMenu.add(getFullListMenu(), listMenuPosition);
+			sMenu.revalidate();
+			ui.guiUtils.centeredMsg(""+ (newCount-oldCount) +" new script(s) added to \"Scripts>Full List>\".", "New Script(s) Detected");
+		});
+		sMenu.add(reloadMI);
 		sMenu.addSeparator();
 		sMenu.add(about());
 		return sMenu;
 	}
 
-	private String getScriptLabel2(final ScriptInfo si) {
-		return getScriptLabel(si).replace('_', ' ');
+	private JMenu getFullListMenu() {
+		final JMenu listMenu = getMenu(null, false);
+		listMenu.setIcon(IconFactory.getMenuIcon(IconFactory.GLYPH.LIST));
+		return listMenu;
+	}
+
+	private String getScriptLabel(final ScriptInfo si, final boolean trimExtension) {
+		final String label = (trimExtension) ? SNTUtils.stripExtension(getScriptLabel(si)) : getScriptLabel(si);
+		return label.replace('_', ' ');
 	}
 
 	private String getScriptLabel(final ScriptInfo si) {
@@ -231,8 +296,7 @@ class ScriptInstaller implements MenuKeyListener {
 					"The list is automatically populated at startup.<br><br>" +
 					"To have your own scripts listed here, save them in the <tt>scripts</tt> " +
 					"directory while including <i>SNT</i> in the filename (e.g., <tt>" +
-					appService.getApp().getBaseDirectory() + File.separator + " scripts" +
-					File.separator + "My_SNT_script.py</tt>) <br><br>" +
+					getScriptsDirPath() + File.separator + "My_SNT_script.py</tt>) <br><br>" +
 					"To edit a listed script hold \"Shift\" while clicking on its menu entry.<br><br>" +
 					"Several programming examples are available through the Script Editor's " +
 					"<i>Templates>Neuroanatomy></i> menu.  Please submit a pull request to SNT's " +
@@ -254,8 +318,7 @@ class ScriptInstaller implements MenuKeyListener {
 
 	@Override
 	public void menuKeyReleased(final MenuKeyEvent e) {
-		openInsteadOfRun = false;
-
+		openInsteadOfRun = e.isShiftDown();
 	}
 
 }

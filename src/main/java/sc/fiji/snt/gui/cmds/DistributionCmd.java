@@ -22,7 +22,6 @@
 
 package sc.fiji.snt.gui.cmds;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,9 +69,8 @@ public class DistributionCmd extends CommonDynamicCmd {
 		super.init(false);
 		final MutableModuleItem<String> measurementChoiceInput = getInfo()
 			.getMutableInput("measurementChoice", String.class);
-		final List<String> choices = new ArrayList<>();
-		Collections.addAll(choices, TreeStatistics.COMMON_MEASUREMENTS);
-		if (setValuesFromSNTService) choices.add(TreeStatistics.VALUES);
+		final List<String> choices = TreeStatistics.getMetrics();
+		if (!setValuesFromSNTService) choices.remove(TreeStatistics.VALUES);
 		Collections.sort(choices);
 		measurementChoiceInput.setChoices(choices);
 		measurementChoiceInput.setValue(this, prefService.get(getClass(),

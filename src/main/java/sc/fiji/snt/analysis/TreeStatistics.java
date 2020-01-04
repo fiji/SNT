@@ -26,6 +26,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
@@ -55,8 +57,11 @@ import sc.fiji.snt.util.SNTColor;
  */
 public class TreeStatistics extends TreeAnalyzer {
 
-	/** Flag for {@value #LENGTH} analysis. */
-	public static final String LENGTH = "Path length";
+	/** Flag for {@value #PATH_LENGTH} analysis. */
+	public static final String PATH_LENGTH = "Path length";
+
+	/** Flag for {@value #BRANCH_LENGTH} analysis. */
+	public static final String BRANCH_LENGTH = "Branch length";
 
 	/** Flag for {@value #TERMINAL_LENGTH} analysis. */
 	public static final String TERMINAL_LENGTH = "Length of terminal branches";
@@ -95,6 +100,9 @@ public class TreeStatistics extends TreeAnalyzer {
 	/** Flag for {@value #Z_COORDINATES} statistics. */
 	public static final String Z_COORDINATES = "Z coordinates";
 
+	/** Flag for {@value #CONTRACTION} statistics. */
+	public static final String CONTRACTION = "Contraction";
+
 	/**
 	 * Flag for analysis of {@value #VALUES}, an optional numeric property that
 	 * can be assigned to Path nodes (e.g., voxel intensities, assigned via
@@ -106,24 +114,11 @@ public class TreeStatistics extends TreeAnalyzer {
 	 */
 	public static final String VALUES = "Node intensity values";
 
-	public static final String[] COMMON_MEASUREMENTS = { //
-			LENGTH, //
-			PRIMARY_LENGTH, //
-			TERMINAL_LENGTH, //
-			N_BRANCH_POINTS, //
-			N_NODES, //
-			MEAN_RADIUS, //
-			PATH_ORDER, //
-			NODE_RADIUS, //
-			X_COORDINATES, //
-			Y_COORDINATES, //
-			Z_COORDINATES,
-			VALUES };
-
 	private static final String[] ALL_FLAGS = { //
-			LENGTH, //
+			BRANCH_LENGTH, //
 			TERMINAL_LENGTH, //
 			PRIMARY_LENGTH, //
+			PATH_LENGTH, //
 			PATH_ORDER, //
 			INTER_NODE_DISTANCE,//
 			INTER_NODE_DISTANCE_SQUARED,//
@@ -134,6 +129,7 @@ public class TreeStatistics extends TreeAnalyzer {
 			X_COORDINATES, //
 			Y_COORDINATES, //
 			Z_COORDINATES, //
+			CONTRACTION, //
 			VALUES };
 
 	private LastDstats lastDstats;
@@ -148,29 +144,48 @@ public class TreeStatistics extends TreeAnalyzer {
 	}
 
 	/**
+	 * Gets the list of <i>all</i> supported metrics.
+	 *
+	 * @return the list of available metrics
+	 */
+	public static List<String> getAllMetrics() {
+		return Arrays.stream(ALL_FLAGS).collect(Collectors.toList());
+	}
+
+	/**
+	 * Gets the list of most commonly used metrics.
+	 *
+	 * @return the list of commonly used metrics
+	 */
+	public static List<String> getMetrics() {
+		return getAllMetrics().stream().filter(metric -> {
+			return !metric.toLowerCase().contains("path");
+		}).collect(Collectors.toList());
+	}
+
+	/**
 	 * Computes the {@link SummaryStatistics} for the specified measurement.
 	 *
-	 * @param measurement the measurement ({@link #N_NODES}, {@link #NODE_RADIUS},
+	 * @param metric the measurement ({@link #N_NODES}, {@link #NODE_RADIUS},
 	 *          etc.)
 	 * @return the SummaryStatistics object.
 	 */
-	public SummaryStatistics getSummaryStats(final String measurement) {
+	public SummaryStatistics getSummaryStats(final String metric) {
 		final SummaryStatistics sStats = new SummaryStatistics();
-		assembleStats(new StatisticsInstance(sStats), getNormalizedMeasurement(
-			measurement));
+		assembleStats(new StatisticsInstance(sStats), getNormalizedMeasurement(metric));
 		return sStats;
 	}
 
 	/**
 	 * Computes the {@link DescriptiveStatistics} for the specified measurement.
 	 *
-	 * @param measurement the measurement ({@link #N_NODES}, {@link #NODE_RADIUS},
+	 * @param metric the measurement ({@link #N_NODES}, {@link #NODE_RADIUS},
 	 *          etc.)
 	 * @return the DescriptiveStatistics object.
 	 */
-	public DescriptiveStatistics getDescriptiveStats(final String measurement) {
+	public DescriptiveStatistics getDescriptiveStats(final String metric) {
 		final DescriptiveStatistics dStats = new DescriptiveStatistics();
-		final String normMeasurement = getNormalizedMeasurement(measurement);
+		final String normMeasurement = getNormalizedMeasurement(metric);
 		if (!lastDstatsCanBeRecycled(normMeasurement)) {
 			assembleStats(new StatisticsInstance(dStats), normMeasurement);
 			lastDstats = new LastDstats(normMeasurement, dStats);
@@ -182,13 +197,13 @@ public class TreeStatistics extends TreeAnalyzer {
 	 * Gets the relative frequencies histogram for a univariate measurement. The
 	 * number of bins is determined using the Freedman-Diaconis rule.
 	 *
-	 * @param measurement the measurement ({@link #N_NODES}, {@link #NODE_RADIUS},
+	 * @param metric the measurement ({@link #N_NODES}, {@link #NODE_RADIUS},
 	 *          etc.)
 	 * @return the frame holding the histogram
 	 */
-	public ChartFrame getHistogram(final String measurement) {
+	public ChartFrame getHistogram(final String metric) {
 
-		final String normMeasurement = getNormalizedMeasurement(measurement);
+		final String normMeasurement = getNormalizedMeasurement(metric);
 		final HistogramDatasetPlus datasetPlus = new HistogramDatasetPlus(normMeasurement);
 		final JFreeChart chart = ChartFactory.createHistogram(null, normMeasurement,
 			"Rel. Frequency", datasetPlus.getDataset());
@@ -240,6 +255,9 @@ public class TreeStatistics extends TreeAnalyzer {
 
 	protected String tryReallyHardToGuessMetric(final String guess) {
 		final String normGuess = guess.toLowerCase();
+		if (normGuess.indexOf("contrac") != -1) {
+			return CONTRACTION;
+		}
 		if (normGuess.indexOf("length") != -1 || normGuess.indexOf("cable") != -1) {
 			if (normGuess.indexOf("term") != -1) {
 				return TERMINAL_LENGTH;
@@ -247,8 +265,11 @@ public class TreeStatistics extends TreeAnalyzer {
 			else if (normGuess.indexOf("prim") != -1) {
 				return PRIMARY_LENGTH;
 			}
+			else if (normGuess.indexOf("path") != -1) {
+				return PATH_LENGTH;
+			}
 			else {
-				return LENGTH;
+				return BRANCH_LENGTH;
 			}
 		}
 		if (normGuess.indexOf("path") != -1 && normGuess.indexOf("order") != -1) {
@@ -312,7 +333,27 @@ public class TreeStatistics extends TreeAnalyzer {
 		final String measurement)
 	{
 		switch (getNormalizedMeasurement(measurement)) {
-			case LENGTH:
+			case CONTRACTION:
+			try {
+				final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
+				for (final Path p : analyzer.getBranches())
+					stat.addValue(p.getContraction());
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				stat.addValue(Double.NaN);
+			}
+			break;
+			case BRANCH_LENGTH:
+			try {
+				final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
+				for (final Path p : analyzer.getBranches())
+					stat.addValue(p.getLength());
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				stat.addValue(Double.NaN);
+			}
+			break;
+			case PATH_LENGTH:
 				for (final Path p : tree.list())
 					stat.addValue(p.getLength());
 				break;
@@ -497,6 +538,7 @@ public class TreeStatistics extends TreeAnalyzer {
 	public static void main(final String[] args) {
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeStatistics treeStats = new TreeStatistics(tree);
+		treeStats.getHistogram("contraction").setVisible(true);
 		treeStats.getHistogram(PATH_ORDER).setVisible(true);
 		treeStats.restrictToOrder(1);
 		treeStats.getHistogram(PATH_ORDER).setVisible(true);

@@ -371,6 +371,20 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
+	 * Returns the ratio between the "Euclidean distance" of this path and its
+	 * length. The Euclidean distance of this path is defined as the distance
+	 * between this Path's start and end point.
+	 *
+	 * @return the Contraction of this Path, or {@code NaN} if this Path has no length
+	 */
+	public double getContraction() {
+		final double length = getLength();
+		if (length == 0) return Double.NaN;
+		final double eDistance = getNode(size() - 1).distanceTo(getNode(0));
+		return eDistance / length;
+	}
+
+	/**
 	 * Gets the length of this Path
 	 *
 	 * @return the length of this Path

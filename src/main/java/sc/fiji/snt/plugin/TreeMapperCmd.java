@@ -46,7 +46,6 @@ import org.scijava.widget.Button;
 
 import sc.fiji.snt.analysis.PathProfiler;
 import sc.fiji.snt.analysis.TreeColorMapper;
-import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.viewer.Viewer3D;
 import sc.fiji.snt.Path;
@@ -149,12 +148,8 @@ public class TreeMapperCmd extends DynamicCommand {
 	private void init() {
 		final MutableModuleItem<String> measurementChoiceInput = getInfo()
 			.getMutableInput("measurementChoice", String.class);
-		final List<String> choices = new ArrayList<>();
-		Collections.addAll(choices, TreeStatistics.COMMON_MEASUREMENTS);
-		choices.add(TreeColorMapper.PATH_DISTANCE);
-		choices.add(TreeColorMapper.TAG_FILENAME);
-		choices.add(TreeColorMapper.STRAHLER_NUMBER);
-		if (setValuesFromSNTService) choices.add(TreeColorMapper.VALUES);
+		final List<String> choices = TreeColorMapper.getMetrics();
+		if (!setValuesFromSNTService) choices.remove(TreeColorMapper.VALUES);
 		Collections.sort(choices);
 		measurementChoiceInput.setChoices(choices);
 		measurementChoiceInput.setValue(this, prefService.get(getClass(),

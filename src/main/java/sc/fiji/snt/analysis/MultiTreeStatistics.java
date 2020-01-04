@@ -24,6 +24,8 @@ package sc.fiji.snt.analysis;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.text.WordUtils;
 
@@ -50,6 +52,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 	/** Flag for {@value #PRIMARY_LENGTH} analysis. */
 	public static final String PRIMARY_LENGTH = "Length of primary branches (sum)";
 
+	/** Flag for {@value #AVG_BRANCH_LENGTH} analysis. */
+	public static final String AVG_BRANCH_LENGTH = "Average branch length";
+
 	/** Flag specifying {@link Tree#assignValue(double) Tree value} statistics */
 	public static final String ASSIGNED_VALUE = "Assigned value";
 
@@ -73,6 +78,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 
 	/** Flag for {@value #N_BRANCH_POINTS} statistics */
 	public static final String N_BRANCH_POINTS = "No. of branch points";
+
+	/** Flag for {@value #AVG_CONTRACTION} statistics */
+	public static final String AVG_CONTRACTION = "Average contraction";
 
 	/** Flag for {@value #N_PATHS} statistics */
 	public static final String N_PATHS = "No. of paths";
@@ -102,7 +110,7 @@ public class MultiTreeStatistics extends TreeStatistics {
 			LENGTH, TERMINAL_LENGTH, PRIMARY_LENGTH, //
 			STRAHLER_NUMBER, STRAHLER_RATIO, HIGHEST_PATH_ORDER, //
 			N_BRANCHES, N_PRIMARY_BRANCHES, N_TERMINAL_BRANCHES, N_BRANCH_POINTS, N_TIPS, //
-			ASSIGNED_VALUE, MEAN_RADIUS, //
+			AVG_CONTRACTION, MEAN_RADIUS, ASSIGNED_VALUE, //
 			WIDTH, HEIGHT, DEPTH, //
 			N_NODES, N_PATHS, N_FITTED_PATHS//
 	};
@@ -124,6 +132,26 @@ public class MultiTreeStatistics extends TreeStatistics {
 	public MultiTreeStatistics(final Collection<Tree> group) {
 		super(new Tree());
 		this.groupOfTrees = group;
+	}
+
+	/**
+	 * Gets the list of <i>all</i> supported metrics.
+	 *
+	 * @return the list of available metrics
+	 */
+	public static List<String> getAllMetrics() {
+		return Arrays.stream(ALL_FLAGS).collect(Collectors.toList());
+	}
+
+	/**
+	 * Gets the list of most commonly used metrics.
+	 *
+	 * @return the list of commonly used metrics
+	 */
+	public static List<String> getMetrics() {
+		return getAllMetrics().stream().filter(metric -> {
+			return !(ASSIGNED_VALUE.equals(metric) || metric.toLowerCase().contains("path"));
+		}).collect(Collectors.toList());
 	}
 
 	/**
@@ -267,6 +295,22 @@ public class MultiTreeStatistics extends TreeStatistics {
 			case STRAHLER_RATIO:
 				try {
 					stat.addValue(ta.getStrahlerBifurcationRatio());
+				} catch (final IllegalArgumentException ignored) {
+					SNTUtils.log("Error: " + ignored.getMessage());
+					stat.addValue(Double.NaN);
+				}
+				break;
+			case AVG_CONTRACTION:
+				try {
+					stat.addValue(ta.getAvgContraction());
+				} catch (final IllegalArgumentException ignored) {
+					SNTUtils.log("Error: " + ignored.getMessage());
+					stat.addValue(Double.NaN);
+				}
+				break;
+			case AVG_BRANCH_LENGTH:
+				try {
+					stat.addValue(ta.getAvgBranchLength());
 				} catch (final IllegalArgumentException ignored) {
 					SNTUtils.log("Error: " + ignored.getMessage());
 					stat.addValue(Double.NaN);

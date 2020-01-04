@@ -84,6 +84,12 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 	@Parameter(label = MultiTreeStatistics.PRIMARY_LENGTH)
 	private boolean primaryLength;
 
+	@Parameter(label = MultiTreeStatistics.AVG_BRANCH_LENGTH)
+	private boolean avgBranchLength;
+
+	@Parameter(label = MultiTreeStatistics.AVG_CONTRACTION)
+	private boolean avgContraction;
+
 	@Parameter(label = MultiTreeStatistics.N_BRANCH_POINTS)
 	private boolean nBPs;
 
@@ -161,6 +167,8 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 	}
 
 	private void setAllCheckboxesEnabled(final boolean enable) {
+		avgBranchLength = enable;
+		avgContraction = enable;
 		cableLength = enable;
 		depth = enable;
 		height = enable;
@@ -182,6 +190,8 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 	public void run() {
 
 		final List<String> metrics = new ArrayList<>();
+		if (avgBranchLength) metrics.add(MultiTreeStatistics.AVG_BRANCH_LENGTH);
+		if (avgContraction) metrics.add(MultiTreeStatistics.AVG_CONTRACTION);
 		if(cableLength) metrics.add(MultiTreeStatistics.LENGTH);
 		if(terminalLength) metrics.add(MultiTreeStatistics.TERMINAL_LENGTH);
 		if(primaryLength) metrics.add(MultiTreeStatistics.PRIMARY_LENGTH);

@@ -315,6 +315,20 @@ public class TreeAnalyzer extends ContextCommand {
 				SNTUtils.log("Error: " + ignored.getMessage());
 				return Double.NaN;
 			}
+		case MultiTreeStatistics.AVG_CONTRACTION:
+			try {
+				return getAvgContraction();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
+		case MultiTreeStatistics.AVG_BRANCH_LENGTH:
+			try {
+				return getAvgBranchLength();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
 		case MultiTreeStatistics.N_NODES:
 			return tree.getNodes().size();
 		case MultiTreeStatistics.N_PRIMARY_BRANCHES:

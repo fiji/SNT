@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import net.imagej.ImageJ;
 import net.imagej.lut.LUTService;
@@ -72,7 +73,7 @@ public class TreeColorMapper extends ColorMapper {
 	/** Flag for {@value #PATH_ORDER} mapping. */
 	public static final String PATH_ORDER = TreeStatistics.PATH_ORDER;
 	/** Flag for {@value #LENGTH} mapping. */
-	public static final String LENGTH = TreeStatistics.LENGTH;
+	public static final String LENGTH = TreeStatistics.PATH_LENGTH;
 	/** Flag for {@value #N_BRANCH_POINTS} mapping. */
 	public static final String N_BRANCH_POINTS = TreeStatistics.N_BRANCH_POINTS;
 	/** Flag for {@value #N_NODES} mapping. */
@@ -136,6 +137,15 @@ public class TreeColorMapper extends ColorMapper {
 	 */
 	public TreeColorMapper() {
 		mappedTrees = new ArrayList<>();
+	}
+
+	/**
+	 * Gets the list of supported mapping metrics.
+	 *
+	 * @return the list of mapping metrics.
+	 */
+	public static List<String> getMetrics() {
+		return Arrays.stream(ALL_FLAGS).collect(Collectors.toList());
 	}
 
 	private void initLuts() {

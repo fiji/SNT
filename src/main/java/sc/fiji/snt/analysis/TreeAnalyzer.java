@@ -291,7 +291,7 @@ public class TreeAnalyzer extends ContextCommand {
 		return MultiTreeStatistics.getMetrics();
 	}
 
-	protected Number getMetric(final String metric) {
+	public Number getMetric(final String metric) {
 		switch (metric) {
 		case MultiTreeStatistics.ASSIGNED_VALUE:
 			return tree.getAssignedValue();

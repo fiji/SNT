@@ -906,9 +906,22 @@ public class Path implements Comparable<Path> {
 		other.setIsPrimary(isPrimary());
 		other.setSWCType(getSWCType());
 		other.setCTposition(getChannel(), getFrame());
-		other.setEditableNode(getEditableNodeIndex());
+		other.setEditableNode((getEditableNodeIndex() < other.size()) ? getEditableNodeIndex() : -1);
 		other.setCanvasOffset(getCanvasOffset());
 		other.setColor(getColor());
+		other.id = id;
+	}
+
+	/**
+	 * Returns a new Path with this Path's attributes (e.g. spatial scale), but no nodes.
+	 *
+	 * @return the empty path
+	 */
+	public Path createPath() {
+		final Calibration cal = getCalibration();
+		final Path dup = new Path(cal.pixelWidth, cal.pixelHeight, cal.pixelDepth, cal.getUnit(), size());
+		applyCommonProperties(dup);
+		return dup;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1102,11 +1115,13 @@ public class Path implements Comparable<Path> {
 	public void addNode(final PointInImage point) {
 		addCommonPropertiesNode(point);
 		if (!Double.isNaN(point.v)) setNodeValue(point.v, size() - 1);
-	}
-
-	protected void addNode(final SWCPoint point) {
-		addCommonPropertiesNode(point);
-		radii[size() - 1] = point.radius;
+		if (point instanceof SWCPoint) {
+			final double radius = ((SWCPoint)point).radius;
+			if (radius > 0) {
+				if (!hasRadii()) createCircles();
+				radii[size() - 1] = ((SWCPoint)point).radius;
+			}
+		}
 	}
 
 	private void addCommonPropertiesNode(final SNTPoint point) {
@@ -2655,6 +2670,6 @@ public class Path implements Comparable<Path> {
 		if (getClass() != obj.getClass()) return false;
 		final Path other = (Path) obj;
 		if (obj == this) return true;
-		return (this.id == other.id) && (this.size() == other.size());
+		return (this.id == other.id);
 	}
 }

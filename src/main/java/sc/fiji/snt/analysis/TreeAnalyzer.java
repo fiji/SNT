@@ -28,8 +28,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+
 import org.scijava.table.DefaultGenericTable;
 
 import net.imagej.ImageJ;
@@ -54,62 +57,6 @@ import sc.fiji.snt.util.PointInImage;
  */
 @Plugin(type = ContextCommand.class, visible = false)
 public class TreeAnalyzer extends ContextCommand {
-
-	/** @deprecated Use {@link TreeStatistics#PATH_ORDER} instead */
-	@Deprecated
-	public static final String PATH_ORDER = TreeStatistics.PATH_ORDER;
-
-	/** @deprecated Use {@link TreeStatistics#INTER_NODE_DISTANCE} instead */
-	@Deprecated
-	public static final String INTER_NODE_DISTANCE = TreeStatistics.INTER_NODE_DISTANCE;
-
-	/** @deprecated Use {@link TreeStatistics#TERMINAL_LENGTH} instead */
-	@Deprecated
-	public static final String TERMINAL_LENGTH = TreeStatistics.TERMINAL_LENGTH;
-
-	/** @deprecated Use {@link TreeStatistics#PRIMARY_LENGTH} instead */
-	@Deprecated
-	public static final String PRIMARY_LENGTH = TreeStatistics.PRIMARY_LENGTH;
-
-	/** @deprecated Use {@link TreeStatistics#INTER_NODE_DISTANCE_SQUARED} instead */
-	@Deprecated
-	public static final String INTER_NODE_DISTANCE_SQUARED = TreeStatistics.INTER_NODE_DISTANCE_SQUARED;
-
-	/** @deprecated Use {@link TreeStatistics#LENGTH} instead */
-	@Deprecated
-	public static final String LENGTH = TreeStatistics.LENGTH;
-
-	/** @deprecated Use {@link TreeStatistics#N_BRANCH_POINTS} instead */
-	@Deprecated
-	public static final String N_BRANCH_POINTS = TreeStatistics.N_BRANCH_POINTS;
-
-	/** @deprecated Use {@link TreeStatistics#N_NODES} instead */
-	@Deprecated
-	public static final String N_NODES = TreeStatistics.N_NODES;
-
-	/** @deprecated Use {@link TreeStatistics#NODE_RADIUS} instead */
-	@Deprecated
-	public static final String NODE_RADIUS = TreeStatistics.NODE_RADIUS;
-
-	/** @deprecated Use {@link TreeStatistics#MEAN_RADIUS} instead */
-	@Deprecated
-	public static final String MEAN_RADIUS = TreeStatistics.MEAN_RADIUS;
-
-	/** @deprecated Use {@link TreeStatistics#X_COORDINATES} instead */
-	@Deprecated
-	public static final String X_COORDINATES = TreeStatistics.X_COORDINATES;
-
-	/** @deprecated Use {@link TreeStatistics#X_COORDINATES} instead */
-	@Deprecated
-	public static final String Y_COORDINATES = TreeStatistics.Y_COORDINATES;
-
-	/** @deprecated Use {@link TreeStatistics#X_COORDINATES} instead */
-	@Deprecated
-	public static final String Z_COORDINATES = TreeStatistics.Z_COORDINATES;
-
-	/** @deprecated Use {@link TreeStatistics#VALUES} instead */
-	@Deprecated
-	public static final String VALUES = TreeStatistics.VALUES;
 
 	@Parameter
 	protected StatusService statusService;
@@ -332,6 +279,18 @@ public class TreeAnalyzer extends ContextCommand {
 		return table.getRowCount() - 1;
 	}
 
+	/**
+	 * Gets a list of supported metrics. Note that this list will only include
+	 * commonly used metrics. For a complete list of supported metrics see e.g.,
+	 * {@link MultiTreeStatistics#getAllMetrics()}
+	 * 
+	 * @return the list of available metrics
+	 * @see MultiTreeStatistics#getMetrics()
+	 */
+	public static List<String> getMetrics() {
+		return MultiTreeStatistics.getMetrics();
+	}
+
 	protected Number getMetric(final String metric) {
 		switch (metric) {
 		case MultiTreeStatistics.ASSIGNED_VALUE:
@@ -390,14 +349,29 @@ public class TreeAnalyzer extends ContextCommand {
 			return getWidth();
 		default:
 			throw new IllegalArgumentException("Unrecognizable measurement \"" + metric + "\". "
-					+ "Maybe you meant one of the following?: " + Arrays.toString(MultiTreeStatistics.ALL_FLAGS));
+					+ "Maybe you meant one of the following?: \"" +  String.join(", ", getMetrics() +"\""));
 		}
 	}
 
+	/**
+	 * Measures this Tree
+	 *
+	 * @param metrics the metrics
+	 * @param groupByType the group by type
+	 * @see #getAvailableMetrics()
+	 */
 	public void measure(final Collection<String> metrics, final boolean groupByType) {
 		measure(tree.getLabel(), metrics, groupByType);
 	}
 
+	/**
+	 * Measures this Tree.
+	 *
+	 * @param rowHeader the row header
+	 * @param metrics the metrics
+	 * @param groupByType the group by type
+	 * @see #getAvailableMetrics()
+	 */
 	public void measure(final String rowHeader, final Collection<String> metrics, final boolean groupByType) {
 		if (table == null) table = new DefaultGenericTable();
 		final int lastRow = table.getRowCount() - 1;
@@ -736,6 +710,49 @@ public class TreeAnalyzer extends ContextCommand {
 	public int getNBranches() throws IllegalArgumentException {
 		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
 		return (int) sAnalyzer.getBranchCounts().values().stream().mapToDouble(f -> f).sum();
+	}
+
+	/**
+	 * Gets all the branches in the analyzed tree. A branch is defined as the Path
+	 * composed of all the nodes between two branching points or between one
+	 * branching point and a termination point.
+	 *
+	 * @return the list of branches as Path objects.
+	 * @see StrahlerAnalyzer#getBranches()
+	 * @throws IllegalArgumentException if tree contains multiple roots or loops
+	 */
+	public List<Path> getBranches() throws IllegalArgumentException {
+		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
+		return sAnalyzer.getBranches().values().stream().flatMap(List::stream).collect(Collectors.toList());
+	}
+
+	/**
+	 * Gets average {@link Path#getContraction() contraction} for all the branches
+	 * of the analyzed tree.
+	 * 
+	 * @throws IllegalArgumentException if tree contains multiple roots or loops
+	 * @return the average branch contraction
+	 */
+	public double getAvgContraction() throws IllegalArgumentException {
+		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
+		double contraction = 0;
+		final List<Path> branches = getBranches();
+		for (final Path p : branches) {
+			contraction += p.getContraction();
+		}
+		return contraction / branches.size();
+	}
+
+	/**
+	 * Gets average length for all the branches of the analyzed tree.
+	 * 
+	 * @throws IllegalArgumentException if tree contains multiple roots or loops
+	 * @return the average branch length
+	 */
+	public double getAvgBranchLength() throws IllegalArgumentException {
+		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
+		final List<Path> branches = getBranches();
+		return sumLength(getBranches()) / branches.size();
 	}
 
 	private double sumLength(final Collection<Path> paths) {

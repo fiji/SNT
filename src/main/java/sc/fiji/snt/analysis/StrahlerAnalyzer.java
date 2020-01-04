@@ -41,6 +41,7 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
+import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
@@ -58,6 +59,7 @@ public class StrahlerAnalyzer {
 	private final Tree tree;
 	private int maxOrder = -1;
 	private final Map<Integer, List<SWCPoint>> mappedNodes = new TreeMap<>();
+	private final Map<Integer, List<Path>> branchesMap = new TreeMap<>();
 	private final Map<Integer, Double> nBranchesMap = new TreeMap<>();
 	private final Map<Integer, Double> bPointsMap = new TreeMap<>();
 	private final Map<Integer, Double> bRatioMap = new TreeMap<>();
@@ -142,15 +144,24 @@ public class StrahlerAnalyzer {
 			double nBranches = 0;
 			final TopologicalOrderIterator<SWCPoint, SWCWeightedEdge> it = new TopologicalOrderIterator<SWCPoint, SWCWeightedEdge>(
 					subGraph);
-			final List<SWCPoint> listedNodes = new ArrayList<>();
+			ArrayList<Path>branches = new ArrayList<>();
 			while (it.hasNext()) {
 				final SWCPoint node = it.next();
-				listedNodes.add(node);
 				final List<SWCPoint> children = Graphs.successorListOf(subGraph, node);
-				if (children.size() != 1)
+				if (children.size() != 1) {
 					nBranches++;
+				}
+				final int idx = branches.indexOf(node.getPath());
+				if (idx != -1) {
+					branches.get(idx).addNode(node);
+				} else {
+					final Path p = node.getPath().createPath();
+					p.addNode(node);
+					branches.add(p);
+				}
 			}
 			nBranchesMap.put(order, nBranches);
+			branchesMap.put(order, branches);
 		});
 	}
 
@@ -219,6 +230,15 @@ public class StrahlerAnalyzer {
 	}
 
 	/**
+	 * @return the map containing the list of branches on each order
+	 *         (Horton-Strahler numbers as key and branch points count as value).
+	 */
+	public Map<Integer, List<Path>> getBranches() {
+		if (branchesMap == null || branchesMap.isEmpty()) compute();
+		return branchesMap;
+	}
+
+	/**
 	 * @return the map containing the bifurcation ratios obtained as the ratio of
 	 *         no. of branches between consecutive orders (Horton-Strahler numbers
 	 *         as key and ratios as value).
@@ -247,7 +267,7 @@ public class StrahlerAnalyzer {
 	 * @return the map containing the nodes associated with each order
 	 *         (Horton-Strahler numbers as key and ratios as value).
 	 */
-	public Map<Integer, List<SWCPoint>> getNodes() {
+	protected Map<Integer, List<SWCPoint>> getNodes() {
 		if (mappedNodes == null || mappedNodes.isEmpty()) {
 			compute();
 			for (final SWCPoint node : graph.vertexSet()) {

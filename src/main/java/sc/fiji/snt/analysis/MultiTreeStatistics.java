@@ -27,10 +27,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.text.WordUtils;
 
 import net.imagej.ImageJ;
-import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
@@ -43,6 +44,10 @@ import sc.fiji.snt.Tree;
  */
 public class MultiTreeStatistics extends TreeStatistics {
 
+	/*
+	 * NB: These should all be Capitalized expressions in lower case without hyphens
+	 * unless for "Horton-Strahler"
+	 */
 	/** Flag for {@value #LENGTH} analysis. */
 	public static final String LENGTH = "Cable length";
 
@@ -107,19 +112,27 @@ public class MultiTreeStatistics extends TreeStatistics {
 	public static final String N_FITTED_PATHS = "No. of fitted paths";
 
 	protected static String[] ALL_FLAGS = { //
-			LENGTH, TERMINAL_LENGTH, PRIMARY_LENGTH, //
-			STRAHLER_NUMBER, STRAHLER_RATIO, HIGHEST_PATH_ORDER, //
-			N_BRANCHES, N_PRIMARY_BRANCHES, N_TERMINAL_BRANCHES, N_BRANCH_POINTS, N_TIPS, //
-			AVG_CONTRACTION, MEAN_RADIUS, ASSIGNED_VALUE, //
-			WIDTH, HEIGHT, DEPTH, //
-			N_NODES, N_PATHS, N_FITTED_PATHS//
-	};
-
-	protected static String[] COMMON_FLAGS = { //
-			LENGTH, TERMINAL_LENGTH, PRIMARY_LENGTH, //
-			N_BRANCH_POINTS, N_TIPS, //
-			N_PRIMARY_BRANCHES, N_TERMINAL_BRANCHES, //
-			N_PATHS, N_FITTED_PATHS, MEAN_RADIUS, WIDTH, HEIGHT, DEPTH //
+			ASSIGNED_VALUE, //
+			AVG_BRANCH_LENGTH, //
+			AVG_CONTRACTION, //
+			DEPTH, //
+			HEIGHT, //
+			HIGHEST_PATH_ORDER, //
+			LENGTH, //
+			MEAN_RADIUS, //
+			N_BRANCH_POINTS, //
+			N_BRANCHES, //
+			N_FITTED_PATHS, //
+			N_NODES, //
+			N_PATHS, //
+			N_PRIMARY_BRANCHES, //
+			N_TERMINAL_BRANCHES, //
+			N_TIPS, //
+			PRIMARY_LENGTH, //
+			STRAHLER_NUMBER, //
+			STRAHLER_RATIO, //
+			TERMINAL_LENGTH, //
+			WIDTH, //
 	};
 
 	private Collection<Tree> groupOfTrees;
@@ -172,8 +185,31 @@ public class MultiTreeStatistics extends TreeStatistics {
 		tree.setLabel(groupLabel);
 	}
 
-	@Override
-	protected String tryReallyHardToGuessMetric(final String guess) {
+	protected static String getNormalizedMeasurement(final String measurement, final boolean defaultToTreeStatistics)
+			throws UnknownMetricException {
+		if (Arrays.stream(ALL_FLAGS).anyMatch(measurement::equalsIgnoreCase)) {
+			// This is just so that we can use capitalized strings in the GUI
+			// and lower case strings in scripts
+			return WordUtils.capitalize(measurement, new char[] { '-' }); // Horton-Strahler
+		}
+		String normMeasurement = tryReallyHardToGuessMetric(measurement);
+		final boolean unknown = "unknown".equals(normMeasurement);
+		if (!unknown && !measurement.equals(normMeasurement)) {
+			SNTUtils.log("\"" + normMeasurement + "\" assumed");
+		}
+		if (unknown) {
+			if (defaultToTreeStatistics) {
+				SNTUtils.log("Unrecognized MultiTreeStatistics parameter... Defaulting to TreeStatistics analysis");
+				normMeasurement = TreeStatistics.getNormalizedMeasurement(measurement);
+			} else {
+				throw new UnknownMetricException("Unrecognizable measurement! "
+						+ "Maybe you meant one of the following?: \"" + String.join(", ", getMetrics()) + "\"");
+			}
+		}
+		return normMeasurement;
+	}
+
+	protected static String tryReallyHardToGuessMetric(final String guess) {
 		if (Arrays.stream(ALL_FLAGS).anyMatch(guess::equalsIgnoreCase)) {
 			return WordUtils.capitalize(guess, '-');
 		}
@@ -185,6 +221,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 			}
 			else if (normGuess.indexOf("prim") != -1) {
 				return PRIMARY_LENGTH;
+			}
+			else if (normGuess.indexOf("branch") != -1 && containsAvgReference(normGuess)) {
+				return AVG_BRANCH_LENGTH;
 			}
 			else {
 				return LENGTH;
@@ -218,7 +257,7 @@ public class MultiTreeStatistics extends TreeStatistics {
 		if (normGuess.indexOf("bp") != -1 || normGuess.indexOf("branch") != -1 || normGuess.indexOf("junctions") != -1) {
 			return N_BRANCH_POINTS;
 		}
-		if (normGuess.indexOf("radi") != -1 ) {
+		if (normGuess.indexOf("radi") != -1 && containsAvgReference(normGuess)) {
 			return MEAN_RADIUS;
 		}
 		if (normGuess.indexOf("nodes") != -1 ) {
@@ -236,117 +275,51 @@ public class MultiTreeStatistics extends TreeStatistics {
 				return N_PATHS;
 			}
 		}
-		return super.tryReallyHardToGuessMetric(guess);
+		if (normGuess.indexOf("contraction") != -1 && containsAvgReference(normGuess)) {
+			return AVG_CONTRACTION;
+		}
+		return "unknown";
+	}
+
+	private static boolean containsAvgReference(final String string) {
+		return (string.indexOf("mean") != -1 || string.indexOf("avg") != -1 || string.indexOf("average") != -1);
+	}
+
+	@Override
+	public SummaryStatistics getSummaryStats(final String metric) {
+		final SummaryStatistics sStats = new SummaryStatistics();
+		assembleStats(new StatisticsInstance(sStats), getNormalizedMeasurement(metric, true));
+		return sStats;
+	}
+
+	@Override
+	public DescriptiveStatistics getDescriptiveStats(final String metric) {
+		final DescriptiveStatistics dStats = new DescriptiveStatistics();
+		final String normMeasurement = getNormalizedMeasurement(metric, true);
+		if (!lastDstatsCanBeRecycled(normMeasurement)) {
+			assembleStats(new StatisticsInstance(dStats), normMeasurement);
+			lastDstats = new LastDstats(normMeasurement, dStats);
+		}
+		return lastDstats.dStats;
 	}
 
 	@Override
 	protected void assembleStats(final StatisticsInstance stat,
-		final String measurement)
+		final String measurement) throws UnknownMetricException
 	{
-		final String normMeasurement = getNormalizedMeasurement(measurement);
-		if (ASSIGNED_VALUE.equals(normMeasurement)) {
-			for (final Tree t : groupOfTrees) stat.addValue(t.getAssignedValue());
-			return;
-		}
-		for (final Tree t : groupOfTrees) {
-			final TreeAnalyzer ta = new TreeAnalyzer(t);
-			switch (normMeasurement) {
-			case LENGTH:
-				stat.addValue(ta.getCableLength());
-				break;
-			case TERMINAL_LENGTH:
-				stat.addValue(ta.getTerminalLength());
-				break;
-			case PRIMARY_LENGTH:
-				stat.addValue(ta.getPrimaryLength());
-				break;
-			case N_BRANCH_POINTS:
-				stat.addValue(ta.getBranchPoints().size());
-				break;
-			case N_NODES:
-				stat.addValue(t.getNodes().size());
-				break;
-			case N_BRANCHES:
-				stat.addValue(ta.getNBranches());
-				break;
-			case N_PRIMARY_BRANCHES:
-				stat.addValue(ta.getPrimaryBranches().size());
-				break;
-			case N_TERMINAL_BRANCHES:
-				stat.addValue(ta.getTerminalBranches().size());
-				break;
-			case N_TIPS:
-				stat.addValue(ta.getTips().size());
-				break;
-			case N_PATHS:
-				stat.addValue(ta.getNPaths());
-				break;
-			case N_FITTED_PATHS:
-				stat.addValue(ta.getNFittedPaths());
-				break;
-			case STRAHLER_NUMBER:
-				try {
-					stat.addValue(ta.getStrahlerNumber());
-				} catch (final IllegalArgumentException ignored) {
-					SNTUtils.log("Error: " + ignored.getMessage());
-					stat.addValue(Double.NaN);
-				}
-				break;
-			case STRAHLER_RATIO:
-				try {
-					stat.addValue(ta.getStrahlerBifurcationRatio());
-				} catch (final IllegalArgumentException ignored) {
-					SNTUtils.log("Error: " + ignored.getMessage());
-					stat.addValue(Double.NaN);
-				}
-				break;
-			case AVG_CONTRACTION:
-				try {
-					stat.addValue(ta.getAvgContraction());
-				} catch (final IllegalArgumentException ignored) {
-					SNTUtils.log("Error: " + ignored.getMessage());
-					stat.addValue(Double.NaN);
-				}
-				break;
-			case AVG_BRANCH_LENGTH:
-				try {
-					stat.addValue(ta.getAvgBranchLength());
-				} catch (final IllegalArgumentException ignored) {
-					SNTUtils.log("Error: " + ignored.getMessage());
-					stat.addValue(Double.NaN);
-				}
-				break;
-			case HIGHEST_PATH_ORDER:
-				stat.addValue(ta.getHighestPathOrder());
-				break;
-			case MEAN_RADIUS:
-				double sum = 0;
-				for (final Path p : t.list())
-					sum += p.getMeanRadius();
-				stat.addValue(sum / t.size());
-				break;
-			case WIDTH:
-				stat.addValue(ta.getWidth());
-				break;
-			case HEIGHT:
-				stat.addValue(ta.getHeight());
-				break;
-			case DEPTH:
-				stat.addValue(ta.getDepth());
-				break;
-			default:
-				SNTUtils.log("Unrecognized MultiTreeStatistics parameter... Defaulting to TreeStatistics analysis");
-				dumpStats(stat, measurement);
-				return;
+		try {
+			String normMeasurement = getNormalizedMeasurement(measurement, false);
+			for (final Tree t : groupOfTrees) {
+				final TreeAnalyzer ta = new TreeAnalyzer(t);
+				stat.addValue(ta.getMetricWithoutChecks(normMeasurement).doubleValue());
 			}
+		} catch (final UnknownMetricException ignored) {
+			SNTUtils.log("Unrecognized MultiTreeStatistics parameter... Defaulting to TreeStatistics analysis");
+			final String normMeasurement = TreeStatistics.getNormalizedMeasurement(measurement); // Will throw yet another UnknownMetricException
+			for (final Tree tree : groupOfTrees)
+				super.tree.list().addAll(tree.list());
+			super.assembleStats(stat, normMeasurement);
 		}
-	}
-
-	private void dumpStats(final StatisticsInstance stat, final String measurement) {
-		final String normMeasurement = super.getNormalizedMeasurement(measurement);
-		for (final Tree tree : groupOfTrees)
-			super.tree.list().addAll(tree.list());
-		super.assembleStats(stat, normMeasurement);
 	}
 
 	/* IDE debug method */

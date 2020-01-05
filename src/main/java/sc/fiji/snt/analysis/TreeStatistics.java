@@ -116,23 +116,24 @@ public class TreeStatistics extends TreeAnalyzer {
 
 	private static final String[] ALL_FLAGS = { //
 			BRANCH_LENGTH, //
-			TERMINAL_LENGTH, //
-			PRIMARY_LENGTH, //
-			PATH_LENGTH, //
-			PATH_ORDER, //
-			INTER_NODE_DISTANCE,//
-			INTER_NODE_DISTANCE_SQUARED,//
+			CONTRACTION, //
+			INTER_NODE_DISTANCE, //
+			INTER_NODE_DISTANCE_SQUARED, //
+			MEAN_RADIUS, //
 			N_BRANCH_POINTS, //
 			N_NODES, //
 			NODE_RADIUS, //
-			MEAN_RADIUS, //
+			PATH_LENGTH, //
+			PATH_ORDER, //
+			PRIMARY_LENGTH, //
+			TERMINAL_LENGTH, //
+			VALUES, //
 			X_COORDINATES, //
 			Y_COORDINATES, //
 			Z_COORDINATES, //
-			CONTRACTION, //
-			VALUES };
+	};
 
-	private LastDstats lastDstats;
+	protected LastDstats lastDstats;
 
 	/**
 	 * Instantiates a new instance from a collection of Paths
@@ -253,7 +254,7 @@ public class TreeStatistics extends TreeAnalyzer {
 		return frame;
 	}
 
-	protected String tryReallyHardToGuessMetric(final String guess) {
+	protected static String tryReallyHardToGuessMetric(final String guess) {
 		final String normGuess = guess.toLowerCase();
 		if (normGuess.indexOf("contrac") != -1) {
 			return CONTRACTION;
@@ -312,7 +313,7 @@ public class TreeStatistics extends TreeAnalyzer {
 		return "unknown";
 	}
 
-	protected String getNormalizedMeasurement(final String measurement) {
+	protected static String getNormalizedMeasurement(final String measurement) {
 		if (Arrays.stream(ALL_FLAGS).anyMatch(measurement::equalsIgnoreCase)) {
 			// This is just so that we can use capitalized strings in the GUI
 			// and lower case strings in scripts
@@ -322,7 +323,7 @@ public class TreeStatistics extends TreeAnalyzer {
 		if (!measurement.equals(normMeasurement)) {
 			SNTUtils.log("\"" + normMeasurement + "\" assumed");
 			if ("unknonwn".equals(normMeasurement)) {
-				throw new IllegalArgumentException("Unrecognizable measurement! "
+				throw new UnknownMetricException("Unrecognizable measurement! "
 						+ "Maybe you meant one of the following?: " + Arrays.toString(ALL_FLAGS));
 			}
 		}
@@ -333,7 +334,17 @@ public class TreeStatistics extends TreeAnalyzer {
 		final String measurement)
 	{
 		switch (getNormalizedMeasurement(measurement)) {
-			case CONTRACTION:
+		case BRANCH_LENGTH:
+			try {
+				final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
+				for (final Path p : analyzer.getBranches())
+					stat.addValue(p.getLength());
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				stat.addValue(Double.NaN);
+			}
+			break;
+		case CONTRACTION:
 			try {
 				final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
 				for (final Path p : analyzer.getBranches())
@@ -343,120 +354,110 @@ public class TreeStatistics extends TreeAnalyzer {
 				stat.addValue(Double.NaN);
 			}
 			break;
-			case BRANCH_LENGTH:
-			try {
-				final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-				for (final Path p : analyzer.getBranches())
-					stat.addValue(p.getLength());
-			} catch (final IllegalArgumentException ignored) {
-				SNTUtils.log("Error: " + ignored.getMessage());
-				stat.addValue(Double.NaN);
+		case INTER_NODE_DISTANCE:
+			for (final Path p : tree.list()) {
+				if (p.size() < 2)
+					continue;
+				for (int i = 1; i < p.size(); i += 1) {
+					stat.addValue(p.getNode(i).distanceTo(p.getNode(i - 1)));
+				}
 			}
 			break;
-			case PATH_LENGTH:
-				for (final Path p : tree.list())
-					stat.addValue(p.getLength());
-				break;
-			case PRIMARY_LENGTH:
-				for (final Path p : getPrimaryBranches())
-					stat.addValue(p.getLength());
-				break;
-			case TERMINAL_LENGTH:
-				for (final Path p : getTerminalBranches())
-					stat.addValue(p.getLength());
-				break;
-			case N_NODES:
-				for (final Path p : tree.list())
-					stat.addValue(p.size());
-				break;
-			case INTER_NODE_DISTANCE:
-				for (final Path p : tree.list()) {
-					if (p.size() < 2) continue;
-					for (int i = 1; i < p.size(); i += 1) {
-						stat.addValue(p.getNode(i).distanceTo(p.getNode(i -
-							1)));
-					}
+		case INTER_NODE_DISTANCE_SQUARED:
+			for (final Path p : tree.list()) {
+				if (p.size() < 2)
+					continue;
+				for (int i = 1; i < p.size(); i += 1) {
+					stat.addValue(p.getNode(i).distanceSquaredTo(p.getNode(i - 1)));
 				}
-				break;
-			case INTER_NODE_DISTANCE_SQUARED:
-				for (final Path p : tree.list()) {
-					if (p.size() < 2) continue;
-					for (int i = 1; i < p.size(); i += 1) {
-						stat.addValue(p.getNode(i).distanceSquaredTo(p
-							.getNode(i - 1)));
-					}
+			}
+			break;
+		case MEAN_RADIUS:
+			for (final Path p : tree.list()) {
+				stat.addValue(p.getMeanRadius());
+			}
+			break;
+		case N_BRANCH_POINTS:
+			for (final Path p : tree.list()) {
+				stat.addValue(p.findJunctions().size());
+			}
+			break;
+		case N_NODES:
+			for (final Path p : tree.list())
+				stat.addValue(p.size());
+			break;
+		case NODE_RADIUS:
+			for (final Path p : tree.list()) {
+				for (int i = 0; i < p.size(); i++) {
+					stat.addValue(p.getNodeRadius(i));
 				}
-				break;
-			case NODE_RADIUS:
-				for (final Path p : tree.list()) {
-					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getNodeRadius(i));
-					}
+			}
+			break;
+		case PATH_LENGTH:
+			for (final Path p : tree.list())
+				stat.addValue(p.getLength());
+			break;
+		case PATH_ORDER:
+			for (final Path p : tree.list()) {
+				stat.addValue(p.getOrder());
+			}
+			break;
+		case PRIMARY_LENGTH:
+			for (final Path p : getPrimaryBranches())
+				stat.addValue(p.getLength());
+			break;
+		case TERMINAL_LENGTH:
+			for (final Path p : getTerminalBranches())
+				stat.addValue(p.getLength());
+			break;
+		case VALUES:
+			for (final Path p : tree.list()) {
+				if (!p.hasNodeValues())
+					continue;
+				for (int i = 0; i < p.size(); i++) {
+					stat.addValue(p.getNodeValue(i));
 				}
-				break;
-			case MEAN_RADIUS:
-				for (final Path p : tree.list()) {
-					stat.addValue(p.getMeanRadius());
+			}
+			if (stat.getN() == 0)
+				throw new IllegalArgumentException("Tree has no values assigned");
+			break;
+		case X_COORDINATES:
+			for (final Path p : tree.list()) {
+				for (int i = 0; i < p.size(); i++) {
+					stat.addValue(p.getNode(i).x);
 				}
-				break;
-			case PATH_ORDER:
-				for (final Path p : tree.list()) {
-					stat.addValue(p.getOrder());
+			}
+			break;
+		case Y_COORDINATES:
+			for (final Path p : tree.list()) {
+				for (int i = 0; i < p.size(); i++) {
+					stat.addValue(p.getNode(i).y);
 				}
-				break;
-			case N_BRANCH_POINTS:
-				for (final Path p : tree.list()) {
-					stat.addValue(p.findJunctions().size());
+			}
+		case Z_COORDINATES:
+			for (final Path p : tree.list()) {
+				for (int i = 0; i < p.size(); i++) {
+					stat.addValue(p.getNode(i).z);
 				}
-				break;
-			case X_COORDINATES:
-				for (final Path p : tree.list()) {
-					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getNode(i).x);
-					}
-				}
-				break;
-			case Y_COORDINATES:
-				for (final Path p : tree.list()) {
-					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getNode(i).y);
-					}
-				}
-			case Z_COORDINATES:
-				for (final Path p : tree.list()) {
-					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getNode(i).z);
-					}
-				}
-				break;
-			case VALUES:
-				for (final Path p : tree.list()) {
-					if (!p.hasNodeValues()) continue;
-					for (int i = 0; i < p.size(); i++) {
-						stat.addValue(p.getNodeValue(i));
-					}
-				}
-				if (stat.getN() == 0)
-					throw new IllegalArgumentException("Tree has no values assigned");
-				break;
-			default:
-				throw new IllegalArgumentException("Unrecognized parameter " +
-					measurement);
+			}
+			break;
+		default:
+			throw new IllegalArgumentException("Unrecognized parameter " + measurement);
 		}
 	}
 
-	private boolean lastDstatsCanBeRecycled(final String normMeasurement) {
+	protected boolean lastDstatsCanBeRecycled(final String normMeasurement) {
 		return (lastDstats != null && tree.size() == lastDstats.size &&
 			normMeasurement.equals(lastDstats.measurement));
 	}
 
-	private class LastDstats {
+	class LastDstats {
 
 		private final String measurement;
-		private final DescriptiveStatistics dStats;
+		final DescriptiveStatistics dStats;
 		private final int size;
 
-		private LastDstats(final String measurement,
+		LastDstats(final String measurement,
 			final DescriptiveStatistics dStats)
 		{
 			this.measurement = measurement;

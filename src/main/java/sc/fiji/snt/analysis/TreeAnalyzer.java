@@ -271,7 +271,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see #setTable(DefaultGenericTable)
 	 */
 	public void summarize(final String rowHeader, final boolean groupByType) {
-		measure(rowHeader, Arrays.asList(MultiTreeStatistics.COMMON_FLAGS), true);
+		measure(rowHeader, getMetrics(), true);
 	}
 
 	private int getNextRow(final String rowHeader) {
@@ -291,10 +291,28 @@ public class TreeAnalyzer extends ContextCommand {
 		return MultiTreeStatistics.getMetrics();
 	}
 
-	protected Number getMetric(final String metric) {
+	public Number getMetric(final String metric) throws IllegalArgumentException {
+		return getMetricWithoutChecks(MultiTreeStatistics.getNormalizedMeasurement(metric, false));
+	}
+
+	protected Number getMetricWithoutChecks(final String metric) throws IllegalArgumentException {
 		switch (metric) {
 		case MultiTreeStatistics.ASSIGNED_VALUE:
 			return tree.getAssignedValue();
+		case MultiTreeStatistics.AVG_BRANCH_LENGTH:
+			try {
+				return getAvgBranchLength();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
+		case MultiTreeStatistics.AVG_CONTRACTION:
+			try {
+				return getAvgContraction();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
 		case MultiTreeStatistics.DEPTH:
 			return getDepth();
 		case MultiTreeStatistics.HEIGHT:
@@ -315,32 +333,18 @@ public class TreeAnalyzer extends ContextCommand {
 				SNTUtils.log("Error: " + ignored.getMessage());
 				return Double.NaN;
 			}
-		case MultiTreeStatistics.AVG_CONTRACTION:
-			try {
-				return getAvgContraction();
-			} catch (final IllegalArgumentException ignored) {
-				SNTUtils.log("Error: " + ignored.getMessage());
-				return Double.NaN;
-			}
-		case MultiTreeStatistics.AVG_BRANCH_LENGTH:
-			try {
-				return getAvgBranchLength();
-			} catch (final IllegalArgumentException ignored) {
-				SNTUtils.log("Error: " + ignored.getMessage());
-				return Double.NaN;
-			}
+		case MultiTreeStatistics.N_FITTED_PATHS:
+			return getNFittedPaths();
 		case MultiTreeStatistics.N_NODES:
 			return tree.getNodes().size();
+		case MultiTreeStatistics.N_PATHS:
+			return getNPaths();
 		case MultiTreeStatistics.N_PRIMARY_BRANCHES:
 			return getPrimaryBranches().size();
 		case MultiTreeStatistics.N_TERMINAL_BRANCHES:
 			return getTerminalBranches().size();
 		case MultiTreeStatistics.N_TIPS:
 			return getTips().size();
-		case MultiTreeStatistics.N_PATHS:
-			return getNPaths();
-		case MultiTreeStatistics.N_FITTED_PATHS:
-			return getNFittedPaths();
 		case MultiTreeStatistics.PRIMARY_LENGTH:
 			return getPrimaryLength();
 		case MultiTreeStatistics.STRAHLER_NUMBER:

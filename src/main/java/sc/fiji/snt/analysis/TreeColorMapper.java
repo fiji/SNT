@@ -88,7 +88,7 @@ public class TreeColorMapper extends ColorMapper {
 	public static final String Y_COORDINATES = TreeStatistics.Y_COORDINATES;
 	/** Flag for {@value #Z_COORDINATES} mapping. */
 	public static final String Z_COORDINATES = TreeStatistics.Z_COORDINATES;
-	/** See {@link TreeAnalyzer#VALUES}. */
+	/** Flag for {@value #VALUES} mapping. */
 	public static final String VALUES = TreeStatistics.VALUES;
 	/** Flag for {@value #PATH_DISTANCE} mapping. */
 	public static final String PATH_DISTANCE = "Path distance to soma";

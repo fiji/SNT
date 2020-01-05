@@ -1903,8 +1903,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @return true, if import was successful
 	 * @see NeuroMorphoLoader
 	 * @see #importSWC(String, boolean)
-	 * @see #importSWC(BufferedReader, boolean, double, double, double, double,
-	 *      double, double, boolean)
+	 * @see #importSWC(String, boolean, double, double, double, double, double, double, boolean)
 	 */
 	public boolean importSWC(final String descriptor, final String urlOrFilePath) {
 		if (SNTUtils.isValidURL(urlOrFilePath)) {
@@ -2289,22 +2288,27 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * Imports an SWC file using advanced options.
 	 *
 	 * @param filePath the absolute file path to the imported file
-	 * @param assumeCoordinatesInVoxels see
-	 *          {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
-	 * @param xOffset see
-	 *          {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
-	 * @param yOffset see
-	 *          {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
-	 * @param zOffset see
-	 *          {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
-	 * @param xScale see
-	 *          {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
-	 * @param yScale see
-	 *          {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
-	 * @param zScale see
-	 *          {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
-	 * @param replaceAllPaths see
-	 *          {@link #importSWC(BufferedReader, boolean, double, double, double, double, double, double, boolean)}
+	 * @param assumeCoordinatesInVoxels If true, the SWC coordinates are assumed
+	 *          to be in image coordinates ("pixels"). Note that in this case,
+	 *          radii will be scaled by the minimum voxel separation. This
+	 *          workaround seems to be required to properly import unscaled files
+	 * @param xOffset the offset to be applied to all X coordinates. May be useful
+	 *          to import data obtained from multiple "un-stitched" fields of
+	 *          view. Default is 0.
+	 * @param yOffset the offset to be applied to all Y coordinates. May be useful
+	 *          to import data obtained from multiple "un-stitched" fields of
+	 *          view. Default is 0.
+	 * @param zOffset the offset to be applied to all Z coordinates. May be useful
+	 *          to import data obtained from multiple "un-stitched" fields of
+	 *          view. Default is 0.
+	 * @param xScale the scaling factor for all X coordinates. Useful to import
+	 *          data onto downsampled images. Default is 1.
+	 * @param yScale the scaling factor for all Y coordinates. Useful to import
+	 *          data onto downsampled images. Default is 1.
+	 * @param zScale the scaling factor for all Z coordinates. Useful to import
+	 *          data onto downsampled images. Default is 1.
+	 * @param replaceAllPaths If true, all existing Paths will be deleted before
+	 *          the import.
 	 * @return true, if import was successful
 	 */
 	public boolean importSWC(final String filePath,

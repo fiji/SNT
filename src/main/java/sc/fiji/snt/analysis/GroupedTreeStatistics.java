@@ -125,6 +125,8 @@ public class GroupedTreeStatistics {
 	 *                    N_NODES}, {@link MultiTreeStatistics#NODE_RADIUS
 	 *                    NODE_RADIUS}, etc.)
 	 * @return the frame holding the histogram
+	 * @see MultiTreeStatistics#getMetrics()
+	 * @see TreeStatistics#getMetrics()
 	 */
 	public ChartFrame getHistogram(final String measurement) {
 		final String normMeasurement = MultiTreeStatistics.getNormalizedMeasurement(measurement, true);
@@ -169,6 +171,16 @@ public class GroupedTreeStatistics {
 		return getFrame(chart, "Grouped Hist.", new Dimension(400, 400));
 	}
 
+	/**
+	 * Assembles a Box and Whisker Plot for the specified measurement.
+	 *
+	 * @param measurement the measurement ({@link MultiTreeStatistics#N_NODES
+	 *                    N_NODES}, {@link MultiTreeStatistics#NODE_RADIUS
+	 *                    NODE_RADIUS}, etc.)
+	 * @return the frame holding the box plot
+	 * @see MultiTreeStatistics#getMetrics()
+	 * @see TreeStatistics#getMetrics()
+	 */
 	public ChartFrame getBoxPlot(final String measurement) {
 
 		final String normMeasurement = MultiTreeStatistics.getNormalizedMeasurement(measurement, true);

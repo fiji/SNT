@@ -111,8 +111,6 @@ public class GraphUtils {
 	 * Displays a graph in a SNT's "Dendrogram Viewer" featuring UI commands for
 	 * interactive visualization and export options.
 	 *
-	 * @param <V>   the graph's vertex type
-	 * @param <E>   the graph's edge type
 	 * @param graph the graph to be displayed
 	 * @return the assembled window
 	 */

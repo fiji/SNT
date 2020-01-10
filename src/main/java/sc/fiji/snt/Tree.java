@@ -795,6 +795,19 @@ public class Tree {
 	}
 
 	/**
+	 * Assembles a DirectedGraph from this Tree.
+	 *
+	 * @param simplify if true, graph will be simplified so that Tree is only
+	 *                 represented by root, branch-points and tips.
+	 * @return the Tree's graph with edge weights corresponding to inter-node
+	 *         Euclidean distances
+	 * @throws IllegalArgumentException if tree contains multiple roots or loops
+	 */
+	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph(final boolean simplify) throws IllegalArgumentException {
+		return (simplify) ? GraphUtils.getSimplifiedGraph(getGraph()) : getGraph();
+	}
+
+	/**
 	 * Script-friendly method for creating a Tree from a reconstruction file.
 	 *
 	 * @param filePath the absolute path to the file (.Traces, (e)SWC or JSON) to be

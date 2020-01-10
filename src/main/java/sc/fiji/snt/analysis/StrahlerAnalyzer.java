@@ -37,7 +37,6 @@ import java.util.stream.IntStream;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
@@ -142,11 +141,8 @@ public class StrahlerAnalyzer {
 
 			// # N. branches
 			double nBranches = 0;
-			final TopologicalOrderIterator<SWCPoint, SWCWeightedEdge> it = new TopologicalOrderIterator<SWCPoint, SWCWeightedEdge>(
-					subGraph);
 			ArrayList<Path>branches = new ArrayList<>();
-			while (it.hasNext()) {
-				final SWCPoint node = it.next();
+			for (final SWCPoint node : subGraph.vertexSet()) {
 				final List<SWCPoint> children = Graphs.successorListOf(subGraph, node);
 				if (children.size() != 1) {
 					nBranches++;

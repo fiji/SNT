@@ -173,7 +173,7 @@ public class GraphUtils {
 				parent = Graphs.predecessorListOf(graph, node).get(0);
 				final double edgeWeight = graph.getEdge(parent, node).getWeight();
 				pathWeight += edgeWeight;
-				if (graph.degreeOf(parent) != 2) {
+				if (graph.inDegreeOf(parent) == 0 || graph.outDegreeOf(parent) > 1) {
 					return new SimplifiedVertex(parent, pathWeight);
 				}
 				node = parent;

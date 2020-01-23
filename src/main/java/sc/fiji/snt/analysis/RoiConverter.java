@@ -314,7 +314,7 @@ public class RoiConverter extends TreeAnalyzer {
 				// to points. It is an overhead and not required for 2D images
 				// We should change the IJ1 API so that position can be assigned
 				// without an image
-				imp = tree.getImpContainer(exportPlane);
+				imp = tree.getImpContainer(exportPlane, 8);
 			}
 		}
 

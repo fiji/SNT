@@ -34,20 +34,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.scijava.util.ColorRGB;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.util.SWCPoint;
 import sholl.UPoint;
-import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.analysis.graph.GraphUtils;
 import sc.fiji.snt.analysis.graph.SWCWeightedEdge;
 import sc.fiji.snt.analysis.sholl.TreeParser;
@@ -635,51 +634,53 @@ public class Tree {
 	}
 
 	/**
-	 * Gets an empty image capable of holding the skeletonized version of this
-	 * tree.
+	 * Gets an empty image capable of holding the skeletonized version of this tree.
 	 *
 	 * @param multiDThreePaneView the pane flag indicating the SNT view for this
-	 *          image e.g., {@link MultiDThreePanes#XY_PLANE}
-	 * @return the empty 8-bit {@link ImagePlus} container
+	 *                            image e.g., {@link MultiDThreePanes#XY_PLANE}
+	 * @param bitDepth            8, 16 or 32 (float)
+	 * 
+	 * @return the empty {@link ImagePlus} container
 	 */
-	public ImagePlus getImpContainer(final int multiDThreePaneView) {
+	public ImagePlus getImpContainer(final int multiDThreePaneView, final int bitDepth) {
 		if (tree.isEmpty()) throw new IllegalArgumentException(
 			"tree contains no paths");
-		// TODO: this should be handled by BoundingBox
-		final TreeStatistics tStats = new TreeStatistics(this);
-		final SummaryStatistics xCoordStats = tStats.getSummaryStats(
-				TreeStatistics.X_COORDINATES);
-		final SummaryStatistics yCoordStats = tStats.getSummaryStats(
-				TreeStatistics.Y_COORDINATES);
-		final SummaryStatistics zCoordStats = tStats.getSummaryStats(
-				TreeStatistics.Z_COORDINATES);
-		final PointInImage p1 = new PointInImage(xCoordStats.getMin(), yCoordStats
-			.getMin(), zCoordStats.getMin());
-		final PointInImage p2 = new PointInImage(xCoordStats.getMax(), yCoordStats
-			.getMax(), zCoordStats.getMax());
+		final BoundingBox bBox = getBoundingBox(true);
 		final Path referencePath = tree.iterator().next();
-		p1.onPath = referencePath;
-		p2.onPath = referencePath;
-		final PointInCanvas bound1 = p1.getUnscaledPoint(multiDThreePaneView);
-		final PointInCanvas bound2 = p2.getUnscaledPoint(multiDThreePaneView);
+		bBox.origin().onPath = referencePath;
+		bBox.originOpposite().onPath = referencePath;
+		final PointInCanvas bound1 = bBox.origin().getUnscaledPoint(multiDThreePaneView);
+		final PointInCanvas bound2 = bBox.originOpposite().getUnscaledPoint(multiDThreePaneView);
 
 		// Padding is required to accommodate "rounding errors"
 		// in PathAndFillManager.setPathPointsInVolume()
-		final int xyPadding = 5; // 5 extra pixels on each margin
+		final int xyPadding = 6; // 4 extra pixels on each margin
 		final int zPadding = 2; // 1 slice above / below last point
-		final int w = (int) (bound2.x - bound1.x) + xyPadding;
-		final int h = (int) (bound2.y - bound1.y) + xyPadding;
-		int d = (int) (bound2.z - bound1.z);
+		final int w = (int) Math.round(bound2.x - bound1.x) + xyPadding;
+		final int h = (int) Math.round(bound2.y - bound1.y) + xyPadding;
+		int d = (int) Math.round(bound2.z - bound1.z);
 		if (d < 1) d = 1;
 		if (d > 1) d += zPadding;
-		return IJ.createImage(null, w, h, d, 8);
+		final ImagePlus imp = IJ.createImage(null, w, h, d, bitDepth);
+		return imp;
 	}
 
-	public void skeletonize(final ImagePlus destinationImp, final int value) {
+	/**
+	 * Skeletonizes (rasterizes) this tree on the specified image using Bresenham’s
+	 * Algorithm (3D).
+	 *
+	 * @param destinationImp the destination image (16-bit). It is assumed that the
+	 *                       image dimensions are suitable, and that the spatial
+	 *                       calibration of the image is compatible with that of
+	 *                       this tree. Out of bound locations will be silently
+	 *                       ignored.
+	 * @param value          the pixel intensity of the skeleton
+	 * @throws IllegalArgumentException If image is not 16-bit grayscale (unsigned)
+	 */
+	public void skeletonize(final ImagePlus destinationImp, final int value) throws IllegalArgumentException {
 		if (destinationImp.getType() != ImagePlus.GRAY16) {
 			throw new IllegalArgumentException("Only 16-bit images supported");
 		}
-		initPathAndFillManager();
 		final int width = destinationImp.getWidth();
 		final int height = destinationImp.getHeight();
 		final int depth = destinationImp.getNSlices();
@@ -688,12 +689,64 @@ public class Tree {
 		final ImageStack s = destinationImp.getStack();
 		final short[][] slices_data = new short[depth][];
 		for (int z = 0; z < depth; ++z) {
-			slices_data[z] = (short[]) s.getPixels(destinationImp.getStackIndex(channel, z +
-				1, frame));
+			slices_data[z] = (short[]) s.getPixels(destinationImp.getStackIndex(channel, z + 1, frame));
 		}
-		pafm.assignSpatialSettings(destinationImp);
-		pafm.setPathPointsInVolume(list(), slices_data, value, width, height, depth);
-		pafm.resetSpatialSettings(); // do not tether this tree to destinationImp
+		new PathAndFillManager().setPathPointsInVolume(list(), slices_data, value, width, height, depth);
+	}
+
+	/**
+	 * Retrieves the rasterized skeleton of this tree at 1:1 scaling.
+	 *
+	 * @return the skeletonized 8-bit binary image: (skeleton: 255, background: 0).
+	 * @see #skeletonize(ImagePlus, int)
+	 */
+	public ImagePlus getSkeleton() {
+		// Find what is the offset of the tree relative to (0,0,0). The skeleton
+		// image is generated using getImpContainer(), so we'll set padding margins
+		// to half of getImpContainer#xyPadding/#zPadding
+		final PointInImage origin = getBoundingBox(true).origin();
+		final int xyMargin = 3;
+		final int zMargin = (origin.z - getBoundingBox(false).originOpposite().z > 0) ? 1 : 0;
+		final double xOffset = origin.getX() - xyMargin;
+		final double yOffset = origin.getY() - xyMargin;
+		final double zOffset = origin.getZ() - zMargin;
+
+		// Now we'll 1) apply the translation offset to each Path as canvas offset
+		// and 2) map the path scaling to 1. We'll keep of existing values so that
+		// we can restore them after skeletonization
+		final ArrayList<PointInCanvas> pics = new ArrayList<>(size());
+		final ArrayList<Calibration> spacings = new ArrayList<>(size());
+		for (final Path p : list()) {
+			pics.add(p.getCanvasOffset());
+			p.setCanvasOffset(new PointInCanvas(-xOffset, -yOffset, -zOffset));
+			spacings.add(p.getCalibration());
+			p.setSpacing(new Calibration()); // 1,1,1 pixel spacing
+		}
+
+		// Skeletonize and restore values
+		final ImagePlus imp = getImpContainer(MultiDThreePanes.XY_PLANE, 16);
+		skeletonize(imp, 65535);
+		for (int i = 0; i < size(); i++) {
+			get(i).setCanvasOffset(pics.get(i));
+			get(i).setSpacing(spacings.get(i));
+		}
+		SNTUtils.convertTo8bit(imp);
+		imp.setTitle("Skel " + getLabel());
+		if (getBoundingBox().isScaled())
+			imp.setCalibration(getBoundingBox().getCalibration());
+		return imp;
+	}
+
+	/**
+	 * Retrieves a 2D projection of the rasterized skeleton of this tree at 1:1
+	 * scaling.
+	 *
+	 * @return the skeletonized 8-bit binary image: (skeleton: 255, background: 0).
+	 * @see #getSkeleton()
+	 */
+	public ImagePlus getSkeleton2D() {
+		final ImagePlus imp = getSkeleton();
+		return (imp.getNDimensions() > 2) ? SNTUtils.getMIP(imp) : imp;
 	}
 
 	/**
@@ -787,7 +840,7 @@ public class Tree {
 	 * Assembles a DirectedGraph from this Tree.
 	 *
 	 * @return the Tree's graph with edge weights corresponding to inter-node
-	 *         Euclidean distances
+	 *         distances
 	 * @throws IllegalArgumentException if tree contains multiple roots or loops
 	 */
 	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph() throws IllegalArgumentException {
@@ -799,8 +852,7 @@ public class Tree {
 	 *
 	 * @param simplify if true, graph will be simplified so that Tree is only
 	 *                 represented by root, branch-points and tips.
-	 * @return the Tree's graph with edge weights corresponding to inter-node
-	 *         Euclidean distances
+	 * @return the Tree's graph with edge weights corresponding to branch lengths
 	 * @throws IllegalArgumentException if tree contains multiple roots or loops
 	 */
 	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph(final boolean simplify) throws IllegalArgumentException {
@@ -984,7 +1036,7 @@ public class Tree {
 		for (final Path path : list()) clone.add(path.clone());
 		return clone;
 	}
-	
+
 	private class TreeBoundingBox extends BoundingBox {
 
 		private boolean dimensionsNeedToBeComputed;

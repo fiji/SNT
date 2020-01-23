@@ -239,7 +239,7 @@ public class SNTUtils {
 	}
 
 	public static String formatDouble(final double value, final int digits) {
-		return getDecimalFormat(value, digits).format(value);
+		return (Double.isNaN(value)) ? "NaN" : getDecimalFormat(value, digits).format(value);
 	}
 
 	public static DecimalFormat getDecimalFormat(final double value, final int digits) {

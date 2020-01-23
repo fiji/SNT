@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.NoSuchElementException;
+import java.util.Map.Entry;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -117,15 +117,6 @@ public class GroupedTreeStatistics {
 		return groups.keySet();
 	}
 
-	private String getNormalizedMeasurement(final String measurement) {
-		try {
-			final MultiTreeStatistics firstGroupStats = groups.values().iterator().next();
-			return firstGroupStats.getNormalizedMeasurement(measurement);
-		} catch (final NoSuchElementException ex) {
-			throw new IllegalArgumentException("No group(s) have yet been added");
-		}
-	}
-
 	/**
 	 * Gets the relative frequencies histogram for a univariate measurement. The
 	 * number of bins is determined using the Freedman-Diaconis rule.
@@ -134,19 +125,20 @@ public class GroupedTreeStatistics {
 	 *                    N_NODES}, {@link MultiTreeStatistics#NODE_RADIUS
 	 *                    NODE_RADIUS}, etc.)
 	 * @return the frame holding the histogram
+	 * @see MultiTreeStatistics#getMetrics()
+	 * @see TreeStatistics#getMetrics()
 	 */
 	public ChartFrame getHistogram(final String measurement) {
-
-		final String normMeasurement = getNormalizedMeasurement(measurement);
+		final String normMeasurement = MultiTreeStatistics.getNormalizedMeasurement(measurement, true);
 		final int[] nBins = new int[] { 0 };
 		// Retrieve all HistogramDatasetPlus instances
 		final LinkedHashMap<String, HistogramDatasetPlus> hdpMap = new LinkedHashMap<>();
-		groups.forEach((label, mstats) -> {
-			final HistogramDatasetPlus hdp = mstats.new HistogramDatasetPlus(normMeasurement);
+		for (final Entry<String, MultiTreeStatistics> entry : groups.entrySet()) {
+			final HistogramDatasetPlus hdp = entry.getValue().new HistogramDatasetPlus(normMeasurement);
 			hdp.compute();
 			nBins[0] += hdp.nBins;
-			hdpMap.put(label, hdp);
-		});
+			hdpMap.put(entry.getKey(), hdp);
+		}
 		nBins[0] = nBins[0] / groups.size();
 
 		// Add all series
@@ -179,9 +171,19 @@ public class GroupedTreeStatistics {
 		return getFrame(chart, "Grouped Hist.", new Dimension(400, 400));
 	}
 
+	/**
+	 * Assembles a Box and Whisker Plot for the specified measurement.
+	 *
+	 * @param measurement the measurement ({@link MultiTreeStatistics#N_NODES
+	 *                    N_NODES}, {@link MultiTreeStatistics#NODE_RADIUS
+	 *                    NODE_RADIUS}, etc.)
+	 * @return the frame holding the box plot
+	 * @see MultiTreeStatistics#getMetrics()
+	 * @see TreeStatistics#getMetrics()
+	 */
 	public ChartFrame getBoxPlot(final String measurement) {
 
-		final String normMeasurement = getNormalizedMeasurement(measurement);
+		final String normMeasurement = MultiTreeStatistics.getNormalizedMeasurement(measurement, true);
 		final DefaultBoxAndWhiskerCategoryDataset dataset = new DefaultBoxAndWhiskerCategoryDataset();
 		groups.forEach((label, mstats) -> {
 			final HistogramDatasetPlus hdp = mstats.new HistogramDatasetPlus(normMeasurement);

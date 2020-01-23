@@ -42,10 +42,6 @@ import sc.fiji.snt.gui.GuiUtils;
 @Plugin(type = Command.class, visible = false, label = "Create Dendrogram", initializer = "init")
 public class GraphGeneratorCmd extends CommonDynamicCmd {
 
-//	@Parameter(required = false, label="Simplify", description="Whether dendrogram"
-//			+ "should only contain the root, junction points and end-points.")
-//	private boolean simplify;
-
 	@Parameter(required = false)
 	private Tree tree;
 
@@ -65,8 +61,7 @@ public class GraphGeneratorCmd extends CommonDynamicCmd {
 	@Override
 	public void run() {
 		try {
-//			if (simplify) tree.downSample(Double.MAX_VALUE);
-			GraphUtils.show(tree.getGraph());
+			GraphUtils.show(tree.getGraph(true));
 		} catch (final IllegalArgumentException exc) { // multiple roots, etc..
 			error("Graph could not be created: " + exc.getLocalizedMessage() + "\n"
 			+ "Please ensure you select a single set of connected paths (one root exclusively)");

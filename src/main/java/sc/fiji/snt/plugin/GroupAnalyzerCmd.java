@@ -90,6 +90,8 @@ public class GroupAnalyzerCmd extends ContextCommand {
 			MultiTreeStatistics.LENGTH,
 			MultiTreeStatistics.TERMINAL_LENGTH,
 			MultiTreeStatistics.PRIMARY_LENGTH,
+			MultiTreeStatistics.AVG_BRANCH_LENGTH,
+			MultiTreeStatistics.AVG_CONTRACTION,
 			MultiTreeStatistics.N_BRANCH_POINTS,
 			MultiTreeStatistics.N_TIPS,
 			MultiTreeStatistics.N_BRANCHES,

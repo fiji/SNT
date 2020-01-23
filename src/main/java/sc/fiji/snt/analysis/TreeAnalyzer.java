@@ -271,7 +271,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see #setTable(DefaultGenericTable)
 	 */
 	public void summarize(final String rowHeader, final boolean groupByType) {
-		measure(rowHeader, Arrays.asList(MultiTreeStatistics.COMMON_FLAGS), true);
+		measure(rowHeader, getMetrics(), true);
 	}
 
 	private int getNextRow(final String rowHeader) {
@@ -291,10 +291,43 @@ public class TreeAnalyzer extends ContextCommand {
 		return MultiTreeStatistics.getMetrics();
 	}
 
-	public Number getMetric(final String metric) {
+	/**
+	 * Computes the specified metric.
+	 *
+	 * @param metric the metric to be computed (case insensitive). While it is
+	 *               expected to be an element of {@link #getMetrics()}, it can be
+	 *               specified in a "loose" manner: If {@code metric} is not
+	 *               initially recognized, an heuristic will match it to the closest
+	 *               entry in the list of possible metrics. E.g., "# bps", "n
+	 *               junctions", will be both mapped to
+	 *               {@link MultiTreeStatistics#N_BRANCH_POINTS}. Details on the
+	 *               matching are printed to the Console when in debug mode.
+	 * @return the computed value
+	 * @throws IllegalArgumentException if metric is not recognized
+	 * @see #getMetrics()
+	 */
+	public Number getMetric(final String metric) throws IllegalArgumentException {
+		return getMetricWithoutChecks(MultiTreeStatistics.getNormalizedMeasurement(metric, false));
+	}
+
+	protected Number getMetricWithoutChecks(final String metric) throws IllegalArgumentException {
 		switch (metric) {
 		case MultiTreeStatistics.ASSIGNED_VALUE:
 			return tree.getAssignedValue();
+		case MultiTreeStatistics.AVG_BRANCH_LENGTH:
+			try {
+				return getAvgBranchLength();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
+		case MultiTreeStatistics.AVG_CONTRACTION:
+			try {
+				return getAvgContraction();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
 		case MultiTreeStatistics.DEPTH:
 			return getDepth();
 		case MultiTreeStatistics.HEIGHT:
@@ -315,32 +348,18 @@ public class TreeAnalyzer extends ContextCommand {
 				SNTUtils.log("Error: " + ignored.getMessage());
 				return Double.NaN;
 			}
-		case MultiTreeStatistics.AVG_CONTRACTION:
-			try {
-				return getAvgContraction();
-			} catch (final IllegalArgumentException ignored) {
-				SNTUtils.log("Error: " + ignored.getMessage());
-				return Double.NaN;
-			}
-		case MultiTreeStatistics.AVG_BRANCH_LENGTH:
-			try {
-				return getAvgBranchLength();
-			} catch (final IllegalArgumentException ignored) {
-				SNTUtils.log("Error: " + ignored.getMessage());
-				return Double.NaN;
-			}
+		case MultiTreeStatistics.N_FITTED_PATHS:
+			return getNFittedPaths();
 		case MultiTreeStatistics.N_NODES:
 			return tree.getNodes().size();
+		case MultiTreeStatistics.N_PATHS:
+			return getNPaths();
 		case MultiTreeStatistics.N_PRIMARY_BRANCHES:
 			return getPrimaryBranches().size();
 		case MultiTreeStatistics.N_TERMINAL_BRANCHES:
 			return getTerminalBranches().size();
 		case MultiTreeStatistics.N_TIPS:
 			return getTips().size();
-		case MultiTreeStatistics.N_PATHS:
-			return getNPaths();
-		case MultiTreeStatistics.N_FITTED_PATHS:
-			return getNFittedPaths();
 		case MultiTreeStatistics.PRIMARY_LENGTH:
 			return getPrimaryLength();
 		case MultiTreeStatistics.STRAHLER_NUMBER:
@@ -363,45 +382,54 @@ public class TreeAnalyzer extends ContextCommand {
 			return getWidth();
 		default:
 			throw new IllegalArgumentException("Unrecognizable measurement \"" + metric + "\". "
-					+ "Maybe you meant one of the following?: \"" +  String.join(", ", getMetrics() +"\""));
+					+ "Maybe you meant one of the following?: \"" + String.join(", ", getMetrics() + "\""));
 		}
 	}
 
 	/**
-	 * Measures this Tree
+	 * Measures this Tree, outputting the result to this Analyzer table using
+	 * default row labels. If a Context has been specified, the table is updated.
+	 * Otherwise, table contents are printed to Console.
 	 *
-	 * @param metrics the metrics
-	 * @param groupByType the group by type
-	 * @see #getAvailableMetrics()
+	 * @param metrics     the list of metrics to be computed. When null or an empty
+	 *                    collection is specified, {@link #getMetrics()} is used.
+	 * @param groupByType if false, metrics are computed to all branches in the
+	 *                    Tree. If true, measurements will be split by SWC type
+	 *                    annotations (axon, dendrite, etc.)
 	 */
 	public void measure(final Collection<String> metrics, final boolean groupByType) {
 		measure(tree.getLabel(), metrics, groupByType);
 	}
 
 	/**
-	 * Measures this Tree.
+	 * Measures this Tree, outputting the result to this Analyzer table. If a
+	 * Context has been specified, the table is updated. Otherwise, table contents
+	 * are printed to Console.
 	 *
-	 * @param rowHeader the row header
-	 * @param metrics the metrics
-	 * @param groupByType the group by type
-	 * @see #getAvailableMetrics()
+	 * @param rowHeader   the row header label
+	 * @param metrics     the list of metrics to be computed. When null or an empty
+	 *                    collection is specified, {@link #getMetrics()} is used.
+	 * @param groupByType if false, metrics are computed to all branches in the
+	 *                    Tree. If true, measurements will be split by SWC type
+	 *                    annotations (axon, dendrite, etc.)
 	 */
 	public void measure(final String rowHeader, final Collection<String> metrics, final boolean groupByType) {
 		if (table == null) table = new DefaultGenericTable();
 		final int lastRow = table.getRowCount() - 1;
+		final Collection<String> measuringMetrics = (metrics == null || metrics.isEmpty()) ? getMetrics() : metrics;
 		if (groupByType) {
 			for (final int type : tree.getSWCTypes()) {
 				if (type == Path.SWC_SOMA) continue;
 				restrictToSWCType(type);
 				final int row = getNextRow(rowHeader);
 				table.set(getCol("SWC Type"), row, Path.getSWCtypeName(type, true));
-				metrics.forEach(metric -> table.set(getCol(metric), row, getMetric(metric)));
+				measuringMetrics.forEach(metric -> table.set(getCol(metric), row, getMetricWithoutChecks(metric)));
 				resetRestrictions();
 			}
 		} else {
 			int row = getNextRow(rowHeader);
 			table.set(getCol("SWC Types"), row, getSWCTypesAsString());
-			metrics.forEach(metric -> table.set(getCol(metric), row, getMetric(metric)));
+			measuringMetrics.forEach(metric -> table.set(getCol(metric), row, getMetricWithoutChecks(metric)));
 		}
 		if (getContext() == null) {
 			System.out.println(SNTUtils.tableToString(table, lastRow + 1, table.getRowCount() - 1));

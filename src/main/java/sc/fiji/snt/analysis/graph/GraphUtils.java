@@ -25,12 +25,17 @@ package sc.fiji.snt.analysis.graph;
 import java.awt.Window;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 
 import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.util.SupplierUtil;
 import org.scijava.util.Colors;
 
 import net.imagej.ImageJ;
@@ -41,6 +46,11 @@ import sc.fiji.snt.gui.GuiUtils;
 import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.Viewer3D;
 
+/**
+ * Utilities for Graph conversions.
+ * @author Tiago Ferreira
+ * @author Cameron Arshadi
+ */
 public class GraphUtils {
 
 	private GraphUtils() {
@@ -108,11 +118,85 @@ public class GraphUtils {
 	}
 
 	/**
+	 * Simplifies a graph so that it is represented only by root, branch nodes and
+	 * leaves.
+	 *
+	 * @param graph the graph to be simplified
+	 * @return the simplified graph
+	 */
+	public static DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getSimplifiedGraph(
+			final DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph) {
+		final LinkedHashSet<SWCPoint> relevantNodes = new LinkedHashSet<>();
+		relevantNodes.add(getRoot(graph));
+		relevantNodes.addAll(getBPs(graph));
+		relevantNodes.addAll(geTips(graph));
+		final DirectedWeightedGraph<SWCPoint, SWCWeightedEdge> simplifiedGraph = new DirectedWeightedGraph<SWCPoint, SWCWeightedEdge>();
+		{
+			// Have no idea why, but we have to explicitly declare the supplier
+			simplifiedGraph.setEdgeSupplier(SupplierUtil.createSupplier(SWCWeightedEdge.class));
+		}
+		relevantNodes.forEach(node -> simplifiedGraph.addVertex(node));
+		for (final SWCPoint node : relevantNodes) {
+			final SimplifiedVertex ancestor = firstRelevantAncestor(graph, node);
+			if (ancestor != null && ancestor.associatedWeight > 0) {
+				try {
+					final SWCWeightedEdge edge = simplifiedGraph.addEdge(ancestor.vertex, node);
+					simplifiedGraph.setEdgeWeight(edge, ancestor.associatedWeight);
+				} catch (final IllegalArgumentException ignored) {
+					// do nothing. ancestor.vertex not found in simplifiedGraph
+				}
+			}
+		}
+		return simplifiedGraph;
+	}
+
+	private static List<SWCPoint> getBPs(final DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph) {
+		return graph.vertexSet().stream().filter(v -> graph.outDegreeOf(v) > 1).collect(Collectors.toList());
+	}
+
+	private static List<SWCPoint> geTips(final DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph) {
+		return graph.vertexSet().stream().filter(v -> graph.outDegreeOf(v) == 0).collect(Collectors.toList());
+	}
+
+	private static SWCPoint getRoot(final DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph) {
+		return graph.vertexSet().stream().filter(v -> graph.inDegreeOf(v) == 0).findFirst().orElse(null);
+	}
+
+	private static SimplifiedVertex firstRelevantAncestor(final Graph<SWCPoint, SWCWeightedEdge> graph, SWCPoint node) {
+		if (!Graphs.vertexHasPredecessors(graph, node)) {
+			return null;
+		}
+		double pathWeight = 0;
+		SWCPoint parent;
+		while (true) {
+			try {
+				parent = Graphs.predecessorListOf(graph, node).get(0);
+				final double edgeWeight = graph.getEdge(parent, node).getWeight();
+				pathWeight += edgeWeight;
+				if (graph.inDegreeOf(parent) == 0 || graph.outDegreeOf(parent) > 1) {
+					return new SimplifiedVertex(parent, pathWeight);
+				}
+				node = parent;
+			} catch (final IndexOutOfBoundsException | NullPointerException ignored) {
+				return null;
+			}
+		}
+	}
+
+	private static class SimplifiedVertex {
+		final SWCPoint vertex;
+		final double associatedWeight;
+
+		SimplifiedVertex(final SWCPoint vertex, final double associatedWeight) {
+			this.vertex = vertex;
+			this.associatedWeight = associatedWeight;
+		}
+	}
+
+	/**
 	 * Displays a graph in a SNT's "Dendrogram Viewer" featuring UI commands for
 	 * interactive visualization and export options.
 	 *
-	 * @param <V>   the graph's vertex type
-	 * @param <E>   the graph's edge type
 	 * @param graph the graph to be displayed
 	 * @return the assembled window
 	 */
@@ -142,5 +226,6 @@ public class GraphUtils {
 		recViewer.add(convertedTree);
 		recViewer.show();
 		GraphUtils.show(graph);
+		GraphUtils.show(GraphUtils.getSimplifiedGraph(graph));
 	}
 }

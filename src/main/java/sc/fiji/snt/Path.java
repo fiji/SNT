@@ -938,6 +938,13 @@ public class Path implements Comparable<Path> {
 		return dup;
 	}
 
+	protected void setSpacing(final Calibration cal) {
+		this.x_spacing = cal.pixelWidth;
+		this.y_spacing = cal.pixelHeight;
+		this.z_spacing = cal.pixelDepth;
+		this.spacing_units = cal.getUnit();
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public Path clone() {

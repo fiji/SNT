@@ -701,18 +701,20 @@ public class Tree {
 	 * @see #skeletonize(ImagePlus, int)
 	 */
 	public ImagePlus getSkeleton() {
-		// Find what is the offset of the tree relative to (0,0,0). The skeleton
-		// image is generated using getImpContainer(), so we'll set padding margins
-		// to half of getImpContainer#xyPadding/#zPadding
-		final PointInImage origin = getBoundingBox(true).origin();
+
+		// Find what is the offset of the tree relative to (0,0,0).
+		// We'll set padding margins similarly to getImpContainer()
+		final BoundingBox bBox = getBoundingBox(true);
+		final PointInImage origin = bBox.origin();
+		final boolean threeD = bBox.depth() > 0;
 		final int xyMargin = 3;
-		final int zMargin = (origin.z - getBoundingBox(false).originOpposite().z > 0) ? 1 : 0;
+		final int zMargin = (threeD) ? 1 : 0;
 		final double xOffset = origin.getX() - xyMargin;
 		final double yOffset = origin.getY() - xyMargin;
 		final double zOffset = origin.getZ() - zMargin;
 
-		// Now we'll 1) apply the translation offset to each Path as canvas offset
-		// and 2) map the path scaling to 1. We'll keep of existing values so that
+		// Apply the translation offset to each Path as canvas offset and
+		// map the path scaling to 1. We'll keep of existing values so that
 		// we can restore them after skeletonization
 		final ArrayList<PointInCanvas> pics = new ArrayList<>(size());
 		final ArrayList<Calibration> spacings = new ArrayList<>(size());
@@ -723,17 +725,26 @@ public class Tree {
 			p.setSpacing(new Calibration()); // 1,1,1 pixel spacing
 		}
 
-		// Skeletonize and restore values
-		final ImagePlus imp = getImpContainer(MultiDThreePanes.XY_PLANE, 16);
+		// Define image dimensions
+		final int w = (int) Math.round(bBox.width()) + (2 * xyMargin);
+		final int h = (int) Math.round(bBox.height()) + (2 * xyMargin);
+		int d = (int) Math.round(bBox.depth());
+		if (d < 1) d = 1;
+		if (d > 1) d += (2 * zMargin);
+		final ImagePlus imp = IJ.createImage("Skel " + getLabel(), w, h, d, 16);
+
+		// Skeletonize
 		skeletonize(imp, 65535);
+		SNTUtils.convertTo8bit(imp);
+		if (getBoundingBox().isScaled())
+			imp.setCalibration(getBoundingBox().getCalibration());
+
+		// Restore initial state
 		for (int i = 0; i < size(); i++) {
 			get(i).setCanvasOffset(pics.get(i));
 			get(i).setSpacing(spacings.get(i));
 		}
-		SNTUtils.convertTo8bit(imp);
-		imp.setTitle("Skel " + getLabel());
-		if (getBoundingBox().isScaled())
-			imp.setCalibration(getBoundingBox().getCalibration());
+
 		return imp;
 	}
 

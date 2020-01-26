@@ -1401,6 +1401,10 @@ public class Tree {
 		boolean isComputationNeeded() {
 			return dimensionsNeedToBeComputed;
 		}
+
+		public String toString() {
+			return "[TreeBoundingBox: origin: " + this.origin + ", originOpposite: " + this.originOpposite + "]";
+		}
 	}
 
 	public static void assignUniqueColors(final Collection<Tree> trees) {

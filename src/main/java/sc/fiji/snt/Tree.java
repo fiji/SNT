@@ -34,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.scijava.util.ColorRGB;
 
@@ -627,9 +628,11 @@ public class Tree {
 	 * @return the BoundingBox
 	 */
 	public BoundingBox getBoundingBox(final boolean computeIfUnset) {
-		final boolean compute = computeIfUnset || (box != null && box.isComputationNeeded());
-		if (compute && box == null) box = new TreeBoundingBox();
-		if (compute) box.compute(getNodes().iterator());
+		final boolean compute = box == null || computeIfUnset || box.isComputationNeeded();
+		if (box == null) 
+			box = new TreeBoundingBox();
+		if (compute)
+			box.compute(getNodes().iterator());
 		return box;
 	}
 
@@ -704,18 +707,30 @@ public class Tree {
 
 		// Find what is the offset of the tree relative to (0,0,0).
 		// We'll set padding margins similarly to getImpContainer()
-		final BoundingBox bBox = getBoundingBox(true);
-		final PointInImage origin = bBox.origin();
-		final boolean threeD = bBox.depth() > 0;
+		SNTUtils.log("Skeletonizing "+ getLabel());
+		final SummaryStatistics xStats = new SummaryStatistics();
+		final SummaryStatistics yStats = new SummaryStatistics();
+		final SummaryStatistics zStats = new SummaryStatistics();
+		for (final PointInImage p : getNodes()) {
+			xStats.addValue(p.x);
+			yStats.addValue(p.y);
+			zStats.addValue(p.z);
+		}
+		final PointInImage origin = new PointInImage(xStats.getMin(), yStats.getMin(), zStats.getMin());
+		final double width = Math.abs(xStats.getMax() - origin.getX());
+		final double height = Math.abs(yStats.getMax() - origin.getY());
+		final double depth = Math.abs(zStats.getMax() - origin.getZ());
+		final boolean threeD = depth > 0;
 		final int xyMargin = 3;
 		final int zMargin = (threeD) ? 1 : 0;
 		final double xOffset = origin.getX() - xyMargin;
 		final double yOffset = origin.getY() - xyMargin;
 		final double zOffset = origin.getZ() - zMargin;
+		SNTUtils.log("  Tree boundaries: " + width + "x" + height + "x" + depth);
 
 		// Apply the translation offset to each Path as canvas offset and
-		// map the path scaling to 1. We'll keep of existing values so that
-		// we can restore them after skeletonization
+		// map the path scaling to 1. We'll keep track of existing values
+		// so that we can restore them after skeletonization
 		final ArrayList<PointInCanvas> pics = new ArrayList<>(size());
 		final ArrayList<Calibration> spacings = new ArrayList<>(size());
 		for (final Path p : list()) {
@@ -726,11 +741,12 @@ public class Tree {
 		}
 
 		// Define image dimensions
-		final int w = (int) Math.round(bBox.width()) + (2 * xyMargin);
-		final int h = (int) Math.round(bBox.height()) + (2 * xyMargin);
-		int d = (int) Math.round(bBox.depth());
+		final int w = (int) Math.round(width) + (2 * xyMargin);
+		final int h = (int) Math.round(height) + (2 * xyMargin);
+		int d = (int) Math.round(depth);
 		if (d < 1) d = 1;
 		if (d > 1) d += (2 * zMargin);
+		SNTUtils.log("  Allocating " + w + "x" + h + "x" + d + " pixels (16-bit)");
 		final ImagePlus imp = IJ.createImage("Skel " + getLabel(), w, h, d, 16);
 
 		// Skeletonize
@@ -740,6 +756,7 @@ public class Tree {
 			imp.setCalibration(getBoundingBox().getCalibration());
 
 		// Restore initial state
+		SNTUtils.log("  Skeletonization complete");
 		for (int i = 0; i < size(); i++) {
 			get(i).setCanvasOffset(pics.get(i));
 			get(i).setSpacing(spacings.get(i));
@@ -1052,7 +1069,7 @@ public class Tree {
 
 		private boolean dimensionsNeedToBeComputed;
 
-		private TreeBoundingBox(final BoundingBox box) {
+		TreeBoundingBox(final BoundingBox box) {
 			this.origin = box.origin();
 			this.originOpposite = box.originOpposite();
 			this.xSpacing = box.xSpacing;
@@ -1062,16 +1079,16 @@ public class Tree {
 			this.spacingUnit = box.getUnit();
 		}
 
-		private TreeBoundingBox() {
+		TreeBoundingBox() {
 			super();
 		}
 
-		private void setComputationNeeded(final boolean bool) {
+		void setComputationNeeded(final boolean bool) {
 			dimensionsNeedToBeComputed = bool;
 			if (bool) reset();
 		}
 
-		private boolean isComputationNeeded() {
+		boolean isComputationNeeded() {
 			return dimensionsNeedToBeComputed;
 		}
 	}

@@ -2510,14 +2510,10 @@ public class PathAndFillManager extends DefaultHandler implements
 				 */
 				if (current.diagonallyAdjacentOrEqual(previous)) {
 					try {
-						slices[current.z][current.y * width + current.x] = (short) pixelIntensity;
+						slices [current.z][current.y * width + current.x] = (short) pixelIntensity;
 					} catch (final ArrayIndexOutOfBoundsException ignored) {
-						final int x = Math.min(width - 1, Math.max(0, current.x));
-						final int y = Math.min(height - 1, Math.max(0, current.y));
-						final int z = Math.min(depth - 1, Math.max(0, current.z));
-						slices[z][y * width + x] = (short) pixelIntensity;
-						SNTUtils.warn(String.format("Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]", z,
-								y, width, x));
+						SNTUtils.warn(String.format("Bresenham3D: Out-of-bounds point at [%d,%d,%d]", current.x,
+								current.y * width, current.z));
 					}
 				}
 				else {
@@ -2531,13 +2527,8 @@ public class PathAndFillManager extends DefaultHandler implements
 							slices[ip.z][ip.y * width + ip.x] = (short) pixelIntensity;
 						}
 						catch (final ArrayIndexOutOfBoundsException ignored) {
-							final int x = Math.min(width - 1, Math.max(0, ip.x));
-							final int y = Math.min(height - 1, Math.max(0, ip.y));
-							final int z = Math.min(depth - 1, Math.max(0, ip.z));
-							slices[z][y * width + x] = (short) pixelIntensity;
-							SNTUtils.warn(String.format(
-								"Bresenham3D: Forced out-of-bounds point to [%d][%d * %d + %d]",
-								z, y, width, x));
+							SNTUtils.warn(String.format("Bresenham3D: Out-of-bounds point at [%d,%d,%d]", ip.x,
+									ip.y * width, ip.z));
 						}
 					}
 				}

@@ -49,21 +49,27 @@ public class TreeAnalyzerTest {
 
 	@Test
 	public void testAnalyzer() {
-		assertTrue("# Paths should be 16", analyzer.getNPaths() == 16);
-		assertTrue("# Branch points should be 15", analyzer.getBranchPoints().size() == 15);
-		assertTrue("# Tips should be 16", analyzer.getTips().size() == 16);
-		assertTrue("# I paths should be 1", analyzer.getPrimaryPaths().size() == 1);
-		assertTrue("# Highest path order should be 5", analyzer.getHighestPathOrder() == 5);
+		assertTrue("# Paths = 16", analyzer.getNPaths() == 16);
+		assertTrue("# Branch points = 15", analyzer.getBranchPoints().size() == 15);
+		assertTrue("# Tips = 16", analyzer.getTips().size() == 16);
+		assertTrue("# I paths = 1", analyzer.getPrimaryPaths().size() == 1);
+		assertTrue("# Highest path order = 5", analyzer.getHighestPathOrder() == 5);
 		final double cableLength =  analyzer.getCableLength();
 		assertTrue("569.34 > Sum length of all paths < 569.35um", cableLength > 569.34 && cableLength < 569.35);
 		final double primaryLength =  analyzer.getPrimaryLength();
 		assertTrue("50.99 > Sum length of I branches < 51.01um", primaryLength > 50.99 && primaryLength < 51.01);
 		final double terminalLength =  analyzer.getTerminalLength();
 		assertTrue("153.29um > Sum length of terminal paths < 153.30um", terminalLength > 153.29 && terminalLength < 153.30);
+		final double avgBranchLength =  analyzer.getAvgBranchLength();
+		assertTrue("144.35um > Avg branch length < 144.34um", avgBranchLength > 144.34 && avgBranchLength < 144.35);
 		assertTrue("Strahler number: 5", analyzer.getStrahlerNumber() == 5);
 		assertTrue("Strahler bif. ratio: 2", analyzer.getStrahlerBifurcationRatio() == 2);
 		assertTrue("N Branches: 31", analyzer.getNBranches() == 31);
-
+		assertTrue("Width = 116.0", analyzer.getWidth() == 116d);
+		assertTrue("Height = 145.0", analyzer.getHeight() == 145d);
+		assertTrue("Depth = 0.0", analyzer.getDepth() == 0d);
+		final double avgContraction=  analyzer.getAvgContraction();
+		assertTrue("0.1231 > Avg contraction < 0.1230", avgContraction > 0.1230 && avgContraction < 0.1231);
 	}
 
 }

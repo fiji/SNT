@@ -39,10 +39,6 @@ import sc.fiji.snt.gui.GuiUtils;
  */
 public class BoundingBox {
 
-	private final static PointInImage MIN_ORIGIN = new PointInImage(
-		Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE);
-	private final static PointInImage MAX_ORIGIN_OPPOSITE = new PointInImage(
-		Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
 	private final static String DEF_SPACING_UNIT = "? units";
 
 	/** The 'voxel width' of the bounding box */
@@ -59,10 +55,10 @@ public class BoundingBox {
 
 	protected String spacingUnit = DEF_SPACING_UNIT;
 
-	/** The bounding box origin (SE, lower left corner) */
+	/** The bounding box origin (SE, lower corner) */
 	protected PointInImage origin;
 
-	/** The origin opposite (NW, upper right corner of bounding box) */
+	/** The origin opposite (NW, upper corner) */
 	protected PointInImage originOpposite;
 
 	/**
@@ -103,16 +99,16 @@ public class BoundingBox {
 	 * @param iterator the iterator of the points Collection
 	 */
 	public void compute(final Iterator<? extends SNTPoint> iterator) {
-		if (!origin.isReal()) origin = MAX_ORIGIN_OPPOSITE;
-		if (!originOpposite.isReal()) originOpposite = MIN_ORIGIN;
-		iterator.forEachRemaining(point -> {
-			if (point.getX() < origin.x) origin.x = point.getX();
-			else if (point.getX() > originOpposite.x) originOpposite.x = point.getX();
-			if (point.getY() < origin.y) origin.y = point.getY();
-			else if (point.getY() > originOpposite.y) originOpposite.y = point.getY();
-			if (point.getZ() < origin.z) origin.z = point.getZ();
-			else if (point.getZ() > originOpposite.z) originOpposite.z = point.getZ();
+		final SummaryStatistics xStats = new SummaryStatistics();
+		final SummaryStatistics yStats = new SummaryStatistics();
+		final SummaryStatistics zStats = new SummaryStatistics();
+		iterator.forEachRemaining(p -> {
+			xStats.addValue(p.getX());
+			yStats.addValue(p.getY());
+			zStats.addValue(p.getZ());
 		});
+		origin = new PointInImage(xStats.getMin(), yStats.getMin(), zStats.getMin());
+		originOpposite = new PointInImage(xStats.getMax(), yStats.getMax(), zStats.getMax());
 	}
 
 	public SNTPoint getCentroid() {
@@ -285,15 +281,15 @@ public class BoundingBox {
 	}
 
 	public double width() {
-		return originOpposite.x - origin.x;
+		return Math.abs(originOpposite.x - origin.x);
 	}
 
 	public double height() {
-		return originOpposite.y - origin.y;
+		return Math.abs(originOpposite.y - origin.y);
 	}
 
 	public double depth() {
-		return originOpposite.z - origin.z;
+		return Math.abs(originOpposite.z - origin.z);
 	}
 
 	/**

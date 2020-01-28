@@ -34,7 +34,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.scijava.util.ColorRGB;
 
@@ -708,24 +707,16 @@ public class Tree {
 		// Find what is the offset of the tree relative to (0,0,0).
 		// We'll set padding margins similarly to getImpContainer()
 		SNTUtils.log("Skeletonizing "+ getLabel());
-		final SummaryStatistics xStats = new SummaryStatistics();
-		final SummaryStatistics yStats = new SummaryStatistics();
-		final SummaryStatistics zStats = new SummaryStatistics();
-		for (final PointInImage p : getNodes()) {
-			xStats.addValue(p.x);
-			yStats.addValue(p.y);
-			zStats.addValue(p.z);
-		}
-		final PointInImage origin = new PointInImage(xStats.getMin(), yStats.getMin(), zStats.getMin());
-		final double width = Math.abs(xStats.getMax() - origin.getX());
-		final double height = Math.abs(yStats.getMax() - origin.getY());
-		final double depth = Math.abs(zStats.getMax() - origin.getZ());
+		box = (TreeBoundingBox) getBoundingBox(true);
+		final double width = box.width();
+		final double height = box.height();
+		final double depth = box.depth();
 		final boolean threeD = depth > 0;
 		final int xyMargin = 3;
 		final int zMargin = (threeD) ? 1 : 0;
-		final double xOffset = origin.getX() - xyMargin;
-		final double yOffset = origin.getY() - xyMargin;
-		final double zOffset = origin.getZ() - zMargin;
+		final double xOffset = box.origin().getX() - xyMargin;
+		final double yOffset = box.origin().getY() - xyMargin;
+		final double zOffset = box.origin().getZ() - zMargin;
 		SNTUtils.log("  Tree boundaries: " + width + "x" + height + "x" + depth);
 
 		// Apply the translation offset to each Path as canvas offset and

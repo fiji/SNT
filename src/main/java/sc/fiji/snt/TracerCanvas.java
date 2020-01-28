@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Stroke;
 import java.util.ArrayList;
 
 import ij.ImagePlus;
@@ -92,8 +93,8 @@ class TracerCanvas extends MultiDThreePanesCanvas {
 		final boolean drawDiametersXY = plugin.getDrawDiametersXY();
 
 		if (pathAndFillManager != null) {
+			final Stroke stroke = g.getStroke();
 			for (int i = 0; i < pathAndFillManager.size(); ++i) {
-
 				final Path p = pathAndFillManager.getPath(i);
 				if (p == null) continue;
 
@@ -129,6 +130,7 @@ class TracerCanvas extends MultiDThreePanesCanvas {
 					drawPath.drawPathAsPoints(this, g, color, plane, (isSelected &&
 						customColor), drawDiametersXY);
 				}
+				g.setStroke(stroke);
 			}
 		}
 

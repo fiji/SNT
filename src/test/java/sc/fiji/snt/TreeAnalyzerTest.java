@@ -70,6 +70,17 @@ public class TreeAnalyzerTest {
 		assertTrue("Depth = 0.0", analyzer.getDepth() == 0d);
 		final double avgContraction=  analyzer.getAvgContraction();
 		assertTrue("0.1231 > Avg contraction < 0.1230", avgContraction > 0.1230 && avgContraction < 0.1231);
+
+		// Scaling tests
+		for (double scaleFactor : new double[] { .5d, 2d }) {
+			tree.scale(scaleFactor, scaleFactor, scaleFactor);
+			final TreeAnalyzer scaledAnalyzer = new TreeAnalyzer(tree);
+			assertTrue("Scaling: Equal # Tips", analyzer.getTips().size() == scaledAnalyzer.getTips().size());
+			assertTrue("Scaling: Equal # Branch points", analyzer.getBranchPoints().size() == scaledAnalyzer.getBranchPoints().size());
+			assertTrue("Scaling: Equal # Branches", analyzer.getNBranches() == scaledAnalyzer.getNBranches());
+			assertTrue("Scaling: Scaled length", scaledAnalyzer.getCableLength() == cableLength * scaleFactor);
+			tree.scale(1 / scaleFactor, 1 / scaleFactor, 1 / scaleFactor);
+		}
 	}
 
 }

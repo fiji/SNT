@@ -469,8 +469,8 @@ public class Tree {
 				p.precise_y_positions[node] *= yScale;
 				p.precise_z_positions[node] *= zScale;
 			}
-			final List<PointInImage> sePoints = p.findJunctions();
-			sePoints.forEach(pim -> pim.scale(xScale, yScale, zScale));
+			if (p.endJoinsPoint != null) p.endJoinsPoint.scale(xScale, yScale, zScale);
+			if (p.startJoinsPoint != null) p.startJoinsPoint.scale(xScale, yScale, zScale);
 		});
 		if (box != null) {
 			box.origin().x *= xScale;

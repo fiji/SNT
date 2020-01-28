@@ -151,7 +151,7 @@ public class Path implements Comparable<Path> {
 	// NB: The leagacy 3D viewer requires always a unique name
 	private String name;
 	// Path based ordering akin of reverse Horton-Strahler numbers
-	private int order = -1;
+	private int order = 1;
 	// The SWC-type flag of this path
 	int swcType = SWC_UNDEFINED;
 	// is this path selected in the UI?

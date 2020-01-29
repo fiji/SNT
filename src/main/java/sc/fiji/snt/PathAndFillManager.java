@@ -374,11 +374,21 @@ public class PathAndFillManager extends DefaultHandler implements
 		return exportAllPathsAsSWC(getPathsStructured(), baseFilename);
 	}
 
+	public synchronized boolean exportTree(final int treeIndex, final File file) {
+		return exportConnectedStructureAsSWC(getPathsStructured()[treeIndex], file);
+	}
+
 	protected synchronized boolean exportAllPathsAsSWC(final Path[] primaryPaths, final String baseFilename) {
 		final String prefix = SNTUtils.stripExtension(baseFilename);
 		int i = 0;
 		for (final Path primaryPath : primaryPaths) {
 			final File swcFile = getSWCFileForIndex(prefix, i);
+			if (exportConnectedStructureAsSWC(primaryPath, swcFile)) ++i;
+		}
+		return i > 0;
+	}
+	protected synchronized boolean exportConnectedStructureAsSWC(final Path primaryPath, final File swcFile) {
+		{
 			final HashSet<Path> connectedPaths = new HashSet<>();
 			final LinkedList<Path> nextPathsToConsider = new LinkedList<>();
 			nextPathsToConsider.add(primaryPath);
@@ -413,7 +423,6 @@ public class PathAndFillManager extends DefaultHandler implements
 				SNTUtils.error("IOException", ioe);
 				return false;
 			}
-			++i;
 		}
 		if (plugin != null) plugin.showStatus(0, 0, "Export finished.");
 		return true;

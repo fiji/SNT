@@ -989,7 +989,7 @@ public class Tree {
 		} else if (!filePath.toLowerCase().endsWith(".swc")) {
 			file = new File(filePath + ".swc");
 		}
-		return pafm.exportAllPathsAsSWC(file.getAbsolutePath());
+		return pafm.exportTree(0, file);
 	}
 
 	/**

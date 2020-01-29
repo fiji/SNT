@@ -194,12 +194,13 @@ public class PointInImage implements SNTPoint {
 	}
 
 	@Override
-	public boolean equals(final Object o) { // NB: onPath is optional: field not
-																					// evaluated for equality
+	public boolean equals(final Object o) {
 		if (o == this) return true;
 		if (o == null) return false;
 		if (getClass() != o.getClass()) return false;
-		return isSameLocation((PointInImage) o);
+		final PointInImage other = (PointInImage) o;
+		final boolean sameLoc = isSameLocation(other);
+		return (onPath == null || other.onPath == null) ? sameLoc : (sameLoc && onPath.equals(other.onPath));
 	}
 
 	@Override

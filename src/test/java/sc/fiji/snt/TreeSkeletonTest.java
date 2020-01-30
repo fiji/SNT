@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ij.ImagePlus;
@@ -54,6 +55,7 @@ public class TreeSkeletonTest {
 		assumeNotNull(trees);
 	}
 
+	@Ignore
 	@Test
 	public void testSkeletonizer() {
 		final HashSet<BoundingBox> boxes = new HashSet<>();

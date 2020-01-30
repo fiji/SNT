@@ -47,6 +47,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -526,6 +529,28 @@ public class Viewer3D {
 		}
 		mouseController.stopThreadController();
 		mouseController.recordRotation(angle, frames, destinationDirectory);
+
+		// Log instructions on how to assemble video
+		logVideoInstructions(destinationDirectory);
+
+	}
+
+	private void logVideoInstructions(final File destinationDirectory) {
+		final StringBuilder sb = new StringBuilder("The image sequence can be converted into a video using ffmpeg (www.ffmpeg.org):");
+		sb.append("\n-------------------------------------------\n");
+		sb.append("cd \"").append(destinationDirectory).append("\"\n");
+		sb.append("ffmpeg -framerate ").append(prefs.getFPS()).append(" -i %5d.png -vf \"");
+		if (currentView == ViewMode.SIDE && !view.isAxeBoxDisplayed()) sb.append("vflip,");
+		sb.append("scale=-1:-1,format=yuv420p\" video.mp4");
+		sb.append("\n-------------------------------------------\n");
+		sb.append("\nAlternatively, IJ built-in commands can also be used, e.g.:\n");
+		sb.append("\"File>Import>Image Sequence...\", followed by \"File>Save As>AVI...\"");
+		try {
+			Files.write(Paths.get(new File(destinationDirectory, "-build-video.txt").getAbsolutePath()),
+					sb.toString().getBytes(StandardCharsets.UTF_8));
+		} catch (final IOException e) {
+			System.out.println(sb.toString());
+		}
 	}
 
 	/**
@@ -2109,12 +2134,15 @@ public class Viewer3D {
 				RecViewerPrefsCmd.DEF_ROTATION_ANGLE);
 		}
 
+		private int getFPS() {
+			return tp.prefService.getInt(RecViewerPrefsCmd.class,
+					"rotationFPS", RecViewerPrefsCmd.DEF_ROTATION_FPS);
+		}
+
 		private int getSnapshotRotationSteps() {
-			final int fps = tp.prefService.getInt(RecViewerPrefsCmd.class,
-				"rotationFPS", RecViewerPrefsCmd.DEF_ROTATION_FPS);
 			final double duration = tp.prefService.getDouble(RecViewerPrefsCmd.class,
 				"rotationDuration", RecViewerPrefsCmd.DEF_ROTATION_DURATION);
-			return (int) Math.round(fps * duration);
+			return (int) Math.round(getFPS() * duration);
 		}
 
 		private String getControlsSensitivity() {

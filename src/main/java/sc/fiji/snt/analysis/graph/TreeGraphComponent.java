@@ -168,6 +168,18 @@ class TreeGraphComponent extends mxGraphComponent {
 		return new JScrollPane(holder);
 	}
 
+	@Override
+	public void zoomIn() {
+		super.zoomIn();
+		centerGraph();
+	}
+
+	@Override
+	public void zoomOut() {
+		super.zoomOut();
+		centerGraph();
+	}
+
 	private void addRubberBandZoom() {
 		new mxRubberband(this) {
 
@@ -222,7 +234,7 @@ class TreeGraphComponent extends mxGraphComponent {
 		mItem.addActionListener(e -> zoomOut());
 		popup.add(mItem);
 		mItem = new JMenuItem("Reset Zoom");
-		mItem.addActionListener(e -> {zoomActual(); zoomAndCenter();});
+		mItem.addActionListener(e -> {zoomActual(); zoomAndCenter(); centerGraph();});
 		popup.add(mItem);
 		popup.addSeparator();
 		mItem = new JMenuItem("Available Shortcuts...");

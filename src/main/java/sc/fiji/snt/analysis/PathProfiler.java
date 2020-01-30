@@ -61,7 +61,6 @@ import sc.fiji.snt.util.SNTColor;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = ContextCommand.class, visible = false)
 public class PathProfiler extends ContextCommand {
 
 	/** Flag for retrieving distances from {@link #getValues(Path)} */

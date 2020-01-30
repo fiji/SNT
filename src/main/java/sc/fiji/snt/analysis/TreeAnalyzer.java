@@ -55,7 +55,6 @@ import sc.fiji.snt.util.PointInImage;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = ContextCommand.class, visible = false)
 public class TreeAnalyzer extends ContextCommand {
 
 	@Parameter

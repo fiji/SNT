@@ -44,7 +44,7 @@ import sc.fiji.snt.gui.cmds.CommonDynamicCmd;
  *
  * @author Tiago Ferreira
  */
-@Plugin(initializer = "init", type = Command.class, visible = false,
+@Plugin(type = Command.class, initializer = "init", visible = false,
 label = "Estimate Radii (Local Thickness)")
 public class LocalThicknessCmd extends CommonDynamicCmd {
 

@@ -24,6 +24,7 @@ package sc.fiji.snt.gui.cmds;
 
 import java.io.IOException;
 
+import org.scijava.command.Command;
 import org.scijava.command.CommandService;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
@@ -38,7 +39,7 @@ import sc.fiji.snt.SNTUtils;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = ContextCommand.class, visible = true, menuPath = "Plugins>NeuroAnatomy>Legacy>Simple Neurite Tracer...")
+@Plugin(type = Command.class, visible = true, menuPath = "Plugins>NeuroAnatomy>Legacy>Simple Neurite Tracer...")
 public class SNTLegacyLoaderCmd extends ContextCommand {
 
 	@Parameter

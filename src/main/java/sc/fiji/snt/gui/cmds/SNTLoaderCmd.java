@@ -34,6 +34,7 @@ import net.imagej.legacy.LegacyService;
 import net.imagej.ui.swing.updater.ImageJUpdater;
 
 import org.scijava.ItemVisibility;
+import org.scijava.command.Command;
 import org.scijava.command.CommandService;
 import org.scijava.command.DynamicCommand;
 import org.scijava.convert.ConvertService;
@@ -60,7 +61,7 @@ import sc.fiji.snt.SNTUtils;
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = DynamicCommand.class, visible = true,
+@Plugin(type = Command.class, visible = true,
 	menuPath = "Plugins>NeuroAnatomy>SNT...", label ="SNT Startup Prompt",
 	initializer = "initialize")
 public class SNTLoaderCmd extends DynamicCommand {

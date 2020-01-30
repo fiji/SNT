@@ -378,6 +378,11 @@ public class PathAndFillManager extends DefaultHandler implements
 		return exportConnectedStructureAsSWC(getPathsStructured()[treeIndex], file);
 	}
 
+	protected synchronized boolean savetoFileOrFileSeries(final File file) {
+		final Path[] pathsStructured = getPathsStructured();
+		return (pathsStructured.length == 1) ? exportTree(0, file) : exportAllPathsAsSWC(pathsStructured, file.getAbsolutePath());
+	}
+
 	protected synchronized boolean exportAllPathsAsSWC(final Path[] primaryPaths, final String baseFilename) {
 		final String prefix = SNTUtils.stripExtension(baseFilename);
 		int i = 0;

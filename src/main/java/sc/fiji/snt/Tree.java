@@ -974,7 +974,10 @@ public class Tree {
 	 * @param filePath the absolute path of the output file. {@code .swc} is
 	 *                 automatically appended if {@code filePath} does not include
 	 *                 an extension. If a label has been assigned, {@code filePath}
-	 *                 can also be a directory.
+	 *                 can also be a directory. If this Tree contains multiple
+	 *                 roots, each rooted structure will be saved on a series of
+	 *                 files with 3-digit identifiers appended to the specified file
+	 *                 path (e.g., -000.swc, -001.swc, etc).
 	 * @return true, if file successfully saved.
 	 * @see #setLabel(String)
 	 */
@@ -989,7 +992,7 @@ public class Tree {
 		} else if (!filePath.toLowerCase().endsWith(".swc")) {
 			file = new File(filePath + ".swc");
 		}
-		return pafm.exportTree(0, file);
+		return pafm.savetoFileOrFileSeries(file);
 	}
 
 	/**

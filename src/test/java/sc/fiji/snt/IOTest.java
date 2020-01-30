@@ -34,6 +34,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import ij.IJ;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.util.PointInImage;
 
@@ -42,7 +43,7 @@ import sc.fiji.snt.util.PointInImage;
  *
  * @author Tiago Ferreira
  */
-public class SWCTest {
+public class IOTest {
 
 	private List<Tree> trees;
 
@@ -64,14 +65,25 @@ public class SWCTest {
 			final Set<PointInImage> bps = new TreeAnalyzer(tree).getBranchPoints();
 			try {
 
-				final String filePath = folder.newFile(tree.getLabel() + ".swc").getAbsolutePath();
-				assertTrue(tree.saveAsSWC(filePath));
-				final Tree savedTree = new Tree(filePath);
-				// Did tree change?
-				assertTrue(nodes.size() == savedTree.getNodes().size());
-				assertTrue(bps.equals(new TreeAnalyzer(tree).getBranchPoints()));
-				assertTrue(cableLength == new TreeAnalyzer(tree).getCableLength());
+				// SWC I/O
+				final String swcPath = folder.newFile(tree.getLabel() + ".swc").getAbsolutePath();
+				assertTrue("Saving to "+ swcPath, tree.saveAsSWC(swcPath));
+				final Tree swcTree = new Tree(swcPath);
+				assertTrue("Reading file "+ swcPath, swcTree != null && !swcTree.isEmpty());
 
+				// Did tree change when saving to SWC?
+				assertTrue(bps.size() == new TreeAnalyzer(swcTree).getBranchPoints().size());
+				assertTrue(cableLength == new TreeAnalyzer(swcTree).getCableLength());
+
+				// TRACES I/O
+				final String tracesPath = folder.newFile(tree.getLabel() + ".traces").getAbsolutePath();
+				assertTrue("Saving to "+ tracesPath, tree.save(tracesPath));
+				final Tree tracesTree = new Tree(tracesPath);
+				assertTrue("Reading file "+ tracesPath, tracesTree != null && !tracesTree.isEmpty());
+
+				// Did tree change when saving to TRACES?
+				//assertTrue(bps.size() == new TreeAnalyzer(tracesTree).getBranchPoints().size());
+				assertTrue(cableLength == new TreeAnalyzer(tracesTree).getCableLength());
 			} catch (final IOException e) {
 				e.printStackTrace();
 			}

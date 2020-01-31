@@ -81,7 +81,7 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 	private void init(final Collection<SWCPoint> nodes, final boolean assignDistancesToWeights)
 			throws IllegalArgumentException {
 		final Map<Integer, SWCPoint> map = new HashMap<>();
-		for (final SWCPoint node : tree.getNodesAsSWCPoints()) {
+		for (final SWCPoint node : nodes) {
 			map.put(node.id, node);
 			addVertex(node);
 		}

@@ -24,18 +24,13 @@ package sc.fiji.snt.analysis.graph;
 
 import java.awt.Window;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-import javax.swing.*;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import org.jgrapht.Graph;
-import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.util.SupplierUtil;
 import org.scijava.util.Colors;
 
 import net.imagej.ImageJ;
@@ -47,61 +42,23 @@ import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.Viewer3D;
 
 /**
- * Utilities for Graph conversions.
+ * Utilities for Graph handling.
  * @author Tiago Ferreira
- * @author Cameron Arshadi
  */
 public class GraphUtils {
 
 	private GraphUtils() {
 	}
 
-	/**
-	 * Creates a DirectedGraph from a collection of reconstruction nodes.
-	 *
-	 * @param nodes                    the collections of SWC nodes
-	 * @param assignDistancesToWeights if true, inter-node Euclidean distances are
-	 *                                 used as edge weights
-	 * @return the created graph
-	 */
+	@Deprecated
 	public static DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> createGraph(final Collection<SWCPoint> nodes,
 	                                                                              final boolean assignDistancesToWeights) {
-		return createGraphInternal(nodes, assignDistancesToWeights);
+		return new DirectedWeightedGraph(nodes, assignDistancesToWeights);
 	}
 
-	private static DirectedWeightedGraph<SWCPoint, SWCWeightedEdge> createGraphInternal(final Collection<SWCPoint> nodes,
-            final boolean assignDistancesToWeights) {
-		final Map<Integer, SWCPoint> map = new HashMap<>();
-		final DirectedWeightedGraph<SWCPoint, SWCWeightedEdge> graph = new DirectedWeightedGraph<SWCPoint, SWCWeightedEdge>();
-		for (final SWCPoint node : nodes) {
-			map.put(node.id, node);
-			graph.addVertex(node);
-		}
-		for (final SWCPoint node : nodes) {
-			if (node.parent == -1)
-				continue;
-			final SWCPoint previousPoint = map.get(node.parent);
-			node.setPreviousPoint(previousPoint);
-			final SWCWeightedEdge edge = new SWCWeightedEdge();
-			graph.addEdge(previousPoint, node, edge);
-			if (assignDistancesToWeights) {
-				graph.setEdgeWeight(edge, node.distanceTo(previousPoint));
-			}
-		}
-		return graph;
-	}
-
-	/**
-	 * Creates a DirectedGraph from a Tree.
-	 *
-	 * @param tree the Tree to be converted
-	 * @return the created graph with edge weights corresponding to inter-node
-	 *         Euclidean distances
-	 */
+	@Deprecated
 	public static DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> createGraph(final Tree tree) throws IllegalArgumentException {
-		final DirectedWeightedGraph<SWCPoint, SWCWeightedEdge> graph = createGraphInternal(tree.getNodesAsSWCPoints(), true);
-		graph.setLabel(tree.getLabel());
-		return graph;
+		return new DirectedWeightedGraph(tree);
 	}
 
 	/**
@@ -111,90 +68,20 @@ public class GraphUtils {
 	 * @return the Tree, assembled from from the graph vertices
 	 */
 	public static Tree createTree(final DefaultDirectedGraph<SWCPoint, ?> graph) {
-		String label = "";
-		if (graph instanceof DirectedWeightedGraph)
-			label = ((DirectedWeightedGraph<SWCPoint, ?>)graph).getLabel();
-		return new Tree(graph.vertexSet(), label);
+		if (graph instanceof DirectedWeightedGraph && ((DirectedWeightedGraph)graph).getTree() != null) {
+			return ((DirectedWeightedGraph)graph).getTree();
+		}
+		return new Tree(graph.vertexSet(), "");
 	}
 
-	/**
-	 * Simplifies a graph so that it is represented only by root, branch nodes and
-	 * leaves.
-	 *
-	 * @param graph the graph to be simplified
-	 * @return the simplified graph
-	 */
+	@Deprecated
 	public static DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getSimplifiedGraph(
-			final DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph) {
-		final LinkedHashSet<SWCPoint> relevantNodes = new LinkedHashSet<>();
-		relevantNodes.add(getRoot(graph));
-		relevantNodes.addAll(getBPs(graph));
-		relevantNodes.addAll(geTips(graph));
-		final DirectedWeightedGraph<SWCPoint, SWCWeightedEdge> simplifiedGraph = new DirectedWeightedGraph<SWCPoint, SWCWeightedEdge>();
-		{
-			// Have no idea why, but we have to explicitly declare the supplier
-			simplifiedGraph.setEdgeSupplier(SupplierUtil.createSupplier(SWCWeightedEdge.class));
-		}
-		relevantNodes.forEach(node -> simplifiedGraph.addVertex(node));
-		for (final SWCPoint node : relevantNodes) {
-			final SimplifiedVertex ancestor = firstRelevantAncestor(graph, node);
-			if (ancestor != null && ancestor.associatedWeight > 0) {
-				try {
-					final SWCWeightedEdge edge = simplifiedGraph.addEdge(ancestor.vertex, node);
-					simplifiedGraph.setEdgeWeight(edge, ancestor.associatedWeight);
-				} catch (final IllegalArgumentException ignored) {
-					// do nothing. ancestor.vertex not found in simplifiedGraph
-				}
-			}
-		}
-		return simplifiedGraph;
-	}
-
-	private static List<SWCPoint> getBPs(final DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph) {
-		return graph.vertexSet().stream().filter(v -> graph.outDegreeOf(v) > 1).collect(Collectors.toList());
-	}
-
-	private static List<SWCPoint> geTips(final DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph) {
-		return graph.vertexSet().stream().filter(v -> graph.outDegreeOf(v) == 0).collect(Collectors.toList());
-	}
-
-	private static SWCPoint getRoot(final DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph) {
-		return graph.vertexSet().stream().filter(v -> graph.inDegreeOf(v) == 0).findFirst().orElse(null);
-	}
-
-	private static SimplifiedVertex firstRelevantAncestor(final Graph<SWCPoint, SWCWeightedEdge> graph, SWCPoint node) {
-		if (!Graphs.vertexHasPredecessors(graph, node)) {
-			return null;
-		}
-		double pathWeight = 0;
-		SWCPoint parent;
-		while (true) {
-			try {
-				parent = Graphs.predecessorListOf(graph, node).get(0);
-				final double edgeWeight = graph.getEdge(parent, node).getWeight();
-				pathWeight += edgeWeight;
-				if (graph.inDegreeOf(parent) == 0 || graph.outDegreeOf(parent) > 1) {
-					return new SimplifiedVertex(parent, pathWeight);
-				}
-				node = parent;
-			} catch (final IndexOutOfBoundsException | NullPointerException ignored) {
-				return null;
-			}
-		}
-	}
-
-	private static class SimplifiedVertex {
-		final SWCPoint vertex;
-		final double associatedWeight;
-
-		SimplifiedVertex(final SWCPoint vertex, final double associatedWeight) {
-			this.vertex = vertex;
-			this.associatedWeight = associatedWeight;
-		}
+			final DirectedWeightedGraph graph) {
+		return graph.getSimplifiedGraph();
 	}
 
 	/**
-	 * Displays a graph in a SNT's "Dendrogram Viewer" featuring UI commands for
+	 * Displays a graph in SNT's "Dendrogram Viewer" featuring UI commands for
 	 * interactive visualization and export options.
 	 *
 	 * @param graph the graph to be displayed
@@ -226,6 +113,6 @@ public class GraphUtils {
 		recViewer.add(convertedTree);
 		recViewer.show();
 		GraphUtils.show(graph);
-		GraphUtils.show(GraphUtils.getSimplifiedGraph(graph));
+		GraphUtils.show(GraphUtils.getSimplifiedGraph((DirectedWeightedGraph) graph));
 	}
 }

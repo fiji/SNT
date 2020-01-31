@@ -31,7 +31,6 @@ import org.scijava.plugin.Plugin;
 import net.imagej.ImageJ;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
-import sc.fiji.snt.analysis.graph.GraphUtils;
 import sc.fiji.snt.gui.GuiUtils;
 
 /**
@@ -61,7 +60,7 @@ public class GraphGeneratorCmd extends CommonDynamicCmd {
 	@Override
 	public void run() {
 		try {
-			GraphUtils.show(tree.getGraph(true));
+			tree.getGraph(true).show();
 		} catch (final IllegalArgumentException exc) { // multiple roots, etc..
 			error("Graph could not be created: " + exc.getLocalizedMessage() + "\n"
 			+ "Please ensure you select a single set of connected paths (one root exclusively)");

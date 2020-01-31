@@ -34,23 +34,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.jgrapht.graph.DefaultDirectedGraph;
 import org.scijava.util.ColorRGB;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
+import sc.fiji.snt.analysis.graph.DirectedWeightedGraph;
+import sc.fiji.snt.analysis.sholl.TreeParser;
+import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.util.SWCPoint;
 import sholl.UPoint;
-import sc.fiji.snt.analysis.graph.GraphUtils;
-import sc.fiji.snt.analysis.graph.SWCWeightedEdge;
-import sc.fiji.snt.analysis.sholl.TreeParser;
-import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 
 /**
  * Utility class to access a Collection of Paths. A Tree is the preferred way to
@@ -471,6 +469,16 @@ public class Tree {
 			}
 			if (p.endJoinsPoint != null) p.endJoinsPoint.scale(xScale, yScale, zScale);
 			if (p.startJoinsPoint != null) p.startJoinsPoint.scale(xScale, yScale, zScale);
+			if (p.somehowJoins != null) {
+				for (final Path other : p.somehowJoins) {
+					if (other.startJoins == p) {
+						other.startJoinsPoint.scale(xScale, yScale, zScale);
+					}
+					if (other.endJoins == p) {
+						other.endJoinsPoint.scale(xScale, yScale, zScale);
+					}
+				}
+			}
 		});
 		if (box != null) {
 			box.origin().x *= xScale;
@@ -862,8 +870,8 @@ public class Tree {
 	 *         distances
 	 * @throws IllegalArgumentException if tree contains multiple roots or loops
 	 */
-	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph() throws IllegalArgumentException {
-		return GraphUtils.createGraph(this);
+	public DirectedWeightedGraph getGraph() throws IllegalArgumentException {
+		return new DirectedWeightedGraph(this);
 	}
 
 	/**
@@ -874,8 +882,8 @@ public class Tree {
 	 * @return the Tree's graph with edge weights corresponding to branch lengths
 	 * @throws IllegalArgumentException if tree contains multiple roots or loops
 	 */
-	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph(final boolean simplify) throws IllegalArgumentException {
-		return (simplify) ? GraphUtils.getSimplifiedGraph(getGraph()) : getGraph();
+	public DirectedWeightedGraph getGraph(final boolean simplify) throws IllegalArgumentException {
+		return (simplify) ? getGraph().getSimplifiedGraph() : getGraph();
 	}
 
 	/**

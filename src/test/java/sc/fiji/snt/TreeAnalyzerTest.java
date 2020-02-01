@@ -22,6 +22,7 @@
 
 package sc.fiji.snt;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
 
@@ -72,13 +73,13 @@ public class TreeAnalyzerTest {
 		assertTrue("0.1231 > Avg contraction < 0.1230", avgContraction > 0.1230 && avgContraction < 0.1231);
 
 		// Scaling tests
-		for (double scaleFactor : new double[] { .5d, 2d }) {
+		for (double scaleFactor : new double[] { .25d, .5d, 11.87d}) {
 			tree.scale(scaleFactor, scaleFactor, scaleFactor);
 			final TreeAnalyzer scaledAnalyzer = new TreeAnalyzer(tree);
 			assertTrue("Scaling: Equal # Tips", analyzer.getTips().size() == scaledAnalyzer.getTips().size());
 			assertTrue("Scaling: Equal # Branch points", analyzer.getBranchPoints().size() == scaledAnalyzer.getBranchPoints().size());
-			//assertTrue("Scaling: Equal # Branches", analyzer.getNBranches() == scaledAnalyzer.getNBranches());
-			assertTrue("Scaling: Scaled length", scaledAnalyzer.getCableLength() == cableLength * scaleFactor);
+			assertTrue("Scaling: Equal # Branches", analyzer.getNBranches() == scaledAnalyzer.getNBranches());
+			assertEquals("Scaling: Cable length", cableLength * scaleFactor, scaledAnalyzer.getCableLength(), 0.1);
 			tree.scale(1 / scaleFactor, 1 / scaleFactor, 1 / scaleFactor);
 		}
 	}

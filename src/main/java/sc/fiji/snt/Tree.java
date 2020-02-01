@@ -434,12 +434,24 @@ public class Tree {
 				p.precise_y_positions[node] += yOffset;
 				p.precise_z_positions[node] += zOffset;
 			}
-			final List<PointInImage> sePoints = p.findJunctions();
-			sePoints.forEach(pim -> {
-				pim.x += xOffset;
-				pim.y += yOffset;
-				pim.z += zOffset;
-			});
+			if (p.startJoinsPoint != null) {
+				final PointInImage sPim = p.startJoinsPoint;
+				final Path sPath = p.startJoins;
+				sPim.x += xOffset;
+				sPim.y += yOffset;
+				sPim.z += zOffset;
+				p.unsetStartJoin();
+				p.setStartJoin(sPath, sPim);
+			}
+			if (p.endJoinsPoint != null) {
+				final PointInImage ePim = p.endJoinsPoint;
+				final Path ePath = p.endJoins;
+				ePim.x += xOffset;
+				ePim.y += yOffset;
+				ePim.z += zOffset;
+				p.unsetEndJoin();
+				p.setEndJoin(ePath, ePim);
+			}
 		});
 		if (box != null) {
 			box.origin().x += xOffset;
@@ -467,17 +479,19 @@ public class Tree {
 				p.precise_y_positions[node] *= yScale;
 				p.precise_z_positions[node] *= zScale;
 			}
-			if (p.endJoinsPoint != null) p.endJoinsPoint.scale(xScale, yScale, zScale);
-			if (p.startJoinsPoint != null) p.startJoinsPoint.scale(xScale, yScale, zScale);
-			if (p.somehowJoins != null) {
-				for (final Path other : p.somehowJoins) {
-					if (other.startJoins == p) {
-						other.startJoinsPoint.scale(xScale, yScale, zScale);
-					}
-					if (other.endJoins == p) {
-						other.endJoinsPoint.scale(xScale, yScale, zScale);
-					}
-				}
+			if (p.startJoinsPoint != null) {
+				final PointInImage sPim = p.startJoinsPoint;
+				final Path sPath = p.startJoins;
+				sPim.scale(xScale, yScale, zScale);
+				p.unsetStartJoin();
+				p.setStartJoin(sPath, sPim);
+			}
+			if (p.endJoinsPoint != null) {
+				final PointInImage ePim = p.endJoinsPoint;
+				final Path ePath = p.endJoins;
+				ePim.scale(xScale, yScale, zScale);
+				p.unsetEndJoin();
+				p.setEndJoin(ePath, ePim);
 			}
 		});
 		if (box != null) {

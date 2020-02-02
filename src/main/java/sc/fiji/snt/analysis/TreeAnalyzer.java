@@ -25,7 +25,6 @@ package sc.fiji.snt.analysis;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -335,8 +334,8 @@ public class TreeAnalyzer extends ContextCommand {
 		case MultiTreeStatistics.LENGTH:
 			return getCableLength();
 		case MultiTreeStatistics.MEAN_RADIUS:
-			final MultiTreeStatistics treeStats = new MultiTreeStatistics(Collections.singleton(tree));
-			return treeStats.getSummaryStats(MultiTreeStatistics.MEAN_RADIUS).getMean();
+			final TreeStatistics treeStats = new TreeStatistics(tree);
+			return treeStats.getSummaryStats(TreeStatistics.MEAN_RADIUS).getMean();
 		case MultiTreeStatistics.N_BRANCH_POINTS:
 			return getBranchPoints().size();
 		case MultiTreeStatistics.N_BRANCHES:

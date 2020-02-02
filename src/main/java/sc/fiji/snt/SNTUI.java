@@ -98,6 +98,7 @@ import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
 import ij3d.ImageWindow3D;
 import net.imagej.Dataset;
+import net.imagej.ui.swing.updater.ImageJUpdater;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.event.SNTEvent;
 import sc.fiji.snt.gui.ColorChooserButton;
@@ -1622,6 +1623,11 @@ public class SNTUI extends JDialog {
 	private JPanel sciViewerPanel() {
 		openSciView = new JButton("Open SciView Viewer");
 		openSciView.addActionListener(e -> {
+			if (GuiUtils.sciViewUnavailableError()) {
+				final CommandService cmdService = plugin.getContext().getService(CommandService.class);
+				cmdService.run(ImageJUpdater.class, true);
+				return;
+			}
 			if (openingSciView && sciViewSNT != null) {
 				openingSciView = false;
 			}

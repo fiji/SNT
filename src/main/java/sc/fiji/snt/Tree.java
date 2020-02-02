@@ -428,7 +428,7 @@ public class Tree {
 	public void translate(final double xOffset, final double yOffset,
 		final double zOffset)
 	{
-		tree.parallelStream().forEach(p -> {
+		tree.stream().forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] += xOffset;
 				p.precise_y_positions[node] += yOffset;
@@ -473,7 +473,7 @@ public class Tree {
 	public void scale(final double xScale, final double yScale,
 		final double zScale)
 	{
-		tree.parallelStream().forEach(p -> {
+		tree.stream().forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] *= xScale;
 				p.precise_y_positions[node] *= yScale;
@@ -516,7 +516,7 @@ public class Tree {
 		final double zScale, final double radiusScale)
 	{
 		scale(xScale, yScale, zScale);
-		tree.parallelStream().forEach(p -> {
+		tree.stream().forEach(p -> {
 			if (p.hasRadii()) {
 				for (int node = 0; node < p.size(); node++) {
 					p.radii[node] *= radiusScale;
@@ -541,48 +541,81 @@ public class Tree {
 		final double cos = Math.cos(radAngle);
 		switch (axis) {
 			case Z_AXIS:
-				tree.parallelStream().forEach(p -> {
+				tree.stream().forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
 						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double x = pim.x * cos - pim.y * sin;
 						final double y = pim.y * cos + pim.x * sin;
 						p.moveNode(node, new PointInImage(x, y, pim.z));
 					}
-					final List<PointInImage> sePoints = p.findJunctions();
-					sePoints.forEach(pim -> {
-						pim.x = pim.x * cos - pim.y * sin;
-						pim.y = pim.y * cos + pim.x * sin;
-					});
+					if (p.startJoinsPoint != null) {
+						final PointInImage sPim = p.startJoinsPoint;
+						final Path sPath = p.startJoins;
+						sPim.x = sPim.x * cos - sPim.y * sin;
+						sPim.y = sPim.y * cos + sPim.x * sin;
+						p.unsetStartJoin();
+						p.setStartJoin(sPath, sPim);
+					}
+					if (p.endJoinsPoint != null) {
+						final PointInImage ePim = p.endJoinsPoint;
+						final Path ePath = p.endJoins;
+						ePim.x = ePim.x * cos - ePim.y * sin;
+						ePim.y = ePim.y * cos + ePim.x * sin;
+						p.unsetEndJoin();
+						p.setEndJoin(ePath, ePim);
+					}
 				});
 				break;
 			case Y_AXIS:
-				tree.parallelStream().forEach(p -> {
+				tree.stream().forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
 						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double x = pim.x * cos - pim.z * sin;
 						final double z = pim.z * cos + pim.x * sin;
 						p.moveNode(node, new PointInImage(x, pim.y, z));
 					}
-					final List<PointInImage> sePoints = p.findJunctions();
-					sePoints.forEach(pim -> {
-						pim.x = pim.x * cos - pim.z * sin;
-						pim.z = pim.z * cos + pim.x * sin;
-					});
+					if (p.startJoinsPoint != null) {
+						final PointInImage sPim = p.startJoinsPoint;
+						final Path sPath = p.startJoins;
+						sPim.x = sPim.x * cos - sPim.z * sin;
+						sPim.y = sPim.z * cos + sPim.x * sin;
+						p.unsetStartJoin();
+						p.setStartJoin(sPath, sPim);
+					}
+					if (p.endJoinsPoint != null) {
+						final PointInImage ePim = p.endJoinsPoint;
+						final Path ePath = p.endJoins;
+						ePim.x = ePim.x * cos - ePim.z * sin;
+						ePim.y = ePim.z * cos + ePim.x * sin;
+						p.unsetEndJoin();
+						p.setEndJoin(ePath, ePim);
+					}
 				});
 				break;
 			case X_AXIS:
-				tree.parallelStream().forEach(p -> {
+				tree.stream().forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
 						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double y = pim.y * cos - pim.z * sin;
 						final double z = pim.z * cos + pim.y * sin;
 						p.moveNode(node, new PointInImage(pim.x, y, z));
 					}
-					final List<PointInImage> sePoints = p.findJunctions();
-					sePoints.forEach(pim -> {
-						pim.y = pim.y * cos - pim.z * sin;
-						pim.z = pim.z * cos + pim.y * sin;;
-					});
+					if (p.startJoinsPoint != null) {
+						final PointInImage sPim = p.startJoinsPoint;
+						final Path sPath = p.startJoins;
+						sPim.x = sPim.y * cos - sPim.z * sin;
+						sPim.y = sPim.z * cos + sPim.y * sin;
+						p.unsetStartJoin();
+						p.setStartJoin(sPath, sPim);
+					}
+					if (p.endJoinsPoint != null) {
+						final PointInImage ePim = p.endJoinsPoint;
+						final Path ePath = p.endJoins;
+						ePim.x = ePim.y * cos - ePim.z * sin;
+						ePim.y = ePim.z * cos + ePim.y * sin;
+						p.unsetEndJoin();
+						p.setEndJoin(ePath, ePim);
+					}
 				});
 				break;
 			default:
@@ -833,7 +866,7 @@ public class Tree {
 	 *          the radius attribute from the Tree
 	 */
 	public void setRadii(final double r) {
-		tree.parallelStream().forEach(p -> p.setRadius(r));
+		tree.stream().forEach(p -> p.setRadius(r));
 	}
 
 	/**

@@ -261,7 +261,7 @@ public class TreeColorMapper extends ColorMapper {
 			case N_BRANCH_POINTS:
 				integerScale = true;
 				for (final Path p : paths)
-					mappedPaths.add(new MappedPath(p, (double) p.findJunctions()
+					mappedPaths.add(new MappedPath(p, (double) p.getJunctionNodes()
 						.size()));
 				break;
 			case INTERNAL_COUNTER:

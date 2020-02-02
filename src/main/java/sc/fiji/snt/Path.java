@@ -2497,11 +2497,12 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Returns the nodes which are indicated to be a join (junction/branch point), either in this Path
-	 * object, or any other that starts or ends on it.
+	 * Returns the nodes which are indicated to be a join (junction/branch point),
+	 * either in this Path object, or any other that starts or ends on it.
 	 *
 	 * @return the list of nodes as {@link PointInImage} objects
 	 * @see #findJunctionIndices()
+	 * @see #getJunctionNodes()
 	 */
 	public List<PointInImage> findJunctions() {
 		final ArrayList<PointInImage> result = new ArrayList<>();
@@ -2523,11 +2524,40 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
+	 * This is a version of {@link #findJunctions()} ensuring that a junction node
+	 * is only retrieved once even if multiple child paths are associated with it.
+	 * 
+	 * @see #findJunctionIndices()
+	 * @return the junction nodes
+	 */
+	public Set<PointInImage> getJunctionNodes() {
+		class LocationBasePoint extends PointInImage {
+			LocationBasePoint(final PointInImage pim) {
+				super(pim.x, pim.y, pim.z, pim.onPath);
+				setAnnotation(pim.getAnnotation());
+			}
+
+			@Override
+			public boolean equals(final Object o) {
+				if (o == this) return true;
+				if (o == null) return false;
+				if (!(o instanceof PointInImage)) return false;
+				final PointInImage other = (PointInImage) o;
+				return isSameLocation(other);
+			}
+		}
+		final Set<PointInImage> result = new HashSet<>();
+		findJunctions().stream().forEach(j -> result.add(new LocationBasePoint(j)));
+		return result;
+	}
+
+	/**
 	 * Returns the indices of nodes which are indicated to be a join, either in this
 	 * Path object, or any other that starts or ends on it.
 	 *
 	 * @return the indices of junction nodes, naturally sorted
 	 * @see #findJunctions()
+	 * @see #getJunctionNodes()
 	 */
 	public TreeSet<Integer> findJunctionIndices() {
 		final TreeSet<Integer> result = new TreeSet<>();

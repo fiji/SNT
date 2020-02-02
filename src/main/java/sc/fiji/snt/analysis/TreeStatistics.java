@@ -379,7 +379,7 @@ public class TreeStatistics extends TreeAnalyzer {
 			break;
 		case N_BRANCH_POINTS:
 			for (final Path p : tree.list()) {
-				stat.addValue(p.findJunctions().size());
+				stat.addValue(p.getJunctionNodes().size());
 			}
 			break;
 		case N_NODES:

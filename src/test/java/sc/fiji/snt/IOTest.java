@@ -22,6 +22,7 @@
 
 package sc.fiji.snt;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
 
@@ -34,18 +35,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import ij.IJ;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.util.PointInImage;
 
 /**
- * Tests for {@link TreeAnalyzer}s
+ * Test for basic I/O Operations
  *
  * @author Tiago Ferreira
  */
 public class IOTest {
 
 	private List<Tree> trees;
+	private double precision = 1e-10;
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
@@ -72,8 +73,8 @@ public class IOTest {
 				assertTrue("Reading file "+ swcPath, swcTree != null && !swcTree.isEmpty());
 
 				// Did tree change when saving to SWC?
-				assertTrue(bps.size() == new TreeAnalyzer(swcTree).getBranchPoints().size());
-				assertTrue(cableLength == new TreeAnalyzer(swcTree).getCableLength());
+				assertTrue(bps.equals(new TreeAnalyzer(swcTree).getBranchPoints()));
+				assertEquals(cableLength, new TreeAnalyzer(swcTree).getCableLength(), precision);
 
 				// TRACES I/O
 				final String tracesPath = folder.newFile(tree.getLabel() + ".traces").getAbsolutePath();
@@ -82,8 +83,8 @@ public class IOTest {
 				assertTrue("Reading file "+ tracesPath, tracesTree != null && !tracesTree.isEmpty());
 
 				// Did tree change when saving to TRACES?
-				//assertTrue(bps.size() == new TreeAnalyzer(tracesTree).getBranchPoints().size());
-				assertTrue(cableLength == new TreeAnalyzer(tracesTree).getCableLength());
+				assertTrue(bps.equals(new TreeAnalyzer(tracesTree).getBranchPoints()));
+				assertEquals(cableLength, new TreeAnalyzer(tracesTree).getCableLength(), precision);
 			} catch (final IOException e) {
 				e.printStackTrace();
 			}

@@ -36,7 +36,6 @@ import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
-import org.scijava.command.DynamicCommand;
 import org.scijava.command.Interactive;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;

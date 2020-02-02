@@ -51,11 +51,13 @@ import sc.fiji.snt.util.SWCPoint;
 import sholl.UPoint;
 
 /**
- * Utility class to access a Collection of Paths. A Tree is the preferred way to
- * group, access and manipulate {@link Path}s that share something in common,
- * specially when scripting SNT. Most methods are multithreaded. Note that a
- * "Tree" here is literally a collection of {@link Path}s and no restrictions
- * are imposed on its topology.
+ * Utility class to access a Collection of Paths (typically a complete
+ * reconstruction) . A Tree is the preferred way to group, access and manipulate
+ * {@link Path}s that share something in common, specially when scripting SNT.
+ * Note that a "Tree" here is literally a collection of {@link Path}s. Very few
+ * restrictions are imposed on its topology, although it is generally assumed
+ * that the Collection of paths describes a single-rooted structure with no
+ * loops.
  *
  * @author Tiago Ferreira
  */

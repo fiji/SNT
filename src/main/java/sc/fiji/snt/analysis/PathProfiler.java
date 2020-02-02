@@ -39,7 +39,6 @@ import net.imagej.plot.XYSeries;
 import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;

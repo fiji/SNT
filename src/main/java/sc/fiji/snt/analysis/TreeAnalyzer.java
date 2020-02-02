@@ -42,7 +42,6 @@ import org.scijava.command.ContextCommand;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
 
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;

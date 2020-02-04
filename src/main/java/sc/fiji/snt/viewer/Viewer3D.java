@@ -954,17 +954,18 @@ public class Viewer3D {
 		if (width == -1 && height == -1) {
 			frame.setLocation(0, 0);
 			frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-		} else if (width == -1 ) {
+		}
+		final int w = (width == 0) ? (int) (ViewerFrame.DEF_WIDTH * Prefs.SCALE_FACTOR) : width;
+		final int h = (height == 0) ? (int) (ViewerFrame.DEF_HEIGHT * Prefs.SCALE_FACTOR) : height;
+		if (width == -1 ) {
 			frame.setExtendedState(Frame.MAXIMIZED_HORIZ);
-			frame.setSize(frame.getWidth(), height);
+			frame.setSize((frame.getWidth()==0) ? w : frame.getWidth(), h);
 		} else if (height == -1 ) {
 			frame.setExtendedState(Frame.MAXIMIZED_VERT);
-			frame.setSize(width, frame.getHeight());
+			frame.setSize(w, (frame.getHeight()==0) ? h : frame.getHeight());
+		} else {
+			frame.setSize(w, h);
 		}
-		else {
-			frame.setSize(width, height);
-		}
-		frame.setSize(width, height);
 	}
 
 	private void displayMsg(final String msg) {
@@ -2069,7 +2070,7 @@ public class Viewer3D {
 		private static final double DEF_ROTATION_STEP = ROTATION_STEPS[1];
 
 		/* GUI */
-		private static final double SCALE_FACTOR = ij.Prefs.getDouble("gui.scale", 1d); //TODO: Replace w/ Prefs.getGuiScale(); when IJ1.52k in POM
+		private static final double SCALE_FACTOR = ij.Prefs.getGuiScale();
 		private static final boolean DEF_NAG_USER_ON_RETRIEVE_ALL = true;
 		private static final boolean DEF_RETRIEVE_ALL_IF_NONE_SELECTED = true;
 		public boolean nagUserOnRetrieveAll;

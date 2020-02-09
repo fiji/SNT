@@ -37,7 +37,6 @@ import java.util.stream.IntStream;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;

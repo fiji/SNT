@@ -37,6 +37,7 @@ import java.util.stream.IntStream;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
@@ -142,20 +143,15 @@ public class StrahlerAnalyzer {
 			// # N. branches
 			double nBranches = 0;
 			ArrayList<Path>branches = new ArrayList<>();
-			for (final SWCPoint node : subGraph.vertexSet()) {
-				final List<SWCPoint> children = Graphs.successorListOf(subGraph, node);
-				if (children.size() != 1) {
-					nBranches++;
-				}
-				final int idx = branches.indexOf(node.getPath());
-				if (idx != -1) {
-					branches.get(idx).addNode(node);
-				} else {
-					final Path p = node.getPath().createPath();
-					p.addNode(node);
-					branches.add(p);
-				}
+			List<SWCPoint> subGraphRootList = subGraph.vertexSet().stream()
+					.filter(v -> subGraph.inDegreeOf(v) == 0).collect(Collectors.toList());
+			
+			for (SWCPoint subGraphRoot : subGraphRootList) {
+				nBranches++;
+				Path p = getPathToNextRelevantSuccessor(graph, subGraphRoot);
+				branches.add(p);
 			}
+			
 			nBranchesMap.put(order, nBranches);
 			branchesMap.put(order, branches);
 		});
@@ -188,6 +184,30 @@ public class StrahlerAnalyzer {
 	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph() {
 		if (graph == null) compute();
 		return graph;
+	}
+	
+	private Path getPathToNextRelevantSuccessor(DefaultDirectedGraph<SWCPoint, 
+			SWCWeightedEdge> baseGraph, SWCPoint startVertex) {
+		Path p = startVertex.getPath().createPath();
+		SWCPoint currentVertex = startVertex;
+		List<SWCPoint> ancestorForkPoint = Graphs.predecessorListOf(baseGraph,  currentVertex);
+		if (!ancestorForkPoint.isEmpty()) {
+			p.addNode(ancestorForkPoint.get(0));
+		}
+		
+		p.addNode(currentVertex);
+		while (true) {
+			List<SWCPoint> children = Graphs.successorListOf(graph,  currentVertex);
+			if (children.size() == 1) {
+				currentVertex = children.get(0);
+				p.addNode(currentVertex);
+			} else if (children.size() > 1) {
+				
+				return p;
+			} else if (children.size() == 0) {
+				return p;
+			}
+		}	
 	}
 
 	/**

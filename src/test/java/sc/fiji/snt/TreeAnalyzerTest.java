@@ -67,7 +67,7 @@ public class TreeAnalyzerTest {
 		assertEquals("Sum length of all paths", 569.3452, cableLength, precision);
 		assertEquals("Sum length of I branches", 51.0000, primaryLength, precision);
 		assertEquals("Sum length of terminal paths", 153.2965, terminalLength, precision);
-		assertEquals("Avg branch length", 144.3477, avgBranchLength, precision);
+		assertEquals("Avg branch length", 18.3659, avgBranchLength, precision);
 		assertTrue("Strahler number: 5", analyzer.getStrahlerNumber() == 5);
 		assertTrue("Strahler bif. ratio: 2", analyzer.getStrahlerBifurcationRatio() == 2);
 		assertTrue("N Branches: 31", analyzer.getNBranches() == 31);
@@ -75,7 +75,7 @@ public class TreeAnalyzerTest {
 		assertTrue("Height = 145.0", analyzer.getHeight() == 145d);
 		assertTrue("Depth = 0.0", analyzer.getDepth() == 0d);
 		final double avgContraction=  analyzer.getAvgContraction();
-		assertEquals("Avg contraction", 0.1231, avgContraction, precision);
+		assertEquals("Avg contraction", 0.9628, avgContraction, precision);
 
 		// Scaling tests
 		for (double scaleFactor : new double[] { .25d, 1d, 2d}) {

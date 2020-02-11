@@ -295,7 +295,7 @@ public class Viewer3D {
 	private ColorLegend cBar;
 
 	/* Manager */
-	private CheckBoxList managerList;
+	private CheckboxListEditable managerList;
 	private DefaultListModel<Object> managerModel;
 
 	private Chart chart;
@@ -578,9 +578,10 @@ public class Viewer3D {
 			false));
 	}
 
+	@SuppressWarnings("unchecked")
 	private void initManagerList() {
 		managerModel = new DefaultListModel<>();
-		managerList = new CheckBoxList(managerModel);
+		managerList = new CheckboxListEditable(managerModel);
 		managerModel.addElement(CheckBoxList.ALL_ENTRY);
 		managerList.getCheckBoxListSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
@@ -597,6 +598,7 @@ public class Viewer3D {
 				// view.shoot();
 			}
 		});
+		managerList.setCellRenderer(new CustomListRenderer((DefaultListCellRenderer)managerList.getActualCellRenderer()));
 	}
 
 	protected Color fromAWTColor(final java.awt.Color color) {
@@ -2207,7 +2209,6 @@ public class Viewer3D {
 		private JCheckBoxMenuItem debugCheckBox;
 		private final JPanel barPanel;
 		private final SNTSearchableBar searchableBar;
-		private final DefaultListCellRenderer defaultCellRender;
 
 		public ManagerPanel(final GuiUtils guiUtils) {
 			super();
@@ -2242,7 +2243,6 @@ public class Viewer3D {
 			});
 			final JScrollPane scrollPane = new JScrollPane(managerList);
 			managerList.setComponentPopupMenu(popupMenu());
-			defaultCellRender = (DefaultListCellRenderer) managerList.getActualCellRenderer();
 			scrollPane.setWheelScrollingEnabled(true);
 			scrollPane.setBorder(null);
 			scrollPane.setViewportView(managerList);
@@ -2394,11 +2394,16 @@ public class Viewer3D {
 			return menu;
 		}
 
-		@SuppressWarnings("unchecked")
 		private JPopupMenu popupMenu() {
 			final JMenuItem sort = new JMenuItem("Sort List", IconFactory.getMenuIcon(
 				GLYPH.SORT));
 			sort.addActionListener(e -> {
+				if (noLoadedItemsGuiError()) {
+					return;
+				}
+				if (!guiUtils.getConfirmation("Sort List by categories? (any existing tags will be lost)", "Sort List?")) {
+					return;
+				}
 				final List<String> checkedLabels = getLabelsCheckedInManager();
 				try {
 					managerList.setValueIsAdjusting(true);
@@ -2420,9 +2425,33 @@ public class Viewer3D {
 				managerList.addCheckBoxListSelectedValues(checkedLabels.toArray());
 			});
 
-			final JMenuItem customRender = new JCheckBoxMenuItem("Label Categories", IconFactory.getMenuIcon(GLYPH.TAG));
-			customRender.addItemListener(e -> {
-				managerList.setCellRenderer((customRender.isSelected()) ? new CustomListRenderer() : defaultCellRender);
+			final JMenuItem addTag = new JMenuItem("Add Tag(s)...", IconFactory.getMenuIcon(GLYPH.TAG));
+			addTag.addActionListener(e -> {
+				if (noLoadedItemsGuiError()) return;
+				final String tags = guiUtils.getString("Enter one or more tags (space or comma-separated list)\n"//
+						+ "to be assigned to selected items. Tags encoding a color\n"//
+						+ "(e.g., 'red', 'lightblue') will be use to highligh entries.\n"//
+						+ "After dismissing this dialog:\n" //
+						+ "  - Double-click on an object to edit its tags\n" //
+						+ "  - Double-click on '" + CheckBoxList.ALL_ENTRY.toString() + "' to add tags to the entire list",//
+						"Add Tag(s)", "");
+				if (tags == null)
+					return; // user pressed cancel
+				if (managerList.isSelectionEmpty()) checkRetrieveAllOptions("objects");
+				managerList.applyTagToSelectedItems(tags);
+			});
+			final JMenuItem wipeTags = new JMenuItem("Remove Tags...");
+			wipeTags.addActionListener(e -> {
+				if (noLoadedItemsGuiError()) return;
+				if (managerList.isSelectionEmpty()) checkRetrieveAllOptions("objects");
+				if (guiUtils.getConfirmation("Remove all tags from selected items?", "Dispose All Tags?")) {
+					managerList.removeTagsFromSelectedItems();
+				}
+			});
+
+			final JMenuItem renderIcons = new JCheckBoxMenuItem("Label Categories", IconFactory.getMenuIcon(GLYPH.TAG));
+			renderIcons.addItemListener(e -> {
+				((CustomListRenderer)managerList.getActualCellRenderer()).setIconsVisible((renderIcons.isSelected()));
 			});
 	
 			// Select menu
@@ -2503,9 +2532,7 @@ public class Viewer3D {
 			final JMenuItem remove = new JMenuItem("Remove Selected...", IconFactory.getMenuIcon(
 					GLYPH.TRASH));
 			remove.addActionListener(e -> {
-				final boolean noItems = plottedTrees.isEmpty() && plottedObjs.isEmpty();
-				if (noItems) {
-					guiUtils.error("There are no loaded items.");
+				if (noLoadedItemsGuiError()) {
 					return;
 				}
 				final List<?> selectedKeys = managerList.getSelectedValuesList();
@@ -2513,7 +2540,7 @@ public class Viewer3D {
 					guiUtils.error("There are no selected entries.");
 					return;
 				}
-				if (selectedKeys.size() == 1 && CheckBoxList.ALL_ENTRY.equals(selectedKeys.get(0)) && !noItems) {
+				if (selectedKeys.size() == 1 && CheckBoxList.ALL_ENTRY.equals(selectedKeys.get(0))) {
 					wipeScene();
 					return;
 				}
@@ -2531,13 +2558,24 @@ public class Viewer3D {
 			pMenu.add(showMenu);
 			pMenu.add(hideMenu);
 			pMenu.addSeparator();
+			pMenu.add(addTag);
+			pMenu.add(wipeTags);
+			pMenu.addSeparator();
 			pMenu.add(find);
 			pMenu.addSeparator();
 			pMenu.add(sort);
-			pMenu.add(customRender);
+			pMenu.add(renderIcons);
 			pMenu.addSeparator();
 			pMenu.add(remove);
 			return pMenu;
+		}
+
+		private boolean noLoadedItemsGuiError() {
+			final boolean noItems = plottedTrees.isEmpty() && plottedObjs.isEmpty() && plottedAnnotations.isEmpty();
+			if (noItems) {
+				guiUtils.error("There are no loaded items.");
+			}
+			return noItems;
 		}
 
 		private void displaySomas(final boolean displayed) {
@@ -3115,35 +3153,6 @@ public class Viewer3D {
 			}
 		}
 
-		class CustomListRenderer extends DefaultListCellRenderer {
-			private static final long serialVersionUID = 1L;
-			private final Icon treeIcon = IconFactory.getListIcon(GLYPH.TREE);
-			private final Icon meshIcon = IconFactory.getListIcon(GLYPH.CUBE);
-			private final Icon annotationIcon = IconFactory.getListIcon(GLYPH.MARKER);
-
-			@Override
-			public Component getListCellRendererComponent(final JList<?> list, final Object value, final int index,
-					final boolean isSelected, final boolean cellHasFocus) {
-				final JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected,
-						cellHasFocus);
-				if (label.getText().equals(CheckBoxList.ALL_ENTRY.toString()))
-					return label;
-				if (plottedAnnotations.containsKey(label.getText()))
-					label.setIcon(annotationIcon);
-				else if (plottedObjs.containsKey(label.getText()))
-					label.setIcon(meshIcon);
-				else 
-					label.setIcon(treeIcon);
-				
-				return label;
-			}
-
-			@Override
-			public void setBorder(final Border border) {
-				super.setBorder(defaultCellRender.getBorder());
-			}
-
-		}
 		private boolean okToApplyColor(final List<String> labelsOfselectedTrees) {
 			if (!treesContainColoredNodes(labelsOfselectedTrees)) return true;
 			return guiUtils.getConfirmation("Some of the selected reconstructions " +
@@ -3795,6 +3804,212 @@ public class Viewer3D {
 				treeCellRendererComponent.setEnabled(ac.isMeshAvailable());
 				return treeCellRendererComponent;
 			}
+		}
+	}
+
+	/* Adapted from tips4java.wordpress.com/2008/10/19/list-editor/ */
+	private class CheckboxListEditable extends CheckBoxList
+	{
+		private static final long serialVersionUID = 1L;
+		private JPopupMenu editPopup;
+		private javax.swing.JTextField editTextField;
+
+		public CheckboxListEditable(@SuppressWarnings("rawtypes") final DefaultListModel model) {
+			super(model);
+			addMouseListener(new java.awt.event.MouseAdapter() {
+				public void mouseClicked(final MouseEvent e) {
+					if (e.getClickCount() == 2) {
+
+						if (editPopup == null) createEditPopup();
+
+						// Prepare the text field for editing
+						final String selectedLabel = getSelectedValue().toString();
+						if (ALL_ENTRY.toString().equals(selectedLabel)) {
+							if (Viewer3D.this.frame.managerPanel.noLoadedItemsGuiError()) return;
+							editTextField.setText("");
+						} else {
+							final String existingTags = getTagStringFromEntry(getSelectedValue().toString());
+							if (!existingTags.isEmpty()) {
+								editTextField.setText(existingTags);
+								editTextField.selectAll();
+							}
+						}
+
+						// Position the popup editor over top of the selected row
+						final int row = getSelectedIndex();
+						final java.awt.Rectangle r = getCellBounds(row, row);
+						editPopup.setPreferredSize(new Dimension(r.width, r.height));
+						editPopup.show(CheckboxListEditable.this, r.x, r.y);
+						editTextField.requestFocusInWindow();
+
+					} else {
+						CheckboxListEditable.this._handler.mouseClicked(e);
+					}
+				}
+			});
+		}
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		private void createEditPopup() {
+			// Use a text field as the editor
+			editTextField = new GuiUtils(this).textField("Tags:");
+			final Border border = javax.swing.UIManager.getBorder("List.focusCellHighlightBorder");
+			editTextField.setBorder(border);
+			// Add an Action to the text field to save the new value to the model
+			editTextField.addActionListener(e -> {
+				final String tag = editTextField.getText();
+				final int row = getSelectedIndex();
+				final String existingEntry = ((DefaultListModel) getModel()).get(row).toString();
+				if (ALL_ENTRY.toString().equals(existingEntry)) {
+					// textfield was empty
+					applyTagToSelectedItems(tag);
+				} else {
+					if (tag.trim().isEmpty()) {
+						removeTagsFromSelectedItems();
+					} else {
+						// textfield contained all tags
+						final String existingEntryWithoutTags = getUntaggedStringFromTags(existingEntry);
+						final String newEntry = applyTag(existingEntryWithoutTags, tag);
+						((DefaultListModel<String>) getModel()).set(row, newEntry);
+					}
+				}
+				editPopup.setVisible(false);
+			});
+			// Add the editor to the popup
+			editPopup = new JPopupMenu();
+			editPopup.setBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0));
+			editPopup.add(editTextField);
+			editPopup.setPreferredSize(getPreferredSize());
+		}
+
+		@Override
+		public int[] getSelectedIndices() {
+			if ((ALL_ENTRY == getSelectedValue()) || (null == getSelectedValue() && prefs.retrieveAllIfNoneSelected)) {
+				final int[] selectedIndices = new int[super.getModel().getSize() - 1];
+				for (int i = 0; i < selectedIndices.length; i++)
+					selectedIndices[i] = i;
+				return selectedIndices;
+			} else {
+				return super.getSelectedIndices();
+			}
+		}
+
+		@SuppressWarnings({ "unchecked" })
+		void applyTagToSelectedItems(final String tag) {
+			final String cleansedTag = getCleansedTag(tag);
+			if (cleansedTag.trim().isEmpty()) return;
+			for (int i : getSelectedIndices()) {
+				final String entry = (String) ((DefaultListModel<?>) getModel()).get(i);
+				((DefaultListModel<String>) getModel()).set(i, applyTag(entry, tag));
+			}
+		}
+
+		private String getCleansedTag(final String candidate) {
+			return candidate.replace("{", "").replace("}", "");
+		}
+
+		@SuppressWarnings("unchecked")
+		void removeTagsFromSelectedItems() {
+			for (int i : getSelectedIndices()) {
+				final String entry = (String) ((DefaultListModel<?>) getModel()).get(i);
+				((DefaultListModel<String>) getModel()).set(i, removeAllTags(entry));
+			}
+		}
+
+		String applyTag(final String entry, final String tag) {
+			final String cleansedTag = getCleansedTag(tag);
+			if (cleansedTag.trim().isEmpty()) return entry;
+			if (entry.indexOf("}") == -1) {
+				final StringBuilder sb = new StringBuilder(entry);
+				sb.append("{").append(cleansedTag).append("}");
+				return sb.toString();
+			} else {
+				return entry.replace("}", ", " + cleansedTag + "}");
+			}
+		}
+
+		String removeAllTags(final String entry) {
+			final int delimiterIdx = entry.indexOf("{");
+			if (delimiterIdx == -1) {
+				return entry;
+			} else {
+				return entry.substring(0, delimiterIdx);
+			}
+		}
+
+		String[] getTagsFromEntry(final String entry) {
+			final String tagString = getTagStringFromEntry(entry);
+			if (tagString.isEmpty()) return new String[] {};
+			return tagString.split("\\s*(,|\\s)\\s*");
+		}
+
+		String getTagStringFromEntry(final String entry) {
+			final int openingDlm = entry.indexOf("{");
+			final int closingDlm = entry.lastIndexOf("}");
+			if (closingDlm > openingDlm) {
+				return entry.substring(openingDlm + 1, closingDlm);
+			}
+			return "";
+		}
+
+		String getUntaggedStringFromTags(final String entry) {
+			final int openingDlm = entry.indexOf("{");
+			if (openingDlm == -1) {
+				return entry;
+			} else {
+				return entry.substring(0, openingDlm);
+			}
+		}
+
+	}
+
+	private class CustomListRenderer extends DefaultListCellRenderer {
+		private static final long serialVersionUID = 1L;
+		private final Icon treeIcon = IconFactory.getListIcon(GLYPH.TREE);
+		private final Icon meshIcon = IconFactory.getListIcon(GLYPH.CUBE);
+		private final Icon annotationIcon = IconFactory.getListIcon(GLYPH.MARKER);
+		private boolean iconVisible;
+
+		CustomListRenderer(final DefaultListCellRenderer templateInstance) {
+			super();
+			// Apply properties from templateInstance
+			setBorder(templateInstance.getBorder());
+		}
+
+		void setIconsVisible(final boolean iconVisible) {
+			this.iconVisible = iconVisible;
+			updateUI();
+		}
+
+		@Override
+		public Component getListCellRendererComponent(final JList<?> list, final Object value, final int index,
+				final boolean isSelected, final boolean cellHasFocus) {
+			final JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected,
+					cellHasFocus);
+			final String labelText = label.getText();
+			if (CheckBoxList.ALL_ENTRY.toString().equals(labelText))
+				return label;
+			if (iconVisible) {
+				if (plottedAnnotations.containsKey(labelText))
+					label.setIcon(annotationIcon);
+				else if (plottedObjs.containsKey(labelText))
+					label.setIcon(meshIcon);
+				else
+					label.setIcon(treeIcon);
+			} else {
+				label.setIcon(null);
+			}
+			final String[] tags = managerList.getTagsFromEntry(labelText);
+			if (tags.length > 0) {
+				for (final String tag : tags) {
+					final ColorRGB c = ColorRGB.fromHTMLColor(tag);
+					if (c != null) {
+						label.setForeground(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue()));
+						break;
+					}
+				}
+			}
+			return label;
 		}
 	}
 

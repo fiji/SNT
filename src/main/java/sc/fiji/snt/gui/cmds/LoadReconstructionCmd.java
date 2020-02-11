@@ -73,7 +73,7 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 	private ColorRGB color;
 
 	@Parameter(label = "Sub-compartments as separate objects", required = false,
-		description = "If the file contains multiple compartments (e.g., axons, dendrites, soma, etc.), load each one individually.")
+		description = "If the file contains multiple compartments (e.g., axons, dendrites, etc.), load each one individually.")
 	private boolean splitByType;
 
 	@Parameter(persist = false, visibility = ItemVisibility.MESSAGE)
@@ -94,8 +94,6 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 			fileMitem.setDescription(
 				"<HTML>Path to directory containing multiple files." +
 					"<br>Supported extensions: traces, (e)SWC, json");
-			splitByType = false;
-			resolveInput("splitByType");
 		}
 		else {
 			final MutableModuleItem<String> colorChoiceMitem = getInfo()
@@ -176,15 +174,18 @@ public class LoadReconstructionCmd extends CommonDynamicCmd {
 				.getDistinctColors(files.length) : null;
 			int idx = 0;
 			for (final File file : files) {
-				final Tree tree = new Tree(file.getAbsolutePath());
-				if (tree.isEmpty()) {
-					SNTUtils.log("Skipping file... No Paths extracted from " + file
-						.getAbsolutePath());
+				try {
+					final Tree tree = new Tree(file.getAbsolutePath());
+					if (tree.isEmpty()) {
+						throw new IllegalArgumentException("Somehow tree is empty");
+					}
+					tree.setColor((colors == null) ? color : colors[idx++]);
+					importTree(tree);
+				} catch (final IllegalArgumentException ignored) {
+					SNTUtils.log("Skipping file... No Paths extracted from " + file.getAbsolutePath());
 					failures++;
 					continue;
 				}
-				tree.setColor((colors == null) ? color : colors[idx++]);
-				importTree(tree);
 			}
 			if (failures == files.length) {
 				error("No files imported. Invalid Directory?");

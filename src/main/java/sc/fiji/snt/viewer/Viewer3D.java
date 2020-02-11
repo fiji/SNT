@@ -296,7 +296,6 @@ public class Viewer3D {
 
 	/* Manager */
 	private CheckboxListEditable managerList;
-	private DefaultListModel<Object> managerModel;
 
 	private Chart chart;
 	private View view;
@@ -578,11 +577,8 @@ public class Viewer3D {
 			false));
 	}
 
-	@SuppressWarnings("unchecked")
 	private void initManagerList() {
-		managerModel = new DefaultListModel<>();
-		managerList = new CheckboxListEditable(managerModel);
-		managerModel.addElement(CheckBoxList.ALL_ENTRY);
+		managerList = new CheckboxListEditable(new DefaultUpdatableListModel<>());
 		managerList.getCheckBoxListSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
 				final List<String> selectedKeys = getLabelsCheckedInManager();
@@ -598,7 +594,6 @@ public class Viewer3D {
 				// view.shoot();
 			}
 		});
-		managerList.setCellRenderer(new CustomListRenderer((DefaultListCellRenderer)managerList.getActualCellRenderer()));
 	}
 
 	protected Color fromAWTColor(final java.awt.Color color) {
@@ -810,8 +805,8 @@ public class Viewer3D {
 	private void addItemToManager(final String label) {
 		if (managerList == null) return;
 		final int[] indices = managerList.getCheckBoxListSelectedIndices();
-		final int index = managerModel.size() - 1;
-		managerModel.insertElementAt(label, index);
+		final int index = managerList.model.size() - 1;
+		managerList.model.insertElementAt(label, index);
 		// managerList.ensureIndexIsVisible(index);
 		managerList.addCheckBoxListSelectedIndex(index);
 		for (final int i : indices)
@@ -819,7 +814,7 @@ public class Viewer3D {
 	}
 
 	private boolean deleteItemFromManager(final String label) {
-		return managerModel != null && managerModel.removeElement(label);
+		return managerList.model != null && managerList.model.removeElement(label);
 	}
 
 	/**
@@ -2216,7 +2211,7 @@ public class Viewer3D {
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 			searchableBar = new SNTSearchableBar(new ListSearchable(managerList));
 			searchableBar.setStatusLabelPlaceholder(String.format(
-				"%d Item(s) listed", managerModel.size()));
+				"%d Item(s) listed", managerList.model.size()));
 			searchableBar.setVisibleButtons(SearchableBar.SHOW_CLOSE |
 				SearchableBar.SHOW_NAVIGATION | SearchableBar.SHOW_HIGHLIGHTS |
 				SearchableBar.SHOW_MATCHCASE | SearchableBar.SHOW_STATUS);
@@ -2407,17 +2402,17 @@ public class Viewer3D {
 				final List<String> checkedLabels = getLabelsCheckedInManager();
 				try {
 					managerList.setValueIsAdjusting(true);
-					managerModel.removeAllElements();
+					managerList.model.removeAllElements();
 					plottedTrees.keySet().forEach(k -> {
-						managerModel.addElement(k);
+						managerList.model.addElement(k);
 					});
 					plottedObjs.keySet().forEach(k -> {
-						managerModel.addElement(k);
+						managerList.model.addElement(k);
 					});
 					plottedAnnotations.keySet().forEach(k -> {
-						managerModel.addElement(k);
+						managerList.model.addElement(k);
 					});
-					managerModel.addElement(CheckBoxList.ALL_ENTRY);
+					managerList.model.addElement(CheckBoxList.ALL_ENTRY);
 				}
 				finally {
 					managerList.setValueIsAdjusting(false);
@@ -2428,6 +2423,10 @@ public class Viewer3D {
 			final JMenuItem addTag = new JMenuItem("Add Tag(s)...", IconFactory.getMenuIcon(GLYPH.TAG));
 			addTag.addActionListener(e -> {
 				if (noLoadedItemsGuiError()) return;
+				if (managerList.isSelectionEmpty()) {
+					checkRetrieveAllOptions("objects");
+					if (!prefs.retrieveAllIfNoneSelected) return;
+				}
 				final String tags = guiUtils.getString("Enter one or more tags (space or comma-separated list)\n"//
 						+ "to be assigned to selected items. Tags encoding a color\n"//
 						+ "(e.g., 'red', 'lightblue') will be use to highligh entries.\n"//
@@ -2437,21 +2436,22 @@ public class Viewer3D {
 						"Add Tag(s)", "");
 				if (tags == null)
 					return; // user pressed cancel
-				if (managerList.isSelectionEmpty()) checkRetrieveAllOptions("objects");
 				managerList.applyTagToSelectedItems(tags);
 			});
 			final JMenuItem wipeTags = new JMenuItem("Remove Tags...");
 			wipeTags.addActionListener(e -> {
 				if (noLoadedItemsGuiError()) return;
-				if (managerList.isSelectionEmpty()) checkRetrieveAllOptions("objects");
+				if (managerList.isSelectionEmpty()) {
+					checkRetrieveAllOptions("objects");
+					if (!prefs.retrieveAllIfNoneSelected) return;
+				}
 				if (guiUtils.getConfirmation("Remove all tags from selected items?", "Dispose All Tags?")) {
 					managerList.removeTagsFromSelectedItems();
 				}
 			});
-
-			final JMenuItem renderIcons = new JCheckBoxMenuItem("Label Categories", IconFactory.getMenuIcon(GLYPH.TAG));
+			final JMenuItem renderIcons = new JCheckBoxMenuItem("Label Categories", IconFactory.getMenuIcon(GLYPH.MARKER));
 			renderIcons.addItemListener(e -> {
-				((CustomListRenderer)managerList.getActualCellRenderer()).setIconsVisible((renderIcons.isSelected()));
+				managerList.setIconsVisible((renderIcons.isSelected()));
 			});
 	
 			// Select menu
@@ -2560,11 +2560,11 @@ public class Viewer3D {
 			pMenu.addSeparator();
 			pMenu.add(addTag);
 			pMenu.add(wipeTags);
+			pMenu.add(renderIcons);
 			pMenu.addSeparator();
 			pMenu.add(find);
 			pMenu.addSeparator();
 			pMenu.add(sort);
-			pMenu.add(renderIcons);
 			pMenu.addSeparator();
 			pMenu.add(remove);
 			return pMenu;
@@ -2606,7 +2606,7 @@ public class Viewer3D {
 			final int[] indices = new int[map.keySet().size()];
 			int i = 0;
 			for (final String k : map.keySet()) {
-				indices[i++] = managerModel.indexOf(k);
+				indices[i++] = managerList.model.indexOf(k);
 			}
 			managerList.setSelectedIndices(indices);
 		}
@@ -2615,14 +2615,14 @@ public class Viewer3D {
 			final int[] indices = new int[map.keySet().size()];
 			int i = 0;
 			for (final String k : map.keySet()) {
-				indices[i++] = managerModel.indexOf(k);
+				indices[i++] = managerList.model.indexOf(k);
 			}
 			managerList.setSelectedIndices(indices);
 			managerList.setCheckBoxListSelectedIndices(indices);
 		}
 
 		private void setVisible(final String key, final boolean visible) {
-			final int index =  managerModel.indexOf(key);
+			final int index =  managerList.model.indexOf(key);
 			if (index == - 1) return;
 			SwingUtilities.invokeLater(() -> {
 			if (visible)
@@ -3807,25 +3807,34 @@ public class Viewer3D {
 		}
 	}
 
-	/* Adapted from tips4java.wordpress.com/2008/10/19/list-editor/ */
-	private class CheckboxListEditable extends CheckBoxList
-	{
+	/* Inspired by tips4java.wordpress.com/2008/10/19/list-editor/ */
+	private class CheckboxListEditable extends CheckBoxList {
+
 		private static final long serialVersionUID = 1L;
 		private JPopupMenu editPopup;
 		private javax.swing.JTextField editTextField;
+		private final CustomListRenderer renderer;
+		private final DefaultUpdatableListModel<Object> model;
 
-		public CheckboxListEditable(@SuppressWarnings("rawtypes") final DefaultListModel model) {
+		@SuppressWarnings("unchecked")
+		public CheckboxListEditable(final DefaultUpdatableListModel<Object> model) {
 			super(model);
+			this.model = model;
+			this.model.addElement(CheckBoxList.ALL_ENTRY);
+			renderer = new CustomListRenderer((DefaultListCellRenderer) getActualCellRenderer());
+			setCellRenderer(renderer);
 			addMouseListener(new java.awt.event.MouseAdapter() {
 				public void mouseClicked(final MouseEvent e) {
-					if (e.getClickCount() == 2) {
+					if (e.getClickCount() == 2 && !((HandlerPlus) _handler).clicksInCheckBox(e)) {
 
-						if (editPopup == null) createEditPopup();
+						if (editPopup == null)
+							createEditPopup();
 
 						// Prepare the text field for editing
 						final String selectedLabel = getSelectedValue().toString();
 						if (ALL_ENTRY.toString().equals(selectedLabel)) {
-							if (Viewer3D.this.frame.managerPanel.noLoadedItemsGuiError()) return;
+							if (Viewer3D.this.frame.managerPanel.noLoadedItemsGuiError())
+								return;
 							editTextField.setText("");
 						} else {
 							final String existingTags = getTagStringFromEntry(getSelectedValue().toString());
@@ -3843,10 +3852,33 @@ public class Viewer3D {
 						editTextField.requestFocusInWindow();
 
 					} else {
-						CheckboxListEditable.this._handler.mouseClicked(e);
+						_handler.mouseClicked(e);
 					}
 				}
 			});
+		}
+
+		@Override
+		protected Handler createHandler() {
+			return new HandlerPlus(this);
+		}
+
+		class HandlerPlus extends CheckBoxList.Handler {
+
+			public HandlerPlus(final CheckBoxList list) {
+				super(list);
+			}
+
+			@Override
+			protected boolean clicksInCheckBox(final MouseEvent e) {
+				return super.clicksInCheckBox(e); // make method accessible
+			}
+
+		}
+
+		public void setIconsVisible(final boolean b) {
+			renderer.setIconsVisible(b);
+			model.update();
 		}
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -3898,7 +3930,7 @@ public class Viewer3D {
 		void applyTagToSelectedItems(final String tag) {
 			final String cleansedTag = getCleansedTag(tag);
 			if (cleansedTag.trim().isEmpty()) return;
-			for (int i : getSelectedIndices()) {
+			for (final int i : getSelectedIndices()) {
 				final String entry = (String) ((DefaultListModel<?>) getModel()).get(i);
 				((DefaultListModel<String>) getModel()).set(i, applyTag(entry, tag));
 			}
@@ -3910,7 +3942,7 @@ public class Viewer3D {
 
 		@SuppressWarnings("unchecked")
 		void removeTagsFromSelectedItems() {
-			for (int i : getSelectedIndices()) {
+			for (final int i : getSelectedIndices()) {
 				final String entry = (String) ((DefaultListModel<?>) getModel()).get(i);
 				((DefaultListModel<String>) getModel()).set(i, removeAllTags(entry));
 			}
@@ -3961,55 +3993,61 @@ public class Viewer3D {
 			}
 		}
 
-	}
+		class CustomListRenderer extends DefaultListCellRenderer {
+			private static final long serialVersionUID = 1L;
+			private final Icon treeIcon = IconFactory.getListIcon(GLYPH.TREE);
+			private final Icon meshIcon = IconFactory.getListIcon(GLYPH.CUBE);
+			private final Icon annotationIcon = IconFactory.getListIcon(GLYPH.MARKER);
+			private boolean iconVisible;
 
-	private class CustomListRenderer extends DefaultListCellRenderer {
-		private static final long serialVersionUID = 1L;
-		private final Icon treeIcon = IconFactory.getListIcon(GLYPH.TREE);
-		private final Icon meshIcon = IconFactory.getListIcon(GLYPH.CUBE);
-		private final Icon annotationIcon = IconFactory.getListIcon(GLYPH.MARKER);
-		private boolean iconVisible;
-
-		CustomListRenderer(final DefaultListCellRenderer templateInstance) {
-			super();
-			// Apply properties from templateInstance
-			setBorder(templateInstance.getBorder());
-		}
-
-		void setIconsVisible(final boolean iconVisible) {
-			this.iconVisible = iconVisible;
-			updateUI();
-		}
-
-		@Override
-		public Component getListCellRendererComponent(final JList<?> list, final Object value, final int index,
-				final boolean isSelected, final boolean cellHasFocus) {
-			final JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected,
-					cellHasFocus);
-			final String labelText = label.getText();
-			if (CheckBoxList.ALL_ENTRY.toString().equals(labelText))
-				return label;
-			if (iconVisible) {
-				if (plottedAnnotations.containsKey(labelText))
-					label.setIcon(annotationIcon);
-				else if (plottedObjs.containsKey(labelText))
-					label.setIcon(meshIcon);
-				else
-					label.setIcon(treeIcon);
-			} else {
-				label.setIcon(null);
+			CustomListRenderer(final DefaultListCellRenderer templateInstance) {
+				super();
+				// Apply properties from templateInstance
+				setBorder(templateInstance.getBorder());
 			}
-			final String[] tags = managerList.getTagsFromEntry(labelText);
-			if (tags.length > 0) {
-				for (final String tag : tags) {
-					final ColorRGB c = ColorRGB.fromHTMLColor(tag);
-					if (c != null) {
-						label.setForeground(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue()));
-						break;
+
+			void setIconsVisible(final boolean iconVisible) {
+				this.iconVisible = iconVisible;
+			}
+
+			@Override
+			public Component getListCellRendererComponent(final JList<?> list, final Object value, final int index,
+					final boolean isSelected, final boolean cellHasFocus) {
+				final JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected,
+						cellHasFocus);
+				final String labelText = label.getText();
+				if (CheckBoxList.ALL_ENTRY.toString().equals(labelText))
+					return label;
+				if (iconVisible) {
+					if (plottedAnnotations.containsKey(labelText))
+						label.setIcon(annotationIcon);
+					else if (plottedObjs.containsKey(labelText))
+						label.setIcon(meshIcon);
+					else
+						label.setIcon(treeIcon);
+				} else {
+					label.setIcon(null);
+				}
+				final String[] tags = managerList.getTagsFromEntry(labelText);
+				if (tags.length > 0) {
+					for (final String tag : tags) {
+						final ColorRGB c = ColorRGB.fromHTMLColor(tag);
+						if (c != null) {
+							label.setForeground(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue()));
+							break;
+						}
 					}
 				}
+				return label;
 			}
-			return label;
+		}
+
+	}
+
+	class DefaultUpdatableListModel<T> extends DefaultListModel<T> {
+		private static final long serialVersionUID = 1L;
+		public void update() {
+			fireContentsChanged(this, 0, getSize() - 1);
 		}
 	}
 
@@ -5099,7 +5137,7 @@ public class Viewer3D {
 	public static void main(final String[] args) throws InterruptedException {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
-		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
+		final Tree tree = new SNTService().demoTrees().get(0);
 		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
 		colorizer.map(tree, TreeColorMapper.PATH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();
@@ -5152,8 +5190,7 @@ public class Viewer3D {
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);
 		jzy3D.updateColorBarLegend(-8, 88);
 		jzy3D.setEnableDarkMode(false);
-		brainMesh.translate(new PointInImage(20000,0,0));
-
+		brainMesh.translate(new PointInImage(800,0,0));
 	}
 
 }

@@ -80,7 +80,8 @@ public class IconFactory {
 			DRAFT('\uf568', true), //
 			EQUALS('\uf52c', true), //
 			EXPAND('\uf065', true), //
-			EXPAND_ARROWS('\uf31e', true), //
+			EXPAND_ARROWS1('\uf337', true), //
+			EXPAND_ARROWS2('\uf31e', true), //
 			EXPLORE('\uf610', true), //
 			EXPORT('\uf56e', true), //
 			EYE('\uf06e', false), //

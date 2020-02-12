@@ -152,6 +152,14 @@ public class GuiUtils {
 		});
 	}
 
+	public void tempMsg(final String msg, final int location) {
+		SwingUtilities.invokeLater(() -> {
+			if (popup != null && popup.isVisible()) popup.hidePopupImmediately();
+			popup = getPopup(msg);
+			popup.showPopup(location);
+		});
+	}
+
 	public static void showHTMLDialog(final String msg, final String title) {
 		new HTMLDialog(title, msg, false);
 	}

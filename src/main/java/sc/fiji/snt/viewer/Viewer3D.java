@@ -27,7 +27,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
@@ -80,6 +79,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
@@ -89,8 +89,10 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -99,7 +101,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-import org.jzy3d.bridge.awt.FrameAWT;
+import org.jzy3d.bridge.swing.FrameSwing;
 import org.jzy3d.chart.AWTChart;
 import org.jzy3d.chart.Chart;
 import org.jzy3d.chart.controllers.ControllerType;
@@ -900,7 +902,7 @@ public class Viewer3D {
 	 *
 	 * @return the frame containing the viewer.
 	 */
-	public Frame show() {
+	public JFrame show() {
 		return show(0, 0);
 	}
 
@@ -913,7 +915,7 @@ public class Viewer3D {
 	 * @return the frame containing the viewer.
 	 * @see #show()
 	 */
-	public Frame show(final int width, final int height) {
+	public JFrame show(final int width, final int height) {
 		final boolean viewInitialized = initView();
 		if (!viewInitialized && frame != null) {
 			updateView();
@@ -956,15 +958,15 @@ public class Viewer3D {
 		if (frame == null) return;
 		if (width == -1 && height == -1) {
 			frame.setLocation(0, 0);
-			frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+			frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		}
 		final int w = (width == 0) ? (int) (ViewerFrame.DEF_WIDTH * Prefs.SCALE_FACTOR) : width;
 		final int h = (height == 0) ? (int) (ViewerFrame.DEF_HEIGHT * Prefs.SCALE_FACTOR) : height;
 		if (width == -1 ) {
-			frame.setExtendedState(Frame.MAXIMIZED_HORIZ);
+			frame.setExtendedState(JFrame.MAXIMIZED_HORIZ);
 			frame.setSize((frame.getWidth()==0) ? w : frame.getWidth(), h);
 		} else if (height == -1 ) {
-			frame.setExtendedState(Frame.MAXIMIZED_VERT);
+			frame.setExtendedState(JFrame.MAXIMIZED_VERT);
 			frame.setSize(w, (frame.getHeight()==0) ? h : frame.getHeight());
 		} else {
 			frame.setSize(w, h);
@@ -975,10 +977,19 @@ public class Viewer3D {
 		displayMsg(msg, 2500);
 	}
 
+	private void delayedMsg(final int delay, final String msg, final int duration) {
+		final Timer timer = new Timer(delay, e -> displayMsg(msg, duration));
+		timer.setRepeats(false);
+		timer.start();
+	}
+
 	private void displayMsg(final String msg, final int msecs) {
 		if (gUtils != null && chartExists()) {
 			gUtils.setTmpMsgTimeOut(msecs);
-			gUtils.tempMsg(msg);
+			if (frame.isFullScreen)
+				gUtils.tempMsg(msg, SwingConstants.SOUTH_WEST);
+			else
+				gUtils.tempMsg(msg);
 		}
 		else {
 			System.out.println(msg);
@@ -1937,9 +1948,8 @@ public class Viewer3D {
 		}
 	}
 
-	// NB: MouseContoller does not seem to work with FrameSWing so we are stuck
-	// with AWT
-	private class ViewerFrame extends FrameAWT implements IFrame {
+	// TODO: MouseController is more responsive with FrameAWT?
+	private class ViewerFrame extends FrameSwing implements IFrame {
 
 		private static final long serialVersionUID = 1L;
 		private static final int DEF_WIDTH = 800;
@@ -1950,6 +1960,11 @@ public class Viewer3D {
 		private JDialog manager;
 		private AllenCCFNavigator allenNavigator;
 		private ManagerPanel managerPanel;
+
+		// full screen
+		private java.awt.Point loc;
+		private Dimension dim;
+		private boolean isFullScreen;
 
 		/**
 		 * Instantiates a new viewer frame.
@@ -1988,23 +2003,37 @@ public class Viewer3D {
 
 		public JDialog getManager() {
 			final JDialog dialog = new JDialog(this, "RV Controls");
+			managerPanel = new ManagerPanel(new GuiUtils(dialog));
 			dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+			dialog.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(final WindowEvent e) {
+					exitRequested(managerPanel.guiUtils);
+				}
+			});
 			// dialog.setLocationRelativeTo(this);
 			final java.awt.Point parentLoc = getLocation();
 			dialog.setLocation(parentLoc.x + getWidth() + 5, parentLoc.y);
-			managerPanel = new ManagerPanel(new GuiUtils(dialog));
 			dialog.setContentPane(managerPanel);
 			dialog.pack();
 			return dialog;
 		}
 
-		/* (non-Javadoc)
-		 * @see org.jzy3d.bridge.awt.FrameAWT#initialize(org.jzy3d.chart.Chart, org.jzy3d.maths.Rectangle, java.lang.String)
+		private void exitRequested(final GuiUtils gUtilsDefiningPrompt) {
+			if (gUtilsDefiningPrompt.getConfirmation("Quit Reconstruction Viewer?", "Quit?", "Yes. Quit Now",
+					"No. Keep Open")) {
+				Viewer3D.this.dispose();
+			}
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.jzy3d.bridge.awt.FrameAWT#initialize(org.jzy3d.chart.Chart,
+		 * org.jzy3d.maths.Rectangle, java.lang.String)
 		 */
 		@Override
-		public void initialize(final Chart chart, final Rectangle bounds,
-			final String title)
-		{
+		public void initialize(final Chart chart, final Rectangle bounds, final String title) {
 			this.chart = chart;
 			canvas = (Component) chart.getCanvas();
 			setTitle(title);
@@ -2013,10 +2042,9 @@ public class Viewer3D {
 			setSize(new Dimension(bounds.width, bounds.height));
 			AWTWindows.centerWindow(this);
 			addWindowListener(new WindowAdapter() {
-
 				@Override
 				public void windowClosing(final WindowEvent e) {
-					Viewer3D.this.dispose();
+					exitRequested(gUtils);
 				}
 			});
 			setVisible(true);
@@ -2039,6 +2067,28 @@ public class Viewer3D {
 			final String title, final String message)
 		{
 			initialize(chart, bounds, title + message);
+		}
+
+		void exitFullScreen() {
+			if (isFullScreen) {
+				setExtendedState(JFrame.NORMAL);
+				setSize(dim);
+				setLocation(loc);
+				setVisible(true);
+				if (manager!= null) manager.setVisible(true);
+				isFullScreen = false;
+			}
+		}
+
+		void enterFullScreen() {
+			if (!isFullScreen) {
+				dim = frame.getSize();
+				loc = frame.getLocation();
+				if (manager != null) manager.setVisible(false);
+				setExtendedState(JFrame.MAXIMIZED_BOTH );
+				isFullScreen = true;
+				delayedMsg(100, "Press \"Esc\" to exit Full Screen", 3000); // without delay popup is not shown?
+			}
 		}
 	}
 
@@ -2254,8 +2304,8 @@ public class Viewer3D {
 		}
 
 		class Action extends AbstractAction {
-
 			static final String ALL = "All";
+			static final String ENTER_FULL_SCREEN = "Full Screen";
 			static final String FIND = "Find...";
 			static final String FIT = "Fit to Visible Objects";
 			static final String LOG = "Log Scene Details";
@@ -2263,8 +2313,9 @@ public class Viewer3D {
 			static final String REBUILD = "Rebuild Scene...";
 			static final String RELOAD = "Reload Scene";
 			static final String RESET = "Reset Scene";
-			static final String SCENE_SHORTCUTS = "Scene Shortcuts...";
-			public static final String SCRIPT = "Script This Viewer";
+			static final String SCENE_SHORTCUTS_LIST = "Scene Shortcuts...";
+			static final String SCENE_SHORTCUTS_NOTIFICATION = "Scene Shortcuts (Notification)...";
+			static final String SCRIPT = "Script This Viewer";
 			static final String SNAPSHOT = "Take Snapshot";
 			static final String SYNC = "Sync Path Manager Changes";
 			static final String TAG = "Add Tag(s)...";
@@ -2278,7 +2329,7 @@ public class Viewer3D {
 				if (requireCtrl)
 					mod = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 				if (requireShift)
-					mod += KeyEvent.SHIFT_MASK;
+					mod |= KeyEvent.SHIFT_MASK;
 				final KeyStroke ks = KeyStroke.getKeyStroke(key, mod);
 				putValue(AbstractAction.ACCELERATOR_KEY, ks);
 				if (mod == 0) putValue(AbstractAction.MNEMONIC_KEY, key);
@@ -2299,6 +2350,9 @@ public class Viewer3D {
 						searchableBar.getInstaller().openSearchBar(searchableBar);
 						searchableBar.focusSearchField();
 					}
+					return;
+				case ENTER_FULL_SCREEN:
+					frame.enterFullScreen();
 					return;
 				case FIT:
 					fitToVisibleObjects(true, true);
@@ -2331,8 +2385,11 @@ public class Viewer3D {
 				case RESET:
 					keyController.resetView();
 					return;
-				case SCENE_SHORTCUTS:
+				case SCENE_SHORTCUTS_LIST:
 					 keyController.showHelp(true);
+					 return;
+				case SCENE_SHORTCUTS_NOTIFICATION:
+					 keyController.showHelp(false);
 					 return;
 				case SCRIPT:
 					runScriptEditor(prefs.getScriptExtension());
@@ -2409,10 +2466,9 @@ public class Viewer3D {
 			final JMenuItem fit = new JMenuItem(new Action(Action.FIT, KeyEvent.VK_F, false, false));
 			fit.setIcon(IconFactory.getMenuIcon(GLYPH.EXPAND));
 			sceneMenu.add(fit);
-
 			// Aspect-ratio controls
 			final JMenuItem jcbmiFill = new JCheckBoxMenuItem("Stretch-to-Fill");
-			jcbmiFill.setIcon(IconFactory.getMenuIcon(GLYPH.EXPAND_ARROWS));
+			jcbmiFill.setIcon(IconFactory.getMenuIcon(GLYPH.EXPAND_ARROWS1));
 			jcbmiFill.addItemListener(e -> {
 				final ViewportMode mode = (jcbmiFill.isSelected()) ? ViewportMode.STRETCH_TO_FILL
 						: ViewportMode.RECTANGLE_NO_STRETCH;
@@ -2420,6 +2476,9 @@ public class Viewer3D {
 			});
 			sceneMenu.add(jcbmiFill);
 			sceneMenu.add(squarifyMenu());
+			final JMenuItem fullScreen = new JMenuItem(new Action(Action.ENTER_FULL_SCREEN, KeyEvent.VK_F, false, true));
+			fullScreen.setIcon(IconFactory.getMenuIcon(GLYPH.EXPAND_ARROWS2));
+			sceneMenu.add(fullScreen);
 			sceneMenu.addSeparator();
 
 			final JMenuItem reset = new JMenuItem(new Action(Action.RESET, KeyEvent.VK_R, false, false));
@@ -2435,7 +2494,8 @@ public class Viewer3D {
 			mi.addActionListener(e -> wipeScene());
 			sceneMenu.add(mi);
 			sceneMenu.addSeparator();
-			final JMenuItem help = new JMenuItem(new Action(Action.SCENE_SHORTCUTS, KeyEvent.VK_F1, false, false));
+			final JMenuItem help = new JMenuItem(new Action(Action.SCENE_SHORTCUTS_LIST, KeyEvent.VK_F1, false, false));
+			new Action(Action.SCENE_SHORTCUTS_NOTIFICATION, KeyEvent.VK_H, false, false); // register alternative shortcut
 			help.setIcon(IconFactory.getMenuIcon(GLYPH.KEYBOARD));
 			sceneMenu.add(help);
 			sceneMenu.addSeparator();
@@ -4669,7 +4729,11 @@ public class Viewer3D {
 					break;
 				case 'f':
 				case 'F':
-					fitToVisibleObjects(true, true);
+					if (e.isShiftDown()) {
+						frame.enterFullScreen();
+					} else {
+						fitToVisibleObjects(true, true);
+					}
 					break;
 				case '+':
 				case '=':
@@ -4695,6 +4759,9 @@ public class Viewer3D {
 							break;
 						case KeyEvent.VK_RIGHT:
 							mouseController.rotateLive(new Coord2d(rotationStep, 0));
+							break;
+						case KeyEvent.VK_ESCAPE:
+							frame.exitFullScreen();
 							break;
 						default:
 							break;
@@ -4846,7 +4913,7 @@ public class Viewer3D {
 			sb.append("  </tr>");
 			sb.append("  <tr>");
 			sb.append("    <td>Zoom (Scale)</td>");
-			sb.append("    <td>Scroll (or + / - keys)</td>");
+			sb.append("    <td>Scroll wheel (or + / - keys)</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
 			sb.append("    <td>Animate</td>");
@@ -4855,6 +4922,10 @@ public class Viewer3D {
 			sb.append("  <tr>");
 			sb.append("    <td>Snap to Top/Side View</td>");
 			sb.append("    <td>Ctrl + left-click</td>");
+			sb.append("  </tr>");
+			sb.append("  <tr>");
+			sb.append("    <td>Full Screen</td>");
+			sb.append("    <td>Shift+F (Esc to exit)</td>");
 			sb.append("  </tr>");
 			if (showInDialog) sb.append("  <tr>");
 			sb.append("  <tr>");
@@ -4874,7 +4945,7 @@ public class Viewer3D {
 			sb.append("    <td>Press 'F'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td><u>L</u>og View Point, Bounds, etc. &nbsp;&nbsp;</td>");
+			sb.append("    <td><u>L</u>og Scene Details &nbsp;&nbsp;</td>");
 			sb.append("    <td>Press 'L'</td>");
 			sb.append("  </tr>");
 			sb.append("    <td><u>R</u>eset View</td>");
@@ -4893,7 +4964,7 @@ public class Viewer3D {
 			}
 			sb.append("</table>");
 			if (showInDialog) {
-				GuiUtils.showHTMLDialog(sb.toString(), "Reconstruction Viewer Shortcuts");
+				GuiUtils.showHTMLDialog(sb.toString(), "Viewer Shortcuts");
 			}
 			else {
 				displayMsg(sb.toString(), 10000);

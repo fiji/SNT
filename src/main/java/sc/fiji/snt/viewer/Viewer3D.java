@@ -156,6 +156,7 @@ import org.scijava.display.DisplayService;
 import org.scijava.plugin.Parameter;
 import org.scijava.prefs.PrefService;
 import org.scijava.table.DefaultGenericTable;
+import org.scijava.ui.UIService;
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.ui.swing.script.TextEditor;
 import org.scijava.util.ColorRGB;
@@ -172,6 +173,7 @@ import com.jogamp.opengl.FPSCounter;
 import com.jogamp.opengl.GLAnimatorControl;
 import com.jogamp.opengl.GLException;
 
+import ij.IJ;
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
@@ -2111,12 +2113,11 @@ public class Viewer3D {
 					RecViewerPrefsCmd.DEF_SCRIPT_EXTENSION);
 		}
 
-		private String getBoilerplateScript() {
+		private String getBoilerplateScript(final String ext) {
 			final HashMap<String, String> map = new HashMap<>();
 			map.put(".bsh", "BSH.bsh");
 			map.put(".groovy", "GVY.groovy");
 			map.put(".py", "PY.py");
-			final String ext = getScriptExtension();
 			final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 			final InputStream is = classloader.getResourceAsStream("script_templates/Neuroanatomy/Boilerplate/"
 					+ map.get(ext));
@@ -2257,11 +2258,13 @@ public class Viewer3D {
 			static final String ALL = "All";
 			static final String FIND = "Find...";
 			static final String FIT = "Fit to Visible Objects";
+			static final String LOG = "Log Scene Details";
 			static final String NONE = "None";
 			static final String REBUILD = "Rebuild Scene...";
 			static final String RELOAD = "Reload Scene";
 			static final String RESET = "Reset Scene";
 			static final String SCENE_SHORTCUTS = "Scene Shortcuts...";
+			public static final String SCRIPT = "Script This Viewer";
 			static final String SNAPSHOT = "Take Snapshot";
 			static final String SYNC = "Sync Path Manager Changes";
 			static final String TAG = "Add Tag(s)...";
@@ -2300,6 +2303,14 @@ public class Viewer3D {
 				case FIT:
 					fitToVisibleObjects(true, true);
 					return;
+				case LOG:
+					logSceneControls();
+					try {
+						context.getService(UIService.class).getDefaultUI().getConsolePane().show();
+					} catch (final NullPointerException ignored) {
+						// do nothing
+					}
+					break;
 				case NONE:
 					managerList.clearSelection();
 					return;
@@ -2323,6 +2334,9 @@ public class Viewer3D {
 				case SCENE_SHORTCUTS:
 					 keyController.showHelp(true);
 					 return;
+				case SCRIPT:
+					runScriptEditor(prefs.getScriptExtension());
+					return;
 				case SNAPSHOT:
 					keyController.saveScreenshot();
 					return;
@@ -2362,7 +2376,7 @@ public class Viewer3D {
 	
 		private JPanel buttonPanel() {
 			final boolean includeAnalysisCmds = !isSNTInstance();
-			final JPanel buttonPanel = new JPanel(new GridLayout(1, (includeAnalysisCmds) ? 5 : 6));
+			final JPanel buttonPanel = new JPanel(new GridLayout(1, (includeAnalysisCmds) ? 6 : 7));
 			buttonPanel.setBorder(null);
 			// do not allow panel to resize vertically
 			setFixedHeightToPanel(buttonPanel);
@@ -2373,6 +2387,7 @@ public class Viewer3D {
 			if (includeAnalysisCmds)
 				buttonPanel.add(menuButton(GLYPH.CALCULATOR, measureMenu(), "Analyze & Measure"));
 			buttonPanel.add(menuButton(GLYPH.TOOL, toolsMenu(), "Tools & Utilities"));
+			buttonPanel.add(menuButton(GLYPH.CODE, scriptMenu(), "Scripting"));
 			return buttonPanel;
 		}
 
@@ -2408,6 +2423,7 @@ public class Viewer3D {
 			sceneMenu.addSeparator();
 
 			final JMenuItem reset = new JMenuItem(new Action(Action.RESET, KeyEvent.VK_R, false, false));
+			reset.setIcon(IconFactory.getMenuIcon(GLYPH.BROOM));
 			sceneMenu.add(reset);
 			final JMenuItem reload = new JMenuItem(new Action(Action.RELOAD, KeyEvent.VK_R, true, false));
 			reload.setIcon(IconFactory.getMenuIcon(GLYPH.REDO));
@@ -2415,10 +2431,8 @@ public class Viewer3D {
 			final JMenuItem rebuild = new JMenuItem(new Action(Action.REBUILD, KeyEvent.VK_R, true, true));
 			rebuild.setIcon(IconFactory.getMenuIcon(GLYPH.RECYCLE));
 			sceneMenu.add(rebuild);;
-			JMenuItem mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.BROOM));
-			mi.addActionListener(e -> {
-				wipeScene();
-			});
+			JMenuItem mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.DANGER));
+			mi.addActionListener(e -> wipeScene());
 			sceneMenu.add(mi);
 			sceneMenu.addSeparator();
 			final JMenuItem help = new JMenuItem(new Action(Action.SCENE_SHORTCUTS, KeyEvent.VK_F1, false, false));
@@ -3047,19 +3061,6 @@ public class Viewer3D {
 
 		private JPopupMenu toolsMenu() {
 			final JPopupMenu settingsMenu = new JPopupMenu();
-			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode", SNTUtils.isDebugMode());
-			jcbmi.setEnabled(!isSNTInstance());jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
-			jcbmi.setMnemonic('d');
-			jcbmi.addItemListener(e -> {
-				if (isSNTInstance()) {
-					sntService.getPlugin().getUI().setEnableDebugMode(jcbmi.isSelected());
-				} else {
-					SNTUtils.setDebugMode(jcbmi.isSelected());
-				}
-			});
-			settingsMenu.add(jcbmi);
-			settingsMenu.addSeparator();
-
 			final JMenuItem snapshot = new JMenuItem(new Action(Action.SNAPSHOT, KeyEvent.VK_S, false, false));
 			snapshot.setIcon(IconFactory.getMenuIcon(GLYPH.CAMERA));
 			settingsMenu.add(snapshot);
@@ -3072,43 +3073,89 @@ public class Viewer3D {
 				});
 			});
 			settingsMenu.add(mi);
-			settingsMenu.addSeparator();
-
 			settingsMenu.add(legendMenu());
 			settingsMenu.addSeparator();
-
 			settingsMenu.add(sensitivityMenu());
 			mi = new JMenuItem("Preferences...", IconFactory.getMenuIcon(GLYPH.COG));
 			mi.addActionListener(e -> {
 				runCmd(RecViewerPrefsCmd.class, null, CmdWorker.RELOAD_PREFS, false);
 			});
 			settingsMenu.add(mi);
-			settingsMenu.addSeparator();
-			mi = new JMenuItem("Script This Viewer...", IconFactory.getMenuIcon(GLYPH.CODE));
-			mi.addActionListener(e -> {
-				final TextEditor editor = new TextEditor(context);
-				final String extension = prefs.getScriptExtension();
-				final boolean needsSemiColon = extension.endsWith("bsh");
-				final String commentPrefix = (extension.endsWith("py")) ? "# " : "// ";
-				final StringBuilder sb = new StringBuilder(prefs.getBoilerplateScript());
-				sb.append("\n").append(commentPrefix);
-				sb.append("Rec. Viewer's API: https://javadoc.scijava.org/Fiji/sc/fiji/snt/viewer/Viewer3D.html");
-				sb.append("\n").append(commentPrefix);
-				sb.append("Tip: Programmatic control of the Viewer's scene can be set using the Console info");
-				sb.append("\n").append(commentPrefix);
-				sb.append("produced when calling viewer.logSceneControls() or pressing 'L' when viewer is frontmost");
-				sb.append("\n");
-				sb.append("\n").append("viewer = snt.getRecViewer(");
-				if (!isSNTInstance()) sb.append(getID());
-				sb.append(")");
-				if (needsSemiColon) sb.append(";");
-				sb.append("\n");
-				editor.createNewDocument("RecViewerScript" + prefs.getScriptExtension(), sb.toString());
-				//editor.newTab(text, prefs.getScriptExtension());
-				editor.setVisible(true);
-			});
-			settingsMenu.add(mi);
 			return settingsMenu;
+		}
+
+		private JPopupMenu scriptMenu() {
+			final JPopupMenu scriptMenu = new JPopupMenu();
+			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode", SNTUtils.isDebugMode());
+			jcbmi.setEnabled(!isSNTInstance());
+			jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
+			jcbmi.setMnemonic('d');
+			jcbmi.addItemListener(e -> {
+				if (isSNTInstance()) {
+					sntService.getPlugin().getUI().setEnableDebugMode(jcbmi.isSelected());
+				} else {
+					SNTUtils.setDebugMode(jcbmi.isSelected());
+				}
+			});
+			scriptMenu.add(jcbmi);
+
+			final JMenuItem log = new JMenuItem(new Action(Action.LOG, KeyEvent.VK_L, false, false));
+			log.setIcon(IconFactory.getMenuIcon(GLYPH.SCROLL));
+			scriptMenu.add(log);
+
+			final JMenuItem script = new JMenuItem(new Action(Action.SCRIPT, KeyEvent.VK_OPEN_BRACKET, false, false));
+			script.setIcon(IconFactory.getMenuIcon(GLYPH.CODE));
+			scriptMenu.add(script);
+			JMenuItem mi = new JMenuItem("Script This Viewer In...");
+			mi.addActionListener(e -> runScriptEditor(null));
+			scriptMenu.add(mi);
+			scriptMenu.addSeparator();
+			final JMenu resources = new JMenu("Online Resources");
+			resources.setIcon(IconFactory.getMenuIcon(GLYPH.NAVIGATE));
+			mi = new JMenuItem("API");
+			mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", "http://morphonets.github.io/SNT/"));
+			resources.add(mi);
+			mi = new JMenuItem("Documentation");
+			mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", "https://imagej.net/SNT"));
+			resources.add(mi);
+			mi = new JMenuItem("Known Issues");
+			mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", "https://github.com/morphonets/SNT/issues?q=is%3Aissue+is%3Aopen+"));
+			resources.add(mi);
+			mi = new JMenuItem("Source Code");
+			mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", "https://github.com/morphonets/SNT"));
+			resources.add(mi);
+			scriptMenu.add(resources);
+
+			return scriptMenu;
+		}
+
+		private void runScriptEditor(String extension) {
+			if (extension == null) {
+				extension = guiUtils.getChoice("Which scripting language:", "Language?",
+						new String[] { ".bsh", ".groovy", ".py" }, prefs.getScriptExtension());
+				if (extension == null) return;
+			}
+			final TextEditor editor = new TextEditor(context);
+			final boolean needsSemiColon = extension.endsWith("bsh");
+			final String commentPrefix = (extension.endsWith("py")) ? "# " : "// ";
+			final StringBuilder sb = new StringBuilder(prefs.getBoilerplateScript(extension));
+			sb.append("\n").append(commentPrefix);
+			sb.append("Rec. Viewer's API: https://javadoc.scijava.org/Fiji/sc/fiji/snt/viewer/Viewer3D.html");
+			sb.append("\n").append(commentPrefix);
+			sb.append("Tip: Programmatic control of the Viewer's scene can be set using the Console info");
+			sb.append("\n").append(commentPrefix);
+			sb.append("produced when calling viewer.logSceneControls() or pressing 'L' when viewer is frontmost");
+			sb.append("\n");
+			sb.append("\n").append("viewer = snt.getRecViewer(");
+			if (!isSNTInstance()) sb.append(getID());
+			sb.append(")");
+			if (needsSemiColon) sb.append(";");
+			sb.append("\n");
+			editor.createNewDocument("RecViewerScript" + extension, sb.toString());
+			//HACK: Reset the filename because createNewDocument() currently appends multiple extensions
+			editor.setEditorPaneFileName("RecViewerScript" + extension);
+			//editor.newTab(sb.toString(), extension);
+			editor.setVisible(true);
 		}
 
 		private JMenu sensitivityMenu() {

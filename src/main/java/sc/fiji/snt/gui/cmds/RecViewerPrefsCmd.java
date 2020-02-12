@@ -119,7 +119,7 @@ public class RecViewerPrefsCmd extends ContextCommand {
 		if (rotationDuration == 0) rotationDuration = DEF_ROTATION_DURATION;
 		if (rotationFPS == 0) rotationFPS = DEF_ROTATION_FPS;
 		if (sensitivity == null) sensitivity = DEF_CONTROLS_SENSITIVITY;
-		if (scriptExtension == null) sensitivity = DEF_SCRIPT_EXTENSION;
+		if (scriptExtension == null) scriptExtension = DEF_SCRIPT_EXTENSION;
 	}
 
 	@SuppressWarnings("unused")

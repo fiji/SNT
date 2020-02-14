@@ -27,6 +27,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -104,7 +105,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-import org.jzy3d.bridge.swing.FrameSwing;
+import org.jzy3d.bridge.awt.FrameAWT;
 import org.jzy3d.chart.AWTChart;
 import org.jzy3d.chart.Chart;
 import org.jzy3d.chart.controllers.ControllerType;
@@ -908,7 +909,7 @@ public class Viewer3D {
 	 *
 	 * @return the frame containing the viewer.
 	 */
-	public JFrame show() {
+	public Frame show() {
 		return show(0, 0);
 	}
 
@@ -921,7 +922,7 @@ public class Viewer3D {
 	 * @return the frame containing the viewer.
 	 * @see #show()
 	 */
-	public JFrame show(final int width, final int height) {
+	public Frame show(final int width, final int height) {
 		final boolean viewInitialized = initView();
 		if (!viewInitialized && frame != null) {
 			updateView();
@@ -1955,7 +1956,7 @@ public class Viewer3D {
 	}
 
 	// TODO: MouseController is more responsive with FrameAWT?
-	private class ViewerFrame extends FrameSwing implements IFrame {
+	private class ViewerFrame extends FrameAWT implements IFrame {
 
 		private static final long serialVersionUID = 1L;
 		private static final int DEF_WIDTH = 800;
@@ -2130,6 +2131,11 @@ public class Viewer3D {
 			PAN(final float step, final String description) {
 				this.step = step;
 				this.description = description;
+			}
+	
+			// the highest the normalized step the more responsive the pan
+			private static float getNormalizedPan(final float step) {
+				return (HIGHEST.step + LOW.step - step) / (HIGHEST.step - LOW.step);
 			}
 		}
 
@@ -4780,16 +4786,28 @@ public class Viewer3D {
 							showHelp(true);
 							break;
 						case KeyEvent.VK_DOWN:
-							mouseController.rotateLive(new Coord2d(0f, -rotationStep));
+							if (e.isShiftDown()) {
+								pan(new Coord2d(0, -1));
+							} else
+								mouseController.rotateLive(new Coord2d(0f, -rotationStep));
 							break;
 						case KeyEvent.VK_UP:
-							mouseController.rotateLive(new Coord2d(0f, rotationStep));
+							if (e.isShiftDown()) {
+								pan(new Coord2d(0, 1));
+							} else
+								mouseController.rotateLive(new Coord2d(0f, rotationStep));
 							break;
 						case KeyEvent.VK_LEFT:
-							mouseController.rotateLive(new Coord2d(-rotationStep, 0));
+							if (e.isShiftDown()) {
+								pan(new Coord2d(-1, 0));
+							} else
+								mouseController.rotateLive(new Coord2d(-rotationStep, 0));
 							break;
 						case KeyEvent.VK_RIGHT:
-							mouseController.rotateLive(new Coord2d(rotationStep, 0));
+							if (e.isShiftDown()) {
+								pan(new Coord2d(1, 0));
+							} else
+								mouseController.rotateLive(new Coord2d(rotationStep, 0));
 							break;
 						case KeyEvent.VK_ESCAPE:
 							frame.exitFullScreen();
@@ -4798,6 +4816,17 @@ public class Viewer3D {
 							break;
 					}
 			}
+		}
+
+		private void pan(final Coord2d direction) {
+			final float normPan = Prefs.PAN.getNormalizedPan(mouseController.panStep) / 100;
+			final BoundingBox3d bounds = view.getBounds();
+			final Coord3d offset = new Coord3d(
+					bounds.getXRange().getRange() * direction.x * normPan, 
+					bounds.getYRange().getRange() * direction.y * normPan,0);
+			final BoundingBox3d newBounds = bounds.shift(offset);
+			view.setBoundManual(newBounds);
+			view.shoot();
 		}
 
 		private void toggleAxes() {
@@ -4936,7 +4965,7 @@ public class Viewer3D {
 			sb.append("<table>");
 			sb.append("  <tr>");
 			sb.append("    <td>Pan</td>");
-			sb.append("    <td>Right-click &amp; drag</td>");
+			sb.append("    <td>Right-click &amp; drag (or Shift+arrow keys)</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
 			sb.append("    <td>Rotate</td>");
@@ -4951,7 +4980,7 @@ public class Viewer3D {
 			sb.append("    <td>Double left-click</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td>Snap to Top/Side View</td>");
+			sb.append("    <td>Snap to Top/Side View &nbsp; &nbsp;</td>");
 			sb.append("    <td>Ctrl + left-click</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
@@ -4972,11 +5001,11 @@ public class Viewer3D {
 			sb.append("    <td>Press 'D'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td><u>F</u>it View to Visible Objects &nbsp;</td>");
+			sb.append("    <td><u>F</u>it to Visible Objects</td>");
 			sb.append("    <td>Press 'F'</td>");
 			sb.append("  </tr>");
 			sb.append("  <tr>");
-			sb.append("    <td><u>L</u>og Scene Details &nbsp;&nbsp;</td>");
+			sb.append("    <td><u>L</u>og Scene Details</td>");
 			sb.append("    <td>Press 'L'</td>");
 			sb.append("  </tr>");
 			sb.append("    <td><u>R</u>eset View</td>");

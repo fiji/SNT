@@ -3158,6 +3158,8 @@ public class Viewer3D {
 
 		private JPopupMenu toolsMenu() {
 			final JPopupMenu settingsMenu = new JPopupMenu();
+			JLabel header = GuiUtils.leftAlignedLabel("Actions & Utilities:", false);
+			settingsMenu.add(header);
 			final JMenuItem snapshot = new JMenuItem(new Action(Action.SNAPSHOT, KeyEvent.VK_S, false, false));
 			snapshot.setIcon(IconFactory.getMenuIcon(GLYPH.CAMERA));
 			settingsMenu.add(snapshot);
@@ -3172,7 +3174,12 @@ public class Viewer3D {
 			settingsMenu.add(mi);
 			settingsMenu.add(legendMenu());
 			settingsMenu.addSeparator();
-			settingsMenu.add(sensitivityMenu());
+			header = GuiUtils.leftAlignedLabel("Keyboard & Mouse Sensitivity:", false);
+			settingsMenu.add(header);
+			settingsMenu.add(panMenu());
+			settingsMenu.add(zoomMenu());
+			settingsMenu.add(rotationMenu());
+			settingsMenu.addSeparator();
 			mi = new JMenuItem("Preferences...", IconFactory.getMenuIcon(GLYPH.COG));
 			mi.addActionListener(e -> {
 				runCmd(RecViewerPrefsCmd.class, null, CmdWorker.RELOAD_PREFS, false);
@@ -3228,7 +3235,7 @@ public class Viewer3D {
 
 		private void runScriptEditor(String extension) {
 			if (extension == null) {
-				extension = guiUtils.getChoice("Which scripting language:", "Language?",
+				extension = guiUtils.getChoice("Which scripting language?", "Language?",
 						new String[] { ".bsh", ".groovy", ".py" }, prefs.getScriptExtension());
 				if (extension == null) return;
 			}
@@ -3255,29 +3262,7 @@ public class Viewer3D {
 			editor.setVisible(true);
 		}
 
-		private JMenu sensitivityMenu() {
-			final JMenu zoomMenu = new JMenu("Zoom Steps");
-			zoomMenu.setIcon(IconFactory.getMenuIcon(GLYPH.SEARCH));
-			final ButtonGroup zGroup = new ButtonGroup();
-			for (final float step : Prefs.ZOOM_STEPS) {
-				final JMenuItem jcbmi = new JCheckBoxMenuItem(String.format("%.0f",
-					step * 100) + "%");
-				jcbmi.setSelected(step == keyController.zoomStep);
-				jcbmi.addItemListener(e -> keyController.zoomStep = step);
-				zGroup.add(jcbmi);
-				zoomMenu.add(jcbmi);
-			}
-			final JMenu rotationMenu = new JMenu("Rotation Steps");
-			rotationMenu.setIcon(IconFactory.getMenuIcon(GLYPH.UNDO));
-			final ButtonGroup rGroup = new ButtonGroup();
-			for (final double step : Prefs.ROTATION_STEPS) {
-				final JMenuItem jcbmi = new JCheckBoxMenuItem(String.format("%.1f", Math
-					.toDegrees(step)) + "\u00b0");
-				jcbmi.setSelected(step == keyController.rotationStep);
-				jcbmi.addItemListener(e -> keyController.rotationStep = step);
-				rGroup.add(jcbmi);
-				rotationMenu.add(jcbmi);
-			}
+		private JMenu panMenu() {
 			final JMenu panMenu = new JMenu("Pan Accuracy");
 			panMenu.setIcon(IconFactory.getMenuIcon(GLYPH.HAND));
 			final ButtonGroup pGroup = new ButtonGroup();
@@ -3288,12 +3273,37 @@ public class Viewer3D {
 				pGroup.add(jcbmi);
 				panMenu.add(jcbmi);
 			}
-			final JMenu sensitivityMenu = new JMenu("Keyboard & Mouse Sensitivity");
-			sensitivityMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CHECK_DOUBLE));
-			sensitivityMenu.add(panMenu);
-			sensitivityMenu.add(rotationMenu);
-			sensitivityMenu.add(zoomMenu);
-			return sensitivityMenu;
+			return panMenu;
+		}
+
+		private JMenu rotationMenu() {
+			final JMenu rotationMenu = new JMenu("Rotation Steps (Arrow Keys)");
+			rotationMenu.setIcon(IconFactory.getMenuIcon(GLYPH.UNDO));
+			final ButtonGroup rGroup = new ButtonGroup();
+			for (final double step : Prefs.ROTATION_STEPS) {
+				final JMenuItem jcbmi = new JCheckBoxMenuItem(String.format("%.1f", Math
+					.toDegrees(step)) + "\u00b0");
+				jcbmi.setSelected(step == keyController.rotationStep);
+				jcbmi.addItemListener(e -> keyController.rotationStep = step);
+				rGroup.add(jcbmi);
+				rotationMenu.add(jcbmi);
+			}
+			return rotationMenu;
+		}
+
+		private JMenu zoomMenu() {
+			final JMenu zoomMenu = new JMenu("Zoom Steps (+/- Keys)");
+			zoomMenu.setIcon(IconFactory.getMenuIcon(GLYPH.SEARCH));
+			final ButtonGroup zGroup = new ButtonGroup();
+			for (final float step : Prefs.ZOOM_STEPS) {
+				final JMenuItem jcbmi = new JCheckBoxMenuItem(String.format("%.0f",
+					step * 100) + "%");
+				jcbmi.setSelected(step == keyController.zoomStep);
+				jcbmi.addItemListener(e -> keyController.zoomStep = step);
+				zGroup.add(jcbmi);
+				zoomMenu.add(jcbmi);
+			}
+			return zoomMenu;
 		}
 
 		private class RecordWorker extends SwingWorker<String, Object> {
@@ -3544,9 +3554,10 @@ public class Viewer3D {
 					protected void done() {
 						try {
 							get().show();
-							tempSplash.dispose();
 						} catch (final InterruptedException | ExecutionException e) {
 							SNTUtils.error(e.getMessage(), e);
+						} finally {
+							tempSplash.dispose();
 						}
 					}
 				};

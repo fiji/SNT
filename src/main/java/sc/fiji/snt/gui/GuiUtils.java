@@ -496,6 +496,17 @@ public class GuiUtils {
 		centeredDialog(msg, title, JOptionPane.PLAIN_MESSAGE);
 	}
 
+	public void centeredMsg(final String msg, final String title, final String buttonLabel) {
+		if (buttonLabel == null) {
+			centeredMsg(msg, title);
+		} else {
+			final String defaultButtonLabel = UIManager.getString("OptionPane.okButtonText");
+			UIManager.put("OptionPane.okButtonText", buttonLabel);
+			centeredMsg(msg, title);
+			UIManager.put("OptionPane.okButtonText", defaultButtonLabel);
+		}
+	}
+
 	public JDialog dialog(final String msg, final JComponent component,
 		final String title)
 	{

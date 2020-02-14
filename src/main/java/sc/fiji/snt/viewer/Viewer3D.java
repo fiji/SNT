@@ -29,6 +29,8 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
@@ -87,6 +89,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
@@ -137,6 +140,8 @@ import org.jzy3d.plot3d.rendering.canvas.ICanvas;
 import org.jzy3d.plot3d.rendering.canvas.IScreenCanvas;
 import org.jzy3d.plot3d.rendering.canvas.Quality;
 import org.jzy3d.plot3d.rendering.legends.colorbars.AWTColorbarLegend;
+import org.jzy3d.plot3d.rendering.lights.Light;
+import org.jzy3d.plot3d.rendering.lights.LightSet;
 import org.jzy3d.plot3d.rendering.scene.Scene;
 import org.jzy3d.plot3d.rendering.view.AWTView;
 import org.jzy3d.plot3d.rendering.view.View;
@@ -150,6 +155,7 @@ import org.jzy3d.plot3d.transform.Translate;
 import org.jzy3d.plot3d.transform.squarifier.XYSquarifier;
 import org.jzy3d.plot3d.transform.squarifier.XZSquarifier;
 import org.jzy3d.plot3d.transform.squarifier.ZYSquarifier;
+import org.jzy3d.ui.editors.LightEditor;
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.command.CommandModule;
@@ -1958,6 +1964,7 @@ public class Viewer3D {
 		private Chart chart;
 		private Component canvas;
 		private JDialog manager;
+		private LightController lightController;
 		private AllenCCFNavigator allenNavigator;
 		private ManagerPanel managerPanel;
 
@@ -2019,6 +2026,11 @@ public class Viewer3D {
 			return dialog;
 		}
 
+		private void displayLightController() {
+			lightController = new LightController(this);
+			lightController.display();
+		}
+	
 		private void exitRequested(final GuiUtils gUtilsDefiningPrompt) {
 			if (gUtilsDefiningPrompt.getConfirmation("Quit Reconstruction Viewer?", "Quit?", "Yes. Quit Now",
 					"No. Keep Open")) {
@@ -2076,6 +2088,7 @@ public class Viewer3D {
 				setLocation(loc);
 				setVisible(true);
 				if (manager!= null) manager.setVisible(true);
+				if (lightController != null) lightController.setVisible(true);
 				isFullScreen = false;
 			}
 		}
@@ -2085,9 +2098,17 @@ public class Viewer3D {
 				dim = frame.getSize();
 				loc = frame.getLocation();
 				if (manager != null) manager.setVisible(false);
+				if (lightController != null) lightController.setVisible(false);
 				setExtendedState(JFrame.MAXIMIZED_BOTH );
 				isFullScreen = true;
 				delayedMsg(100, "Press \"Esc\" to exit Full Screen", 3000); // without delay popup is not shown?
+			}
+		}
+
+		void disposeControllers() {
+			if (lightController != null) {
+				lightController.dispose();
+				lightController = null;
 			}
 		}
 	}
@@ -2481,6 +2502,14 @@ public class Viewer3D {
 			sceneMenu.add(fullScreen);
 			sceneMenu.addSeparator();
 
+			final JMenuItem light = new JMenuItem("Light Controls...", IconFactory.getMenuIcon(GLYPH.BULB));
+			light.addActionListener(e -> {
+//				guiUtils.centeredMsg(
+//						"Adjustments of light and shadows remain experimental features, some of which undoable.",
+//						"Reminder", "OK. I'll be careful");
+				frame.displayLightController();
+			});
+			sceneMenu.add(light);
 			final JMenuItem reset = new JMenuItem(new Action(Action.RESET, KeyEvent.VK_R, false, false));
 			reset.setIcon(IconFactory.getMenuIcon(GLYPH.BROOM));
 			sceneMenu.add(reset);
@@ -2490,10 +2519,11 @@ public class Viewer3D {
 			final JMenuItem rebuild = new JMenuItem(new Action(Action.REBUILD, KeyEvent.VK_R, true, true));
 			rebuild.setIcon(IconFactory.getMenuIcon(GLYPH.RECYCLE));
 			sceneMenu.add(rebuild);;
-			JMenuItem mi = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.DANGER));
-			mi.addActionListener(e -> wipeScene());
-			sceneMenu.add(mi);
+			JMenuItem wipe = new JMenuItem("Wipe Scene...", IconFactory.getMenuIcon(GLYPH.DANGER));
+			wipe.addActionListener(e -> wipeScene());
+			sceneMenu.add(wipe);
 			sceneMenu.addSeparator();
+
 			final JMenuItem help = new JMenuItem(new Action(Action.SCENE_SHORTCUTS_LIST, KeyEvent.VK_F1, false, false));
 			new Action(Action.SCENE_SHORTCUTS_NOTIFICATION, KeyEvent.VK_H, false, false); // register alternative shortcut
 			help.setIcon(IconFactory.getMenuIcon(GLYPH.KEYBOARD));
@@ -2515,6 +2545,7 @@ public class Viewer3D {
 				removeColorLegends(false);
 				// Ensure nothing else remains
 				chart.getScene().getGraph().getAll().clear();
+				frame.disposeControllers();
 			}
 		}
 
@@ -5032,6 +5063,154 @@ public class Viewer3D {
 			float ypos = labelY; //(labelY < lineHeight) ? lineHeight : labelY;
 			for (final String line : label.split("\n")) {
 				g2d.drawString(line, labelX, ypos += lineHeight);
+			}
+		}
+	}
+
+	private class LightController extends JDialog {
+
+		private static final long serialVersionUID = 1L;
+		private final Chart chart;
+		private final Color existingSpecularColor;
+		private final ViewerFrame viewerFrame;
+
+		LightController(final ViewerFrame viewerFrame) {
+
+			super((viewerFrame.manager == null)?viewerFrame:viewerFrame.manager, "Light Effects");
+			this.viewerFrame = viewerFrame;
+			this.chart = viewerFrame.chart;
+			existingSpecularColor = chart.getView().getBackgroundColor();
+			assignDefaultLightIfNoneExists();
+			final LightEditorPlus lightEditor = new LightEditorPlus(chart, chart.getScene().getLightSet().get(0));
+			final JScrollPane scrollPane = new JScrollPane(lightEditor);
+			scrollPane.setWheelScrollingEnabled(true);
+			scrollPane.setBorder(null);
+			scrollPane.setViewportView(lightEditor);
+			add(scrollPane);
+			setLocationRelativeTo(getParent());
+			setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+			getRootPane().registerKeyboardAction(e -> {
+				dispose(true);
+			}, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+			addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(final WindowEvent e) {
+					dispose(true);
+				}
+			});
+
+		}
+
+		void assignDefaultLightIfNoneExists() {
+			// LightEditor requires chart to have a light, so we'll set it here
+			try {
+				if (chart.getScene().getLightSet() == null)
+					chart.getScene().setLightSet(new LightSet());
+				chart.getScene().getLightSet().get(0);
+			} catch (final IndexOutOfBoundsException ignored) {
+				final Light light = new Light();
+				light.setPosition(chart.getView().getBounds().getCenter());
+				light.setAmbiantColor(existingSpecularColor.negative());
+				light.setDiffuseColor(new Color(0.8f, 0.8f, 0.8f));
+				light.setSpecularColor(existingSpecularColor);
+				light.setRepresentationDisplayed(false);
+				light.setRepresentationRadius(1);
+				chart.getScene().add(light);
+			}
+		}
+
+		void display() {
+			pack();
+			setVisible(true);
+			if (viewerFrame.manager != null) {
+				viewerFrame.manager .toBack(); // byPasses MacOS bug?
+				toFront();
+			}
+		}
+
+		void resetLight() {
+			// HACK: the scene does not seem to update when light is removed
+			// so we'll try our best to restore things to pre-prompt state
+			Light light = chart.getScene().getLightSet().get(0);
+			light.setSpecularColor(existingSpecularColor);
+			chart.getView().setBackgroundColor(existingSpecularColor);
+			light.setEnabled(false);
+			light.setAmbiantColor(null);
+			light.setDiffuseColor(null);
+			light.setSpecularColor(null);
+			chart.render();
+			chart.getScene().remove(light);
+			light = null;
+			chart.getScene().setLightSet(new LightSet());
+			chart.render();
+		}
+
+		void dispose(final boolean prompt) {
+			if (prompt && !new GuiUtils(getParent()).getConfirmation("Keep new lightning scheme? "
+					+ "(If you choose \"Discard\" you may need to rebuild the scene for changes " + "to take effect)",
+					"Keep Changes?", "Yes. Keep", "No. Discard")) {
+				resetLight();
+			}
+			dispose();
+		}
+
+		class LightEditorPlus extends LightEditor {
+			private static final long serialVersionUID = 1L;
+
+			public LightEditorPlus(final Chart chart, final Light light) {
+				super(chart);
+				removeAll();
+				setLayout(new GridBagLayout());
+				final GridBagConstraints gbc = GuiUtils.defaultGbc();
+				add(ambiantColorControl, gbc);
+				gbc.gridy++;
+				add(diffuseColorControl, gbc);
+				gbc.gridy++;
+				add(positionControl, gbc);
+				gbc.gridy++;
+				correctPanels(this);
+				final JPanel buttonPanel = new JPanel();
+				final JButton apply = new JButton("Cancel");
+				apply.addActionListener(e->{
+					dispose(false);
+					resetLight();
+				});
+				buttonPanel.add(apply);
+				final JButton reset = new JButton("Apply");
+				reset.addActionListener(e->{
+					dispose(false);
+				});
+				buttonPanel.add(reset);
+				add(new JLabel(" "), gbc);
+				gbc.gridy++;
+				add(buttonPanel, gbc);
+				setTarget(light);
+			}
+
+			void correctPanels(final Container container) {
+				for (final Component c : container.getComponents()) {
+					if (c instanceof JLabel) {
+						adjustLabel(((JLabel) c));
+					} else if (c instanceof JSlider) {
+						adjustSlider(((JSlider) c));
+					} else if (c instanceof Container) {
+						correctPanels((Container) c);
+					}
+				}
+			}
+
+			private void adjustSlider(final JSlider jSlider) {
+				jSlider.setPaintLabels(false);
+			}
+
+			void adjustLabel(final JLabel label) {
+				String text = label.getText();
+				if (text.startsWith("Pos")) {
+					text = "Position (X,Y,Z): ";
+				} else {
+					text += " Color (R,G,B): ";
+				}
+				label.setText(text);
 			}
 		}
 	}

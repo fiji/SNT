@@ -2160,7 +2160,7 @@ public class PathAndFillManager extends DefaultHandler implements
 				final SWCPoint beforeStart = start.getPreviousPoint();
 				pathStartsOnSWCPoint.put(currentPath, beforeStart);
 				pathStartsAtPointInImage.put(currentPath, beforeStart);
-				//currentPath.addNode(beforeStart);
+				currentPath.addNode(beforeStart);
 			}
 
 			// Now we can start adding points to the path:

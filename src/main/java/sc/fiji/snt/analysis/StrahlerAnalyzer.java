@@ -142,12 +142,12 @@ public class StrahlerAnalyzer {
 			// # N. branches
 			double nBranches = 0;
 			ArrayList<Path>branches = new ArrayList<>();
-			List<SWCPoint> subGraphRootList = subGraph.vertexSet().stream()
-					.filter(v -> subGraph.inDegreeOf(v) == 0).collect(Collectors.toList());
+			List<SWCPoint> subGraphBranchPointsAndTips = subGraph.vertexSet().stream()
+					.filter(v -> (graph.outDegreeOf(v) == 0 || graph.outDegreeOf(v) > 1)).collect(Collectors.toList());
 			
-			for (SWCPoint subGraphRoot : subGraphRootList) {
+			for (SWCPoint subGraphNode : subGraphBranchPointsAndTips) {
 				nBranches++;
-				Path p = getPathToNextRelevantSuccessor(graph, subGraphRoot);
+				Path p = getPathToFirstRelevantAncestor(subGraphNode);
 				branches.add(p);
 			}
 			
@@ -185,28 +185,24 @@ public class StrahlerAnalyzer {
 		return graph;
 	}
 	
-	private Path getPathToNextRelevantSuccessor(DefaultDirectedGraph<SWCPoint, 
-			SWCWeightedEdge> baseGraph, SWCPoint startVertex) {
-		Path p = startVertex.getPath().createPath();
+	private Path getPathToFirstRelevantAncestor(SWCPoint startVertex) {
+		Path path = startVertex.getPath().createPath();
 		SWCPoint currentVertex = startVertex;
-		List<SWCPoint> ancestorForkPoint = Graphs.predecessorListOf(baseGraph,  currentVertex);
-		if (!ancestorForkPoint.isEmpty()) {
-			p.addNode(ancestorForkPoint.get(0));
-		}
+
+		List<SWCPoint> reversed = new ArrayList<SWCPoint>();
+		reversed.add(0, currentVertex);
 		
-		p.addNode(currentVertex);
-		while (true) {
-			List<SWCPoint> children = Graphs.successorListOf(graph,  currentVertex);
-			if (children.size() == 1) {
-				currentVertex = children.get(0);
-				p.addNode(currentVertex);
-			} else if (children.size() > 1) {
-				
-				return p;
-			} else if (children.size() == 0) {
-				return p;
+		while (Graphs.vertexHasPredecessors(graph, currentVertex)) {
+			currentVertex = Graphs.predecessorListOf(graph,  currentVertex).get(0);
+			reversed.add(0, currentVertex);
+			if (graph.outDegreeOf(currentVertex) > 1) {
+				break;
 			}
-		}	
+		}
+		for (SWCPoint point : reversed) {
+			path.addNode(point);
+		}
+		return path;
 	}
 
 	/**

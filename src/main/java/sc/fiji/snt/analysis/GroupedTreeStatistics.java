@@ -32,11 +32,11 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -98,6 +98,23 @@ public class GroupedTreeStatistics {
 	}
 
 	/**
+	 * Adds a comparison group to the analysis queue.
+	 *
+	 * @param group    the collection of Trees to be analyzed
+	 * @param groupLabel a unique label identifying the group
+	 * @param swcTypes   SWC type(s) a string with at least 2 characters describing
+	 *                   the SWC type allowed in the subtree (e.g., 'axn', or
+	 *                   'dendrite')
+	 * @throws NoSuchElementException {@code swcTypes} are not applicable to {@code group}
+	 */
+	public void addGroup(final Collection<Tree> group, final String groupLabel, final String... swcTypes)
+			throws NoSuchElementException {
+		final MultiTreeStatistics mStats = new MultiTreeStatistics(group, swcTypes);
+		mStats.setLabel(groupLabel);
+		groups.put(groupLabel, mStats);
+	}
+
+	/**
 	 * Gets the group statistics.
 	 *
 	 * @param groupLabel the unique label identifying the group
@@ -145,7 +162,7 @@ public class GroupedTreeStatistics {
 		final HistogramDataset dataset = new HistogramDataset();
 		dataset.setType(HistogramType.RELATIVE_FREQUENCY);
 		hdpMap.forEach((label, hdp) -> {
-			dataset.addSeries(label, hdp.values, nBins[0]);
+			dataset.addSeries(label, hdp.valuesAsArray(), nBins[0]);
 		});
 
 		final JFreeChart chart = ChartFactory.createHistogram(null, normMeasurement, "Rel. Frequency", dataset);
@@ -187,7 +204,7 @@ public class GroupedTreeStatistics {
 		final DefaultBoxAndWhiskerCategoryDataset dataset = new DefaultBoxAndWhiskerCategoryDataset();
 		groups.forEach((label, mstats) -> {
 			final HistogramDatasetPlus hdp = mstats.new HistogramDatasetPlus(normMeasurement);
-			dataset.add(createValueList(hdp.values), normMeasurement, label);
+			dataset.add(hdp.values, normMeasurement, label);
 		});
 		final JFreeChart chart = ChartFactory.createBoxAndWhiskerChart(null, null, normMeasurement, dataset, false);
 		final CategoryPlot plot = (CategoryPlot) chart.getPlot();
@@ -214,14 +231,6 @@ public class GroupedTreeStatistics {
 		final int height = 400;
 		final double width = (groups.size() < 4) ? height / 1.5 : height * 1.5;
 		return getFrame(chart, "Box-plot", new Dimension((int) width, height));
-	}
-
-	private static ArrayList<Double> createValueList(final double[] values) {
-		final ArrayList<Double> result = new ArrayList<>(values.length);
-		for (int i = 0; i < values.length; i++) {
-			result.add(new Double(values[i]));
-		}
-		return result;
 	}
 
 	private ChartFrame getFrame(final JFreeChart chart, final String title, final Dimension preferredSize) {

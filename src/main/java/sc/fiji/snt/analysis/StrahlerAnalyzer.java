@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -142,10 +143,13 @@ public class StrahlerAnalyzer {
 			// # N. branches
 			double nBranches = 0;
 			ArrayList<Path>branches = new ArrayList<>();
-			List<SWCPoint> subGraphBranchPointsAndTips = subGraph.vertexSet().stream()
-					.filter(v -> (graph.outDegreeOf(v) == 0 || graph.outDegreeOf(v) > 1)).collect(Collectors.toList());
+			final LinkedHashSet<SWCPoint> relevantNodes = new LinkedHashSet<>();
+			relevantNodes.addAll(subGraph.vertexSet().stream()
+					.filter(v -> graph.outDegreeOf(v) > 1).collect(Collectors.toCollection(HashSet::new)));
+			relevantNodes.addAll(subGraph.vertexSet().stream()
+					.filter(v -> graph.outDegreeOf(v) == 0).collect(Collectors.toCollection(HashSet::new)));
 			
-			for (SWCPoint subGraphNode : subGraphBranchPointsAndTips) {
+			for (SWCPoint subGraphNode : relevantNodes) {
 				nBranches++;
 				Path p = getPathToFirstRelevantAncestor(subGraphNode);
 				branches.add(p);
@@ -199,6 +203,7 @@ public class StrahlerAnalyzer {
 				break;
 			}
 		}
+
 		for (SWCPoint point : reversed) {
 			path.addNode(point);
 		}

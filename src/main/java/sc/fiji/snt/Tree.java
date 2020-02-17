@@ -320,7 +320,7 @@ public class Tree {
 	 *          {@link Path#SWC_DENDRITE}, etc.)
 	 */
 	public void setType(final int type) {
-		tree.stream().forEach(p -> p.setSWCType(type));
+		tree.forEach(p -> p.setSWCType(type));
 	}
 
 	/**
@@ -360,7 +360,7 @@ public class Tree {
 		if (labelIdx == -1) throw new IllegalArgumentException(
 			"Unrecognized SWC-type label:" + type);
 		final int intType = Path.getSWCtypes().get(labelIdx);
-		tree.stream().forEach(p -> p.setSWCType(intType));
+		tree.forEach(p -> p.setSWCType(intType));
 	}
 
 	/**
@@ -462,7 +462,7 @@ public class Tree {
 		final double zOffset)
 	{
 		final PointInCanvas offset = new PointInCanvas(xOffset, yOffset, zOffset);
-		tree.stream().forEach(p -> p.setCanvasOffset(offset));
+		tree.forEach(p -> p.setCanvasOffset(offset));
 	}
 
 	/**
@@ -475,7 +475,7 @@ public class Tree {
 	public void translate(final double xOffset, final double yOffset,
 		final double zOffset)
 	{
-		tree.stream().forEach(p -> {
+		tree.forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] += xOffset;
 				p.precise_y_positions[node] += yOffset;
@@ -520,7 +520,7 @@ public class Tree {
 	public void scale(final double xScale, final double yScale,
 		final double zScale)
 	{
-		tree.stream().forEach(p -> {
+		tree.forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] *= xScale;
 				p.precise_y_positions[node] *= yScale;
@@ -563,7 +563,7 @@ public class Tree {
 		final double zScale, final double radiusScale)
 	{
 		scale(xScale, yScale, zScale);
-		tree.stream().forEach(p -> {
+		tree.forEach(p -> {
 			if (p.hasRadii()) {
 				for (int node = 0; node < p.size(); node++) {
 					p.radii[node] *= radiusScale;
@@ -588,7 +588,7 @@ public class Tree {
 		final double cos = Math.cos(radAngle);
 		switch (axis) {
 			case Z_AXIS:
-				tree.stream().forEach(p -> {
+				tree.forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
 						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double x = pim.x * cos - pim.y * sin;
@@ -614,7 +614,7 @@ public class Tree {
 				});
 				break;
 			case Y_AXIS:
-				tree.stream().forEach(p -> {
+				tree.forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
 						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double x = pim.x * cos - pim.z * sin;
@@ -640,7 +640,7 @@ public class Tree {
 				});
 				break;
 			case X_AXIS:
-				tree.stream().forEach(p -> {
+				tree.forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
 						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double y = pim.y * cos - pim.z * sin;
@@ -887,7 +887,7 @@ public class Tree {
 	 * @see Path#hasNodeColors()
 	 */
 	public void setColor(final ColorRGB color) {
-		tree.stream().forEach(p -> {
+		tree.forEach(p -> {
 			p.setColor(color);
 			if (color != null) p.setNodeColors(null);
 		});
@@ -913,7 +913,7 @@ public class Tree {
 	 *          the radius attribute from the Tree
 	 */
 	public void setRadii(final double r) {
-		tree.stream().forEach(p -> p.setRadius(r));
+		tree.forEach(p -> p.setRadius(r));
 	}
 
 	/**

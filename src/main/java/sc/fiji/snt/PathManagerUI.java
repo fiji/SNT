@@ -517,6 +517,35 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	}
 
 	/**
+	 * Gets the paths currently selected in the Manager's {@link JTree} list as {@link Tree}s.
+	 *
+	 * @param ifNoneSelectedGetAll if true and no paths are currently selected, all
+	 *                             Paths in the list are considered
+	 * @return the map of selected paths ({@link Tree#getLabel() as keys}
+	 * @see #getSelectedPaths(boolean)
+	 */
+	public Map<String, Tree> getSelectedPathsOrganizedByTrees(final boolean ifNoneSelectedGetAll) {
+		return getSelectedPathsOrganizedByTrees(getSelectedPaths(ifNoneSelectedGetAll));
+	}
+
+	private Map<String, Tree> getSelectedPathsOrganizedByTrees(final Collection<Path> paths) {
+		final HashMap<String, Tree> trees = new HashMap<>();
+		if (paths.isEmpty()) return trees;
+		for (final Path p : paths) {
+			final String tLabel = p.getTreeLabel();
+			if (trees.get(tLabel) == null) {
+				final Tree tree = new Tree();
+				tree.setLabel(tLabel);
+				tree.add(p);
+				trees.put(tLabel, tree);
+			} else {
+				trees.get(tLabel).add(p);
+			}
+		}
+		return trees;
+	}
+
+	/**
 	 * Gets the paths currently selected in the Manager's {@link JTree} list.
 	 *
 	 * @param ifNoneSelectedGetAll if true and no paths are currently selected,
@@ -865,7 +894,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 	private Collection<Tree> getTreesPrompt(final boolean includeAll) {
 		final Collection<Tree> trees = pathAndFillManager.getTrees();
-		if (trees.size() == 1) return Collections.singleton(trees.iterator().next());
+		if (trees.size() == 1) return trees;
 		final ArrayList<String> treeLabels = new ArrayList<>(trees.size());
 		if (includeAll)
 			treeLabels.add("   -- All --  ");

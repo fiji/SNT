@@ -244,7 +244,7 @@ public class TreeParser implements Parser {
 
 	private void assembleSortedShollPointList() {
 		shollPointsList = new ArrayList<>();
-		tree.list().stream().forEach(p -> {
+		tree.list().forEach(p -> {
 			if (!running) return;
 			for (int i = 0; i < p.size() - 1; ++i) {
 				final PointInImage pim1 = p.getNode(i);

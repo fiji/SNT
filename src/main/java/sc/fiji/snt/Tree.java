@@ -28,10 +28,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.scijava.util.ColorRGB;
@@ -261,28 +263,31 @@ public class Tree {
 	 *         if no hits were retrieved
 	 */
 	public Tree subTree(final String... swcTypes) {
-		final int[] types = new int[swcTypes.length];
+		final Set<Integer> types = new HashSet<>();
 		for (int i = 0; i < swcTypes.length; i++) {
 			switch (swcTypes[i].toLowerCase().substring(0, 2)) {
 			case "ax":
-				types[i] = Path.SWC_AXON;
+				types.add(Path.SWC_AXON);
 				break;
 			case "so":
-				types[i] = Path.SWC_SOMA;
+				types.add(Path.SWC_SOMA);
 				break;
 			case "ap":
-				types[i] = Path.SWC_APICAL_DENDRITE;
+				types.add(Path.SWC_APICAL_DENDRITE);
 				break;
 			case "ba":
-			case "de":
-				types[i] = Path.SWC_DENDRITE;
+			case "(b":
+				types.add(Path.SWC_DENDRITE);
 				break;
+			case "de":
+				types.add(Path.SWC_APICAL_DENDRITE);
+				types.add(Path.SWC_DENDRITE);
 			default:
-				types[i] = Path.SWC_UNDEFINED;
+				types.add(Path.SWC_UNDEFINED);
 				break;
 			}
 		}
-		return subTree(types);
+		return subTree(types.stream().mapToInt(Integer::intValue).toArray());
 	}
 
 	/**
@@ -325,6 +330,12 @@ public class Tree {
 		String inputType = (type == null) ? Path.SWC_UNDEFINED_LABEL : type.trim()
 			.toLowerCase();
 		switch (inputType) {
+			case "apical dendrite":
+			case "(apical) dendrite":
+				inputType = Path.SWC_APICAL_DENDRITE_LABEL;
+				break;
+			case "basal dendrite":
+			case "(basal) dendrite":
 			case "dendrite":
 			case "dend":
 				inputType = Path.SWC_DENDRITE_LABEL;
@@ -332,8 +343,12 @@ public class Tree {
 			case "":
 			case "none":
 			case "unknown":
+			case "undefined":
 			case "undef":
 				inputType = Path.SWC_UNDEFINED_LABEL;
+				break;
+			case "custom":
+				inputType = Path.SWC_CUSTOM_LABEL;
 				break;
 			default:
 				break; // keep input
@@ -1023,6 +1038,23 @@ public class Tree {
 			}
 		}
 		return trees;
+	}
+
+	/**
+	 * Returns the SWC Type flags used by SNT.
+	 * 
+	 * @return the map mapping swct type flags (e.g., {@link Path#SWC_AXON},
+	 *         {@link Path#SWC_DENDRITE}, etc.) and their respective labels
+	 */
+	public static Map<Integer, String> getSWCTypeMap() {
+		final HashMap<Integer, String> map = new HashMap<>();
+		map.put(Path.SWC_UNDEFINED, Path.SWC_UNDEFINED_LABEL);
+		map.put(Path.SWC_SOMA, Path.SWC_SOMA_LABEL);
+		map.put(Path.SWC_AXON, Path.SWC_AXON_LABEL);
+		map.put(Path.SWC_DENDRITE, Path.SWC_DENDRITE_LABEL);
+		map.put(Path.SWC_APICAL_DENDRITE, Path.SWC_APICAL_DENDRITE_LABEL);
+		map.put(Path.SWC_CUSTOM, Path.SWC_CUSTOM_LABEL);
+		return map;
 	}
 
 	/**

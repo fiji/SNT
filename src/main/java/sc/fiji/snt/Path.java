@@ -2547,7 +2547,7 @@ public class Path implements Comparable<Path> {
 			}
 		}
 		final Set<PointInImage> result = new HashSet<>();
-		findJunctions().stream().forEach(j -> result.add(new LocationBasePoint(j)));
+		findJunctions().forEach(j -> result.add(new LocationBasePoint(j)));
 		return result;
 	}
 

@@ -526,7 +526,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 */
 	public Collection<Tree> getTrees() {
 		final HashMap<String, Tree> map = new HashMap<>();
-		allPaths.stream().forEach(p->{
+		allPaths.forEach(p->{
 			final String treeID = p.getTreeLabel();
 			if (map.get(treeID) == null) {
 				final Tree tree = new Tree();
@@ -539,6 +539,16 @@ public class PathAndFillManager extends DefaultHandler implements
 		});
 		map.values().forEach( tree -> renameTreeAfterPrimaryPath(tree));
 		return map.values();
+	}
+
+	protected boolean multipleTreesExist() {
+		if (allPaths.isEmpty()) return false;
+		final int refID = allPaths.get(0).getTreeID();
+		for (int i = 1; i < allPaths.size(); i++) {
+			final int id = allPaths.get(i).getTreeID();
+			if (id != refID) return true;
+		}
+		return false;
 	}
 
 	private void renameTreeAfterPrimaryPath(final Tree tree) {
@@ -856,7 +866,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @param tree the collection of paths to be added
 	 */
 	public void addTree(final Tree tree) {
-		tree.list().stream().forEach(p -> addPath(p, true, true));
+		tree.list().forEach(p -> addPath(p, true, true));
 	}
 
 	/**
@@ -2921,7 +2931,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		final boolean showOnlySelectedPaths = plugin.isOnlySelectedPathsVisible();
 		// Now iterate over all the paths:
 
-		allPaths.stream().forEach(p -> {
+		allPaths.forEach(p -> {
 
 			if (p.fittedVersionOf != null) return; // here interpreted as 'continue'
 

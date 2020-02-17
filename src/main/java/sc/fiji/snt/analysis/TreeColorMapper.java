@@ -393,7 +393,7 @@ public class TreeColorMapper extends ColorMapper {
 
 		// Wipe node values so that computed distances don't
 		// get mistakenly interpreted as pixel intensities
-		paths.stream().forEach(p -> p.setNodeValues(null));
+		paths.forEach(p -> p.setNodeValues(null));
 
 	}
 

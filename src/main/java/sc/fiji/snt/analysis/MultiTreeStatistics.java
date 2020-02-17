@@ -22,14 +22,17 @@
 
 package sc.fiji.snt.analysis;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.text.WordUtils;
+import org.jfree.chart.ChartFrame;
 
 import net.imagej.ImageJ;
 import sc.fiji.snt.SNTService;
@@ -145,6 +148,25 @@ public class MultiTreeStatistics extends TreeStatistics {
 	public MultiTreeStatistics(final Collection<Tree> group) {
 		super(new Tree());
 		this.groupOfTrees = group;
+	}
+
+	/**
+	 * Instantiates a new instance from a collection of Trees.
+	 *
+	 * @param group    the collection of Trees to be analyzed
+	 * @param swcTypes SWC type(s) a string with at least 2 characters describing
+	 *                 the SWC type allowed in the subtree (e.g., 'axn', or
+	 *                 'dendrite')
+	 * @throws NoSuchElementException {@code swcTypes} are not applicable to {@code group}
+	 */
+	public MultiTreeStatistics(final Collection<Tree> group, final String... swcTypes) throws NoSuchElementException {
+		super(new Tree());
+		this.groupOfTrees = new ArrayList<>();
+		group.forEach( inputTree -> {
+			final Tree filteredTree = inputTree.subTree(swcTypes);
+			if (filteredTree != null && filteredTree.size() > 0) groupOfTrees.add(filteredTree);
+		});
+		if (groupOfTrees.isEmpty()) throw new NoSuchElementException("No match for the specified type(s) in group");
 	}
 
 	/**
@@ -319,6 +341,32 @@ public class MultiTreeStatistics extends TreeStatistics {
 			for (final Tree tree : groupOfTrees)
 				super.tree.list().addAll(tree.list());
 			super.assembleStats(stat, normMeasurement);
+		}
+	}
+
+	@Override
+	public void restrictToSWCType(final int... types) {
+		throw new IllegalArgumentException("Operation not supported. Only filtering in constructor is supported");
+	}
+
+	@Override
+	public void resetRestrictions() {
+		throw new IllegalArgumentException("Operation not supported. Only filtering in constructor is supported");
+	}
+
+	public ChartFrame getHistogram(final String metric) {
+		final String normMeasurement = getNormalizedMeasurement(metric, true);
+		final HistogramDatasetPlus datasetPlus = new HistogramDatasetPlusMulti(normMeasurement);
+		return getHistogram(normMeasurement, datasetPlus);
+	}
+
+	class HistogramDatasetPlusMulti extends HistogramDatasetPlus {
+		HistogramDatasetPlusMulti(String measurement) {
+			super(measurement, false);
+			getDescriptiveStats(measurement);
+			for (final double v : lastDstats.dStats.getValues()) {
+				values.add(v);
+			}
 		}
 	}
 

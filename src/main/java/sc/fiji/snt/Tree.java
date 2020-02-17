@@ -28,12 +28,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.scijava.Context;
 import org.scijava.util.ColorRGB;
 
 import ij.IJ;
@@ -48,6 +51,8 @@ import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.util.SWCPoint;
+import sc.fiji.snt.viewer.Viewer2D;
+import sc.fiji.snt.viewer.Viewer3D;
 import sholl.UPoint;
 
 /**
@@ -261,28 +266,31 @@ public class Tree {
 	 *         if no hits were retrieved
 	 */
 	public Tree subTree(final String... swcTypes) {
-		final int[] types = new int[swcTypes.length];
+		final Set<Integer> types = new HashSet<>();
 		for (int i = 0; i < swcTypes.length; i++) {
 			switch (swcTypes[i].toLowerCase().substring(0, 2)) {
 			case "ax":
-				types[i] = Path.SWC_AXON;
+				types.add(Path.SWC_AXON);
 				break;
 			case "so":
-				types[i] = Path.SWC_SOMA;
+				types.add(Path.SWC_SOMA);
 				break;
 			case "ap":
-				types[i] = Path.SWC_APICAL_DENDRITE;
+				types.add(Path.SWC_APICAL_DENDRITE);
 				break;
 			case "ba":
-			case "de":
-				types[i] = Path.SWC_DENDRITE;
+			case "(b":
+				types.add(Path.SWC_DENDRITE);
 				break;
+			case "de":
+				types.add(Path.SWC_APICAL_DENDRITE);
+				types.add(Path.SWC_DENDRITE);
 			default:
-				types[i] = Path.SWC_UNDEFINED;
+				types.add(Path.SWC_UNDEFINED);
 				break;
 			}
 		}
-		return subTree(types);
+		return subTree(types.stream().mapToInt(Integer::intValue).toArray());
 	}
 
 	/**
@@ -312,7 +320,7 @@ public class Tree {
 	 *          {@link Path#SWC_DENDRITE}, etc.)
 	 */
 	public void setType(final int type) {
-		tree.stream().forEach(p -> p.setSWCType(type));
+		tree.forEach(p -> p.setSWCType(type));
 	}
 
 	/**
@@ -325,6 +333,12 @@ public class Tree {
 		String inputType = (type == null) ? Path.SWC_UNDEFINED_LABEL : type.trim()
 			.toLowerCase();
 		switch (inputType) {
+			case "apical dendrite":
+			case "(apical) dendrite":
+				inputType = Path.SWC_APICAL_DENDRITE_LABEL;
+				break;
+			case "basal dendrite":
+			case "(basal) dendrite":
 			case "dendrite":
 			case "dend":
 				inputType = Path.SWC_DENDRITE_LABEL;
@@ -332,8 +346,12 @@ public class Tree {
 			case "":
 			case "none":
 			case "unknown":
+			case "undefined":
 			case "undef":
 				inputType = Path.SWC_UNDEFINED_LABEL;
+				break;
+			case "custom":
+				inputType = Path.SWC_CUSTOM_LABEL;
 				break;
 			default:
 				break; // keep input
@@ -342,7 +360,7 @@ public class Tree {
 		if (labelIdx == -1) throw new IllegalArgumentException(
 			"Unrecognized SWC-type label:" + type);
 		final int intType = Path.getSWCtypes().get(labelIdx);
-		tree.stream().forEach(p -> p.setSWCType(intType));
+		tree.forEach(p -> p.setSWCType(intType));
 	}
 
 	/**
@@ -358,6 +376,33 @@ public class Tree {
 			types.add(it.next().getSWCType());
 		}
 		return types;
+	}
+
+	public Viewer3D show3D() {
+		final Viewer3D viewer = new Viewer3D();
+		viewer.addTree(this);
+		if (getLabel() != null) {
+			final java.awt.Frame frame = viewer.show();
+			frame.setTitle(frame.getTitle().replace("Reconstruction Viewer", getLabel()));
+		}
+		return viewer;
+	}
+
+	public Viewer2D show2D() {
+		final Viewer2D viewer = new Viewer2D(new Context());
+		viewer.add(this);
+		if (getLabel() != null) {
+			viewer.setTitle(getLabel());
+		}
+		viewer.show();
+		return viewer;
+	}
+
+	public void show() {
+		if (is3D())
+			show3D();
+		else 
+			show2D();
 	}
 
 	/**
@@ -417,7 +462,7 @@ public class Tree {
 		final double zOffset)
 	{
 		final PointInCanvas offset = new PointInCanvas(xOffset, yOffset, zOffset);
-		tree.stream().forEach(p -> p.setCanvasOffset(offset));
+		tree.forEach(p -> p.setCanvasOffset(offset));
 	}
 
 	/**
@@ -430,7 +475,7 @@ public class Tree {
 	public void translate(final double xOffset, final double yOffset,
 		final double zOffset)
 	{
-		tree.stream().forEach(p -> {
+		tree.forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] += xOffset;
 				p.precise_y_positions[node] += yOffset;
@@ -475,7 +520,7 @@ public class Tree {
 	public void scale(final double xScale, final double yScale,
 		final double zScale)
 	{
-		tree.stream().forEach(p -> {
+		tree.forEach(p -> {
 			for (int node = 0; node < p.size(); node++) {
 				p.precise_x_positions[node] *= xScale;
 				p.precise_y_positions[node] *= yScale;
@@ -518,7 +563,7 @@ public class Tree {
 		final double zScale, final double radiusScale)
 	{
 		scale(xScale, yScale, zScale);
-		tree.stream().forEach(p -> {
+		tree.forEach(p -> {
 			if (p.hasRadii()) {
 				for (int node = 0; node < p.size(); node++) {
 					p.radii[node] *= radiusScale;
@@ -543,7 +588,7 @@ public class Tree {
 		final double cos = Math.cos(radAngle);
 		switch (axis) {
 			case Z_AXIS:
-				tree.stream().forEach(p -> {
+				tree.forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
 						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double x = pim.x * cos - pim.y * sin;
@@ -569,7 +614,7 @@ public class Tree {
 				});
 				break;
 			case Y_AXIS:
-				tree.stream().forEach(p -> {
+				tree.forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
 						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double x = pim.x * cos - pim.z * sin;
@@ -595,7 +640,7 @@ public class Tree {
 				});
 				break;
 			case X_AXIS:
-				tree.stream().forEach(p -> {
+				tree.forEach(p -> {
 					for (int node = 0; node < p.size(); node++) {
 						final PointInImage pim = p.getNodeWithoutChecks(node);
 						final double y = pim.y * cos - pim.z * sin;
@@ -842,7 +887,7 @@ public class Tree {
 	 * @see Path#hasNodeColors()
 	 */
 	public void setColor(final ColorRGB color) {
-		tree.stream().forEach(p -> {
+		tree.forEach(p -> {
 			p.setColor(color);
 			if (color != null) p.setNodeColors(null);
 		});
@@ -868,7 +913,7 @@ public class Tree {
 	 *          the radius attribute from the Tree
 	 */
 	public void setRadii(final double r) {
-		tree.stream().forEach(p -> p.setRadius(r));
+		tree.forEach(p -> p.setRadius(r));
 	}
 
 	/**
@@ -1023,6 +1068,23 @@ public class Tree {
 			}
 		}
 		return trees;
+	}
+
+	/**
+	 * Returns the SWC Type flags used by SNT.
+	 * 
+	 * @return the map mapping swct type flags (e.g., {@link Path#SWC_AXON},
+	 *         {@link Path#SWC_DENDRITE}, etc.) and their respective labels
+	 */
+	public static Map<Integer, String> getSWCTypeMap() {
+		final HashMap<Integer, String> map = new HashMap<>();
+		map.put(Path.SWC_UNDEFINED, Path.SWC_UNDEFINED_LABEL);
+		map.put(Path.SWC_SOMA, Path.SWC_SOMA_LABEL);
+		map.put(Path.SWC_AXON, Path.SWC_AXON_LABEL);
+		map.put(Path.SWC_DENDRITE, Path.SWC_DENDRITE_LABEL);
+		map.put(Path.SWC_APICAL_DENDRITE, Path.SWC_APICAL_DENDRITE_LABEL);
+		map.put(Path.SWC_CUSTOM, Path.SWC_CUSTOM_LABEL);
+		return map;
 	}
 
 	/**

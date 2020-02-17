@@ -25,7 +25,9 @@ package sc.fiji.snt.analysis;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -203,9 +205,37 @@ public class TreeStatistics extends TreeAnalyzer {
 	 * @return the frame holding the histogram
 	 */
 	public ChartFrame getHistogram(final String metric) {
-
 		final String normMeasurement = getNormalizedMeasurement(metric);
 		final HistogramDatasetPlus datasetPlus = new HistogramDatasetPlus(normMeasurement);
+		return getHistogram(normMeasurement, datasetPlus);
+	}
+
+	public static TreeStatistics fromCollection(final Collection<Tree> trees, final String metric) {
+		if (trees.size() == 1) return new TreeStatistics(trees.iterator().next());
+		final TreeStatistics holder = new TreeStatistics(new Tree());
+		holder.tree.setLabel(getLabelFromTreeCollection(trees));
+		final String normMeasurement = getNormalizedMeasurement(metric);
+		final DescriptiveStatistics holderStats = holder.getDescriptiveStats(normMeasurement);
+		for (final Tree tree : trees) {
+			final TreeStatistics treeStats = new TreeStatistics(tree);
+			final DescriptiveStatistics dStats = treeStats.getDescriptiveStats(normMeasurement);
+			for (final double v : dStats.getValues()) {
+				holderStats.addValue(v);
+			}
+		}
+		return holder;
+	}
+
+	private static String getLabelFromTreeCollection(final Collection<Tree> trees) {
+		final StringBuilder sb = new StringBuilder();
+		for (final Tree tree: trees) {
+			if (tree.getLabel() != null) sb.append(tree.getLabel()).append(" ");
+		}
+		return (sb.length() == 0) ? "Grouped Cells" : sb.toString().trim();
+	}
+
+	protected ChartFrame getHistogram(final String normMeasurement, final HistogramDatasetPlus datasetPlus) {
+
 		final JFreeChart chart = ChartFactory.createHistogram(null, normMeasurement,
 			"Rel. Frequency", datasetPlus.getDataset());
 
@@ -491,28 +521,45 @@ public class TreeStatistics extends TreeAnalyzer {
 	}
 
 	class HistogramDatasetPlus {
-		String measurement;
-		double[] values;
+		final String measurement;
+		final List<Double> values;
 		int nBins;
 		long n;
 		double q1, q3, min, max;
 
 		HistogramDatasetPlus(final String measurement) {
-			this.measurement = measurement;
-			getDescriptiveStats(measurement);
-			values = lastDstats.dStats.getValues();
+			this(measurement, true);
 		}
 
+		HistogramDatasetPlus(final String measurement, final boolean retrieveValues) {
+			this.measurement = measurement;
+			values = new ArrayList<Double>();
+			if (retrieveValues) {
+				getDescriptiveStats(measurement);
+				for (final double v : lastDstats.dStats.getValues()) {
+					values.add(v);
+				}
+			}
+		}
+	
+		double[] valuesAsArray() {
+			final double[] doubles = new double[values.size()];
+			for (int i = 0; i < doubles.length; i++) {
+				doubles[i] = values.get(i);
+			}
+			return doubles;
+		}
+	
 		void compute() {
 			n = lastDstats.dStats.getN();
 			q1 = lastDstats.dStats.getPercentile(25);
 			q3 = lastDstats.dStats.getPercentile(75);
 			min = lastDstats.dStats.getMin();
 			max = lastDstats.dStats.getMax();
-			if (n == 0) {
+			if (n == 0 || max == min) {
 				nBins = 1;
 			}
-			if (n <= 10) {
+			else if (n <= 10) {
 				nBins = (int) n;
 			} else {
 				final double binWidth = 2 * (q3 - q1) / Math.cbrt(n); // Freedman-Diaconis rule
@@ -529,7 +576,7 @@ public class TreeStatistics extends TreeAnalyzer {
 			compute();
 			final HistogramDataset dataset = new HistogramDataset();
 			dataset.setType(HistogramType.RELATIVE_FREQUENCY);
-			dataset.addSeries(measurement, values, nBins);
+			dataset.addSeries(measurement, valuesAsArray(), nBins);
 			return dataset;
 		}
 

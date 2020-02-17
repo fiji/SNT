@@ -237,8 +237,7 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 			error("No reconstruction file(s) could be retrieved from the specified path.");
 			return;
 		}
-
-		resetUI();
+		measure(trees, metrics);
 	}
 
 	private boolean validFile(final File file) {
@@ -246,7 +245,8 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 	}
 
 	private void measure(final Collection<Tree> trees, final List<String> metrics) {
-		final DefaultGenericTable table = (sntService.isActive()) ? sntService.getTable() : new DefaultGenericTable();
+		DefaultGenericTable table = (sntService.isActive()) ? sntService.getTable() : new DefaultGenericTable();
+		if (table == null) table = new DefaultGenericTable();
 		final int n = trees.size();
 		final Iterator<Tree> it = trees.iterator();
 		int index = 0;
@@ -258,6 +258,7 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 			analyzer.setTable(table, TABLE_TITLE);
 			analyzer.measure(metrics, splitByType); // will display table
 		}
+		resetUI();
 	}
 
 

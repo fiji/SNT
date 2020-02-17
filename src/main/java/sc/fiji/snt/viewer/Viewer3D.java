@@ -2090,6 +2090,7 @@ public class Viewer3D {
 				setVisible(true);
 				if (manager!= null) manager.setVisible(true);
 				if (lightController != null) lightController.setVisible(true);
+				if (allenNavigator != null) allenNavigator.dialog.setVisible(true);
 				isFullScreen = false;
 			}
 		}
@@ -2100,16 +2101,10 @@ public class Viewer3D {
 				loc = frame.getLocation();
 				if (manager != null) manager.setVisible(false);
 				if (lightController != null) lightController.setVisible(false);
+				if (allenNavigator != null) allenNavigator.dialog.setVisible(false);
 				setExtendedState(JFrame.MAXIMIZED_BOTH );
 				isFullScreen = true;
-				delayedMsg(100, "Press \"Esc\" to exit Full Screen", 3000); // without delay popup is not shown?
-			}
-		}
-
-		void disposeControllers() {
-			if (lightController != null) {
-				lightController.dispose();
-				lightController = null;
+				delayedMsg(300, "Press \"Esc\" to exit Full Screen", 3000); // without delay popup is not shown?
 			}
 		}
 	}
@@ -2470,7 +2465,7 @@ public class Viewer3D {
 			buttonPanel.add(menuButton(GLYPH.ATLAS, refBrainsMenu(), "Reference Brains"));
 			if (includeAnalysisCmds)
 				buttonPanel.add(menuButton(GLYPH.CALCULATOR, measureMenu(), "Analyze & Measure"));
-			buttonPanel.add(menuButton(GLYPH.TOOL, toolsMenu(), "Tools & Utilities"));
+			buttonPanel.add(menuButton(GLYPH.TOOL, toolsMenu(), "Actions & Settings"));
 			buttonPanel.add(menuButton(GLYPH.CODE, scriptMenu(), "Scripting"));
 			return buttonPanel;
 		}
@@ -2551,7 +2546,10 @@ public class Viewer3D {
 				removeColorLegends(false);
 				// Ensure nothing else remains
 				chart.getScene().getGraph().getAll().clear();
-				frame.disposeControllers();
+				if (frame.lightController != null) {
+					frame.lightController.dispose();
+					frame.lightController = null;
+				}
 			}
 		}
 
@@ -3673,8 +3671,8 @@ public class Viewer3D {
 							updateView();
 							if (failuresAndSuccesses[0] > 0)
 								guiUtils.error("" + failuresAndSuccesses[0] + "/" + failuresAndSuccesses[1]
-										+ " dropped file(s) were not be imported (Console log will"
-										+ " have more details, if you have enabled \"Debug mode\").");
+										+ " dropped file(s) were not imported (Console log will"
+										+ " have more details if you have enabled \"Debug mode\").");
 							resetEscape();
 						}
 					};
@@ -5171,18 +5169,22 @@ public class Viewer3D {
 		void resetLight() {
 			// HACK: the scene does not seem to update when light is removed
 			// so we'll try our best to restore things to pre-prompt state
-			Light light = chart.getScene().getLightSet().get(0);
-			light.setSpecularColor(existingSpecularColor);
-			chart.getView().setBackgroundColor(existingSpecularColor);
-			light.setEnabled(false);
-			light.setAmbiantColor(null);
-			light.setDiffuseColor(null);
-			light.setSpecularColor(null);
-			chart.render();
-			chart.getScene().remove(light);
-			light = null;
-			chart.getScene().setLightSet(new LightSet());
-			chart.render();
+			try {
+				Light light = chart.getScene().getLightSet().get(0);
+				light.setSpecularColor(existingSpecularColor);
+				chart.getView().setBackgroundColor(existingSpecularColor);
+				light.setEnabled(false);
+				light.setAmbiantColor(null);
+				light.setDiffuseColor(null);
+				light.setSpecularColor(null);
+				chart.render();
+				chart.getScene().remove(light);
+				light = null;
+				chart.getScene().setLightSet(new LightSet());
+				chart.render();
+			} catch (final IndexOutOfBoundsException ignored) {
+				// do nothing. Somehow Light was already removed from scene
+			}
 		}
 
 		void dispose(final boolean prompt) {

@@ -194,7 +194,7 @@ public class PathOrderAnalysisCmd extends TreeAnalyzer {
 
 	private List<Double> converIntSetToDoubleList(final Set<Integer> set) {
 		ArrayList<Double> list = new ArrayList<>(set.size());
-		set.stream().forEach( i -> list.add((double)i));
+		set.forEach( i -> list.add((double)i));
 		return list;
 	}
 

@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.scijava.Context;
 import org.scijava.util.ColorRGB;
 
 import ij.IJ;
@@ -50,6 +51,8 @@ import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.util.SWCPoint;
+import sc.fiji.snt.viewer.Viewer2D;
+import sc.fiji.snt.viewer.Viewer3D;
 import sholl.UPoint;
 
 /**
@@ -373,6 +376,33 @@ public class Tree {
 			types.add(it.next().getSWCType());
 		}
 		return types;
+	}
+
+	public Viewer3D show3D() {
+		final Viewer3D viewer = new Viewer3D();
+		viewer.addTree(this);
+		if (getLabel() != null) {
+			final java.awt.Frame frame = viewer.show();
+			frame.setTitle(frame.getTitle().replace("Reconstruction Viewer", getLabel()));
+		}
+		return viewer;
+	}
+
+	public Viewer2D show2D() {
+		final Viewer2D viewer = new Viewer2D(new Context());
+		viewer.add(this);
+		if (getLabel() != null) {
+			viewer.setTitle(getLabel());
+		}
+		viewer.show();
+		return viewer;
+	}
+
+	public void show() {
+		if (is3D())
+			show3D();
+		else 
+			show2D();
 	}
 
 	/**

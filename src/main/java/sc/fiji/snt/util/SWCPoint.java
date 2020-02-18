@@ -136,10 +136,12 @@ public class SWCPoint extends PointInImage implements SNTPoint, Comparable<SWCPo
 	 */
 	@Override
 	public boolean equals(final Object o) {
-		if (this == o) return true;
-		if (o == null) return false;
-		if (!(o instanceof SWCPoint)) return false;
-		return this.id == ((SWCPoint) o).id;
+		return this == o;
+	}
+	
+	@Override
+	public int hashCode() {
+		return System.identityHashCode(this);
 	}
 
 	/**

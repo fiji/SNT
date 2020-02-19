@@ -19,7 +19,7 @@ import sc.fiji.snt.viewer.MultiViewer2D
 
 
 // Retrive all reconstruction files from the directory
-trees = Tree.listFromDir(recDir)
+trees = Tree.listFromDir(recDir.toString())
 if (trees.isEmpty()) {
 	// Directory is invalid. Let's retrieve demo data instead
 	trees = snt.demoTrees()

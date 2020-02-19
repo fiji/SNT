@@ -141,6 +141,8 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 	@Parameter(required = false)
 	private Collection<Tree> trees;
 
+	@Parameter(required = false)
+	DefaultGenericTable table;
 
 	@SuppressWarnings("unused")
 	private void init() {
@@ -155,6 +157,12 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 		}
 		if (tree != null) resolveInput("trees");
 		if (trees != null) resolveInput("tree");
+		if (table == null) {
+			table = (sntService.isActive()) ? sntService.getTable() : new DefaultGenericTable();
+			if (table == null) table = new DefaultGenericTable();
+		} else {
+			resolveInput("table");
+		}
 	}
 
 	@SuppressWarnings("unused")
@@ -245,8 +253,6 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 	}
 
 	private void measure(final Collection<Tree> trees, final List<String> metrics) {
-		DefaultGenericTable table = (sntService.isActive()) ? sntService.getTable() : new DefaultGenericTable();
-		if (table == null) table = new DefaultGenericTable();
 		final int n = trees.size();
 		final Iterator<Tree> it = trees.iterator();
 		int index = 0;

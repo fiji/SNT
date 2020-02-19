@@ -501,7 +501,7 @@ public class TreeAnalyzer extends ContextCommand {
 		final String displayName = (tableTitle == null) ? "SNT Measurements"
 			: tableTitle;
 		final Display<?> display = displayService.getDisplay(displayName);
-		if (display != null && display.isDisplaying(table)) {
+		if (display != null) {
 			display.update();
 		}
 		else {

@@ -696,9 +696,28 @@ public class Viewer3D {
 	 * @return the Tree list
 	 */
 	public List<Tree> getTrees() {
-		final ArrayList<Tree> trees = new ArrayList<>(plottedTrees.values().size());
-		plottedTrees.values().forEach( shapeTree -> trees.add(shapeTree.tree));
-		return trees;
+		return getTrees(false);
+	}
+
+	/**
+	 * Returns all trees added to this viewer.
+	 *
+	 * @param visibleOnly If true, only visible Trees are retrieved.
+	 * @return the Tree list
+	 */
+	public List<Tree> getTrees(final boolean visibleOnly) {
+		if (visibleOnly) {
+			final ArrayList<Tree> trees = new ArrayList<>();
+			plottedTrees.forEach((k, shapeTree) -> {
+				if (shapeTree.isDisplayed())
+					trees.add(shapeTree.tree);
+			});
+			return trees;
+		} else {
+			final ArrayList<Tree> trees = new ArrayList<>(plottedTrees.values().size());
+			plottedTrees.values().forEach(shapeTree -> trees.add(shapeTree.tree));
+			return trees;
+		}
 	}
 
 	/**
@@ -707,9 +726,29 @@ public class Viewer3D {
 	 * @return the mesh list
 	 */
 	public List<OBJMesh> getMeshes() {
-		final ArrayList<OBJMesh> meshes = new ArrayList<>(plottedObjs.values().size());
-		plottedObjs.values().forEach( vbo -> meshes.add(vbo.objMesh));
-		return meshes;
+		return getMeshes(false);
+	}
+
+	/**
+	 * Returns all meshes added to this viewer.
+	 *
+	 * @param visibleOnly If true, only visible meshes are retrieved.
+	 *
+	 * @return the mesh list
+	 */
+	public List<OBJMesh> getMeshes(final boolean visibleOnly) {
+		if (visibleOnly) {
+			final ArrayList<OBJMesh> meshes = new ArrayList<>();
+			plottedObjs.values().forEach( vbo -> {
+				if (vbo.isDisplayed())
+					meshes.add(vbo.objMesh);
+			});
+			return meshes;
+		} else {
+			final ArrayList<OBJMesh> meshes = new ArrayList<>(plottedObjs.values().size());
+			plottedObjs.values().forEach( vbo -> meshes.add(vbo.objMesh));
+			return meshes;
+		}
 	}
 
 	/**
@@ -2796,9 +2835,36 @@ public class Viewer3D {
 			managerList.setSelectedObjects(selectedKeys.toArray());
 		}
 
-		private List<String> getSelectedTrees(final boolean promptForAllIfNone) {
-			return getSelectedKeys(plottedTrees, "reconstructions",
-				promptForAllIfNone);
+		private Tree getSingleSelectionTree() {
+			if (plottedTrees.size() == 1) return plottedTrees.values().iterator()
+				.next().tree;
+			final List<Tree> trees = getSelectedTrees(false);
+			if (trees == null) return null;
+			if (trees.isEmpty() || trees.size() > 1) {
+				guiUtils.error(
+					"This command requires a single recontruction to be selected.");
+				return null;
+			}
+			return trees.get(0);
+		}
+
+		private List<Tree> getSelectedTrees() {
+			return getSelectedTrees(prefs.retrieveAllIfNoneSelected);
+		}
+	
+		private List<Tree> getSelectedTrees(final boolean promptForAllIfNone) {
+			final List<String> keys = getSelectedKeys(plottedTrees, "reconstructions", promptForAllIfNone);
+			if (keys == null) return null;
+			final List<Tree> trees = new ArrayList<>();
+			keys.forEach( k -> {
+				final ShapeTree sTree = plottedTrees.get(k);
+				if (sTree != null) trees.add(sTree.tree);
+			});
+			return trees;
+		}
+
+		private List<String> getSelectedTreeLabels() {
+			return getSelectedKeys(plottedTrees, "reconstructions", prefs.retrieveAllIfNoneSelected);
 		}
 
 		private List<String> getSelectedMeshes(final boolean promptForAllIfNone) {
@@ -2840,29 +2906,25 @@ public class Viewer3D {
 			final JPopupMenu measureMenu = new JPopupMenu();
 			JMenuItem mi = new JMenuItem("Measure...", IconFactory.getMenuIcon(GLYPH.TABLE));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
-				if (keys == null) return;
-				final List<Tree> trees = new ArrayList<>();
-				keys.forEach( k -> {
-					final ShapeTree sTree = plottedTrees.get(k);
-					if (sTree != null) trees.add(sTree.tree);
-				});
-				final Map<String, Object> input = new HashMap<>();
-				input.put("trees", trees);
-				runCmd(AnalyzerCmd.class, input, CmdWorker.DO_NOTHING, false);
+				final List<Tree> trees = getSelectedTrees();
+				if (trees == null || trees.isEmpty()) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("trees", trees);
+				initTable();
+				inputs.put("table", table);
+				runCmd(AnalyzerCmd.class, inputs, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);
 			mi = new JMenuItem("Quick Measurements", IconFactory.getMenuIcon(GLYPH.ROCKET));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
-				if (keys == null) return;
-				if (table == null) table =  new DefaultGenericTable();
-				plottedTrees.forEach((k, shapeTree) -> {
-					if (!keys.contains(k)) return;
-					final TreeStatistics tStats = new TreeStatistics(shapeTree.tree);
+				final List<Tree> trees = getSelectedTrees();
+				if (trees == null || trees.isEmpty()) return;
+				initTable();
+				trees.forEach(tree -> {
+					final TreeStatistics tStats = new TreeStatistics(tree);
 					tStats.setContext(context);
 					tStats.setTable(table);
-					tStats.summarize(k, true); // will display table
+					tStats.summarize(tree.getLabel(), true); // will display table
 				});
 			});
 			measureMenu.add(mi);
@@ -2905,17 +2967,8 @@ public class Viewer3D {
 			return measureMenu;
 		}
 
-		private Tree getSingleSelectionTree() {
-			if (plottedTrees.size() == 1) return plottedTrees.values().iterator()
-				.next().tree;
-			final List<String> keys = getSelectedTrees(false);
-			if (keys == null) return null;
-			if (keys.isEmpty() || keys.size() > 1) {
-				guiUtils.error(
-					"This command requires a single recontruction to be selected.");
-				return null;
-			}
-			return plottedTrees.get(keys.get(0)).tree;
+		private void initTable() {
+			if (table == null) table =  new DefaultGenericTable();
 		}
 
 		private JMenu customizeMeshesMenu() {
@@ -3014,7 +3067,7 @@ public class Viewer3D {
 
 			JMenuItem mi = new JMenuItem("All Parameters...", IconFactory.getMenuIcon(GLYPH.SLIDERS));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
+				final List<String> keys = getSelectedTreeLabels();
 				if (keys == null) return;
 				if (cmdService == null) {
 					guiUtils.error(
@@ -3076,7 +3129,7 @@ public class Viewer3D {
 	
 			mi = new JMenuItem("Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
+				final List<String> keys = getSelectedTreeLabels();
 				if (keys == null || !okToApplyColor(keys)) return;
 				final ColorRGB c = guiUtils.getColorRGB("Reconstruction(s) Color",
 					java.awt.Color.RED, "HSB");
@@ -3088,7 +3141,7 @@ public class Viewer3D {
 			menu.add(mi);
 			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.DOTCIRCLE));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
+				final List<String> keys = getSelectedTreeLabels();
 				if (keys == null) return;
 				String msg = "<HTML><body><div style='width:500;'>" +
 					"Please specify a constant thickness value [ranging from 1 (thinnest) to 8"
@@ -3112,7 +3165,7 @@ public class Viewer3D {
 
 			mi = new JMenuItem("Translate...", IconFactory.getMenuIcon(GLYPH.MOVE));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(prefs.retrieveAllIfNoneSelected);
+				final List<String> keys = getSelectedTreeLabels();
 				if (keys == null) return;
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("treeLabels", keys);
@@ -3123,7 +3176,7 @@ public class Viewer3D {
 
 			mi = new JMenuItem("Color Coding (Individual Cells)...");
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
+				final List<String> keys = getSelectedTreeLabels();
 				if (keys == null) return;
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("treeMappingLabels", keys);
@@ -3132,7 +3185,7 @@ public class Viewer3D {
 			menu.add(mi);
 			mi = new JMenuItem("Color Coding (Group of Cells)...");
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
+				final List<String> keys = getSelectedTreeLabels();
 				if (keys == null) return;
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("multiTreeMappingLabels", keys);
@@ -3141,7 +3194,7 @@ public class Viewer3D {
 			menu.add(mi);
 			mi = new JMenuItem("Color Each Cell Uniquely");
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
+				final List<String> keys = getSelectedTreeLabels();
 				if (keys == null || !okToApplyColor(keys)) return;
 
 				final ColorRGB[] colors = SNTColor.getDistinctColors(keys.size());
@@ -3408,7 +3461,7 @@ public class Viewer3D {
 			mi = new JMenuItem("Remove Selected...", IconFactory.getMenuIcon(
 				GLYPH.DELETE));
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(false);
+				final List<String> keys = getSelectedTreeLabels();
 				if (keys == null || keys.isEmpty()) {
 					guiUtils.error("There are no selected reconstructions.");
 					return;
@@ -3419,7 +3472,7 @@ public class Viewer3D {
 					return;
 				}
 				Viewer3D.this.setSceneUpdatesEnabled(false);
-				keys.stream().forEach(k -> Viewer3D.this.removeTree(k));
+				keys.forEach(k -> Viewer3D.this.removeTree(k));
 				Viewer3D.this.setSceneUpdatesEnabled(true);
 				Viewer3D.this.updateView();
 			});
@@ -3491,7 +3544,7 @@ public class Viewer3D {
 					return;
 				}
 				Viewer3D.this.setSceneUpdatesEnabled(false);
-				keys.stream().forEach(k -> Viewer3D.this.removeMesh(k));
+				keys.forEach(k -> Viewer3D.this.removeMesh(k));
 				Viewer3D.this.setSceneUpdatesEnabled(true);
 				Viewer3D.this.updateView();
 			});
@@ -4526,10 +4579,12 @@ public class Viewer3D {
 			this.type = (type == Path.SWC_APICAL_DENDRITE) ? Path.SWC_DENDRITE : type;
 		}
 
+		@SuppressWarnings("unused")
 		boolean isDendrite() {
 			return type == Path.SWC_DENDRITE;
 		}
 
+		@SuppressWarnings("unused")
 		boolean isAxon() {
 			return type == Path.SWC_AXON;
 		}
@@ -4887,9 +4942,8 @@ public class Viewer3D {
 			final BoundingBox3d bounds = view.getBounds();
 			final Coord3d offset = new Coord3d(
 					bounds.getXRange().getRange() * direction.x * normPan, 
-					bounds.getYRange().getRange() * direction.y * normPan,0);
-			final BoundingBox3d newBounds = bounds.shift(offset);
-			view.setBoundManual(newBounds);
+					bounds.getYRange().getRange() * direction.y * normPan, 0);
+			view.setBoundManual(bounds.shift(offset));
 			view.shoot();
 		}
 
@@ -5243,7 +5297,7 @@ public class Viewer3D {
 		}
 
 		void dispose(final boolean prompt) {
-			if (prompt && !new GuiUtils(getParent()).getConfirmation("Keep new lightning scheme? "
+			if (prompt && !new GuiUtils(this).getConfirmation("Keep new lightning scheme? "
 					+ "(If you choose \"Discard\" you may need to rebuild the scene for changes " + "to take effect)",
 					"Keep Changes?", "Yes. Keep", "No. Discard")) {
 				resetLight();
@@ -5343,7 +5397,7 @@ public class Viewer3D {
 		final List<AbstractDrawable> all = chart.getView().getScene().getGraph()
 			.getAll();
 		final BoundingBox3d bounds = new BoundingBox3d(0, 0, 0, 0, 0, 0);
-		all.stream().forEach(d -> {
+		all.forEach(d -> {
 			if (d != null && d.isDisplayed() && d.getBounds() != null && !d
 				.getBounds().isReset())
 			{

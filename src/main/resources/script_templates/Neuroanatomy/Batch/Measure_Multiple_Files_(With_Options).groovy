@@ -8,6 +8,6 @@ version:    20191217
 info:       Applies SNT's measure command to a directory
 """
 
-import sc.fiji.snt.gui.cmds.DetailedMeasurementsCmd
+import sc.fiji.snt.plugin.AnalyzerCmd
 
-ij.command().run(DetailedMeasurementsCmd.class, true, null)
+ij.command().run(AnalyzerCmd.class, true, null)

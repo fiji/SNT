@@ -142,7 +142,7 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 	private Collection<Tree> trees;
 
 	@Parameter(required = false)
-	DefaultGenericTable table;
+	private DefaultGenericTable table;
 
 	@SuppressWarnings("unused")
 	private void init() {

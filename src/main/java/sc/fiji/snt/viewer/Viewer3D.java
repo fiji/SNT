@@ -207,7 +207,8 @@ import sc.fiji.snt.gui.SNTSearchableBar;
 import sc.fiji.snt.gui.cmds.ColorMapReconstructionCmd;
 import sc.fiji.snt.gui.cmds.CustomizeObjCmd;
 import sc.fiji.snt.gui.cmds.CustomizeTreeCmd;
-import sc.fiji.snt.gui.cmds.DistributionCmd;
+import sc.fiji.snt.gui.cmds.DistributionBPCmd;
+import sc.fiji.snt.gui.cmds.DistributionCPCmd;
 import sc.fiji.snt.gui.cmds.LoadObjCmd;
 import sc.fiji.snt.gui.cmds.LoadReconstructionCmd;
 import sc.fiji.snt.gui.cmds.MLImporterCmd;
@@ -2905,6 +2906,7 @@ public class Viewer3D {
 		private JPopupMenu measureMenu() {
 			final JPopupMenu measureMenu = new JPopupMenu();
 			JMenuItem mi = new JMenuItem("Measure...", IconFactory.getMenuIcon(GLYPH.TABLE));
+			mi.setToolTipText("Computes detailed metrics from single cells");
 			mi.addActionListener(e -> {
 				final List<Tree> trees = getSelectedTrees();
 				if (trees == null || trees.isEmpty()) return;
@@ -2916,6 +2918,7 @@ public class Viewer3D {
 			});
 			measureMenu.add(mi);
 			mi = new JMenuItem("Quick Measurements", IconFactory.getMenuIcon(GLYPH.ROCKET));
+			mi.setToolTipText("Runs \"Measure...\" on a pre-set list of metrics");
 			mi.addActionListener(e -> {
 				final List<Tree> trees = getSelectedTrees();
 				if (trees == null || trees.isEmpty()) return;
@@ -2928,23 +2931,31 @@ public class Viewer3D {
 				});
 			});
 			measureMenu.add(mi);
-			mi = new JMenuItem("Distribution Analysis...", IconFactory.getMenuIcon(
-				GLYPH.CHART));
+			mi = new JMenuItem("Distribution Analysis... (Branch Properties)", IconFactory.getMenuIcon(GLYPH.CHART));
+			mi.setToolTipText("Computes metrics from all the branches of selected trees");
 			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTrees(true);
-				if (keys == null || keys.isEmpty()) return;
-				final Tree mergedTree = new Tree();
-				plottedTrees.forEach((k, shapeTree) -> {
-					if (!keys.contains(k)) return;
-					mergedTree.merge(shapeTree.tree);
-				});
+				final List<Tree> trees = getSelectedTrees();
+				if (trees == null || trees.isEmpty()) return;
 				final Map<String, Object> inputs = new HashMap<>();
-				inputs.put("tree", mergedTree);
-				runCmd(DistributionCmd.class, inputs, CmdWorker.DO_NOTHING, false);
+				inputs.put("trees", trees);
+				inputs.put("calledFromPathManagerUI", false);
+				runCmd(DistributionBPCmd.class, inputs, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);
-			mi = new JMenuItem("Sholl Analysis...", IconFactory.getMenuIcon(
-				GLYPH.BULLSEYE));
+			mi = new JMenuItem("Distribution Analysis (Cell Properties)...", IconFactory.getMenuIcon(GLYPH.CHART));
+			mi.setToolTipText("Computes metrics from individual cells");
+			mi.addActionListener(e -> {
+				final List<Tree> trees = getSelectedTrees();
+				if (trees == null || trees.isEmpty()) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("trees", trees);
+				inputs.put("calledFromPathManagerUI", false);
+				runCmd(DistributionCPCmd.class, inputs, CmdWorker.DO_NOTHING, false);
+			});
+			measureMenu.add(mi);
+			measureMenu.addSeparator();
+			mi = new JMenuItem("Sholl Analysis...", IconFactory.getMenuIcon(GLYPH.BULLSEYE));
+			mi.setToolTipText("Runs Sholl Analysis on single cells");
 			mi.addActionListener(e -> {
 				final Tree tree = getSingleSelectionTree();
 				if (tree == null) return;
@@ -2954,8 +2965,8 @@ public class Viewer3D {
 				runCmd(ShollTracingsCmd.class, input, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);
-			mi = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(
-				GLYPH.BRANCH_CODE));
+			mi = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(GLYPH.BRANCH_CODE));
+			mi.setToolTipText("Runs Strahler Analysis on single cells");
 			mi.addActionListener(e -> {
 				final Tree tree = getSingleSelectionTree();
 				if (tree == null) return;

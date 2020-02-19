@@ -22,6 +22,7 @@
 
 package sc.fiji.snt.gui.cmds;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,21 +38,20 @@ import org.scijava.plugin.Plugin;
 import org.scijava.prefs.PrefService;
 
 import sc.fiji.snt.analysis.PathProfiler;
-import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.TreeStatistics;
 import sc.fiji.snt.gui.GuiUtils;
 
 /**
- * Command for plotting distributions of morphometric properties of
- * {@link Tree}s
+ * Command for plotting distributions of morphometric properties
+ * (branch-related) of {@link Tree}s
  *
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false,
-	label = "Distribution Analysis", initializer = "init")
-public class DistributionCmd extends CommonDynamicCmd {
+	label = "Distribution Analysis (Branch Properties)", initializer = "init")
+public class DistributionBPCmd extends CommonDynamicCmd {
 
 	@Parameter
 	private PrefService prefService;
@@ -59,38 +59,63 @@ public class DistributionCmd extends CommonDynamicCmd {
 	@Parameter(required = true, label = "Measurement")
 	private String measurementChoice;
 
-	@Parameter(required = true)
+	// Allowed inputs are a single Tree, or a Collection of Trees
+	@Parameter(required = false)
 	private Tree tree;
 
+	@Parameter(required = false)
+	private Collection<Tree> trees;
+
 	@Parameter(required = false, visibility = ItemVisibility.INVISIBLE)
-	private boolean setValuesFromSNTService;
+	private boolean calledFromPathManagerUI;
+
+	private boolean imgDataAvailable;
 
 	protected void init() {
 		super.init(false);
 		final MutableModuleItem<String> measurementChoiceInput = getInfo()
 			.getMutableInput("measurementChoice", String.class);
 		final List<String> choices = TreeStatistics.getMetrics();
-		if (!setValuesFromSNTService) choices.remove(TreeStatistics.VALUES);
+		imgDataAvailable = calledFromPathManagerUI && sntService.getPlugin().accessToValidImageData();
+		if (!imgDataAvailable) choices.remove(TreeStatistics.VALUES);
 		Collections.sort(choices);
 		measurementChoiceInput.setChoices(choices);
 		measurementChoiceInput.setValue(this, prefService.get(getClass(),
-			"measurementChoice", TreeStatistics.PATH_ORDER));
-		resolveInput("setValuesFromSNTService");
+			"measurementChoice", TreeStatistics.CONTRACTION));
+		if (tree != null) {
+			trees = Collections.singletonList(tree);
+			resolveInput("trees");
+		} else {
+			resolveInput("tree");
+		}
 	}
 
 	@Override
 	public void run() {
-		if (setValuesFromSNTService && TreeColorMapper.VALUES.equals(
+		if (imgDataAvailable && TreeStatistics.VALUES.equals(
 			measurementChoice))
 		{
 			SNTUtils.log("Assigning values...");
-			final PathProfiler profiler = new PathProfiler(tree, sntService
-				.getPlugin().getLoadedDataAsImp());
-			profiler.assignValues();
+			trees.forEach( tree -> {
+				final PathProfiler profiler = new PathProfiler(tree, sntService
+						.getPlugin().getLoadedDataAsImp());
+					profiler.assignValues();
+			});
+
 		}
-		final TreeStatistics treeStats = new TreeStatistics(tree);
-		treeStats.getHistogram(measurementChoice).setVisible(true);
-		resetUI();
+		try {
+			final TreeStatistics treeStats = TreeStatistics.fromCollection(trees, measurementChoice);
+			treeStats.getHistogram(measurementChoice).setVisible(true);
+			resetUI();
+		} catch (final IllegalArgumentException ex) {
+			String error = "It was not possible to retrieve valid histogram data.\n";
+			if (calledFromPathManagerUI) {
+				error += "Perhaps some of the selected Paths were disconnected?"
+						+ "Please re-run command with valid selection (e.g., All Paths)";
+			}
+			cancel(error);
+			ex.printStackTrace();
+		}
 	}
 
 	/* IDE debug method **/
@@ -102,7 +127,7 @@ public class DistributionCmd extends CommonDynamicCmd {
 		tree.setLabel("Bogus test");
 		final Map<String, Object> input = new HashMap<>();
 		input.put("tree", tree);
-		ij.command().run(DistributionCmd.class, true, input);
+		ij.command().run(DistributionBPCmd.class, true, input);
 	}
 
 }

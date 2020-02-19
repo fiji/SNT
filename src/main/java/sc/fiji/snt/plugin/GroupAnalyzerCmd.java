@@ -165,8 +165,8 @@ public class GroupAnalyzerCmd extends ContextCommand {
 		});
 		final StringBuilder exitMsg = new StringBuilder("<HTML>");
 		if (inputGroupsCounter != stats.getGroups().size()) {
-			exitMsg.append("<p>").append(inputGroupsCounter - stats.getGroups().size());
-			exitMsg.append(" directories did not contain matching data and were skipped.</p>");
+			exitMsg.append("<p>Some directories (").append(inputGroupsCounter - stats.getGroups().size());
+			exitMsg.append(") did not contain matching data and were skipped.</p>");
 		}
 		if (isMetricMappable(metric)) {
 			exitMsg.append("<p>NB: Only the first 10 cells of each group were mapped.</p>");

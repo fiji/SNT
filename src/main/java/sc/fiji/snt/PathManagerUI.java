@@ -102,7 +102,7 @@ import sc.fiji.snt.gui.ColorMenu;
 import sc.fiji.snt.gui.IconFactory;
 import sc.fiji.snt.gui.PathManagerUISearchableBar;
 import sc.fiji.snt.gui.SwingSafeResult;
-import sc.fiji.snt.gui.cmds.DistributionCmd;
+import sc.fiji.snt.gui.cmds.DistributionBPCmd;
 import sc.fiji.snt.gui.cmds.PathFitterCmd;
 import sc.fiji.snt.gui.cmds.SWCTypeOptionsCmd;
 import sc.fiji.snt.plugin.AnalyzerCmd;
@@ -1864,10 +1864,11 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 				return;
 			}
 			else if (MEASURE_CMD_OPTIONS.equals(cmd)) {
-				final Collection<Tree> trees = (assumeAll) ? getTrees() : Collections.singleton(new Tree(selectedPaths));
+				final Collection<Tree> trees = getTrees();
 				if (trees == null) return;
 				final HashMap<String, Object> inputs = new HashMap<>();
 				inputs.put("trees", trees);
+				inputs.put("table", getTable());
 				(plugin.getUI().new DynamicCmdRunner(AnalyzerCmd.class, inputs)).run();
 				return;
 			}
@@ -1895,15 +1896,12 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			}
 			else if (HISTOGRAM_CMD.equals(cmd)) {
 				final Map<String, Object> input = new HashMap<>();
-				final Tree tree = new Tree(selectedPaths);
-				tree.setLabel(getDescription(selectedPaths));
-				input.put("tree", tree);
-				input.put("setValuesFromSNTService", !plugin.tracingHalted);
+				input.put("trees", getSelectedPathsOrganizedByTrees(selectedPaths).values());
+				input.put("calledFromPathManagerUI", true);
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
-				cmdService.run(DistributionCmd.class, true, input);
+				cmdService.run(DistributionBPCmd.class, true, input);
 				return;
-
 			}
 			if (CUSTOM_TAG_CMD.equals(cmd)) {
 

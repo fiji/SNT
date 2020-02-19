@@ -38,38 +38,60 @@ import net.imagej.ImageJ;
 import sc.fiji.snt.gui.GuiUtils;
 
 /**
- * Command for customizing a Tree in Reconstruction Viewer
+ * Command for customizing selected Trees in Reconstruction Viewer.
  *
  * @author Tiago Ferreira
  */
 @Plugin(type = Command.class, visible = false, label = "Customize Reconstruction(s)...")
 public class CustomizeTreeCmd extends ContextCommand {
 
-	@Parameter(label = "<HTML><b>Processes:", persist = false, visibility = ItemVisibility.MESSAGE)
+	@Parameter(label = "<HTML><b>Dendrites:", persist = false, visibility = ItemVisibility.MESSAGE)
 	private String msg1 = "";
 
 	@Parameter(label = "Color", required = false)
-	private ColorRGB tColor;
+	private ColorRGB dColor;
 
-	@Parameter(label = "Transparency (%)", min = "0.5", max = "100", style = NumberWidget.SCROLL_BAR_STYLE)
-	private double tTransparency;
+	@Parameter(label = "Transparency (%)", min = "0", max = "100", style = NumberWidget.SCROLL_BAR_STYLE)
+	private double dTransparency;
+
+	@Parameter(label = "Skip dendrites customization")
+	private boolean skipD;
 
 	@Parameter(label = "Thickness", min = "1", max = "8",  stepSize = "1",
 			description = "Arbitrary units. 1: Thinnest; 8: Thickest")
-	private double tSize;
+	private double dSize;
+
+	@Parameter(label = "<HTML><b>Axons:", persist = false, visibility = ItemVisibility.MESSAGE)
+	private String msg2 = "";
+
+	@Parameter(label = "Color", required = false)
+	private ColorRGB aColor;
+
+	@Parameter(label = "Transparency (%)", min = "0", max = "100", style = NumberWidget.SCROLL_BAR_STYLE)
+	private double aTransparency;
+
+	@Parameter(label = "Thickness", min = "1", max = "8",  stepSize = "1",
+			description = "Arbitrary units. 1: Thinnest; 8: Thickest")
+	private double aSize;
+
+	@Parameter(label = "Skip axon customization")
+	private boolean skipA;
 
 	@Parameter(label = "<HTML><b>Soma:", persist = false, visibility = ItemVisibility.MESSAGE)
-	private String msg2 = "";
+	private String msg3 = "";
 
 	@Parameter(label = "Color", required = false)
 	private ColorRGB sColor;
 
-	@Parameter(label = "Transparency (%)", min = "0.5", max = "100", style = NumberWidget.SCROLL_BAR_STYLE)
+	@Parameter(label = "Transparency (%)", min = "0", max = "100", style = NumberWidget.SCROLL_BAR_STYLE)
 	private double sTransparency;
 
 	@Parameter(label = "Radius", min = "0",
 			description = "Spatially calibrated units. Applies only if soma is being rendered as a sphere")
 	private double sSize;
+
+	@Parameter(label = "Skip soma customization")
+	private boolean skipS;
 
 	// this should really be @Parameter(type = ItemIO.OUTPUT), but this
 	// Suppresses the annoying "ignoring unsupported output message
@@ -85,15 +107,17 @@ public class CustomizeTreeCmd extends ContextCommand {
 	 */
 	@Override
 	public void run() {
-		if (sTransparency >= 100 || tTransparency >= 100) {
-			cancel("Surface color cannot be fully transparent.");
-		}
+//		if (sTransparency >= 100 || dTransparency >= 100 || aTransparency >= 100) {
+//			cancel("Surface color cannot be fully transparent.");
+//		}
 		colorMap = new HashMap<>();
-		colorMap.put("soma", (sColor == null) ? null : new ColorRGBA(sColor.getRed(), sColor.getGreen(), sColor.getBlue(), getAlpha(sTransparency)));
-		colorMap.put("tree", (tColor == null) ? null : new ColorRGBA(tColor.getRed(), tColor.getGreen(), tColor.getBlue(), getAlpha(tTransparency)));
+		colorMap.put("soma", (sColor == null || skipS) ? null : new ColorRGBA(sColor.getRed(), sColor.getGreen(), sColor.getBlue(), getAlpha(sTransparency)));
+		colorMap.put("dendrite", (dColor == null || skipD) ? null : new ColorRGBA(dColor.getRed(), dColor.getGreen(), dColor.getBlue(), getAlpha(dTransparency)));
+		colorMap.put("axon", (aColor == null || skipA) ? null : new ColorRGBA(aColor.getRed(), aColor.getGreen(), aColor.getBlue(), getAlpha(aTransparency)));
 		sizeMap = new HashMap<>();
-		sizeMap.put("soma", sSize);
-		sizeMap.put("tree", tSize);
+		sizeMap.put("soma", (skipS) ? -1 : sSize);
+		sizeMap.put("dendrite", (skipD) ? -1 : dSize);
+		sizeMap.put("axon", (skipA) ? -1 : aSize);
 	}
 
 	private int getAlpha( final double transparency) {

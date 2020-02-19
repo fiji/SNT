@@ -3050,18 +3050,22 @@ public class Viewer3D {
 							return;
 						}
 						final Color sColor = fromColorRGB(colorMap.get("soma"));
-						final Color tColor = fromColorRGB(colorMap.get("tree"));
+						final Color dColor = fromColorRGB(colorMap.get("dendrite"));
+						final Color aColor = fromColorRGB(colorMap.get("axon"));
 						final double sSize = sizeMap.get("soma");
-						final double tSize = sizeMap.get("tree");
+						final double dSize = sizeMap.get("dendrite");
+						final double aSize = sizeMap.get("axon");
 						for (final String label : keys) {
 							final ShapeTree tree = plottedTrees.get(label);
 							if (tree.somaSubShape != null) {
 								if (sColor != null) tree.setSomaColor(sColor);
-								tree.setSomaRadius((float) sSize);
+								if (sSize > -1) tree.setSomaRadius((float) sSize);
 							}
 							if (tree.treeSubShape != null) {
-								if (tColor != null) tree.setArborColor(tColor);
-								tree.setThickness((float) tSize);
+								if (dColor != null) tree.setArborColor(dColor, Path.SWC_DENDRITE);
+								if (aColor != null) tree.setArborColor(aColor, Path.SWC_AXON);
+								if (dSize > -1) tree.setThickness((float) dSize, Path.SWC_DENDRITE);
+								if (aSize > -1) tree.setThickness((float) aSize, Path.SWC_AXON);
 							}
 						}
 					}
@@ -3102,7 +3106,7 @@ public class Viewer3D {
 					guiUtils.error("Invalid thickness value.");
 					return;
 				}
-				setTreesThickness(keys, thickness.floatValue());
+				setTreeThickness(keys, thickness.floatValue(), null);
 			});
 			menu.add(mi);
 
@@ -3143,7 +3147,7 @@ public class Viewer3D {
 				final ColorRGB[] colors = SNTColor.getDistinctColors(keys.size());
 				final int[] counter = new int[] { 0 };
 				plottedTrees.forEach((k, shapeTree) -> {
-					shapeTree.setArborColor(colors[counter[0]]);
+					shapeTree.setArborColor(colors[counter[0]], ShapeTree.ANY);
 					shapeTree.setSomaColor(colors[counter[0]]);
 					counter[0]++;
 				});
@@ -4255,10 +4259,28 @@ public class Viewer3D {
 		SNTUtils.removeViewer(this);
 	}
 
+	private int getSubTreeCompartment(final String compartment) {
+		if (compartment == null || compartment.length() < 2) return -1;
+		switch (compartment.toLowerCase().substring(0, 2)) {
+		case "ax":
+			return ShapeTree.AXON;
+		case "ap":
+		case "ba":
+		case "(b":
+		case "de":
+			return ShapeTree.DENDRITE;
+		default:
+			return ShapeTree.ANY;
+		}
+	}
+
 	private class ShapeTree extends Shape {
 
 		private static final float SOMA_SCALING_FACTOR = 2.5f;
 		private static final float SOMA_SLICES = 15f; // Sphere default;
+		private static final int DENDRITE = Path.SWC_DENDRITE;
+		private static final int AXON = Path.SWC_AXON;
+		private static final int ANY = -1;
 
 		private final Tree tree;
 		private Shape treeSubShape;
@@ -4309,7 +4331,7 @@ public class Viewer3D {
 
 		private void assembleShape() {
 
-			final List<LineStrip> lines = new ArrayList<>();
+			final List<LineStripPlus> lines = new ArrayList<>();
 			final List<SWCPoint> somaPoints = new ArrayList<>();
 			final List<java.awt.Color> somaColors = new ArrayList<>();
 
@@ -4333,7 +4355,7 @@ public class Viewer3D {
 				}
 
 				// Assemble arbor(s)
-				final LineStrip line = new LineStrip(p.size());
+				final LineStripPlus line = new LineStripPlus(p.size(), p.getSWCType());
 				for (int i = 0; i < p.size(); ++i) {
 					final PointInImage pim = p.getNode(i);
 					final Coord3d coord = new Coord3d(pim.x, pim.y, pim.z);
@@ -4438,20 +4460,35 @@ public class Viewer3D {
 			if (somaSubShape != null && somaSubShape instanceof Sphere)
 				((Sphere)somaSubShape).setVolume(radius);
 		}
-	
-		public void setThickness(final float thickness) {
-			if (treeSubShape != null) treeSubShape.setWireframeWidth(thickness);
+
+		private void setThickness(final float thickness, final int type) {
+			if (treeSubShape == null) return;
+			if (type == ShapeTree.ANY) {
+				treeSubShape.setWireframeWidth(thickness);
+			}
+			else for (int i = 0; i < treeSubShape.size(); i++) {
+				final LineStripPlus ls = ((LineStripPlus) treeSubShape.get(i));
+				if (ls.type == type) {
+					ls.setWireframeWidth(thickness);
+				}
+			}
 		}
 
-		private void setArborColor(final ColorRGB color) {
-			setArborColor(fromColorRGB(color));
+		private void setArborColor(final ColorRGB color, final int type) {
+			setArborColor(fromColorRGB(color), type);
 		}
 
-		private void setArborColor(final Color color) {
-			if (treeSubShape != null) treeSubShape.setWireframeColor(color);
-//			for (int i = 0; i < treeSubShape.size(); i++) {
-//				((LineStrip) treeSubShape.get(i)).setColor(color);
-//			}
+		private void setArborColor(final Color color, final int type) {
+			if (treeSubShape == null) return;
+			if (type == -1) {
+				treeSubShape.setWireframeColor(color);
+			}
+			else for (int i = 0; i < treeSubShape.size(); i++) {
+				final LineStripPlus ls = ((LineStripPlus) treeSubShape.get(i));
+				if (ls.type == type) {
+					ls.setColor(color);
+				}
+			}
 		}
 
 		private Color getArborWireFrameColor() {
@@ -4477,6 +4514,24 @@ public class Viewer3D {
 			colorizer.map(tree, measurement, colorTable);
 			rebuildShape();
 			return colorizer.getMinMax();
+		}
+
+	}
+
+	private class LineStripPlus extends LineStrip {
+		final int type;
+
+		LineStripPlus(final int size, final int type) {
+			super(size);
+			this.type = (type == Path.SWC_APICAL_DENDRITE) ? Path.SWC_DENDRITE : type;
+		}
+
+		boolean isDendrite() {
+			return type == Path.SWC_DENDRITE;
+		}
+
+		boolean isAxon() {
+			return type == Path.SWC_AXON;
 		}
 
 	}
@@ -4934,12 +4989,12 @@ public class Viewer3D {
 				if (isSameRGB(shapeTree.getSomaColor(), newBackground)) shapeTree
 					.setSomaColor(newForeground);
 				if (isSameRGB(shapeTree.getArborWireFrameColor(), newBackground)) {
-					shapeTree.setArborColor(newForeground);
+					shapeTree.setArborColor(newForeground, -1);
 					return; // replaces continue in lambda expression;
 				}
 				final Shape shape = shapeTree.treeSubShape;
 				for (int i = 0; i < shapeTree.treeSubShape.size(); i++) {
-					final List<Point> points = ((LineStrip) shape.get(i)).getPoints();
+					final List<Point> points = ((LineStripPlus) shape.get(i)).getPoints();
 					points.stream().forEach(p -> {
 						final Color pColor = p.getColor();
 						if (isSameRGB(pColor, newBackground)) {
@@ -5339,15 +5394,19 @@ public class Viewer3D {
 	/**
 	 * Applies a constant thickness (line width) to a subset of rendered trees.
 	 *
-	 * @param labels the Collection of keys specifying the subset of trees
-	 * @param thickness the thickness (line width)
-	 * @see #setTreesThickness(float)
+	 * @param labels      the Collection of keys specifying the subset of trees
+	 * @param thickness   the thickness (line width)
+	 * @param compartment a string with at least 2 characters describing the Tree
+	 *                    compartment (e.g., 'axon', 'axn', 'dendrite', 'dend',
+	 *                    etc.)
+	 * @see #setTreeThickness(float, String)
 	 */
-	public void setTreesThickness(final Collection<String> labels,
-		final float thickness)
+	public void setTreeThickness(final Collection<String> labels,
+		final float thickness, final String compartment)
 	{
+		final int comp = getSubTreeCompartment(compartment);
 		plottedTrees.forEach((k, shapeTree) -> {
-			if (labels.contains(k)) shapeTree.setThickness(thickness);
+			if (labels.contains(k)) shapeTree.setThickness(thickness, comp);
 		});
 	}
 
@@ -5356,11 +5415,61 @@ public class Viewer3D {
 	 * trees are rendered using their nodes' diameter.
 	 *
 	 * @param thickness the thickness (line width)
-	 * @see #setTreesThickness(Collection, float)
+	 * @see #setTreeThickness(Collection, float)
+	 * @see #setTreeThickness(float, String)
 	 */
-	public void setTreesThickness(final float thickness) {
+	public void setTreeThickness(final float thickness) {
 		plottedTrees.values().forEach(shapeTree -> shapeTree.setThickness(
-			thickness));
+			thickness, -1));
+	}
+
+	/**
+	 * Applies a constant thickness (line width) to all rendered trees.Note that by
+	 * default, trees are rendered using their nodes' diameter.
+	 *
+	 * @param thickness   the thickness (line width)
+	 * @param compartment a string with at least 2 characters describing the Tree
+	 *                    compartment (e.g., 'axon', 'axn', 'dendrite', 'dend',
+	 *                    etc.)
+	 * @see #setTreeThickness(float)
+	 */
+	public void setTreeThickness(final float thickness, final String compartment) {
+		final int comp = getSubTreeCompartment(compartment);
+		plottedTrees.values().forEach(shapeTree -> shapeTree.setThickness(
+				thickness, comp));
+	}
+
+	/**
+	 * Recolors a subset of rendered trees.
+	 *
+	 * @param labels      the Collection of keys specifying the subset of trees
+	 * @param color       the color to be applied, either a 1) HTML color codes
+	 *                    starting with hash ({@code #}), a color preset ("red",
+	 *                    "blue", etc.), or integer triples of the form
+	 *                    {@code r,g,b} and range {@code [0, 255]}
+	 * @param compartment a string with at least 2 characters describing the Tree
+	 *                    compartment (e.g., 'axon', 'axn', 'dendrite', 'dend',
+	 *                    etc.)
+	 */
+	public void setTreeColor(final Collection<String> labels, final String color, final String compartment) {
+		setTreeColor(labels, new ColorRGB(color), compartment);
+	}
+
+	/**
+	 * Recolors a subset of rendered trees.
+	 *
+	 * @param labels      the Collection of keys specifying the subset of trees
+	 * @param color       the color to be applied.
+	 * @param compartment a string with at least 2 characters describing the Tree
+	 *                    compartment (e.g., 'axon', 'axn', 'dendrite', 'dend',
+	 *                    etc.)
+	 */
+	public void setTreeColor(final Collection<String> labels, final ColorRGB color, final String compartment) {
+		final int comp = getSubTreeCompartment(compartment);
+		plottedTrees.forEach((k, shapeTree) -> {
+			if (labels.contains(k))
+				shapeTree.setArborColor((color == null) ? defColor : fromColorRGB(color), comp);
+		});
 	}
 
 	/**
@@ -5474,7 +5583,7 @@ public class Viewer3D {
 	{
 		plottedTrees.forEach((k, shapeTree) -> {
 			if (labels.contains(k)) {
-				shapeTree.setArborColor(color);
+				shapeTree.setArborColor(color, ShapeTree.ANY);
 				shapeTree.setSomaColor(color);
 			}
 		});
@@ -5486,9 +5595,9 @@ public class Viewer3D {
 			if (labels.contains(entry.getKey())) {
 				final Shape shape = entry.getValue().treeSubShape;
 				for (int i = 0; i < shape.size(); i++) {
-					// treeSubShape is only composed of LineStrips so this is a safe
+					// treeSubShape is only composed of LineStripPluses so this is a safe
 					// casting
-					final Color color = getNodeColor((LineStrip) shape.get(i));
+					final Color color = getNodeColor((LineStripPlus) shape.get(i));
 					if (color == null) continue;
 					if (refColor == null) {
 						refColor = color;
@@ -5502,7 +5611,7 @@ public class Viewer3D {
 		return false;
 	}
 
-	private Color getNodeColor(final LineStrip lineStrip) {
+	private Color getNodeColor(final LineStripPlus lineStrip) {
 		for (final Point p : lineStrip.getPoints()) {
 			if (p != null) return p.rgb;
 		}

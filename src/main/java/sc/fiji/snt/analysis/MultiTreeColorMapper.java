@@ -111,35 +111,6 @@ public class MultiTreeColorMapper extends ColorMapper {
 		}
 	}
 
-	/**
-	 * Instantiates the MultiTreeColorMapper.
-	 *
-	 * @param trees    the group of trees to be mapped,
-	 * @param swcTypes SWC type(s) a string with at least 2 characters describing
-	 *                 the SWC type allowed in the subtree (e.g., 'axn', or
-	 *                 'dendrite')
-	 * @throws NoSuchElementException {@code swcTypes} are not applicable to
-	 *                                {@code trees}
-	 */
-	public MultiTreeColorMapper(final Collection<Tree> trees, final String... swcTypes)
-			throws NoSuchElementException {
-		mappedTrees = new ArrayList<>();
-		if (swcTypes == null) {
-			for (final Tree tree : trees) {
-				if (tree.size() > 0)
-					mappedTrees.add(new MappedTree(tree));
-			}
-		} else {
-			trees.forEach(inputTree -> {
-				final Tree filteredTree = inputTree.subTree(swcTypes);
-				if (filteredTree != null && inputTree.size() > 0)
-					mappedTrees.add(new MappedTree(inputTree));
-			});
-			if (mappedTrees.isEmpty())
-				throw new NoSuchElementException("No match for the specified type(s) in group");
-		}
-	}
-
 	/*
 	 * (non-Javadoc)
 	 *

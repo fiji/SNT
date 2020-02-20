@@ -846,7 +846,10 @@ public class Viewer3D {
 	public Annotation3D mergeAnnotations(final Collection<Annotation3D> annotations, final String label) {
 		final boolean updateFlag = viewUpdatesEnabled;
 		viewUpdatesEnabled = false;
-		annotations.forEach(annot -> removeDrawable(getAnnotationDrawables(), annot.getLabel()));
+		annotations.forEach(annot -> {
+			final String[] labelAndManagerEntry = TagUtils.getUntaggedAndTaggedLabels(annot.getLabel());
+			removeDrawable(getAnnotationDrawables(), labelAndManagerEntry[0], labelAndManagerEntry[1]);
+		});
 		viewUpdatesEnabled = updateFlag;
 		final Annotation3D annotation = new Annotation3D(this, annotations);
 		final String uniqueLabel = getUniqueLabel(plottedAnnotations, "Merged Annot.", label);
@@ -868,8 +871,21 @@ public class Viewer3D {
 			managerList.addCheckBoxListSelectedIndex(i);
 	}
 
-	private boolean deleteItemFromManager(final String label) {
-		return managerList.model != null && managerList.model.removeElement(label);
+	private boolean deleteItemFromManager(final String managerEntry) {
+		if (managerList.model == null)
+			return false;
+		if (!managerList.model.removeElement(managerEntry)) {
+			// managerEntry was not found. It is likely associated
+			// with a tagged element. Retry:
+			for (int i = 0; i < managerList.model.getSize(); i++) {
+				final Object entry = managerList.model.getElementAt(i);
+				if (CheckBoxList.ALL_ENTRY.equals(entry)) continue;
+				if (TagUtils.removeAllTags(entry.toString()).equals(managerEntry)) {
+					return managerList.model.removeElement(entry);
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1098,13 +1114,18 @@ public class Viewer3D {
 	 * @see #addTree(Tree)
 	 */
 	public boolean removeTree(final String treeLabel) {
+		final String[] labelAndManagerEntry = TagUtils.getUntaggedAndTaggedLabels(treeLabel);
+		return removeTree(labelAndManagerEntry[0], labelAndManagerEntry[1]);
+	}
+
+	private boolean removeTree(final String treeLabel, final String managerEntry) {
 		final ShapeTree shapeTree = plottedTrees.get(treeLabel);
 		if (shapeTree == null) return false;
 		boolean removed = plottedTrees.remove(treeLabel) != null;
 		if (chart != null) {
 			removed = removed && chart.getScene().getGraph().remove(shapeTree.get(),
 				viewUpdatesEnabled);
-			if (removed) deleteItemFromManager(treeLabel);
+			if (removed) deleteItemFromManager(managerEntry);
 		}
 		return removed;
 	}
@@ -1118,7 +1139,7 @@ public class Viewer3D {
 	 */
 	public boolean removeMesh(final OBJMesh mesh) {
 		final String meshLabel = getLabel(mesh);
-		return removeDrawable(plottedObjs, meshLabel);
+		return removeDrawable(plottedObjs, meshLabel, meshLabel);
 	}
 
 	/**
@@ -1129,7 +1150,12 @@ public class Viewer3D {
 	 * @see #loadMesh(String, ColorRGB, double)
 	 */
 	public boolean removeMesh(final String meshLabel) {
-		return removeDrawable(plottedObjs, meshLabel);
+		final String[] labelAndManagerEntry = TagUtils.getUntaggedAndTaggedLabels(meshLabel);
+		return removeDrawable(plottedObjs, labelAndManagerEntry[0], labelAndManagerEntry[1]);
+	}
+
+	private boolean removeMesh(final String meshLabel, final String managerEntry) {
+		return removeDrawable(plottedObjs, meshLabel, managerEntry);
 	}
 
 	/**
@@ -1179,10 +1205,10 @@ public class Viewer3D {
 		if (viewUpdatesEnabled) chart.render();
 	}
 
-	private void removeSceneObject(final String label) {
-		if (!removeTree(label)) {
-			if (!removeMesh(label))
-				removeDrawable(getAnnotationDrawables(), label);
+	private void removeSceneObject(final String label, final String managerEntry) {
+		if (!removeTree(label, managerEntry)) {
+			if (!removeMesh(label, managerEntry))
+				removeDrawable(getAnnotationDrawables(), label, managerEntry);
 		}
 	}
 
@@ -1224,7 +1250,8 @@ public class Viewer3D {
 		} else if (object instanceof OBJMesh) {
 			removeMesh((OBJMesh) object);
 		} else if (object instanceof String) {
-			removeSceneObject((String) object);
+			final String[] labelAndManagerEntry = TagUtils.getUntaggedAndTaggedLabels((String)object);
+			removeSceneObject(labelAndManagerEntry[0], labelAndManagerEntry[1]);
 		} else if (object instanceof AbstractDrawable && chart != null) {
 			chart.getScene().getGraph().remove((AbstractDrawable) object, viewUpdatesEnabled);
 		} else {
@@ -1257,7 +1284,7 @@ public class Viewer3D {
 	}
 
 	private synchronized <T extends AbstractDrawable> boolean removeDrawable(
-		final Map<String, T> map, final String label)
+		final Map<String, T> map, final String label, final String managerListEntry)
 	{
 		final T drawable = map.get(label);
 		if (drawable == null) return false;
@@ -1266,7 +1293,7 @@ public class Viewer3D {
 			removed = removed && chart.getScene().getGraph().remove(drawable,
 				viewUpdatesEnabled);
 			if (removed) {
-				deleteItemFromManager(label);
+				deleteItemFromManager(managerListEntry);
 				if (frame != null && frame.allenNavigator != null)
 					frame.allenNavigator.meshRemoved(label);
 			}
@@ -2744,7 +2771,8 @@ public class Viewer3D {
 					selectedKeys.forEach(k -> {
 						if (k.equals(CheckBoxList.ALL_ENTRY))
 							return; // continue in lambda expression
-						removeSceneObject(k.toString());
+						final String[] labelAndManagerEntry = TagUtils.getUntaggedAndTaggedLabels(k.toString());
+						removeSceneObject(labelAndManagerEntry[0], labelAndManagerEntry[1]);
 					});
 				}
 			});
@@ -2879,7 +2907,12 @@ public class Viewer3D {
 				guiUtils.error("There are no loaded " + mapDescriptor + ".");
 				return null;
 			}
-			final List<?> selectedKeys = managerList.getSelectedValuesList();
+			final List<?> selectedValues = managerList.getSelectedValuesList();
+			if (selectedValues == null) return null;
+			final List<String> selectedKeys= new ArrayList<>(selectedValues.size());
+			selectedValues.forEach(sv -> {
+				selectedKeys.add(TagUtils.removeAllTags(sv.toString()));
+			});
 			final List<String> allKeys = new ArrayList<>(map.keySet());
 			if ((promptForAllIfNone && map.size() == 1) || (selectedKeys
 				.size() == 1 && selectedKeys.get(0) == CheckBoxList.ALL_ENTRY))
@@ -4101,7 +4134,7 @@ public class Viewer3D {
 								return;
 							editTextField.setText("");
 						} else {
-							final String existingTags = getTagStringFromEntry(getSelectedValue().toString());
+							final String existingTags = TagUtils.getTagStringFromEntry(getSelectedValue().toString());
 							if (!existingTags.isEmpty()) {
 								editTextField.setText(existingTags);
 								editTextField.selectAll();
@@ -4164,8 +4197,8 @@ public class Viewer3D {
 						removeTagsFromSelectedItems();
 					} else {
 						// textfield contained all tags
-						final String existingEntryWithoutTags = getUntaggedStringFromTags(existingEntry);
-						final String newEntry = applyTag(existingEntryWithoutTags, tag);
+						final String existingEntryWithoutTags = TagUtils.getUntaggedStringFromTags(existingEntry);
+						final String newEntry = TagUtils.applyTag(existingEntryWithoutTags, tag);
 						((DefaultListModel<String>) getModel()).set(row, newEntry);
 					}
 				}
@@ -4192,70 +4225,22 @@ public class Viewer3D {
 
 		@SuppressWarnings({ "unchecked" })
 		void applyTagToSelectedItems(final String tag) {
-			final String cleansedTag = getCleansedTag(tag);
+			final String cleansedTag = TagUtils.getCleansedTag(tag);
 			if (cleansedTag.trim().isEmpty()) return;
 			for (final int i : getSelectedIndices()) {
 				final String entry = (String) ((DefaultListModel<?>) getModel()).get(i);
-				((DefaultListModel<String>) getModel()).set(i, applyTag(entry, tag));
+				((DefaultListModel<String>) getModel()).set(i, TagUtils.applyTag(entry, tag));
 			}
-		}
-
-		private String getCleansedTag(final String candidate) {
-			return candidate.replace("{", "").replace("}", "");
 		}
 
 		@SuppressWarnings("unchecked")
 		void removeTagsFromSelectedItems() {
 			for (final int i : getSelectedIndices()) {
 				final String entry = (String) ((DefaultListModel<?>) getModel()).get(i);
-				((DefaultListModel<String>) getModel()).set(i, removeAllTags(entry));
+				((DefaultListModel<String>) getModel()).set(i, TagUtils.removeAllTags(entry));
 			}
 		}
 
-		String applyTag(final String entry, final String tag) {
-			final String cleansedTag = getCleansedTag(tag);
-			if (cleansedTag.trim().isEmpty()) return entry;
-			if (entry.indexOf("}") == -1) {
-				final StringBuilder sb = new StringBuilder(entry);
-				sb.append("{").append(cleansedTag).append("}");
-				return sb.toString();
-			} else {
-				return entry.replace("}", ", " + cleansedTag + "}");
-			}
-		}
-
-		String removeAllTags(final String entry) {
-			final int delimiterIdx = entry.indexOf("{");
-			if (delimiterIdx == -1) {
-				return entry;
-			} else {
-				return entry.substring(0, delimiterIdx);
-			}
-		}
-
-		String[] getTagsFromEntry(final String entry) {
-			final String tagString = getTagStringFromEntry(entry);
-			if (tagString.isEmpty()) return new String[] {};
-			return tagString.split("\\s*(,|\\s)\\s*");
-		}
-
-		String getTagStringFromEntry(final String entry) {
-			final int openingDlm = entry.indexOf("{");
-			final int closingDlm = entry.lastIndexOf("}");
-			if (closingDlm > openingDlm) {
-				return entry.substring(openingDlm + 1, closingDlm);
-			}
-			return "";
-		}
-
-		String getUntaggedStringFromTags(final String entry) {
-			final int openingDlm = entry.indexOf("{");
-			if (openingDlm == -1) {
-				return entry;
-			} else {
-				return entry.substring(0, openingDlm);
-			}
-		}
 
 		class CustomListRenderer extends DefaultListCellRenderer {
 			private static final long serialVersionUID = 1L;
@@ -4292,7 +4277,7 @@ public class Viewer3D {
 				} else {
 					label.setIcon(null);
 				}
-				final String[] tags = managerList.getTagsFromEntry(labelText);
+				final String[] tags = TagUtils.getTagsFromEntry(labelText);
 				if (tags.length > 0) {
 					for (final String tag : tags) {
 						final ColorRGB c = ColorRGB.fromHTMLColor(tag);
@@ -4303,6 +4288,70 @@ public class Viewer3D {
 					}
 				}
 				return label;
+			}
+		}
+
+	}
+
+	static final class TagUtils {
+
+		private TagUtils(){}
+
+		static String getCleansedTag(final String candidate) {
+			return candidate.replace("{", "").replace("}", "");
+		}
+
+		static String applyTag(final String entry, final String tag) {
+			final String cleansedTag = getCleansedTag(tag);
+			if (cleansedTag.trim().isEmpty()) return entry;
+			if (entry.indexOf("}") == -1) {
+				final StringBuilder sb = new StringBuilder(entry);
+				sb.append("{").append(cleansedTag).append("}");
+				return sb.toString();
+			} else {
+				return entry.replace("}", ", " + cleansedTag + "}");
+			}
+		}
+
+		static String removeAllTags(final String entry) {
+			final int delimiterIdx = entry.indexOf("{");
+			if (delimiterIdx == -1) {
+				return entry;
+			} else {
+				return entry.substring(0, delimiterIdx);
+			}
+		}
+
+		static String[] getTagsFromEntry(final String entry) {
+			final String tagString = getTagStringFromEntry(entry);
+			if (tagString.isEmpty()) return new String[] {};
+			return tagString.split("\\s*(,|\\s)\\s*");
+		}
+
+		static String getTagStringFromEntry(final String entry) {
+			final int openingDlm = entry.indexOf("{");
+			final int closingDlm = entry.lastIndexOf("}");
+			if (closingDlm > openingDlm) {
+				return entry.substring(openingDlm + 1, closingDlm);
+			}
+			return "";
+		}
+
+		static String getUntaggedStringFromTags(final String entry) {
+			final int openingDlm = entry.indexOf("{");
+			if (openingDlm == -1) {
+				return entry;
+			} else {
+				return entry.substring(0, openingDlm);
+			}
+		}
+
+		static String[] getUntaggedAndTaggedLabels(final String entry) {
+			final int openingDlm = entry.indexOf("{");
+			if (openingDlm == -1) {
+				return new String[] {entry, entry};
+			} else {
+				return new String[] {entry.substring(0, openingDlm), entry};
 			}
 		}
 

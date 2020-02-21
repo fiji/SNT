@@ -479,7 +479,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * @param lut         the lookup table specifying the color mapping
 	 */
 	public void map(final Collection<? extends PointInImage> points, final String measurement,
-			final String colorTable)
+			final String lut)
 	{
 		final boolean swcPoints = points.stream().anyMatch(p -> p instanceof SWCPoint);
 		@SuppressWarnings("unchecked")
@@ -497,7 +497,7 @@ public class TreeColorMapper extends ColorMapper {
 				}
 			}
 		}
-		map(tree, measurement, colorTable);
+		map(tree, measurement, lut);
 	}
 
 	protected String tryReallyHardToGuessMetric(final String guess) {

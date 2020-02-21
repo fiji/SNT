@@ -1,5 +1,4 @@
 # @ImageJ ij
-# @LUTService lut
 
 import sc.fiji.snt.*
 import sc.fiji.snt.io.*
@@ -94,23 +93,10 @@ somaCentroid = SNTPoint.average(somaNodes)
 println("SomaLocation: $somaCentroid.x, $somaCentroid.y, $somaCentroid.z")
 println("Centroid of all BPs in ${thalamus.name()}: $bpsCentroid.x, $bpsCentroid.y, $bpsCentroid.z")
 
-// Which branches are associated with these BPs? Terminal? Secondary?
-// Let's look at the Strahler distribuition. For convenience we'll
-// assemble a Tree from such branches (Paths in SNT)
-branches = []
-for (bp in bps) { branches.add(bp.getPath()) }
-bpsTree = new Tree(branches)
-bpsTree.setLabel("BPs in ${thalamus.acronym()}")
-bpsStats = new TreeStatistics(bpsTree)
-bpsStats.getHistogram("path order").show()
-
-// What about their length?
-bpsStats.getHistogram("length").show()
-
 // Let's assemble a Reconstruction Viewer to visualize the data
 viewer = new Viewer3D(ij.context())
 
-// Add meshes
+// Add relevant meshes
 brainMesh = AllenUtils.getCompartment("Whole Brain").getMesh()
 viewer.add(brainMesh)
 viewer.add(somaCompartment.getMesh())
@@ -121,10 +107,10 @@ tree = loader.getTree()
 tree.setColor("yellow")
 viewer.add(tree)
 
-// Annotate thalamic BPs color coded by depth
+// Annotate thalamic BPs color coded by depth and
+// add them to viewer as point-cloud annotation
 mapper = new TreeColorMapper(ij.context())
-colorTable = lut.loadLUT(lut.findLUTs().get("Ice.lut"))
-mapper.map(bpsTree, "z coordinates", colorTable)
+mapper.map(bps, "z coordinates", "Ice.lut")
 annot = viewer.annotatePoints(bps, "Thalamic BPs")
 annot.setSize(10)
 

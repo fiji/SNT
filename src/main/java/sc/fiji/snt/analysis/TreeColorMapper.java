@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -441,7 +442,7 @@ public class TreeColorMapper extends ColorMapper {
 	/**
 	 * Colorizes a tree after the specified measurement.
 	 *
-	 * @param tree the tree to be colorized
+	 * @param tree the tree to be mapped
 	 * @param measurement the measurement ({@link #PATH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param colorTable the color table specifying the color mapping. Null not
@@ -464,6 +465,39 @@ public class TreeColorMapper extends ColorMapper {
 				mappedTrees.add(tree);
 			}
 		}
+	}
+
+	/**
+	 * Colorizes a collection of points after the specified measurement. Mapping
+	 * bounds are automatically determined. This is a convenience method to extend
+	 * color mapping to point clouds.
+	 *
+	 * @param points      the points to be mapped
+	 * @param measurement the measurement ({@link #Z_COORDINATES}, etc.). Note that
+	 *                    if {@code points} do note encode a valid Tree. only
+	 *                    metrics applicable to coordinates are expected.
+	 * @param lut         the lookup table specifying the color mapping
+	 */
+	public void map(final Collection<? extends PointInImage> points, final String measurement,
+			final String colorTable)
+	{
+		final boolean swcPoints = points.stream().anyMatch(p -> p instanceof SWCPoint);
+		@SuppressWarnings("unchecked")
+		Tree tree = (swcPoints) ? new Tree((Collection<SWCPoint>) points, "") : null;
+		if (tree == null) {
+			// We'll just assemble a Tree from the points and hope for the best
+			tree = new Tree();
+			for (PointInImage point : points) {
+				if (point.onPath != null)
+					tree.add(point.onPath);
+				else {
+					Path p = new Path(1, 1, 1, "NA");
+					p.addNode(point);
+					tree.add(p);
+				}
+			}
+		}
+		map(tree, measurement, colorTable);
 	}
 
 	protected String tryReallyHardToGuessMetric(final String guess) {
@@ -533,7 +567,7 @@ public class TreeColorMapper extends ColorMapper {
 	 * Colorizes a tree after the specified measurement. Mapping bounds are
 	 * automatically determined.
 	 *
-	 * @param tree the tree to be plotted
+	 * @param tree the tree to be mapped
 	 * @param measurement the measurement ({@link #PATH_ORDER} }{@link #LENGTH},
 	 *          etc.)
 	 * @param lut the lookup table specifying the color mapping

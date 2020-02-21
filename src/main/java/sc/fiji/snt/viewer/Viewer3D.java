@@ -5348,7 +5348,7 @@ public class Viewer3D {
 				light = null;
 				chart.getScene().setLightSet(new LightSet());
 				chart.render();
-			} catch (final IndexOutOfBoundsException ignored) {
+			} catch (final IndexOutOfBoundsException | NullPointerException ignored) {
 				// do nothing. Somehow Light was already removed from scene
 			}
 		}

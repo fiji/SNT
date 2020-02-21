@@ -2527,13 +2527,13 @@ public class Viewer3D {
 			// do not allow panel to resize vertically
 			setFixedHeightToPanel(buttonPanel);
 			buttonPanel.add(menuButton(GLYPH.MASKS, sceneMenu(), "Scene Controls"));
-			buttonPanel.add(menuButton(GLYPH.TREE, treesMenu(), "Manage & Customize Neuronal Arbors"));
-			buttonPanel.add(menuButton(GLYPH.CUBE, meshMenu(), "Manage & Customize 3D Meshes"));
+			buttonPanel.add(menuButton(GLYPH.TREE, treesMenu(), "Neuronal Arbors"));
+			buttonPanel.add(menuButton(GLYPH.CUBE, meshMenu(), "3D Meshes"));
 			buttonPanel.add(menuButton(GLYPH.ATLAS, refBrainsMenu(), "Reference Brains"));
 			if (includeAnalysisCmds)
 				buttonPanel.add(menuButton(GLYPH.CALCULATOR, measureMenu(), "Analyze & Measure"));
-			buttonPanel.add(menuButton(GLYPH.TOOL, toolsMenu(), "Actions & Settings"));
-			buttonPanel.add(menuButton(GLYPH.CODE, scriptMenu(), "Scripting"));
+			buttonPanel.add(menuButton(GLYPH.TOOL, utilsMenu(), "Utilities"));
+			buttonPanel.add(menuButton(GLYPH.COG, prefsMenu(), "Settings"));
 			return buttonPanel;
 		}
 
@@ -2938,6 +2938,7 @@ public class Viewer3D {
 
 		private JPopupMenu measureMenu() {
 			final JPopupMenu measureMenu = new JPopupMenu();
+			addSeparator(measureMenu, "Tabular Results:");
 			JMenuItem mi = new JMenuItem("Measure...", IconFactory.getMenuIcon(GLYPH.TABLE));
 			mi.setToolTipText("Computes detailed metrics from single cells");
 			mi.addActionListener(e -> {
@@ -2964,7 +2965,8 @@ public class Viewer3D {
 				});
 			});
 			measureMenu.add(mi);
-			mi = new JMenuItem("Distribution Analysis... (Branch Properties)", IconFactory.getMenuIcon(GLYPH.CHART));
+			addSeparator(measureMenu, "Distribution Analysis:");
+			mi = new JMenuItem("Branch Properties...", IconFactory.getMenuIcon(GLYPH.CHART));
 			mi.setToolTipText("Computes metrics from all the branches of selected trees");
 			mi.addActionListener(e -> {
 				final List<Tree> trees = getSelectedTrees();
@@ -2975,7 +2977,7 @@ public class Viewer3D {
 				runCmd(DistributionBPCmd.class, inputs, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);
-			mi = new JMenuItem("Distribution Analysis (Cell Properties)...", IconFactory.getMenuIcon(GLYPH.CHART));
+			mi = new JMenuItem("Cell Properties...", IconFactory.getMenuIcon(GLYPH.CHART));
 			mi.setToolTipText("Computes metrics from individual cells");
 			mi.addActionListener(e -> {
 				final List<Tree> trees = getSelectedTrees();
@@ -2986,7 +2988,7 @@ public class Viewer3D {
 				runCmd(DistributionCPCmd.class, inputs, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);
-			measureMenu.addSeparator();
+			addSeparator(measureMenu, "Single-Cell Analysis:");
 			mi = new JMenuItem("Sholl Analysis...", IconFactory.getMenuIcon(GLYPH.BULLSEYE));
 			mi.setToolTipText("Runs Sholl Analysis on single cells");
 			mi.addActionListener(e -> {
@@ -3015,11 +3017,8 @@ public class Viewer3D {
 			if (table == null) table =  new DefaultGenericTable();
 		}
 
-		private JMenu customizeMeshesMenu() {
-			final JMenu meshMenu = new JMenu("Customize");
-			meshMenu.setMnemonic('c');
-			meshMenu.setIcon(IconFactory.getMenuIcon(GLYPH.CUBE));
-
+		private void addCustomizeMeshCommands(final JPopupMenu menu) {
+			addSeparator(menu, "Customize:");
 			JMenuItem mi = new JMenuItem("All Parameters...", IconFactory.getMenuIcon(GLYPH.SLIDERS));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedMeshes(true);
@@ -3060,7 +3059,7 @@ public class Viewer3D {
 				}
 				(new getMeshColors()).execute();
 			});
-			meshMenu.add(mi);;
+			menu.add(mi);;
 
 			// Mesh customizations
 			mi = new JMenuItem("Color...", IconFactory.getMenuIcon(
@@ -3080,7 +3079,7 @@ public class Viewer3D {
 					obj.setColor(color);
 				}
 			});
-			meshMenu.add(mi);
+			menu.add(mi);
 			mi = new JMenuItem("Transparency...", IconFactory.getMenuIcon(
 				GLYPH.ADJUST));
 			mi.addActionListener(e -> {
@@ -3100,14 +3099,10 @@ public class Viewer3D {
 					plottedObjs.get(label).getColor().a = fValue;
 				}
 			});
-			meshMenu.add(mi);
-			return meshMenu;
+			menu.add(mi);
 		}
 
-		private JMenu customizeTreesMenu() {
-			final JMenu menu = new JMenu("Customize");
-			menu.setMnemonic('c');
-			menu.setIcon(IconFactory.getMenuIcon(GLYPH.TREE));
+		private void addCustomizeTreeCommands(final JPopupMenu menu) {
 
 			JMenuItem mi = new JMenuItem("All Parameters...", IconFactory.getMenuIcon(GLYPH.SLIDERS));
 			mi.addActionListener(e -> {
@@ -3183,6 +3178,43 @@ public class Viewer3D {
 				applyColorToPlottedTrees(keys, c);
 			});
 			menu.add(mi);
+			final JMenu ccMenu = new JMenu("Color Coding");
+			ccMenu.setIcon(IconFactory.getMenuIcon(GLYPH.SIGNS));
+			menu.add(ccMenu);
+			mi = new JMenuItem("Individual Cells...");
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTreeLabels();
+				if (keys == null) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("treeMappingLabels", keys);
+				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
+			ccMenu.add(mi);
+			mi = new JMenuItem("Group of Cells...");
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTreeLabels();
+				if (keys == null) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("multiTreeMappingLabels", keys);
+				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
+			});
+			ccMenu.add(mi);
+			mi = new JMenuItem("Color Each Cell Uniquely");
+			mi.addActionListener(e -> {
+				final List<String> keys = getSelectedTreeLabels();
+				if (keys == null || !okToApplyColor(keys)) return;
+
+				final ColorRGB[] colors = SNTColor.getDistinctColors(keys.size());
+				final int[] counter = new int[] { 0 };
+				plottedTrees.forEach((k, shapeTree) -> {
+					shapeTree.setArborColor(colors[counter[0]], ShapeTree.ANY);
+					shapeTree.setSomaColor(colors[counter[0]]);
+					counter[0]++;
+				});
+				displayMsg("Unique colors assigned");
+			});
+			ccMenu.add(mi);
+
 			mi = new JMenuItem("Thickness...", IconFactory.getMenuIcon(GLYPH.DOTCIRCLE));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTreeLabels();
@@ -3216,52 +3248,14 @@ public class Viewer3D {
 				runCmd(TranslateReconstructionsCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			menu.add(mi);
-			menu.addSeparator();
-
-			mi = new JMenuItem("Color Coding (Individual Cells)...");
-			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTreeLabels();
-				if (keys == null) return;
-				final Map<String, Object> inputs = new HashMap<>();
-				inputs.put("treeMappingLabels", keys);
-				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
-			});
-			menu.add(mi);
-			mi = new JMenuItem("Color Coding (Group of Cells)...");
-			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTreeLabels();
-				if (keys == null) return;
-				final Map<String, Object> inputs = new HashMap<>();
-				inputs.put("multiTreeMappingLabels", keys);
-				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
-			});
-			menu.add(mi);
-			mi = new JMenuItem("Color Each Cell Uniquely");
-			mi.addActionListener(e -> {
-				final List<String> keys = getSelectedTreeLabels();
-				if (keys == null || !okToApplyColor(keys)) return;
-
-				final ColorRGB[] colors = SNTColor.getDistinctColors(keys.size());
-				final int[] counter = new int[] { 0 };
-				plottedTrees.forEach((k, shapeTree) -> {
-					shapeTree.setArborColor(colors[counter[0]], ShapeTree.ANY);
-					shapeTree.setSomaColor(colors[counter[0]]);
-					counter[0]++;
-				});
-				displayMsg("Unique colors assigned");
-			});
-			menu.add(mi);
-
-			return menu;
 		}
 
-		private JPopupMenu toolsMenu() {
-			final JPopupMenu settingsMenu = new JPopupMenu();
-			JLabel header = GuiUtils.leftAlignedLabel("Actions & Utilities:", false);
-			settingsMenu.add(header);
+		private JPopupMenu utilsMenu() {
+			final JPopupMenu utilsMenu = new JPopupMenu();
+			addSeparator(utilsMenu, "Actions & Utilities:");
 			final JMenuItem snapshot = new JMenuItem(new Action(Action.SNAPSHOT, KeyEvent.VK_S, false, false));
 			snapshot.setIcon(IconFactory.getMenuIcon(GLYPH.CAMERA));
-			settingsMenu.add(snapshot);
+			utilsMenu.add(snapshot);
 			JMenuItem mi = new JMenuItem("Record Rotation", IconFactory
 				.getMenuIcon(GLYPH.VIDEO));
 			mi.addActionListener(e -> {
@@ -3270,28 +3264,22 @@ public class Viewer3D {
 					new RecordWorker().execute();
 				});
 			});
-			settingsMenu.add(mi);
-			settingsMenu.add(legendMenu());
-			settingsMenu.addSeparator();
-			header = GuiUtils.leftAlignedLabel("Keyboard & Mouse Sensitivity:", false);
-			settingsMenu.add(header);
-			settingsMenu.add(panMenu());
-			settingsMenu.add(zoomMenu());
-			settingsMenu.add(rotationMenu());
-			settingsMenu.addSeparator();
-			mi = new JMenuItem("Preferences...", IconFactory.getMenuIcon(GLYPH.COG));
-			mi.addActionListener(e -> {
-				runCmd(RecViewerPrefsCmd.class, null, CmdWorker.RELOAD_PREFS, false);
-			});
-			settingsMenu.add(mi);
-			return settingsMenu;
-		}
-
-		private JPopupMenu scriptMenu() {
-			final JPopupMenu scriptMenu = new JPopupMenu();
+			utilsMenu.add(mi);
+			utilsMenu.add(legendMenu());
+			
+			addSeparator(utilsMenu, "Scripting:");
+			final JMenuItem script = new JMenuItem(new Action(Action.SCRIPT, KeyEvent.VK_OPEN_BRACKET, false, false));
+			script.setIcon(IconFactory.getMenuIcon(GLYPH.CODE));
+			utilsMenu.add(script);
+			mi = new JMenuItem("Script This Viewer In...");
+			mi.addActionListener(e -> runScriptEditor(null));
+			utilsMenu.add(mi);
+			final JMenuItem log = new JMenuItem(new Action(Action.LOG, KeyEvent.VK_L, false, false));
+			log.setIcon(IconFactory.getMenuIcon(GLYPH.STREAM));
+			utilsMenu.add(log);
 			final JMenuItem jcbmi = new JCheckBoxMenuItem("Debug Mode", SNTUtils.isDebugMode());
 			jcbmi.setEnabled(!isSNTInstance());
-			jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.BUG));
+			jcbmi.setIcon(IconFactory.getMenuIcon(GLYPH.STETHOSCOPE));
 			jcbmi.setMnemonic('d');
 			jcbmi.addItemListener(e -> {
 				if (isSNTInstance()) {
@@ -3300,36 +3288,37 @@ public class Viewer3D {
 					SNTUtils.setDebugMode(jcbmi.isSelected());
 				}
 			});
-			scriptMenu.add(jcbmi);
+			utilsMenu.add(jcbmi);
 
-			final JMenuItem log = new JMenuItem(new Action(Action.LOG, KeyEvent.VK_L, false, false));
-			log.setIcon(IconFactory.getMenuIcon(GLYPH.SCROLL));
-			scriptMenu.add(log);
-
-			final JMenuItem script = new JMenuItem(new Action(Action.SCRIPT, KeyEvent.VK_OPEN_BRACKET, false, false));
-			script.setIcon(IconFactory.getMenuIcon(GLYPH.CODE));
-			scriptMenu.add(script);
-			JMenuItem mi = new JMenuItem("Script This Viewer In...");
-			mi.addActionListener(e -> runScriptEditor(null));
-			scriptMenu.add(mi);
-			scriptMenu.addSeparator();
-			final JMenu resources = new JMenu("Online Resources");
-			resources.setIcon(IconFactory.getMenuIcon(GLYPH.NAVIGATE));
-			mi = new JMenuItem("API");
-			mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", "http://morphonets.github.io/SNT/"));
-			resources.add(mi);
-			mi = new JMenuItem("Documentation");
+			addSeparator(utilsMenu, "Online Resources:");
+			mi = new JMenuItem("Documentation", IconFactory.getMenuIcon(GLYPH.QUESTION));
 			mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", "https://imagej.net/SNT"));
-			resources.add(mi);
-			mi = new JMenuItem("Known Issues");
+			utilsMenu.add(mi);
+			mi = new JMenuItem("API",  IconFactory.getMenuIcon(GLYPH.SCROLL));
+			mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", "http://morphonets.github.io/SNT/"));
+			utilsMenu.add(mi);
+			mi = new JMenuItem("Known Issues", IconFactory.getMenuIcon(GLYPH.BUG));
 			mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", "https://github.com/morphonets/SNT/issues?q=is%3Aissue+is%3Aopen+"));
-			resources.add(mi);
+			utilsMenu.add(mi);
 			mi = new JMenuItem("Source Code");
 			mi.addActionListener(e -> IJ.runPlugIn("ij.plugin.BrowserLauncher", "https://github.com/morphonets/SNT"));
-			resources.add(mi);
-			scriptMenu.add(resources);
+			utilsMenu.add(mi);
+			return utilsMenu;
+		}
 
-			return scriptMenu;
+		private JPopupMenu prefsMenu() {
+			final JPopupMenu prefsMenu = new JPopupMenu();
+			addSeparator(prefsMenu, "Keyboard & Mouse Sensitivity:");
+			prefsMenu.add(panMenu());
+			prefsMenu.add(zoomMenu());
+			prefsMenu.add(rotationMenu());
+			prefsMenu.addSeparator();
+			final JMenuItem mi = new JMenuItem("Global Preferences...", IconFactory.getMenuIcon(GLYPH.COGS));
+			mi.addActionListener(e -> {
+				runCmd(RecViewerPrefsCmd.class, null, CmdWorker.RELOAD_PREFS, false);
+			});
+			prefsMenu.add(mi);
+			return prefsMenu;
 		}
 
 		private void runScriptEditor(String extension) {
@@ -3458,6 +3447,7 @@ public class Viewer3D {
 
 		private JPopupMenu treesMenu() {
 			final JPopupMenu tracesMenu = new JPopupMenu();
+			addSeparator(tracesMenu, "Add:");
 			JMenuItem mi = new JMenuItem("Import File...", IconFactory.getMenuIcon(
 				GLYPH.IMPORT));
 			mi.setMnemonic('f');
@@ -3499,9 +3489,11 @@ public class Viewer3D {
 				runCmd(RemoteSWCImporterCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			remoteMenu.add(mi);
-			tracesMenu.addSeparator();
-			tracesMenu.add(customizeTreesMenu());
-			tracesMenu.addSeparator();
+
+			addSeparator(tracesMenu, "Customize & Adjust:");
+			addCustomizeTreeCommands(tracesMenu);
+
+			addSeparator(tracesMenu, "Remove:");
 			mi = new JMenuItem("Remove Selected...", IconFactory.getMenuIcon(
 				GLYPH.DELETE));
 			mi.addActionListener(e -> {
@@ -3564,16 +3556,23 @@ public class Viewer3D {
 			return legendMenu;
 		}
 
+		private void addSeparator(final JPopupMenu menu, final String header) {
+			final JLabel label = GuiUtils.leftAlignedLabel(header, false);
+			if (menu.getComponentCount() > 1) menu.addSeparator();
+			menu.add(label);
+		}
+
 		private JPopupMenu meshMenu() {
 			final JPopupMenu meshMenu = new JPopupMenu();
+			addSeparator(meshMenu, "Add:");
 			JMenuItem mi = new JMenuItem("Import OBJ File(s)...", IconFactory
 				.getMenuIcon(GLYPH.IMPORT));
 			mi.addActionListener(e -> runCmd(LoadObjCmd.class, null,
 				CmdWorker.DO_NOTHING));
 			meshMenu.add(mi);
-			meshMenu.addSeparator();
-			meshMenu.add(customizeMeshesMenu());
-			meshMenu.addSeparator();
+			addCustomizeMeshCommands(meshMenu);
+
+			addSeparator(meshMenu, "Remove:");
 			mi = new JMenuItem("Remove Selected...", IconFactory.getMenuIcon(
 				GLYPH.DELETE));
 			mi.addActionListener(e -> {
@@ -3609,30 +3608,8 @@ public class Viewer3D {
 
 		private JPopupMenu refBrainsMenu() {
 			final JPopupMenu refMenu = new JPopupMenu("Reference Brains");
-			final JMenu drosoAdultMenu = new JMenu("Drosophila (Adult)");
-			refMenu.add(drosoAdultMenu);
-			JMenuItem mi = new JMenuItem("FlyCircuit");
-			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_FCWB));
-			drosoAdultMenu.add(mi);
-			mi = new JMenuItem("JFRC2 (VFB)");
-			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_JFRC2));
-			drosoAdultMenu.add(mi);
-			mi = new JMenuItem("JFRC3");
-			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_JFRC3));
-			drosoAdultMenu.add(mi);
-			mi = new JMenuItem("Adult VNS", IconFactory.getMenuIcon(GLYPH.CLOUD));
-			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_VNS));
-			drosoAdultMenu.add(mi);
-			final JMenu drosoEmbMenu = new JMenu("Drosophila (Embryonic)");
-			refMenu.add(drosoEmbMenu);
-			mi = new JMenuItem("Larva L1", IconFactory.getMenuIcon(GLYPH.CLOUD));
-			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_L1));
-			drosoEmbMenu.add(mi);
-			mi = new JMenuItem("Larva L3", IconFactory.getMenuIcon(GLYPH.CLOUD));
-			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_L3));
-			drosoEmbMenu.add(mi);
-			refMenu.addSeparator();
-			mi = new JMenuItem("Mouse (Adult): Allen CCF Navigator", IconFactory
+			addSeparator(refMenu, "Mouse:");
+			JMenuItem mi = new JMenuItem("Allen CCF Navigator", IconFactory
 					.getMenuIcon(GLYPH.NAVIGATE));
 			mi.addActionListener(e -> {
 				assert SwingUtilities.isEventDispatchThread();
@@ -3663,12 +3640,32 @@ public class Viewer3D {
 				worker.execute();
 			});
 			refMenu.add(mi);
-			refMenu.addSeparator();
-			final JMenuItem zfMenuItem = new JMenu("Zebrafish (Embryonic)");
-			refMenu.add(zfMenuItem);
-			mi = new JMenuItem("Max Planck ZBA");
+			
+			addSeparator(refMenu, "Zebrafish:");
+			mi = new JMenuItem("Max Planck ZBA", IconFactory.getMenuIcon(GLYPH.ARCHIVE));
 			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_ZEBRAFISH));
-			zfMenuItem.add(mi);
+			refMenu.add(mi);
+
+			addSeparator(refMenu, "Drosophila:");
+			mi = new JMenuItem("Adult Brain: FlyCircuit", IconFactory.getMenuIcon(GLYPH.ARCHIVE));
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_FCWB));
+			refMenu.add(mi);
+			mi = new JMenuItem("Adult Brain: JFRC2 (VFB)", IconFactory.getMenuIcon(GLYPH.ARCHIVE));
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_JFRC2));
+			refMenu.add(mi);
+			mi = new JMenuItem("Adult Brain: JFRC3", IconFactory.getMenuIcon(GLYPH.ARCHIVE));
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_JFRC3));
+			refMenu.add(mi);
+			mi = new JMenuItem("Adult VNS", IconFactory.getMenuIcon(GLYPH.CLOUD));
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_VNS));
+			refMenu.add(mi);
+			mi = new JMenuItem("L1 Larva", IconFactory.getMenuIcon(GLYPH.CLOUD));
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_L1));
+			refMenu.add(mi);
+			mi = new JMenuItem("L3 Larva", IconFactory.getMenuIcon(GLYPH.CLOUD));
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_L3));
+			refMenu.add(mi);
+
 			return refMenu;
 		}
 

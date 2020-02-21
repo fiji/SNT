@@ -47,6 +47,7 @@ public class IconFactory {
 	}
 
 	public enum GLYPH {
+			ARCHIVE('\uf1c6', false), //
 			ADJUST('\uf042', true), //
 			ATLAS('\uf558', true), //
 			//ATOM('\uf5d2', true), //
@@ -65,7 +66,9 @@ public class IconFactory {
 			CIRCLE('\uf192', false), //
 			CLOUD('\uf381', true), //
 			CODE('\uf120', true), //
+			CODE2('\uf121', true), //
 			COG('\uf013', true), //
+			COGS('\uf085', true), //
 			COLOR('\uf53f', true), //
 			COLOR2('\uf5c3', true), //
 			COMMENTS('\uf086', false), //
@@ -121,8 +124,11 @@ public class IconFactory {
 			SAVE('\uf0c7', false), //
 			SCROLL('\uf70e', true), //
 			SEARCH('\uf002', true), //
+			SIGNS('\uf277', true), //
 			SLIDERS('\uf1de', true), //
 			SORT('\uf15d', true), //
+			STETHOSCOPE('\uf0f1', true), //
+			STREAM('\uf550', true), //
 			SUN('\uf185', true), //
 			SYNC('\uf2f1', true), //
 			//TACHOMETER('\uf3fd', true), //

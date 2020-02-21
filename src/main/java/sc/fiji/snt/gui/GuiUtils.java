@@ -768,7 +768,7 @@ public class GuiUtils {
 
 	public static Color getDisabledComponentColor() {
 		try {
-			return UIManager.getColor("MenuItem.disabledBackground");
+			return UIManager.getColor("MenuItem.disabledForeground");
 		}
 		catch (final Exception ignored) {
 			return Color.GRAY;

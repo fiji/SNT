@@ -68,7 +68,7 @@ public class GraphUtils {
 	 * @return the Tree, assembled from from the graph vertices
 	 */
 	public static Tree createTree(final DefaultDirectedGraph<SWCPoint, ?> graph) {
-		if (graph instanceof DirectedWeightedGraph && ((DirectedWeightedGraph)graph).getTree() != null) {
+		if (graph instanceof DirectedWeightedGraph) {
 			return ((DirectedWeightedGraph)graph).getTree();
 		}
 		return new Tree(graph.vertexSet(), "");

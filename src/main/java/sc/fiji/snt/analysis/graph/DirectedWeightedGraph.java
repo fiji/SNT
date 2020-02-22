@@ -30,8 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.jgrapht.GraphTests;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.traverse.DepthFirstIterator;
 
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.util.SWCPoint;
@@ -108,7 +110,7 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 		final LinkedHashSet<SWCPoint> relevantNodes = new LinkedHashSet<>();
 		relevantNodes.add(getRoot());
 		relevantNodes.addAll(getBPs());
-		relevantNodes.addAll(geTips());
+		relevantNodes.addAll(getTips());
 		final DirectedWeightedGraph simplifiedGraph = new DirectedWeightedGraph();
 		transferCommonProperties(simplifiedGraph);
 		relevantNodes.forEach(node -> simplifiedGraph.addVertex(node));
@@ -123,6 +125,7 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 				}
 			}
 		}
+		simplifiedGraph.updateVertexProperties();
 		return simplifiedGraph;
 	}
 
@@ -156,6 +159,75 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 			this.associatedWeight = associatedWeight;
 		}
 	}
+	
+	/**
+	 * For all edges, sets the Euclidean distance between the source and target
+	 * vertex as the weight.
+	 */
+	public void assignEdgeWeightsEuclidean() {
+		for (SWCWeightedEdge e : this.edgeSet()) {
+			double distance = e.getSource().distanceTo(e.getTarget());
+			this.setEdgeWeight(e, distance);
+		}
+	}
+	
+	/**
+	 * Scales each vertex SWCVertex by the specified factors.
+	 *
+	 * @param xScale                     the scaling factor for x coordinates
+	 * @param yScale                     the scaling factor for y coordinates
+	 * @param zScale                     the scaling factor for z coordinates
+	 * @param updateEdgeWeightsEuclidean if true, update all edge weights with
+	 *                                   inter-node Euclidean distances
+	 */
+	public void scale(double xScale, double yScale, double zScale, boolean updateEdgeWeightsEuclidean) {
+		for (SWCPoint v : vertexSet()) {
+			v.scale(xScale, yScale, zScale);
+		}
+		if (updateEdgeWeightsEuclidean) {
+			assignEdgeWeightsEuclidean();
+		}
+	}
+	
+	/**
+	 * Gets the sum of all edge weights.
+	 *
+	 * @return the sum of all edge weights
+	 */
+	public double sumEdgeWeights() {
+		return edgeSet().stream().mapToDouble(e -> e.getWeight()).sum();
+	}
+	
+	public DepthFirstIterator<SWCPoint, SWCWeightedEdge> getDepthFirstIterator() {
+		return new DepthFirstIterator<SWCPoint, SWCWeightedEdge>(this);
+	}
+
+	public DepthFirstIterator<SWCPoint, SWCWeightedEdge> getDepthFirstIterator(SWCPoint startVertex) {
+		return new DepthFirstIterator<SWCPoint, SWCWeightedEdge>(this, startVertex);
+	}
+	
+	/**
+	 * Re-assigns a unique Integer identifier to each vertex based on visit order
+	 * during Depth First Search. Also updates the parent and previousPoint fields
+	 * of each SWCvertex contained in the Graph.
+	 */
+	private void updateVertexProperties() {
+		DepthFirstIterator<SWCPoint, SWCWeightedEdge> iter = getDepthFirstIterator(getRoot());
+		int currentId = 1;
+		while (iter.hasNext()) {
+			SWCPoint v = iter.next();
+			v.id = currentId;
+			currentId++;
+			List<SWCPoint> parentList = Graphs.predecessorListOf(this, v);
+			if (!parentList.isEmpty()) {
+				v.parent = parentList.get(0).id;
+				v.setPreviousPoint(parentList.get(0));
+			} else {
+				v.parent = -1;
+				v.setPreviousPoint(null);
+			}
+		}
+	}
 
 	private void transferCommonProperties(final DirectedWeightedGraph otherGraph) {
 		otherGraph.tree = this.tree;
@@ -175,7 +247,7 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 	 *
 	 * @return the list of end points
 	 */
-	public List<SWCPoint> geTips() {
+	public List<SWCPoint> getTips() {
 		return vertexSet().stream().filter(v -> outDegreeOf(v) == 0).collect(Collectors.toList());
 	}
 
@@ -185,6 +257,9 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 	 * @return the root node.
 	 */
 	public SWCPoint getRoot() {
+		if (!GraphTests.isConnected(this)) {
+			throw new IllegalStateException("Graph has multiple connected components");
+		}
 		return vertexSet().stream().filter(v -> inDegreeOf(v) == 0).findFirst().orElse(null);
 	}
 
@@ -194,7 +269,8 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 	 * @return the tree (or null if no association exists)
 	 */
 	public Tree getTree() {
-		return tree;
+		updateVertexProperties();
+		return new Tree(this.vertexSet(), "");
 	}
 
 	/**
@@ -203,6 +279,9 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 	 * @return a reference to the displayed window.
 	 */
 	public Window show() {
+		updateVertexProperties();
 		return GraphUtils.show(this);
 	}
+	
+	
 }

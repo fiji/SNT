@@ -22,10 +22,6 @@
 
 package sc.fiji.snt.analysis;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -34,21 +30,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.text.WordUtils;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.StandardXYBarPainter;
-import org.jfree.chart.renderer.xy.XYBarRenderer;
-import org.jfree.chart.title.TextTitle;
-import org.jfree.chart.ui.RectangleEdge;
-import org.jfree.data.statistics.HistogramDataset;
-import org.jfree.data.statistics.HistogramType;
 
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
-import sc.fiji.snt.util.SNTColor;
+import sc.fiji.snt.analysis.AnalysisUtils.HistogramDatasetPlus;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of
@@ -204,9 +191,9 @@ public class TreeStatistics extends TreeAnalyzer {
 	 *          etc.)
 	 * @return the frame holding the histogram
 	 */
-	public ChartFrame getHistogram(final String metric) {
+	public SNTChart getHistogram(final String metric) {
 		final String normMeasurement = getNormalizedMeasurement(metric);
-		final HistogramDatasetPlus datasetPlus = new HistogramDatasetPlus(normMeasurement);
+		final HistogramDatasetPlus datasetPlus = new HDPlus(normMeasurement, true);
 		return getHistogram(normMeasurement, datasetPlus);
 	}
 
@@ -234,53 +221,9 @@ public class TreeStatistics extends TreeAnalyzer {
 		return (sb.length() == 0) ? "Grouped Cells" : sb.toString().trim();
 	}
 
-	protected ChartFrame getHistogram(final String normMeasurement, final HistogramDatasetPlus datasetPlus) {
-
-		final JFreeChart chart = ChartFactory.createHistogram(null, normMeasurement,
-			"Rel. Frequency", datasetPlus.getDataset());
-
-		// Customize plot
-		final Color bColor = null; //Color.WHITE; make graph transparent so that it can be exported without background
-		final XYPlot plot = chart.getXYPlot();
-		plot.setBackgroundPaint(bColor);
-		plot.setDomainGridlinesVisible(false);
-		plot.setRangeGridlinesVisible(false);
-		final XYBarRenderer bar_renderer = (XYBarRenderer) plot.getRenderer();
-		bar_renderer.setBarPainter(new StandardXYBarPainter());
-		bar_renderer.setDrawBarOutline(true);
-		bar_renderer.setSeriesOutlinePaint(0, Color.DARK_GRAY);
-		bar_renderer.setSeriesPaint(0, SNTColor.alphaColor(Color.LIGHT_GRAY, 50));
-		bar_renderer.setShadowVisible(false);
-		chart.setBackgroundPaint(bColor);
-		chart.setAntiAlias(true);
-		chart.setTextAntiAlias(true);
-
-		// Append descriptive label
-		chart.removeLegend();
-		final StringBuilder sb = new StringBuilder();
-		final double mean = lastDstats.dStats.getMean();
-		final int nDecimals = (mean < 0.51) ? 3 : 2;
-		sb.append("Q1: ").append(SNTUtils.formatDouble(datasetPlus.q1, nDecimals));
-		sb.append("  Median: ").append(SNTUtils.formatDouble(lastDstats.dStats
-			.getPercentile(50), nDecimals));
-		sb.append("  Q3: ").append(SNTUtils.formatDouble(datasetPlus.q3, nDecimals));
-		sb.append("  IQR: ").append(SNTUtils.formatDouble(datasetPlus.q3 - datasetPlus.q1, nDecimals));
-		sb.append("  Bins: ").append(datasetPlus.nBins);
-		sb.append("\nN: ").append(datasetPlus.n);
-		sb.append("  Min: ").append(SNTUtils.formatDouble(datasetPlus.min, nDecimals));
-		sb.append("  Max: ").append(SNTUtils.formatDouble(datasetPlus.max, nDecimals));
-		sb.append("  Mean\u00B1").append("SD: ").append(SNTUtils.formatDouble(
-			mean, nDecimals)).append("\u00B1").append(SNTUtils.formatDouble(
-				lastDstats.dStats.getStandardDeviation(), nDecimals));
-		final TextTitle label = new TextTitle(sb.toString());
-		label.setFont(label.getFont().deriveFont(Font.PLAIN));
-		label.setPosition(RectangleEdge.BOTTOM);
-		chart.addSubtitle(label);
-		final ChartFrame frame = new ChartFrame("Hist. " + tree.getLabel(), chart);
-		frame.getChartPanel().setBackground(bColor);
-		frame.setPreferredSize(new Dimension(400, 400));
-		frame.setBackground(Color.WHITE); // provided contrast to otherwise transparent background
-		frame.pack();
+	protected SNTChart getHistogram(final String normMeasurement, final HistogramDatasetPlus datasetPlus) {
+		final JFreeChart chart = AnalysisUtils.getHistogram(normMeasurement, lastDstats.dStats, datasetPlus);
+		final SNTChart frame = new SNTChart("Hist. " + tree.getLabel(), chart);
 		return frame;
 	}
 
@@ -352,7 +295,7 @@ public class TreeStatistics extends TreeAnalyzer {
 		final String normMeasurement = tryReallyHardToGuessMetric(measurement);
 		if (!measurement.equals(normMeasurement)) {
 			SNTUtils.log("\"" + normMeasurement + "\" assumed");
-			if ("unknonwn".equals(normMeasurement)) {
+			if ("unknown".equals(normMeasurement)) {
 				throw new UnknownMetricException("Unrecognizable measurement! "
 						+ "Maybe you meant one of the following?: " + Arrays.toString(ALL_FLAGS));
 			}
@@ -464,6 +407,7 @@ public class TreeStatistics extends TreeAnalyzer {
 					stat.addValue(p.getNode(i).y);
 				}
 			}
+			break;
 		case Z_COORDINATES:
 			for (final Path p : tree.list()) {
 				for (int i = 0; i < p.size(); i++) {
@@ -520,20 +464,16 @@ public class TreeStatistics extends TreeAnalyzer {
 
 	}
 
-	class HistogramDatasetPlus {
+	class HDPlus extends HistogramDatasetPlus {
 		final String measurement;
-		final List<Double> values;
-		int nBins;
-		long n;
-		double q1, q3, min, max;
 
-		HistogramDatasetPlus(final String measurement) {
+		HDPlus(final String measurement) {
 			this(measurement, true);
 		}
 
-		HistogramDatasetPlus(final String measurement, final boolean retrieveValues) {
+		HDPlus(final String measurement, final boolean retrieveValues) {
+			super();
 			this.measurement = measurement;
-			values = new ArrayList<Double>();
 			if (retrieveValues) {
 				getDescriptiveStats(measurement);
 				for (final double v : lastDstats.dStats.getValues()) {
@@ -541,56 +481,22 @@ public class TreeStatistics extends TreeAnalyzer {
 				}
 			}
 		}
-	
-		double[] valuesAsArray() {
-			final double[] doubles = new double[values.size()];
-			for (int i = 0; i < doubles.length; i++) {
-				doubles[i] = values.get(i);
-			}
-			return doubles;
-		}
-	
-		void compute() {
-			n = lastDstats.dStats.getN();
-			q1 = lastDstats.dStats.getPercentile(25);
-			q3 = lastDstats.dStats.getPercentile(75);
-			min = lastDstats.dStats.getMin();
-			max = lastDstats.dStats.getMax();
-			if (n == 0 || max == min) {
-				nBins = 1;
-			}
-			else if (n <= 10) {
-				nBins = (int) n;
-			} else {
-				final double binWidth = 2 * (q3 - q1) / Math.cbrt(n); // Freedman-Diaconis rule
-				if (binWidth == 0) {
-					nBins = (int) Math.round(Math.sqrt(n));
-				} else {
-					nBins = (int) Math.ceil((max - min) / binWidth);
-				}
-				nBins = Math.max(1, nBins);
-			}
-		}
-
-		HistogramDataset getDataset() {
-			compute();
-			final HistogramDataset dataset = new HistogramDataset();
-			dataset.setType(HistogramType.RELATIVE_FREQUENCY);
-			dataset.addSeries(measurement, valuesAsArray(), nBins);
-			return dataset;
-		}
-
 	}
 
 	/* IDE debug method */
 	public static void main(final String[] args) {
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeStatistics treeStats = new TreeStatistics(tree);
-		treeStats.getHistogram("contraction").setVisible(true);
-		treeStats.getHistogram(PATH_ORDER).setVisible(true);
-		treeStats.restrictToOrder(1);
-		treeStats.getHistogram(PATH_ORDER).setVisible(true);
-		treeStats.resetRestrictions();
-		treeStats.getHistogram(PATH_ORDER).setVisible(true);
+//		treeStats.getHistogram("contraction", 0.5, Double.NaN).setVisible(true);
+//		treeStats.getHistogram(PATH_ORDER).setVisible(true);
+//		treeStats.restrictToOrder(1);
+		SNTChart a = treeStats.getHistogram(CONTRACTION);
+		a.annotatePoint(0.2, 0.18, "");
+		a.annotateXline(0.2, "");
+		a.annotateYline(0.02, "y-line");
+
+		a.setVisible(true);
+//		treeStats.resetRestrictions();
+		//treeStats.getHistogram(PATH_ORDER).setVisible(true);
 	}
 }

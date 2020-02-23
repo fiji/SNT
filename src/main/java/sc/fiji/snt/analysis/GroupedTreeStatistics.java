@@ -39,7 +39,6 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartFrame;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
@@ -63,7 +62,7 @@ import org.scijava.util.ColorRGB;
 import net.imagej.ImageJ;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
-import sc.fiji.snt.analysis.TreeStatistics.HistogramDatasetPlus;
+import sc.fiji.snt.analysis.TreeStatistics.HDPlus;
 import sc.fiji.snt.util.SNTColor;
 
 /**
@@ -145,13 +144,13 @@ public class GroupedTreeStatistics {
 	 * @see MultiTreeStatistics#getMetrics()
 	 * @see TreeStatistics#getMetrics()
 	 */
-	public ChartFrame getHistogram(final String measurement) {
+	public SNTChart getHistogram(final String measurement) {
 		final String normMeasurement = MultiTreeStatistics.getNormalizedMeasurement(measurement, true);
 		final int[] nBins = new int[] { 0 };
 		// Retrieve all HistogramDatasetPlus instances
-		final LinkedHashMap<String, HistogramDatasetPlus> hdpMap = new LinkedHashMap<>();
+		final LinkedHashMap<String, HDPlus> hdpMap = new LinkedHashMap<>();
 		for (final Entry<String, MultiTreeStatistics> entry : groups.entrySet()) {
-			final HistogramDatasetPlus hdp = entry.getValue().new HistogramDatasetPlus(normMeasurement);
+			final HDPlus hdp = entry.getValue().new HDPlus(normMeasurement);
 			hdp.compute();
 			nBins[0] += hdp.nBins;
 			hdpMap.put(entry.getKey(), hdp);
@@ -198,12 +197,12 @@ public class GroupedTreeStatistics {
 	 * @see MultiTreeStatistics#getMetrics()
 	 * @see TreeStatistics#getMetrics()
 	 */
-	public ChartFrame getBoxPlot(final String measurement) {
+	public SNTChart getBoxPlot(final String measurement) {
 
 		final String normMeasurement = MultiTreeStatistics.getNormalizedMeasurement(measurement, true);
 		final DefaultBoxAndWhiskerCategoryDataset dataset = new DefaultBoxAndWhiskerCategoryDataset();
 		groups.forEach((label, mstats) -> {
-			final HistogramDatasetPlus hdp = mstats.new HistogramDatasetPlus(normMeasurement);
+			final HDPlus hdp = mstats.new HDPlus(normMeasurement);
 			dataset.add(hdp.values, normMeasurement, label);
 		});
 		final JFreeChart chart = ChartFactory.createBoxAndWhiskerChart(null, null, normMeasurement, dataset, false);
@@ -233,7 +232,7 @@ public class GroupedTreeStatistics {
 		return getFrame(chart, "Box-plot", new Dimension((int) width, height));
 	}
 
-	private ChartFrame getFrame(final JFreeChart chart, final String title, final Dimension preferredSize) {
+	private SNTChart getFrame(final JFreeChart chart, final String title, final Dimension preferredSize) {
 		chart.setBackgroundPaint(null);
 		chart.setAntiAlias(true);
 		chart.setTextAntiAlias(true);
@@ -245,7 +244,7 @@ public class GroupedTreeStatistics {
 		cp.setMinimumDrawHeight(0);
 		cp.setMaximumDrawHeight(Integer.MAX_VALUE);
 		cp.setBackground(null);
-		final ChartFrame frame = new ChartFrame(title, chart);
+		final SNTChart frame = new SNTChart(title, chart);
 		frame.setPreferredSize(preferredSize);
 		frame.setBackground(Color.WHITE); // provided contrast to otherwise transparent background
 		frame.pack();

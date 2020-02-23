@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.text.WordUtils;
-import org.jfree.chart.ChartFrame;
 
 import net.imagej.ImageJ;
 import sc.fiji.snt.SNTService;
@@ -354,13 +353,13 @@ public class MultiTreeStatistics extends TreeStatistics {
 		throw new IllegalArgumentException("Operation not supported. Only filtering in constructor is supported");
 	}
 
-	public ChartFrame getHistogram(final String metric) {
+	public SNTChart getHistogram(final String metric) {
 		final String normMeasurement = getNormalizedMeasurement(metric, true);
-		final HistogramDatasetPlus datasetPlus = new HistogramDatasetPlusMulti(normMeasurement);
+		final HistogramDatasetPlusMulti datasetPlus = new HistogramDatasetPlusMulti(normMeasurement);
 		return getHistogram(normMeasurement, datasetPlus);
 	}
 
-	class HistogramDatasetPlusMulti extends HistogramDatasetPlus {
+	class HistogramDatasetPlusMulti extends HDPlus {
 		HistogramDatasetPlusMulti(String measurement) {
 			super(measurement, false);
 			getDescriptiveStats(measurement);

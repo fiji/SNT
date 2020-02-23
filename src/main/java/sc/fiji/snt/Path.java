@@ -1960,7 +1960,7 @@ public class Path implements Comparable<Path> {
 		return order;
 	}
 
-	protected void setOrder(final int order) {
+	public void setOrder(final int order) {
 		this.order = order;
 		if (fitted != null) fitted.order = order;
 		else if (fittedVersionOf != null) fittedVersionOf.order = order;

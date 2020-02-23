@@ -205,6 +205,7 @@ import sc.fiji.snt.gui.IconFactory;
 import sc.fiji.snt.gui.IconFactory.GLYPH;
 import sc.fiji.snt.gui.SNTSearchableBar;
 import sc.fiji.snt.gui.cmds.ColorMapReconstructionCmd;
+import sc.fiji.snt.gui.cmds.CustomizeLegendCmd;
 import sc.fiji.snt.gui.cmds.CustomizeObjCmd;
 import sc.fiji.snt.gui.cmds.CustomizeTreeCmd;
 import sc.fiji.snt.gui.cmds.DistributionBPCmd;
@@ -932,9 +933,13 @@ public class Viewer3D {
 	 * @param min the minimum value in the color table
 	 * @param max the maximum value in the color table
 	 */
-	public void updateColorBarLegend(final double min, final double max)
+	public void updateColorBarLegend(final double min, final double max) {
+		updateColorBarLegend(min, max, -1);
+	}
+
+	private void updateColorBarLegend(final double min, final double max, final float fSize)
 	{
-		if (cBar != null) cBar.update(min, max);
+		if (cBar != null) cBar.update(min, max, fSize);
 	}
 
 	/**
@@ -1915,9 +1920,11 @@ public class Viewer3D {
 			this(mapper, new Font(Font.SANS_SERIF, Font.PLAIN, (int) (12 * Prefs.SCALE_FACTOR)), 5, 2);
 		}
 
-		public void update(final double min, final double max) {
+		public void update(final double min, final double max, final float fontSize) {
 			shape.getColorMapper().setMin(min);
 			shape.getColorMapper().setMax(max);
+			if (fontSize > 0)
+				imageGenerator.setFont(imageGenerator.getFont().deriveFont(fontSize));
 			((ColorbarImageGenerator) imageGenerator).setMin(min);
 			((ColorbarImageGenerator) imageGenerator).setMax(max);
 		}
@@ -2570,14 +2577,6 @@ public class Viewer3D {
 			sceneMenu.add(fullScreen);
 			sceneMenu.addSeparator();
 
-			final JMenuItem light = new JMenuItem("Light Controls...", IconFactory.getMenuIcon(GLYPH.BULB));
-			light.addActionListener(e -> {
-//				guiUtils.centeredMsg(
-//						"Adjustments of light and shadows remain experimental features, some of which undoable.",
-//						"Reminder", "OK. I'll be careful");
-				frame.displayLightController();
-			});
-			sceneMenu.add(light);
 			final JMenuItem reset = new JMenuItem(new Action(Action.RESET, KeyEvent.VK_R, false, false));
 			reset.setIcon(IconFactory.getMenuIcon(GLYPH.BROOM));
 			sceneMenu.add(reset);
@@ -3165,7 +3164,7 @@ public class Viewer3D {
 				(new getTreeColors()).execute();
 			});
 			menu.add(mi);
-	
+
 			mi = new JMenuItem("Color...", IconFactory.getMenuIcon(GLYPH.COLOR));
 			mi.addActionListener(e -> {
 				final List<String> keys = getSelectedTreeLabels();
@@ -3266,7 +3265,14 @@ public class Viewer3D {
 			});
 			utilsMenu.add(mi);
 			utilsMenu.add(legendMenu());
-			
+			final JMenuItem light = new JMenuItem("Light Controls...", IconFactory.getMenuIcon(GLYPH.BULB));
+			light.addActionListener(e -> {
+//				guiUtils.centeredMsg(
+//						"Adjustments of light and shadows remain experimental features, some of which undoable.",
+//						"Reminder", "OK. I'll be careful");
+				frame.displayLightController();
+			});
+			utilsMenu.add(light);
 			addSeparator(utilsMenu, "Scripting:");
 			final JMenuItem script = new JMenuItem(new Action(Action.SCRIPT, KeyEvent.VK_OPEN_BRACKET, false, false));
 			script.setIcon(IconFactory.getMenuIcon(GLYPH.CODE));
@@ -3530,7 +3536,7 @@ public class Viewer3D {
 			// Legend Menu
 			final JMenu legendMenu = new JMenu("Color Legends");
 			legendMenu.setIcon(IconFactory.getMenuIcon(GLYPH.COLOR2));
-			JMenuItem mi = new JMenuItem("Add...");
+			JMenuItem mi = new JMenuItem("Add...", IconFactory.getMenuIcon(GLYPH.PLUS));
 			mi.addActionListener(e -> {
 				final Map<String, Object> inputs = new HashMap<>();
 				inputs.put("treeMappingLabels", null);
@@ -3538,12 +3544,55 @@ public class Viewer3D {
 				runCmd(ColorMapReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			legendMenu.add(mi);
-			mi = new JMenuItem("Remove Last");
+			mi = new JMenuItem("Edit Last...", IconFactory.getMenuIcon(GLYPH.SLIDERS));
+			mi.addActionListener(e -> {
+				if (cmdService == null) {
+					guiUtils.error(
+						"This command requires Reconstruction Viewer to be aware of a Scijava Context.");
+					return;
+				}
+				if (cBar == null) {
+					guiUtils.error("No Legend currently exists.");
+					return;
+				}
+				class GetLegendSettings extends SwingWorker<Object, Object> {
+
+					CommandModule cmdModule;
+
+					@Override
+					public Object doInBackground() {
+						try {
+							cmdModule = cmdService.run(CustomizeLegendCmd.class, true).get();
+						}
+						catch (final InterruptedException | ExecutionException ignored) {
+							return null;
+						}
+						return null;
+					}
+
+					@Override
+					protected void done() {
+						if (cmdModule != null && cmdModule.isCanceled()) {
+							return; // user pressed cancel or chose nothing
+						}
+						@SuppressWarnings("unchecked")
+						final HashMap<String, Double> outMap = (HashMap<String, Double>) cmdModule.getInput("outMap");
+						if (outMap == null) {
+							guiUtils.error("Command execution failed.");
+							return;
+						}
+						updateColorBarLegend(outMap.get("min"), outMap.get("max"), outMap.get("fSize").floatValue());
+					}
+				}
+				(new GetLegendSettings()).execute();
+			});
+			legendMenu.add(mi);
+
+			legendMenu.addSeparator();
+			mi = new JMenuItem("Remove Last", IconFactory.getMenuIcon(GLYPH.DELETE));
 			mi.addActionListener(e -> removeColorLegends(true));
 			legendMenu.add(mi);
-			legendMenu.addSeparator();
-			mi = new JMenuItem("Remove All...");
-			mi.setIcon(IconFactory.getMenuIcon(GLYPH.TRASH));
+			mi = new JMenuItem("Remove All...", IconFactory.getMenuIcon(GLYPH.TRASH));
 			mi.addActionListener(e -> {
 				if (!guiUtils.getConfirmation("Remove all color legends from scene?",
 					"Remove All Legends?"))

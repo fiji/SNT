@@ -21,15 +21,11 @@ import time
 from sc.fiji.snt import Tree
 from sc.fiji.snt.io import MouseLightLoader
 from sc.fiji.snt.viewer import Viewer3D
-from sc.fiji.snt.analysis.graph import GraphUtils
+from sc.fiji.snt.analysis.graph import DirectedWeightedGraph
 
 from org.jgrapht import Graphs, GraphPath, GraphTests
 from org.jgrapht.alg.shortestpath import DijkstraShortestPath
 
-
-def getGraphTips(graph):
-    """Return all terminal nodes (out-degree 0) of the graph."""
-    return [node for node in graph.vertexSet() if graph.outDegreeOf(node) == 0]
 
 
 def distanceToRoot(graph, n):
@@ -49,7 +45,7 @@ def distanceToRoot(graph, n):
 def getTreeDiameter(graph):
     """Return graph diameter, which for rooted directed trees
     is the longest shortest path between the root and any terminal node."""
-    tips = getGraphTips(graph)
+    tips = graph.getTips()
     max_dist = 0
     for tip in tips:
         dist = distanceToRoot(graph, tip)
@@ -67,26 +63,25 @@ def run():
     # Get the SWCPoint representation of each dendritic node, which
     # contains all attributes of a single line in an SWC file.
     print("Extracting dendritic nodes...")
-    nodes = loader.getNodes("dendrite")
+    dendritic_tree = loader.getTree("dendrite")
 
-    # Build a jgrapht Graph object from the nodes and assign
+    # Build a jgrapht Graph object from the Tree nodes and assign
     # euclidean distance between adjacent nodes as edge weights.
-    # Note that other weighs could be assigned using the jgrapht API.
-    print("Assembling graph from %s vertices..." % len(nodes))
-    graph = GraphUtils.createGraph(nodes, True)
+    print("Assembling graph from Tree's nodes...")
+    graph = dendritic_tree.getGraph()
     
     # When dealing with a relatively low number of vertices (<10k),
     # one can display the graph in SNT's dedicated canvas w/ controls
-    # for export and visualization in its right-click menu.
+    # for visualization, navigation and export:
     print("Displaying graph...")
-    GraphUtils.show(graph)
+    graph.show()
 
     # Retrieve the root: the singular node with in-degree 0
-    root = [node for node in graph.vertexSet() if graph.inDegreeOf(node) == 0][0]
+    root = graph.getRoot()
 
     # Compute the longest shortest path using parent pointers
     t0 = time.time()
-    tips = getGraphTips(graph)
+    tips = graph.getTips()
     lsp = getTreeDiameter(graph)
     t1 = time.time()
     print("Shortest path (PP)=%s. Time: %ss" % (lsp, t1-t0))
@@ -110,9 +105,8 @@ def run():
     viewer = Viewer3D(context)
 
     # Import results as sc.fiji.snt.Tree objects expected by Viewer3D
-    snt_tree_input_nodes = Tree(nodes, "Input nodes")
-    snt_tree_input_nodes.setColor("cyan")
-    viewer.add(snt_tree_input_nodes)
+    dendritic_tree.setColor("cyan")
+    viewer.add(dendritic_tree)
 
     shortest_path_vertices = grapht_path.getVertexList()
     snt_tree_shortest_path = Tree(shortest_path_vertices, "Dijkstra shortest path")

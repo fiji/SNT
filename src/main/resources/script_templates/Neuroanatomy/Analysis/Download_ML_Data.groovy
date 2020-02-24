@@ -28,9 +28,9 @@ if (!MouseLightLoader.isDatabaseAvailable() || !compartmentOfInterest) {
 }
 
 println("ML Database is online")
-for (neuron in 1..MouseLightLoader.getNeuronCount()) {
+for (id in 1..MouseLightLoader.getNeuronCount()) {
 
-    // Define a valid cell ID
+    // Define a valid cell ID (We could also use MouseLightLoader#getAllNeuronIDs)
     id = "AA" + new DecimalFormat("0000").format(neuron)
     loader = loader = new MouseLightLoader(id)
     print("Parsing " + id + "...")

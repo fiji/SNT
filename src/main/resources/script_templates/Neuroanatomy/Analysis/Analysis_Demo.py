@@ -48,9 +48,9 @@ def run():
         ui.showDialog("Somehow the specified id was not found", "Error")
         return
 
-    # All the raw data in the MouseLight database is stored as JSONObjects.
-    # If needed, these could be access as follows:
-    # https://stleary.github.io/JSON-java/index.html
+    # All of the raw data in the MouseLight database is stored as JSONObjects.
+    # (https://stleary.github.io/JSON-java/index.html). If needed, these could
+    # be access as follows:
     #all_data = loader.getJSON()
 
     # To extract a compartment:
@@ -62,7 +62,7 @@ def run():
         d_stats = TreeStatistics(tree)
 
         # NB: SummaryStatistics should be more performant than DescriptiveStatistics
-        # https://javadoc.scijava.org/Fiji/sc/fiji/tracing/analysis/TreeStatistics.html
+        # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/analysis/TreeStatistics.html
         metric = TreeStatistics.INTER_NODE_DISTANCE  # same as "inter-node distance"
         summary_stats = d_stats.getSummaryStats(metric)
         d_stats.getHistogram(metric).show()
@@ -73,21 +73,19 @@ def run():
 
         # We can get the volume of a compartment by approximating the volume of
         # each path, and summing to total. For info on the assumptions made in
-        # the volume calculation, look for the source code of sc.fiji.snt.Path
-        # https://github.com/fiji/SNT/search?q=getApproximatedVolume
-        compartment_volume = 0
-        for path in tree.list():
-            compartment_volume += path.getApproximatedVolume()
+        # this volume calculation, have a look at Tree's documentation:
+        # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/Tree.html
+        compartment_volume = tree.getApproximatedVolume()
         print("Approximate volume of tracing is %d cubic microns" % compartment_volume)
 
-        # Let's find the minimum bounding box containing all existing nodes
-        # https://javadoc.scijava.org/Fiji/sc/fiji/tracing/util/BoundingBox.html
+        # Let's find the minimum bounding box containing all existing nodes:
+        # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/util/BoundingBox.html
         bb = tree.getBoundingBox(True)
         bb_dim = bb.getDimensions(False)
         print("Dimensions of bounding box containing all nodes (in micrometers): {} x {} x {}".format(*bb_dim))
 
     # To load a neuron from NeuroMorpho.org, use NeuroMorphoLoader.
-    # https://javadoc.scijava.org/Fiji/sc/fiji/tracing/io/NeuroMorphoLoader.html
+    # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/io/NeuroMorphoLoader.html
     # We choose a reconstruction with traced node radii:
     # http://neuromorpho.org/neuron_info.jsp?neuron_name=Adol-20100419cell1
     nm_loader = NeuroMorphoLoader()
@@ -98,12 +96,11 @@ def run():
         if nm_tree is not None:
             nm_stats = TreeStatistics(nm_tree)
             nm_metric = TreeStatistics.MEAN_RADIUS
-            nm_stats.getHistogram(nm_metric).show()
+            nm_stats.getHistogram("mean radius").show()
 
-            # To build custom plots, we can use PlotService
-            # https://github.com/maarzt/scijava-plot. E.g., we can see how
-            # radius changes with centrifugal path order. For simplicity,
-            # we'll only consider the mean node radius of each path
+            # To build custom plots, we can use SciJava's PlotService. E.g., we
+            # can see how radius changes with centrifugal path order. For
+            # simplicity, we'll only consider the mean node radius of each path
             order_dict = defaultdict(list)
             for p in nm_tree.list():
                 r = p.getMeanRadius()

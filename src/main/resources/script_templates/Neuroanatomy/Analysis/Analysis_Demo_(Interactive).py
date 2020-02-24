@@ -32,7 +32,7 @@ def run():
     # The SNTService contains convenience methods that will simplify
     # our script. For more advanced features we'll script other classes
     # directly, but we'll use SNTService whenever pertinent.
-    # https://javadoc.scijava.org/Fiji/sc/fiji/tracing/SNTService.html
+    # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/SNTService.html
     # Let's start SNT's GUI if it is currently not running
     if not snt.getUI():
         snt.initialize(True)  # display GUI?
@@ -57,8 +57,8 @@ def run():
     # just the current subset of selected Paths in the Path Manager dialog.
     # This is useful when one only wants to analyze the groups of Paths
     # selected using the Filtering toolbar of the Path Manager.
-    # https://javadoc.scijava.org/Fiji/sc/tracing/tracing/analysis/TreeAnalyzer.html
-    # https://javadoc.scijava.org/Fiji/sc/tracing/analysis/TreeStatistics.html
+    # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/analysis/TreeAnalyzer.html
+    # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/analysis/TreeStatistics.html
     analyzer = snt.getAnalyzer(False)  # Include only selected paths?
     stats = snt.getStatistics(False)   # Include only selected paths?
 

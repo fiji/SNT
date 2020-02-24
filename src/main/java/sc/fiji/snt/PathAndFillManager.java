@@ -2908,9 +2908,7 @@ public class PathAndFillManager extends DefaultHandler implements
 
 			pw.print(",");
 			final double fittedVolume = pForLengthAndName.getApproximatedVolume();
-			if (fittedVolume >= 0) pw.print(fittedVolume);
-			else pw.print("");
-
+			pw.print(fittedVolume);
 			pw.print("\r\n");
 			pw.flush();
 		}

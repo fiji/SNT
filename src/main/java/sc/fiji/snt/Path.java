@@ -2413,13 +2413,13 @@ public class Path implements Comparable<Path> {
 	 * the filling interface.
 	 * </p>
 	 *
-	 * @return the approximate fitted volume (in physical units), or -1 if this
+	 * @return the approximate fitted volume (in physical units), or 0 if this
 	 *         Path has no radii
 	 * @see #hasRadii()
 	 */
 	public double getApproximatedVolume() {
 		if (!hasRadii()) {
-			return -1;
+			return 0;
 		}
 
 		double totalVolume = 0;

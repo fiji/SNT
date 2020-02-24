@@ -185,6 +185,20 @@ public class OBJMesh {
 	}
 
 	/**
+	 * Determines whether the mesh bounding box should be displayed.
+	 * 
+	 * @param boundingBoxColor the color of the mesh bounding box, either a 1) HTML
+	 *                         color codes starting with hash ({@code #}), a color
+	 *                         preset ("red", "blue", etc.), or integer triples of
+	 *                         the form {@code r,g,b} and range {@code [0, 255]}. If
+	 *                         null, or if string does not encode a valid color, no
+	 *                         bounding box is displayed
+	 */
+	public void setBoundingBoxColor(final String boundingBoxColor) {
+		setBoundingBoxColor(new ColorRGB(boundingBoxColor));
+	}
+
+	/**
 	 * Gets the minimum bounding box of this mesh.
 	 * 
 	 * @param hemiHalf either "left", "l", "right", "r" otherwise bounding box is

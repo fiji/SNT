@@ -18,7 +18,6 @@ from sc.fiji.snt.annotation import AllenUtils
 from sc.fiji.snt.viewer import Viewer3D
 from sc.fiji.snt.viewer.Viewer3D import ViewMode
 
-from org.scijava.util import Colors
 
 def run():
 
@@ -34,31 +33,28 @@ def run():
 
     # We'll visualize dendrites and axons differently, loading cell in 2 steps
     print("    Retrieving ML neuron...")
-    dend_tree = loader.getTree('dendrite', Colors.ORANGE)
-    dend_tree.setLabel("AA0100 (Dendrites)")
-    axon_tree = loader.getTree('axon', None)
-    axon_tree.setLabel("AA0100 (Axon)")
+    dend_tree = loader.getTree('dendrite')
+    axon_tree = loader.getTree('axon')
 
     # Color code axons: map path order to color table
     print("... Done. Assigning LUT to axonal arbor...")
     mapper = TreeColorMapper(context)
-    color_table = lut.loadLUT(lut.findLUTs().get("Ice.lut"))
-    mapper.map(axon_tree, "path order", color_table)
-    bounds = mapper.getMinMax()
+    mapper.map(axon_tree, "distance to soma", "Ice.lut")
 
     # Assemble 3D scene in Reconstruction Viewer
     print("... Done. Preparing Reconstruction Viewer...")
     viewer = snt.newRecViewer(True)  # viewer with GUI controls?
 
     # Add reconstructions and color map legend
+    dend_tree.setColor("orange")
     viewer.add(dend_tree)
     viewer.add(axon_tree)
-    viewer.addColorBarLegend(color_table, bounds[0], bounds[1])
+    viewer.addColorBarLegend(mapper)
 
-    # Add Allen Reference Atlas (ARA) annotations: brain contour
+    # Add Allen Reference Atlas annotations: brain contour
     # and compartment associated with soma of downloaded cell
     brainMesh = AllenUtils.getCompartment("Whole Brain").getMesh()
-    brainMesh.setBoundingBoxColor(Colors.GRAY)
+    brainMesh.setBoundingBoxColor("cyan")
     viewer.add(brainMesh)
     soma_annotation = next(iter(loader.getNodes("soma"))).getAnnotation()
     viewer.add(soma_annotation.getMesh())

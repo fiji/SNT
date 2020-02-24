@@ -46,7 +46,7 @@ public interface BrainAnnotation {
 	/** @return the mesh associated with this compartment */
 	public OBJMesh getMesh();
 
-	/** @return assesses if {@annotation} is contained by this compartment */
+	/** @return assesses if {@code annotation} is contained by this compartment */
 	public boolean contains(BrainAnnotation annotation);
 
 }

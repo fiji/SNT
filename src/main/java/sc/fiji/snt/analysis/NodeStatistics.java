@@ -163,7 +163,7 @@ public class NodeStatistics {
 	 * Gets the relative frequencies histogram for a univariate measurement. The
 	 * number of bins is determined using the Freedman-Diaconis rule.
 	 *
-	 * @param metric the measurement ({@link #N_NODES}, {@link #RADIUS},
+	 * @param metric the measurement ({@link #X_COORDINATES}, {@link #RADIUS},
 	 *          etc.)
 	 * @return the frame holding the histogram
 	 */

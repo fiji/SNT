@@ -121,7 +121,7 @@ public class TreeColorMapper extends ColorMapper {
 	private final List<Tree> mappedTrees;
 
 	/**
-	 * Instantiates the Colorizer.
+	 * Instantiates the mapper.
 	 *
 	 * @param context the SciJava application context providing the services
 	 *          required by the class

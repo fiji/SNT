@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 
 import org.jfree.chart.ChartFrame;
+import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYPointerAnnotation;
 import org.jfree.chart.plot.Marker;
@@ -45,10 +46,24 @@ public class SNTChart extends ChartFrame {
 	private static final Color BACKGROUND_COLOR = null;
 
 	protected SNTChart(final String title, final JFreeChart chart) {
+		this(title, chart, new Dimension(400, 400));
+	}
+
+	public SNTChart(String title, JFreeChart chart, Dimension preferredSize) {
 		super(title, chart);
-		getChartPanel().setBackground(BACKGROUND_COLOR);
-		setPreferredSize(new Dimension(400, 400));
+		chart.setBackgroundPaint(null);
+		chart.setAntiAlias(true);
+		chart.setTextAntiAlias(true);
+		final ChartPanel cp = new ChartPanel(chart);
+		// Tweak: Ensure chart is always drawn and not scaled to avoid rendering
+		// artifacts
+		cp.setMinimumDrawWidth(0);
+		cp.setMaximumDrawWidth(Integer.MAX_VALUE);
+		cp.setMinimumDrawHeight(0);
+		cp.setMaximumDrawHeight(Integer.MAX_VALUE);
+		cp.setBackground(BACKGROUND_COLOR);
 		setBackground(Color.WHITE); // provided contrast to otherwise transparent background
+		setPreferredSize(preferredSize);
 		pack();
 	}
 

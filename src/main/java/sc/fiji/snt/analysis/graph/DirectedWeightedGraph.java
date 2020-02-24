@@ -159,18 +159,18 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 			this.associatedWeight = associatedWeight;
 		}
 	}
-	
+
 	/**
 	 * For all edges, sets the Euclidean distance between the source and target
 	 * vertex as the weight.
 	 */
 	public void assignEdgeWeightsEuclidean() {
-		for (SWCWeightedEdge e : this.edgeSet()) {
-			double distance = e.getSource().distanceTo(e.getTarget());
+		for (final SWCWeightedEdge e : this.edgeSet()) {
+			final double distance = e.getSource().distanceTo(e.getTarget());
 			this.setEdgeWeight(e, distance);
 		}
 	}
-	
+
 	/**
 	 * Scales each vertex SWCVertex by the specified factors.
 	 *
@@ -180,15 +180,15 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 	 * @param updateEdgeWeightsEuclidean if true, update all edge weights with
 	 *                                   inter-node Euclidean distances
 	 */
-	public void scale(double xScale, double yScale, double zScale, boolean updateEdgeWeightsEuclidean) {
-		for (SWCPoint v : vertexSet()) {
+	public void scale(final double xScale, final double yScale, final double zScale, final boolean updateEdgeWeightsEuclidean) {
+		for (final SWCPoint v : vertexSet()) {
 			v.scale(xScale, yScale, zScale);
 		}
 		if (updateEdgeWeightsEuclidean) {
 			assignEdgeWeightsEuclidean();
 		}
 	}
-	
+
 	/**
 	 * Gets the sum of all edge weights.
 	 *
@@ -197,28 +197,28 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 	public double sumEdgeWeights() {
 		return edgeSet().stream().mapToDouble(e -> e.getWeight()).sum();
 	}
-	
+
 	public DepthFirstIterator<SWCPoint, SWCWeightedEdge> getDepthFirstIterator() {
 		return new DepthFirstIterator<SWCPoint, SWCWeightedEdge>(this);
 	}
 
-	public DepthFirstIterator<SWCPoint, SWCWeightedEdge> getDepthFirstIterator(SWCPoint startVertex) {
+	public DepthFirstIterator<SWCPoint, SWCWeightedEdge> getDepthFirstIterator(final SWCPoint startVertex) {
 		return new DepthFirstIterator<SWCPoint, SWCWeightedEdge>(this, startVertex);
 	}
-	
+
 	/**
 	 * Re-assigns a unique Integer identifier to each vertex based on visit order
 	 * during Depth First Search. Also updates the parent and previousPoint fields
 	 * of each SWCvertex contained in the Graph.
 	 */
 	private void updateVertexProperties() {
-		DepthFirstIterator<SWCPoint, SWCWeightedEdge> iter = getDepthFirstIterator(getRoot());
+		final DepthFirstIterator<SWCPoint, SWCWeightedEdge> iter = getDepthFirstIterator(getRoot());
 		int currentId = 1;
 		while (iter.hasNext()) {
-			SWCPoint v = iter.next();
+			final SWCPoint v = iter.next();
 			v.id = currentId;
 			currentId++;
-			List<SWCPoint> parentList = Graphs.predecessorListOf(this, v);
+			final List<SWCPoint> parentList = Graphs.predecessorListOf(this, v);
 			if (!parentList.isEmpty()) {
 				v.parent = parentList.get(0).id;
 				v.setPreviousPoint(parentList.get(0));
@@ -264,9 +264,9 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 	}
 
 	/**
-	 * Returns the Tree associated with this graph.
+	 * Reassembles a tree from this graph's data.
 	 *
-	 * @return the tree (or null if no association exists)
+	 * @return the reassembled tree
 	 */
 	public Tree getTree() {
 		updateVertexProperties();
@@ -282,6 +282,5 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 		updateVertexProperties();
 		return GraphUtils.show(this);
 	}
-	
-	
+
 }

@@ -413,7 +413,6 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public void measure(final String rowHeader, final Collection<String> metrics, final boolean groupByType) {
 		if (table == null) table = new DefaultGenericTable();
-		final int lastRow = table.getRowCount() - 1;
 		final Collection<String> measuringMetrics = (metrics == null || metrics.isEmpty()) ? getMetrics() : metrics;
 		if (groupByType) {
 			for (final int type : tree.getSWCTypes()) {

@@ -39,10 +39,8 @@ import sc.fiji.snt.analysis.AnalysisUtils.HistogramDatasetPlus;
 import sc.fiji.snt.util.PointInImage;
 
 /**
- * Computes summary and descriptive statistics from univariate properties of
- * Paths and Nodes in a {@link Tree}. For analysis of groups of Trees use
- * {@link MultiTreeStatistics}.
- *
+ * Computes summary and descriptive statistics from a Collection of nodes.
+ * 
  * @author Tiago Ferreira
  */
 public class NodeStatistics {
@@ -65,7 +63,7 @@ public class NodeStatistics {
 	/** Flag for {@value #Z_COORDINATES} statistics. */
 	public static final String Z_COORDINATES = TreeStatistics.Z_COORDINATES;
 
-	/** Flag for statistics on node {@value #VALUES} */
+	/** Flag for statistics on {@value #VALUES} */
 	public static final String VALUES = TreeStatistics.VALUES;
 
 	private static final String[] ALL_FLAGS = { //
@@ -100,7 +98,7 @@ public class NodeStatistics {
 	 * Performs statistics on a collection of nodes.
 	 *
 	 * @param points the points to be analyzed
-	 * @param tree   the Tree associated with points
+	 * @param tree   the Tree associated with {@code points}
 	 */
 	public NodeStatistics(final Collection<? extends PointInImage> points, final Tree tree) {
 		this.points = points;
@@ -108,9 +106,9 @@ public class NodeStatistics {
 	}
 
 	/**
-	 * Gets the list of most commonly used metrics.
+	 * Gets the list of supported metrics.
 	 *
-	 * @return the list of commonly used metrics
+	 * @return the list of supported metrics
 	 */
 	public static List<String> getMetrics() {
 		return Arrays.stream(ALL_FLAGS).collect(Collectors.toList());
@@ -123,7 +121,7 @@ public class NodeStatistics {
 	 *          etc.)
 	 * @return the DescriptiveStatistics object.
 	 */
-	public DescriptiveStatistics getSummaryStats(final String metric) throws UnknownMetricException {
+	public DescriptiveStatistics getDescriptiveStatistics(final String metric) throws UnknownMetricException {
 		final String normMetric = getNormalizedMeasurement(metric);
 		if (normMetric.equals(currentMetric) && currentStats != null) return currentStats;
 		currentMetric = normMetric;
@@ -168,7 +166,7 @@ public class NodeStatistics {
 	 * @return the frame holding the histogram
 	 */
 	public SNTChart getHistogram(final String metric) {
-		getSummaryStats(metric);
+		getDescriptiveStatistics(metric);
 		final HistogramDatasetPlus datasetPlus = new HistogramDatasetPlus(currentStats, true);
 		final JFreeChart chart = AnalysisUtils.getHistogram(currentMetric, currentStats, datasetPlus);
 		final SNTChart frame = new SNTChart("Hist. " + currentMetric, chart);
@@ -206,7 +204,7 @@ public class NodeStatistics {
 	}
 
 	/**
-	 * Associates the nodes being analyzed with branches of the specified tree
+	 * Associates the nodes being analyzed to the branches of the specified tree
 	 *
 	 * @param tree the association tree
 	 */

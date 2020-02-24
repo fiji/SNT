@@ -39,7 +39,6 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.ValueAxis;
@@ -184,7 +183,8 @@ public class GroupedTreeStatistics {
 			bar_renderer.setSeriesPaint(i, awtColor);
 		}
 		bar_renderer.setShadowVisible(false);
-		return getFrame(chart, "Grouped Hist.", new Dimension(400, 400));
+		chart.getLegend().setBackgroundPaint(bColor);
+		return new SNTChart("Grouped Hist.", chart);
 	}
 
 	/**
@@ -229,26 +229,7 @@ public class GroupedTreeStatistics {
 
 		final int height = 400;
 		final double width = (groups.size() < 4) ? height / 1.5 : height * 1.5;
-		return getFrame(chart, "Box-plot", new Dimension((int) width, height));
-	}
-
-	private SNTChart getFrame(final JFreeChart chart, final String title, final Dimension preferredSize) {
-		chart.setBackgroundPaint(null);
-		chart.setAntiAlias(true);
-		chart.setTextAntiAlias(true);
-		final ChartPanel cp = new ChartPanel(chart);
-		// Tweak: Ensure chart is always drawn and not scaled to avoid rendering
-		// artifacts
-		cp.setMinimumDrawWidth(0);
-		cp.setMaximumDrawWidth(Integer.MAX_VALUE);
-		cp.setMinimumDrawHeight(0);
-		cp.setMaximumDrawHeight(Integer.MAX_VALUE);
-		cp.setBackground(null);
-		final SNTChart frame = new SNTChart(title, chart);
-		frame.setPreferredSize(preferredSize);
-		frame.setBackground(Color.WHITE); // provided contrast to otherwise transparent background
-		frame.pack();
-		return frame;
+		return new SNTChart("Box-plot", chart,  new Dimension((int) width, height));
 	}
 
 	/**
@@ -445,7 +426,7 @@ public class GroupedTreeStatistics {
 		final GroupedTreeStatistics groupedStats = new GroupedTreeStatistics();
 		groupedStats.addGroup(sntService.demoTrees().subList(0, 4), "Group 1");
 		groupedStats.addGroup(sntService.demoTrees().subList(2, 4), "Group 2");
-		/// groupedStats.getHistogram(TreeStatistics.INTER_NODE_DISTANCE).setVisible(true);
+		groupedStats.getHistogram(TreeStatistics.INTER_NODE_DISTANCE).show();
 		groupedStats.getBoxPlot("node dx sq").setVisible(true);
 
 	}

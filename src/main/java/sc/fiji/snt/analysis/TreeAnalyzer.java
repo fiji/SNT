@@ -46,6 +46,7 @@ import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.annotation.BrainAnnotation;
 import sc.fiji.snt.util.PointInImage;
 
 /**
@@ -629,6 +630,25 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
+	 * Gets the position of all the tips in the analyzed tree associated with the
+	 * specified annotation.
+	 *
+	 * @param annot the BrainAnnotation to be queried.
+	 * @return the branch points positions, or an empty set if no tips were
+	 *         retrieved.
+	 */
+	public Set<PointInImage> getTips(final BrainAnnotation annot) {
+		if (tips == null) getTips();
+		final HashSet<PointInImage> fTips = new HashSet<>();
+		for (final PointInImage tip : tips) {
+			final BrainAnnotation annotation = tip.getAnnotation();
+			if (annotation != null && annot.contains(annotation))
+				fTips.add(tip);
+		}
+		return fTips;
+	}
+
+	/**
 	 * Gets the position of all the branch points in the analyzed tree.
 	 *
 	 * @return the branch points positions
@@ -639,6 +659,25 @@ public class TreeAnalyzer extends ContextCommand {
 			joints.addAll(p.getJunctionNodes());
 		}
 		return joints;
+	}
+
+	/**
+	 * Gets the position of all the branch points in the analyzed tree associated
+	 * with the specified annotation.
+	 *
+	 * @param annot the BrainAnnotation to be queried.
+	 * @return the branch points positions, or an empty set if no branch points
+	 *         were retrieved.
+	 */
+	public Set<PointInImage> getBranchPoints(final BrainAnnotation annot) {
+		if (joints == null) getBranchPoints();
+		final HashSet<PointInImage>fJoints = new HashSet<>();
+		for (final PointInImage joint: joints) {
+			final BrainAnnotation annotation = joint.getAnnotation();
+			if (annotation != null && annot.contains(annotation))
+				fJoints.add(joint);
+		}
+		return fJoints;
 	}
 
 	/**

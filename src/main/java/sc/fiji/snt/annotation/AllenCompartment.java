@@ -329,6 +329,12 @@ public class AllenCompartment implements BrainAnnotation {
 	}
 
 	@Override
+	public boolean contains(BrainAnnotation annotation) {
+		if (!(annotation instanceof AllenCompartment)) return false;
+		return equals(annotation) || contains((AllenCompartment)annotation);
+	}
+
+	@Override
 	public String toString() {
 		return name() + " [" + acronym + "]";
 	}

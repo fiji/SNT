@@ -429,10 +429,7 @@ public class TreeAnalyzer extends ContextCommand {
 			table.set(getCol("SWC Types"), row, getSWCTypesAsString());
 			measuringMetrics.forEach(metric -> table.set(getCol(metric), row, getMetricWithoutChecks(metric)));
 		}
-		if (getContext() == null) {
-			System.out.println(SNTUtils.tableToString(table, lastRow + 1, table.getRowCount() - 1));
-		} else
-			updateAndDisplayTable();
+		if (getContext() != null) updateAndDisplayTable();
 	}
 
 	protected String getSWCTypesAsString() {

@@ -279,14 +279,26 @@ public class TreeAnalyzer extends ContextCommand {
 
 	/**
 	 * Gets a list of supported metrics. Note that this list will only include
-	 * commonly used metrics. For a complete list of supported metrics see e.g.,
-	 * {@link MultiTreeStatistics#getAllMetrics()}
+	 * commonly used metrics. For a complete list of supported metrics see
+	 * {@link #getAllMetrics()}
 	 * 
 	 * @return the list of available metrics
 	 * @see MultiTreeStatistics#getMetrics()
 	 */
 	public static List<String> getMetrics() {
 		return MultiTreeStatistics.getMetrics();
+	}
+
+	/**
+	 * Gets the list of <i>all</i> supported metrics.
+	 *
+	 * @return the list of available metrics
+	 * 
+	 * @return the list of all available metrics
+	 * @see MultiTreeStatistics#getAllMetrics()
+	 */
+	public static List<String> getAllMetrics() {
+		return MultiTreeStatistics.getAllMetrics();
 	}
 
 	/**

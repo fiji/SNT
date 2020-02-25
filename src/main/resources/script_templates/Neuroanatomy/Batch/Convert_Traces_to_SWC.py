@@ -30,20 +30,21 @@ def run():
     for f in os.listdir(d):
         if os.path.basename(f).startswith('.'):
             continue
-        if re.search('.*-exported-\d{3}.swc', f):
+        if re.search('.*-exported(-\d{3})?.swc', f):
             log.warn("'%s' already exists" % f)
         if not f.lower().endswith('.traces'):
             log.info('Skipping %s...' % f)
             continue
         file_path = os.path.join(d, f)
         swc_filename_prefix = re.sub(r'\.traces', '-exported', file_path)
-        log.info('Converting %s to %s-*.swc' % (file_path, swc_filename_prefix))
+        log.info('Converting %s to %s.swc' % (file_path, swc_filename_prefix))
         tree = Tree(file_path)
         if tree.saveAsSWC(swc_filename_prefix):
             conversion_counter += 1
         else:
             log.error('Could not convert %s' % file_path)
-    log.info(str(conversion_counter) + ' file(s) successfully converted')
+    msg = str(conversion_counter) + ' file(s) successfully converted.'
+    log.info(msg)
+    ui.showDialog(msg)
 
 run()
-

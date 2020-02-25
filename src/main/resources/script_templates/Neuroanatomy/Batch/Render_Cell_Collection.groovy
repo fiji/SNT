@@ -46,13 +46,11 @@ trees.forEach({
 })
 
 // Add Legend
-limits = colorMapper.getMinMax()
-viewer.addColorBarLegend(colorTable, (float)limits[0], (float)limits[1])
+viewer.addColorBarLegend(colorMapper)
 
 // Show result
 viewer.show()
 viewer.setAnimationEnabled(true)
 td = TimeCategory.minus(new Date(), start)
-println("Length range: " + limits[0] + "---" + limits[1])
 println("Rendered " + trees.size() + " files in "+ td)
 println("With Viewer active, Press 'H' for a list of Viewer's shortcuts")

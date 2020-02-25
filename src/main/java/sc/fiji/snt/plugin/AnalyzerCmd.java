@@ -160,9 +160,8 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 		if (table == null) {
 			table = (sntService.isActive()) ? sntService.getTable() : new DefaultGenericTable();
 			if (table == null) table = new DefaultGenericTable();
-		} else {
-			resolveInput("table");
 		}
+		resolveInput("table");
 	}
 
 	@SuppressWarnings("unused")
@@ -277,6 +276,6 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 		final Tree tree = sntService.demoTrees().get(0);
 		final Map<String, Object> input = new HashMap<>();
 		input.put("tree", tree);
-		ij.command().run(AnalyzerCmd.class, true, input);
+		ij.command().run(AnalyzerCmd.class, true, (Map<String, Object>)null);
 	}
 }

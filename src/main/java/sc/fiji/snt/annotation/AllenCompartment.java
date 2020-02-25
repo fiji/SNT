@@ -345,8 +345,9 @@ public class AllenCompartment implements BrainAnnotation {
 		if (o == null) return false;
 		if (!(o instanceof AllenCompartment))
 			return false;
-		return id() == ((AllenCompartment) o).id()
-				|| uuid.equals(((AllenCompartment) o).uuid);
+		if (uuid != null)
+			return uuid.equals(((AllenCompartment) o).uuid);
+		return id() == ((AllenCompartment) o).id();
 	}
 
 	/* IDE Debug method */

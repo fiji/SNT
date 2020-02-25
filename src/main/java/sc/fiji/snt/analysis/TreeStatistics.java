@@ -22,20 +22,31 @@
 
 package sc.fiji.snt.analysis;
 
+import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.text.WordUtils;
 import org.jfree.chart.JFreeChart;
+import org.jfree.data.category.DefaultCategoryDataset;
 
 import sc.fiji.snt.Path;
+import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.AnalysisUtils.HistogramDatasetPlus;
+import sc.fiji.snt.annotation.BrainAnnotation;
+import sc.fiji.snt.io.MouseLightLoader;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of
@@ -181,6 +192,34 @@ public class TreeStatistics extends TreeAnalyzer {
 			lastDstats = new LastDstats(normMeasurement, dStats);
 		}
 		return lastDstats.dStats;
+	}
+
+	public Map<BrainAnnotation, Double> getBrainAnnotations(final int level) {
+		final HashMap<BrainAnnotation, Double> map = new HashMap<>();
+		getAnnotations(level).forEach(annot -> {
+			if (annot != null) map.put(annot, getCableLength(annot));
+		});
+		return map;
+	}
+
+	public SNTChart getBrainAnnotationHistogram() {
+		return getBrainAnnotationHistogram(Integer.MAX_VALUE);
+	}
+
+	public SNTChart getBrainAnnotationHistogram(final int depth) {
+		final Map<BrainAnnotation, Double> map = getBrainAnnotations(depth);
+		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		final String seriesLabel = (depth == Integer.MAX_VALUE) ? "full depth" : "Depth \u2264" + depth;
+		map.entrySet().stream().sorted((e1, e2) -> -e1.getValue().compareTo(e2.getValue())).forEach(entry -> {
+			dataset.addValue(entry.getValue(), seriesLabel,
+					(entry.getKey() == null) ? "Undef." : entry.getKey().acronym());
+		});
+		final JFreeChart chart = AnalysisUtils.createCategoryPlot( //
+				"Brain areas (" + seriesLabel + ")", // domain axis title
+				"Cable length", // range axis title
+				dataset, seriesLabel);
+		final SNTChart frame = new SNTChart("Brain Areas", chart, new Dimension(400, 500));
+		return frame;
 	}
 
 	/**

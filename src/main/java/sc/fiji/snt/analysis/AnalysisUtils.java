@@ -42,6 +42,7 @@ import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.title.TextTitle;
 import org.jfree.chart.ui.RectangleEdge;
+import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.statistics.HistogramType;
@@ -114,6 +115,7 @@ class AnalysisUtils {
 		plot.setBackgroundPaint(bColor);
 		plot.setDomainGridlinesVisible(false);
 		plot.setRangeGridlinesVisible(false);
+		plot.setAxisOffset(new RectangleInsets(0,0, 0, 0));
 		final XYBarRenderer bar_renderer = (XYBarRenderer) plot.getRenderer();
 		bar_renderer.setBarPainter(new StandardXYBarPainter());
 		bar_renderer.setDrawBarOutline(true);
@@ -148,7 +150,10 @@ class AnalysisUtils {
 		plot.setDomainGridlinesVisible(false);
 		plot.setRangeGridlinesVisible(true);
 		plot.setRangeGridlinePaint(SNTColor.alphaColor(Color.LIGHT_GRAY, 50));
-		plot.getDomainAxis().setCategoryMargin(0.0);
+		plot.getDomainAxis().setCategoryMargin(0);
+		plot.getDomainAxis().setLowerMargin(0.01);
+		plot.getDomainAxis().setUpperMargin(0.01);
+		plot.setAxisOffset(new RectangleInsets(0,0, 0, 0));
 		final BarRenderer barRender = ((BarRenderer) plot.getRenderer());
 		barRender.setBarPainter(new StandardBarPainter());
 		barRender.setDrawBarOutline(true);

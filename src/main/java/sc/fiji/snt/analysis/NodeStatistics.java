@@ -206,12 +206,13 @@ public class NodeStatistics {
 		final Map<BrainAnnotation, Integer> map = getBrainAnnotations(depth);
 		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		final String seriesLabel = (depth == Integer.MAX_VALUE) ? "full depth" : "Depth \u2264"+depth;
-		map.forEach((annot, count) -> {
-			dataset.addValue(count, seriesLabel, (annot == null) ? "Undef." : annot.acronym());
+		map.entrySet().stream().sorted((e1, e2) -> -e1.getValue().compareTo(e2.getValue())).forEach(entry -> {
+			dataset.addValue(entry.getValue(), seriesLabel,
+					(entry.getKey() == null) ? "Undef." : entry.getKey().acronym());
 		});
 		final JFreeChart chart = AnalysisUtils.createCategoryPlot( //
 				"Brain areas (" + seriesLabel + ")", // domain axis title
-				"Counts", // range axis title
+				"Frequency (counts)", // range axis title
 				dataset, seriesLabel);
 		final SNTChart frame = new SNTChart("Brain Areas", chart, new Dimension(400, 500));
 		return frame;

@@ -698,6 +698,51 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
+	 * Gets the cable length associated with the specified compartment (neuropil
+	 * label).
+	 *
+	 * @param compartment the query compartment (null not allowed)
+	 * @return the filtered cable length
+	 */
+	public double getCableLength(final BrainAnnotation compartment) {
+		double sumLength = 0d;
+		for (final Path path : tree.list()) {
+			for (int i = 1; i < path.size(); i++) {
+				final BrainAnnotation prevNodeAnnotation = path.getNodeAnnotation(i - 1);
+				final BrainAnnotation currentNodeAnnotation = path.getNodeAnnotation(i);
+				if (compartment.contains(prevNodeAnnotation) && compartment.contains(currentNodeAnnotation)) {
+					sumLength += path.getNode(i).distanceTo(path.getNode(i - 1));
+				}
+			}
+		}
+		return sumLength;
+	}
+
+	public Set<BrainAnnotation> getAnnotations() {
+		final HashSet<BrainAnnotation> set = new HashSet<>();
+		for (final Path path : tree.list()) {
+			for (int i = 0; i < path.size(); i++) {
+				final BrainAnnotation annotation = path.getNodeAnnotation(i);
+				if (annotation != null) set.add(annotation);
+			}
+		}
+		return set;
+	}
+
+	public Set<BrainAnnotation> getAnnotations(final int level) {
+		final Set<BrainAnnotation> filteredAnnotations = new HashSet<>();
+		getAnnotations().forEach(annot -> {
+			final int depth = annot.getOntologyDepth();
+			if (depth > level) {
+				filteredAnnotations.add(annot.getAncestor(level - depth));
+			} else {
+				filteredAnnotations.add(annot);
+			}
+		});
+		return filteredAnnotations;
+	}
+
+	/**
 	 * Gets the cable length of primary branches.
 	 *
 	 * @return the length sum of all primary branches

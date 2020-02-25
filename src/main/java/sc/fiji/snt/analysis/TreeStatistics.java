@@ -222,7 +222,7 @@ public class TreeStatistics extends TreeAnalyzer {
 	}
 
 	protected SNTChart getHistogram(final String normMeasurement, final HistogramDatasetPlus datasetPlus) {
-		final JFreeChart chart = AnalysisUtils.getHistogram(normMeasurement, lastDstats.dStats, datasetPlus);
+		final JFreeChart chart = AnalysisUtils.createHistogram(normMeasurement, lastDstats.dStats, datasetPlus);
 		final SNTChart frame = new SNTChart("Hist. " + tree.getLabel(), chart);
 		return frame;
 	}

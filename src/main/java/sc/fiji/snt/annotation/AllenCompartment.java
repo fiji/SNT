@@ -350,6 +350,15 @@ public class AllenCompartment implements BrainAnnotation {
 		return id() == ((AllenCompartment) o).id();
 	}
 
+	@Override
+	public int hashCode() {
+		int hash = 7;
+		hash = 31 * hash + (int) id();
+		hash = 31 * hash + (acronym == null ? 0 : acronym.hashCode());
+		hash = 31 * hash + (uuid == null ? 0 : uuid.hashCode());
+		return hash;
+	}
+
 	/* IDE Debug method */
 	public static void main(final String[] args) {
 		final AllenCompartment comp = AllenUtils.getCompartment("CA3");

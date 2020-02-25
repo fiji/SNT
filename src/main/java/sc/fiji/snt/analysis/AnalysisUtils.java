@@ -33,11 +33,16 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.StatisticalSummary;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.StandardBarPainter;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.title.TextTitle;
 import org.jfree.chart.ui.RectangleEdge;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.statistics.HistogramType;
 
@@ -98,7 +103,7 @@ class AnalysisUtils {
 		return sb.toString();
 	}
 
-	static JFreeChart getHistogram(final String xAxisTitle, final DescriptiveStatistics stats, final HistogramDatasetPlus datasetPlus) {
+	static JFreeChart createHistogram(final String xAxisTitle, final DescriptiveStatistics stats, final HistogramDatasetPlus datasetPlus) {
 
 		final JFreeChart chart = ChartFactory.createHistogram(null, xAxisTitle,
 			"Rel. Frequency", datasetPlus.getDataset(xAxisTitle));
@@ -126,6 +131,30 @@ class AnalysisUtils {
 		label.setFont(label.getFont().deriveFont(Font.PLAIN));
 		label.setPosition(RectangleEdge.BOTTOM);
 		chart.addSubtitle(label);
+		return chart;
+	}
+
+	static JFreeChart createCategoryPlot(final String domainTitle,
+			final String rangeTitle, final DefaultCategoryDataset dataset, final String seriesLabel) {
+		final JFreeChart chart = ChartFactory.createBarChart(null, domainTitle, rangeTitle, dataset,
+				PlotOrientation.HORIZONTAL, // orientation
+				false, // include legend
+				true, // tooltips?
+				false // URLs?
+		);
+		// Customize plot
+		final CategoryPlot plot = chart.getCategoryPlot();
+		plot.setBackgroundPaint(null); //make graph transparent so that it can be exported without background
+		plot.setDomainGridlinesVisible(false);
+		plot.setRangeGridlinesVisible(true);
+		plot.setRangeGridlinePaint(SNTColor.alphaColor(Color.LIGHT_GRAY, 50));
+		plot.getDomainAxis().setCategoryMargin(0.0);
+		final BarRenderer barRender = ((BarRenderer) plot.getRenderer());
+		barRender.setBarPainter(new StandardBarPainter());
+		barRender.setDrawBarOutline(true);
+		barRender.setSeriesPaint(0, SNTColor.alphaColor(Color.LIGHT_GRAY, 50));
+		barRender.setSeriesOutlinePaint(0, Color.DARK_GRAY);
+		barRender.setShadowVisible(false);
 		return chart;
 	}
 

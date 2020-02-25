@@ -22,20 +22,25 @@
 
 package sc.fiji.snt.analysis;
 
+import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.JFreeChart;
+import org.jfree.data.category.DefaultCategoryDataset;
 
 import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.AnalysisUtils.HistogramDatasetPlus;
+import sc.fiji.snt.annotation.BrainAnnotation;
+import sc.fiji.snt.io.MouseLightLoader;
 import sc.fiji.snt.util.PointInImage;
 
 /**
@@ -168,8 +173,47 @@ public class NodeStatistics {
 	public SNTChart getHistogram(final String metric) {
 		getDescriptiveStatistics(metric);
 		final HistogramDatasetPlus datasetPlus = new HistogramDatasetPlus(currentStats, true);
-		final JFreeChart chart = AnalysisUtils.getHistogram(currentMetric, currentStats, datasetPlus);
+		final JFreeChart chart = AnalysisUtils.createHistogram(currentMetric, currentStats, datasetPlus);
 		final SNTChart frame = new SNTChart("Hist. " + currentMetric, chart);
+		return frame;
+	}
+
+	public Map<BrainAnnotation, Integer> getBrainAnnotations(final int level) {
+		final HashMap<BrainAnnotation, Integer> map  = new HashMap<>();
+		points.forEach(p -> {
+			BrainAnnotation mappingAnnotation = null;
+			final BrainAnnotation pAnnotation = p.getAnnotation();
+			if (pAnnotation != null) {
+				final int depth = pAnnotation.getOntologyDepth();
+				if (depth > level) {
+					mappingAnnotation = pAnnotation.getAncestor(level-depth);
+				} else {
+					mappingAnnotation = pAnnotation;
+				}
+			}
+			Integer currentCount = map.get(mappingAnnotation);
+			if (currentCount == null) currentCount = 0;
+			map.put(mappingAnnotation, ++currentCount);
+		});
+		return map;
+	}
+
+	public SNTChart getBrainAnnotationHistogram() {
+		return getBrainAnnotationHistogram(Integer.MAX_VALUE);
+	}
+
+	public SNTChart getBrainAnnotationHistogram(final int depth) {
+		final Map<BrainAnnotation, Integer> map = getBrainAnnotations(depth);
+		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		final String seriesLabel = (depth == Integer.MAX_VALUE) ? "full depth" : "Depth \u2264"+depth;
+		map.forEach((annot, count) -> {
+			dataset.addValue(count, seriesLabel, (annot == null) ? "Undef." : annot.acronym());
+		});
+		final JFreeChart chart = AnalysisUtils.createCategoryPlot( //
+				"Brain areas (" + seriesLabel + ")", // domain axis title
+				"Counts", // range axis title
+				dataset, seriesLabel);
+		final SNTChart frame = new SNTChart("Brain Areas", chart, new Dimension(400, 500));
 		return frame;
 	}
 
@@ -261,5 +305,11 @@ public class NodeStatistics {
 		final NodeStatistics treeStats = new NodeStatistics(tree.getNodes());
 		final SNTChart hist = treeStats.getHistogram("x-coord");
 		hist.show();
+		final MouseLightLoader loader = new MouseLightLoader("AA0001");
+		final TreeAnalyzer analyzer = new TreeAnalyzer(loader.getTree("axon"));
+		final NodeStatistics nStats = new NodeStatistics(analyzer.getTips());
+		final SNTChart plot = nStats.getBrainAnnotationHistogram();
+		plot.show();
+
 	}
 }

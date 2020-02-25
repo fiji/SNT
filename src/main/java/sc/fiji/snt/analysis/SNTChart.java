@@ -24,6 +24,7 @@ package sc.fiji.snt.analysis;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.ChartPanel;
@@ -34,6 +35,8 @@ import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.TextAnchor;
+
+import sc.fiji.snt.Tree;
 
 /**
  * Extension of {@link ChartFrame} with convenience methods for plot annotations.
@@ -74,28 +77,32 @@ public class SNTChart extends ChartFrame {
 	public void annotateXline(final double xValue, final String label) {
 		final Marker marker = new ValueMarker(xValue);
 		marker.setPaint(Color.BLACK);
-		marker.setLabelBackgroundColor(Color.WHITE);
+		marker.setLabelBackgroundColor(new Color(255,255,255,0));
 		if (label != null)
 			marker.setLabel(label);
 		marker.setLabelAnchor(RectangleAnchor.TOP_LEFT);
 		marker.setLabelTextAnchor(TextAnchor.TOP_RIGHT);
+		marker.setLabelFont(getPlot().getDomainAxis().getTickLabelFont());
 		getPlot().addDomainMarker(marker);
 	}
 
 	public void annotateYline(final double yValue, final String label) {
 		final Marker marker = new ValueMarker(yValue);
 		marker.setPaint(Color.BLACK);
-		marker.setLabelBackgroundColor(Color.WHITE);
+		marker.setLabelBackgroundColor(new Color(255,255,255,0));
 		if (label != null)
 			marker.setLabel(label);
 		marker.setLabelAnchor(RectangleAnchor.TOP_RIGHT);
 		marker.setLabelTextAnchor(TextAnchor.BOTTOM_RIGHT);
+		marker.setLabelFont(getPlot().getRangeAxis().getTickLabelFont());
 		getPlot().addRangeMarker(marker);
 	}
 
 	public void annotatePoint(final double x, final double y, final String label) {
-		// final XYTextAnnotation annot = new XYTextAnnotation(label, x, y);
 		final XYPointerAnnotation annot = new XYPointerAnnotation(label, x, y, -Math.PI / 2.0);
+		final Font font = getPlot().getDomainAxis().getTickLabelFont();
+		annot.setLabelOffset(font.getSize());
+		annot.setFont(font);
 		getPlot().addAnnotation(annot);
 	}
 
@@ -104,4 +111,16 @@ public class SNTChart extends ChartFrame {
 	public void show() {
 		super.show();
 	}
+
+	/* IDE debug method */
+	public static void main(final String[] args) {
+		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
+		final TreeStatistics treeStats = new TreeStatistics(tree);
+		final SNTChart chart = treeStats.getHistogram("contraction");
+		chart.annotatePoint(0.5, 0.15, "No data here");
+		chart.annotateXline(0.275, "Start of slope");
+		chart.annotateYline(0.050, "5% mark");
+		chart.show();
+	}
+
 }

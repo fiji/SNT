@@ -49,4 +49,8 @@ public interface BrainAnnotation {
 	/** @return assesses if {@code annotation} is contained by this compartment */
 	public boolean contains(BrainAnnotation annotation);
 
+	public int getOntologyDepth();
+
+	public BrainAnnotation getAncestor(final int level);
+
 }

@@ -174,7 +174,7 @@ public class DensityPlot2DTest {
 //                    frameCur.localize(pos);
 //                    System.out.println("framecur: " + Arrays.toString(pos));
 
-                    frameCur.get().set( inCur.get().get() + 10 );
+                    frameCur.get().set( inCur.get().get() );
                 }
 
                 ImagePlus frameImp = ImageJFunctions.wrap(frameImg, "frame");

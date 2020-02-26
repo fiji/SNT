@@ -152,6 +152,13 @@ public class MouseLightLoader {
 		return nodes;
 	}
 
+	public SWCPoint getSomaLocation() {
+		return getNodes(SOMA).first();
+	}
+
+	public AllenCompartment getSomaCompartment() {
+		return (AllenCompartment) getSomaLocation().getAnnotation();
+	}
 
 	/**
 	 * Extracts reconstruction(s) from a JSON file.
@@ -424,6 +431,21 @@ public class MouseLightLoader {
 	}
 
 	/**
+	 * Gets the loaders for all the cells publicly available in the MouseLight database.
+	 *
+	 * @return the list of loaders or an empty list if the ML database could not be reached.
+	 */
+	public static List<MouseLightLoader> getAllLoaders() {
+		final List<MouseLightLoader> list = new ArrayList<>();
+		IntStream.rangeClosed(0, getNeuronCount()).forEach( neuron -> {
+			final String id = "AA" + new DecimalFormat("0000").format(neuron);
+			final MouseLightLoader loader = new MouseLightLoader(id);
+			if (loader.idExists()) list.add(loader);
+		});
+		return list;
+	}
+
+	/**
 	 * Gets the IDs of all the cells publicly available in the MouseLight database.
 	 *
 	 * @return the list of cell IDs or an empty list if no database could not be reached.
@@ -433,7 +455,6 @@ public class MouseLightLoader {
 		IntStream.rangeClosed(0, getNeuronCount()).forEach( neuron -> {
 			final String id = "AA" + new DecimalFormat("0000").format(neuron);
 			if (new MouseLightLoader(id).idExists()) list.add(id);
-
 		});
 		return list;
 	}

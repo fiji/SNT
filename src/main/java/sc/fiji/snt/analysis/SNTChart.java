@@ -29,12 +29,18 @@ import java.awt.Font;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.CategoryTextAnnotation;
 import org.jfree.chart.annotations.XYPointerAnnotation;
+import org.jfree.chart.axis.CategoryAnchor;
+import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.Marker;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.title.TextTitle;
 import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
+import org.jfree.data.Range;
 
 import sc.fiji.snt.Tree;
 
@@ -96,6 +102,26 @@ public class SNTChart extends ChartFrame {
 		marker.setLabelTextAnchor(TextAnchor.BOTTOM_RIGHT);
 		marker.setLabelFont(getPlot().getRangeAxis().getTickLabelFont());
 		getPlot().addRangeMarker(marker);
+	}
+
+	public void annotateCategory(final String category, final String label) {
+		final CategoryPlot catPlot = getChartPanel().getChart().getCategoryPlot();
+		if (catPlot.getCategories().contains(category)) {
+			final Range range = catPlot.getRangeAxis().getRange();
+			final double center = (range.getUpperBound() + range.getLowerBound() ) / 2;
+			final CategoryTextAnnotation annot = new CategoryTextAnnotation(label, category, center);
+			annot.setPaint(Color.BLACK);
+			annot.setCategoryAnchor(CategoryAnchor.MIDDLE);
+			annot.setFont(catPlot.getRangeAxis().getTickLabelFont());
+			catPlot.addAnnotation(annot);
+		}
+	}
+
+	public void annotate(final String label) {
+		final TextTitle tLabel = new TextTitle(label);
+		tLabel.setFont(tLabel.getFont().deriveFont(Font.PLAIN));
+		tLabel.setPosition(RectangleEdge.BOTTOM);
+		getChartPanel().getChart().addSubtitle(tLabel);
 	}
 
 	public void annotatePoint(final double x, final double y, final String label) {

@@ -411,12 +411,20 @@ public class MouseLightQuerier {
 	 * @throws IllegalArgumentException if retrieval of data for this neuron is
 	 *           not possible
 	 */
-	public SWCPoint getSoma() throws IllegalArgumentException {
+	public SWCPoint getSomaLocation() throws IllegalArgumentException {
 		if (!initialized) initialize();
 		return soma;
 	}
 
-	private AllenCompartment getSomaCompartment() {
+	/**
+	 * @deprecated Use {@link #getSomaLocation()} instead.
+	 */
+	@Deprecated
+	public SWCPoint getSoma() throws IllegalArgumentException {
+		return getSomaLocation();
+	}
+
+	public AllenCompartment getSomaCompartment() {
 		if (!initialized) {
 			try {
 				initialize(false);

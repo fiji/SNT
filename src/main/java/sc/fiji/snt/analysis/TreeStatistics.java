@@ -26,14 +26,10 @@ import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.text.WordUtils;
@@ -41,12 +37,10 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import sc.fiji.snt.Path;
-import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.AnalysisUtils.HistogramDatasetPlus;
 import sc.fiji.snt.annotation.BrainAnnotation;
-import sc.fiji.snt.io.MouseLightLoader;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of

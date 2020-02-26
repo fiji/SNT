@@ -305,11 +305,15 @@ public class NodeStatistics {
 		final Tree tree = new SNTService().demoTrees().get(0);
 		final NodeStatistics treeStats = new NodeStatistics(tree.getNodes());
 		final SNTChart hist = treeStats.getHistogram("x-coord");
+		hist.annotate("Free text");
 		hist.show();
 		final MouseLightLoader loader = new MouseLightLoader("AA0001");
 		final TreeAnalyzer analyzer = new TreeAnalyzer(loader.getTree("axon"));
 		final NodeStatistics nStats = new NodeStatistics(analyzer.getTips());
 		final SNTChart plot = nStats.getBrainAnnotationHistogram();
+		plot.annotateCategory("CA1", "Not showing");
+		plot.annotateCategory("CP", "highlighted category");
+		plot.annotate("Free Text");
 		plot.show();
 
 	}

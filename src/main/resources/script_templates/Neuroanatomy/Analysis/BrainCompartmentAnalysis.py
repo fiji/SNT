@@ -40,7 +40,12 @@ hist.show()
 
 # Does the distribution of axonal cable reflect the distribution of tips?
 tStats = TreeStatistics(axon);
-hist = tStats.getBrainAnnotationHistogram(max_ontology_depth)
-hist.annotate('Soma location: {}'.format(soma_loc.getAnnotation().acronym()))
+hist = tStats.getAnnotatedLengthHistogram(max_ontology_depth)
+
+# Let's highlight the soma compartment
+cSoma = loader.getSomaCompartment()
+if (cSoma.getOntologyDepth() > max_ontology_depth)
+	cSoma = cSoma.getAncestor(max_ontology_depth - cSoma.getOntologyDepth());
+hist.annotateCategory(cSoma.acronym(), "soma")
 hist.show()
 

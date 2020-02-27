@@ -22,6 +22,7 @@
 
 package sc.fiji.snt.analysis;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -32,11 +33,13 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.CategoryTextAnnotation;
 import org.jfree.chart.annotations.XYPointerAnnotation;
 import org.jfree.chart.axis.CategoryAnchor;
+import org.jfree.chart.plot.CategoryMarker;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.Marker;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.title.TextTitle;
+import org.jfree.chart.ui.Layer;
 import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
@@ -106,14 +109,20 @@ public class SNTChart extends ChartFrame {
 
 	public void annotateCategory(final String category, final String label) {
 		final CategoryPlot catPlot = getChartPanel().getChart().getCategoryPlot();
+		final CategoryMarker marker = new CategoryMarker(category, Color.BLACK, new BasicStroke(1.0f,
+				BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] { 6.0f, 6.0f }, 0.0f));
+		marker.setDrawAsLine(true);
+		catPlot.addDomainMarker(marker, Layer.BACKGROUND);
 		if (catPlot.getCategories().contains(category)) {
-			final Range range = catPlot.getRangeAxis().getRange();
-			final double center = (range.getUpperBound() + range.getLowerBound() ) / 2;
-			final CategoryTextAnnotation annot = new CategoryTextAnnotation(label, category, center);
-			annot.setPaint(Color.BLACK);
-			annot.setCategoryAnchor(CategoryAnchor.MIDDLE);
-			annot.setFont(catPlot.getRangeAxis().getTickLabelFont());
-			catPlot.addAnnotation(annot);
+			if (label != null && !label.isEmpty()) {
+				final Range range = catPlot.getRangeAxis().getRange();
+				final double labelYloc = range.getUpperBound() * 0.90 + range.getLowerBound();
+				final CategoryTextAnnotation annot = new CategoryTextAnnotation(label, category, labelYloc);
+				annot.setPaint(Color.BLACK);
+				annot.setCategoryAnchor(CategoryAnchor.END);
+				annot.setFont(catPlot.getRangeAxis().getTickLabelFont());
+				catPlot.addAnnotation(annot);
+			}
 		}
 	}
 

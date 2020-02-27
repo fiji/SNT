@@ -136,25 +136,19 @@ public class AllenCompartment implements BrainAnnotation {
 	}
 
 	/**
-	 * Assesses if this annotation is parent of a specified compartment.
-	 *
-	 * @param childCompartment the compartment to be tested
-	 * @return true, if successful, i.e., {@code childCompartment}'s
-	 *         {@link #getTreePath()} contains this compartment
-	 */
-	public boolean contains(final AllenCompartment childCompartment) {
-		return childCompartment != null && childCompartment.getStructureIdPath().contains(String.valueOf(id()));
-	}
-
-	/**
 	 * Assesses if this annotation is a child of a specified compartment.
 	 *
-	 * @param parentCompartment the compartment to be tested
-	 * @return true, if successful, i.e., {@link #getTreePath()} contains
+	 * @param childCompartment the compartment to be tested
+	 * @return true, if successful, i.e., {@code parentCompartment} is not this
+	 *         compartment and {@link #getTreePath()} contains
 	 *         {@code parentCompartment}
 	 */
-	public boolean containedBy(final AllenCompartment parentCompartment) {
-		return getStructureIdPath().contains(String.valueOf(parentCompartment.id()));
+	@Override
+	public boolean isChildOf(final BrainAnnotation childCompartment) {
+		if (childCompartment == null || !(childCompartment instanceof AllenCompartment))
+			return false;
+		final AllenCompartment cCompartment = (AllenCompartment) childCompartment;
+		return id() != cCompartment.id() && getStructureIdPath().contains(String.valueOf(cCompartment.id()));
 	}
 
 	/**
@@ -241,7 +235,7 @@ public class AllenCompartment implements BrainAnnotation {
 		final ArrayList<AllenCompartment> children = new ArrayList<>();
 		final Collection<AllenCompartment> allCompartments = AllenUtils.getOntologies();
 		for (final AllenCompartment c : allCompartments) {
-			if (this.contains(c)) children.add(c);
+			if (c.isChildOf(this)) children.add(c);
 		}
 		return children;
 	}
@@ -258,7 +252,7 @@ public class AllenCompartment implements BrainAnnotation {
 		final ArrayList<AllenCompartment> children = new ArrayList<>();
 		final Collection<AllenCompartment> allCompartments = AllenUtils.getOntologies();
 		for (AllenCompartment c :  allCompartments) {
-			if (this.contains(c) && c.getTreePath().size() <= maxLevel)
+			if (isChildOf(c) && c.getTreePath().size() <= maxLevel)
 				children.add(c);
 		}
 		return children;
@@ -328,10 +322,19 @@ public class AllenCompartment implements BrainAnnotation {
 		return mesh;
 	}
 
+	/**
+	 * Assesses if this annotation is the parent of the specified compartment.
+	 *
+	 * @param childCompartment the compartment to be tested
+	 * @return true, if successful, i.e., {@code childCompartment} is not this
+	 *         compartment and is present in {@link #getChildren()}
+	 */
 	@Override
-	public boolean contains(BrainAnnotation annotation) {
-		if (!(annotation instanceof AllenCompartment)) return false;
-		return equals(annotation) || contains((AllenCompartment)annotation);
+	public boolean isParentOf(final BrainAnnotation childCompartment) {
+		if (childCompartment == null || !(childCompartment instanceof AllenCompartment))
+			return false;
+		final AllenCompartment cCompartment = (AllenCompartment) childCompartment;
+		return id() != cCompartment.id() && cCompartment.getStructureIdPath().contains(String.valueOf(id()));
 	}
 
 	@Override
@@ -354,23 +357,34 @@ public class AllenCompartment implements BrainAnnotation {
 	public int hashCode() {
 		int hash = 7;
 		hash = 31 * hash + (int) id();
-		hash = 31 * hash + (acronym == null ? 0 : acronym.hashCode());
 		hash = 31 * hash + (uuid == null ? 0 : uuid.hashCode());
+		//hash = 31 * hash + (acronym == null ? 0 : acronym.hashCode());
 		return hash;
 	}
 
 	/* IDE Debug method */
 	public static void main(final String[] args) {
-		final AllenCompartment comp = AllenUtils.getCompartment("CA3");
-		System.out.println(comp);
-		System.out.println("treePath: " + comp.getTreePath());
-		System.out.println("depth: " + comp.getOntologyDepth());
-		System.out.println("# ancestors: " + comp.getAncestors().size());
-		IntStream.rangeClosed(-comp.getOntologyDepth(), 0).forEach(level -> {
-			System.out.println("ancestor " + level + ": " + comp.getAncestor(level));
+		final AllenCompartment child = AllenUtils.getCompartment("CA3");
+		final AllenCompartment parent = AllenUtils.getCompartment("Hippocampal Formation");
+		System.out.println("CA3.isChildOf(HPF):\t"+child.isChildOf(parent));
+		System.out.println("HPF.isChildOf(CA3):\t" +parent.isChildOf(child));
+		System.out.println("CA3.isParentOf(CA3):\t" +child.isParentOf(child));
+		System.out.println("CA3.isParentOf(HPF):\t" +child.isParentOf(parent));
+		System.out.println("HPF.isParentOf(CA3):\t" +parent.isParentOf(child));
+		System.out.println("HPF.isChildOf(HPF):\t" +parent.isChildOf(parent));
+
+		System.out.println("CA3.getChildren():\t" +child.getChildren());
+		System.out.println("CA3.getTreePath():\t" + child.getTreePath());
+		System.out.println("CA3.getOntologyDepth():\t" + child.getOntologyDepth());
+		System.out.println("CA3 # ancestors:\t" + child.getAncestors().size());
+
+		System.out.println("CA3 up-down ancestors:");
+		IntStream.rangeClosed(-child.getOntologyDepth(), 0).forEach(level -> {
+			System.out.println("\tancestor " + level + ": " + child.getAncestor(level));
 		});
-		IntStream.rangeClosed(0, comp.getOntologyDepth()).forEach(level -> {
-			System.out.println("ancestor " + level + ": " + comp.getAncestor(level));
+		System.out.println("CA3 down-up ancestors:");
+		IntStream.rangeClosed(0, child.getOntologyDepth()).forEach(level -> {
+			System.out.println("\tancestor " + level + ": " + child.getAncestor(level));
 		});
 	}
 }

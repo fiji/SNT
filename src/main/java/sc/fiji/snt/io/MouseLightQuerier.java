@@ -501,7 +501,7 @@ public class MouseLightQuerier {
 			final String id = "AA" + new DecimalFormat("0000").format(neuron);
 			final MouseLightQuerier querier = new MouseLightQuerier(id);
 			final AllenCompartment sCompartment = querier.getSomaCompartment();
-			if (sCompartment != null && (sCompartment.equals(compartment) || sCompartment.containedBy(compartment))) {
+			if (sCompartment != null && (sCompartment.equals(compartment) || sCompartment.isChildOf(compartment))) {
 				list.add(id);
 			}
 		});

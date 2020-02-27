@@ -25,7 +25,8 @@ package sc.fiji.snt.annotation;
 import sc.fiji.snt.viewer.OBJMesh;
 
 /**
- * Classes extending this interface implement a neuropil label/annotation.
+ * Classes extending this interface implement a neuropil label/annotation aka
+ * "compartment".
  *
  * @author Tiago Ferreira
  */
@@ -46,11 +47,26 @@ public interface BrainAnnotation {
 	/** @return the mesh associated with this compartment */
 	public OBJMesh getMesh();
 
-	/** @return assesses if {@code annotation} is contained by this compartment */
-	public boolean contains(BrainAnnotation annotation);
+	/** @return whether this compartment is a sub-compartment of {@code annotation} */
+	public boolean isChildOf(BrainAnnotation annotation);
+
+	/** @return whether this compartment is a parentCompartment of {@code annotation} */
+	public boolean isParentOf(final BrainAnnotation parentCompartment);
 
 	public int getOntologyDepth();
 
+	/** @return whether a mesh is available for this compartment */
+	public boolean isMeshAvailable();
+
+	/**
+	 * @param level the ancestor level as negative 1-based index. E.g., {@code -1}
+	 *              retrieves the last ancestor (parent), {@code -2} retrieves the
+	 *              second to last, etc
+	 * @return the ancestor of this compartment at the nth level
+	 */
 	public BrainAnnotation getAncestor(final int level);
+
+	/** @return the parent of this compartment */
+	public BrainAnnotation getParent();
 
 }

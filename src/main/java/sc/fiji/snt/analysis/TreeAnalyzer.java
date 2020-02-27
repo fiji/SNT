@@ -641,7 +641,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Gets the position of all the tips in the analyzed tree associated with the
 	 * specified annotation.
 	 *
-	 * @param annot the BrainAnnotation to be queried.
+	 * @param annot the BrainAnnotation to be queried. Null not allowed.
 	 * @return the branch points positions, or an empty set if no tips were
 	 *         retrieved.
 	 */
@@ -650,7 +650,7 @@ public class TreeAnalyzer extends ContextCommand {
 		final HashSet<PointInImage> fTips = new HashSet<>();
 		for (final PointInImage tip : tips) {
 			final BrainAnnotation annotation = tip.getAnnotation();
-			if (annotation != null && annot.contains(annotation))
+			if (annotation != null && isSameOrParentAnnotation(annot, annotation))
 				fTips.add(tip);
 		}
 		return fTips;
@@ -682,7 +682,7 @@ public class TreeAnalyzer extends ContextCommand {
 		final HashSet<PointInImage>fJoints = new HashSet<>();
 		for (final PointInImage joint: joints) {
 			final BrainAnnotation annotation = joint.getAnnotation();
-			if (annotation != null && annot.contains(annotation))
+			if (annotation != null && isSameOrParentAnnotation(annot, annotation))
 				fJoints.add(joint);
 		}
 		return fJoints;
@@ -702,20 +702,34 @@ public class TreeAnalyzer extends ContextCommand {
 	 * label).
 	 *
 	 * @param compartment the query compartment (null not allowed)
+	 * @param includeChildren whether children of {@code compartment} should be included
 	 * @return the filtered cable length
 	 */
-	public double getCableLength(final BrainAnnotation compartment) {
+	public double getCableLength(final BrainAnnotation compartment, final boolean includeChildren) {
 		double sumLength = 0d;
 		for (final Path path : tree.list()) {
 			for (int i = 1; i < path.size(); i++) {
 				final BrainAnnotation prevNodeAnnotation = path.getNodeAnnotation(i - 1);
 				final BrainAnnotation currentNodeAnnotation = path.getNodeAnnotation(i);
-				if (compartment.contains(prevNodeAnnotation) && compartment.contains(currentNodeAnnotation)) {
-					sumLength += path.getNode(i).distanceTo(path.getNode(i - 1));
+				if (currentNodeAnnotation == null) continue;
+				if (includeChildren) {
+					if (isSameOrParentAnnotation(compartment, currentNodeAnnotation)
+							&& isSameOrParentAnnotation(compartment, prevNodeAnnotation)) {
+						sumLength += path.getNode(i).distanceTo(path.getNode(i - 1));
+					}
+				} else {
+					if (currentNodeAnnotation.equals(compartment) &&
+							currentNodeAnnotation.equals(prevNodeAnnotation)) {
+						sumLength += path.getNode(i).distanceTo(path.getNode(i - 1));
+					}
 				}
 			}
 		}
 		return sumLength;
+	}
+
+	protected boolean isSameOrParentAnnotation(final BrainAnnotation annot, final BrainAnnotation annotToBeTested) {
+		return annot.equals(annotToBeTested) || annot.isParentOf(annotToBeTested);
 	}
 
 	public Set<BrainAnnotation> getAnnotations() {

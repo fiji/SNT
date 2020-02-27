@@ -40,7 +40,9 @@ import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.AnalysisUtils.HistogramDatasetPlus;
+import sc.fiji.snt.annotation.AllenCompartment;
 import sc.fiji.snt.annotation.BrainAnnotation;
+import sc.fiji.snt.io.MouseLightLoader;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of
@@ -188,20 +190,53 @@ public class TreeStatistics extends TreeAnalyzer {
 		return lastDstats.dStats;
 	}
 
-	public Map<BrainAnnotation, Double> getBrainAnnotations(final int level) {
+	public Map<BrainAnnotation, Double> getAnnotatedLength(int level) {
 		final HashMap<BrainAnnotation, Double> map = new HashMap<>();
-		getAnnotations(level).forEach(annot -> {
-			if (annot != null) map.put(annot, getCableLength(annot));
+		final Set<BrainAnnotation> annotations = getAnnotations(level);
+		// 1. Let's remove 1) any null annotations and 2) the "Whole brain" root
+		// ontology (the only one who has no parent) as it won't be very useful here
+		annotations.removeIf(annot -> annot == null || annot.getParent()==null);
+		annotations.forEach(annot -> {
+			map.put(annot, getCableLength(annot, true));
 		});
+
+		// 2. If the annotation set contains a parent of another element, we'll need
+		// to subtract the child length from the parent
+		for (final Map.Entry<BrainAnnotation, Double> entry1 : map.entrySet()) {
+			final BrainAnnotation annot1 = entry1.getKey();
+
+			for (final Map.Entry<BrainAnnotation, Double> entry2 : map.entrySet()) {
+				final BrainAnnotation annot2 = entry2.getKey();
+
+				if (!annot1.equals(annot2) && (annot2.isChildOf(annot1))) {
+					final double length2 = entry2.getValue();
+					map.put(annot1, map.get(annot1) - length2);
+				}
+			}
+		}
+
+		// 3. Now we remove all compartments with zero distances
+		System.out.println("map size() before "+ map.size());
+		map.entrySet().removeIf(e -> e.getValue() <= 0);
+		System.out.println("map size() after "+ map.size());
+
+		// Did we account for all the distances?
+		final double unacountedCable = getCableLength() - map.values().stream().mapToDouble(d -> d).sum();
+		System.out.println("getCableLength     "+ getCableLength());
+		System.out.println("sum of map         "+ map.values().stream().mapToDouble(d -> d).sum());
+		System.out.println("unacountedCable   "+ unacountedCable);
+		if (unacountedCable > 0d) {
+			map.put(null, unacountedCable);
+		}
 		return map;
 	}
 
-	public SNTChart getBrainAnnotationHistogram() {
-		return getBrainAnnotationHistogram(Integer.MAX_VALUE);
+	public SNTChart getAnnotatedLengthHistogram() {
+		return getAnnotatedLengthHistogram(Integer.MAX_VALUE);
 	}
 
-	public SNTChart getBrainAnnotationHistogram(final int depth) {
-		final Map<BrainAnnotation, Double> map = getBrainAnnotations(depth);
+	public SNTChart getAnnotatedLengthHistogram(final int depth) {
+		final Map<BrainAnnotation, Double> map = getAnnotatedLength(depth);
 		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		final String seriesLabel = (depth == Integer.MAX_VALUE) ? "full depth" : "Depth \u2264" + depth;
 		map.entrySet().stream().sorted((e1, e2) -> -e1.getValue().compareTo(e2.getValue())).forEach(entry -> {
@@ -518,18 +553,15 @@ public class TreeStatistics extends TreeAnalyzer {
 
 	/* IDE debug method */
 	public static void main(final String[] args) {
-		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
-		final TreeStatistics treeStats = new TreeStatistics(tree);
-//		treeStats.getHistogram("contraction", 0.5, Double.NaN).setVisible(true);
-//		treeStats.getHistogram(PATH_ORDER).setVisible(true);
-//		treeStats.restrictToOrder(1);
-		SNTChart a = treeStats.getHistogram(CONTRACTION);
-		a.annotatePoint(0.2, 0.18, "");
-		a.annotateXline(0.2, "");
-		a.annotateYline(0.02, "y-line");
+		final MouseLightLoader loader = new MouseLightLoader("AA0788");
+		final Tree axon = loader.getTree("axon");
+		final TreeStatistics tStats = new TreeStatistics(axon);
+		final SNTChart hist = tStats.getAnnotatedLengthHistogram(5);
+		AllenCompartment somaCompartment = loader.getSomaCompartment();
+		if (somaCompartment.getOntologyDepth() > 5)
+			somaCompartment = somaCompartment.getAncestor(5 - somaCompartment.getOntologyDepth());
+		hist.annotateCategory(somaCompartment.acronym(), "soma");
+		hist.show();
 
-		a.setVisible(true);
-//		treeStats.resetRestrictions();
-		//treeStats.getHistogram(PATH_ORDER).setVisible(true);
 	}
 }

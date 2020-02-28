@@ -192,41 +192,45 @@ public class TreeStatistics extends TreeAnalyzer {
 
 	public Map<BrainAnnotation, Double> getAnnotatedLength(int level) {
 		final HashMap<BrainAnnotation, Double> map = new HashMap<>();
+		// 1. Retrieve lengths for all annotations. Set has no null annotations
 		final Set<BrainAnnotation> annotations = getAnnotations(level);
-		// 1. Let's remove 1) any null annotations and 2) the "Whole brain" root
-		// ontology (the only one who has no parent) as it won't be very useful here
-		annotations.removeIf(annot -> annot == null || annot.getParent()==null);
 		annotations.forEach(annot -> {
 			map.put(annot, getCableLength(annot, true));
 		});
 
-		// 2. If the annotation set contains a parent of another element, we'll need
-		// to subtract the child length from the parent
-		for (final Map.Entry<BrainAnnotation, Double> entry1 : map.entrySet()) {
-			final BrainAnnotation annot1 = entry1.getKey();
+		// 2. The map may contain a parent of another mapped annotation, so we'll
+		// need to subtract the child length from the parent
+		final double cableLength =  getCableLength(); // cable length of entire tree
+		double mapLength = map.values().stream().mapToDouble(d -> d).sum();
+		while (mapLength > cableLength) {
 
-			for (final Map.Entry<BrainAnnotation, Double> entry2 : map.entrySet()) {
-				final BrainAnnotation annot2 = entry2.getKey();
+			for (final Map.Entry<BrainAnnotation, Double> entry1 : map.entrySet()) {
+				final BrainAnnotation parent = entry1.getKey();
 
-				if (!annot1.equals(annot2) && (annot2.isChildOf(annot1))) {
-					final double length2 = entry2.getValue();
-					map.put(annot1, map.get(annot1) - length2);
+				for (final Map.Entry<BrainAnnotation, Double> entry2 : map.entrySet()) {
+					final BrainAnnotation child = entry2.getKey();
+
+					if (!parent.equals(child) && (child.isChildOf(parent))) {
+						final double lengthInChild = entry2.getValue();
+						final double adjustedParentLength = map.get(parent) - lengthInChild;
+						map.put(parent, adjustedParentLength);
+					}
 				}
 			}
+
+			// Remove any parent annotations associated with zero lengths
+			map.entrySet().removeIf(entry->entry.getValue() <=0);
+
+			// Repeat as necessary
+			final double newMapLength = map.values().stream().mapToDouble(d -> d).sum();
+			if (newMapLength==mapLength) break;
+			mapLength = newMapLength;
 		}
 
-		// 3. Now we remove all compartments with zero distances
-		System.out.println("map size() before "+ map.size());
-		map.entrySet().removeIf(e -> e.getValue() <= 0);
-		System.out.println("map size() after "+ map.size());
-
-		// Did we account for all the distances?
-		final double unacountedCable = getCableLength() - map.values().stream().mapToDouble(d -> d).sum();
-		System.out.println("getCableLength     "+ getCableLength());
-		System.out.println("sum of map         "+ map.values().stream().mapToDouble(d -> d).sum());
-		System.out.println("unacountedCable   "+ unacountedCable);
-		if (unacountedCable > 0d) {
-			map.put(null, unacountedCable);
+		// Did we account for all the distances? If not, assign them to a null annotation
+		final double unaccountedCable = cableLength - mapLength;
+		if (unaccountedCable > 0d) {
+			map.put(null, unaccountedCable);
 		}
 		return map;
 	}
@@ -238,16 +242,21 @@ public class TreeStatistics extends TreeAnalyzer {
 	public SNTChart getAnnotatedLengthHistogram(final int depth) {
 		final Map<BrainAnnotation, Double> map = getAnnotatedLength(depth);
 		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-		final String seriesLabel = (depth == Integer.MAX_VALUE) ? "full depth" : "Depth \u2264" + depth;
+		final String seriesLabel = (depth == Integer.MAX_VALUE) ? "no filtering" : "depth \u2264" + depth;
 		map.entrySet().stream().sorted((e1, e2) -> -e1.getValue().compareTo(e2.getValue())).forEach(entry -> {
-			dataset.addValue(entry.getValue(), seriesLabel,
-					(entry.getKey() == null) ? "Undef." : entry.getKey().acronym());
+			if (entry.getKey() != null)
+					dataset.addValue(entry.getValue(), seriesLabel, entry.getKey().acronym());
 		});
+		int nAreas = map.size();
+		if (map.get(null) != null) {
+			dataset.addValue(map.get(null), seriesLabel,"Other" );
+			nAreas--;
+		}
 		final JFreeChart chart = AnalysisUtils.createCategoryPlot( //
-				"Brain areas (" + seriesLabel + ")", // domain axis title
+				"Brain areas (N=" + nAreas + ", "+ seriesLabel +")", // domain axis title
 				"Cable length", // range axis title
 				dataset, seriesLabel);
-		final SNTChart frame = new SNTChart("Brain Areas", chart, new Dimension(400, 500));
+		final SNTChart frame = new SNTChart("Brain Areas", chart, new Dimension(400, 600));
 		return frame;
 	}
 
@@ -556,12 +565,17 @@ public class TreeStatistics extends TreeAnalyzer {
 		final MouseLightLoader loader = new MouseLightLoader("AA0788");
 		final Tree axon = loader.getTree("axon");
 		final TreeStatistics tStats = new TreeStatistics(axon);
-		final SNTChart hist = tStats.getAnnotatedLengthHistogram(5);
+		final int depth = 6;//Integer.MAX_VALUE;
+		SNTChart hist = tStats.getAnnotatedLengthHistogram(depth);
 		AllenCompartment somaCompartment = loader.getSomaCompartment();
-		if (somaCompartment.getOntologyDepth() > 5)
-			somaCompartment = somaCompartment.getAncestor(5 - somaCompartment.getOntologyDepth());
-		hist.annotateCategory(somaCompartment.acronym(), "soma");
+		if (somaCompartment.getOntologyDepth() > depth)
+			somaCompartment = somaCompartment.getAncestor(depth - somaCompartment.getOntologyDepth());
+		hist.annotateCategory(somaCompartment.acronym(), "soma", "blue");
 		hist.show();
+		NodeStatistics nStats =new NodeStatistics(tStats.getTips());
+				hist = nStats.getAnnotatedHistogram(depth);
+				hist.annotate("No. of tips: " + tStats.getTips().size());
+				hist.show();
 
 	}
 }

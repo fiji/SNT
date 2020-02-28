@@ -701,6 +701,18 @@ public class TreeAnalyzer extends ContextCommand {
 	 * Gets the cable length associated with the specified compartment (neuropil
 	 * label).
 	 *
+	 * @param compartment the query compartment (null not allowed). All of its
+	 *                    children will be considered
+	 * @return the filtered cable length
+	 */
+	public double getCableLength(final BrainAnnotation compartment) {
+		return getCableLength(compartment, true);
+	}
+
+	/**
+	 * Gets the cable length associated with the specified compartment (neuropil
+	 * label).
+	 *
 	 * @param compartment the query compartment (null not allowed)
 	 * @param includeChildren whether children of {@code compartment} should be included
 	 * @return the filtered cable length
@@ -711,15 +723,14 @@ public class TreeAnalyzer extends ContextCommand {
 			for (int i = 1; i < path.size(); i++) {
 				final BrainAnnotation prevNodeAnnotation = path.getNodeAnnotation(i - 1);
 				final BrainAnnotation currentNodeAnnotation = path.getNodeAnnotation(i);
-				if (currentNodeAnnotation == null) continue;
 				if (includeChildren) {
 					if (isSameOrParentAnnotation(compartment, currentNodeAnnotation)
 							&& isSameOrParentAnnotation(compartment, prevNodeAnnotation)) {
 						sumLength += path.getNode(i).distanceTo(path.getNode(i - 1));
 					}
 				} else {
-					if (currentNodeAnnotation.equals(compartment) &&
-							currentNodeAnnotation.equals(prevNodeAnnotation)) {
+					if (compartment.equals(currentNodeAnnotation) &&
+							compartment.equals(prevNodeAnnotation)) {
 						sumLength += path.getNode(i).distanceTo(path.getNode(i - 1));
 					}
 				}

@@ -6,7 +6,7 @@ info:       A Python demo on how to assess the brain areas a neuron projects to
             (in this case a MouseLight neuron retrived through direct connection
             to the MouseLight database (internet connection required). 
 """
-from sc.fiji.snt.analysis import (NodeStatistics, TreeAnalyzer, TreeStatistics)
+from sc.fiji.snt.analysis import (NodeStatistics, TreeStatistics)
 from sc.fiji.snt.annotation import AllenUtils
 from sc.fiji.snt.io import MouseLightLoader
 
@@ -22,12 +22,23 @@ loader = MouseLightLoader("AA0788")
 soma_loc = loader.getSomaLocation()
 axon = loader.getTree("axon")
 
+# Let's determine the soma's brain area (compartment) at the specified depth:
+cSoma = loader.getSomaCompartment()
+if cSoma.getOntologyDepth() > max_ontology_depth:
+    cSoma = cSoma.getAncestor(max_ontology_depth - cSoma.getOntologyDepth())
+    
 # Let's analyze the axonal terminals: What's their whole-brain distribution?
-analyzer = TreeAnalyzer(axon)
-tips = analyzer.getTips()
+tStats = TreeStatistics(axon)
+tips = tStats.getTips()
 nStats = NodeStatistics(tips)
-hist = nStats.getBrainAnnotationHistogram(max_ontology_depth)
+hist = nStats.getAnnotatedHistogram(max_ontology_depth)
 hist.annotate('No. of tips: {}'.format(tips.size()))
+hist.annotateCategory(cSoma.acronym(), "soma", "blue")
+hist.show()
+
+# Does the distribution of axonal cable reflect the distribution of tips?
+hist = tStats.getAnnotatedLengthHistogram(max_ontology_depth)
+hist.annotateCategory(cSoma.acronym(), "soma", "blue")
 hist.show()
 
 # Does this neuron project to contra-lateral locations?
@@ -36,16 +47,5 @@ midline = AllenUtils.brainCenter().getX()
 hist.annotateXline(midline, "midline")
 hemisphere = "left" if AllenUtils.isLeftHemisphere(soma_loc) else "right" 
 hist.annotatePoint(soma_loc.getX(), 0, "soma ({} hemi.)".format(hemisphere))
-hist.show()
-
-# Does the distribution of axonal cable reflect the distribution of tips?
-tStats = TreeStatistics(axon);
-hist = tStats.getAnnotatedLengthHistogram(max_ontology_depth)
-
-# Let's highlight the soma compartment
-cSoma = loader.getSomaCompartment()
-if (cSoma.getOntologyDepth() > max_ontology_depth)
-	cSoma = cSoma.getAncestor(max_ontology_depth - cSoma.getOntologyDepth());
-hist.annotateCategory(cSoma.acronym(), "soma")
 hist.show()
 

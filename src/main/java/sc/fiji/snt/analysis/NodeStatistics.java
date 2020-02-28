@@ -198,23 +198,28 @@ public class NodeStatistics {
 		return map;
 	}
 
-	public SNTChart getBrainAnnotationHistogram() {
-		return getBrainAnnotationHistogram(Integer.MAX_VALUE);
+	public SNTChart getAnnotatedHistogram() {
+		return getAnnotatedHistogram(Integer.MAX_VALUE);
 	}
 
-	public SNTChart getBrainAnnotationHistogram(final int depth) {
+	public SNTChart getAnnotatedHistogram(final int depth) {
 		final Map<BrainAnnotation, Integer> map = getBrainAnnotations(depth);
 		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-		final String seriesLabel = (depth == Integer.MAX_VALUE) ? "full depth" : "Depth \u2264"+depth;
+		final String seriesLabel = (depth == Integer.MAX_VALUE) ? "no filtering" : "depth \u2264" + depth;
 		map.entrySet().stream().sorted((e1, e2) -> -e1.getValue().compareTo(e2.getValue())).forEach(entry -> {
-			dataset.addValue(entry.getValue(), seriesLabel,
-					(entry.getKey() == null) ? "Undef." : entry.getKey().acronym());
+			if (entry.getKey() != null)
+					dataset.addValue(entry.getValue(), seriesLabel, entry.getKey().acronym());
 		});
+		int nAreas = map.size();
+		if (map.get(null) != null) {
+			dataset.addValue(map.get(null), seriesLabel,"Other" );
+			nAreas--;
+		}
 		final JFreeChart chart = AnalysisUtils.createCategoryPlot( //
-				"Brain areas (" + seriesLabel + ")", // domain axis title
-				"Frequency (counts)", // range axis title
+				"Brain areas (N=" + nAreas + ", "+ seriesLabel +")", // domain axis title
+				"Frequency", // range axis title
 				dataset, seriesLabel);
-		final SNTChart frame = new SNTChart("Brain Areas", chart, new Dimension(400, 500));
+		final SNTChart frame = new SNTChart("Brain Areas", chart, new Dimension(400, 600));
 		return frame;
 	}
 
@@ -310,7 +315,7 @@ public class NodeStatistics {
 		final MouseLightLoader loader = new MouseLightLoader("AA0001");
 		final TreeAnalyzer analyzer = new TreeAnalyzer(loader.getTree("axon"));
 		final NodeStatistics nStats = new NodeStatistics(analyzer.getTips());
-		final SNTChart plot = nStats.getBrainAnnotationHistogram();
+		final SNTChart plot = nStats.getAnnotatedHistogram();
 		plot.annotateCategory("CA1", "Not showing");
 		plot.annotateCategory("CP", "highlighted category");
 		plot.annotate("Free Text");

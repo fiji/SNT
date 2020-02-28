@@ -280,6 +280,7 @@ public class Viewer3D {
 
 	private final static String MESH_LABEL_ALLEN = "Whole Brain";
 	private final static String MESH_LABEL_ZEBRAFISH = "Outline (MP ZBA)";
+	private final static String MESH_LABEL_JFRC2018 = "JFRC 2018";
 	private final static String MESH_LABEL_JFRC2 = "JFRC2 (VFB)";
 	private final static String MESH_LABEL_JFRC3 = "JFRC3";
 	private final static String MESH_LABEL_FCWB = "FCWB";
@@ -1665,7 +1666,7 @@ public class Viewer3D {
 	 *
 	 * @param template the reference brain to be loaded (case-insensitive). E.g.,
 	 *                 "zebrafish" (MP ZBA); "mouse" (Allen CCF); "JFRC2", "JFRC3"
-	 *                 "FCWB" (adult), "L1", "L3", "VNC" (Drosophila)
+	 *                 "JFRC2018", "FCWB"(adult), "L1", "L3", "VNC" (Drosophila)
 	 * 
 	 * @return a reference to the loaded mesh
 	 * @throws IllegalArgumentException if {@code template} is not recognized
@@ -1688,6 +1689,9 @@ public class Viewer3D {
 		}
 		OBJMesh objMesh;
 		switch (label) {
+		case MESH_LABEL_JFRC2018:
+			objMesh = VFBUtils.getRefBrain("jfrc2018");
+			break;
 		case MESH_LABEL_JFRC2:
 			objMesh = VFBUtils.getRefBrain("jfrc2");
 			break;
@@ -1723,6 +1727,10 @@ public class Viewer3D {
 
 	private static String getNormalizedBrainLabel(final String input) {
 		switch (input.toLowerCase()) {
+		case "jfrc2018":
+		case "jfrc 2018":
+		case "jfrctemplate2018":
+			return MESH_LABEL_JFRC2018;
 		case "jfrc2":
 		case "jfrc2010":
 		case "jfrctemplate2010":
@@ -3698,6 +3706,10 @@ public class Viewer3D {
 			addSeparator(refMenu, "Drosophila:");
 			mi = new JMenuItem("Adult Brain: FlyCircuit", IconFactory.getMenuIcon(GLYPH.ARCHIVE));
 			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_FCWB));
+			refMenu.add(mi);
+			mi = new JMenuItem("Adult Brain: JFRC 2018", IconFactory.getMenuIcon(GLYPH.ARCHIVE));
+			mi.setToolTipText("<HTML>AKA <i>The Bogovic brain</i>");
+			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_JFRC2018));
 			refMenu.add(mi);
 			mi = new JMenuItem("Adult Brain: JFRC2 (VFB)", IconFactory.getMenuIcon(GLYPH.ARCHIVE));
 			mi.addActionListener(e -> loadRefBrainAction(true, MESH_LABEL_JFRC2));

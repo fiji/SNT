@@ -44,6 +44,7 @@ import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.Range;
+import org.scijava.util.ColorRGB;
 
 import sc.fiji.snt.Tree;
 
@@ -84,32 +85,51 @@ public class SNTChart extends ChartFrame {
 	}
 
 	public void annotateXline(final double xValue, final String label) {
+		annotateXline(xValue, label, null);
+	}
+
+	public void annotateXline(final double xValue, final String label, final String color) {
 		final Marker marker = new ValueMarker(xValue);
-		marker.setPaint(Color.BLACK);
+		final Color c = getColorFromString(color);
+		marker.setPaint(c);
 		marker.setLabelBackgroundColor(new Color(255,255,255,0));
-		if (label != null)
+		if (label != null && !label.isEmpty()) {
+			marker.setLabelPaint(c);
 			marker.setLabel(label);
-		marker.setLabelAnchor(RectangleAnchor.TOP_LEFT);
-		marker.setLabelTextAnchor(TextAnchor.TOP_RIGHT);
-		marker.setLabelFont(getPlot().getDomainAxis().getTickLabelFont());
+			marker.setLabelAnchor(RectangleAnchor.TOP_LEFT);
+			marker.setLabelTextAnchor(TextAnchor.TOP_RIGHT);
+			marker.setLabelFont(getPlot().getDomainAxis().getTickLabelFont());
+		}
 		getPlot().addDomainMarker(marker);
 	}
 
 	public void annotateYline(final double yValue, final String label) {
+		annotateYline(yValue, label, null);
+	}
+
+	public void annotateYline(final double yValue, final String label, final String color) {
+		final Color c = getColorFromString(color);
 		final Marker marker = new ValueMarker(yValue);
-		marker.setPaint(Color.BLACK);
+		marker.setPaint(c);
 		marker.setLabelBackgroundColor(new Color(255,255,255,0));
-		if (label != null)
+		if (label != null && !label.isEmpty()) {
+			marker.setLabelPaint(c);
 			marker.setLabel(label);
-		marker.setLabelAnchor(RectangleAnchor.TOP_RIGHT);
-		marker.setLabelTextAnchor(TextAnchor.BOTTOM_RIGHT);
-		marker.setLabelFont(getPlot().getRangeAxis().getTickLabelFont());
+			marker.setLabelAnchor(RectangleAnchor.TOP_RIGHT);
+			marker.setLabelTextAnchor(TextAnchor.BOTTOM_RIGHT);
+			marker.setLabelFont(getPlot().getRangeAxis().getTickLabelFont());
+		}
 		getPlot().addRangeMarker(marker);
 	}
 
 	public void annotateCategory(final String category, final String label) {
+		annotateCategory(category, label, null);
+	}
+
+	public void annotateCategory(final String category, final String label, final String color) {
 		final CategoryPlot catPlot = getChartPanel().getChart().getCategoryPlot();
-		final CategoryMarker marker = new CategoryMarker(category, Color.BLACK, new BasicStroke(1.0f,
+		final Color c = getColorFromString(color);
+		final CategoryMarker marker = new CategoryMarker(category, c, new BasicStroke(1.0f,
 				BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] { 6.0f, 6.0f }, 0.0f));
 		marker.setDrawAsLine(true);
 		catPlot.addDomainMarker(marker, Layer.BACKGROUND);
@@ -118,12 +138,18 @@ public class SNTChart extends ChartFrame {
 				final Range range = catPlot.getRangeAxis().getRange();
 				final double labelYloc = range.getUpperBound() * 0.90 + range.getLowerBound();
 				final CategoryTextAnnotation annot = new CategoryTextAnnotation(label, category, labelYloc);
-				annot.setPaint(Color.BLACK);
+				annot.setPaint(c);
 				annot.setCategoryAnchor(CategoryAnchor.END);
 				annot.setFont(catPlot.getRangeAxis().getTickLabelFont());
 				catPlot.addAnnotation(annot);
 			}
 		}
+	}
+
+	private Color getColorFromString(final String string) {
+		if (string == null) return Color.BLACK;
+		final ColorRGB c = new ColorRGB(string);
+		return (c==null) ? Color.BLACK : new Color(c.getRed(), c.getGreen(), c.getBlue());
 	}
 
 	public void annotate(final String label) {
@@ -134,9 +160,16 @@ public class SNTChart extends ChartFrame {
 	}
 
 	public void annotatePoint(final double x, final double y, final String label) {
+		annotatePoint(x,y,label, null);
+	}
+
+	public void annotatePoint(final double x, final double y, final String label, final String color) {
 		final XYPointerAnnotation annot = new XYPointerAnnotation(label, x, y, -Math.PI / 2.0);
 		final Font font = getPlot().getDomainAxis().getTickLabelFont();
+		final Color c = getColorFromString(color);
 		annot.setLabelOffset(font.getSize());
+		annot.setPaint(c);
+		annot.setArrowPaint(c);
 		annot.setFont(font);
 		getPlot().addAnnotation(annot);
 	}
@@ -152,9 +185,9 @@ public class SNTChart extends ChartFrame {
 		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 		final TreeStatistics treeStats = new TreeStatistics(tree);
 		final SNTChart chart = treeStats.getHistogram("contraction");
-		chart.annotatePoint(0.5, 0.15, "No data here");
-		chart.annotateXline(0.275, "Start of slope");
-		chart.annotateYline(0.050, "5% mark");
+		chart.annotatePoint(0.5, 0.15, "No data here", "green");
+		chart.annotateXline(0.275, "Start of slope", "blue");
+		chart.annotateYline(0.050, "5% mark", "red");
 		chart.show();
 	}
 

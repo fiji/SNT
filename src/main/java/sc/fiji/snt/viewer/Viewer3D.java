@@ -217,6 +217,7 @@ import sc.fiji.snt.gui.cmds.RecViewerPrefsCmd;
 import sc.fiji.snt.gui.cmds.RemoteSWCImporterCmd;
 import sc.fiji.snt.gui.cmds.TranslateReconstructionsCmd;
 import sc.fiji.snt.io.FlyCircuitLoader;
+import sc.fiji.snt.io.MouseLightLoader;
 import sc.fiji.snt.io.NeuroMorphoLoader;
 import sc.fiji.snt.plugin.AnalyzerCmd;
 import sc.fiji.snt.plugin.ShollTracingsCmd;
@@ -774,17 +775,6 @@ public class Viewer3D {
 	public Annotation3D annotateSurface(final Collection<? extends SNTPoint> points, final String label)
 	{
 		final Annotation3D annotation = new Annotation3D(this, points, Annotation3D.SURFACE);
-		final String uniquelabel = getUniqueLabel(plottedAnnotations, "Point Annot.", label);
-		annotation.setLabel(uniquelabel);
-		plottedAnnotations.put(uniquelabel, annotation);
-		addItemToManager(uniquelabel);
-		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
-		return annotation;
-	}
-	
-	public Annotation3D annotateClosedSurface(final List<List<? extends SNTPoint>> simplices, final String label)
-	{
-		final Annotation3D annotation = new Annotation3D(this, simplices);
 		final String uniquelabel = getUniqueLabel(plottedAnnotations, "Point Annot.", label);
 		annotation.setLabel(uniquelabel);
 		plottedAnnotations.put(uniquelabel, annotation);
@@ -5857,6 +5847,10 @@ public class Viewer3D {
 			jzy3D.view.shoot();
 			jzy3D.fitToVisibleObjects(true, false);
 		}
+		MouseLightLoader loader = new MouseLightLoader("AA1044");
+		Tree aa1044 = loader.getTree("axon");
+		jzy3D.annotateSurface(new TreeAnalyzer(aa1044).getTips(), "Convex Hull");
+		jzy3D.addTree(aa1044);
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);

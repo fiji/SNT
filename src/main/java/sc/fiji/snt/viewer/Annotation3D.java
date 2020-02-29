@@ -27,9 +27,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import com.github.quickhull3d.Point3d;
+import com.github.quickhull3d.QuickHull3D;
+
 import org.jzy3d.colors.Color;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.plot3d.builder.Builder;
+import org.jzy3d.plot3d.builder.concrete.OrthonormalTessellator;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
 import org.jzy3d.plot3d.primitives.LineStrip;
 import org.jzy3d.plot3d.primitives.Point;
@@ -61,7 +65,6 @@ public class Annotation3D {
 
 	private final Viewer3D viewer;
 	private final Collection<? extends SNTPoint> points;
-	private List<List<? extends SNTPoint>> simplices;
 	private final AbstractDrawable drawable;
 	private final int type;
 	private float size;
@@ -101,44 +104,44 @@ public class Annotation3D {
 		}
 		setSize(-1);
 	}
-	
-	protected Annotation3D(final Viewer3D viewer, final List<List<? extends SNTPoint>> simplices) {
-		this.viewer = viewer;
-		this.simplices = simplices;
-		this.type = SURFACE;
-		this.points = null;
-		size = viewer.getDefaultThickness();
-		drawable = assembleClosedSurface();
-		
-	}
 
 	protected Annotation3D(final Viewer3D viewer, final SNTPoint point) {
 		this(viewer, Collections.singleton(point), SCATTER);
 	}
-	
-	private AbstractDrawable assembleClosedSurface() {
-		List<Polygon> polygons = new ArrayList<Polygon>();
-		for(int i = 0; i < simplices.size() -1; i++){
-            Polygon polygon = new Polygon();
-            polygon.add(new Point( new Coord3d(simplices.get(i).get(0).getX(), simplices.get(i).get(0).getY(), simplices.get(i).get(0).getZ()) ));
-            polygon.add(new Point( new Coord3d(simplices.get(i).get(1).getX(), simplices.get(i).get(1).getY(), simplices.get(i).get(1).getZ()) ));
-            polygon.add(new Point( new Coord3d(simplices.get(i).get(2).getX(), simplices.get(i).get(2).getY(), simplices.get(i).get(2).getZ()) ));
-            polygons.add(polygon);
-	    }
-		Shape surface = new Shape(polygons);
-		surface.setColor(Utils.contrastColor(viewer.getDefColor()).alphaSelf(0.4f));
-		surface.setWireframeColor(viewer.getDefColor().alphaSelf(0.8f));
-		surface.setFaceDisplayed(true);
-		surface.setWireframeDisplayed(true);
-		return surface;
-	}
 
 	private AbstractDrawable assembleSurface() {
-		final ArrayList<Coord3d> coordinates = new ArrayList<>();
+		Point3d[] points3d = new Point3d[points.size()];
+		int i = 0;
 		for (final SNTPoint point : points) {
-			coordinates.add(new Coord3d(point.getX(), point.getY(), point.getZ()));
+			points3d[i] = new Point3d(point.getX(), point.getY(), point.getZ());
+			i++;
 		}
-		final Shape surface = Builder.buildDelaunay(coordinates);
+		QuickHull3D convexHull = new QuickHull3D(points3d);
+		convexHull.triangulate();
+		Point3d[] vertices = convexHull.getVertices();
+		int[][] faces = convexHull.getFaces();
+		
+		ArrayList<ArrayList<Coord3d>> coord3dFaces = new ArrayList<ArrayList<Coord3d>>();
+		for(int j = 0; j < faces.length; j++){
+			ArrayList<Coord3d> simplex = new ArrayList<Coord3d>();
+			for (int k = 0; k < faces[j].length ; k++) {
+				double x = vertices[faces[j][k]].x;
+				double y = vertices[faces[j][k]].y;
+				double z = vertices[faces[j][k]].z;
+				Coord3d coord = new Coord3d(x,y,z);
+				simplex.add(coord); 
+			}
+			coord3dFaces.add(simplex);
+		}
+		List<Polygon> polygons = new ArrayList<Polygon>();
+		for(ArrayList<Coord3d> face : coord3dFaces){
+            Polygon polygon = new Polygon();
+            polygon.add(new Point(face.get(0)));
+            polygon.add(new Point(face.get(1)));
+            polygon.add(new Point(face.get(2)));
+            polygons.add(polygon);
+	    }
+		final Shape surface = new Shape(polygons);
 		surface.setColor(Utils.contrastColor(viewer.getDefColor()).alphaSelf(0.4f));
 		surface.setWireframeColor(viewer.getDefColor().alphaSelf(0.8f));
 		surface.setFaceDisplayed(true);

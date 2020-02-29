@@ -781,6 +781,17 @@ public class Viewer3D {
 		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
 		return annotation;
 	}
+	
+	public Annotation3D annotateClosedSurface(final List<List<? extends SNTPoint>> simplices, final String label)
+	{
+		final Annotation3D annotation = new Annotation3D(this, simplices);
+		final String uniquelabel = getUniqueLabel(plottedAnnotations, "Point Annot.", label);
+		annotation.setLabel(uniquelabel);
+		plottedAnnotations.put(uniquelabel, annotation);
+		addItemToManager(uniquelabel);
+		chart.add(annotation.getDrawable(), viewUpdatesEnabled);
+		return annotation;
+	}
 
 	/**
 	 * Adds an highlighting point annotation to this viewer.

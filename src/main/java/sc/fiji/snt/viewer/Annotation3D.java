@@ -25,6 +25,7 @@ package sc.fiji.snt.viewer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.jzy3d.colors.Color;
 import org.jzy3d.maths.Coord3d;
@@ -32,6 +33,7 @@ import org.jzy3d.plot3d.builder.Builder;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
 import org.jzy3d.plot3d.primitives.LineStrip;
 import org.jzy3d.plot3d.primitives.Point;
+import org.jzy3d.plot3d.primitives.Polygon;
 import org.jzy3d.plot3d.primitives.Scatter;
 import org.jzy3d.plot3d.primitives.Shape;
 import org.scijava.util.ColorRGB;
@@ -59,6 +61,7 @@ public class Annotation3D {
 
 	private final Viewer3D viewer;
 	private final Collection<? extends SNTPoint> points;
+	private List<List<? extends SNTPoint>> simplices;
 	private final AbstractDrawable drawable;
 	private final int type;
 	private float size;
@@ -98,9 +101,36 @@ public class Annotation3D {
 		}
 		setSize(-1);
 	}
+	
+	protected Annotation3D(final Viewer3D viewer, final List<List<? extends SNTPoint>> simplices) {
+		this.viewer = viewer;
+		this.simplices = simplices;
+		this.type = SURFACE;
+		this.points = null;
+		size = viewer.getDefaultThickness();
+		drawable = assembleClosedSurface();
+		
+	}
 
 	protected Annotation3D(final Viewer3D viewer, final SNTPoint point) {
 		this(viewer, Collections.singleton(point), SCATTER);
+	}
+	
+	private AbstractDrawable assembleClosedSurface() {
+		List<Polygon> polygons = new ArrayList<Polygon>();
+		for(int i = 0; i < simplices.size() -1; i++){
+            Polygon polygon = new Polygon();
+            polygon.add(new Point( new Coord3d(simplices.get(i).get(0).getX(), simplices.get(i).get(0).getY(), simplices.get(i).get(0).getZ()) ));
+            polygon.add(new Point( new Coord3d(simplices.get(i).get(1).getX(), simplices.get(i).get(1).getY(), simplices.get(i).get(1).getZ()) ));
+            polygon.add(new Point( new Coord3d(simplices.get(i).get(2).getX(), simplices.get(i).get(2).getY(), simplices.get(i).get(2).getZ()) ));
+            polygons.add(polygon);
+	    }
+		Shape surface = new Shape(polygons);
+		surface.setColor(Utils.contrastColor(viewer.getDefColor()).alphaSelf(0.4f));
+		surface.setWireframeColor(viewer.getDefColor().alphaSelf(0.8f));
+		surface.setFaceDisplayed(true);
+		surface.setWireframeDisplayed(true);
+		return surface;
 	}
 
 	private AbstractDrawable assembleSurface() {

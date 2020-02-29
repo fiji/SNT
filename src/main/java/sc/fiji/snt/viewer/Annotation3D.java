@@ -51,7 +51,8 @@ import sc.fiji.snt.viewer.Viewer3D.Utils;
 /**
  * An Annotation3D is a triangulated surface or a cloud of points (scatter)
  * rendered in {@link Viewer3D} that can be used to highlight nodes in a
- * {@link sc.fiji.snt.Tree Tree} or locations in a {@link sc.fiji.snt.viewer.OBJMesh mesh}.
+ * {@link sc.fiji.snt.Tree Tree} or locations in a
+ * {@link sc.fiji.snt.viewer.OBJMesh mesh}.
  *
  * @author Tiago Ferreira
  */
@@ -86,7 +87,7 @@ public class Annotation3D {
 		this.points = points;
 		this.type = type;
 		size = viewer.getDefaultThickness();
-		switch(type) {
+		switch (type) {
 		case SCATTER:
 			drawable = assembleScatter();
 			break;
@@ -100,7 +101,7 @@ public class Annotation3D {
 			drawable = assembleQTip();
 			break;
 		default:
-			throw new IllegalArgumentException("Unrecognized type "+ type);
+			throw new IllegalArgumentException("Unrecognized type " + type);
 		}
 		setSize(-1);
 	}
@@ -120,27 +121,27 @@ public class Annotation3D {
 		convexHull.triangulate();
 		Point3d[] vertices = convexHull.getVertices();
 		int[][] faces = convexHull.getFaces();
-		
+
 		ArrayList<ArrayList<Coord3d>> coord3dFaces = new ArrayList<ArrayList<Coord3d>>();
-		for(int j = 0; j < faces.length; j++){
+		for (int j = 0; j < faces.length; j++) {
 			ArrayList<Coord3d> simplex = new ArrayList<Coord3d>();
-			for (int k = 0; k < faces[j].length ; k++) {
+			for (int k = 0; k < faces[j].length; k++) {
 				double x = vertices[faces[j][k]].x;
 				double y = vertices[faces[j][k]].y;
 				double z = vertices[faces[j][k]].z;
-				Coord3d coord = new Coord3d(x,y,z);
-				simplex.add(coord); 
+				Coord3d coord = new Coord3d(x, y, z);
+				simplex.add(coord);
 			}
 			coord3dFaces.add(simplex);
 		}
 		List<Polygon> polygons = new ArrayList<Polygon>();
-		for(ArrayList<Coord3d> face : coord3dFaces){
-            Polygon polygon = new Polygon();
-            polygon.add(new Point(face.get(0)));
-            polygon.add(new Point(face.get(1)));
-            polygon.add(new Point(face.get(2)));
-            polygons.add(polygon);
-	    }
+		for (ArrayList<Coord3d> face : coord3dFaces) {
+			Polygon polygon = new Polygon();
+			polygon.add(new Point(face.get(0)));
+			polygon.add(new Point(face.get(1)));
+			polygon.add(new Point(face.get(2)));
+			polygons.add(polygon);
+		}
 		final Shape surface = new Shape(polygons);
 		surface.setColor(Utils.contrastColor(viewer.getDefColor()).alphaSelf(0.4f));
 		surface.setWireframeColor(viewer.getDefColor().alphaSelf(0.8f));
@@ -178,32 +179,35 @@ public class Annotation3D {
 	private AbstractDrawable assembleStrip() {
 		final ArrayList<Point> linePoints = new ArrayList<>(points.size());
 		for (final SNTPoint point : points) {
-			if (point == null) continue;
+			if (point == null)
+				continue;
 			final Coord3d coord = new Coord3d(point.getX(), point.getY(), point.getZ());
-			Color color= viewer.getDefColor();
+			Color color = viewer.getDefColor();
 			if (point instanceof PointInImage && ((PointInImage) point).getPath() != null) {
 				final Path path = ((PointInImage) point).getPath();
 				final int nodeIndex = path.getNodeIndex(((PointInImage) point));
 				if (nodeIndex > -1) {
-					color = viewer.fromAWTColor((path.hasNodeColors()) ? path.getNodeColor(nodeIndex) : path.getColor());
+					color = viewer
+							.fromAWTColor((path.hasNodeColors()) ? path.getNodeColor(nodeIndex) : path.getColor());
 				}
 			}
 			linePoints.add(new Point(coord, color));
 		}
 		final LineStrip line = new LineStrip();
 		line.addAll(linePoints);
-		//line.setShowPoints(true);
-		//line.setStipple(true);
-		//line.setStippleFactor(2);
-		//line.setStipplePattern((short) 0xAAAA);
+		// line.setShowPoints(true);
+		// line.setStipple(true);
+		// line.setStippleFactor(2);
+		// line.setStipplePattern((short) 0xAAAA);
 		return line;
 	}
 
 	private AbstractDrawable assembleQTip() {
 		final Shape shape = new Shape();
-		final LineStrip line = (LineStrip)assembleStrip();
+		final LineStrip line = (LineStrip) assembleStrip();
 		shape.add(line);
-		if (line.getPoints().size() >= 2) shape.add(assembleScatter());
+		if (line.getPoints().size() >= 2)
+			shape.add(assembleScatter());
 		return shape;
 	}
 
@@ -311,11 +315,10 @@ public class Annotation3D {
 	/**
 	 * Script friendly method to assign a color to the annotation.
 	 *
-	 * @param color               the color to render the imported file, either a 1)
-	 *                            HTML color codes starting with hash ({@code #}), a
-	 *                            color preset ("red", "blue", etc.), or integer
-	 *                            triples of the form {@code r,g,b} and range
-	 *                            {@code [0, 255]}
+	 * @param color the color to render the imported file, either a 1) HTML color
+	 *              codes starting with hash ({@code #}), a color preset ("red",
+	 *              "blue", etc.), or integer triples of the form {@code r,g,b} and
+	 *              range {@code [0, 255]}
 	 */
 	public void setColor(final String color) {
 		setColor(new ColorRGB(color), 10d);

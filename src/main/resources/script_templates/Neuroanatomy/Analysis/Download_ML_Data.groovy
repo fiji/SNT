@@ -1,14 +1,14 @@
 import sc.fiji.snt.io.MouseLightLoader
 import sc.fiji.snt.annotation.AllenCompartment
 import sc.fiji.snt.annotation.AllenUtils
-import java.text.DecimalFormat
+
 
 /**
  * Exemplifies how to programmatically retrieve data from MouseLight's database at
  * ml-neuronbrowser.janelia.org: It iterates through all the neurons in the server
  * and downloads data (both JSON and SWC formats) for cells with soma associated
- * with the specified Allen Reference Atlas (ARA) compartment. Downloaded files will
- * contain all metadata associated with the cell (i.e., labeling used, strain, etc.)
+ * with the specified brain area. Downloaded files will contain all metadata
+ * associated with the cell (i.e., labeling used, strain, etc.)
  * For advanced queries, have a look at MouseLightQuerier
  * TF 20190317
  */
@@ -16,7 +16,7 @@ import java.text.DecimalFormat
 // Absolute path to saving directory. Will be created as needed
 destinationDirectory = System.properties.'user.home' + '/Desktop/ML-neurons'
 
-// The name of the ARA compartment to be screened (as displayed by Reconstruction
+// The name of the brain compartment (Allen CCF ontology, as displayed by Reconstruction
 // Viewer's CCF Navigator) NB: Specifying "Whole Brain" would effectively download
 // _all_ reconstructions from the database
 compartmentOfInterest = AllenUtils.getCompartment("CA3")
@@ -27,23 +27,21 @@ if (!MouseLightLoader.isDatabaseAvailable() || !compartmentOfInterest) {
     return
 }
 
-println("ML Database is online")
-for (id in 1..MouseLightLoader.getNeuronCount()) {
+nNeurons = MouseLightLoader.getNeuronCount()
+println("ML Database is online with " + nNeurons + " available. Gathering IDs...")
+ids = MouseLightLoader.getRangeOfIDs(1, nNeurons);
 
-    // Define a valid cell ID (We could also use MouseLightLoader#getAllNeuronIDs)
-    id = "AA" + new DecimalFormat("0000").format(neuron)
-    loader = loader = new MouseLightLoader(id)
-    print("Parsing " + id + "...")
+for (id in ids) {
+
+	print("Parsing " + id + "...")
+    loader = new MouseLightLoader(id)
     if (!loader.idExists()) {
-        println(" id not found. Skipping...")
+        println(" Somehow neuron is not available? Skipping...")
         continue
     }
 
-    // Retrieve the 1st node of the soma and its annotated compartment
-    soma = loader.getNodes("soma")[0]
-    somaCompartment = (AllenCompartment) soma.getAnnotation()
-
-    if (compartmentOfInterest.contains(somaCompartment)) {
+    somaCompartment = loader.getSomaCompartment()
+    if (compartmentOfInterest.equals(somaCompartment) || compartmentOfInterest.isParentOf(somaCompartment)) {
         print(" Downloading: \tJSON saved: " + loader.saveAsJSON(destinationDirectory))
         println("\tSWC saved: " + loader.saveAsSWC(destinationDirectory))
     } else {
@@ -51,4 +49,4 @@ for (id in 1..MouseLightLoader.getNeuronCount()) {
     }
 
 }
-println("Finished parsing of all " + MouseLightLoader.getNeuronCount() + " available neurons")
+println("Finished parsing of all " + ids.size() + "/" + nNeurons + " available neurons")

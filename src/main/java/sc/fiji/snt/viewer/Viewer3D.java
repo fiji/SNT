@@ -1222,10 +1222,14 @@ public class Viewer3D {
 	 * Script friendly method to add a supported object ({@link Tree},
 	 * {@link OBJMesh}, {@link AbstractDrawable}, etc.) to this viewer.
 	 *
-	 * @param object the object to be added
+	 * @param object the object to be added. No exception is triggered if null
 	 * @throws IllegalArgumentException if object is not supported
 	 */
 	public void add(final Object object) {
+		if (object == null) {
+			SNTUtils.log("Null object ignored for scene addition");
+			return;
+		}
 		try {
 			if (object instanceof Tree) {
 				addTree((Tree) object);

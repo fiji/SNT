@@ -29,6 +29,7 @@ def get_trees(directory, filtering_string):
        reconstruction files in the specified directory. The list
        will only contain Trees from SWC, TRACES and JSON files
        whose filename contains the specified string."""
+
     if not recursive:
         return Tree.listFromDir(directory, filtering_string)
     trees = []
@@ -42,39 +43,43 @@ def run():
     d = str(input_dir)
     trees = get_trees(d, name_filter)
     if not trees or len(trees) == 0:
-        uiservice.showDialog("No files matched the specified criteria", "Error")
+        uiservice.showDialog('No files matched the specified criteria',
+                             'Error')
         return
 
     # Define a common table to host results
+
     table = DefaultGenericTable()
-    
+
     # Define the metrics to be considered
-    if "Complete" in chosen_metrics:
-        metrics = TreeAnalyzer.getAllMetrics() 
+
+    if 'Complete' in chosen_metrics:
+        metrics = TreeAnalyzer.getAllMetrics()
     else:
         metrics = TreeAnalyzer.getMetrics()
 
     for (counter, tree) in enumerate(trees):
 
-        msg = 'Analyzing Tree: %s: %s...' % (counter + 1, tree.getLabel())
+        msg = 'Analyzing Tree: %s: %s...' % (counter + 1,
+                tree.getLabel())
         status.showStatus(msg)
         log.info(msg)
 
         # Prepare analysis. We'll make TreeAnalyzer aware of current context
         # so that we don't need to worry about displaying/updating the table
+
         analyzer = TreeAnalyzer(tree)
         analyzer.setContext(context)
-        analyzer.setTable(table, ("SWC Measurements: %s" % input_dir))
+        analyzer.setTable(table, 'SWC Measurements: %s' % input_dir)
 
         # Analyze the data grouping measurements by compartment (e.g., axon,
         # dendrite). See the analysis API for more sophisticated operations:
-        # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/analysis/package-summary.html
-        analyzer.measure(metrics, True) # Split results by compartment?
+        # https://morphonets.github.io/SNT/
+
+        analyzer.measure(metrics, True)  # Split results by compartment?
 
     msg = 'Done. %s file(s) analyzed...' % (counter + 1)
-    log.info(msg)  
+    log.info(msg)
     uiservice.showDialog(msg)
 
-
 run()
-

@@ -201,6 +201,15 @@ public class BoundingBox {
 	}
 
 	/**
+	 * Gets this BoundingBox dimensions in real world units.
+	 *
+	 * @return the BoundingBox dimensions {width, height, depth}.
+	 */
+	public double[] getDimensions() {
+		return getDimensions(true);
+	}
+
+	/**
 	 * Gets this BoundingBox dimensions.
 	 *
 	 * @param scaled If true, dimensions are retrieved in real world units,

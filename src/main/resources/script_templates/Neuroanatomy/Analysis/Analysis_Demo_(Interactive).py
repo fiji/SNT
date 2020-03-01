@@ -1,12 +1,5 @@
-# @Context context
-# @LegacyService ls
-# @DatasetService ds
-# @DisplayService display
-# @LogService log
 # @SNTService snt
-# @StatusService status
 # @UIService ui
-
 
 """
 file:       Analysis_Demo_(Interactive).py
@@ -20,11 +13,8 @@ info:       Exemplifies how to programmatically interact with a running instance
 
 import math
 
-from sc.fiji.snt import (Path, PathAndFillManager, SNT, SNTUI, Tree)
-from sc.fiji.snt.util import PointInImage
-from sc.fiji.snt.analysis import (RoiConverter, TreeAnalyzer, TreeColorMapper, 
-    TreeStatistics)
-from sc.fiji.snt.viewer import (Viewer2D, Viewer3D)
+from sc.fiji.snt import (SNTUI, Tree)
+from sc.fiji.snt.analysis import (TreeAnalyzer, TreeStatistics)
 
 
 def run():
@@ -48,39 +38,39 @@ def run():
     snt.getUI().changeState(SNTUI.TRACING_PAUSED)
     snt.loadTree(demo_tree)
 
-    # Almost all SNT analyses are performed on a Tree, i.e., a collection
-    # of Paths. We can immediately retrieve TreeAnalyzer (responsible for
-    # analyzing Trees) or TreeStatistics (responsible for computing
-    # descriptive statistics for univariate properties of a Tree) instances
-    # from SNTService.
-    # These instances can be built from all the Paths currently loaded, or
-    # just the current subset of selected Paths in the Path Manager dialog.
-    # This is useful when one only wants to analyze the groups of Paths
-    # selected using the Filtering toolbar of the Path Manager.
+    # Almost all SNT analyses are performed on a Tree, i.e., a collection of
+    # Paths. To do so we can use TreeAnalyzer or TreeStatistics (the latter
+    # features all of TreeAnalyzer's capabilities plus advanced functionality
+    # for detailed statistics. We can instantiate both from SNTService using
+    # 1) all the Paths currently loaded, or 2) just the current subset of
+    # selected Paths in the Path Manager dialog.
+    # This is useful when one only wants to analyze the group(s) of Paths
+    # selected through Path Manager's filtering toolbar.
     # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/analysis/TreeAnalyzer.html
     # https://morphonets.github.io/SNT/index.html?sc/fiji/snt/analysis/TreeStatistics.html
     analyzer = snt.getAnalyzer(False)  # Include only selected paths?
     stats = snt.getStatistics(False)   # Include only selected paths?
 
-    # Measurements can be displayed in SNT's UI:
+    # Beacause TreeAnalyzer was initiated from SNTService, measurements can be
+    # displayed in SNT's UI:
     analyzer.summarize("TreeV Demo", True) # Split summary by compartment?
     analyzer.updateAndDisplayTable()
 
-    # It is also possible to build the above instances from a Tree. This
-    # is useful if, e.g, one needs to manipulate Paths in advanced.
-    # NB: rotation, and scaling of large Trees can be computer intensive
-    metric = TreeStatistics.INTER_NODE_DISTANCE # same as "inter-node distance"
+    # It is also possible to build the above instances from a Tree. This is
+    # useful for post-hoc analysis and if, e.g, one needs to manipulate Paths
+    # in advance.
+    metric = "inter-node distance"  #same as TreeStatistics.INTER_NODE_DISTANCE
     summary_stats = stats.getSummaryStats(metric)
     stats.getHistogram(metric).show()
     print("Smallest inter-node distance: %d" % summary_stats.getMin())
 
-    # E.g., let's' downsample the Tree, imposing 10um between 'shaft' nodes.
-    # NB: When downsampling, branch points and tip positions are not altered
+    # E.g., let's' downsample the Tree, imposing 10um between 'shaft' nodes:
+    # When downsampling, branch points and tip positions are not altered
     tree = snt.getTree(False) # Retrieve only paths selected in the Manager?
     tree.downSample(10) # 10um
     tree.setLabel("10um downsampled")
 
-    # Let's compare the metric distribution after downsampling
+    # Let's compare the distribution of the chosen metric after downsampling:
     stats = TreeStatistics(tree)
     summary_stats = stats.getSummaryStats(metric)
     stats.getHistogram(metric).show()
@@ -94,6 +84,5 @@ def run():
     tree.setColor("yellow")
     snt.loadTree(tree)
     snt.getRecViewer().show()
-    snt.getPlugin().updateAllViewers()
 
 run()

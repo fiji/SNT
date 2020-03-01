@@ -51,3 +51,4 @@ viewer.setAxesVisible(false)
 // Display result (panels can  be exported by right-clicking on
 // individual panels or by using viewer.save("/path/to/file")
 viewer.show()
+println("All done")

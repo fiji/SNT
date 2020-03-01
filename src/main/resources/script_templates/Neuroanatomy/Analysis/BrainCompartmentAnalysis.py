@@ -3,8 +3,8 @@ file:       Brain_Comparment_Analysis.py
 author:     Tiago Ferreira
 version:    20200126
 info:       A Python demo on how to assess the brain areas a neuron projects to
-            (in this case a MouseLight neuron retrived through direct connection
-            to the MouseLight database (internet connection required). 
+            (in this case a MouseLight neuron retrived from the MouseLight
+            database). Internet connection required. 
 """
 from sc.fiji.snt.analysis import (NodeStatistics, TreeStatistics)
 from sc.fiji.snt.annotation import AllenUtils
@@ -13,22 +13,25 @@ from sc.fiji.snt.io import MouseLightLoader
 
 # In this example we are going to analyze the axonal projections of a Mouselight
 # neuron across the whole brain (Allen CCF). For simplicity, we'll focus only on
-# brain regions defined by mid level ontologies (as per Reconstruction Viewer's 
-# Allen CCF navigator):
+# brain regions defined by mid level ontologies (see Allen CCF Navigator in
+# Reconstruction Viewer):
 max_ontology_depth = 6
 
-# Let's retrive the axonal arbor of cell id AA0788
+# Let's retrive the axonal arbor of cell id AA0788 and its soma location:
 loader = MouseLightLoader("AA0788")
-soma_loc = loader.getSomaLocation()
 axon = loader.getTree("axon")
+soma_loc = loader.getSomaLocation()
 
-# Let's determine the soma's brain area (compartment) at the specified depth:
+# Let's determine the soma's compartment (annotated brain area) at the specified
+# ontology depth:
 cSoma = loader.getSomaCompartment()
 if cSoma.getOntologyDepth() > max_ontology_depth:
     cSoma = cSoma.getAncestor(max_ontology_depth - cSoma.getOntologyDepth())
     
-# Let's analyze the axonal terminals: What's their whole-brain distribution?
+# First we initialize TreeStatistics: It will be at the core of our analysis
 tStats = TreeStatistics(axon)
+
+# Let's analyze the axonal terminals: Where are they located?
 tips = tStats.getTips()
 nStats = NodeStatistics(tips)
 hist = nStats.getAnnotatedHistogram(max_ontology_depth)
@@ -49,3 +52,5 @@ hemisphere = "left" if AllenUtils.isLeftHemisphere(soma_loc) else "right"
 hist.annotatePoint(soma_loc.getX(), 0, "soma ({} hemi.)".format(hemisphere))
 hist.show()
 
+#5715770918
+#12:45 tuesday 3rd

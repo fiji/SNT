@@ -56,8 +56,7 @@ def run():
     brainMesh = AllenUtils.getCompartment("Whole Brain").getMesh()
     brainMesh.setBoundingBoxColor("cyan")
     viewer.add(brainMesh)
-    soma_annotation = next(iter(loader.getNodes("soma"))).getAnnotation()
-    viewer.add(soma_annotation.getMesh())
+    viewer.add(loader.getSomaCompartment().getMesh())
 
     # Display scene
     viewer.setViewMode(ViewMode.SIDE)

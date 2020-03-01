@@ -395,7 +395,11 @@ public class SNTUI extends JDialog {
 					"It may not function reliably on recent operating systems.";
 			tab3.add(largeMsg(msg2), c3);
 			c3.gridy++;
-			tab3.add(legacy3DViewerPanel(), c3);
+			try {
+				tab3.add(legacy3DViewerPanel(), c3);
+			} catch (final NoClassDefFoundError ignored) {
+				tab3.add(largeMsg("Error: Legacy 3D Viewer could not be initialized!"), c3);
+			}
 
 			{
 				tabbedPane.setIconAt(0, IconFactory.getTabbedPaneIcon(IconFactory.GLYPH.HOME));
@@ -1291,7 +1295,21 @@ public class SNTUI extends JDialog {
 	}
 
 	@SuppressWarnings("deprecation")
-	private JPanel legacy3DViewerPanel() {
+	private JPanel legacy3DViewerPanel() throws java.lang.NoClassDefFoundError {
+
+		// Build panel
+		final JPanel p = new JPanel();
+		p.setLayout(new GridBagLayout());
+		final GridBagConstraints c = new GridBagConstraints();
+		c.ipadx = 0;
+		c.insets = new Insets(0, 0, 0, 0);
+		c.anchor = GridBagConstraints.LINE_START;
+		c.fill = GridBagConstraints.HORIZONTAL;
+	
+		if (!GuiUtils.isLegacy3DViewerAvailable()) {
+			p.add(new JLabel("Viewer not found in your installation."));
+			return p;
+		}
 
 		final String VIEWER_NONE = "None";
 		final String VIEWER_WITH_IMAGE = "New with image...";
@@ -1501,15 +1519,6 @@ public class SNTUI extends JDialog {
 		actionChoice.setEnabled(false);
 		applyActionChoice.setEnabled(false);
 
-		// Build panel
-		final JPanel p = new JPanel();
-		p.setLayout(new GridBagLayout());
-		final GridBagConstraints c = new GridBagConstraints();
-		c.ipadx = 0;
-		c.insets = new Insets(0, 0, 0, 0);
-		c.anchor = GridBagConstraints.LINE_START;
-		c.fill = GridBagConstraints.HORIZONTAL;
-
 		// row 1
 		c.gridy = 0;
 		c.gridx = 0;
@@ -1593,7 +1602,13 @@ public class SNTUI extends JDialog {
 		openRecViewer.addActionListener(e -> {
 			// if (noPathsError()) return;
 			if (recViewer == null) {
-				getReconstructionViewer(true);
+				try {
+					getReconstructionViewer(true);
+				} catch (final NoClassDefFoundError exc) {
+					exc.printStackTrace();
+					no3DcapabilitiesError("Reconstruction Viewer");
+					return;
+				}
 				recViewer.setDefaultColor(new ColorRGB(plugin.deselectedColor.getRed(),
 						plugin.deselectedColor.getGreen(), plugin.deselectedColor.getBlue()));
 				if (pathAndFillManager.size() > 0)
@@ -1633,7 +1648,12 @@ public class SNTUI extends JDialog {
 			}
 			if (!openingSciView && sciViewSNT == null || (sciViewSNT.getSciView() == null || sciViewSNT.getSciView().isClosed())) {
 				openingSciView = true;
-				new Thread(() -> new SciViewSNT(plugin).getSciView()).start();
+				try {
+					new Thread(() -> new SciViewSNT(plugin).getSciView()).start();
+				} catch (final NoClassDefFoundError exc) {
+					exc.printStackTrace();
+					no3DcapabilitiesError("SciView");
+				}
 			}
 		});
 
@@ -1660,6 +1680,11 @@ public class SNTUI extends JDialog {
 		return panel;
 	}
 
+	private void no3DcapabilitiesError(final String viewer) {
+		guiUtils.error(viewer + " could not be initialized. Your installation seems "
+				+ "to be missing essential 3D libraries. Please use the updater to re-instate any "
+				+ "missing files. See Console for details.", "Error: Dependencies Missing");
+	}
 
 	private JPanel statusButtonPanel() {
 		keepSegment = GuiUtils.smallButton(hotKeyLabel("Yes", "Y"));

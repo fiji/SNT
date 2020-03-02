@@ -25,21 +25,26 @@ package sc.fiji.snt.viewer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
-import com.github.quickhull3d.Point3d;
-import com.github.quickhull3d.QuickHull3D;
+import net.imagej.mesh.Mesh;
+import net.imagej.mesh.Triangle;
+import net.imagej.mesh.Triangles;
+import net.imagej.mesh.Vertices;
+import net.imagej.mesh.naive.NaiveDoubleMesh;
+import net.imagej.ops.OpMatchingService;
+import net.imagej.ops.OpService;
 
 import org.jzy3d.colors.Color;
 import org.jzy3d.maths.Coord3d;
-import org.jzy3d.plot3d.builder.Builder;
-import org.jzy3d.plot3d.builder.concrete.OrthonormalTessellator;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
 import org.jzy3d.plot3d.primitives.LineStrip;
 import org.jzy3d.plot3d.primitives.Point;
 import org.jzy3d.plot3d.primitives.Polygon;
 import org.jzy3d.plot3d.primitives.Scatter;
 import org.jzy3d.plot3d.primitives.Shape;
+import org.scijava.Context;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 
@@ -111,27 +116,31 @@ public class Annotation3D {
 	}
 
 	private AbstractDrawable assembleSurface() {
-		Point3d[] points3d = new Point3d[points.size()];
-		int i = 0;
+		final Mesh dmesh = new NaiveDoubleMesh();
 		for (final SNTPoint point : points) {
-			points3d[i] = new Point3d(point.getX(), point.getY(), point.getZ());
-			i++;
+			dmesh.vertices().add(point.getX(), point.getY(), point.getZ());
 		}
-		QuickHull3D convexHull = new QuickHull3D(points3d);
-		convexHull.triangulate();
-		Point3d[] vertices = convexHull.getVertices();
-		int[][] faces = convexHull.getFaces();
-
+		OpService ops = new Context(OpService.class, OpMatchingService.class).getService(OpService.class);
+		Mesh hull = (Mesh) ops.geom().convexHull(dmesh).get(0);
+		Vertices verts = hull.vertices();
+		Triangles faces = hull.triangles();
+		Iterator<Triangle> faceIter = faces.iterator();
 		ArrayList<ArrayList<Coord3d>> coord3dFaces = new ArrayList<ArrayList<Coord3d>>();
-		for (int j = 0; j < faces.length; j++) {
+		while (faceIter.hasNext()) {
 			ArrayList<Coord3d> simplex = new ArrayList<Coord3d>();
-			for (int k = 0; k < faces[j].length; k++) {
-				double x = vertices[faces[j][k]].x;
-				double y = vertices[faces[j][k]].y;
-				double z = vertices[faces[j][k]].z;
-				Coord3d coord = new Coord3d(x, y, z);
-				simplex.add(coord);
-			}
+			Triangle t = faceIter.next();
+			double x0 = verts.x(t.vertex0());
+			double y0 = verts.y(t.vertex0());
+			double z0 = verts.z(t.vertex0());
+			simplex.add(new Coord3d(x0, y0, z0));
+			double x1 = verts.x(t.vertex1());
+			double y1 = verts.y(t.vertex1());
+			double z1 = verts.z(t.vertex1());
+			simplex.add(new Coord3d(x1, y1, z1));
+			double x2 = verts.x(t.vertex2());
+			double y2 = verts.y(t.vertex2());
+			double z2 = verts.z(t.vertex2());
+			simplex.add(new Coord3d(x2, y2, z2));
 			coord3dFaces.add(simplex);
 		}
 		List<Polygon> polygons = new ArrayList<Polygon>();

@@ -310,10 +310,5 @@
 			<artifactId>jline</artifactId>
 			<version>3.13.1</version>
 		</dependency>
-		<dependency>
-			<groupId>com.github.quickhull3d</groupId>
-			<artifactId>quickhull3d</artifactId>
-			<version>1.0.0</version>
-		</dependency>
 	</dependencies>
 </project>

@@ -25,15 +25,26 @@ package sc.fiji.snt.viewer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
+import net.imagej.mesh.Mesh;
+import net.imagej.mesh.Triangle;
+import net.imagej.mesh.Triangles;
+import net.imagej.mesh.Vertices;
+import net.imagej.mesh.naive.NaiveDoubleMesh;
+import net.imagej.ops.OpMatchingService;
+import net.imagej.ops.OpService;
 
 import org.jzy3d.colors.Color;
 import org.jzy3d.maths.Coord3d;
-import org.jzy3d.plot3d.builder.Builder;
 import org.jzy3d.plot3d.primitives.AbstractDrawable;
 import org.jzy3d.plot3d.primitives.LineStrip;
 import org.jzy3d.plot3d.primitives.Point;
+import org.jzy3d.plot3d.primitives.Polygon;
 import org.jzy3d.plot3d.primitives.Scatter;
 import org.jzy3d.plot3d.primitives.Shape;
+import org.scijava.Context;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.Colors;
 
@@ -45,7 +56,8 @@ import sc.fiji.snt.viewer.Viewer3D.Utils;
 /**
  * An Annotation3D is a triangulated surface or a cloud of points (scatter)
  * rendered in {@link Viewer3D} that can be used to highlight nodes in a
- * {@link sc.fiji.snt.Tree Tree} or locations in a {@link sc.fiji.snt.viewer.OBJMesh mesh}.
+ * {@link sc.fiji.snt.Tree Tree} or locations in a
+ * {@link sc.fiji.snt.viewer.OBJMesh mesh}.
  *
  * @author Tiago Ferreira
  */
@@ -80,7 +92,7 @@ public class Annotation3D {
 		this.points = points;
 		this.type = type;
 		size = viewer.getDefaultThickness();
-		switch(type) {
+		switch (type) {
 		case SCATTER:
 			drawable = assembleScatter();
 			break;
@@ -94,7 +106,7 @@ public class Annotation3D {
 			drawable = assembleQTip();
 			break;
 		default:
-			throw new IllegalArgumentException("Unrecognized type "+ type);
+			throw new IllegalArgumentException("Unrecognized type " + type);
 		}
 		setSize(-1);
 	}
@@ -104,11 +116,42 @@ public class Annotation3D {
 	}
 
 	private AbstractDrawable assembleSurface() {
-		final ArrayList<Coord3d> coordinates = new ArrayList<>();
+		final Mesh dmesh = new NaiveDoubleMesh();
 		for (final SNTPoint point : points) {
-			coordinates.add(new Coord3d(point.getX(), point.getY(), point.getZ()));
+			dmesh.vertices().add(point.getX(), point.getY(), point.getZ());
 		}
-		final Shape surface = Builder.buildDelaunay(coordinates);
+		OpService ops = new Context(OpService.class, OpMatchingService.class).getService(OpService.class);
+		Mesh hull = (Mesh) ops.geom().convexHull(dmesh).get(0);
+		Vertices verts = hull.vertices();
+		Triangles faces = hull.triangles();
+		Iterator<Triangle> faceIter = faces.iterator();
+		ArrayList<ArrayList<Coord3d>> coord3dFaces = new ArrayList<ArrayList<Coord3d>>();
+		while (faceIter.hasNext()) {
+			ArrayList<Coord3d> simplex = new ArrayList<Coord3d>();
+			Triangle t = faceIter.next();
+			double x0 = verts.x(t.vertex0());
+			double y0 = verts.y(t.vertex0());
+			double z0 = verts.z(t.vertex0());
+			simplex.add(new Coord3d(x0, y0, z0));
+			double x1 = verts.x(t.vertex1());
+			double y1 = verts.y(t.vertex1());
+			double z1 = verts.z(t.vertex1());
+			simplex.add(new Coord3d(x1, y1, z1));
+			double x2 = verts.x(t.vertex2());
+			double y2 = verts.y(t.vertex2());
+			double z2 = verts.z(t.vertex2());
+			simplex.add(new Coord3d(x2, y2, z2));
+			coord3dFaces.add(simplex);
+		}
+		List<Polygon> polygons = new ArrayList<Polygon>();
+		for (ArrayList<Coord3d> face : coord3dFaces) {
+			Polygon polygon = new Polygon();
+			polygon.add(new Point(face.get(0)));
+			polygon.add(new Point(face.get(1)));
+			polygon.add(new Point(face.get(2)));
+			polygons.add(polygon);
+		}
+		final Shape surface = new Shape(polygons);
 		surface.setColor(Utils.contrastColor(viewer.getDefColor()).alphaSelf(0.4f));
 		surface.setWireframeColor(viewer.getDefColor().alphaSelf(0.8f));
 		surface.setFaceDisplayed(true);
@@ -145,32 +188,35 @@ public class Annotation3D {
 	private AbstractDrawable assembleStrip() {
 		final ArrayList<Point> linePoints = new ArrayList<>(points.size());
 		for (final SNTPoint point : points) {
-			if (point == null) continue;
+			if (point == null)
+				continue;
 			final Coord3d coord = new Coord3d(point.getX(), point.getY(), point.getZ());
-			Color color= viewer.getDefColor();
+			Color color = viewer.getDefColor();
 			if (point instanceof PointInImage && ((PointInImage) point).getPath() != null) {
 				final Path path = ((PointInImage) point).getPath();
 				final int nodeIndex = path.getNodeIndex(((PointInImage) point));
 				if (nodeIndex > -1) {
-					color = viewer.fromAWTColor((path.hasNodeColors()) ? path.getNodeColor(nodeIndex) : path.getColor());
+					color = viewer
+							.fromAWTColor((path.hasNodeColors()) ? path.getNodeColor(nodeIndex) : path.getColor());
 				}
 			}
 			linePoints.add(new Point(coord, color));
 		}
 		final LineStrip line = new LineStrip();
 		line.addAll(linePoints);
-		//line.setShowPoints(true);
-		//line.setStipple(true);
-		//line.setStippleFactor(2);
-		//line.setStipplePattern((short) 0xAAAA);
+		// line.setShowPoints(true);
+		// line.setStipple(true);
+		// line.setStippleFactor(2);
+		// line.setStipplePattern((short) 0xAAAA);
 		return line;
 	}
 
 	private AbstractDrawable assembleQTip() {
 		final Shape shape = new Shape();
-		final LineStrip line = (LineStrip)assembleStrip();
+		final LineStrip line = (LineStrip) assembleStrip();
 		shape.add(line);
-		if (line.getPoints().size() >= 2) shape.add(assembleScatter());
+		if (line.getPoints().size() >= 2)
+			shape.add(assembleScatter());
 		return shape;
 	}
 
@@ -278,11 +324,10 @@ public class Annotation3D {
 	/**
 	 * Script friendly method to assign a color to the annotation.
 	 *
-	 * @param color               the color to render the imported file, either a 1)
-	 *                            HTML color codes starting with hash ({@code #}), a
-	 *                            color preset ("red", "blue", etc.), or integer
-	 *                            triples of the form {@code r,g,b} and range
-	 *                            {@code [0, 255]}
+	 * @param color the color to render the imported file, either a 1) HTML color
+	 *              codes starting with hash ({@code #}), a color preset ("red",
+	 *              "blue", etc.), or integer triples of the form {@code r,g,b} and
+	 *              range {@code [0, 255]}
 	 */
 	public void setColor(final String color) {
 		setColor(new ColorRGB(color), 10d);

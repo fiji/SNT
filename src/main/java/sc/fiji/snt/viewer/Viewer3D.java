@@ -218,6 +218,7 @@ import sc.fiji.snt.gui.cmds.RecViewerPrefsCmd;
 import sc.fiji.snt.gui.cmds.RemoteSWCImporterCmd;
 import sc.fiji.snt.gui.cmds.TranslateReconstructionsCmd;
 import sc.fiji.snt.io.FlyCircuitLoader;
+import sc.fiji.snt.io.MouseLightLoader;
 import sc.fiji.snt.io.NeuroMorphoLoader;
 import sc.fiji.snt.plugin.AnalyzerCmd;
 import sc.fiji.snt.plugin.BrainAnnotationCmd;
@@ -5896,6 +5897,10 @@ public class Viewer3D {
 			jzy3D.view.shoot();
 			jzy3D.fitToVisibleObjects(true, false);
 		}
+		MouseLightLoader loader = new MouseLightLoader("AA1044");
+		Tree aa1044 = loader.getTree("axon");
+		jzy3D.annotateSurface(new TreeAnalyzer(aa1044).getTips(), "Convex Hull");
+		jzy3D.addTree(aa1044);
 		jzy3D.show();
 		jzy3D.setAnimationEnabled(true);
 		jzy3D.setViewPoint(-1.5707964f, -1.5707964f);

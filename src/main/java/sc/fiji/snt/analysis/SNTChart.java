@@ -175,10 +175,11 @@ public class SNTChart extends ChartFrame {
 		getPlot().addAnnotation(annot);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void show() {
 		AWTWindows.centerWindow(this);
-		setVisible(true);
+		super.show();
 	}
 
 	/* IDE debug method */

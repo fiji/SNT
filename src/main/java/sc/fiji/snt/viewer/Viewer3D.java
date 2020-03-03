@@ -67,6 +67,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -219,6 +220,7 @@ import sc.fiji.snt.gui.cmds.TranslateReconstructionsCmd;
 import sc.fiji.snt.io.FlyCircuitLoader;
 import sc.fiji.snt.io.NeuroMorphoLoader;
 import sc.fiji.snt.plugin.AnalyzerCmd;
+import sc.fiji.snt.plugin.BrainAnnotationCmd;
 import sc.fiji.snt.plugin.ShollTracingsCmd;
 import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.util.PointInImage;
@@ -2233,9 +2235,11 @@ public class Viewer3D {
 		/* GUI */
 		private static final double SCALE_FACTOR = ij.Prefs.getGuiScale();
 		private static final boolean DEF_NAG_USER_ON_RETRIEVE_ALL = true;
+		private static final String DEF_TREE_COMPARTMENT_CHOICE = "Axon";
 		private static final boolean DEF_RETRIEVE_ALL_IF_NONE_SELECTED = true;
 		public boolean nagUserOnRetrieveAll;
 		public boolean retrieveAllIfNoneSelected;
+		public String treeCompartmentChoice;
 
 		private final Viewer3D tp;
 		private final KeyController kc;
@@ -2252,6 +2256,7 @@ public class Viewer3D {
 		private void setPreferences() {
 			nagUserOnRetrieveAll = DEF_NAG_USER_ON_RETRIEVE_ALL;
 			retrieveAllIfNoneSelected = DEF_RETRIEVE_ALL_IF_NONE_SELECTED;
+			treeCompartmentChoice = DEF_TREE_COMPARTMENT_CHOICE;
 			setSnapshotDirectory();
 			if (tp.prefService == null) {
 				kc.zoomStep = DEF_ZOOM_STEP;
@@ -2888,6 +2893,28 @@ public class Viewer3D {
 			return trees.get(0);
 		}
 
+		private Tree getSingleSelectionTreeWithPromptForType() {
+			Tree tree = getSingleSelectionTree();
+			if (tree == null) return null;
+			final Set<Integer> types = tree.getSWCTypes();
+			if (types.size() == 1)
+				return tree;
+			final String compartment = guiUtils.getChoice("Compartment:", "Which Neuronal Processes?",
+					new String[] { "All", "Axon", "Dendrites" }, prefs.treeCompartmentChoice);
+			if (compartment == null)
+				return null;
+			prefs.treeCompartmentChoice = compartment;
+			if (!compartment.toLowerCase().contains("all")) {
+				tree = tree.subTree(compartment);
+				if (tree.isEmpty()) {
+					final String treeLabel = (tree.getLabel() == null) ? "Reconstruction" : tree.getLabel();
+					guiUtils.error(treeLabel + " does not contain processes tagged as \"" + compartment + "\".");
+					return null;
+				}
+			}
+			return tree;
+		}
+
 		private List<Tree> getSelectedTrees() {
 			return getSelectedTrees(prefs.retrieveAllIfNoneSelected);
 		}
@@ -3001,7 +3028,6 @@ public class Viewer3D {
 			measureMenu.add(mi);
 			addSeparator(measureMenu, "Single-Cell Analysis:");
 			mi = new JMenuItem("Sholl Analysis...", IconFactory.getMenuIcon(GLYPH.BULLSEYE));
-			mi.setToolTipText("Runs Sholl Analysis on single cells");
 			mi.addActionListener(e -> {
 				final Tree tree = getSingleSelectionTree();
 				if (tree == null) return;
@@ -3012,13 +3038,21 @@ public class Viewer3D {
 			});
 			measureMenu.add(mi);
 			mi = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(GLYPH.BRANCH_CODE));
-			mi.setToolTipText("Runs Strahler Analysis on single cells");
 			mi.addActionListener(e -> {
-				final Tree tree = getSingleSelectionTree();
+				final Tree tree = getSingleSelectionTreeWithPromptForType();
 				if (tree == null) return;
 				final StrahlerCmd sa = new StrahlerCmd(tree);
 				sa.setContext(context);
 				SwingUtilities.invokeLater(() -> sa.run());
+			});
+			measureMenu.add(mi);
+			mi = new JMenuItem("Brain Area Analysis", IconFactory.getMenuIcon(GLYPH.BRAIN));
+			mi.addActionListener(e -> {
+				final Tree tree = getSingleSelectionTree();
+				if (tree == null) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("tree", tree);
+				runCmd(BrainAnnotationCmd.class, inputs, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);
 			return measureMenu;
@@ -3061,10 +3095,10 @@ public class Viewer3D {
 						}
 						final ColorRGBA[] colors = (ColorRGBA[]) cmdModule.getInput("colors");
 						if (colors == null) return;
-						final Color surfaceColor = fromColorRGB((ColorRGBA)colors[0]);
+						final Color surfaceColor = (colors[0]==null) ? null : fromColorRGB(colors[0]);
 						for (final String label : keys) {
-							plottedObjs.get(label).setColor(surfaceColor);
-							plottedObjs.get(label).objMesh.setBoundingBoxColor(colors[1]);
+							if (surfaceColor != null) plottedObjs.get(label).setColor(surfaceColor);
+							if (colors[1] != null) plottedObjs.get(label).objMesh.setBoundingBoxColor(colors[1]);
 						}
 					}
 				}

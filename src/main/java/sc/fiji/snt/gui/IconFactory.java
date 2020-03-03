@@ -53,7 +53,7 @@ public class IconFactory {
 			//ATOM('\uf5d2', true), //
 			BINOCULARS('\uf1e5', true), //
 			BOOK_READER('\uf5da', true), //
-			//BRAIN('\uf5dc', true), //
+			BRAIN('\uf5dc', true), //
 			BRANCH_CODE('\uf126', true), //
 			BROOM('\uf51a', true), //
 			BUG('\uf188', true), //

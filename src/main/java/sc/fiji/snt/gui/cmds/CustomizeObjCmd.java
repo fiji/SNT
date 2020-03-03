@@ -53,6 +53,9 @@ public class CustomizeObjCmd extends ContextCommand {
 	@Parameter(label = "Transparency (%)", min = "0.5", max = "100", style = NumberWidget.SCROLL_BAR_STYLE)
 	private double mTransparency;
 
+	@Parameter(label = "Skip mesh customization")
+	private boolean skipM;
+
 	@Parameter(label = "<HTML>&nbsp;", required = false, persist = false, visibility = ItemVisibility.MESSAGE)
 	private String SPACER;
 
@@ -82,9 +85,8 @@ public class CustomizeObjCmd extends ContextCommand {
 		if (mTransparency >= 100) {
 			cancel("Surface cannot be fully transparent.");
 		}
-		if (mColor == null) mColor = Colors.WHITE;
 		colors = new ColorRGBA[2];
-		colors[0] = (mColor == null) ? null : new ColorRGBA(mColor.getRed(), mColor.getGreen(), mColor.getBlue(), getAlpha(mTransparency));
+		colors[0] = (mColor == null || skipM) ? null : new ColorRGBA(mColor.getRed(), mColor.getGreen(), mColor.getBlue(), getAlpha(mTransparency));
 		colors[1] = (!displayBox || bbColor == null || bbTransparency == 100) ? null
 				: new ColorRGBA(bbColor.getRed(), bbColor.getGreen(), bbColor.getBlue(), getAlpha(bbTransparency));
 	}

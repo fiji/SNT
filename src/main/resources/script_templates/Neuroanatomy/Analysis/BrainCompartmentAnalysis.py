@@ -52,5 +52,3 @@ hemisphere = "left" if AllenUtils.isLeftHemisphere(soma_loc) else "right"
 hist.annotatePoint(soma_loc.getX(), 0, "soma ({} hemi.)".format(hemisphere))
 hist.show()
 
-#5715770918
-#12:45 tuesday 3rd

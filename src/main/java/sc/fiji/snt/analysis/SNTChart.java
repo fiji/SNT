@@ -44,6 +44,7 @@ import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.Range;
+import org.scijava.ui.awt.AWTWindows;
 import org.scijava.util.ColorRGB;
 
 import sc.fiji.snt.Tree;
@@ -175,9 +176,9 @@ public class SNTChart extends ChartFrame {
 	}
 
 	@Override
-	@SuppressWarnings("deprecation")
 	public void show() {
-		super.show();
+		AWTWindows.centerWindow(this);
+		setVisible(true);
 	}
 
 	/* IDE debug method */

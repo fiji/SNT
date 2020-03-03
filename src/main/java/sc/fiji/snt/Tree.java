@@ -44,16 +44,13 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
 import sc.fiji.snt.analysis.graph.DirectedWeightedGraph;
-import sc.fiji.snt.analysis.sholl.TreeParser;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
-import sc.fiji.snt.util.SNTPoint;
 import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.viewer.Viewer3D;
-import sholl.UPoint;
 
 /**
  * Utility class to access a Collection of Paths (typically a complete
@@ -232,12 +229,29 @@ public class Tree {
 	}
 
 	/**
-	 * Checks if is empty.
+	 * Checks if this Tree is empty.
 	 *
 	 * @return true if this tree contains no Paths, false otherwise
 	 */
 	public boolean isEmpty() {
 		return tree.isEmpty();
+	}
+
+	/**
+	 * Checks if the nodes of this Tree have been assigned {@link BrainAnnotation}s
+	 * (neuropil labels).
+	 *
+	 * @return true if at least one node in the Tree has a valid annotation, false
+	 *         otherwise
+	 */
+	public boolean isAnnotated() {
+		for (final Path p : tree) {
+			for (int i = 0; i < p.size(); ++i) {
+				if (p.getNodeAnnotation(i) != null)
+					return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -406,23 +420,19 @@ public class Tree {
 	}
 
 	/**
-	 * Gets the centroid position of all nodes tagged as {@link Path#SWC_SOMA}
+	 * Gets the list of all nodes tagged as {@link Path#SWC_SOMA}.
 	 *
-	 * @return the centroid of soma position or null if no Paths are tagged as
-	 *         soma
+	 * @return the soma nodes or null if no Paths are tagged as soma.
+	 * @see #getRoot()
 	 */
-	public PointInImage getSomaPosition() {
-		final TreeParser parser = new TreeParser(this);
-		try {
-			parser.setCenter(TreeParser.PRIMARY_NODES_SOMA);
+	public List<PointInImage> getSomaNodes() {
+		final List<PointInImage> points = new ArrayList<>();
+		for (final Path p : tree) {
+			if (p.isPrimary() && p.getSWCType() == Path.SWC_SOMA) {
+				points.add(p.getNode(0));
+			}
 		}
-		catch (final IllegalArgumentException ignored) {
-			SNTUtils.log("No soma attribute found...");
-			return null;
-		}
-		final UPoint center = parser.getCenter();
-		return (center == null) ? null : new PointInImage(center.x, center.y,
-			center.z);
+		return (points.isEmpty()) ? null : points;
 	}
 
 	/**
@@ -444,10 +454,6 @@ public class Tree {
 			}
 		}
 		return (rootPath == null) ? null : rootPath.getNodeWithoutChecks(0);
-	}
-
-	public SNTPoint getCentroid() {
-		return SNTPoint.average(getNodes());
 	}
 
 	/**

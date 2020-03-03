@@ -23,29 +23,29 @@ import org.scijava.util.*
 // compartments we are interested in:
 cellId = "AA0596"
 somaCompartment = AllenUtils.getCompartment("Somatomotor areas")
-thalamus = AllenUtils.getCompartment("Thalamus")
+projCompartment = AllenUtils.getCompartment("Thalamus")
 
-// First we define a Loader for the MouseLightDatabase:
+// Define a Loader for the MouseLightDatabase:
 loader = new MouseLightLoader(cellId)
 if (!loader.idExists()) {
 	println(" id not found. Aborting...")
 	return null
 }
 
-// Now we extract all the axonal branch points in the Thalamus.
-// See method below for detaisl:
+// Now we extract all the axonal branch points in the Thalamus. See method
+// below for detais:
 bps = getFilteredBranchPoints(loader)
 if (!bps) {
-  println(" Bummer! No branch points are associated with $thalamus")
+  println(" Bummer! No branch points are associated with $projCompartment")
   return
 }
 
 // Let's look at the soma location of the analyzed cell, and the centroid
 // defined by the extracted branch points. 
-somaCentroid = SNTPoint.average(loader.getNodes("soma"))
+somaCentroid = loader.getSomaLocation()
 bpsCentroid = SNTPoint.average(bps)
 println("SomaLocation: $somaCentroid.x, $somaCentroid.y, $somaCentroid.z")
-println("Centroid of BPs in ${thalamus.name()}: $bpsCentroid.x, $bpsCentroid.y, $bpsCentroid.z")
+println("Centroid of BPs in ${projCompartment.name()}: $bpsCentroid.x, $bpsCentroid.y, $bpsCentroid.z")
 
 // Let's find out how many of the branch points are in the left hemisphere
 // (NB: In the ML database the medial-Lateral axis is mapped to the X-axis)
@@ -68,7 +68,7 @@ viewer = new Viewer3D(ij.context())
 brainMesh = AllenUtils.getCompartment("Whole Brain").getMesh()
 viewer.add(brainMesh)
 viewer.add(somaCompartment.getMesh())
-viewer.add(thalamus.getMesh())
+viewer.add(projCompartment.getMesh())
 
 // Add original cell
 tree = loader.getTree()
@@ -98,12 +98,12 @@ print("... Done. With Viewer active, Press 'H' or 'F1' for help")
 
 /** 
  * Extracts all the branch points (BPs) of the specified cell that are
- * contained by {@code thalamus}. Does nothing if cell's soma is not
+ * contained by {@code projCompartment}. Does nothing if cell's soma is not
  * contained by {@code somaCompartment}
  */
 def getFilteredBranchPoints(loader) {
 
-	if (!somaCompartment || !thalamus) {
+	if (!somaCompartment || !projCompartment) {
 		println("Aborting: Compartment(s) are not valid")
 		return null
 	}
@@ -111,24 +111,23 @@ def getFilteredBranchPoints(loader) {
 		println(" id not found. Skipping...")
 		return null
 	}
-	// Retrieve the 1st node of the soma and its annotated compartment
-	soma = loader.getNodes("soma")[0]
-	compartment = (AllenCompartment) soma.getAnnotation()
-	if (!somaCompartment.contains(compartment)) {
+	// Validate the soma location of this loader's cell
+	compartment = loader.getSomaCompartment()
+	if (somaCompartment.equals(compartment) || somaCompartment.isParentOf(compartment)) {
+
+		println(" Id matches soma location requirements!")
+
+		// Retrieve the axonal arbor as a Tree object. Instantiate a TreeAnalyzer
+		// so that we can conveniently 1) access all of the axonal branch points,
+		// and 2) filter them by annotated compartment
+		axonalTree = loader.getTree("axon")
+		analyzer = new TreeAnalyzer(axonalTree)
+		branchPoints = analyzer.getBranchPoints(projCompartment)
+		println(" Found ${branchPoints.size()} match(es)")
+
+		return branchPoints
+	} else {
 		println(" Soma not associated with " + somaCompartment + ". Skipping...")
 		return null
 	}
-	println(" Id matches soma location requirements!")
-
-	// Retrieve the axonal arbor as a Tree object. Instantiate a TreeAnalyzer
-	// so that we can conveniently 1) access all of the axonal branch points,
-	// and 2) filter them by annotated compartment
-	axonalTree = loader.getTree("axon")
-	analyzer = new TreeAnalyzer(axonalTree)
-	branchPoints = analyzer.getBranchPoints(thalamus)
-	println(" Found ${branchPoints.size()} match(es)")
-
-	// return the filtered list of branch points
-	branchPoints
 }
-

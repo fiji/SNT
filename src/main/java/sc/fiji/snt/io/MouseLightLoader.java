@@ -446,15 +446,30 @@ public class MouseLightLoader {
 	}
 
 	/**
-	 * Gets the IDs of all the cells publicly available in the MouseLight database.
+	 * Convenience method to obtain a consecutive range of cell IDs from a range of
+	 * indices. E.g., {@code getRangeOfIDs(1, getNeuronCount())} would return the
+	 * list of IDs for all the cells in the MouseLight database.
 	 *
-	 * @return the list of cell IDs or an empty list if no database could not be reached.
+	 * @param first the first index in the range (inclusive, 1-based)
+	 * @param last  the last index in the range (inclusive)
+	 * @return the list of cell IDs or an empty list if database could not be
+	 *         reached.
 	 */
-	public List<String> getAllNeuronIDs() {
+	public static List<String> getRangeOfIDs(final int first, final int last) {
 		final List<String> list = new ArrayList<>();
-		IntStream.rangeClosed(0, getNeuronCount()).forEach( neuron -> {
+		final int maxN = getNeuronCount();
+		if (maxN == -1) return list;
+		if (maxN > 9999) {
+			throw new IllegalArgumentException(
+					"This method needs to be updated to accomodate the large # of neurons in database. "
+					+ "Please contact the developers");
+		}
+		final int adjFirst = Math.max(1, first);
+		final int adjLast = Math.min(last, maxN);
+		IntStream.rangeClosed(adjFirst, adjLast).forEach( neuron -> {
 			final String id = "AA" + new DecimalFormat("0000").format(neuron);
-			if (new MouseLightLoader(id).idExists()) list.add(id);
+			//if (new MouseLightLoader(id).idExists())
+			list.add(id);
 		});
 		return list;
 	}

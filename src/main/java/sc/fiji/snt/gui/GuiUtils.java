@@ -164,8 +164,16 @@ public class GuiUtils {
 		new HTMLDialog(title, msg, false);
 	}
 
+	public static boolean isLegacy3DViewerAvailable() {
+		return Types.load("ij3d.Image3DUniverse") != null;
+	}
+
+	public static boolean isSciViewAvailable() {
+		return Types.load("sc.iview.SciView") != null && Types.load("graphics.scenery.backends.Renderer") != null;
+	}
+
 	public static boolean sciViewUnavailableError() {
-		final boolean available = Types.load("sc.iview.SciView") != null || Types.load("graphics.scenery.backends.Renderer") != null;
+		final boolean available = isSciViewAvailable();
 		if (!available) {
 			final String msg = "SNT now requires you to subscribe to the <i>SciView</i> update site. To do so:" +
 					"<ol>" +

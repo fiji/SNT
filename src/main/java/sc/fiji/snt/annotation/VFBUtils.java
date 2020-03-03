@@ -47,9 +47,11 @@ public class VFBUtils {
 
 	private static final String HOME_DIR = "http://www.virtualflybrain.org/site/vfb_site/home.htm";
 	private static final String DATA_DIR = "http://www.virtualflybrain.org/data/VFB/i/";
+	private final static String JFRC2018_MESH_LABEL = "JFRC 2018 Template";
 	private final static String JFRC2_MESH_LABEL = "JFRC2 (VFB) Template";
 	private final static String JFRC3_MESH_LABEL = "JFRC3 Template";
 	private final static String FCWB_MESH_LABEL = "FCWB Template";
+	private final static PointInImage JFRC2018_BRAIN_BARYCENTRE = new PointInImage(312.1580f, 150.0717f, 89.4155f);
 	private final static PointInImage JFRC2_BRAIN_BARYCENTRE = new PointInImage(321.3978f, 154.8180f, 69.0848f);
 	private final static PointInImage JFRC3_BRAIN_BARYCENTRE = new PointInImage(276.5773f, 133.8614f, 82.6505f);
 	private final static PointInImage FCWB_BRAIN_BARYCENTRE = new PointInImage(281.7975f, 154.2765f, 53.6835f);
@@ -83,13 +85,17 @@ public class VFBUtils {
 
 	/**
 	 * Returns the spatial centroid of an adult Drosophila template brain.
+	 * 
 	 * @param templateBrain the template brain to be loaded (case-insensitive).
 	 *                      Either "JFRC2" (AKA JFRC2010, VFB), "JFRC3" (AKA
-	 *                      JFRC2013), or "FCWB" (FlyCircuit Whole Brain Template)
+	 *                      JFRC2013), "JFRC2018" or "FCWB" (FlyCircuit Whole Brain
+	 *                      Template)
 	 * @return the SNT point defining the (X,Y,Z) center of brain mesh.
 	 */
 	public static SNTPoint brainBarycentre(final String templateBrain) {
 		switch (getNormalizedTemplateLabel(templateBrain)) {
+		case JFRC2018_MESH_LABEL:
+			return JFRC2018_BRAIN_BARYCENTRE;
 		case JFRC2_MESH_LABEL:
 			return JFRC2_BRAIN_BARYCENTRE;
 		case JFRC3_MESH_LABEL:
@@ -104,6 +110,10 @@ public class VFBUtils {
 	private static String getNormalizedTemplateLabel(final String templateBrain) {
 		final String inputType = (templateBrain == null) ? null : templateBrain.toLowerCase();
 		switch (inputType) {
+		case "jfrc2018":
+		case "jfrc 2018":
+		case "jfrctemplate2018":
+			return JFRC2018_MESH_LABEL;
 		case "jfrc2":
 		case "jfrc2010":
 		case "jfrctemplate2010":
@@ -129,12 +139,15 @@ public class VFBUtils {
 	 *
 	 * @param templateBrain the template brain to be loaded (case-insensitive).
 	 *                      Either "JFRC2" (AKA JFRC2010, VFB), "JFRC3" (AKA
-	 *                      JFRC2013), or "FCWB" (FlyCircuit Whole Brain Template)
+	 *                      JFRC2013), "JFRC2018", or "FCWB" (FlyCircuit Whole Brain
+	 *                      Template)
 	 * @return the template mesh.
 	 * @throws IllegalArgumentException if templateBrain is not recognized
 	 */
 	public static OBJMesh getRefBrain(final String templateBrain) throws IllegalArgumentException {
 		switch (getNormalizedTemplateLabel(templateBrain)) {
+		case JFRC2018_MESH_LABEL:
+			return getBundledMesh(JFRC2018_MESH_LABEL, "meshes/JFRCtemplate2018.obj");
 		case JFRC2_MESH_LABEL:
 			return getBundledMesh(JFRC2_MESH_LABEL, "meshes/JFRCtemplate2010.obj");
 		case JFRC3_MESH_LABEL:

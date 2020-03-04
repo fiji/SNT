@@ -219,6 +219,21 @@ class ScriptInstaller implements MenuKeyListener {
 		final JMenu listMenu = getFullListMenu();
 		final int listMenuPosition = sMenu.getItemCount();
 		sMenu.add(listMenu);
+		final JMenuItem reloadMI = new JMenuItem("Reload Scripts...", IconFactory.getMenuIcon(GLYPH.REDO));
+		reloadMI.addActionListener(e -> {
+			final int oldCount = scripts.size();
+			addLocalScripts();
+			final int newCount = scripts.size();
+			if (oldCount == newCount) {
+				ui.guiUtils.centeredMsg("No new scripts detected.", "List Reloaded");
+				return;
+			}
+			sMenu.remove(listMenuPosition);
+			sMenu.add(getFullListMenu(), listMenuPosition);
+			sMenu.revalidate();
+			ui.guiUtils.centeredMsg(""+ (newCount-oldCount) +" new script(s) added to \"Scripts>Full List>\".", "New Script(s) Detected");
+		});
+		sMenu.add(reloadMI);
 		sMenu.addSeparator();
 		final JMenuItem mi = new JMenuItem("New...", IconFactory.getMenuIcon(GLYPH.CODE));
 		mi.addActionListener(e -> {
@@ -245,21 +260,6 @@ class ScriptInstaller implements MenuKeyListener {
 			}
 		});
 		sMenu.add(mi);
-		final JMenuItem reloadMI = new JMenuItem("Reload...", IconFactory.getMenuIcon(GLYPH.REDO));
-		reloadMI.addActionListener(e -> {
-			final int oldCount = scripts.size();
-			addLocalScripts();
-			final int newCount = scripts.size();
-			if (oldCount == newCount) {
-				ui.guiUtils.centeredMsg("No new scripts detected.", "List Reloaded");
-				return;
-			}
-			sMenu.remove(listMenuPosition);
-			sMenu.add(getFullListMenu(), listMenuPosition);
-			sMenu.revalidate();
-			ui.guiUtils.centeredMsg(""+ (newCount-oldCount) +" new script(s) added to \"Scripts>Full List>\".", "New Script(s) Detected");
-		});
-		sMenu.add(reloadMI);
 		sMenu.addSeparator();
 		sMenu.add(about());
 		return sMenu;

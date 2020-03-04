@@ -91,13 +91,12 @@ public class SkeletonizerCmd implements Command {
 			error("No active instance of SNT was found.");
 			return;
 		}
+
 		final ImagePlus imp = plugin.getImagePlus();
+		final boolean displayCanvas = !plugin.accessToValidImageData();
 		final boolean twoDdisplayCanvas =  imp != null && imp.getNSlices() == 1 && tree.is3D();
-		if (twoDdisplayCanvas) {
-			error(
-				"Paths have a depth component but are being displayed on a 2D canvas.");
-			return;
-		}
+		final boolean useNewImage = displayCanvas || twoDdisplayCanvas;
+
 		final Roi roi = (imp == null) ? null : imp.getRoi();
 		boolean restrictByRoi = !roiChoice.equals("None");
 		final boolean validAreaRoi = (roi == null || !roi.isArea());
@@ -111,28 +110,34 @@ public class SkeletonizerCmd implements Command {
 
 		plugin.showStatus(0, 0, "Converting paths to skeletons...");
 
-		final ImagePlus imagePlus = plugin.makePathVolume(tree.list());
-		if (restrictByRoi && roi != null && roi.isArea()) {
-			final ImageStack stack = imagePlus.getStack();
-			for (int i = 1; i <= stack.getSize(); i++) {
-				final ImageProcessor ip = stack.getProcessor(i);
-				ip.setValue(0);
-				ip.fillOutside(roi);
+		try {
+			final ImagePlus imagePlus = (useNewImage) ? tree.getSkeleton() : plugin.makePathVolume(tree.list());
+			if (restrictByRoi && roi != null && roi.isArea()) {
+				final ImageStack stack = imagePlus.getStack();
+				for (int i = 1; i <= stack.getSize(); i++) {
+					final ImageProcessor ip = stack.getProcessor(i);
+					ip.setValue(0);
+					ip.fillOutside(roi);
+				}
+				imagePlus.setRoi(roi);
 			}
-			imagePlus.setRoi(roi);
+			if (callAnalyzeSkeleton) {
+				final Skeletonize3D_ skeletonizer = new Skeletonize3D_();
+				skeletonizer.setup("", imagePlus);
+				skeletonizer.run(imagePlus.getProcessor());
+				final AnalyzeSkeleton_ analyzer = new AnalyzeSkeleton_();
+				analyzer.setup("", imagePlus);
+				analyzer.run(imagePlus.getProcessor());
+			}
+
+			imagePlus.show();
 		}
-
-		if (callAnalyzeSkeleton) {
-			final Skeletonize3D_ skeletonizer = new Skeletonize3D_();
-			skeletonizer.setup("", imagePlus);
-			skeletonizer.run(imagePlus.getProcessor());
-			final AnalyzeSkeleton_ analyzer = new AnalyzeSkeleton_();
-			analyzer.setup("", imagePlus);
-			analyzer.run(imagePlus.getProcessor());
+		catch (final OutOfMemoryError error) {
+			final String msg = "Out of Memory: There is not enough RAM to perform skeletonizztion under "
+					+ "current options. Please allocate more memory to IJ, downsample the reconstruction, "
+					+ " or consider skeletonization through API scripting";
+			error(msg);
 		}
-
-		imagePlus.show();
-
 	}
 
 	private boolean getConfirmation(final String msg, final String title) {

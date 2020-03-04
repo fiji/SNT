@@ -899,7 +899,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		if (includeAll)
 			treeLabels.add("   -- All --  ");
 		trees.forEach(t -> treeLabels.add(t.getLabel()));
-		final String choice = guiUtils.getChoice("Multiple rooted structures exist. Which one should be analyzed?",
+		final String choice = guiUtils.getChoice("Multiple rooted structures exist. Which one should be considered?",
 				"Which Structure?", treeLabels.toArray(new String[trees.size()]), treeLabels.get(0));
 		if (includeAll && "   -- All --  ".equals(choice))
 			return trees;
@@ -1959,7 +1959,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			else if (CONVERT_TO_SKEL_CMD.equals(cmd)) {
 
 				final Map<String, Object> input = new HashMap<>();
-				input.put("tree", new Tree(selectedPaths));
+				final Tree tree = new Tree(selectedPaths);
+				tree.setLabel("Paths");
+				input.put("tree", tree);
 				final CommandService cmdService = plugin.getContext().getService(
 					CommandService.class);
 				cmdService.run(SkeletonizerCmd.class, true, input);
@@ -2131,7 +2133,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 					return;
 				}
 
-				final boolean imagenotAvailable = !plugin.accessToValidImageData();
+				final boolean imageNotAvailable = !plugin.accessToValidImageData();
 				final ArrayList<PathFitter> pathsToFit = new ArrayList<>();
 				int skippedFits = 0;
 
@@ -2144,7 +2146,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 
 					// A fitted version does not exist
 					else if (p.getFitted() == null) {
-						if (imagenotAvailable) {
+						if (imageNotAvailable) {
 							// Keep a tally of how many computations we are skipping
 							skippedFits++;
 						}

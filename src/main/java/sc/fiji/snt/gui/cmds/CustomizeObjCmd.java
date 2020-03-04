@@ -30,7 +30,6 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.ColorRGBA;
-import org.scijava.util.Colors;
 import org.scijava.widget.NumberWidget;
 
 import net.imagej.ImageJ;

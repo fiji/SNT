@@ -211,6 +211,7 @@ import sc.fiji.snt.gui.cmds.CustomizeObjCmd;
 import sc.fiji.snt.gui.cmds.CustomizeTreeCmd;
 import sc.fiji.snt.gui.cmds.DistributionBPCmd;
 import sc.fiji.snt.gui.cmds.DistributionCPCmd;
+import sc.fiji.snt.gui.cmds.GraphGeneratorCmd;
 import sc.fiji.snt.gui.cmds.LoadObjCmd;
 import sc.fiji.snt.gui.cmds.LoadReconstructionCmd;
 import sc.fiji.snt.gui.cmds.MLImporterCmd;
@@ -3028,6 +3029,24 @@ public class Viewer3D {
 			});
 			measureMenu.add(mi);
 			addSeparator(measureMenu, "Single-Cell Analysis:");
+			mi = new JMenuItem("Brain Area Analysis", IconFactory.getMenuIcon(GLYPH.BRAIN));
+			mi.addActionListener(e -> {
+				final Tree tree = getSingleSelectionTree();
+				if (tree == null) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("tree", tree);
+				runCmd(BrainAnnotationCmd.class, inputs, CmdWorker.DO_NOTHING, false);
+			});
+			measureMenu.add(mi);
+			mi = new JMenuItem("Create Dendrogram...", IconFactory.getMenuIcon(GLYPH.DIAGRAM));
+			mi.addActionListener(e -> {
+				final Tree tree = getSingleSelectionTreeWithPromptForType();
+				if (tree == null) return;
+				final Map<String, Object> inputs = new HashMap<>();
+				inputs.put("tree", tree);
+				runCmd(GraphGeneratorCmd.class, inputs, CmdWorker.DO_NOTHING, false);
+			});
+			measureMenu.add(mi);
 			mi = new JMenuItem("Sholl Analysis...", IconFactory.getMenuIcon(GLYPH.BULLSEYE));
 			mi.addActionListener(e -> {
 				final Tree tree = getSingleSelectionTree();
@@ -3038,22 +3057,13 @@ public class Viewer3D {
 				runCmd(ShollTracingsCmd.class, input, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);
-			mi = new JMenuItem("Strahler Analysis", IconFactory.getMenuIcon(GLYPH.BRANCH_CODE));
+			mi = new JMenuItem("Strahler Analysis...", IconFactory.getMenuIcon(GLYPH.BRANCH_CODE));
 			mi.addActionListener(e -> {
 				final Tree tree = getSingleSelectionTreeWithPromptForType();
 				if (tree == null) return;
 				final StrahlerCmd sa = new StrahlerCmd(tree);
 				sa.setContext(context);
 				SwingUtilities.invokeLater(() -> sa.run());
-			});
-			measureMenu.add(mi);
-			mi = new JMenuItem("Brain Area Analysis", IconFactory.getMenuIcon(GLYPH.BRAIN));
-			mi.addActionListener(e -> {
-				final Tree tree = getSingleSelectionTree();
-				if (tree == null) return;
-				final Map<String, Object> inputs = new HashMap<>();
-				inputs.put("tree", tree);
-				runCmd(BrainAnnotationCmd.class, inputs, CmdWorker.DO_NOTHING, false);
 			});
 			measureMenu.add(mi);
 			return measureMenu;

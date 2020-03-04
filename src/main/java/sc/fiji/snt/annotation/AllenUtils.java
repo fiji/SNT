@@ -184,6 +184,12 @@ public class AllenUtils {
 	 * @return the max number of ontology levels.
 	 */
 	public static int getHighestOntologyDepth() {
+		// No need to compute, as this is unlikely to change
+		return 10; // computeHighestOntologyDepth();
+	}
+
+	@SuppressWarnings("unused")
+	private static int computeHighestOntologyDepth() {
 		int maxLevel = 0;
 		for (final AllenCompartment c : getOntologies()) {
 			maxLevel = Math.max(maxLevel, c.getOntologyDepth());

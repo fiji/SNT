@@ -1114,7 +1114,7 @@ public class SNT extends MultiDThreePanes implements
 		switch (guessedType) {
 			case PathAndFillManager.TRACES_FILE_TYPE_SWC: {
 				final SWCImportOptionsDialog swcImportDialog =
-					new SWCImportOptionsDialog("SWC import options for " + file
+					new SWCImportOptionsDialog(getUI(), "SWC import options for " + file
 						.getName());
 				if (swcImportDialog.succeeded() && pathAndFillManager.importSWC(
 					file.getAbsolutePath(), swcImportDialog.getIgnoreCalibration(),

@@ -217,9 +217,9 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener,
 		saveFieldsToPrefs();
 	}
 
-	public SWCImportOptionsDialog(final String title) {
+	public SWCImportOptionsDialog(final JDialog parent, final String title) {
 
-		super((JFrame) null, title, true);
+		super((JFrame)null, title, true);
 
 		okButton.addActionListener(this);
 		cancelButton.addActionListener(this);
@@ -286,8 +286,6 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener,
 
 		setFieldsFromPrefs();
 		pack();
-		setLocationRelativeTo(null); // center dialog
-
 		addWindowListener(new WindowAdapter() {
 
 			@Override
@@ -295,6 +293,7 @@ public class SWCImportOptionsDialog extends JDialog implements ActionListener,
 				dispose();
 			}
 		});
+		setLocationRelativeTo(parent);
 		setVisible(true);
 	}
 

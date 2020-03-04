@@ -2276,8 +2276,9 @@ public class SNTUI extends JDialog {
 					"Single or Group Comparison?", choices, choices[1]);
 			if (choices[0].equals(choice))
 				(new CmdRunner(CompareFilesCmd.class)).execute();
-			else
-				(new CmdRunner(GroupAnalyzerCmd.class)).execute();
+			else {
+				(new DynamicCmdRunner(GroupAnalyzerCmd.class, null)).run();
+			}
 		});
 		utilitiesMenu.addSeparator();
 		final JMenuItem graphGenerator = new JMenuItem("Create Dendrogram",

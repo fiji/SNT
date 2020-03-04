@@ -24,6 +24,8 @@ package sc.fiji.snt.plugin;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+
 import org.scijava.command.Command;
 import org.scijava.command.CommandService;
 import org.scijava.plugin.Parameter;
@@ -51,7 +53,9 @@ public class BrainAnnotationCmd extends CommonDynamicCmd {
 			"Cable Length & No.of Tips" })
 	private String histogramType;
 
-	@Parameter(required = false, label = "Deepest ontology:", description = "Deepest ontology depth to be considered. Set it to -1 to consider all depths", min = "-1")
+	@Parameter(required = false, label = "Deepest ontology:",
+			description = "<HTML><div WIDTH=400>The Deepest ontology depth to be considered. As a reference, the deepest level for "
+					+ "several mouse brain atlases is around 10. Set it to 0 to consider all depths", min ="0")
 	private int ontologyDepth;
 
 	@Parameter(required = false, label = "Compartment", choices = { "All", "Axon", "Dendrites" })
@@ -113,14 +117,17 @@ public class BrainAnnotationCmd extends CommonDynamicCmd {
 		statusService.showStatus("Classifying reconstruction...");
 		final TreeStatistics tStats = new TreeStatistics(tree);
 		if (histogramType.toLowerCase().contains("length")) {
-			hist = tStats.getAnnotatedLengthHistogram(ontologyDepth < 0 ? Integer.MAX_VALUE : ontologyDepth);
+			hist = tStats.getAnnotatedLengthHistogram(ontologyDepth <= 0 ? Integer.MAX_VALUE : ontologyDepth);
 			annotateSoma(hist, somaAnnot, somaLabel);
+			hist.annotate("Total cable length: " + tStats.getCableLength());
 			hist.show();
 		}
 		if (histogramType.toLowerCase().contains("tips")) {
-			final NodeStatistics nStats = new NodeStatistics(tStats.getTips());
+			final Set<PointInImage> tips = tStats.getTips();
+			final NodeStatistics nStats = new NodeStatistics(tips);
 			hist = nStats.getAnnotatedHistogram(ontologyDepth <= 0 ? Integer.MAX_VALUE : ontologyDepth);
 			annotateSoma(hist, somaAnnot, somaLabel);
+			hist.annotate("No. of tips: " + tips.size());
 			hist.show();
 		}
 

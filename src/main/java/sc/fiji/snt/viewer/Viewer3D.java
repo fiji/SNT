@@ -223,6 +223,7 @@ import sc.fiji.snt.io.MouseLightLoader;
 import sc.fiji.snt.io.NeuroMorphoLoader;
 import sc.fiji.snt.plugin.AnalyzerCmd;
 import sc.fiji.snt.plugin.BrainAnnotationCmd;
+import sc.fiji.snt.plugin.GroupAnalyzerCmd;
 import sc.fiji.snt.plugin.ShollTracingsCmd;
 import sc.fiji.snt.plugin.StrahlerCmd;
 import sc.fiji.snt.util.PointInImage;
@@ -3528,6 +3529,13 @@ public class Viewer3D {
 				runCmd(LoadReconstructionCmd.class, inputs, CmdWorker.DO_NOTHING);
 			});
 			tracesMenu.add(mi);
+
+			mi = new JMenuItem("Import & Compare Groups...", IconFactory.getMenuIcon(GLYPH.MAGIC));
+			mi.addActionListener(e -> {
+				runCmd(GroupAnalyzerCmd.class, null, CmdWorker.DO_NOTHING);
+			});
+			tracesMenu.add(mi);
+
 			final JMenu remoteMenu = new JMenu("Load from Database");
 			remoteMenu.setMnemonic('d');
 			remoteMenu.setDisplayedMnemonicIndex(10);

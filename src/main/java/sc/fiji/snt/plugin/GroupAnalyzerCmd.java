@@ -22,10 +22,10 @@
 
 package sc.fiji.snt.plugin;
 
-import java.awt.Frame;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
@@ -35,10 +35,10 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.ItemIO;
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
-import org.scijava.command.ContextCommand;
+import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.ui.UIService;
+import org.scijava.util.ColorRGB;
 import org.scijava.widget.FileWidget;
 
 import net.imagej.ImageJ;
@@ -48,24 +48,26 @@ import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.GroupedTreeStatistics;
 import sc.fiji.snt.analysis.MultiTreeColorMapper;
 import sc.fiji.snt.analysis.MultiTreeStatistics;
+import sc.fiji.snt.analysis.SNTChart;
 import sc.fiji.snt.gui.GuiUtils;
+import sc.fiji.snt.gui.cmds.CommonDynamicCmd;
+import sc.fiji.snt.util.SNTColor;
 import sc.fiji.snt.viewer.MultiViewer2D;
+import sc.fiji.snt.viewer.Viewer3D;
 
 /**
- * Command for Comparing Groups of Tree(s).
+ * Command for Comparing Groups of Tree(s). Implements the "Compare Groups..."
+ * and "Import & Compare Groups..."
  *
  * @author Tiago Ferreira
  */
-@Plugin(type = Command.class, visible = false, label="Compare Groups...")
-public class GroupAnalyzerCmd extends ContextCommand {
+@Plugin(type = Command.class, visible = false, label="Compare Groups...", initializer = "init")
+public class GroupAnalyzerCmd extends CommonDynamicCmd {
 
-	private static final String COMMON_DESC_PRE = "<HTML><div WIDTH=500>Path to directory containing group ";
-	private static final String COMMON_DESC_POST = " files. NB: A single file can also be specified but "
-			+ "the \"Browser\" prompt may not allow single files to be selected. In "
-			+ "that case, you can manually specify its path in the text field.";
-
-	@Parameter
-	private UIService uiService;
+	private static final String COMMON_DESC_PRE = "<HTML><div WIDTH=500>Path to directory containing Group ";
+	private static final String COMMON_DESC_POST = " reconstructions. Ignored if empty. NB: A single file "
+			+ "can also be specified but the \"Browser\" prompt may not allow single files to be selected. "
+			+ "In that case, you can manually specify its path in the text field.";
 
 	// I: Input options
 	@Parameter(label = "<HTML><b>Groups:", persist = false, required = false, visibility = ItemVisibility.MESSAGE)
@@ -82,11 +84,23 @@ public class GroupAnalyzerCmd extends ContextCommand {
 	@Parameter(label = "Group 4", required = false, style = FileWidget.DIRECTORY_STYLE, description = COMMON_DESC_PRE + 4 + COMMON_DESC_POST)
 	private File g4File;
 
+	@Parameter(label = "Group 5", required = false, style = FileWidget.DIRECTORY_STYLE, description = COMMON_DESC_PRE + 5 + COMMON_DESC_POST)
+	private File g5File;
+
+	@Parameter(label = "Group 6", required = false, style = FileWidget.DIRECTORY_STYLE, description = COMMON_DESC_PRE + 6 + COMMON_DESC_POST)
+	private File g6File;
+
+	@Parameter(label = "<HTML>&nbsp;<br><b>Options:", persist = false, required = false, visibility = ItemVisibility.MESSAGE)
+	private String SPACER3;
+
+	@Parameter(label = "Compartments", choices = {"All", "Dendrites", "Axon"})
+	private String scope;
+
 	// II. Metrics
 	@Parameter(label = "<HTML>&nbsp;<br><b>Metrics:", persist = false, required = false, visibility = ItemVisibility.MESSAGE)
 	private String SPACER2;
 
-	@Parameter(label = "Metric", choices = {//
+	@Parameter(label = "Metric", callback ="metricChanged", choices = {//
 			MultiTreeStatistics.LENGTH,
 			MultiTreeStatistics.TERMINAL_LENGTH,
 			MultiTreeStatistics.PRIMARY_LENGTH,
@@ -106,17 +120,53 @@ public class GroupAnalyzerCmd extends ContextCommand {
 	})
 	private String metric;
 
-	@Parameter(label = "<HTML>&nbsp;<br><b>Options:", persist = false, required = false, visibility = ItemVisibility.MESSAGE)
-	private String SPACER3;
+	@Parameter(label = "<HTML>&nbsp;<br><b>Output(s):", persist = false, required = false, visibility = ItemVisibility.MESSAGE)
+	private String SPACER4;
 
-	@Parameter(label = "Compartments", choices = {"All", "Dendrites", "Axon"})
-	private String scope;
+	@Parameter(required = false, label = "Comparison plots", description = "Display Histograms & Box-Plots?")
+	private boolean displayPlots;
+
+	@Parameter(required = false, label = "Mapped metric montage", description = "<HTML><div WIDTH=500>Assemble multiple-panel figure "
+			+ "from group exemplars? This option is only considered if chosen metric can be mapped to a LUT.")
+	private boolean displayInMultiViewer;
+
+	@Parameter(required = false, label = "3D Scene", description = "Display groups on a dedicated instance of Reconstruction Viewer?")
+	private boolean displayInRecViewer;
 
 	@Parameter(type = ItemIO.OUTPUT, label = "Group Statistics")
 	private String report;
 
-	private int inputGroupsCounter;
+	@Parameter(required = false)
+	private Viewer3D recViewer;
 
+	private int inputGroupsCounter;
+	private boolean noMetrics;
+
+
+	@SuppressWarnings("unused")
+	private void init() {
+		if (recViewer != null) {
+			// then this is Reconstruction Viewer's Load & Compare Command
+			displayInRecViewer = true;
+			resolveInput("displayInRecViewer");
+			getInfo().setLabel("Load & Compare Groups of Cells");
+			List<String> mChoices = MultiTreeStatistics.getMetrics();
+			mChoices.add(0, "None. Skip measurements");
+			final MutableModuleItem<String> mInput = getInfo().getMutableInput("metric", String.class);
+			mInput.setChoices(mChoices);
+		}
+	}
+
+	@SuppressWarnings("unused")
+	private void metricChanged() {
+		noMetrics = metric.toLowerCase().contains("none");
+		if (noMetrics) {
+			displayInMultiViewer = false;
+			displayPlots = false;
+		} else {
+			displayInMultiViewer = displayInMultiViewer && isMetricMappable(metric);
+		}
+	}
 
 	@Override
 	public void run() {
@@ -127,20 +177,26 @@ public class GroupAnalyzerCmd extends ContextCommand {
 		addGroup(stats, g2File, "Group 2");
 		addGroup(stats, g3File, "Group 3");
 		addGroup(stats, g4File, "Group 4");
+		addGroup(stats, g5File, "Group 5");
+		addGroup(stats, g6File, "Group 6");
 
 		if (stats.getGroups().size() == 0) {
 			cancel("No matching reconstruction(s) could be retrieved from the specified path(s).");
 			return;
 		}
-		final Frame histFrame = stats.getHistogram(metric);
-		final Frame boxFrame = stats.getBoxPlot(metric);
-		{
-			final StringBuilder reportBuilder = new StringBuilder("    ").append(metric).append(" Statistics:\\r\\n");
+		if (noMetrics) {
+			super.resolveOutput("report");
+
+		} else {
+			final SNTChart histFrame = stats.getHistogram(metric);
+			final SNTChart boxFrame = stats.getBoxPlot(metric);
+
+			final StringBuilder reportBuilder = new StringBuilder("    ").append(metric).append(" Statistics:\r\n");
 			final SummaryStatistics uberStats = new SummaryStatistics();
 			stats.getGroups().forEach(group -> {
 				final DescriptiveStatistics dStats = stats.getGroupStats(group).getDescriptiveStats(metric);
 				reportBuilder.append(group).append(" Statistics:");
-				reportBuilder.append("\r\nPath:\t").append(getDirPath(group));
+				reportBuilder.append("\r\nFolder:\t").append(getDirPath(group));
 				reportBuilder.append("\r\nN:\t").append(dStats.getN());
 				reportBuilder.append("\r\nMean:\t").append(dStats.getMean());
 				reportBuilder.append("\r\nStDev:\t").append(dStats.getStandardDeviation());
@@ -154,26 +210,55 @@ public class GroupAnalyzerCmd extends ContextCommand {
 				uberStats.addValue(dStats.getPercentile(10));
 				uberStats.addValue(dStats.getPercentile(90));
 			});
-			if (isMetricMappable(metric)) {
+			report = reportBuilder.toString();
+			if (displayPlots) {
+				histFrame.show();
+				boxFrame.setLocationRelativeTo(histFrame);
+				boxFrame.setVisible(true);
+			}
+			final boolean mappableMetric = isMetricMappable(metric);
+			if (displayInMultiViewer && mappableMetric) {
 				stats.getGroups().forEach(group -> displayGroup(stats, group, uberStats.getMin(), uberStats.getMax()));
 			}
-			report = reportBuilder.toString();
+			final StringBuilder exitMsg = new StringBuilder("<HTML>");
+			if (inputGroupsCounter != stats.getGroups().size()) {
+				exitMsg.append("<p>Some directories (").append(inputGroupsCounter - stats.getGroups().size());
+				exitMsg.append(") did not contain matching data and were skipped.</p>");
+			}
+			if (displayInMultiViewer) {
+				exitMsg.append((mappableMetric) ? "<p>NB: Only the first 10 cells of each group were mapped.</p>"
+						: "<p>NB: Metric is not mappable. Choice ignored.</p>");
+			}
+			if (exitMsg.length() > 10) {
+				uiService.showDialog(exitMsg.toString(), "Warning");
+			}
 		}
-		SwingUtilities.invokeLater(() -> {
-			histFrame.setVisible(true);
-			boxFrame.setVisible(true);
-		});
-		final StringBuilder exitMsg = new StringBuilder("<HTML>");
-		if (inputGroupsCounter != stats.getGroups().size()) {
-			exitMsg.append("<p>Some directories (").append(inputGroupsCounter - stats.getGroups().size());
-			exitMsg.append(") did not contain matching data and were skipped.</p>");
+		if (displayInRecViewer) {
+			boolean recViewerIsNotVisible = false;
+			if (recViewer == null) {
+				recViewer = sntService.newRecViewer(true);
+				recViewerIsNotVisible = true;
+			}
+			recViewer.setSceneUpdatesEnabled(false);
+			final ColorRGB[] colors = SNTColor.getDistinctColors(stats.getGroups().size());
+			final Iterator<String> groupsIterator = stats.getGroups().iterator();
+			int index = 0;
+			while (groupsIterator.hasNext()) {
+				final String groupLabel = groupsIterator.next();
+				for (final Tree tree : stats.getGroupStats(groupLabel).getGroup()) {
+					tree.setLabel((tree.getLabel() == null) ? "" : tree.getLabel() + " (" + groupLabel + ")");
+					tree.setColor(colors[index]);
+					recViewer.addTree(tree);
+				}
+				index++;
+			}
+			recViewer.setSceneUpdatesEnabled(true);
+			recViewer.updateView();
+			if (recViewerIsNotVisible) recViewer.show();
 		}
-		if (isMetricMappable(metric)) {
-			exitMsg.append("<p>NB: Only the first 10 cells of each group were mapped.</p>");
-		}
-		if (exitMsg.length() > 10) {
-			uiService.showDialog(exitMsg.toString(), "Warning");
-		}
+
+		resetUI();
+
 	}
 
 	private String getDirPath(final String groupLabel) {

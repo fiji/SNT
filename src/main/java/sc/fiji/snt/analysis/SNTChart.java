@@ -27,6 +27,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 
+import javax.swing.SwingUtilities;
+
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -175,11 +177,11 @@ public class SNTChart extends ChartFrame {
 		getPlot().addAnnotation(annot);
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
+	@SuppressWarnings("deprecation")
 	public void show() {
 		AWTWindows.centerWindow(this);
-		super.show();
+		SwingUtilities.invokeLater(() -> super.show());
 	}
 
 	/* IDE debug method */

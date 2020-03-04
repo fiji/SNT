@@ -256,7 +256,8 @@ public class TreeStatistics extends TreeAnalyzer {
 				"Brain areas (N=" + nAreas + ", "+ seriesLabel +")", // domain axis title
 				"Cable length", // range axis title
 				dataset, seriesLabel);
-		final SNTChart frame = new SNTChart("Brain Areas", chart, new Dimension(400, 600));
+		final String tLabel = (tree.getLabel() == null) ? "" : tree.getLabel();
+		final SNTChart frame = new SNTChart(tLabel + " Annotated Length", chart, new Dimension(400, 600));
 		return frame;
 	}
 

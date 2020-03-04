@@ -87,6 +87,7 @@ public class NodeStatistics {
 	private Tree branchAssignmentTree;
 	private String currentMetric;
 	private DescriptiveStatistics currentStats;
+	private String label;
 
 
 	/**
@@ -117,6 +118,20 @@ public class NodeStatistics {
 	 */
 	public static List<String> getMetrics() {
 		return Arrays.stream(ALL_FLAGS).collect(Collectors.toList());
+	}
+
+	/**
+	 * Sets a descriptive label to this statistic analysis to be used in histograms,
+	 * etc.
+	 *
+	 * @param label the descriptive label
+	 */
+	public void setLabel(String label) {
+		this.label = label;
+	}
+
+	private String getLabel() {
+		return (label == null) ? "" : label;
 	}
 
 	/**
@@ -219,7 +234,7 @@ public class NodeStatistics {
 				"Brain areas (N=" + nAreas + ", "+ seriesLabel +")", // domain axis title
 				"Frequency", // range axis title
 				dataset, seriesLabel);
-		final SNTChart frame = new SNTChart("Brain Areas", chart, new Dimension(400, 600));
+		final SNTChart frame = new SNTChart(getLabel() + " Annotated Node Distribution", chart, new Dimension(400, 600));
 		return frame;
 	}
 

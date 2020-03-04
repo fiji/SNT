@@ -31,6 +31,9 @@ import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.DialogPrompt.MessageType;
+import org.scijava.ui.DialogPrompt.Result;
+import org.scijava.ui.UIService;
 import org.scijava.widget.Button;
 import org.scijava.widget.NumberWidget;
 
@@ -53,6 +56,8 @@ public class RecViewerPrefsCmd extends ContextCommand {
 	public static String DEF_CONTROLS_SENSITIVITY = "High";
 	public static String DEF_SCRIPT_EXTENSION = ".groovy";
 
+	@Parameter
+	private UIService uiService;
 
 	@Parameter(
 		label = "<HTML><b>I. Snapshot Recordings:",
@@ -109,8 +114,12 @@ public class RecViewerPrefsCmd extends ContextCommand {
 			visibility = ItemVisibility.MESSAGE)
 	private String msg3;
 
-	@Parameter(label = "Defaults", callback = "reset")
+	@Parameter(label = "Defaults", callback = "defaults")
 	private Button defaults;
+
+	@Parameter(label = "   Reset  ", callback = "reset")
+	private Button reset;
+
 
 	private void init() {
 		if (snapshotDir == null) snapshotDir = new File(DEF_SNAPSHOT_DIR);
@@ -122,8 +131,7 @@ public class RecViewerPrefsCmd extends ContextCommand {
 		if (scriptExtension == null) scriptExtension = DEF_SCRIPT_EXTENSION;
 	}
 
-	@SuppressWarnings("unused")
-	private void reset() {
+	private void defaults() {
 		snapshotDir = null;
 		rotationAngle = 0;
 		rotationDuration = 0;
@@ -131,6 +139,21 @@ public class RecViewerPrefsCmd extends ContextCommand {
 		sensitivity = null;
 		scriptExtension = null;
 		init();
+	}
+
+	@SuppressWarnings("unused")
+	private void reset() {
+		final PrefsCmd pCmd = new PrefsCmd();
+		pCmd.setContext(getContext());
+		final Result result = uiService.showDialog(
+				"Reset preferences to defaults?\nThis will also reset all of SNT preferences!",
+				MessageType.QUESTION_MESSAGE);
+			if (Result.YES_OPTION == result || Result.OK_OPTION == result) {
+				pCmd.clearAll();
+				defaults();
+				uiService.showDialog("Preferences Reset.\nYou may need to restart"
+						+ " for changes to take effect.", "Restart May Be Required");
+			}
 	}
 
 	private void snapshotDirChanged() {

@@ -38,8 +38,12 @@ import sc.fiji.snt.SNT;
 import sc.fiji.snt.SNTPrefs;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.gui.GuiUtils;
+import sc.fiji.snt.plugin.AnalyzerCmd;
+import sc.fiji.snt.plugin.BrainAnnotationCmd;
 import sc.fiji.snt.plugin.CallLegacyShollPlugin;
+import sc.fiji.snt.plugin.GroupAnalyzerCmd;
 import sc.fiji.snt.plugin.LocalThicknessCmd;
+import sc.fiji.snt.plugin.PathOrderAnalysisCmd;
 import sc.fiji.snt.plugin.PlotterCmd;
 import sc.fiji.snt.plugin.ROIExporterCmd;
 import sc.fiji.snt.plugin.ShollTracingsCmd;
@@ -115,7 +119,7 @@ public class PrefsCmd extends ContextCommand {
 	}
 
 	/** Clears all of SNT preferences. */
-	protected void clearAll() {
+	public void clearAll() {
 		// gui.cmds
 		prefService.clear(ChooseDatasetCmd.class);
 		prefService.clear(ColorMapReconstructionCmd.class);
@@ -145,8 +149,12 @@ public class PrefsCmd extends ContextCommand {
 		prefService.clear(TranslateReconstructionsCmd.class);
 
 		// tracing.plugin
+		prefService.clear(AnalyzerCmd.class);
+		prefService.clear(BrainAnnotationCmd.class);
 		prefService.clear(CallLegacyShollPlugin.class);
+		prefService.clear(GroupAnalyzerCmd.class);
 		prefService.clear(LocalThicknessCmd.class);
+		prefService.clear(PathOrderAnalysisCmd.class);
 		prefService.clear(PlotterCmd.class);
 		prefService.clear(ROIExporterCmd.class);
 		prefService.clear(ShollTracingsCmd.class);

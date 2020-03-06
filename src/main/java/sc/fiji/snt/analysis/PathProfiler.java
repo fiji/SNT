@@ -176,15 +176,24 @@ public class PathProfiler extends ContextCommand {
 	 */
 	public void assignValues(final Path p) {
 		final double[] values = new double[p.size()];
-		final int c = p.getChannel();
-		final int f = p.getFrame();
-		for (int i = 0; i < p.size(); i++) {
-			try {
-				final int zPos = imp.getStackIndex(c, p.getZUnscaled(i) + 1, f);
-				values[i] = stack.getVoxel(p.getXUnscaled(i), p.getYUnscaled(i), zPos);
+		if (imp.getNDimensions() == 2) {
+			for (int i = 0; i < p.size(); i++) {
+				try {
+					values[i] = imp.getPixel(p.getXUnscaled(i), p.getYUnscaled(i))[0];
+				} catch (final IndexOutOfBoundsException exc) {
+					values[i] = Float.NaN;
+				}
 			}
-			catch (final IndexOutOfBoundsException exc) {
-				values[i] = Float.NaN;
+		} else {
+			final int c = p.getChannel();
+			final int f = p.getFrame();
+			for (int i = 0; i < p.size(); i++) {
+				try {
+					final int zPos = imp.getStackIndex(c, p.getZUnscaled(i) + 1, f);
+					values[i] = stack.getVoxel(p.getXUnscaled(i), p.getYUnscaled(i), zPos);
+				} catch (final IndexOutOfBoundsException exc) {
+					values[i] = Float.NaN;
+				}
 			}
 		}
 		p.setNodeValues(values);
@@ -219,9 +228,9 @@ public class PathProfiler extends ContextCommand {
 	}
 
 	/**
-	 * Gets the profile for the specified path as a map of lists, with distances
-	 * stored under {@link #X_VALUES} ({@value #X_VALUES}) and intensities under
-	 * {@link #Y_VALUES} ({@value #Y_VALUES}).
+	 * Gets the profile for the specified path as a map of lists, with distances (or
+	 * indices) stored under {@link #X_VALUES} ({@value #X_VALUES}) and intensities
+	 * under {@link #Y_VALUES} ({@value #Y_VALUES}).
 	 *
 	 * @param p the path to be profiled
 	 * @return the profile
@@ -230,19 +239,31 @@ public class PathProfiler extends ContextCommand {
 		if (!p.hasNodeValues()) assignValues(p);
 		final List<Double> xList = new ArrayList<>();
 		final List<Double> yList = new ArrayList<>();
-		final PointInImage previous = p.getNode(0);
-		double dx = 0;
-		for (int i = 0; i < p.size(); i++) {
-			if (nodeIndices) {
-				xList.add(dx++);
+
+		if (nodeIndices) {
+			for (int i = 0; i < p.size(); i++) {
+				xList.add((double)i); 
+				yList.add(p.getNodeValue(i));
 			}
-			else {
+		} else {
+
+			// Add data for first node
+			xList.add(0d);
+			yList.add(p.getNodeValue(0));
+
+			// Add data for remaining nodes
+			PointInImage previousNode = p.getNode(0);
+			double cumulativePathLength = 0d;
+			for (int i = 1; i < p.size(); i++) {
 				final PointInImage node = p.getNode(i);
-				dx += node.distanceTo(previous);
-				xList.add(dx);
+				cumulativePathLength += node.distanceTo(previousNode);
+				xList.add(cumulativePathLength);
+				previousNode = node;
+				yList.add(p.getNodeValue(i));
 			}
-			yList.add(p.getNodeValue(i));
 		}
+
+		assert xList.size() == yList.size();
 		final Map<String, List<Double>> map = new HashMap<>();
 		map.put(X_VALUES, xList);
 		map.put(Y_VALUES, yList);

@@ -105,7 +105,7 @@ public class DistributionBPCmd extends CommonDynamicCmd {
 		}
 		try {
 			final TreeStatistics treeStats = TreeStatistics.fromCollection(trees, measurementChoice);
-			treeStats.getHistogram(measurementChoice).setVisible(true);
+			treeStats.getHistogram(measurementChoice).show();
 			resetUI();
 		} catch (final IllegalArgumentException ex) {
 			String error = "It was not possible to retrieve valid histogram data.\n";

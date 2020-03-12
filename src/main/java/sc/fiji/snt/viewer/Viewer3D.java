@@ -3030,7 +3030,7 @@ public class Viewer3D {
 			});
 			measureMenu.add(mi);
 			addSeparator(measureMenu, "Single-Cell Analysis:");
-			mi = new JMenuItem("Brain Area Analysis", IconFactory.getMenuIcon(GLYPH.BRAIN));
+			mi = new JMenuItem("Brain Area Analysis...", IconFactory.getMenuIcon(GLYPH.BRAIN));
 			mi.addActionListener(e -> {
 				final Tree tree = getSingleSelectionTree();
 				if (tree == null) return;

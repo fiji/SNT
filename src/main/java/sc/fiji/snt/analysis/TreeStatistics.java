@@ -181,9 +181,9 @@ public class TreeStatistics extends TreeAnalyzer {
 	 * @return the DescriptiveStatistics object.
 	 */
 	public DescriptiveStatistics getDescriptiveStats(final String metric) {
-		final DescriptiveStatistics dStats = new DescriptiveStatistics();
 		final String normMeasurement = getNormalizedMeasurement(metric);
 		if (!lastDstatsCanBeRecycled(normMeasurement)) {
+			final DescriptiveStatistics dStats = new DescriptiveStatistics();
 			assembleStats(new StatisticsInstance(dStats), normMeasurement);
 			lastDstats = new LastDstats(normMeasurement, dStats);
 		}

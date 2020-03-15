@@ -27,6 +27,7 @@ public class PersistenceAnalyzer {
 
 	private final Tree tree;
 	private final HashMap<SWCPoint, ArrayList<Double>> persistenceMap = new HashMap<SWCPoint, ArrayList<Double>>();
+	private ArrayList<ArrayList<Double>> persistenceDiagram;
 	private DirectedWeightedGraph graph;
 
 	public PersistenceAnalyzer(final Tree tree) {
@@ -108,6 +109,9 @@ public class PersistenceAnalyzer {
 	public ArrayList<ArrayList<Double>> getPersistenceDiagram() {
 		if (persistenceMap == null || persistenceMap.isEmpty())
 			compute();
+		if (persistenceDiagram != null) {
+			return persistenceDiagram;
+		}
 		ArrayList<ArrayList<Double>> diagram = new ArrayList<ArrayList<Double>>();
 		for (ArrayList<Double> point : persistenceMap.values()) {
 			diagram.add(point);
@@ -118,7 +122,13 @@ public class PersistenceAnalyzer {
 				return o1.get(0).compareTo(o2.get(0));
 			}
 		});
+		persistenceDiagram = diagram;
 		return diagram;
+	}
+	
+	public ArrayList<Double> getTreeVector(int vectorLength, double sigma) {
+		ArrayList<Double> vector = vectorize(getPersistenceDiagram(), vectorLength, sigma);
+		return vector;
 	}
 
 	private double distanceToRoot(final DirectedWeightedGraph graph, SWCPoint node) {
@@ -127,7 +137,6 @@ public class PersistenceAnalyzer {
 			return 0.0;
 		while (node.parent != -1) {
 			SWCPoint p = Graphs.predecessorListOf(graph, node).get(0);
-			// only one incoming edge, unless something has gone horribly wrong...
 			SWCWeightedEdge incomingEdge = graph.getEdge(p, node);
 			double weight = incomingEdge.getWeight();
 			// un-comment the following to test against Allen biccn tools implementation test cases
@@ -148,9 +157,44 @@ public class PersistenceAnalyzer {
 		}
 		return node;
 	}
+	
+	private double[] getRange(ArrayList<ArrayList<Double>> diagram) {
+		double[] range = new double[2];
+		double min_x = Double.MAX_VALUE;
+		double max_x = -Double.MAX_VALUE;
+		for (ArrayList<Double> point : diagram) {
+			if (point.get(0) < min_x) min_x = point.get(0);
+			if (point.get(0) > max_x) max_x = point.get(0);
+		}
+		range[0]= min_x;
+		range[1]= max_x;
+		return range;
+	}
+
+	private double densityFunc(double mean, double sigma, ArrayList<ArrayList<Double>> diagram) {
+		double sum = 0.0;
+		for (ArrayList<Double> point : diagram) {
+			double result = Math.abs(point.get(1) - point.get(0)) * gaussian(mean, sigma, point.get(0));
+			sum += result;
+		}
+		return sum;
+	}
 
 	private double gaussian(double mean, double sigma, double sample) {
 		return (double) 1.0 / Math.exp(((mean - sample) * (mean - sample)) / (2 * (sigma * sigma)));
+	}
+	
+	private ArrayList<Double> vectorize(ArrayList<ArrayList<Double>> diagram, int steps, double sigma) {
+		ArrayList<Double> vector = new ArrayList<Double>();
+		double[] r = getRange(diagram);
+		double interval = Math.abs(r[1] - r[0]) / (steps-1);
+		double pos = r[0];
+		for ( int i = 0 ; i < steps; i++ ) {
+			double component = densityFunc(pos, sigma, diagram);
+			vector.add(component);
+			pos += interval;
+		}
+		return vector;
 	}
 
 }

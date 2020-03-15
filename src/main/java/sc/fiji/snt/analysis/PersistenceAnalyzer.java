@@ -69,6 +69,13 @@ public class PersistenceAnalyzer {
 					point.add(0.0); // component born at root
 					point.add(node.v); // died at end point farthest from root
 					persistenceMap.put(node, point);
+					// Now add the same point in the opposite direction
+					// in order to make the ranges of each dimension symmetric.
+					// This is done in the Allen biccn tools implementation.
+					ArrayList<Double> extendedPoint = new ArrayList<Double>();
+					extendedPoint.add(node.v);
+					extendedPoint.add(0.0);
+					persistenceMap.put(p, extendedPoint);
 					toRemove.add(node);
 					closedSet.add(node);
 					continue;
@@ -125,7 +132,7 @@ public class PersistenceAnalyzer {
 			double weight = incomingEdge.getWeight();
 			// un-comment the following to test against Allen biccn tools implementation test cases
 			// They use Euclidean distance between simplified graph nodes instead of geodesic
-			// weight = p.distanceTo(node)
+			// weight = p.distanceTo(node);
 			distance += weight;
 			node = p;
 		}

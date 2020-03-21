@@ -1,6 +1,7 @@
 package sc.fiji.snt.analysis;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ import sc.fiji.snt.util.SWCPoint;
 public class PersistenceAnalyzer {
 
 	private final Tree tree;
-	private final HashMap<SWCPoint, ArrayList<Double>> persistenceMap = new HashMap<SWCPoint, ArrayList<Double>>();
+	private final HashMap<SWCPoint, ArrayList<SWCPoint>> persistenceMap = new HashMap<SWCPoint, ArrayList<SWCPoint>>();
 	private ArrayList<ArrayList<Double>> persistenceDiagram;
 	private DirectedWeightedGraph graph;
 
@@ -66,17 +67,17 @@ public class PersistenceAnalyzer {
 				if (p.parent == -1) {
 					// We've arrived at the last open point,
 					// which is the point with maximum f(x).
-					ArrayList<Double> point = new ArrayList<Double>();
-					point.add(0.0); // component born at root
-					point.add(node.v); // died at end point farthest from root
+					ArrayList<SWCPoint> point = new ArrayList<SWCPoint>();
+					point.add(root); // component born at root
+					point.add(node); // died at end point farthest from root
 					persistenceMap.put(node, point);
 					// Now add the same point in the opposite direction
 					// in order to make the ranges of each dimension symmetric.
 					// This is done in the Allen biccn tools implementation.
-					ArrayList<Double> extendedPoint = new ArrayList<Double>();
-					extendedPoint.add(node.v);
-					extendedPoint.add(0.0);
-					persistenceMap.put(p, extendedPoint);
+//					ArrayList<SWCPoint> extendedPoint = new ArrayList<SWCPoint>();
+//					extendedPoint.add(node);
+//					extendedPoint.add(root);
+//					persistenceMap.put(p, extendedPoint);
 					toRemove.add(node);
 					closedSet.add(node);
 					continue;
@@ -94,9 +95,9 @@ public class PersistenceAnalyzer {
 					for (SWCPoint dead : group) {
 						toRemove.add(dead);
 						closedSet.add(dead);
-						ArrayList<Double> point = new ArrayList<Double>();
-						point.add(bp.v); // component born at branch point
-						point.add(dead.v); // died at end point
+						ArrayList<SWCPoint> point = new ArrayList<SWCPoint>();
+						point.add(bp); // component born at branch point
+						point.add(dead); // died at end point
 						persistenceMap.put(dead, point);
 					}
 					closedSet.add(bp);
@@ -113,8 +114,9 @@ public class PersistenceAnalyzer {
 			return persistenceDiagram;
 		}
 		ArrayList<ArrayList<Double>> diagram = new ArrayList<ArrayList<Double>>();
-		for (ArrayList<Double> point : persistenceMap.values()) {
-			diagram.add(point);
+		for (ArrayList<SWCPoint> point : persistenceMap.values()) {
+			diagram.add(new ArrayList<Double>(
+				      Arrays.asList(point.get(0).v, point.get(1).v)));
 		}
 		Collections.sort(diagram, new Comparator<ArrayList<Double>>() {
 			@Override
@@ -126,7 +128,20 @@ public class PersistenceAnalyzer {
 		return diagram;
 	}
 	
-	public ArrayList<Double> getTreeVector(int vectorLength, double sigma) {
+	public ArrayList<ArrayList<SWCPoint>> getPersistenceDiagramNodes() {
+		if (persistenceMap == null || persistenceMap.isEmpty())
+			compute();
+		ArrayList<ArrayList<SWCPoint>> intervalNodes = new ArrayList<ArrayList<SWCPoint>>(persistenceMap.values());
+		Collections.sort(intervalNodes, new Comparator<ArrayList<SWCPoint>>() {
+			@Override
+			public int compare(ArrayList<SWCPoint> o1, ArrayList<SWCPoint> o2) {
+				return Double.compare(o1.get(0).v, o2.get(0).v);
+			}
+		});
+		return intervalNodes;
+	}
+	
+	public ArrayList<Double> getPersistenceVector(int vectorLength, double sigma) {
 		ArrayList<Double> vector = vectorize(getPersistenceDiagram(), vectorLength, sigma);
 		return vector;
 	}

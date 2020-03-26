@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -37,6 +38,7 @@ import net.imagej.ImageJ;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.annotation.BrainAnnotation;
 
 /**
  * Computes summary and descriptive statistics from univariate properties of
@@ -337,9 +339,15 @@ public class MultiTreeStatistics extends TreeStatistics {
 		} catch (final UnknownMetricException ignored) {
 			SNTUtils.log("Unrecognized MultiTreeStatistics parameter... Defaulting to TreeStatistics analysis");
 			final String normMeasurement = TreeStatistics.getNormalizedMeasurement(measurement); // Will throw yet another UnknownMetricException
+			assignGroupToSuperTree();
+			super.assembleStats(stat, normMeasurement);
+		}
+	}
+
+	private void assignGroupToSuperTree() {
+		if (super.tree.isEmpty()) {
 			for (final Tree tree : groupOfTrees)
 				super.tree.list().addAll(tree.list());
-			super.assembleStats(stat, normMeasurement);
 		}
 	}
 
@@ -352,6 +360,30 @@ public class MultiTreeStatistics extends TreeStatistics {
 	public void resetRestrictions() {
 		throw new IllegalArgumentException("Operation not supported. Only filtering in constructor is supported");
 	}
+
+	@Override
+	public Set<BrainAnnotation> getAnnotations() {
+		assignGroupToSuperTree();
+		return super.getAnnotations();
+	}
+
+	@Override
+	public Set<BrainAnnotation> getAnnotations(final int level) {
+		assignGroupToSuperTree();
+		return super.getAnnotations(level);
+	}
+
+//	@Override
+//	public double getCableLength(final BrainAnnotation compartment) {
+//		assignGroupToSuperTree();
+//		return super.getCableLength(compartment);
+//	}
+//
+//	@Override
+//	public double getCableLength(final BrainAnnotation compartment, final boolean includeChildren) {
+//		assignGroupToSuperTree();
+//		return super.getCableLength(compartment, includeChildren);
+//	}
 
 	public SNTChart getHistogram(final String metric) {
 		final String normMeasurement = getNormalizedMeasurement(metric, true);
@@ -376,6 +408,6 @@ public class MultiTreeStatistics extends TreeStatistics {
 		SNTUtils.setDebugMode(true);
 		final MultiTreeStatistics treeStats = new MultiTreeStatistics(sntService.demoTrees());
 		treeStats.setLabel("Demo Dendrites");
-		treeStats.getHistogram("junctions").setVisible(true);
+		treeStats.getHistogram("junctions").show();
 	}
 }

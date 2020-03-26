@@ -32,17 +32,19 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
-
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.entity.EntityCollection;
+import org.jfree.chart.labels.BoxAndWhiskerToolTipGenerator;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.Outlier;
@@ -58,10 +60,10 @@ import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.statistics.HistogramType;
 import org.scijava.util.ColorRGB;
 
-import net.imagej.ImageJ;
-import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.TreeStatistics.HDPlus;
+import sc.fiji.snt.annotation.AllenUtils;
+import sc.fiji.snt.annotation.BrainAnnotation;
 import sc.fiji.snt.util.SNTColor;
 
 /**
@@ -73,6 +75,10 @@ import sc.fiji.snt.util.SNTColor;
  * @author Tiago Ferreira
  */
 public class GroupedTreeStatistics {
+
+	private static final String LENGTH = MultiTreeStatistics.LENGTH;
+	private static final String N_TIPS = MultiTreeStatistics.N_TIPS;
+	private static final String N_BRANCH_POINTS = MultiTreeStatistics.N_BRANCH_POINTS;
 
 	private final LinkedHashMap<String, MultiTreeStatistics> groups;
 
@@ -206,7 +212,13 @@ public class GroupedTreeStatistics {
 			dataset.add(hdp.values, normMeasurement, label);
 		});
 		final JFreeChart chart = ChartFactory.createBoxAndWhiskerChart(null, null, normMeasurement, dataset, false);
-		final CategoryPlot plot = (CategoryPlot) chart.getPlot();
+		assignRenderer((CategoryPlot) chart.getPlot(), true);
+		final int height = 400;
+		final double width = (groups.size() < 4) ? height / 1.5 : height * 1.5;
+		return new SNTChart("Box-plot", chart,  new Dimension((int) width, height));
+	}
+
+	private CustomBoxAndWhiskerRenderer assignRenderer(final CategoryPlot plot, final boolean monochrome) {
 		plot.setBackgroundPaint(null);
 		plot.setRangePannable(true);
 		plot.setDomainGridlinesVisible(false);
@@ -218,18 +230,104 @@ public class GroupedTreeStatistics {
 		renderer.setDrawOutliers(true);
 		renderer.setItemMargin(0);
 		renderer.setDefaultPaint(Color.BLACK);
-		renderer.setSeriesOutlinePaint(0, Color.BLACK);
-		renderer.setSeriesItemLabelPaint(0, Color.BLACK);
-		renderer.setSeriesPaint(0, Color.GRAY);
+		if (monochrome) {
+			for (int i = 0; i < groups.size(); i++) {
+				renderer.setSeriesPaint(i, Color.GRAY);
+				renderer.setSeriesOutlinePaint(i, Color.BLACK);
+				renderer.setSeriesItemLabelPaint(i, Color.BLACK);
+			}
+		} else {
+			final ColorRGB[] colors = SNTColor.getDistinctColors(groups.size());
+			for (int i = 0; i < groups.size(); i++) {
+				final Color color = new Color(colors[i].getRed(), colors[i].getGreen(), colors[i].getBlue());
+				renderer.setSeriesPaint(i, color);
+				renderer.setSeriesOutlinePaint(i, color);
+				renderer.setSeriesItemLabelPaint(i, color);
+			}
+		}
+		String tooltipformat = "<html><body>Max: {5}<br>Q3: {7}<br>Median: {3}<br>Q1: {6}<br>Min: {4}<br>Mean: {2}</body></html>";
+		renderer.setDefaultToolTipGenerator(new BoxAndWhiskerToolTipGenerator(tooltipformat, NumberFormat.getNumberInstance()));
 		renderer.setUseOutlinePaintForWhiskers(true);
 		renderer.setMaximumBarWidth(0.10);
 		renderer.setMedianVisible(true);
 		renderer.setMeanVisible(true);
 		renderer.setFillBox(false);
+		return renderer;
+	}
 
+	/**
+	 * Gets the box plot.
+	 *
+	 * @param feature the feature
+	 * @param annotations the annotations
+	 * @return the box plot
+	 */
+	public SNTChart getBoxPlot(final String feature, final Collection<BrainAnnotation> annotations) {
+		String normFeature = getBoxPlotFeature(feature);
+		if (normFeature.equalsIgnoreCase("unknown")) {
+			throw new IllegalArgumentException("Unrecognizable measurement \"" + feature);
+		}
+
+		class AnnotatedValues {
+
+			final HashMap<String, ArrayList<Double>> map  = new HashMap<>();
+
+			AnnotatedValues(final Collection<BrainAnnotation> annotations, final Collection<Tree> trees) {
+				for (final BrainAnnotation annotation : annotations) {
+					if (annotation == null) continue;
+					final ArrayList<Double> values = new ArrayList<>();
+					map.put(annotation.acronym(), values);
+					for (final Tree tree: trees) {
+						if (tree == null) continue;
+						switch (normFeature) {
+						case LENGTH:
+							values.add(new TreeAnalyzer(tree).getCableLength(annotation));
+							break;
+						case N_BRANCH_POINTS:
+							values.add((double) new TreeAnalyzer(tree).getBranchPoints(annotation).size());
+							break;
+						case N_TIPS:
+							values.add((double) new TreeAnalyzer(tree).getTips(annotation).size());
+							break;
+						default:
+							throw new IllegalArgumentException("Unrecognized feature");
+						}
+					}
+				}
+			}
+		}
+
+		final HashMap<String, AnnotatedValues> mappedValues = new HashMap<>();
+		final DefaultBoxAndWhiskerCategoryDataset dataset = new DefaultBoxAndWhiskerCategoryDataset();
+		groups.forEach((groupLabel, groupStats) -> {
+			mappedValues.put(groupLabel, new AnnotatedValues(annotations, groupStats.getGroup()));
+		});
+		mappedValues.forEach( (groupLabel, annotatedLenghts) -> {
+			annotatedLenghts.map.forEach( (annotationLabel, values) -> {
+				dataset.add(values, groupLabel, annotationLabel);
+			});
+		});
+
+		final JFreeChart chart = ChartFactory.createBoxAndWhiskerChart(null, null, normFeature, dataset, true);
+		assignRenderer((CategoryPlot) chart.getPlot(), false);
 		final int height = 400;
 		final double width = (groups.size() < 4) ? height / 1.5 : height * 1.5;
 		return new SNTChart("Box-plot", chart,  new Dimension((int) width, height));
+	}
+
+	private String getBoxPlotFeature(final String guess) {
+		if (guess == null || guess.isEmpty()) return LENGTH;
+		final String normGuess = guess.toLowerCase();
+		if (normGuess.indexOf("len") != -1 || normGuess.indexOf("cable") != -1) {
+			return LENGTH;
+		}
+		if (normGuess.indexOf("bp") != -1 || normGuess.indexOf("branch") != -1 || normGuess.indexOf("junction") != -1) {
+			return N_BRANCH_POINTS;
+		}
+		if (normGuess.indexOf("tip") != -1 || normGuess.indexOf("end") != -1) {
+			return N_TIPS;
+		}
+		return "unknown";
 	}
 
 	/**

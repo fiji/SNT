@@ -70,6 +70,9 @@ public class SNTChart extends ChartFrame {
 		chart.setBackgroundPaint(null);
 		chart.setAntiAlias(true);
 		chart.setTextAntiAlias(true);
+		if (chart.getLegend() != null) {
+			chart.getLegend().setBackgroundPaint(chart.getBackgroundPaint());
+		}
 		final ChartPanel cp = new ChartPanel(chart);
 		// Tweak: Ensure chart is always drawn and not scaled to avoid rendering
 		// artifacts

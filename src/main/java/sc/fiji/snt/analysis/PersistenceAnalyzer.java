@@ -7,10 +7,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 import org.jgrapht.Graphs;
 
+import net.imagej.ImageJ;
+import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.graph.DirectedWeightedGraph;
@@ -27,16 +30,26 @@ import sc.fiji.snt.util.SWCPoint;
 public class PersistenceAnalyzer {
 
 	private final Tree tree;
-	private final HashMap<SWCPoint, ArrayList<SWCPoint>> persistenceMap = new HashMap<SWCPoint, ArrayList<SWCPoint>>();
-	private ArrayList<ArrayList<Double>> persistenceDiagram;
+
+	private final HashMap<String, ArrayList<ArrayList<Double>>> persistenceDiagramMap = new HashMap<String, ArrayList<ArrayList<Double>>>();
+	private final HashMap<String, ArrayList<ArrayList<SWCPoint>>> persistenceNodesMap = new HashMap<String, ArrayList<ArrayList<SWCPoint>>>();
+
 	private DirectedWeightedGraph graph;
 
 	public PersistenceAnalyzer(final Tree tree) {
 		this.tree = tree;
 	}
 
-	private void compute() {
-		// Generate persistence points via sub-level set filtration
+	/**
+	 * Generate Persistence Diagram using the algorithm described by Kanari, L.,
+	 * Dłotko, P., Scolamiero, M. et al. A Topological Representation of Branching
+	 * Neuronal Morphologies. Neuroinform 16, 3–13 (2018).
+	 */
+	private void compute(String func) {
+
+		ArrayList<ArrayList<SWCPoint>> persistenceNodes = new ArrayList<ArrayList<SWCPoint>>();
+		ArrayList<ArrayList<Double>> persistenceDiagram = new ArrayList<ArrayList<Double>>();
+
 		SNTUtils.log("Retrieving graph...");
 		// Use simplified graph since geodesic distances are preserved as edge weights
 		// This provides a significant performance boost over the full Graph.
@@ -45,108 +58,84 @@ public class PersistenceAnalyzer {
 			return;
 
 		Set<SWCPoint> openSet = new HashSet<SWCPoint>();
-		Set<SWCPoint> closedSet = new HashSet<SWCPoint>();
-
 		List<SWCPoint> tips = graph.getTips();
-		List<SWCPoint> branchPoints = graph.getBPs();
-		SWCPoint root = graph.getRoot();
-		root.v = 0.0;
+		SWCPoint minTip = tips.get(0);
 		for (SWCPoint t : tips) {
-			t.v = distanceToRoot(graph, t);
-			// only keep track of open end points
 			openSet.add(t);
-		}
-		for (SWCPoint bp : branchPoints) {
-			bp.v = distanceToRoot(graph, bp);
-		}
-		while (!openSet.isEmpty()) {
-			HashMap<SWCPoint, ArrayList<SWCPoint>> currentBranchPoints = new HashMap<SWCPoint, ArrayList<SWCPoint>>();
-			ArrayList<SWCPoint> toRemove = new ArrayList<SWCPoint>();
-			for (SWCPoint node : openSet) {
-				SWCPoint p = getOpenPredecessor(graph, closedSet, node);
-				if (p.parent == -1) {
-					// We've arrived at the last open point,
-					// which is the point with maximum f(x).
-					ArrayList<SWCPoint> point = new ArrayList<SWCPoint>();
-					point.add(root); // component born at root
-					point.add(node); // died at end point farthest from root
-					persistenceMap.put(node, point);
-					// Now add the same point in the opposite direction
-					// in order to make the ranges of each dimension symmetric.
-					// This is done in the Allen biccn tools implementation.
-//					ArrayList<SWCPoint> extendedPoint = new ArrayList<SWCPoint>();
-//					extendedPoint.add(node);
-//					extendedPoint.add(root);
-//					persistenceMap.put(p, extendedPoint);
-					toRemove.add(node);
-					closedSet.add(node);
-					continue;
-				}
-				if (!currentBranchPoints.containsKey(p)) {
-					currentBranchPoints.put(p, new ArrayList<SWCPoint>());
-				}
-				currentBranchPoints.get(p).add(node);
+			t.v = - 1 * descriptorFunc(graph, t, func);
+			if (t.v < minTip.v) {
+				minTip = t;
 			}
-			for (SWCPoint bp : currentBranchPoints.keySet()) {
-				if (currentBranchPoints.get(bp).size() == graph.outDegreeOf(bp)) {
-					ArrayList<SWCPoint> group = currentBranchPoints.get(bp);
-					SWCPoint survivor = group.stream().max(Comparator.comparingDouble(n -> n.v)).get();
-					group.remove(survivor);
-					for (SWCPoint dead : group) {
-						toRemove.add(dead);
-						closedSet.add(dead);
-						ArrayList<SWCPoint> point = new ArrayList<SWCPoint>();
-						point.add(bp); // component born at branch point
-						point.add(dead); // died at end point
-						persistenceMap.put(dead, point);
+		}
+		SWCPoint root = graph.getRoot();
+		
+		while (!openSet.contains(root)) {
+			List<SWCPoint> toRemove = new ArrayList<SWCPoint>();
+			List<SWCPoint> toAdd = new ArrayList<SWCPoint>();
+			for (SWCPoint l : openSet){
+				if (toRemove.contains(l)) continue;
+				SWCPoint p = Graphs.predecessorListOf(graph, l).get(0);
+				List<SWCPoint> children = Graphs.successorListOf(graph, p);
+				if (openSet.containsAll(children)) {
+					SWCPoint survivor = children.stream().min(Comparator.comparingDouble(n -> n.v)).get();
+					toAdd.add(p);
+					for (SWCPoint child : children) {
+						toRemove.add(child);
+						if (!child.equals(survivor)) {
+							persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(child.v, -1 * descriptorFunc(graph, p, func))));
+							persistenceNodes.add(new ArrayList<>(Arrays.asList(child, p)));
+						}
 					}
-					closedSet.add(bp);
+					p.v = survivor.v;
 				}
 			}
+			openSet.addAll(toAdd);
 			openSet.removeAll(toRemove);
 		}
+
+
+		persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(root.v, -1 * descriptorFunc(graph, root, func))));
+		persistenceNodes.add(new ArrayList<SWCPoint>(Arrays.asList(minTip, root)));
+
+		persistenceDiagramMap.put(func, persistenceDiagram);
+		persistenceNodesMap.put(func, persistenceNodes);
 	}
 
-	public ArrayList<ArrayList<Double>> getPersistenceDiagram() {
-		if (persistenceMap == null || persistenceMap.isEmpty())
-			compute();
-		if (persistenceDiagram != null) {
-			return persistenceDiagram;
+	public ArrayList<ArrayList<Double>> getPersistenceDiagram(String descriptor) {
+		if (persistenceDiagramMap.get(descriptor) == null || persistenceDiagramMap.get(descriptor).isEmpty()) {
+			compute(descriptor);
 		}
-		ArrayList<ArrayList<Double>> diagram = new ArrayList<ArrayList<Double>>();
-		for (ArrayList<SWCPoint> point : persistenceMap.values()) {
-			diagram.add(new ArrayList<Double>(
-				      Arrays.asList(point.get(0).v, point.get(1).v)));
-		}
-		Collections.sort(diagram, new Comparator<ArrayList<Double>>() {
+		Collections.sort(persistenceDiagramMap.get(descriptor), new Comparator<ArrayList<Double>>() {
 			@Override
 			public int compare(ArrayList<Double> o1, ArrayList<Double> o2) {
 				return o1.get(0).compareTo(o2.get(0));
 			}
 		});
-		persistenceDiagram = diagram;
-		return diagram;
+		return persistenceDiagramMap.get(descriptor);
 	}
-	
-	public ArrayList<ArrayList<SWCPoint>> getPersistenceDiagramNodes() {
-		if (persistenceMap == null || persistenceMap.isEmpty())
-			compute();
-		ArrayList<ArrayList<SWCPoint>> intervalNodes = new ArrayList<ArrayList<SWCPoint>>(persistenceMap.values());
-		Collections.sort(intervalNodes, new Comparator<ArrayList<SWCPoint>>() {
+
+	public ArrayList<ArrayList<SWCPoint>> getPersistenceDiagramNodes(String descriptor) {
+		if (persistenceNodesMap.get(descriptor) == null || persistenceNodesMap.get(descriptor).isEmpty())
+			compute(descriptor);
+		Collections.sort(persistenceNodesMap.get(descriptor), new Comparator<ArrayList<SWCPoint>>() {
 			@Override
 			public int compare(ArrayList<SWCPoint> o1, ArrayList<SWCPoint> o2) {
 				return Double.compare(o1.get(0).v, o2.get(0).v);
 			}
 		});
-		return intervalNodes;
-	}
-	
-	public ArrayList<Double> getPersistenceVector(int vectorLength, double sigma) {
-		ArrayList<Double> vector = vectorize(getPersistenceDiagram(), vectorLength, sigma);
-		return vector;
+		return persistenceNodesMap.get(descriptor);
 	}
 
-	private double distanceToRoot(final DirectedWeightedGraph graph, SWCPoint node) {
+	private double descriptorFunc(final DirectedWeightedGraph graph, SWCPoint node, String func) {
+		if (func.equalsIgnoreCase("geodesic"))
+			return geodesicDistanceToRoot(graph, node);
+		else if (func.equalsIgnoreCase("radial"))
+			return radialDistanceToRoot(graph, node);
+		else
+			throw new IllegalArgumentException("unrecognized descriptor");
+	}
+
+	private double geodesicDistanceToRoot(final DirectedWeightedGraph graph, SWCPoint node) {
 		double distance = 0;
 		if (node.parent == -1)
 			return 0.0;
@@ -154,62 +143,26 @@ public class PersistenceAnalyzer {
 			SWCPoint p = Graphs.predecessorListOf(graph, node).get(0);
 			SWCWeightedEdge incomingEdge = graph.getEdge(p, node);
 			double weight = incomingEdge.getWeight();
-			// un-comment the following to test against Allen biccn tools implementation test cases
-			// They use Euclidean distance between simplified graph nodes instead of geodesic
-			// weight = p.distanceTo(node);
 			distance += weight;
 			node = p;
 		}
 		return distance;
 	}
 
-	private SWCPoint getOpenPredecessor(final DirectedWeightedGraph graph, Set<SWCPoint> closedSet, SWCPoint node) {
-		while (node.parent != -1) {
-			node = Graphs.predecessorListOf(graph, node).get(0);
-			if (!closedSet.contains(node) && graph.outDegreeOf(node) > 1) {
-				return node;
-			}
-		}
-		return node;
+	private double radialDistanceToRoot(final DirectedWeightedGraph graph, SWCPoint node) {
+		return graph.getRoot().distanceTo(node);
 	}
-	
-	private double[] getRange(ArrayList<ArrayList<Double>> diagram) {
-		double[] range = new double[2];
-		double min_x = Double.MAX_VALUE;
-		double max_x = -Double.MAX_VALUE;
+
+	/* IDE debug method */
+	public static void main(final String[] args) throws InterruptedException {
+		final ImageJ ij = new ImageJ();
+		final SNTService sntService = ij.context().getService(SNTService.class);
+		final Tree tree = sntService.demoTree();
+		final PersistenceAnalyzer analyzer = new PersistenceAnalyzer(tree);
+		ArrayList<ArrayList<Double>> diagram = analyzer.getPersistenceDiagram("radial");
 		for (ArrayList<Double> point : diagram) {
-			if (point.get(0) < min_x) min_x = point.get(0);
-			if (point.get(0) > max_x) max_x = point.get(0);
+			System.out.println(point);
 		}
-		range[0]= min_x;
-		range[1]= max_x;
-		return range;
+		System.out.println(diagram.size());
 	}
-
-	private double densityFunc(double mean, double sigma, ArrayList<ArrayList<Double>> diagram) {
-		double sum = 0.0;
-		for (ArrayList<Double> point : diagram) {
-			double result = Math.abs(point.get(1) - point.get(0)) * gaussian(mean, sigma, point.get(0));
-			sum += result;
-		}
-		return sum;
-	}
-
-	private double gaussian(double mean, double sigma, double sample) {
-		return (double) 1.0 / Math.exp(((mean - sample) * (mean - sample)) / (2 * (sigma * sigma)));
-	}
-	
-	private ArrayList<Double> vectorize(ArrayList<ArrayList<Double>> diagram, int steps, double sigma) {
-		ArrayList<Double> vector = new ArrayList<Double>();
-		double[] r = getRange(diagram);
-		double interval = Math.abs(r[1] - r[0]) / (steps-1);
-		double pos = r[0];
-		for ( int i = 0 ; i < steps; i++ ) {
-			double component = densityFunc(pos, sigma, diagram);
-			vector.add(component);
-			pos += interval;
-		}
-		return vector;
-	}
-
 }

@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
 import org.jgrapht.Graphs;
@@ -132,7 +131,7 @@ public class PersistenceAnalyzer {
 		else if (func.equalsIgnoreCase("radial"))
 			return radialDistanceToRoot(graph, node);
 		else
-			throw new IllegalArgumentException("unrecognized descriptor");
+			throw new IllegalArgumentException("Unrecognized Descriptor");
 	}
 
 	private double geodesicDistanceToRoot(final DirectedWeightedGraph graph, SWCPoint node) {

@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
@@ -192,7 +193,12 @@ public class MouseLightLoader {
 	public static Map<String, TreeSet<SWCPoint>> extractNodes(final File jsonFile, final String compartment) throws FileNotFoundException {
 		final JSONTokener tokener = new JSONTokener(new FileInputStream(jsonFile));
 		final JSONObject json = new JSONObject(tokener);
-		final JSONArray neuronArray = json.getJSONArray("neurons");
+		JSONArray neuronArray;
+		try {
+			neuronArray = json.getJSONArray("neurons");
+		} catch (final JSONException ex) {
+			neuronArray = json.getJSONObject("contents").getJSONArray("neurons");
+		}
 		if (neuronArray == null) return null;
 		final String normCompartment = (compartment == null) ? "" : compartment.toLowerCase();
 		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
@@ -278,6 +284,24 @@ public class MouseLightLoader {
 	public JSONObject getJSON() {
 		if (jsonData == null) jsonData = getJSON(JSON_URL);
 		return jsonData;
+	}
+
+	public boolean save(final String path) {
+		return save(new File(path));
+	}
+
+	public boolean save(final File file) {
+		if (file == null) throw new IllegalArgumentException("Invalid file");
+		File jsonFile = (file.isDirectory()) ? new File(file, id + ".json") : file;
+		try {
+			FileWriter writer = new FileWriter(jsonFile);
+			writer.write(getJSON().toString());
+			writer.close();
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	/**

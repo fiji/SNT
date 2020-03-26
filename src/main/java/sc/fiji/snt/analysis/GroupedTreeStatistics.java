@@ -60,9 +60,10 @@ import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.statistics.HistogramType;
 import org.scijava.util.ColorRGB;
 
+import net.imagej.ImageJ;
+import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.TreeStatistics.HDPlus;
-import sc.fiji.snt.annotation.AllenUtils;
 import sc.fiji.snt.annotation.BrainAnnotation;
 import sc.fiji.snt.util.SNTColor;
 

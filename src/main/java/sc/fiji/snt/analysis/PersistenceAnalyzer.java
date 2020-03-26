@@ -58,12 +58,12 @@ public class PersistenceAnalyzer {
 
 		Set<SWCPoint> openSet = new HashSet<SWCPoint>();
 		List<SWCPoint> tips = graph.getTips();
-		SWCPoint minTip = tips.get(0);
+		SWCPoint maxTip = tips.get(0);
 		for (SWCPoint t : tips) {
 			openSet.add(t);
-			t.v = - 1 * descriptorFunc(graph, t, func);
-			if (t.v < minTip.v) {
-				minTip = t;
+			t.v = descriptorFunc(graph, t, func);
+			if (t.v > maxTip.v) {
+				maxTip = t;
 			}
 		}
 		SWCPoint root = graph.getRoot();
@@ -76,13 +76,13 @@ public class PersistenceAnalyzer {
 				SWCPoint p = Graphs.predecessorListOf(graph, l).get(0);
 				List<SWCPoint> children = Graphs.successorListOf(graph, p);
 				if (openSet.containsAll(children)) {
-					SWCPoint survivor = children.stream().min(Comparator.comparingDouble(n -> n.v)).get();
+					SWCPoint survivor = children.stream().max(Comparator.comparingDouble(n -> n.v)).get();
 					toAdd.add(p);
 					for (SWCPoint child : children) {
 						toRemove.add(child);
 						if (!child.equals(survivor)) {
-							persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(child.v, -1 * descriptorFunc(graph, p, func))));
-							persistenceNodes.add(new ArrayList<>(Arrays.asList(child, p)));
+							persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(descriptorFunc(graph, p, func), child.v)));
+							persistenceNodes.add(new ArrayList<>(Arrays.asList(p, child)));
 						}
 					}
 					p.v = survivor.v;
@@ -93,8 +93,8 @@ public class PersistenceAnalyzer {
 		}
 
 
-		persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(root.v, -1 * descriptorFunc(graph, root, func))));
-		persistenceNodes.add(new ArrayList<SWCPoint>(Arrays.asList(minTip, root)));
+		persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(descriptorFunc(graph, root, func), root.v)));
+		persistenceNodes.add(new ArrayList<SWCPoint>(Arrays.asList(root, maxTip)));
 
 		persistenceDiagramMap.put(func, persistenceDiagram);
 		persistenceNodesMap.put(func, persistenceNodes);

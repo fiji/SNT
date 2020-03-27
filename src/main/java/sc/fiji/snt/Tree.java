@@ -134,7 +134,7 @@ public class Tree {
 		if (pafm == null) throw new IllegalArgumentException(
 			"No paths extracted from " + filename + " Invalid file?");
 		tree = pafm.getPaths();
-		setLabel(f.getName());
+		setLabel(SNTUtils.stripExtension(f.getName()));
 	}
 
 	/**
@@ -305,7 +305,8 @@ public class Tree {
 			}
 		}
 		final Tree subTree = subTree(types.stream().mapToInt(Integer::intValue).toArray());
-		subTree.setLabel(getLabel() + " " + Arrays.toString(swcTypes));
+		if (getLabel() != null) 
+			subTree.setLabel(getLabel() + " " + Arrays.toString(swcTypes));
 		return subTree;
 	}
 
@@ -337,7 +338,7 @@ public class Tree {
 					joinsIt.remove();
 			}
 		}
-		subtree.setLabel(getLabel() + " (filtered)");
+		if (getLabel() != null) subtree.setLabel(getLabel() + " (filtered)");
 		return subtree;
 	}
 
@@ -1233,24 +1234,31 @@ public class Tree {
 
 	/* IDE debug method */
 	public static void main(final String[] args) {
+
 		final Tree tree = new Tree("/home/tferr/code/zi/AA0174.json");
 		TreeAnalyzer analyzer = new TreeAnalyzer(tree);
 		final int treeBPs = analyzer.getBranchPoints().size();
 		final int treeTips = analyzer.getTips().size();
+		final int treeBranches = analyzer.getBranches().size();
 
 		final DirectedWeightedGraph graph = tree.getGraph();
+		System.out.println("Graph : Tree Before Filtering");
 		System.out.println(graph.vertexSet().size() + " : " + tree.getNodes().size());
 		System.out.println(graph.vertexSet().size() + " : " + tree.getNodesAsSWCPoints().size());
 
 		final Tree aTree = tree.subTree("axon");
 		final DirectedWeightedGraph aGraph = aTree.getGraph();
+		System.out.println("SubGraph : SubTree After Filtering");
 		System.out.println(tree.getLabel() + " : " + aTree.getLabel());
 		System.out.println(aGraph.vertexSet().size() + " : " + aTree.getNodes().size());
 		System.out.println(aGraph.vertexSet().size() + " : " + aTree.getNodesAsSWCPoints().size());
 
 		// Did the filtering affect original tree?
 		analyzer = new TreeAnalyzer(tree);
+		System.out.println("Tree Before Filtering : Tree After Filtering");
 		System.out.println(treeBPs + " : " + analyzer.getBranchPoints().size());
 		System.out.println(treeTips + " : " + analyzer.getTips().size());
+		System.out.println(treeBranches + " : " + analyzer.getBranches().size());
+
 	}
 }

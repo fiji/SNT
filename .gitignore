@@ -24,4 +24,6 @@
 !jars/*
 
 # Notebooks #
-notebooks/\.ipynb_checkpoints/
+\.ipynb_checkpoints/
+__pycache__/
+*.py[cod]

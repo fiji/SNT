@@ -290,12 +290,19 @@ public class MouseLightLoader {
 		return save(new File(path));
 	}
 
+	/**
+	 * Convenience method to save JSON data.
+	 *
+	 * @param file the output directory or the output file
+	 * @return true, if successful
+	 * @see #saveAsJSON(String)
+	 */
 	public boolean save(final File file) {
 		if (file == null) throw new IllegalArgumentException("Invalid file");
 		File jsonFile = (file.isDirectory()) ? new File(file, id + ".json") : file;
 		try {
 			FileWriter writer = new FileWriter(jsonFile);
-			writer.write(getJSON().toString());
+			writer.write(getJSON().getJSONObject("contents").toString());
 			writer.close();
 			return true;
 		} catch (IOException e) {

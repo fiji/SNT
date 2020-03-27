@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +42,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
+import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.graph.DirectedWeightedGraph;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
 import sc.fiji.snt.util.BoundingBox;
@@ -304,7 +304,9 @@ public class Tree {
 				break;
 			}
 		}
-		return subTree(types.stream().mapToInt(Integer::intValue).toArray());
+		final Tree subTree = subTree(types.stream().mapToInt(Integer::intValue).toArray());
+		subTree.setLabel(getLabel() + " " + Arrays.toString(swcTypes));
+		return subTree;
 	}
 
 	/**
@@ -317,13 +319,25 @@ public class Tree {
 	 */
 	public Tree subTree(final int... swcTypes) {
 		final Tree subtree = new Tree();
-		final Iterator<Path> it = tree.iterator();
+		Iterator<Path> it = tree.iterator();
 		while (it.hasNext()) {
 			final Path p = it.next();
 			final boolean filteredType = Arrays.stream(swcTypes).anyMatch(t -> t == p
 				.getSWCType());
 			if (filteredType) subtree.add(p);
 		}
+		it = subtree.tree.iterator();
+		while (it.hasNext()) {
+			final Path p = it.next();
+			final Iterator<Path> joinsIt = p.somehowJoins.iterator();
+			while (joinsIt.hasNext()) {
+				final Path joins = joinsIt.next();
+				final boolean filteredType = Arrays.stream(swcTypes).anyMatch(t -> t == joins.getSWCType());
+				if (!filteredType)
+					joinsIt.remove();
+			}
+		}
+		subtree.setLabel(getLabel() + " (filtered)");
 		return subtree;
 	}
 
@@ -943,21 +957,8 @@ public class Tree {
 
 	public Collection<SWCPoint> getNodesAsSWCPoints() throws IllegalArgumentException {
 		initPathAndFillManager();
-		final Path[] primaryPaths = pafm.getPathsStructured();
-		if (primaryPaths.length != 1) throw new IllegalArgumentException("Tree contains multiple roots!");
-		final HashSet<Path> connectedPaths = new HashSet<>();
-		final LinkedList<Path> nextPathsToConsider = new LinkedList<>();
-		nextPathsToConsider.add(primaryPaths[0]);
-		while (nextPathsToConsider.size() > 0) {
-			final Path currentPath = nextPathsToConsider.removeFirst();
-			connectedPaths.add(currentPath);
-			for (final Path joinedPath : currentPath.somehowJoins) {
-				if (!connectedPaths.contains(joinedPath)) nextPathsToConsider.add(
-					joinedPath);
-			}
-		}
 		try {
-			return pafm.getSWCFor(connectedPaths);
+			return pafm.getSWCFor(tree);
 		} catch (final SWCExportException e) {
 			throw new IllegalArgumentException(e.getMessage());
 		}
@@ -1228,5 +1229,28 @@ public class Tree {
 		boolean isComputationNeeded() {
 			return dimensionsNeedToBeComputed;
 		}
+	}
+
+	/* IDE debug method */
+	public static void main(final String[] args) {
+		final Tree tree = new Tree("/home/tferr/code/zi/AA0174.json");
+		TreeAnalyzer analyzer = new TreeAnalyzer(tree);
+		final int treeBPs = analyzer.getBranchPoints().size();
+		final int treeTips = analyzer.getTips().size();
+
+		final DirectedWeightedGraph graph = tree.getGraph();
+		System.out.println(graph.vertexSet().size() + " : " + tree.getNodes().size());
+		System.out.println(graph.vertexSet().size() + " : " + tree.getNodesAsSWCPoints().size());
+
+		final Tree aTree = tree.subTree("axon");
+		final DirectedWeightedGraph aGraph = aTree.getGraph();
+		System.out.println(tree.getLabel() + " : " + aTree.getLabel());
+		System.out.println(aGraph.vertexSet().size() + " : " + aTree.getNodes().size());
+		System.out.println(aGraph.vertexSet().size() + " : " + aTree.getNodesAsSWCPoints().size());
+
+		// Did the filtering affect original tree?
+		analyzer = new TreeAnalyzer(tree);
+		System.out.println(treeBPs + " : " + analyzer.getBranchPoints().size());
+		System.out.println(treeTips + " : " + analyzer.getTips().size());
 	}
 }

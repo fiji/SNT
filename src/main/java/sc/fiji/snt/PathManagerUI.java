@@ -89,7 +89,6 @@ import org.scijava.command.CommandService;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.prefs.PrefService;
-import org.scijava.table.DefaultGenericTable;
 
 import com.jidesoft.swing.Searchable;
 import com.jidesoft.swing.TreeSearchable;
@@ -97,6 +96,7 @@ import com.jidesoft.swing.TreeSearchable;
 import ij.ImagePlus;
 import net.imagej.ImageJ;
 import sc.fiji.snt.analysis.PathProfiler;
+import sc.fiji.snt.analysis.SNTTable;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.gui.ColorMenu;
 import sc.fiji.snt.gui.IconFactory;
@@ -128,8 +128,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	private DefaultMutableTreeNode root;
 	private final SNT plugin;
 	private final PathAndFillManager pathAndFillManager;
-	private DefaultGenericTable table;
-	private boolean tableSaved;
+	private SNTTable table;
 
 	protected static final String TABLE_TITLE = "SNT Measurements";
 	protected final GuiUtils guiUtils;
@@ -1524,11 +1523,8 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 		if (display != null && display.isDisplaying(table)) display.close();
 	}
 
-	protected DefaultGenericTable getTable() {
-		if (table == null) table = new DefaultGenericTable();
-		// we will assume that immediately after being retrieved,
-		// the table will contain unsaved data. //FIXME: sloppy
-		tableSaved = table.getRowCount() > 0;
+	protected SNTTable getTable() {
+		if (table == null) table = new SNTTable();
 		return table;
 	}
 
@@ -1562,7 +1558,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 	}
 
 	protected boolean measurementsUnsaved() {
-		return validTableMeasurements() && !tableSaved;
+		return validTableMeasurements() && table.hasUnsavedData();
 	}
 
 	private boolean validTableMeasurements() {
@@ -1570,32 +1566,9 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			.getColumnCount() > 0;
 	}
 
-	private void saveTable(final File outputFile) throws IOException {
-		final String sep = ",";
-		final PrintWriter pw = new PrintWriter(new OutputStreamWriter(
-			new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
-		final int columns = table.getColumnCount();
-		final int rows = table.getRowCount();
 
-		// Print a column header to hold row headers
-		SNTUtils.csvQuoteAndPrint(pw, "Description");
-		pw.print(sep);
-		for (int col = 0; col < columns; ++col) {
-			SNTUtils.csvQuoteAndPrint(pw, table.getColumnHeader(col));
-			if (col < (columns - 1)) pw.print(sep);
-		}
-		pw.print("\r\n");
-		for (int row = 0; row < rows; row++) {
-			SNTUtils.csvQuoteAndPrint(pw, table.getRowHeader(row));
-			pw.print(sep);
-			for (int col = 0; col < columns; col++) {
-				SNTUtils.csvQuoteAndPrint(pw, table.get(col, row));
-				if (col < (columns - 1)) pw.print(sep);
-			}
-			pw.print("\r\n");
-		}
-		pw.close();
-		tableSaved = true;
+	protected void saveTable(final File outputFile) throws IOException {
+		table.save(outputFile);
 	}
 
 	protected void saveTable() {

@@ -29,7 +29,6 @@ import java.util.stream.IntStream;
 import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;
 import org.scijava.plugin.Parameter;
-import org.scijava.table.DefaultGenericTable;
 import org.scijava.ui.UIService;
 import org.scijava.util.Colors;
 
@@ -41,6 +40,7 @@ import net.imagej.plot.MarkerStyle;
 import net.imagej.plot.PlotService;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.analysis.SNTTable;
 import sc.fiji.snt.analysis.StrahlerAnalyzer;
 
 /**
@@ -103,27 +103,18 @@ public class StrahlerCmd extends ContextCommand {
 	}
 
 	private void updateAndDisplayTable() {
-		final DefaultGenericTable table = new DefaultGenericTable();
+		final SNTTable table = new SNTTable();
 		IntStream.rangeClosed(1, maxOrder).forEach(order -> {
 			table.appendRow();
 			final int row = Math.max(0, table.getRowCount() - 1);
-			table.set(getCol(table, "Horton-Strahler #"), row, order);
-			table.set(getCol(table, "Rev. Horton-Strahler #"), row, maxOrder - order + 1);
-			table.set(getCol(table, "Length (Sum)"), row, tLengthMap.get(order));
-			table.set(getCol(table, "# Branches"), row, nBranchesMap.get(order));
-			table.set(getCol(table, "Bifurcation ratio"), row, bRatioMap.get(order));
-			table.set(getCol(table, "# Branch Points"), row, bPointsMap.get(order));
+			table.set("Horton-Strahler #", row, order);
+			table.set("Rev. Horton-Strahler #", row, maxOrder - order + 1);
+			table.set("Length (Sum)", row, tLengthMap.get(order));
+			table.set("# Branches", row, nBranchesMap.get(order));
+			table.set("Bifurcation ratio", row, bRatioMap.get(order));
+			table.set("# Branch Points", row, bPointsMap.get(order));
 		});
 		uiService.show("SNT: Strahler Plot", table);
-	}
-
-	protected int getCol(final DefaultGenericTable table, final String header) {
-		int idx = table.getColumnIndex(header);
-		if (idx == -1) {
-			table.appendColumn(header);
-			idx = table.getColumnCount() - 1;
-		}
-		return idx;
 	}
 
 	private void displayPlot() {

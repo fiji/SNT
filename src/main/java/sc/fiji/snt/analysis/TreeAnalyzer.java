@@ -895,7 +895,7 @@ public class TreeAnalyzer extends ContextCommand {
 		final List<Path> branches = getBranches();
 		for (final Path p : branches) {
 			final double pContraction = p.getContraction();
-			if (!Double.isNaN(pContraction)) contraction += p.getContraction();
+			if (!Double.isNaN(pContraction)) contraction += pContraction;
 		}
 		return contraction / branches.size();
 	}

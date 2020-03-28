@@ -5,7 +5,7 @@ Welcome to the collection of [SNT] notebooks that demonstrate how to access its
 
 ## Download
 To run these notebooks from your local machine download all the files as a
-[ZIP archive](https://kinolien.github.io/gitzip/?download=https://github.com/morphonets/SNT/tree/master/notebooks&token=f523985da9454712fb16f9ef39e9de65015af4aa),
+[ZIP archive](https://kinolien.github.io/gitzip/?download=https://github.com/morphonets/SNT/tree/master/notebooks),
 and unzip the files to a local directory. Alternatively, download them manually
 from [GitHub](https://github.com/morphonets/SNT/tree/master/notebooks).
 
@@ -57,14 +57,15 @@ conda install -c conda-forge pandas
 
 ## Resources
  - SNT:
-  - [Documentation][snt]
-  - [API]
-  - [Repository](https://github.com/morphonets/SNT)
-  - [Image.sc](https://forum.image.sc/tag/snt/)
+   - [Documentation][snt]
+   - [API]
+   - [Repository](https://github.com/morphonets/SNT)
+   - [Image.sc](https://forum.image.sc/tag/snt/)
+
  - pyimagej:
-  - [Documentation][pyimagej]
-  - [Repository](https://github.com/imagej/pyimagej)
-  - [Image.sc](https://forum.image.sc/tag/pyimagej/)
+   - [Documentation][pyimagej]
+   - [Repository](https://github.com/imagej/pyimagej)
+   - [Image.sc](https://forum.image.sc/tag/pyimagej/)
 
 [snt]: https://imagej.net/SNT
 [api]: https://morphonets.github.io/SNT

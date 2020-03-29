@@ -143,6 +143,15 @@ public class PersistenceAnalyzer {
 		return persistenceDiagramMap.get(descriptor);
 	}
 
+	public ArrayList<Double> getBarCodes(final String descriptor) throws UnknownMetricException, IllegalArgumentException {
+		final ArrayList<ArrayList<Double>> diag = getPersistenceDiagram(descriptor);
+		final ArrayList<Double> barcodes = new ArrayList<>(diag.size());
+		diag.forEach(point -> {
+			barcodes.add(point.get(1) - point.get(0));
+		});
+		return barcodes;
+	}
+
 	/**
 	 * Gets the persistence diagram nodes.
 	 *

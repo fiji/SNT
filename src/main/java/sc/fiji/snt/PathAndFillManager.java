@@ -811,6 +811,35 @@ public class PathAndFillManager extends DefaultHandler implements
 			"You must select all the connected paths\n(" + selectedAndNotConnected +
 				" paths (e.g. \"" + disconnectedExample + "\") were not connected.)");
 
+
+		// FIXME: DUP NODES: These should have never occurred in the first place
+//		Iterator<SWCPoint> it = result.iterator();
+//		Set<Integer> idsToRemove = new HashSet<>();
+//		for (int i = 0; i < result.size(); i++) {
+//			final SWCPoint node1 = result.get(i);
+//			for (int j = 1; j < result.size(); j++) {
+//				if (i == j) continue;
+//				final SWCPoint node2 = result.get(j);
+//				if (node2.isSameLocation(node1) && node2.parent == node1.parent) {
+//					idsToRemove.add(node2.id);
+//					System.out.println("Removing #### ");
+//					System.out.println(node2);
+//					System.out.println(node1);
+//				}
+//			}
+//		}
+//
+//		while (it.hasNext()) {
+//			final SWCPoint node = it.next();
+//			if (idsToRemove.contains(node.id)) {
+//				it.remove();
+//			}
+//		}
+//		for (SWCPoint node: result) {
+//			if (idsToRemove.contains(node.parent))
+//				node.parent = -1;
+//		}
+
 		return result;
 	}
 
@@ -2191,6 +2220,19 @@ public class PathAndFillManager extends DefaultHandler implements
 					currentPoint = null;
 				}
 			}
+
+			// FIXME: DUP NODES: Paths contain duplicated nodes!! Remove them here:
+//			for (int i = 0; i < currentPath.size(); i++) {
+//				final PointInImage node1 = currentPath.getNode(i);
+//				for (int j = 1; j < currentPath.size(); j++) {
+//					if (i == j) continue;
+//					final PointInImage node2 = currentPath.getNode(j);
+//					if (node2.isSameLocation(node1)) {
+//						System.out.println("Removing "+ node2);
+//						currentPath.removeNode(j);
+//					}
+//				}
+//			}
 			currentPath.setGuessedTangents(2);
 			addPath(currentPath);
 		}

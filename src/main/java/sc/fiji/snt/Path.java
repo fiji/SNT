@@ -1129,11 +1129,15 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Appends a node to this Path.
+	 * Appends a node to this Path. Does nothing if the location encoded by
+	 * {@code point} has already been added by the last {@code addNode(point)} call.
 	 *
 	 * @param point the node to be inserted
 	 */
 	public void addNode(final PointInImage point) {
+		// FIXME: DUP NODES: Do not allow duplicate nodes
+		if (size() > 0 && getNodeWithoutChecks(size() - 1).isSameLocation(point))
+			return;
 		addCommonPropertiesNode(point);
 		if (!Double.isNaN(point.v)) setNodeValue(point.v, size() - 1);
 		if (point instanceof SWCPoint) {

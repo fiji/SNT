@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.scijava.table.DefaultGenericTable;
@@ -582,13 +581,8 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see #restrictToOrder(int...)
 	 */
 	public Set<Path> getPrimaryBranches() {
-		primaryBranches = new HashSet<>();
-		for (final Path p : tree.list()) {
-			if (!p.isPrimary()) continue;
-			final TreeSet<Integer> joinIndices = p.findJunctionIndices();
-			final int firstJointIdx = (joinIndices.isEmpty()) ? p.size() - 1 : joinIndices.first();
-			primaryBranches.add(p.getSection(0, firstJointIdx));
-		}
+		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
+		primaryBranches = new HashSet<>(sAnalyzer.getBranches(sAnalyzer.getRootNumber()));
 		return primaryBranches;
 	}
 
@@ -604,17 +598,8 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see #restrictToOrder(int...)
 	 */
 	public Set<Path> getTerminalBranches() {
-		terminalBranches = new HashSet<>();
-		if (joints == null) getBranchPoints();
-		for (final Path p : tree.list()) {
-			final int lastNodeIdx = p.size() - 1;
-			if (joints.contains(p.getNode(lastNodeIdx))) {
-				continue; // not a terminal branch
-			}
-			final TreeSet<Integer> joinIndices = p.findJunctionIndices();
-			final int lastJointIdx = (joinIndices.isEmpty()) ? 0 : joinIndices.last();
-			terminalBranches.add(p.getSection(lastJointIdx, lastNodeIdx));
-		}
+		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
+		terminalBranches = new HashSet<>(sAnalyzer.getBranches(1));
 		return terminalBranches;
 	}
 
@@ -864,8 +849,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @throws IllegalArgumentException if tree contains multiple roots or loops
 	 */
 	public int getNBranches() throws IllegalArgumentException {
-		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
-		return (int) sAnalyzer.getBranchCounts().values().stream().mapToDouble(f -> f).sum();
+		return getBranches().size();
 	}
 
 	/**
@@ -890,7 +874,6 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @return the average branch contraction
 	 */
 	public double getAvgContraction() throws IllegalArgumentException {
-		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
 		double contraction = 0;
 		final List<Path> branches = getBranches();
 		for (final Path p : branches) {
@@ -907,7 +890,6 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @return the average branch length
 	 */
 	public double getAvgBranchLength() throws IllegalArgumentException {
-		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
 		final List<Path> branches = getBranches();
 		return sumLength(getBranches()) / branches.size();
 	}

@@ -37,7 +37,6 @@ import java.util.stream.IntStream;
 
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.AsSubgraph;
-import org.jgrapht.graph.DefaultDirectedGraph;
 
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
@@ -45,6 +44,7 @@ import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.analysis.graph.DirectedWeightedGraph;
 import sc.fiji.snt.analysis.graph.SWCWeightedEdge;
 import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.Viewer3D;
@@ -64,7 +64,7 @@ public class StrahlerAnalyzer {
 	private final Map<Integer, Double> bPointsMap = new TreeMap<>();
 	private final Map<Integer, Double> bRatioMap = new TreeMap<>();
 	private final Map<Integer, Double> tLengthMap = new TreeMap<>();
-	private DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph;
+	private DirectedWeightedGraph graph;
 
 	public StrahlerAnalyzer(final Tree tree) {
 		this.tree = tree;
@@ -184,7 +184,7 @@ public class StrahlerAnalyzer {
 	/**
 	 * @return the graph of the tree being parsed.
 	 */
-	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph() {
+	public DirectedWeightedGraph getGraph() {
 		if (graph == null) compute();
 		return graph;
 	}
@@ -252,6 +252,12 @@ public class StrahlerAnalyzer {
 	public Map<Integer, List<Path>> getBranches() {
 		if (branchesMap == null || branchesMap.isEmpty()) compute();
 		return branchesMap;
+	}
+
+	public List<Path> getBranches(final int order) throws IllegalArgumentException {
+		if (order < 1 || order > getRootNumber())
+			throw new IllegalArgumentException("Invalid order: 1 >= order <=" + getRootNumber());
+		return branchesMap.get(order);
 	}
 
 	/**

@@ -107,7 +107,11 @@ public class SciViewSNT {
 		if (sciView == null) {
 			if (SwingUtilities.isEventDispatchThread())
 				SNTUtils.log("Initializing active SciView from EDT");
-			setSciView(sciViewService.getOrCreateActiveSciView());
+			try {
+				setSciView(sciViewService.getOrCreateActiveSciView());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

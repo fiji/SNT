@@ -503,7 +503,7 @@ public class TreeAnalyzer extends ContextCommand {
 	 */
 	public void updateAndDisplayTable() {
 		if (getContext() == null) {
-			System.out.println(SNTUtils.tableToString(table, 0, table.getRowCount() - 1));
+			System.out.println(SNTTable.tableToString(table, 0, table.getRowCount() - 1));
 			return;
 		}
 		final String displayName = (tableTitle == null) ? "SNT Measurements"

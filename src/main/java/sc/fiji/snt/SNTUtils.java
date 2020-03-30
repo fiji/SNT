@@ -24,8 +24,12 @@ package sc.fiji.snt;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -35,7 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
-import java.util.stream.IntStream;
 
 import org.scijava.Context;
 import org.scijava.log.LogService;
@@ -165,24 +168,6 @@ public class SNTUtils {
 		return mip;
 	}
 
-	public static String tableToString(final GenericTable table, final int firstRow, final int lastRow) {
-		final int fRow = Math.max(0, firstRow);
-		final int lRow = Math.min(table.getRowCount() - 1, lastRow);
-		final String sep = "\t";
-		final StringBuilder sb = new StringBuilder();
-		IntStream.range(0, table.getColumnCount()).forEach( col -> {
-			sb.append(table.getColumnHeader(col)).append(sep);
-		});
-		sb.append("\n\r");
-		IntStream.rangeClosed(fRow, lRow).forEach( row -> {
-			IntStream.range(0, table.getColumnCount()).forEach( col -> {
-				sb.append(table.get(col, row)).append(sep);
-			});
-			sb.append("\n\r");
-		});
-		return sb.toString().replaceAll("null", " ");
-	}
-
 	public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {
 		pw.print(stringForCSV("" + o));
 	}
@@ -217,6 +202,35 @@ public class SNTUtils {
 	public static String stripExtension(final String filename) {
 		final int lastDot = filename.lastIndexOf(".");
 		return (lastDot > 0) ? filename.substring(0, lastDot) : filename;
+	}
+
+	public static void saveTable(final GenericTable table, final File outputFile) throws IOException {
+		final String sep = ",";
+		final PrintWriter pw = new PrintWriter(
+				new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
+		final int columns = table.getColumnCount();
+		final int rows = table.getRowCount();
+
+		// Print a column header to hold row headers
+		SNTUtils.csvQuoteAndPrint(pw, "Description");
+		pw.print(sep);
+		for (int col = 0; col < columns; ++col) {
+			SNTUtils.csvQuoteAndPrint(pw, table.getColumnHeader(col));
+			if (col < (columns - 1))
+				pw.print(sep);
+		}
+		pw.print("\r\n");
+		for (int row = 0; row < rows; row++) {
+			SNTUtils.csvQuoteAndPrint(pw, table.getRowHeader(row));
+			pw.print(sep);
+			for (int col = 0; col < columns; col++) {
+				SNTUtils.csvQuoteAndPrint(pw, table.get(col, row));
+				if (col < (columns - 1))
+					pw.print(sep);
+			}
+			pw.print("\r\n");
+		}
+		pw.close();
 	}
 
 	protected static boolean fileAvailable(final File file) {

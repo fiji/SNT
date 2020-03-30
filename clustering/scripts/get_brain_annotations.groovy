@@ -12,26 +12,26 @@ trees = Tree.listFromDir(cellsDir, "", "axon")
 lTable = new SNTTable()
 tTable = new SNTTable()
 
-for (tree in trees) {
+trees.eachWithIndex { tree, treeIndex ->
 
 	println("Parsing " + tree.getLabel())
 	lTable.appendRow(tree.getLabel())
 	tTable.appendRow(tree.getLabel())
-	row = Math.max(0, lTable.getRowCount() - 1)
 
 	tStats = new TreeStatistics(tree)
 	tStats.getAnnotatedLength(maxOntLevel).each{ annot, length ->
 		colHeader = (annot == null) ? "Length:other" : "Length:" + annot.acronym()
-		lTable.set(colHeader, row, length);
+		lTable.set(colHeader, treeIndex, length);
 	}
 
 	nStats = new NodeStatistics(tStats.getTips())
 	nStats.getBrainAnnotations(maxOntLevel).each{annot, tipsCount ->
 		colHeader = (annot == null) ? "Tips:other" : "Tips:"+annot.acronym()
-		tTable.set(colHeader, row, tipsCount)
+		tTable.set(colHeader, treeIndex, tipsCount)
 	}
 
 }
+
 lTable.fillEmptyCells(0)
 saved = lTable.save(outDir + "/brain-annot-length-maxLevel" + maxOntLevel + ".csv")
 println("lTable saved: " + saved)

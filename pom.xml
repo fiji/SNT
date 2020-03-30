@@ -9,7 +9,7 @@
 		<relativePath />
 	</parent>
 
-	<groupId>sc.fiji</groupId>
+	<groupId>org.morphonets</groupId>
 	<artifactId>SNT</artifactId>
 	<version>3.1.101-SNAPSHOT</version>
 
@@ -125,10 +125,10 @@
 		<package-name>sciview</package-name>
 
 		<!-- Dependency versions for JitPack -->
-		<sciview.version>2f4df2f</sciview.version>
-<!--		<sciview.version>0.2.0-beta-2-SNAPSHOT</sciview.version>-->
-		<scenery.version>7d3b58a</scenery.version>
-		<cleargl.version>2.2.9</cleargl.version>
+		<sciview.version>32ece56</sciview.version>
+		<scenery.version>c7bcf7a</scenery.version>
+
+		<cleargl.version>2.2.10</cleargl.version>
 		<lwjgl.version>3.2.3</lwjgl.version>
 		<jzy3d.version>1.0.3-SNAPSHOT</jzy3d.version>
 		<jide-oss.version>3.6.18</jide-oss.version>

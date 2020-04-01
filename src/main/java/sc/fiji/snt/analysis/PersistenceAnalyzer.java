@@ -179,6 +179,10 @@ public class PersistenceAnalyzer {
 			return geodesicDistanceToRoot(graph, node);
 		else if (func.equalsIgnoreCase("radial"))
 			return radialDistanceToRoot(graph, node);
+		else if (func.equalsIgnoreCase("depth"))
+			return node.getZ();
+		else if (func.equalsIgnoreCase("order"))
+			return node.getPath().getOrder();
 		else
 			throw new UnknownMetricException("Unrecognized Descriptor");
 	}
@@ -207,7 +211,7 @@ public class PersistenceAnalyzer {
 		final SNTService sntService = ij.context().getService(SNTService.class);
 		final Tree tree = sntService.demoTree();
 		final PersistenceAnalyzer analyzer = new PersistenceAnalyzer(tree);
-		final ArrayList<ArrayList<Double>> diagram = analyzer.getPersistenceDiagram("radial");
+		final ArrayList<ArrayList<Double>> diagram = analyzer.getPersistenceDiagram("order");
 		for (final ArrayList<Double> point : diagram) {
 			System.out.println(point);
 		}

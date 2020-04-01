@@ -57,6 +57,7 @@ public class PersistenceAnalyzer {
 	private final HashMap<String, ArrayList<ArrayList<SWCPoint>>> persistenceNodesMap = new HashMap<String, ArrayList<ArrayList<SWCPoint>>>();
 
 	private DirectedWeightedGraph graph;
+	private boolean nodeValuesAssigned;
 
 	public PersistenceAnalyzer(final Tree tree) {
 		this.tree = tree;
@@ -118,6 +119,7 @@ public class PersistenceAnalyzer {
 
 		persistenceDiagramMap.put(func, persistenceDiagram);
 		persistenceNodesMap.put(func, persistenceNodes);
+		nodeValuesAssigned = false; // reset field so that it can be recycled by a different func
 	}
 
 	/**
@@ -181,10 +183,17 @@ public class PersistenceAnalyzer {
 			return radialDistanceToRoot(graph, node);
 		else if (func.equalsIgnoreCase("depth"))
 			return node.getZ();
-		else if (func.equalsIgnoreCase("order"))
+		else if (func.toLowerCase().contains("path"))
 			return node.getPath().getOrder();
-		else
+		else if (func.toLowerCase().contains("centrifugal")) {
+			if (!nodeValuesAssigned) {
+				StrahlerAnalyzer.classify(graph, true);
+				nodeValuesAssigned = true;
+			}
+			return node.v;
+		} else {
 			throw new UnknownMetricException("Unrecognized Descriptor");
+		}
 	}
 
 	private double geodesicDistanceToRoot(final DirectedWeightedGraph graph, SWCPoint node) {

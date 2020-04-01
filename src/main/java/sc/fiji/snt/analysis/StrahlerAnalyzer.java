@@ -70,12 +70,14 @@ public class StrahlerAnalyzer {
 		this.tree = tree;
 	}
 
-	private void compute() {
-
+	private void compute() throws IllegalArgumentException {
 		SNTUtils.log("Retrieving graph...");
-		graph = tree.getGraph(); // IllegalArgumentException if i.e, tree has multiple roots
-		if (graph == null)
-			return;
+		compute(tree.getGraph()); // IllegalArgumentException if i.e, tree has multiple roots
+	}
+
+	private void compute(final DirectedWeightedGraph graph) throws IllegalArgumentException {
+
+		this.graph = graph;
 
 		final List<SWCPoint> allNodes = new ArrayList<>();
 		final List<SWCPoint> unVisitedNodes = new ArrayList<>();
@@ -328,5 +330,15 @@ public class StrahlerAnalyzer {
 		viewer.addColorBarLegend(mapper);
 		viewer.add(tree);
 		viewer.show();
+	}
+
+	public static void classify(final DirectedWeightedGraph graph, final boolean reverseOrder) {
+		final StrahlerAnalyzer sa = new StrahlerAnalyzer(null);
+		sa.compute(graph);
+		if (reverseOrder) {
+			graph.vertexSet().forEach( vertex -> {
+				vertex.v = sa.getRootNumber() - vertex.v + 1;
+			});
+		}
 	}
 }

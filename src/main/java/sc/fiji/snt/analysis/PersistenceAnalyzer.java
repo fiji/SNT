@@ -77,13 +77,17 @@ public class PersistenceAnalyzer {
 		// Use simplified graph since geodesic distances are preserved as edge weights
 		// This provides a significant performance boost over the full Graph.
 		graph = tree.getGraph().getSimplifiedGraph(); // IllegalArgumentException if i.e, tree has multiple roots
-
+		HashMap<SWCPoint, Double> descriptorMap = new HashMap<SWCPoint, Double>();
+		for (SWCPoint node : graph.vertexSet()) {
+			descriptorMap.put(node, descriptorFunc(graph, node, func));
+		}
 		final Set<SWCPoint> openSet = new HashSet<SWCPoint>();
 		final List<SWCPoint> tips = graph.getTips();
 		SWCPoint maxTip = tips.get(0);
 		for (final SWCPoint t : tips) {
 			openSet.add(t);
-			t.v = descriptorFunc(graph, t, func);
+			t.v = descriptorMap.get(t);
+			
 			if (t.v > maxTip.v) {
 				maxTip = t;
 			}
@@ -103,7 +107,7 @@ public class PersistenceAnalyzer {
 					for (final SWCPoint child : children) {
 						toRemove.add(child);
 						if (!child.equals(survivor)) {
-							persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(descriptorFunc(graph, p, func), child.v)));
+							persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(descriptorMap.get(p), child.v)));
 							persistenceNodes.add(new ArrayList<>(Arrays.asList(p, child)));
 						}
 					}
@@ -114,7 +118,7 @@ public class PersistenceAnalyzer {
 			openSet.removeAll(toRemove);
 		}
 
-		persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(descriptorFunc(graph, root, func), root.v)));
+		persistenceDiagram.add(new ArrayList<Double>(Arrays.asList(descriptorMap.get(root), root.v)));
 		persistenceNodes.add(new ArrayList<SWCPoint>(Arrays.asList(root, maxTip)));
 
 		persistenceDiagramMap.put(func, persistenceDiagram);
@@ -220,7 +224,7 @@ public class PersistenceAnalyzer {
 		final SNTService sntService = ij.context().getService(SNTService.class);
 		final Tree tree = sntService.demoTree();
 		final PersistenceAnalyzer analyzer = new PersistenceAnalyzer(tree);
-		final ArrayList<ArrayList<Double>> diagram = analyzer.getPersistenceDiagram("order");
+		final ArrayList<ArrayList<Double>> diagram = analyzer.getPersistenceDiagram("centrifugal");
 		for (final ArrayList<Double> point : diagram) {
 			System.out.println(point);
 		}

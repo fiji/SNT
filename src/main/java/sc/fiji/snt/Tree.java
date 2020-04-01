@@ -128,12 +128,47 @@ public class Tree {
 	 * @throws IllegalArgumentException if file path is not valid
 	 */
 	public Tree(final String filename) throws IllegalArgumentException {
+		this(filename, "");
+	}
+
+	/**
+	 * Instantiates a new tree from a SWC, TRACES or JSON file with filtering.
+	 *
+	 * @param filename    the absolute file path of the imported file
+	 * @param compartment A case insensitive string with at least 2 characters
+	 *                    describing the sub-cellular compartment (axonal or
+	 *                    dendritic) to be imported (e.g., 'axon', 'dendrites',
+	 *                    'axn', 'dnd', etc.). It is ignored if {@code filename}
+	 *                    encodes a .TRACES file.
+	 * @throws IllegalArgumentException if file path is not valid
+	 */
+	public Tree(final String filename, final String compartment) throws IllegalArgumentException {
 		final File f = new File(filename);
-		if (!f.exists()) throw new IllegalArgumentException(
-			"File does not exist: " + filename);
-		pafm = PathAndFillManager.createFromFile(filename);
-		if (pafm == null) throw new IllegalArgumentException(
-			"No paths extracted from " + filename + " Invalid file?");
+		if (!f.exists())
+			throw new IllegalArgumentException("File does not exist: " + filename);
+		final String normCompartment = (compartment == null || compartment.length() < 2) ? "all"
+				: compartment.toLowerCase().substring(0, 2);
+		switch (normCompartment) {
+		case "ax":
+			pafm = PathAndFillManager.createFromFile(filename, Path.SWC_AXON);
+			break;
+		case "ap":
+			pafm = PathAndFillManager.createFromFile(filename, Path.SWC_APICAL_DENDRITE);
+			break;
+		case "ba":
+		case "(b":
+			pafm = PathAndFillManager.createFromFile(filename, Path.SWC_DENDRITE);
+			break;
+		case "de":
+		case "dn":
+			pafm = PathAndFillManager.createFromFile(filename, Path.SWC_APICAL_DENDRITE, Path.SWC_DENDRITE);
+			break;
+		default:
+			pafm = PathAndFillManager.createFromFile(filename);
+			break;
+		}
+		if (pafm == null)
+			throw new IllegalArgumentException("No paths extracted from " + filename + " Invalid file/compartment?");
 		tree = pafm.getPaths();
 		setLabel(SNTUtils.stripExtension(f.getName()));
 	}
@@ -143,13 +178,22 @@ public class Tree {
 	 *
 	 * @param filename the absolute file path of the imported file
 	 * @param swcTypes only paths matching the specified SWC type(s) (e.g.,
-	 *          {@link Path#SWC_AXON}, {@link Path#SWC_DENDRITE}, etc.) will be
-	 *          imported
+	 *                 {@link Path#SWC_AXON}, {@link Path#SWC_DENDRITE}, etc.) will
+	 *                 be imported. Ignored if {@code filename} encodes a .TRACES
+	 *                 file.
+	 * @throws IllegalArgumentException if file path is not valid
 	 */
-	public Tree(final String filename, final int... swcTypes) {
-		this(filename);
-		tree = subTree(swcTypes).list();
-		pafm = null;
+	public Tree(final String filename, final int... swcTypes) throws IllegalArgumentException {
+		final File f = new File(filename);
+		if (!f.exists())
+			throw new IllegalArgumentException("File does not exist: " + filename);
+		if (filename.toLowerCase().endsWith(".traces") && swcTypes != null)
+			SNTUtils.log("Importing TRACES file: swcTypes will be ignored!");
+		pafm = PathAndFillManager.createFromFile(filename, swcTypes);
+		if (pafm == null)
+			throw new IllegalArgumentException("No paths extracted from " + filename + " Invalid file/flags?");
+		tree = pafm.getPaths();
+		setLabel(SNTUtils.stripExtension(f.getName()));
 	}
 
 	/**

@@ -2127,7 +2127,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	}
 
 	private boolean matchesType(final int type, final int... swcTypes) {
-		return swcTypes.length ==0 || Arrays.stream(swcTypes).anyMatch(t -> t == type);
+		return swcTypes.length == 0 || Arrays.stream(swcTypes).anyMatch(t -> t == type);
 	}
 
 	private boolean importNodes(final String descriptor,

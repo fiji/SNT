@@ -24,18 +24,16 @@ http://www.gnu.org/licenses/gpl-3.0.html>.
 package sc.fiji.snt.analysis;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
+import java.util.stream.IntStream;
 
 import org.scijava.table.DefaultGenericTable;
+import org.scijava.table.GenericTable;
 
 import sc.fiji.snt.SNTUtils;
 
 /**
- * Extension of {@code DefaultGenericTable} with minor scripting conveniences.
+ * Extension of {@code DefaultGenericTable} with (minor) scripting conveniences.
  *
  * @author Tiago Ferreira
  */
@@ -56,6 +54,11 @@ public class SNTTable extends DefaultGenericTable {
 
 	public boolean hasUnsavedData() {
 		return getRowCount() > 0 && hasUnsavedData;
+	}
+
+	public int insertRow(final String header) {
+		appendRow(header);
+		return Math.max(0, getRowCount() - 1);
 	}
 
 	public void set(final String colHeader, final int row, final Object value) {
@@ -91,33 +94,30 @@ public class SNTTable extends DefaultGenericTable {
 	}
 
 	public void save(final File outputFile) throws IOException {
-		final String sep = ",";
-		final PrintWriter pw = new PrintWriter(
-				new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()), StandardCharsets.UTF_8));
-		final int columns = getColumnCount();
-		final int rows = getRowCount();
-
-		// Print a column header to hold row headers
-		SNTUtils.csvQuoteAndPrint(pw, "Description");
-		pw.print(sep);
-		for (int col = 0; col < columns; ++col) {
-			SNTUtils.csvQuoteAndPrint(pw, getColumnHeader(col));
-			if (col < (columns - 1))
-				pw.print(sep);
-		}
-		pw.print("\r\n");
-		for (int row = 0; row < rows; row++) {
-			SNTUtils.csvQuoteAndPrint(pw, getRowHeader(row));
-			pw.print(sep);
-			for (int col = 0; col < columns; col++) {
-				SNTUtils.csvQuoteAndPrint(pw, get(col, row));
-				if (col < (columns - 1))
-					pw.print(sep);
-			}
-			pw.print("\r\n");
-		}
-		pw.close();
+		SNTUtils.saveTable(this, outputFile);
 		hasUnsavedData = false;
 	}
 
+	@Override
+	public String toString() {
+		return tableToString(this, 0, getRowCount() - 1);
+	}
+
+	public static String tableToString(final GenericTable table, final int firstRow, final int lastRow) {
+		final int fRow = Math.max(0, firstRow);
+		final int lRow = Math.min(table.getRowCount() - 1, lastRow);
+		final String sep = "\t";
+		final StringBuilder sb = new StringBuilder();
+		IntStream.range(0, table.getColumnCount()).forEach( col -> {
+			sb.append(table.getColumnHeader(col)).append(sep);
+		});
+		sb.append("\n\r");
+		IntStream.rangeClosed(fRow, lRow).forEach( row -> {
+			IntStream.range(0, table.getColumnCount()).forEach( col -> {
+				sb.append(table.get(col, row)).append(sep);
+			});
+			sb.append("\n\r");
+		});
+		return sb.toString().replaceAll("null", " ");
+	}
 }

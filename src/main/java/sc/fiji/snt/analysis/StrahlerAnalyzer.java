@@ -37,7 +37,6 @@ import java.util.stream.IntStream;
 
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.AsSubgraph;
-import org.jgrapht.graph.DefaultDirectedGraph;
 
 import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
@@ -45,6 +44,7 @@ import sc.fiji.snt.Path;
 import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
+import sc.fiji.snt.analysis.graph.DirectedWeightedGraph;
 import sc.fiji.snt.analysis.graph.SWCWeightedEdge;
 import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.Viewer3D;
@@ -64,18 +64,20 @@ public class StrahlerAnalyzer {
 	private final Map<Integer, Double> bPointsMap = new TreeMap<>();
 	private final Map<Integer, Double> bRatioMap = new TreeMap<>();
 	private final Map<Integer, Double> tLengthMap = new TreeMap<>();
-	private DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> graph;
+	private DirectedWeightedGraph graph;
 
 	public StrahlerAnalyzer(final Tree tree) {
 		this.tree = tree;
 	}
 
-	private void compute() {
-
+	private void compute() throws IllegalArgumentException {
 		SNTUtils.log("Retrieving graph...");
-		graph = tree.getGraph(); // IllegalArgumentException if i.e, tree has multiple roots
-		if (graph == null)
-			return;
+		compute(tree.getGraph()); // IllegalArgumentException if i.e, tree has multiple roots
+	}
+
+	private void compute(final DirectedWeightedGraph graph) throws IllegalArgumentException {
+
+		this.graph = graph;
 
 		final List<SWCPoint> allNodes = new ArrayList<>();
 		final List<SWCPoint> unVisitedNodes = new ArrayList<>();
@@ -184,7 +186,7 @@ public class StrahlerAnalyzer {
 	/**
 	 * @return the graph of the tree being parsed.
 	 */
-	public DefaultDirectedGraph<SWCPoint, SWCWeightedEdge> getGraph() {
+	public DirectedWeightedGraph getGraph() {
 		if (graph == null) compute();
 		return graph;
 	}
@@ -252,6 +254,12 @@ public class StrahlerAnalyzer {
 	public Map<Integer, List<Path>> getBranches() {
 		if (branchesMap == null || branchesMap.isEmpty()) compute();
 		return branchesMap;
+	}
+
+	public List<Path> getBranches(final int order) throws IllegalArgumentException {
+		if (order < 1 || order > getRootNumber())
+			throw new IllegalArgumentException("Invalid order: 1 >= order <=" + getRootNumber());
+		return branchesMap.get(order);
 	}
 
 	/**
@@ -322,5 +330,15 @@ public class StrahlerAnalyzer {
 		viewer.addColorBarLegend(mapper);
 		viewer.add(tree);
 		viewer.show();
+	}
+
+	public static void classify(final DirectedWeightedGraph graph, final boolean reverseOrder) {
+		final StrahlerAnalyzer sa = new StrahlerAnalyzer(null);
+		sa.compute(graph);
+		if (reverseOrder) {
+			graph.vertexSet().forEach( vertex -> {
+				vertex.v = sa.getRootNumber() - vertex.v + 1;
+			});
+		}
 	}
 }

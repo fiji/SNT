@@ -45,6 +45,7 @@ import ij.measure.Calibration;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.graph.DirectedWeightedGraph;
 import sc.fiji.snt.hyperpanes.MultiDThreePanes;
+import sc.fiji.snt.io.MouseLightLoader;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
@@ -127,12 +128,47 @@ public class Tree {
 	 * @throws IllegalArgumentException if file path is not valid
 	 */
 	public Tree(final String filename) throws IllegalArgumentException {
+		this(filename, "");
+	}
+
+	/**
+	 * Instantiates a new tree from a SWC, TRACES or JSON file with filtering.
+	 *
+	 * @param filename    the absolute file path of the imported file
+	 * @param compartment A case insensitive string with at least 2 characters
+	 *                    describing the sub-cellular compartment (axonal or
+	 *                    dendritic) to be imported (e.g., 'axon', 'dendrites',
+	 *                    'axn', 'dnd', etc.). It is ignored if {@code filename}
+	 *                    encodes a .TRACES file.
+	 * @throws IllegalArgumentException if file path is not valid
+	 */
+	public Tree(final String filename, final String compartment) throws IllegalArgumentException {
 		final File f = new File(filename);
-		if (!f.exists()) throw new IllegalArgumentException(
-			"File does not exist: " + filename);
-		pafm = PathAndFillManager.createFromFile(filename);
-		if (pafm == null) throw new IllegalArgumentException(
-			"No paths extracted from " + filename + " Invalid file?");
+		if (!f.exists())
+			throw new IllegalArgumentException("File does not exist: " + filename);
+		final String normCompartment = (compartment == null || compartment.length() < 2) ? "all"
+				: compartment.toLowerCase().substring(0, 2);
+		switch (normCompartment) {
+		case "ax":
+			pafm = PathAndFillManager.createFromFile(filename, Path.SWC_AXON);
+			break;
+		case "ap":
+			pafm = PathAndFillManager.createFromFile(filename, Path.SWC_APICAL_DENDRITE);
+			break;
+		case "ba":
+		case "(b":
+			pafm = PathAndFillManager.createFromFile(filename, Path.SWC_DENDRITE);
+			break;
+		case "de":
+		case "dn":
+			pafm = PathAndFillManager.createFromFile(filename, Path.SWC_APICAL_DENDRITE, Path.SWC_DENDRITE);
+			break;
+		default:
+			pafm = PathAndFillManager.createFromFile(filename);
+			break;
+		}
+		if (pafm == null)
+			throw new IllegalArgumentException("No paths extracted from " + filename + " Invalid file/compartment?");
 		tree = pafm.getPaths();
 		setLabel(SNTUtils.stripExtension(f.getName()));
 	}
@@ -142,12 +178,22 @@ public class Tree {
 	 *
 	 * @param filename the absolute file path of the imported file
 	 * @param swcTypes only paths matching the specified SWC type(s) (e.g.,
-	 *          {@link Path#SWC_AXON}, {@link Path#SWC_DENDRITE}, etc.) will be
-	 *          imported
+	 *                 {@link Path#SWC_AXON}, {@link Path#SWC_DENDRITE}, etc.) will
+	 *                 be imported. Ignored if {@code filename} encodes a .TRACES
+	 *                 file.
+	 * @throws IllegalArgumentException if file path is not valid
 	 */
-	public Tree(final String filename, final int... swcTypes) {
-		this(filename);
-		tree = subTree(swcTypes).list();
+	public Tree(final String filename, final int... swcTypes) throws IllegalArgumentException {
+		final File f = new File(filename);
+		if (!f.exists())
+			throw new IllegalArgumentException("File does not exist: " + filename);
+		if (filename.toLowerCase().endsWith(".traces") && swcTypes != null)
+			SNTUtils.log("Importing TRACES file: swcTypes will be ignored!");
+		pafm = PathAndFillManager.createFromFile(filename, swcTypes);
+		if (pafm == null)
+			throw new IllegalArgumentException("No paths extracted from " + filename + " Invalid file/flags?");
+		tree = pafm.getPaths();
+		setLabel(SNTUtils.stripExtension(f.getName()));
 	}
 
 	/**
@@ -319,27 +365,147 @@ public class Tree {
 	 *         Tree if no hits were retrieved
 	 */
 	public Tree subTree(final int... swcTypes) {
+		return subTreeNodeConversion(swcTypes);
+		//return subTreePathBased2(swcTypes);
+	}
+
+	Tree subTreePathBased1(final int... swcTypes) {
+		// This fails currently
 		final Tree subtree = new Tree();
-		Iterator<Path> it = tree.iterator();
-		while (it.hasNext()) {
-			final Path p = it.next();
-			final boolean filteredType = Arrays.stream(swcTypes).anyMatch(t -> t == p
-				.getSWCType());
-			if (filteredType) subtree.add(p);
+		for (final Path currentPath : list()) {
+			if (currentPath.getName().startsWith("Path 0"))
+				System.out.println(">> Parsing " + currentPath.getName());
+			if (matchesType(currentPath, swcTypes)) {
+
+				final Path p = currentPath.clone();
+				p.somehowJoins.clear();
+				p.children.clear();
+				p.startJoins = null;
+				p.startJoinsPoint = null;
+				p.endJoins = null;
+				p.endJoinsPoint = null;
+
+				for (final Path joins : currentPath.somehowJoins) {
+					if (matchesType(joins, swcTypes)) {
+						p.somehowJoins.add(joins);
+					}
+				}
+				for (final Path child : currentPath.children) {
+					if (matchesType(child, swcTypes)) {
+						p.children.add(child);
+					}
+				}
+				if (currentPath.startJoins != null && matchesType(currentPath.startJoins, swcTypes)) {
+					p.startJoins = currentPath.startJoins;
+					p.startJoinsPoint = currentPath.startJoinsPoint;
+				}
+				if (currentPath.endJoins != null && matchesType(currentPath.endJoins, swcTypes)) {
+					p.endJoins = currentPath.endJoins;
+					p.endJoinsPoint = currentPath.endJoinsPoint;
+				}
+				if (p.startJoins == null && p.endJoins == null)
+					p.setIsPrimary(true);
+				subtree.add(p);
+			}
 		}
-		it = subtree.tree.iterator();
-		while (it.hasNext()) {
-			final Path p = it.next();
+		if (getLabel() != null)
+			subtree.setLabel(getLabel() + " (filtered)");
+		return subtree;
+	}
+
+	Tree subTreePathBased2(final int... swcTypes) {
+		// This alters the # of | branches
+		final Tree subtree = new Tree();
+		ArrayList<Path> pathPool = new ArrayList<Path>(tree);
+		for (final Path p : pathPool) {
+			if (matchesType(p, swcTypes)) {
+				if (subtree.isEmpty()) {
+					final Path rootPath = p.clone();
+					rootPath.setIsPrimary(true);
+					rootPath.somehowJoins = p.somehowJoins;
+					rootPath.children = p.children;
+					subtree.add(rootPath);
+				} else {
+					subtree.add(p);
+				}
+			}
+		}
+
+		// Now remove all linkages and references to non-filtered paths
+		for (final Path p : subtree.list()) {
 			final Iterator<Path> joinsIt = p.somehowJoins.iterator();
 			while (joinsIt.hasNext()) {
 				final Path joins = joinsIt.next();
-				final boolean filteredType = Arrays.stream(swcTypes).anyMatch(t -> t == joins.getSWCType());
-				if (!filteredType)
+				if (!matchesType(joins, swcTypes)) {
 					joinsIt.remove();
+				}
 			}
+			final Iterator<Path> childrenIt = p.children.iterator();
+			while (childrenIt.hasNext()) {
+				final Path child = childrenIt.next();
+				if (!matchesType(child, swcTypes)) {
+					childrenIt.remove();
+				}
+			}
+			if (p.startJoins != null && !matchesType(p.startJoins, swcTypes)) {
+				p.startJoins = null;
+				p.startJoinsPoint = null;
+			}
+			if (p.endJoins != null && !matchesType(p.endJoins, swcTypes)) {
+				p.endJoins = null;
+				p.endJoinsPoint = null;
+			}
+			if (p.startJoins == null && p.endJoins == null)
+				p.setIsPrimary(true);
 		}
+
 		if (getLabel() != null) subtree.setLabel(getLabel() + " (filtered)");
 		return subtree;
+	}
+
+	Tree subTreeNodeConversion(final int... swcTypes) {
+		// this is ~4x slower than Path-based conversion but accurate
+		final List<SWCPoint> nodes = getNodesAsSWCPoints();
+		//System.out.println("nNodes: "+ nodes.size());
+
+		Iterator<SWCPoint> it = nodes.iterator();
+		Set<Integer> idsToRemove = new HashSet<>();
+
+		// Remove filtered nodes
+		while (it.hasNext()) {
+			final SWCPoint node = it.next();
+			if (!matchesType(node, swcTypes))
+				idsToRemove.add(node.id);
+		}
+		if (!idsToRemove.isEmpty()) {
+			it = nodes.iterator();
+			while (it.hasNext()) {
+				final SWCPoint node = it.next();
+				if (idsToRemove.contains(node.id)) {
+					it.remove();
+				}
+			}
+			it = nodes.iterator();
+			while (it.hasNext()) {
+				final SWCPoint node = it.next();
+				if (idsToRemove.contains(node.parent))
+					node.parent = -1;
+			}
+		}
+
+		//System.out.println("Returning subtree with nNodes: "+ nodes.size());
+		return new Tree(nodes, getLabel() + " (filtered)");
+	}
+
+	private boolean matchesType(final SWCPoint node, final int... swcTypes) {
+		for (int type : swcTypes) {
+			if (node.type == type) return true;
+		}
+		return false;
+	}
+
+	private boolean matchesType(final Path path, final int... swcTypes) {
+		return Arrays.stream(swcTypes).anyMatch(t -> t == path.getSWCType());
 	}
 
 	/**
@@ -956,7 +1122,7 @@ public class Tree {
 		return label;
 	}
 
-	public Collection<SWCPoint> getNodesAsSWCPoints() throws IllegalArgumentException {
+	public List<SWCPoint> getNodesAsSWCPoints() throws IllegalArgumentException {
 		initPathAndFillManager();
 		try {
 			return pafm.getSWCFor(tree);
@@ -1235,30 +1401,63 @@ public class Tree {
 	/* IDE debug method */
 	public static void main(final String[] args) {
 
-		final Tree tree = new Tree("/home/tferr/code/zi/AA0174.json");
+		final Tree tree = new Tree("/home/tferr/code/morphonets/SNT/clustering/zi/cells/AA0174.json");
 		TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-		final int treeBPs = analyzer.getBranchPoints().size();
-		final int treeTips = analyzer.getTips().size();
-		final int treeBranches = analyzer.getBranches().size();
+		System.out.println("Creating graph...");
 
-		final DirectedWeightedGraph graph = tree.getGraph();
-		System.out.println("Graph : Tree Before Filtering");
-		System.out.println(graph.vertexSet().size() + " : " + tree.getNodes().size());
-		System.out.println(graph.vertexSet().size() + " : " + tree.getNodesAsSWCPoints().size());
+		DirectedWeightedGraph graph = tree.getGraph();
+		final int nodes = tree.getNodes().size();
+		final int points = tree.getNodesAsSWCPoints().size();
+		final int vertices = graph.vertexSet().size();
+		final int bps = analyzer.getBranchPoints().size();
+		final int tips = analyzer.getTips().size();
+		final int branches = analyzer.getBranches().size();
+		final int primaryBranches = analyzer.getPrimaryBranches().size();
+		final double primaryLength = analyzer.getPrimaryLength();
 
-		final Tree aTree = tree.subTree("axon");
-		final DirectedWeightedGraph aGraph = aTree.getGraph();
-		System.out.println("SubGraph : SubTree After Filtering");
-		System.out.println(tree.getLabel() + " : " + aTree.getLabel());
-		System.out.println(aGraph.vertexSet().size() + " : " + aTree.getNodes().size());
-		System.out.println(aGraph.vertexSet().size() + " : " + aTree.getNodesAsSWCPoints().size());
+		System.out.println("Creating reference subtree...");
+		MouseLightLoader loader = new MouseLightLoader("AA0174");
+		Tree refSubTree = loader.getTree("axon");
+		DirectedWeightedGraph refGraph = refSubTree.getGraph();
+		TreeAnalyzer refAnalyzer = new TreeAnalyzer(refSubTree);
+
+		System.out.println("Creating Subtree...");
+		Tree aTree = tree.subTree("axon");
+		double total = 0;
+		final int nTimes = 100;
+		for (int i = 0; i < nTimes; i++) {
+			long before = System.currentTimeMillis();
+			aTree = tree.subTree("axon");
+			long after = System.currentTimeMillis();
+			total += after-before;
+		}
+		System.out.println("Avg time (all runs): " + SNTUtils.formatDouble(total % 1000 /nTimes, 4));
+
+		graph = aTree.getGraph();
+		analyzer = new TreeAnalyzer(aTree);
+		System.out.println("Subtree properties:");
+		System.out.println("Label:     \t\t" + aTree.getLabel());
+		System.out.println("nPaths:    \t\t" + analyzer.getNPaths() + "/" + refAnalyzer.getNPaths());
+		System.out.println("vertices:  \t\t" + graph.vertexSet().size() + "/" + refGraph.vertexSet().size());
+		System.out.println("nodes:     \t\t" + aTree.getNodes().size() + "/" +  refSubTree.getNodes().size() );
+		System.out.println("SWCPoints: \t\t" + aTree.getNodesAsSWCPoints().size() + "/" + refSubTree.getNodesAsSWCPoints().size());
+		System.out.println("I branches:\t\t" + analyzer.getPrimaryBranches().size() + "/" + refAnalyzer.getPrimaryBranches().size() );
+		System.out.println("I length:  \t\t" + analyzer.getPrimaryLength() + "/" + refAnalyzer.getPrimaryLength());
+		System.out.println("Branches:  \t\t" + analyzer.getBranches().size() + "/" + refAnalyzer.getBranches().size());
 
 		// Did the filtering affect original tree?
 		analyzer = new TreeAnalyzer(tree);
-		System.out.println("Tree Before Filtering : Tree After Filtering");
-		System.out.println(treeBPs + " : " + analyzer.getBranchPoints().size());
-		System.out.println(treeTips + " : " + analyzer.getTips().size());
-		System.out.println(treeBranches + " : " + analyzer.getBranches().size());
+		graph = tree.getGraph();
+		System.out.println("\nOriginal Tree Before/After Filtering:");
+		System.out.println("Label:      \t\t" + tree.getLabel());
+		System.out.println("vertices:   \t\t" + graph.vertexSet().size() + "/" + vertices);
+		System.out.println("nodes:      \t\t" + tree.getNodes().size() + "/" + nodes);
+		System.out.println("SWCPoints:  \t\t" + tree.getNodesAsSWCPoints().size() + "/" + points);
+		System.out.println("I branches: \t\t" + analyzer.getPrimaryBranches().size() + "/" + primaryBranches);
+		System.out.println("I length:   \t\t" + analyzer.getPrimaryLength() + "/" + primaryLength);
+		System.out.println("Branches:   \t\t" + analyzer.getBranches().size() + "/" + branches);
+		System.out.println("Tips:       \t\t" + analyzer.getTips().size() + "/" + tips);
+		System.out.println("BPs:        \t\t" + analyzer.getBranchPoints().size() + "/" + bps);
 
 	}
 }

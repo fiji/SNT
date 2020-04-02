@@ -811,6 +811,35 @@ public class PathAndFillManager extends DefaultHandler implements
 			"You must select all the connected paths\n(" + selectedAndNotConnected +
 				" paths (e.g. \"" + disconnectedExample + "\") were not connected.)");
 
+
+		// FIXME: DUP NODES: These should have never occurred in the first place
+//		Iterator<SWCPoint> it = result.iterator();
+//		Set<Integer> idsToRemove = new HashSet<>();
+//		for (int i = 0; i < result.size(); i++) {
+//			final SWCPoint node1 = result.get(i);
+//			for (int j = 1; j < result.size(); j++) {
+//				if (i == j) continue;
+//				final SWCPoint node2 = result.get(j);
+//				if (node2.isSameLocation(node1) && node2.parent == node1.parent) {
+//					idsToRemove.add(node2.id);
+//					System.out.println("Removing #### ");
+//					System.out.println(node2);
+//					System.out.println(node1);
+//				}
+//			}
+//		}
+//
+//		while (it.hasNext()) {
+//			final SWCPoint node = it.next();
+//			if (idsToRemove.contains(node.id)) {
+//				it.remove();
+//			}
+//		}
+//		for (SWCPoint node: result) {
+//			if (idsToRemove.contains(node.parent))
+//				node.parent = -1;
+//		}
+
 		return result;
 	}
 
@@ -1822,10 +1851,10 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @return the PathAndFillManager instance, or null if file could not be
 	 *         imported
 	 */
-	public static PathAndFillManager createFromFile(final String filePath) {
+	public static PathAndFillManager createFromFile(final String filePath, final int... swcTypes) {
 		final PathAndFillManager pafm = new PathAndFillManager();
 		pafm.setHeadless(true);
-		if (pafm.load(filePath)) return pafm;
+		if (pafm.load(filePath, swcTypes)) return pafm;
 		else return null;
 	}
 
@@ -2045,7 +2074,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		final String descriptor,
 		final boolean assumeCoordinatesInVoxels, final double xOffset,
 		final double yOffset, final double zOffset, final double xScale,
-		final double yScale, final double zScale, final boolean replaceAllPaths)
+		final double yScale, final double zScale, final boolean replaceAllPaths, final int... swcTypes)
 	{
 
 		if (replaceAllPaths) clear();
@@ -2068,19 +2097,21 @@ public class PathAndFillManager extends DefaultHandler implements
 					return false;
 				}
 				try {
-					final int id = Integer.parseInt(fields[0]);
 					final int type = Integer.parseInt(fields[1]);
-					final double x = xScale * Double.parseDouble(fields[2]) + xOffset;
-					final double y = yScale * Double.parseDouble(fields[3]) + yOffset;
-					final double z = zScale * Double.parseDouble(fields[4]) + zOffset;
-					double radius;
-					try {
-						radius = Double.parseDouble(fields[5]);
-					} catch (final NumberFormatException ignored) {
-						radius = 0; // files in which radius is set to NaN
+					if (matchesType(type, swcTypes)) {
+						final int id = Integer.parseInt(fields[0]);
+						final double x = xScale * Double.parseDouble(fields[2]) + xOffset;
+						final double y = yScale * Double.parseDouble(fields[3]) + yOffset;
+						final double z = zScale * Double.parseDouble(fields[4]) + zOffset;
+						double radius;
+						try {
+							radius = Double.parseDouble(fields[5]);
+						} catch (final NumberFormatException ignored) {
+							radius = 0; // files in which radius is set to NaN
+						}
+						final int previous = Integer.parseInt(fields[6]);
+						nodes.add(new SWCPoint(id, type, x, y, z, radius, previous));
 					}
-					final int previous = Integer.parseInt(fields[6]);
-					nodes.add(new SWCPoint(id, type, x, y, z, radius, previous));
 				}
 				catch (final NumberFormatException nfe) {
 					error("There was a malformed number in line: " + line);
@@ -2093,6 +2124,10 @@ public class PathAndFillManager extends DefaultHandler implements
 			return false;
 		}
 		return importNodes(descriptor, nodes, null, assumeCoordinatesInVoxels);
+	}
+
+	private boolean matchesType(final int type, final int... swcTypes) {
+		return swcTypes.length == 0 || Arrays.stream(swcTypes).anyMatch(t -> t == type);
 	}
 
 	private boolean importNodes(final String descriptor,
@@ -2191,6 +2226,19 @@ public class PathAndFillManager extends DefaultHandler implements
 					currentPoint = null;
 				}
 			}
+
+			// FIXME: DUP NODES: Paths contain duplicated nodes!! Remove them here:
+//			for (int i = 0; i < currentPath.size(); i++) {
+//				final PointInImage node1 = currentPath.getNode(i);
+//				for (int j = 1; j < currentPath.size(); j++) {
+//					if (i == j) continue;
+//					final PointInImage node2 = currentPath.getNode(j);
+//					if (node2.isSameLocation(node1)) {
+//						System.out.println("Removing "+ node2);
+//						currentPath.removeNode(j);
+//					}
+//				}
+//			}
 			currentPath.setGuessedTangents(2);
 			addPath(currentPath);
 		}
@@ -2338,7 +2386,8 @@ public class PathAndFillManager extends DefaultHandler implements
 	public boolean importSWC(final String filePath,
 		final boolean assumeCoordinatesInVoxels, final double xOffset,
 		final double yOffset, final double zOffset, final double xScale,
-		final double yScale, final double zScale, final boolean replaceAllPaths)
+		final double yScale, final double zScale, final boolean replaceAllPaths,
+		final int... swcTypes)
 	{
 
 		if (filePath == null) return false;
@@ -2358,7 +2407,7 @@ public class PathAndFillManager extends DefaultHandler implements
 					StandardCharsets.UTF_8));
 
 			result = importSWC(br, SNTUtils.stripExtension(f.getName()), assumeCoordinatesInVoxels, xOffset, yOffset,
-				zOffset, xScale, yScale, zScale, replaceAllPaths);
+				zOffset, xScale, yScale, zScale, replaceAllPaths, swcTypes);
 
 			if (is != null) is.close();
 
@@ -2425,7 +2474,7 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 	}
 
-	protected boolean loadUncompressedXML(final String filename) {
+	protected boolean loadUncompressedXML(final String filename, final int...swcTypes) {
 		try {
 			SNTUtils.log("Loading uncompressed file...");
 			return load(new BufferedInputStream(new FileInputStream(filename)));
@@ -2436,9 +2485,18 @@ public class PathAndFillManager extends DefaultHandler implements
 		}
 	}
 
-	private boolean loadJSON(final String filename) {
+	private boolean loadJSON(final String filename, final int... swcTypes) {
+		String compartment = "all";
+		if (swcTypes.length == 1 && swcTypes[0] == Path.SWC_AXON) {
+			compartment = "axon";
+		}
+		else if (swcTypes.length == 1 && (swcTypes[0] == Path.SWC_DENDRITE || swcTypes[0] == Path.SWC_APICAL_DENDRITE)
+				|| swcTypes.length == 2
+						&& Arrays.stream(swcTypes).sum() == Path.SWC_DENDRITE + Path.SWC_APICAL_DENDRITE) {
+			compartment = "dendrite";
+		}
 		try {
-			final Map<String, TreeSet<SWCPoint>> nMap = MouseLightLoader.extractNodes(new File(filename), "all");
+			final Map<String, TreeSet<SWCPoint>> nMap = MouseLightLoader.extractNodes(new File(filename), compartment);
 			final Map<String, Tree> outMap = importNeurons(nMap, null, "um");
 			return outMap.values().stream().anyMatch(tree -> tree != null && !tree.isEmpty());
 		} catch (final FileNotFoundException | IllegalArgumentException | JSONException e) {
@@ -2452,9 +2510,12 @@ public class PathAndFillManager extends DefaultHandler implements
 	 *
 	 * @param filePath the absolute path to the file (.Traces, SWC or JSON) to be
 	 *                 imported
+	 * @param swcTypes (Optional) The SWC type(s) (e.g., {@link Path#SWC_AXON},
+	 *                 {@link Path#SWC_DENDRITE}, etc.) to be considered in the
+	 *                 import. Ignored if {@code filePath} encodes a .TRACES file.
 	 * @return true, if successful
 	 */
-	public boolean load(final String filePath) {
+	public boolean load(final String filePath, final int... swcTypes) {
 		final int guessedType = guessTracesFileType(filePath);
 		boolean result;
 		switch (guessedType) {
@@ -2465,10 +2526,10 @@ public class PathAndFillManager extends DefaultHandler implements
 				result = loadUncompressedXML(filePath);
 				break;
 			case TRACES_FILE_TYPE_ML_JSON:
-				result = loadJSON(filePath);
+				result = loadJSON(filePath, swcTypes);
 				break;
 			case TRACES_FILE_TYPE_SWC:
-				result = importSWC(filePath, false, 0, 0, 0, 1, 1, 1, true);
+				result = importSWC(filePath, false, 0, 0, 0, 1, 1, 1, true, swcTypes);
 				break;
 			default:
 				SNTUtils.warn("guessTracesFileType() return an unknown type" + guessedType);

@@ -87,7 +87,6 @@ public class PersistenceAnalyzer {
 		for (final SWCPoint t : tips) {
 			openSet.add(t);
 			t.v = descriptorMap.get(t);
-			
 			if (t.v > maxTip.v) {
 				maxTip = t;
 			}
@@ -179,13 +178,17 @@ public class PersistenceAnalyzer {
 		});
 		return persistenceNodesMap.get(descriptor);
 	}
+	
+	public static List<String> getDescriptors() {
+		return new ArrayList<String>(Arrays.asList("geodesic", "radial", "depth", "path", "centrifugal"));
+	}
 
 	private double descriptorFunc(final DirectedWeightedGraph graph, final SWCPoint node, final String func) throws UnknownMetricException {
-		if (func.equalsIgnoreCase("geodesic"))
+		if (func.toLowerCase().contains("geodesic"))
 			return geodesicDistanceToRoot(graph, node);
-		else if (func.equalsIgnoreCase("radial"))
+		else if (func.toLowerCase().contains("radial"))
 			return radialDistanceToRoot(graph, node);
-		else if (func.equalsIgnoreCase("depth"))
+		else if (func.toLowerCase().contains("depth"))
 			return node.getZ();
 		else if (func.toLowerCase().contains("path"))
 			return node.getPath().getOrder();

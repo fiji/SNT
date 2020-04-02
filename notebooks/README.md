@@ -1,6 +1,6 @@
 # SNT Notebooks
 
-This collection of notebooks demonstrates how to access the [SNT] [] [API] from a
+This collection of notebooks demonstrates how to access the [SNT][] [API][] from a
 Python environment.
 
 
@@ -126,18 +126,18 @@ conda install -c conda-forge matplotlib
 
 ## Resources
 - SNT:
- - [Documentation][snt]
- - [API]
- - [Repository](https://github.com/morphonets/SNT)
- - [Image.sc](https://forum.image.sc/tag/snt/)
+  - [Documentation][snt]
+  - [API]
+  - [Repository](https://github.com/morphonets/SNT)
+  - [Image.sc](https://forum.image.sc/tag/snt/)
 
 - pyimagej:
- - [Documentation][pyimagej]
- - [Repository](https://github.com/imagej/pyimagej)
- - [Image.sc](https://forum.image.sc/tag/pyimagej/)
+  - [Documentation][pyimagej]
+  - [Repository](https://github.com/imagej/pyimagej)
+  - [Image.sc](https://forum.image.sc/tag/pyimagej/)
 
 - conda:
- - [Documentation](https://docs.conda.io/projects/conda/en/latest/)
+  - [Documentation](https://docs.conda.io/projects/conda/en/latest/)
 
 
 [snt]: https://imagej.net/SNT

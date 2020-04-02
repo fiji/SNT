@@ -23,16 +23,17 @@ The core requirement are [pyimagej] and [Fiji](https://imagej.net/Fiji).
 1. Install [conda](https://www.anaconda.com/distribution/). See e.g., [here][pyimagej]
    for details.
 
-2. Activate the [conda-forge](https://conda-forge.org/) channel:
+2. Activate the [conda-forge](https://conda-forge.org/) channel and set it default:
 
   ```bash
   conda config --add channels conda-forge
+  conda config --set channel_priority strict
   ```
 
 3. Install [pyimagej] into a new conda environment named `pyimagej`:
 
   ```bash
-  conda create -n pyimagej pyimagej openjdk=8
+  conda create -n pyimagej pyimagej openjdk
   ```
 
   At this point, it is convenient to make the new `pyimagej` environment available
@@ -71,13 +72,14 @@ Before running the notebooks, there are three more things to take care of:
 
   ```bash
   conda activate pyimagej
-  conda install -c defaults matplotlib pandas seaborn scikit-learn
+  conda install matplotlib pandas seaborn scikit-learn
   ```
 
   However, some notebooks require specialized packages from `conda-forge`:
 
   ```bash
-  conda install -c conda-forge gudhi trimesh
+  conda activate pyimagej
+  conda install gudhi trimesh
   ```
   Some functionality may require [blender](https://www.blender.org/download/).
 
@@ -95,10 +97,24 @@ jupyter notebook
 
 (replacing `/path/to/notebooks/directory` with the path to the actual directory
 where you unzipped the _notebooks_ directory). If you prefer JupyterLab, replace
-`jupyter notebook` with `jupyter lab`.
+`jupyter notebook` with `jupyter lab`. You may need to install them on the
+`pyimagej` environment, if not present:
+
+```bash
+conda activate pyimagej
+conda install jupyterlab
+```
 
 
 ## Troubleshooting
+We had confusing reports of errors related to missing `libjvm.so` files with java
+8. Replacing openjdk (and pyjnius) with a newer version seems to have fixed it:
+
+```bash
+conda activate pyimagej
+conda install openjdk=11
+```
+
 Installing packages from multiple channels may lead to installation conflicts.
 Packages served by e.g., `conda-forge` and the regular `defaults` channel may
 not be 1000% compatible. You can impose a preference for `conda-forge` by having

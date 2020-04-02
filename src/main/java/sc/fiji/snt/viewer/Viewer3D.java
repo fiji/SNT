@@ -1501,6 +1501,28 @@ public class Viewer3D {
 	}
 
 	/**
+	 * Renders the scene from a specified camera angle (script-friendly).
+	 *
+	 * @param viewMode the view mode (case insensitive): "side" or "sagittal"; "top"
+	 *                 or "coronal"; "perspective" or "overview"; "default" or "".
+	 */
+	public void setViewMode(final String viewMode) {
+		if (viewMode == null || viewMode.trim().isEmpty()) {
+			setViewMode(ViewMode.DEFAULT);
+		}
+		final String vMode = viewMode.toLowerCase();
+		if (vMode.contains("side") || vMode.contains("sag")) {
+			setViewMode(ViewMode.SIDE);
+		} else if (vMode.contains("top") || vMode.contains("cor")) {
+			setViewMode(ViewMode.TOP);
+		} else if (vMode.contains("pers") || vMode.contains("ove")) {
+			setViewMode(ViewMode.PERSPECTIVE);
+		} else {
+			setViewMode(ViewMode.DEFAULT);
+		}
+	}
+
+	/**
 	 * Renders the scene from a specified camera angle using polar coordinates
 	 * relative to the the center of the scene. Only X and Y dimensions are
 	 * required, as the distance to center is automatically computed. Current

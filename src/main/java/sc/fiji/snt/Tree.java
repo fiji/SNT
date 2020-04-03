@@ -866,7 +866,9 @@ public class Tree {
 	public List<PointInImage> getNodes() {
 		final List<PointInImage> list = new ArrayList<>();
 		for (final Path p : tree) {
-			for (int i = 0; i < p.size(); ++i) {
+			// The first node of a child path is the same as the forked point
+			// on its parent, so we'll skip it if this is a child path
+			for (int i =  (p.isPrimary()) ? 0 : 1; i < p.size(); ++i) {
 				list.add(p.getNodeWithoutChecks(i));
 			}
 		}

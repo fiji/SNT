@@ -1123,6 +1123,7 @@ public class Tree {
 	}
 
 	public List<SWCPoint> getNodesAsSWCPoints() throws IllegalArgumentException {
+		if (isEmpty()) return new ArrayList<SWCPoint>();
 		initPathAndFillManager();
 		try {
 			return pafm.getSWCFor(tree);

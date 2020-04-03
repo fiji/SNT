@@ -143,7 +143,6 @@ public class StrahlerAnalyzer {
 			bPointsMap.put(order, nBPs);
 
 			// # N. branches
-			double nBranches = 0;
 			ArrayList<Path>branches = new ArrayList<>();
 			final LinkedHashSet<SWCPoint> relevantNodes = new LinkedHashSet<>();
 			relevantNodes.addAll(subGraph.vertexSet().stream()
@@ -152,12 +151,11 @@ public class StrahlerAnalyzer {
 					.filter(v -> graph.outDegreeOf(v) == 0).collect(Collectors.toCollection(HashSet::new)));
 			
 			for (SWCPoint subGraphNode : relevantNodes) {
-				nBranches++;
 				Path p = getPathToFirstRelevantAncestor(subGraphNode);
-				branches.add(p);
+				if (p.size() > 1) branches.add(p);
 			}
 			
-			nBranchesMap.put(order, nBranches);
+			nBranchesMap.put(order, (double)branches.size());
 			branchesMap.put(order, branches);
 		});
 	}
@@ -193,6 +191,7 @@ public class StrahlerAnalyzer {
 	
 	private Path getPathToFirstRelevantAncestor(SWCPoint startVertex) {
 		Path path = startVertex.getPath().createPath();
+		path.setOrder((int) startVertex.v);
 		SWCPoint currentVertex = startVertex;
 
 		List<SWCPoint> reversed = new ArrayList<SWCPoint>();
@@ -213,11 +212,20 @@ public class StrahlerAnalyzer {
 	}
 
 	/**
-	 * @return the highest Horton-Strahler number of the parsed tree.
+	 * @return the highest Horton-Strahler number in the parsed tree.
 	 */
 	public int getRootNumber() {
 		if (maxOrder < 1) compute();
 		return maxOrder;
+	}
+
+	/**
+	 * @return the highest Horton-Strahler number associated with a branch in the
+	 *         parsed tree. Either {@code getRootNumber()} or
+	 *         {@code getRootNumber()-1}.
+	 */
+	public int getHighestBranchOrder() {
+		return (branchesMap.get(getRootNumber()).isEmpty()) ? maxOrder-1 : maxOrder;
 	}
 
 	/**
@@ -257,9 +265,24 @@ public class StrahlerAnalyzer {
 	}
 
 	public List<Path> getBranches(final int order) throws IllegalArgumentException {
-		if (order < 1 || order > getRootNumber())
-			throw new IllegalArgumentException("Invalid order: 1 >= order <=" + getRootNumber());
+		if (order < 1 || order > getHighestBranchOrder())
+			throw new IllegalArgumentException("Invalid branch order: 1 >= order <= " + getHighestBranchOrder());
 		return branchesMap.get(order);
+	}
+
+	public List<Path> getRootAssociatedBranches() {
+		final List<Path> rootBranches = new ArrayList<>();
+		final int highestBranchOrder = getHighestBranchOrder();
+		final SWCPoint root = graph.getRoot();
+		IntStream.rangeClosed(1, highestBranchOrder).forEach(order -> {
+			getBranches().get(order).forEach(branch -> {
+				if (branch.getNode(0).isSameLocation(root)) {
+					//System.out.println("Adding root branch order " + branch.getOrder());
+					rootBranches.add(branch);
+				}
+			});
+		});
+		return rootBranches;
 	}
 
 	/**

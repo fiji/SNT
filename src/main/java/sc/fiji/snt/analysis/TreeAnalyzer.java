@@ -570,26 +570,26 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Retrieves the primary branches of the analyzed Tree. A primary branch
-	 * corresponds to the section of a primary Path between its origin and its
-	 * closest branch-point.
-	 *
-	 * @return the set containing the primary branches. Note that as per
-	 *         {@link Path#getSection(int, int)}, these branches will not carry any
-	 *         connectivity information.
+	 * Retrieves the primary branches of the analyzed Tree. Primary branches (or
+	 * root-associated) have origin in the Tree's root, extending to the closest
+	 * branch/end-point. Note that a primary branch can also be terminal.
+	 * 
+	 * @return the set containing the primary branches. Note that these branches
+	 *         (Path segments) will not carry any connectivity information.
 	 * @see #getPrimaryPaths()
-	 * @see #restrictToOrder(int...)
+	 * @see StrahlerAnalyzer#getRootAssociatedBranches()
 	 */
 	public Set<Path> getPrimaryBranches() {
-		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
-		primaryBranches = new HashSet<>(sAnalyzer.getBranches(sAnalyzer.getRootNumber()));
+		if (sAnalyzer == null)
+			sAnalyzer = new StrahlerAnalyzer(tree);
+		primaryBranches = new HashSet<>(sAnalyzer.getRootAssociatedBranches());
 		return primaryBranches;
 	}
 
 	/**
 	 * Retrieves the terminal branches of the analyzed Tree. A terminal branch
 	 * corresponds to the section of a terminal Path between its last branch-point
-	 * and its terminal point (tip).
+	 * and its terminal point (tip). A terminal branch can also be primary.
 	 *
 	 * @return the set containing terminal branches. Note that as per
 	 *         {@link Path#getSection(int, int)}, these branches will not carry any

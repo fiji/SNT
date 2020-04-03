@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.scijava.Context;
 import org.scijava.util.ColorRGB;
 
 import ij.IJ;
@@ -584,7 +583,7 @@ public class Tree {
 	}
 
 	public Viewer2D show2D() {
-		final Viewer2D viewer = new Viewer2D(new Context());
+		final Viewer2D viewer = new Viewer2D();
 		viewer.add(this);
 		if (getLabel() != null) {
 			viewer.setTitle(getLabel());

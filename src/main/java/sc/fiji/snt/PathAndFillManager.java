@@ -1855,7 +1855,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * Creates a PathAndFillManager instance from imported data
 	 *
 	 * @param filePath the absolute path of the file to be imported as per
-	 *          {@link #load(String)}
+	 *          {@link #load(String, int...)}
 	 * @return the PathAndFillManager instance, or null if file could not be
 	 *         imported
 	 */
@@ -1964,7 +1964,6 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @return true, if import was successful
 	 * @see NeuroMorphoLoader
 	 * @see #importSWC(String, boolean)
-	 * @see #importSWC(String, boolean, double, double, double, double, double, double, boolean)
 	 */
 	public boolean importSWC(final String descriptor, final String urlOrFilePath) {
 		if (SNTUtils.isValidURL(urlOrFilePath)) {

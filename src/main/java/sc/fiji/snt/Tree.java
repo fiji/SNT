@@ -284,8 +284,9 @@ public class Tree {
 	}
 
 	/**
-	 * Checks if the nodes of this Tree have been assigned {@link BrainAnnotation}s
-	 * (neuropil labels).
+	 * Checks if the nodes of this Tree have been assigned
+	 * {@link sc.fiji.snt.annotation.BrainAnnotation BrainAnnotation}s (neuropil
+	 * labels).
 	 *
 	 * @return true if at least one node in the Tree has a valid annotation, false
 	 *         otherwise

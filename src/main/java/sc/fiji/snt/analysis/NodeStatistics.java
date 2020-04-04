@@ -195,6 +195,42 @@ public class NodeStatistics <T extends PointInImage> {
 		return frame;
 	}
 
+	/**
+	 * Gets the list of nodes associated with the specified compartment (neuropil
+	 * label).
+	 *
+	 * @param compartment the query compartment (null not allowed). All of its
+	 *                    children will be considered
+	 * @return the list of filtered nodes
+	 */
+	public List<T> get(final BrainAnnotation compartment) {
+		return get(compartment, true);
+	}
+
+	/**
+	 * Gets the list of nodes associated with the specified compartment (neuropil
+	 * label).
+	 *
+	 * @param compartment the query compartment (null not allowed)
+	 * @param includeChildren whether children of {@code compartment} should be included
+	 * @return the list of filtered nodes
+	 */
+	public List<T> get(final BrainAnnotation compartment, final boolean includeChildren) {
+		final List<T> list = new ArrayList<T>();
+		for (final T node : points) {
+			final BrainAnnotation annotation = node.getAnnotation();
+			if (annotation != null) {
+				boolean include = annotation.equals(compartment);
+				if (includeChildren)
+					include = include || compartment.isParentOf(annotation);
+				if (include) {
+					list.add(node);
+				}
+			}
+		}
+		return list;
+	}
+
 	public Map<BrainAnnotation, List<T>> getAnnotatedNodes() {
 		return getAnnotatedNodes(Integer.MAX_VALUE);
 	}

@@ -169,6 +169,10 @@ public class AllenUtils {
 		return point.getX() <= BRAIN_BARYCENTRE.x;
 	}
 
+	public static boolean isLeftHemisphere(final double x, final double y, final double z) {
+		return x <= BRAIN_BARYCENTRE.x;
+	}
+
 	/**
 	 * Returns the spatial centroid of the Allen CCF.
 	 *

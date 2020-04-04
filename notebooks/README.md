@@ -72,10 +72,10 @@ Before running the notebooks, there are three more things to take care of:
 
   ```bash
   conda activate pyimagej
-  conda install matplotlib pandas seaborn scikit-learn
+  conda install jupyterlab matplotlib pandas seaborn scikit-learn
   ```
 
-  However, some notebooks require specialized packages from `conda-forge`:
+  However, some notebooks require other packages only in `conda-forge`:
 
   ```bash
   conda activate pyimagej
@@ -85,7 +85,6 @@ Before running the notebooks, there are three more things to take care of:
 
 
 ## Running
-
 Activate the `pyimagej` environment (if you have not registered it in `ipykernel`)
 and start jupyter from the _notebooks_ [directory](./):
 
@@ -97,8 +96,8 @@ jupyter notebook
 
 (replacing `/path/to/notebooks/directory` with the path to the actual directory
 where you unzipped the _notebooks_ directory). If you prefer JupyterLab, replace
-`jupyter notebook` with `jupyter lab`. You may need to install them on the
-`pyimagej` environment, if not present:
+`jupyter notebook` with `jupyter lab`. If not present, you may need to install
+jupyter on the `pyimagej` environment:
 
 ```bash
 conda activate pyimagej
@@ -107,27 +106,30 @@ conda install jupyterlab
 
 
 ## Troubleshooting
-We had confusing reports of errors related to missing `libjvm.so` files with java
-8. Replacing openjdk (and pyjnius) with a newer version seems to have fixed it:
+
+### Installation
+There have been confusing reports of errors related to missing `libjvm.so` files
+with java 8 (on Ubuntu 19.10). Adopting a newer openjdk (and pyjnius) seems to
+fix this:
 
 ```bash
 conda activate pyimagej
 conda install openjdk=11
 ```
 
-Installing packages from multiple channels may lead to installation conflicts.
+Note that installing packages from multiple channels may lead to conflicts.
 Packages served by e.g., `conda-forge` and the regular `defaults` channel may
 not be 1000% compatible. You can impose a preference for `conda-forge` by having
 it listed on the top of your `.condarc` file, and by specifying the priority
-policy:
+policy, so that packages install from `conda-forge` by default:
 
 ```bash
 conda config --add channels conda-forge
 conda config --set channel_priority strict
 ```
 
-You can also use the `-c` flag to specify a package from a specific channel.
-E.g., You can install matplotlib from the `defaults` channel:
+Otherwise, you can also use the `-c` flag to specify a package from a specific
+channel. E.g., You can install matplotlib from the `defaults` channel:
 
 ```bash
 conda activate pyimagej
@@ -140,22 +142,33 @@ conda activate pyimagej
 conda install -c conda-forge matplotlib
 ```
 
+#### Converting from Java
+Java objects returned by SNT may need to be converted to the equivalent Python
+representation. This is achieved by calling pyimagej's `ij.py.from_java()`. For
+more details have a look at the [SNT](./1_overview.ipynb) and
+[pyimagej][pyimagej_intro] introductory notebooks.
+
+
+### Known Issues
+
+Collecting frames from [Viewer3D](https://morphonets.github.io/SNT/index.html?sc/fiji/snt/viewer/Viewer3D.html)
+may not work on multiple displays when initializing Viewer3D from a secondary
+display (at least on Ubuntu 19.10). The current workaround is to run the notebook
+on the primary display.
+
+
 ## Resources
-- SNT:
-  - [Documentation][snt]
-  - [API]
-  - [Repository](https://github.com/morphonets/SNT)
-  - [Image.sc](https://forum.image.sc/tag/snt/)
 
-- pyimagej:
-  - [Documentation][pyimagej]
-  - [Repository](https://github.com/imagej/pyimagej)
-  - [Image.sc](https://forum.image.sc/tag/pyimagej/)
 
-- conda:
-  - [Documentation](https://docs.conda.io/projects/conda/en/latest/)
+| SNT                                               | pyimagej                                               |
+|---------------------------------------------------|--------------------------------------------------------|
+| [Documentation][snt]                              | [Documentation][pyimagej]                              |
+| [API]                                             | [Getting Started][pyimagej_intro]                      |
+| [Source code](https://github.com/morphonets/SNT)  | [Source code](https://github.com/imagej/pyimagej)      |
+| [Image.sc Forum](https://forum.image.sc/tag/snt/) | [Image.sc Forum](https://forum.image.sc/tag/pyimagej/) |
 
 
 [snt]: https://imagej.net/SNT
 [api]: https://morphonets.github.io/SNT
 [pyimagej]: https://github.com/imagej/pyimagej
+[pyimagej_intro]: https://nbviewer.jupyter.org/github/imagej/tutorials/blob/master/notebooks/1-Using-ImageJ/6-ImageJ-with-Python-Kernel.ipynb

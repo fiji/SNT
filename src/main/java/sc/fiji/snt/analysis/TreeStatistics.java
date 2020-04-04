@@ -141,6 +141,17 @@ public class TreeStatistics extends TreeAnalyzer {
 	}
 
 	/**
+	 * Gets the list of all {@link TreeAnalyzer} supported metrics.
+	 *
+	 * @return the list of all TreeAnalyzer's metrics
+	 * 
+	 * @see TreeAnalyzer#getAllMetrics()
+	 */
+	public static List<String> getAnalyzerMetrics() {
+		return TreeAnalyzer.getAllMetrics();
+	}
+
+	/**
 	 * Gets the list of <i>all</i> supported metrics.
 	 *
 	 * @return the list of available metrics
@@ -573,7 +584,7 @@ public class TreeStatistics extends TreeAnalyzer {
 			somaCompartment = somaCompartment.getAncestor(depth - somaCompartment.getOntologyDepth());
 		hist.annotateCategory(somaCompartment.acronym(), "soma", "blue");
 		hist.show();
-		NodeStatistics nStats =new NodeStatistics(tStats.getTips());
+		NodeStatistics<?> nStats =new NodeStatistics<>(tStats.getTips());
 				hist = nStats.getAnnotatedHistogram(depth);
 				hist.annotate("No. of tips: " + tStats.getTips().size());
 				hist.show();

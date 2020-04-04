@@ -124,7 +124,7 @@ public class BrainAnnotationCmd extends CommonDynamicCmd {
 		}
 		if (histogramType.toLowerCase().contains("tips")) {
 			final Set<PointInImage> tips = tStats.getTips();
-			final NodeStatistics nStats = new NodeStatistics(tips);
+			final NodeStatistics<?> nStats = new NodeStatistics<>(tips);
 			hist = nStats.getAnnotatedHistogram(ontologyDepth <= 0 ? Integer.MAX_VALUE : ontologyDepth);
 			annotateSoma(hist, somaAnnot, somaLabel);
 			hist.annotate("No. of tips: " + tips.size());

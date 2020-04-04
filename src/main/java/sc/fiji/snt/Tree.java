@@ -48,6 +48,7 @@ import sc.fiji.snt.io.MouseLightLoader;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SNTColor;
 import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.viewer.Viewer3D;
@@ -1400,10 +1401,18 @@ public class Tree {
 		}
 	}
 
+	public static void assignUniqueColors(final Collection<Tree> trees) {
+		final ColorRGB[] colors = SNTColor.getDistinctColors(trees.size());
+		int i = 0;
+		for (Iterator<Tree> it = trees.iterator(); it.hasNext(); i++) {
+			it.next().setColor(colors[i]);
+		}
+	}
+
 	/* IDE debug method */
 	public static void main(final String[] args) {
 
-		final Tree tree = new Tree("/home/tferr/code/morphonets/SNT/clustering/zi/cells/AA0174.json");
+		final Tree tree = new Tree("/home/tferr/Downloads/test_swc.swc");
 		TreeAnalyzer analyzer = new TreeAnalyzer(tree);
 		System.out.println("Creating graph...");
 
@@ -1462,4 +1471,5 @@ public class Tree {
 		System.out.println("BPs:        \t\t" + analyzer.getBranchPoints().size() + "/" + bps);
 
 	}
+
 }

@@ -666,6 +666,11 @@ public class Viewer3D {
 		chart.add(shapeTree.get(), viewUpdatesEnabled);
 	}
 
+	public void addTrees(final Collection<Tree> trees, final boolean assignUniqueColors) {
+		if (assignUniqueColors) Tree.assignUniqueColors(trees);
+		trees.forEach(tree -> addTree(tree));
+	}
+
 	/**
 	 * Gets the tree associated with the specified label.
 	 *
@@ -1485,6 +1490,23 @@ public class Viewer3D {
 		final ShapeTree treeShape = plottedTrees.get(treeLabel);
 		if (treeShape == null) return null;
 		return treeShape.colorize(measurement, colorTable);
+	}
+
+	public void assignUniqueColors(final Collection<String> treeLabels)
+		{
+		final List<ShapeTree> shapeTrees = new ArrayList<>();
+		treeLabels.forEach(label -> {
+			final ShapeTree sTree = plottedTrees.get(label);
+			if (sTree != null) {
+				shapeTrees.add(sTree);
+			}
+		});
+		final ColorRGB[] colors = SNTColor.getDistinctColors(shapeTrees.size());
+		for (int i = 0; i < colors.length; i ++) {
+			final ShapeTree shapeTree = shapeTrees.get(i);
+			shapeTree.tree.setColor(colors[i]);
+			shapeTree.setArborColor(fromColorRGB(colors[i]), -1);
+		}
 	}
 
 	/**

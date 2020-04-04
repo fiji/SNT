@@ -81,7 +81,7 @@ public class NodeColorMapper extends ColorMapper {
 	@Parameter
 	private LUTService lutService;
 
-	private final NodeStatistics nodeStatistics;
+	private final NodeStatistics<?> nodeStatistics;
 	private final TreeColorMapper tColorMapper;
 	private Tree singlePointPaths;
 	private Tree pointBranches;
@@ -95,7 +95,7 @@ public class NodeColorMapper extends ColorMapper {
 	 * @param context        the SciJava application context providing the services
 	 *                       required by the class
 	 */
-	public NodeColorMapper(final NodeStatistics nodeStatistics, final Context context) {
+	public NodeColorMapper(final NodeStatistics<?> nodeStatistics, final Context context) {
 		tColorMapper = new TreeColorMapper(context);
 		this.nodeStatistics = nodeStatistics;
 		autoLimits = true;
@@ -109,7 +109,7 @@ public class NodeColorMapper extends ColorMapper {
 	 * @param nodeStatistics the NodeStatistics instance holding the nodes to be
 	 *                       mapped
 	 */
-	public NodeColorMapper(final NodeStatistics nodeStatistics) {
+	public NodeColorMapper(final NodeStatistics<?> nodeStatistics) {
 		tColorMapper = new TreeColorMapper();
 		this.nodeStatistics = nodeStatistics;
 		autoLimits = true;
@@ -225,7 +225,7 @@ public class NodeColorMapper extends ColorMapper {
 	public static void main(final String... args) {
 		final Tree tree = new SNTService().demoTrees().get(0);
 		final List<PointInImage> nodes = tree.getNodes();
-		final NodeStatistics nodeStats = new NodeStatistics(nodes);
+		final NodeStatistics<?> nodeStats = new NodeStatistics<>(nodes);
 		final NodeColorMapper mapper = new NodeColorMapper(nodeStats);
 		mapper.map("x-coord", ColorTables.ICE);
 		final Viewer3D viewer1 = new Viewer3D();

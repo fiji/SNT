@@ -213,6 +213,9 @@ public class MultiTreeColorMapper extends ColorMapper {
 			// n tips/termini/terminals/end points/endings
 			return N_TIPS;
 		}
+		if (normGuess.indexOf("id") != -1 || normGuess.indexOf("cell") != -1) {
+			return ID;
+		}
 		return "unknown";
 	}
 

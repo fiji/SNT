@@ -64,10 +64,11 @@ public class TreeAnalyzer extends ContextCommand {
 
 	protected Tree tree;
 	private Tree unfilteredTree;
-	private HashSet<Path> primaryBranches;
+	private List<Path> primaryBranches;
 	private List<Path> innerBranches;
-	private HashSet<PointInImage> joints;
-	private HashSet<PointInImage> tips;
+	private List<Path> terminalBranches;
+	private Set<PointInImage> joints;
+	private Set<PointInImage> tips;
 	protected DefaultGenericTable table;
 	private String tableTitle;
 	private StrahlerAnalyzer sAnalyzer;
@@ -562,11 +563,11 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Retrieves all the Paths in the analyzed Tree tagged as primary.
 	 *
-	 * @return the set of primary paths.
+	 * @return the list of primary paths.
 	 * @see #getPrimaryBranches()
 	 */
-	public Set<Path> getPrimaryPaths() {
-		final HashSet<Path> primaryPaths = new HashSet<>();
+	public List<Path> getPrimaryPaths() {
+		final List<Path> primaryPaths = new ArrayList<>();
 		for (final Path p : tree.list()) {
 			if (p.isPrimary()) primaryPaths.add(p);
 		}
@@ -597,15 +598,15 @@ public class TreeAnalyzer extends ContextCommand {
 	 * root-associated) have origin in the Tree's root, extending to the closest
 	 * branch/end-point. Note that a primary branch can also be terminal.
 	 * 
-	 * @return the set containing the primary branches. Note that these branches
-	 *         (Path segments) will not carry any connectivity information.
+	 * @return the primary branches. Note that these branches (Path segments) will
+	 *         not carry any connectivity information.
 	 * @see #getPrimaryPaths()
 	 * @see StrahlerAnalyzer#getRootAssociatedBranches()
 	 */
-	public Set<Path> getPrimaryBranches() {
+	public List<Path> getPrimaryBranches() {
 		if (sAnalyzer == null)
 			sAnalyzer = new StrahlerAnalyzer(tree);
-		primaryBranches = new HashSet<>(sAnalyzer.getRootAssociatedBranches());
+		primaryBranches = sAnalyzer.getRootAssociatedBranches();
 		return primaryBranches;
 	}
 
@@ -614,15 +615,15 @@ public class TreeAnalyzer extends ContextCommand {
 	 * corresponds to the section of a terminal Path between its last branch-point
 	 * and its terminal point (tip). A terminal branch can also be primary.
 	 *
-	 * @return the set containing terminal branches. Note that as per
+	 * @return the terminal branches. Note that as per
 	 *         {@link Path#getSection(int, int)}, these branches will not carry any
 	 *         connectivity information.
 	 * @see #getPrimaryBranches
 	 * @see #restrictToOrder(int...)
 	 */
-	public Set<Path> getTerminalBranches() {
+	public List<Path> getTerminalBranches() {
 		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
-		terminalBranches = new HashSet<>(sAnalyzer.getBranches(1));
+		terminalBranches = sAnalyzer.getBranches(1);
 		return terminalBranches;
 	}
 

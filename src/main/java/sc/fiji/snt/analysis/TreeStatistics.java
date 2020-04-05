@@ -405,8 +405,7 @@ public class TreeStatistics extends TreeAnalyzer {
 		switch (getNormalizedMeasurement(measurement)) {
 		case BRANCH_LENGTH:
 			try {
-				final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-				for (final Path p : analyzer.getBranches())
+				for (final Path p : getBranches())
 					stat.addValue(p.getLength());
 			} catch (final IllegalArgumentException ignored) {
 				SNTUtils.log("Error: " + ignored.getMessage());
@@ -415,8 +414,7 @@ public class TreeStatistics extends TreeAnalyzer {
 			break;
 		case CONTRACTION:
 			try {
-				final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-				for (final Path p : analyzer.getBranches())
+				for (final Path p : getBranches())
 					stat.addValue(p.getContraction());
 			} catch (final IllegalArgumentException ignored) {
 				SNTUtils.log("Error: " + ignored.getMessage());

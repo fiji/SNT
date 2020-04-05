@@ -51,14 +51,24 @@ import sc.fiji.snt.util.SWCPoint;
  */
 public class PersistenceAnalyzer {
 
-	private static final int FUNC_UNKNOWN = -1;
-	private static final int FUNC_GEODESIC = 0;
-	private static final int FUNC_RADIAL = 1;
-	private static final int FUNC_PATH_ORDER = 2;
-	private static final int FUNC_CENTRIFUGAL= 3;
-	private static final int FUNC_X = 4;
-	private static final int FUNC_Y = 5;
-	private static final int FUNC_Z = 6;
+	private static final int FUNC_UNKNOWN       = -1;
+	private static final int FUNC_0_GEODESIC    = 0;
+	private static final int FUNC_1_RADIAL      = 1;
+	private static final int FUNC_2_CENTRIFUGAL = 2;
+	private static final int FUNC_3_PATH_ORDER  = 3;
+	private static final int FUNC_4_X           = 4;
+	private static final int FUNC_5_Y           = 5;
+	private static final int FUNC_6_Z           = 6;
+	private static final String[] FUNC_STRINGS = new String[7];
+	static {
+		FUNC_STRINGS[FUNC_0_GEODESIC]    = "geodesic";
+		FUNC_STRINGS[FUNC_1_RADIAL]      = "radial";
+		FUNC_STRINGS[FUNC_2_CENTRIFUGAL] = "centrifugal";
+		FUNC_STRINGS[FUNC_3_PATH_ORDER]  = "path order";
+		FUNC_STRINGS[FUNC_4_X] = "x";
+		FUNC_STRINGS[FUNC_5_Y] = "y";
+		FUNC_STRINGS[FUNC_6_Z] = "z";
+	}
 
 	private final Tree tree;
 
@@ -216,29 +226,28 @@ public class PersistenceAnalyzer {
 	 * @return the list of available descriptors.
 	 */
 	public static List<String> getDescriptors() {
-		return new ArrayList<String>(Arrays.asList("geodesic", "radial", "centrifugal (reverse Strahler)", "path order",
-				"x", "y", "z (depth)"));
+		return Arrays.asList(FUNC_STRINGS);
 	}
 
 	private double descriptorFunc(final DirectedWeightedGraph graph, final SWCPoint node, final int func) throws UnknownMetricException {
 		switch (func) {
-		case FUNC_CENTRIFUGAL:
+		case FUNC_0_GEODESIC:
+			return geodesicDistanceToRoot(graph, node);
+		case FUNC_1_RADIAL:
+			return radialDistanceToRoot(graph, node);
+		case FUNC_2_CENTRIFUGAL:
 			if (!nodeValuesAssigned) {
 				StrahlerAnalyzer.classify(graph, true);
 				nodeValuesAssigned = true;
 			}
 			return node.v;
-		case FUNC_GEODESIC:
-			return geodesicDistanceToRoot(graph, node);
-		case FUNC_PATH_ORDER:
+		case FUNC_3_PATH_ORDER:
 			return node.getPath().getOrder();
-		case FUNC_RADIAL:
-			return radialDistanceToRoot(graph, node);
-		case FUNC_X:
+		case FUNC_4_X:
 			return node.getX();
-		case FUNC_Y:
+		case FUNC_5_Y:
 			return node.getY();
-		case FUNC_Z:
+		case FUNC_6_Z:
 			return node.getZ();
 		default:
 			throw new UnknownMetricException("Unrecognized Descriptor");
@@ -247,25 +256,18 @@ public class PersistenceAnalyzer {
 
 	private int getNormFunction(final String func) {
 		if (func == null || func.trim().isEmpty()) return FUNC_UNKNOWN;
-		final String normFunc = func.toLowerCase();
-		if (normFunc.indexOf("geodesic") != -1) {
-			return FUNC_GEODESIC;
+		for (int i = 0; i < FUNC_STRINGS.length; i++) {
+			if (FUNC_STRINGS[i].equalsIgnoreCase(func)) return i; 
 		}
-		if (normFunc.indexOf("centrifugal") != -1
-				|| (normFunc.indexOf("reverse") != -1 && normFunc.indexOf("strahler") != -1)) {
-			return FUNC_CENTRIFUGAL;
+		final String normFunc = func.toLowerCase();
+		if ((normFunc.indexOf("reverse") != -1 && normFunc.indexOf("strahler") != -1)) {
+			return FUNC_2_CENTRIFUGAL;
 		}
 		if (normFunc.indexOf("path") != -1 && normFunc.indexOf("order") != -1) {
-			return FUNC_PATH_ORDER;
+			return FUNC_3_PATH_ORDER;
 		}
-		if (normFunc.indexOf("depth") == -1 || normFunc.matches(".*\\bz\\b.*")) {
-			return FUNC_Z;
-		}
-		if (normFunc.matches(".*\\bx\\b.*")) {
-			return FUNC_X;
-		}
-		if (normFunc.matches(".*\\by\\b.*")) {
-			return FUNC_Y;
+		if (normFunc.indexOf("depth") == -1) {
+			return FUNC_6_Z;
 		}
 		return FUNC_UNKNOWN;
 	}

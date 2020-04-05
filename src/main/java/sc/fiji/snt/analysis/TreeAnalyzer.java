@@ -65,7 +65,7 @@ public class TreeAnalyzer extends ContextCommand {
 	protected Tree tree;
 	private Tree unfilteredTree;
 	private HashSet<Path> primaryBranches;
-	private HashSet<Path> terminalBranches;
+	private List<Path> innerBranches;
 	private HashSet<PointInImage> joints;
 	private HashSet<PointInImage> tips;
 	protected DefaultGenericTable table;
@@ -365,12 +365,16 @@ public class TreeAnalyzer extends ContextCommand {
 			return getNPaths();
 		case MultiTreeStatistics.N_PRIMARY_BRANCHES:
 			return getPrimaryBranches().size();
+		case MultiTreeStatistics.N_INNER_BRANCHES:
+			return getInnerBranches().size();
 		case MultiTreeStatistics.N_TERMINAL_BRANCHES:
 			return getTerminalBranches().size();
 		case MultiTreeStatistics.N_TIPS:
 			return getTips().size();
 		case MultiTreeStatistics.PRIMARY_LENGTH:
 			return getPrimaryLength();
+		case MultiTreeStatistics.INNER_LENGTH:
+			return getInnerLength();
 		case MultiTreeStatistics.STRAHLER_NUMBER:
 			try {
 				return getStrahlerNumber();
@@ -570,6 +574,25 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
+	 * Retrieves the branches of highest
+	 * {@link StrahlerAnalyzer#getHighestBranchOrder() Strahler order} in the Tree.
+	 * This typically correspond to the most 'internal' branches of the Tree in
+	 * direct sequence from the root.
+	 * 
+	 * @return the list containing the "inner" branches. Note that these branches
+	 *         (Path segments) will not carry any connectivity information.
+	 * @see #getPrimaryPaths()
+	 * @see StrahlerAnalyzer#getBranches()
+	 * @see StrahlerAnalyzer#getHighestBranchOrder()
+	 */
+	public List<Path> getInnerBranches() {
+		if (sAnalyzer == null)
+			sAnalyzer = new StrahlerAnalyzer(tree);
+		innerBranches = sAnalyzer.getBranches(sAnalyzer.getHighestBranchOrder());
+		return innerBranches;
+	}
+
+	/**
 	 * Retrieves the primary branches of the analyzed Tree. Primary branches (or
 	 * root-associated) have origin in the Tree's root, extending to the closest
 	 * branch/end-point. Note that a primary branch can also be terminal.
@@ -761,6 +784,17 @@ public class TreeAnalyzer extends ContextCommand {
 	public double getPrimaryLength() {
 		if (primaryBranches == null) getPrimaryBranches();
 		return sumLength(primaryBranches);
+	}
+
+	/**
+	 * Gets the cable length of inner branches
+	 *
+	 * @return the length sum of all inner branches
+	 * @see #getInnerBranches()
+	 */
+	public double getInnerLength() {
+		if (innerBranches == null) getInnerBranches();
+		return sumLength(innerBranches);
 	}
 
 	/**

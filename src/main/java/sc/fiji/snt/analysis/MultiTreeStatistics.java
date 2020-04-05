@@ -58,6 +58,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 	/** Flag for {@value #TERMINAL_LENGTH} analysis. */
 	public static final String TERMINAL_LENGTH = "Length of terminal branches (sum)";
 
+	/** Flag for {@value #INNER_LENGTH} analysis. */
+	public static final String INNER_LENGTH = "Length of inner branches (sum)";
+
 	/** Flag for {@value #PRIMARY_LENGTH} analysis. */
 	public static final String PRIMARY_LENGTH = "Length of primary branches (sum)";
 
@@ -81,6 +84,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 
 	/** Flag specifying {@value #N_PRIMARY_BRANCHES} statistics */
 	public static final String N_PRIMARY_BRANCHES = "No. of primary branches";
+
+	/** Flag specifying {@value #N_INNER_BRANCHES} statistics */
+	public static final String N_INNER_BRANCHES = "No. of inner branches";
 
 	/** Flag specifying {@value #N_TERMINAL_BRANCHES} statistics */
 	public static final String N_TERMINAL_BRANCHES = "No. of terminal branches";
@@ -130,12 +136,14 @@ public class MultiTreeStatistics extends TreeStatistics {
 			N_NODES, //
 			N_PATHS, //
 			N_PRIMARY_BRANCHES, //
+			N_INNER_BRANCHES, //
 			N_TERMINAL_BRANCHES, //
 			N_TIPS, //
 			PRIMARY_LENGTH, //
+			INNER_LENGTH, //
+			TERMINAL_LENGTH, //
 			STRAHLER_NUMBER, //
 			STRAHLER_RATIO, //
-			TERMINAL_LENGTH, //
 			WIDTH, //
 	};
 
@@ -245,6 +253,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 			else if (normGuess.indexOf("prim") != -1) {
 				return PRIMARY_LENGTH;
 			}
+			else if (normGuess.indexOf("inner") != -1) {
+				return INNER_LENGTH;
+			}
 			else if (normGuess.indexOf("branch") != -1 && containsAvgReference(normGuess)) {
 				return AVG_BRANCH_LENGTH;
 			}
@@ -269,6 +280,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 		if (normGuess.indexOf("branches") != -1) {
 			if (normGuess.indexOf("prim") != -1) {
 				return N_PRIMARY_BRANCHES;
+			}
+			else if (normGuess.indexOf("inner") != -1) {
+				return N_INNER_BRANCHES;
 			}
 			else if (normGuess.indexOf("term") != -1) {
 				return N_TERMINAL_BRANCHES;

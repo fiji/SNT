@@ -65,6 +65,9 @@ public class TreeStatistics extends TreeAnalyzer {
 	/** Flag for {@value #PRIMARY_LENGTH} analysis. */
 	public static final String PRIMARY_LENGTH = "Length of primary branches";
 
+	/** Flag for {@value #INNER_LENGTH} analysis. */
+	public static final String INNER_LENGTH = "Length of inner branches";
+
 	/** Flag for {@value #PATH_ORDER} statistics. */
 	public static final String PATH_ORDER = "Path order";
 
@@ -122,6 +125,7 @@ public class TreeStatistics extends TreeAnalyzer {
 			PATH_LENGTH, //
 			PATH_ORDER, //
 			PRIMARY_LENGTH, //
+			INNER_LENGTH, //
 			TERMINAL_LENGTH, //
 			VALUES, //
 			X_COORDINATES, //
@@ -328,6 +332,9 @@ public class TreeStatistics extends TreeAnalyzer {
 			else if (normGuess.indexOf("prim") != -1) {
 				return PRIMARY_LENGTH;
 			}
+			else if (normGuess.indexOf("inner") != -1) {
+				return INNER_LENGTH;
+			}
 			else if (normGuess.indexOf("path") != -1) {
 				return PATH_LENGTH;
 			}
@@ -470,6 +477,10 @@ public class TreeStatistics extends TreeAnalyzer {
 			break;
 		case TERMINAL_LENGTH:
 			for (final Path p : getTerminalBranches())
+				stat.addValue(p.getLength());
+			break;
+		case INNER_LENGTH:
+			for (final Path p : getInnerBranches())
 				stat.addValue(p.getLength());
 			break;
 		case VALUES:

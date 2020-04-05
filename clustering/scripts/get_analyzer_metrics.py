@@ -12,6 +12,8 @@ out_dir = '/home/tferr/code/morphonets/SNT/clustering/zi'
 def run():
 
     metrics = TreeAnalyzer.getAllMetrics()
+    metrics.remove('Assigned value')
+    metrics.remove('No. of fitted paths')
 
     for st in ["axon", "dendr"]:
 

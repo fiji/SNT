@@ -227,6 +227,7 @@ public class TreeAnalyzer extends ContextCommand {
 		tree.replaceAll(unfilteredTree.list());
 		joints = null;
 		primaryBranches = null;
+		innerBranches = null;
 		terminalBranches = null;
 		tips = null;
 		sAnalyzer = null;

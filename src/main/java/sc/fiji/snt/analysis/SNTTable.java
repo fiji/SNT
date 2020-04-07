@@ -56,6 +56,10 @@ public class SNTTable extends DefaultGenericTable {
 		return getRowCount() > 0 && hasUnsavedData;
 	}
 
+	public void appendToLastRow(final String colHeader, final Object value) {
+		set(getCol(colHeader), getRowCount() - 1, value);
+	}
+
 	public int insertRow(final String header) {
 		appendRow(header);
 		return Math.max(0, getRowCount() - 1);

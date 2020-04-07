@@ -89,8 +89,8 @@ public class ShollAnalyzer {
 
 	private final Tree tree;
 	private final LinkedHashMap<String, Number> metrics;
-	private final LinkedHashMap<String, Number> maxima;
-	private final LinkedHashMap<String, Number> secondaryMaximaMap;
+	private final ArrayList<Double> maximaRadii;
+	private final ArrayList<double[]> secondaryMaxima;;
 
 	private NormalizedProfileStats nStats;
 	private LinearProfileStats lStats;
@@ -102,8 +102,8 @@ public class ShollAnalyzer {
 		parser.setCenter(tree.getRoot());
 		parser.setStepSize(0);
 		metrics = new LinkedHashMap<>();
-		maxima = new LinkedHashMap<>();
-		secondaryMaximaMap = new LinkedHashMap<>();
+		maximaRadii = new ArrayList<>();
+		secondaryMaxima = new ArrayList<>();
 	}
 
 	public static List<String> getMetrics() {
@@ -136,7 +136,7 @@ public class ShollAnalyzer {
 			metrics.put(SUM, lStats.getSum());
 			metrics.put(MAX, lStats.getMax());
 			metrics.put(N_MAX, getMaximaRadii().size());
-			metrics.put(N_SECONDARY_MAX, getSecondaryMaximaMap().size() / 2);
+			metrics.put(N_SECONDARY_MAX, getSecondaryMaxima().size());
 			final UPoint centroid = lStats.getCentroid();
 			metrics.put(CENTROID, centroid.y);
 			metrics.put(CENTROID_RADIUS, centroid.x);
@@ -156,50 +156,23 @@ public class ShollAnalyzer {
 		return metrics;
 	}
 
-	public LinkedHashMap<String, Number> getMaximaRadii() {
+	public ArrayList<Double> getMaximaRadii() {
 
-		if (!maxima.isEmpty())
-			return maxima;
+		if (!maximaRadii.isEmpty()) return maximaRadii;
 		getLinearStats();
-		if (lStats == null)
-			return maxima;
-
+		if (lStats == null) return maximaRadii;
 		final ArrayList<UPoint> maximaPoints = lStats.getMaxima();
-		if (maximaPoints.size() == 1) {
-			maxima.put(MAX_RADIUS_PREFIX, maximaPoints.get(0).x);
-		} else
-			for (int i = 0; i < maximaPoints.size(); i++) {
-				maxima.put(MAX_RADIUS_PREFIX + " " + (i + 1), maximaPoints.get(i).x);
-			}
-		return maxima;
+		for (final UPoint mp : maximaPoints) {
+			maximaRadii.add(mp.x);
+		}
+		return maximaRadii;
 	}
 
-	public LinkedHashMap<String, Number> getSecondaryMaxima() {
-		final LinkedHashMap<String, Number> secondaryMaxima = new LinkedHashMap<>();
-		getSecondaryMaximaMap().forEach((k, v) -> {
-			if (!k.contains("radius"))
-				secondaryMaxima.put(k, v);
-		});
-		return secondaryMaxima;
-	}
+	public ArrayList<double[]> getSecondaryMaxima() {
 
-	public LinkedHashMap<String, Number> getSecondaryMaximaRadii() {
-		final LinkedHashMap<String, Number> secondaryMaximaRadii = new LinkedHashMap<>();
-		getSecondaryMaximaMap().forEach((k, v) -> {
-			if (k.contains("radius")) {
-				secondaryMaximaRadii.put(k, v);
-			}
-		});
-		return secondaryMaximaRadii;
-	}
-
-	private LinkedHashMap<String, Number> getSecondaryMaximaMap() {
-
-		if (!secondaryMaximaMap.isEmpty())
-			return secondaryMaximaMap;
+		if (!secondaryMaxima.isEmpty()) return secondaryMaxima;
 		getLinearStats();
-		if (lStats == null)
-			return secondaryMaximaMap;
+		if (lStats == null) return secondaryMaxima;
 
 		double[] dataToUse = lStats.getYvalues();
 		double variance = lStats.getVariance();
@@ -220,17 +193,12 @@ public class ShollAnalyzer {
 				filteredIndices.add(allPeakIndices[i]);
 			}
 		}
-		final double[] sMaxima = getValues(dataToUse, filteredIndices);
 		final double[] sMaximaRadii = getValues(lStats.getXvalues(), filteredIndices);
-		if (filteredIndices.size() == 1) {
-			secondaryMaximaMap.put(SECONDARY_MAX_PREFIX, sMaxima[0]);
-			secondaryMaximaMap.put(SECONDARY_MAX_RADIUS_PREFIX, sMaximaRadii[0]);
-		} else
-			for (int i = 0; i < filteredIndices.size(); i++) {
-				secondaryMaximaMap.put(SECONDARY_MAX_PREFIX + " " + (i + 1), sMaxima[i]);
-				secondaryMaximaMap.put(SECONDARY_MAX_RADIUS_PREFIX + " " + (i + 1), sMaximaRadii[i]);
-			}
-		return secondaryMaximaMap;
+		final double[] sMaxima = getValues(dataToUse, filteredIndices);
+		for (int i = 0; i < filteredIndices.size(); i++) {
+			secondaryMaxima.add(new double[] {sMaximaRadii[i], sMaxima[i]});
+		}
+		return secondaryMaxima;
 	}
 
 	double[] getValues(final double[] array, final ArrayList<Integer> indices) {
@@ -271,14 +239,9 @@ public class ShollAnalyzer {
 		analyzer.getSingleValueMetrics(true).forEach((metric, value) -> {
 			System.out.println(metric + ":\t" + value);
 		});
-		analyzer.getMaximaRadii().forEach((metric, value) -> {
-			System.out.println(metric + ":\t" + value);
-		});
-		analyzer.getSecondaryMaxima().forEach((metric, value) -> {
-			System.out.println(metric + ":\t" + value);
-		});
-		analyzer.getSecondaryMaximaRadii().forEach((metric, value) -> {
-			System.out.println(metric + ":\t" + value);
+		System.out.println("Max occurs at:\t" + String.valueOf(analyzer.getMaximaRadii()));
+		analyzer.getSecondaryMaxima().forEach(sMax -> {
+			System.out.println("Sec max occur at:\t" + Arrays.toString(sMax));
 		});
 		analyzer.getLinearStats().getPlot().show();
 	}

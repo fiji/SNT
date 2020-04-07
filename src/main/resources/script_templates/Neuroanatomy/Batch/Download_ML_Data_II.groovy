@@ -1,5 +1,5 @@
 import sc.fiji.snt.io.MouseLightLoader
-import sc.fiji.snt.annotation.AllenCompartment
+import sc.fiji.snt.io.MouseLightQuerier
 import sc.fiji.snt.annotation.AllenUtils
 
 
@@ -15,7 +15,7 @@ somaLoc = AllenUtils.getCompartment("CA3")
 
 if (MouseLightLoader.isDatabaseAvailable()) {
 	for (id in MouseLightQuerier.getIDs(somaLoc)) {
-		MouseLightLoader loader = new MouseLightLoader(id)
+		loader = new MouseLightLoader(id)
 		loader.save(outDir)
 	}
 }

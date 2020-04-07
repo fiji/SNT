@@ -35,6 +35,7 @@ import sc.fiji.snt.SNTService;
 import sc.fiji.snt.SNTUtils;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.analysis.sholl.TreeParser;
+import sholl.Logger;
 import sholl.UPoint;
 import sholl.math.LinearProfileStats;
 import sholl.math.NormalizedProfileStats;
@@ -95,15 +96,52 @@ public class ShollAnalyzer {
 	private NormalizedProfileStats nStats;
 	private LinearProfileStats lStats;
 	private final TreeParser parser;
+	private final int[] polynomialDegreeRange;
+	private boolean includeFitting;
 
+	/**
+	 * Instantiates a new Sholl analyzer using default settings, i.e., focused on
+	 * Tree's root; using sampling step size of average inter-node distance; curve
+	 * fitting enabled; and all other parameters left to defaults/auto-discovery.
+	 *
+	 * @param tree the Tree to be analyzed
+	 */
 	public ShollAnalyzer(final Tree tree) {
 		this.tree = tree;
 		parser = new TreeParser(tree);
 		parser.setCenter(tree.getRoot());
-		parser.setStepSize(0);
+		final double stepSizeSq = new TreeStatistics(tree).getSummaryStats(TreeStatistics.INTER_NODE_DISTANCE_SQUARED)
+				.getMean();
+		parser.setStepSize(Math.sqrt(stepSizeSq));
 		metrics = new LinkedHashMap<>();
 		maximaRadii = new ArrayList<>();
 		secondaryMaxima = new ArrayList<>();
+		includeFitting = true;// default in Sholl plugin
+		polynomialDegreeRange = new int[] { 2, 20 }; // defaults in Sholl plugin
+	}
+
+	/**
+	 * Sets the polynomial fit range for linear Sholl statistics.
+	 *
+	 * @param fromDegree the lowest degree to be considered. Set it to -1 to skip
+	 *                   polynomial fit
+	 * @param toDegree   the highest degree to be considered. Set it to -1 to skip
+	 *                   polynomial fit
+	 */
+	public void setPolynomialFitRange(final int fromDegree, final int toDegree) {
+		polynomialDegreeRange[0] = fromDegree;
+		polynomialDegreeRange[1] = toDegree;
+	}
+
+	/**
+	 * Sets whether curve fitting computations should be performed.
+	 *
+	 * @param enable, if {@code true} polynomial and linear regression on normalized
+	 *                Sholl data will be performed. Enabling this option may
+	 *                adversely affect performance.
+	 */
+	public void setEnableCurveFitting(final boolean enable) {
+		includeFitting = enable;
 	}
 
 	public static List<String> getMetrics() {
@@ -111,10 +149,6 @@ public class ShollAnalyzer {
 	}
 
 	public Map<String, Number> getSingleValueMetrics() {
-		return getSingleValueMetrics(true);
-	}
-
-	private Map<String, Number> getSingleValueMetrics(final boolean includeFitting) {
 
 		if (!metrics.isEmpty()) {
 			return metrics;
@@ -122,8 +156,8 @@ public class ShollAnalyzer {
 
 		getLinearStats();
 		if (lStats != null) {
-			if (includeFitting) {
-				final int bestFit = lStats.findBestFit(2, 20, 0.80, -1);
+			if (includeFitting && polynomialDegreeRange[0] + polynomialDegreeRange[1] > 0) {
+				final int bestFit = lStats.findBestFit(polynomialDegreeRange[0], polynomialDegreeRange[1], 0.60, -1);
 				if (lStats.validFit()) {
 					final UPoint fMax = lStats.getCenteredMaximum(true);
 					metrics.put(MAX_FITTED, fMax.y);
@@ -157,7 +191,6 @@ public class ShollAnalyzer {
 	}
 
 	public ArrayList<Double> getMaximaRadii() {
-
 		if (!maximaRadii.isEmpty()) return maximaRadii;
 		getLinearStats();
 		if (lStats == null) return maximaRadii;
@@ -178,7 +211,7 @@ public class ShollAnalyzer {
 		double variance = lStats.getVariance();
 		double absoluteMax = lStats.getMax();
 		try {
-			if (lStats.validFit() && lStats.getRSquaredOfFit() > 0.90) {
+			if (lStats.validFit()) {
 				dataToUse = lStats.getFitYvalues();
 				variance = lStats.getVariance(true);
 				absoluteMax = lStats.getMax(true);
@@ -209,6 +242,12 @@ public class ShollAnalyzer {
 		return values;
 	}
 
+	/**
+	 * Gets the {@link LinearProfileStats} associated with this analyzer. By default
+	 * it is set to determine the polynomial of 'best-fit' (2-20 degree range.)
+	 *
+	 * @return the LinearProfileStats instance
+	 */
 	public LinearProfileStats getLinearStats() {
 		if (lStats == null) {
 			if (!parser.successful())
@@ -219,6 +258,14 @@ public class ShollAnalyzer {
 		return lStats;
 	}
 
+	/**
+	 * Gets the {@link NormalizedProfileStats} associated with this analyzer. By
+	 * default it is set to determine the regression method of 'best-fit' (log-log
+	 * or semi-log) using shell volume as normalizer (if Tree has a depth component)
+	 * or shell area if Tree is 2D.
+	 *
+	 * @return the LinearProfileStats instance
+	 */
 	public NormalizedProfileStats getNormStats() {
 		if (nStats == null) {
 			if (!parser.successful())
@@ -235,8 +282,13 @@ public class ShollAnalyzer {
 		final ImageJ ij = new ImageJ();
 		final SNTService sntService = ij.context().getService(SNTService.class);
 		final Tree tree = sntService.demoTrees().get(0);
-		final ShollAnalyzer analyzer = new ShollAnalyzer(tree);
-		analyzer.getSingleValueMetrics(true).forEach((metric, value) -> {
+		//final Tree tree = new Tree("/home/tferr/code/morphonets/SNT/clustering/zi/cells/AA0768.json", "axon");
+		final ShollAnalyzer analyzer = new 41ShollAnalyzer(tree);
+		analyzer.setPolynomialFitRange(2, 70);
+		Logger logger = new Logger(ij.context());
+		logger.setDebug(true);
+		analyzer.getLinearStats().setLogger(logger);
+		analyzer.getSingleValueMetrics().forEach((metric, value) -> {
 			System.out.println(metric + ":\t" + value);
 		});
 		System.out.println("Max occurs at:\t" + String.valueOf(analyzer.getMaximaRadii()));

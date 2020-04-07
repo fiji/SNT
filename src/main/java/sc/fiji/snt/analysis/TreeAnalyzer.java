@@ -893,7 +893,9 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Gets the {@link ShollAnalyzer} instance associated with this analyzer
+	 * Gets the {@link ShollAnalyzer} instance associated with this analyzer. Note
+	 * that changes to {@link ShollAnalyzer} must be performed before calling
+	 * {@link #getMetric(String)}, {@link #measure(Collection, boolean)}, etc.
 	 *
 	 * @return the ShollAnalyzer instance associated with this analyzer
 	 */

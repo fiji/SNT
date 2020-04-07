@@ -242,7 +242,7 @@ public class StrahlerAnalyzer {
 		final Map<Integer, Double> fragMap = new TreeMap<>();
 		getBranches().forEach( (order, branches) -> {
 			final double nNodes = branches.stream().mapToInt(branch -> branch.size()).sum();
-			fragMap.put(order, nNodes/branches.size());
+			fragMap.put(order, (branches.size()==0) ? Double.NaN : nNodes/branches.size());
 		});
 		return fragMap;
 	}

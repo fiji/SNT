@@ -139,7 +139,7 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 	@Parameter(label = "Action", choices = {"Choose", "Select All", "Select None"}, callback="actionChoiceSelected")
 	private String actionChoice;
 
-	@Parameter(label = "Distinguish compartments", description="<HTML><div WIDTH=500>Wether measurements "
+	@Parameter(label = "Distinguish compartments", description="<HTML><div WIDTH=500>Whether measurements "
 			+ "should be grouped by cellular compartment (e.g., \"axon\", \"dendrites\", etc.)")
 	private boolean splitByType;
 

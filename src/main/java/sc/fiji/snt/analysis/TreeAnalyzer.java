@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -957,8 +956,12 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	public double getAvgFragmentation() {
-		final Map<Integer, Double> fragMap = getStrahlerAnalyzer().getAvgFragmentations();
-		return fragMap.values().stream().mapToDouble(f -> f.doubleValue()).sum() / fragMap.size();
+		double fragmentation = 0;
+		final List<Path> branches = getBranches();
+		for (final Path p : branches) {
+			fragmentation += p.size();
+		}
+		return fragmentation / branches.size();
 	}
 
 	/**

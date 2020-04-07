@@ -238,7 +238,7 @@ public class StrahlerAnalyzer {
 		return tLengthMap;
 	}
 
-	public Map<Integer, Double> getAvgFragmentation() {
+	public Map<Integer, Double> getAvgFragmentations() {
 		final Map<Integer, Double> fragMap = new TreeMap<>();
 		getBranches().forEach( (order, branches) -> {
 			final double nNodes = branches.stream().mapToInt(branch -> branch.size()).sum();
@@ -247,7 +247,7 @@ public class StrahlerAnalyzer {
 		return fragMap;
 	}
 
-	public Map<Integer, Double> getAvgContraction() {
+	public Map<Integer, Double> getAvgContractions() {
 		final Map<Integer, Double> contractMap = new TreeMap<>();
 		getBranches().forEach((order, branches) -> {
 			double contraction = 0;

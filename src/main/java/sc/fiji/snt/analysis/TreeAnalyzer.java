@@ -957,7 +957,7 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	public double getAvgFragmentation() {
-		final Map<Integer, Double> fragMap = getStrahlerAnalyzer().getAvgFragmentation();
+		final Map<Integer, Double> fragMap = getStrahlerAnalyzer().getAvgFragmentations();
 		return fragMap.values().stream().mapToDouble(f -> f.doubleValue()).sum() / fragMap.size();
 	}
 

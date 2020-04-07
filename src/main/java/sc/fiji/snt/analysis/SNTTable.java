@@ -57,6 +57,7 @@ public class SNTTable extends DefaultGenericTable {
 	}
 
 	public void appendToLastRow(final String colHeader, final Object value) {
+		if (getRowCount() == 0) appendRow();
 		set(getCol(colHeader), getRowCount() - 1, value);
 	}
 

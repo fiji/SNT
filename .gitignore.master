@@ -30,3 +30,4 @@ __pycache__/
 
 # Branch specific exclusions
 /clustering/
+.gitignore.clustering

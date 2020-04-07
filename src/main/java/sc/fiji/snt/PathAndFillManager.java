@@ -750,13 +750,21 @@ public class PathAndFillManager extends DefaultHandler implements
 			final boolean realRadius = pathToUse.hasRadii();
 			final boolean hasAnnotations = pathToUse.hasNodeAnnotations();
 			for (int i = indexToStartAt; i < pathToUse.size(); ++i) {
-				double radius = 0;
-				if (realRadius) radius = pathToUse.radii[i];
-				final SWCPoint swcPoint = new SWCPoint(currentPointID, pathToUse
-					.getSWCType(), pathToUse.precise_x_positions[i],
-					pathToUse.precise_y_positions[i], pathToUse.precise_z_positions[i],
-					radius, firstSWCPoint == null ? nearestParentSWCPointID
-						: currentPointID - 1);
+
+				final boolean firstPoint = firstSWCPoint == null;
+
+				// The first node of a child path is the same as the forked point
+				// on its parent, so we'll skip it if this is a child path
+				if (firstPoint && !currentPath.isPrimary()) i++;
+
+				final SWCPoint swcPoint = new SWCPoint(currentPointID, // id
+						pathToUse.getSWCType(), // type
+						pathToUse.precise_x_positions[i], // x
+						pathToUse.precise_y_positions[i], // y
+						pathToUse.precise_z_positions[i], // z
+						(realRadius) ? pathToUse.radii[i] : 0, // radius
+						(firstPoint) ? nearestParentSWCPointID : currentPointID - 1 // parent
+				);
 				swcPoint.setPath(currentPath);
 				if (hasAnnotations) swcPoint.setAnnotation(pathToUse.getNodeAnnotation(i));
 				result.add(swcPoint);
@@ -1847,7 +1855,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * Creates a PathAndFillManager instance from imported data
 	 *
 	 * @param filePath the absolute path of the file to be imported as per
-	 *          {@link #load(String)}
+	 *          {@link #load(String, int...)}
 	 * @return the PathAndFillManager instance, or null if file could not be
 	 *         imported
 	 */
@@ -1956,7 +1964,6 @@ public class PathAndFillManager extends DefaultHandler implements
 	 * @return true, if import was successful
 	 * @see NeuroMorphoLoader
 	 * @see #importSWC(String, boolean)
-	 * @see #importSWC(String, boolean, double, double, double, double, double, double, boolean)
 	 */
 	public boolean importSWC(final String descriptor, final String urlOrFilePath) {
 		if (SNTUtils.isValidURL(urlOrFilePath)) {
@@ -2201,8 +2208,8 @@ public class PathAndFillManager extends DefaultHandler implements
 		while ((start = backtrackTo.poll()) != null) {
 			currentPath = new Path(x_spacing, y_spacing, z_spacing, spacing_units);
 			currentPath.createCircles();
-			if (start.getPreviousPoint() != null) {
-				final SWCPoint beforeStart = start.getPreviousPoint();
+			final SWCPoint beforeStart = start.getPreviousPoint();
+			if (beforeStart != null) {
 				pathStartsOnSWCPoint.put(currentPath, beforeStart);
 				pathStartsAtPointInImage.put(currentPath, beforeStart);
 				currentPath.addNode(beforeStart);

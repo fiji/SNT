@@ -23,6 +23,7 @@
 package sc.fiji.snt.analysis;
 
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -47,8 +48,9 @@ import sc.fiji.snt.util.PointInImage;
  * Computes summary and descriptive statistics from a Collection of nodes.
  * 
  * @author Tiago Ferreira
+ * @param <T>
  */
-public class NodeStatistics {
+public class NodeStatistics <T extends PointInImage> {
 
 	/** Flag for {@value #BRANCH_LENGTH} analysis. */
 	public static final String BRANCH_LENGTH = TreeStatistics.BRANCH_LENGTH;
@@ -81,8 +83,7 @@ public class NodeStatistics {
 			Z_COORDINATES, //
 	};
 
-
-	final Collection<? extends PointInImage> points;
+	final Collection<T> points;
 	private boolean branchesAssigned;
 	private Tree branchAssignmentTree;
 	private String currentMetric;
@@ -90,12 +91,13 @@ public class NodeStatistics {
 	private String label;
 
 
+
 	/**
 	 * Performs statistics on a collection of nodes.
 	 *
 	 * @param points      the points to be analyzed
 	 */
-	public NodeStatistics(final Collection<? extends PointInImage> points) {
+	public NodeStatistics(final Collection<T> points) {
 		this(points, null);
 	}
 
@@ -106,7 +108,7 @@ public class NodeStatistics {
 	 * @param points the points to be analyzed
 	 * @param tree   the Tree associated with {@code points}
 	 */
-	public NodeStatistics(final Collection<? extends PointInImage> points, final Tree tree) {
+	public NodeStatistics(final Collection<T>points, final Tree tree) {
 		this.points = points;
 		branchAssignmentTree = tree;
 	}
@@ -193,7 +195,75 @@ public class NodeStatistics {
 		return frame;
 	}
 
-	public Map<BrainAnnotation, Integer> getBrainAnnotations(final int level) {
+	/**
+	 * Gets the list of nodes associated with the specified compartment (neuropil
+	 * label).
+	 *
+	 * @param compartment the query compartment (null not allowed). All of its
+	 *                    children will be considered
+	 * @return the list of filtered nodes
+	 */
+	public List<T> get(final BrainAnnotation compartment) {
+		return get(compartment, true);
+	}
+
+	/**
+	 * Gets the list of nodes associated with the specified compartment (neuropil
+	 * label).
+	 *
+	 * @param compartment the query compartment (null not allowed)
+	 * @param includeChildren whether children of {@code compartment} should be included
+	 * @return the list of filtered nodes
+	 */
+	public List<T> get(final BrainAnnotation compartment, final boolean includeChildren) {
+		final List<T> list = new ArrayList<T>();
+		for (final T node : points) {
+			final BrainAnnotation annotation = node.getAnnotation();
+			if (annotation != null) {
+				boolean include = annotation.equals(compartment);
+				if (includeChildren)
+					include = include || compartment.isParentOf(annotation);
+				if (include) {
+					list.add(node);
+				}
+			}
+		}
+		return list;
+	}
+
+	public Map<BrainAnnotation, List<T>> getAnnotatedNodes() {
+		return getAnnotatedNodes(Integer.MAX_VALUE);
+	}
+
+	public Map<BrainAnnotation, List<T>> getAnnotatedNodes(final int level) {
+		final HashMap<BrainAnnotation, List<T>> map  = new HashMap<>();
+		for (final T p : points) {
+			BrainAnnotation mappingAnnotation = null;
+			final BrainAnnotation pAnnotation = p.getAnnotation();
+			if (pAnnotation != null) {
+				final int depth = pAnnotation.getOntologyDepth();
+				if (depth > level) {
+					mappingAnnotation = pAnnotation.getAncestor(level-depth);
+				} else {
+					mappingAnnotation = pAnnotation;
+				}
+			}
+			List<T> currentList = map.get(mappingAnnotation);
+			if (currentList == null) {
+				currentList = new ArrayList<T>();
+				map.put(mappingAnnotation, currentList);
+			}
+			currentList.add(p);
+		}
+	
+		return map;
+	}
+
+	public Map<BrainAnnotation, Integer> getAnnotatedFrequencies() {
+		return getAnnotatedFrequencies(Integer.MAX_VALUE);
+	}
+
+	public Map<BrainAnnotation, Integer> getAnnotatedFrequencies(final int level) {
 		final HashMap<BrainAnnotation, Integer> map  = new HashMap<>();
 		points.forEach(p -> {
 			BrainAnnotation mappingAnnotation = null;
@@ -218,7 +288,7 @@ public class NodeStatistics {
 	}
 
 	public SNTChart getAnnotatedHistogram(final int depth) {
-		final Map<BrainAnnotation, Integer> map = getBrainAnnotations(depth);
+		final Map<BrainAnnotation, Integer> map = getAnnotatedFrequencies(depth);
 		final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		final String seriesLabel = (depth == Integer.MAX_VALUE) ? "no filtering" : "depth \u2264" + depth;
 		map.entrySet().stream().sorted((e1, e2) -> -e1.getValue().compareTo(e2.getValue())).forEach(entry -> {
@@ -323,13 +393,13 @@ public class NodeStatistics {
 	/* IDE debug method */
 	public static void main(final String[] args) {
 		final Tree tree = new SNTService().demoTrees().get(0);
-		final NodeStatistics treeStats = new NodeStatistics(tree.getNodes());
+		final NodeStatistics<?> treeStats = new NodeStatistics<>(tree.getNodes());
 		final SNTChart hist = treeStats.getHistogram("x-coord");
 		hist.annotate("Free text");
 		hist.show();
 		final MouseLightLoader loader = new MouseLightLoader("AA0001");
 		final TreeAnalyzer analyzer = new TreeAnalyzer(loader.getTree("axon"));
-		final NodeStatistics nStats = new NodeStatistics(analyzer.getTips());
+		final NodeStatistics<?> nStats = new NodeStatistics<>(analyzer.getTips());
 		final SNTChart plot = nStats.getAnnotatedHistogram();
 		plot.annotateCategory("CA1", "Not showing");
 		plot.annotateCategory("CP", "highlighted category");

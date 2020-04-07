@@ -65,6 +65,9 @@ public class TreeStatistics extends TreeAnalyzer {
 	/** Flag for {@value #PRIMARY_LENGTH} analysis. */
 	public static final String PRIMARY_LENGTH = "Length of primary branches";
 
+	/** Flag for {@value #INNER_LENGTH} analysis. */
+	public static final String INNER_LENGTH = "Length of inner branches";
+
 	/** Flag for {@value #PATH_ORDER} statistics. */
 	public static final String PATH_ORDER = "Path order";
 
@@ -122,6 +125,7 @@ public class TreeStatistics extends TreeAnalyzer {
 			PATH_LENGTH, //
 			PATH_ORDER, //
 			PRIMARY_LENGTH, //
+			INNER_LENGTH, //
 			TERMINAL_LENGTH, //
 			VALUES, //
 			X_COORDINATES, //
@@ -138,6 +142,17 @@ public class TreeStatistics extends TreeAnalyzer {
 	 */
 	public TreeStatistics(final Tree tree) {
 		super(tree);
+	}
+
+	/**
+	 * Gets the list of all {@link TreeAnalyzer} supported metrics.
+	 *
+	 * @return the list of all TreeAnalyzer's metrics
+	 * 
+	 * @see TreeAnalyzer#getAllMetrics()
+	 */
+	public static List<String> getAnalyzerMetrics() {
+		return TreeAnalyzer.getAllMetrics();
 	}
 
 	/**
@@ -317,6 +332,9 @@ public class TreeStatistics extends TreeAnalyzer {
 			else if (normGuess.indexOf("prim") != -1) {
 				return PRIMARY_LENGTH;
 			}
+			else if (normGuess.indexOf("inner") != -1) {
+				return INNER_LENGTH;
+			}
 			else if (normGuess.indexOf("path") != -1) {
 				return PATH_LENGTH;
 			}
@@ -387,8 +405,7 @@ public class TreeStatistics extends TreeAnalyzer {
 		switch (getNormalizedMeasurement(measurement)) {
 		case BRANCH_LENGTH:
 			try {
-				final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-				for (final Path p : analyzer.getBranches())
+				for (final Path p : getBranches())
 					stat.addValue(p.getLength());
 			} catch (final IllegalArgumentException ignored) {
 				SNTUtils.log("Error: " + ignored.getMessage());
@@ -397,8 +414,7 @@ public class TreeStatistics extends TreeAnalyzer {
 			break;
 		case CONTRACTION:
 			try {
-				final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-				for (final Path p : analyzer.getBranches())
+				for (final Path p : getBranches())
 					stat.addValue(p.getContraction());
 			} catch (final IllegalArgumentException ignored) {
 				SNTUtils.log("Error: " + ignored.getMessage());
@@ -459,6 +475,10 @@ public class TreeStatistics extends TreeAnalyzer {
 			break;
 		case TERMINAL_LENGTH:
 			for (final Path p : getTerminalBranches())
+				stat.addValue(p.getLength());
+			break;
+		case INNER_LENGTH:
+			for (final Path p : getInnerBranches())
 				stat.addValue(p.getLength());
 			break;
 		case VALUES:
@@ -573,7 +593,7 @@ public class TreeStatistics extends TreeAnalyzer {
 			somaCompartment = somaCompartment.getAncestor(depth - somaCompartment.getOntologyDepth());
 		hist.annotateCategory(somaCompartment.acronym(), "soma", "blue");
 		hist.show();
-		NodeStatistics nStats =new NodeStatistics(tStats.getTips());
+		NodeStatistics<?> nStats =new NodeStatistics<>(tStats.getTips());
 				hist = nStats.getAnnotatedHistogram(depth);
 				hist.annotate("No. of tips: " + tStats.getTips().size());
 				hist.show();

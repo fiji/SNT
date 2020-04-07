@@ -49,6 +49,7 @@ import net.imagej.plot.MarkerStyle;
 import net.imagej.plot.PlotService;
 import net.imagej.plot.XYPlot;
 import net.imagej.plot.XYSeries;
+import net.imagej.plot.defaultplot.DefaultPlotService;
 import net.imagej.ui.swing.viewer.plot.jfreechart.XYPlotConverter;
 import net.imglib2.display.ColorTable;
 import sc.fiji.snt.Path;
@@ -83,10 +84,22 @@ public class Viewer2D extends TreeColorMapper {
 	private boolean visibleOutline;
 
 	/**
+	 * Instantiates an empty 2D viewer. Note that because the instance is not aware
+	 * of any context, script-friendly methods that use string as arguments may fail
+	 * to retrieve referenced Scijava objects.
+	 */
+	public Viewer2D() {
+		super();
+		setAxesVisible(true);
+		setGridlinesVisible(true);
+		setOutlineVisible(true);
+	}
+
+	/**
 	 * Instantiates an empty 2D viewer.
 	 *
 	 * @param context the SciJava application context providing the services
-	 *          required by the class
+	 *          required by the viewer.
 	 */
 	public Viewer2D(final Context context) {
 		super(context);
@@ -101,7 +114,10 @@ public class Viewer2D extends TreeColorMapper {
 	}
 
 	private void initPlot() {
-		if (plot == null) plot = plotService.newXYPlot();
+		if (plot == null) {
+			if (plotService == null) plotService = new DefaultPlotService();
+			plot = plotService.newXYPlot();
+		}
 	}
 
 	private void plotPaths() {
@@ -346,7 +362,7 @@ public class Viewer2D extends TreeColorMapper {
 	 * @return the converted viewer
 	 */
 	public JFreeChart getChart() {
-		if (plot == null) plot = plotService.newXYPlot();
+		initPlot();
 		final XYPlotConverter converter = new XYPlotConverter();
 		return converter.convert(plot, JFreeChart.class);
 		// chart.setAntiAlias(true);
@@ -364,10 +380,11 @@ public class Viewer2D extends TreeColorMapper {
 		plot.yAxis().setAutoRange();
 		plot.xAxis().setAutoRange();
 		if (show) {
-			if (chart == null) {
-				uiService.show((title == null) ? "SNT Path Plot" : title, plot);
+			if (chart == null && uiService != null) {
+				uiService.show((title == null) ? "Reconstruction Plotter" : title, plot);
 			}
 			else {
+				if (chart == null) chart = getChart();
 				((org.jfree.chart.plot.XYPlot)chart.getPlot()).getDomainAxis().setVisible(visibleAxes);
 				((org.jfree.chart.plot.XYPlot)chart.getPlot()).getRangeAxis().setVisible(visibleAxes);
 				((org.jfree.chart.plot.XYPlot)chart.getPlot()).setDomainGridlinesVisible(visibleGridLines);

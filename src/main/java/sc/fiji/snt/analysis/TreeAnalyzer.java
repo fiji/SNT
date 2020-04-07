@@ -64,13 +64,15 @@ public class TreeAnalyzer extends ContextCommand {
 
 	protected Tree tree;
 	private Tree unfilteredTree;
-	private HashSet<Path> primaryBranches;
-	private HashSet<Path> terminalBranches;
-	private HashSet<PointInImage> joints;
-	private HashSet<PointInImage> tips;
+	private List<Path> primaryBranches;
+	private List<Path> innerBranches;
+	private List<Path> terminalBranches;
+	private Set<PointInImage> joints;
+	private Set<PointInImage> tips;
 	protected DefaultGenericTable table;
 	private String tableTitle;
 	private StrahlerAnalyzer sAnalyzer;
+	private ShollAnalyzer shllAnalyzer;
 
 	private int fittedPathsCounter = 0;
 	private int unfilteredPathsFittedPathsCounter = 0;
@@ -226,9 +228,11 @@ public class TreeAnalyzer extends ContextCommand {
 		tree.replaceAll(unfilteredTree.list());
 		joints = null;
 		primaryBranches = null;
+		innerBranches = null;
 		terminalBranches = null;
 		tips = null;
 		sAnalyzer = null;
+		shllAnalyzer = null;
 		fittedPathsCounter = unfilteredPathsFittedPathsCounter;
 	}
 
@@ -285,7 +289,16 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see MultiTreeStatistics#getMetrics()
 	 */
 	public static List<String> getMetrics() {
-		return MultiTreeStatistics.getMetrics();
+		final ArrayList<String> metrics = new ArrayList<>(MultiTreeStatistics.getMetrics());
+		metrics.add("Sholl: "+ ShollAnalyzer.MEAN);
+		metrics.add("Sholl: "+ ShollAnalyzer.SUM);
+		metrics.add("Sholl: "+ ShollAnalyzer.N_MAX);
+		metrics.add("Sholl: "+ ShollAnalyzer.N_SECONDARY_MAX);
+		metrics.add("Sholl: "+ ShollAnalyzer.MAX_FITTED);
+		metrics.add("Sholl: "+ ShollAnalyzer.MAX_FITTED_RADIUS);
+		metrics.add("Sholl: "+ ShollAnalyzer.POLY_FIT_DEGREE);
+		metrics.add("Sholl: "+ ShollAnalyzer.DECAY);
+		return metrics;
 	}
 
 	/**
@@ -297,7 +310,11 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see MultiTreeStatistics#getAllMetrics()
 	 */
 	public static List<String> getAllMetrics() {
-		return MultiTreeStatistics.getAllMetrics();
+		final ArrayList<String> metrics = new ArrayList<>(MultiTreeStatistics.getAllMetrics());
+		for (final String sm : ShollAnalyzer.ALL_FLAGS) {
+			metrics.add("Sholl: "+ sm);
+		}
+		return metrics;
 	}
 
 	/**
@@ -365,12 +382,16 @@ public class TreeAnalyzer extends ContextCommand {
 			return getNPaths();
 		case MultiTreeStatistics.N_PRIMARY_BRANCHES:
 			return getPrimaryBranches().size();
+		case MultiTreeStatistics.N_INNER_BRANCHES:
+			return getInnerBranches().size();
 		case MultiTreeStatistics.N_TERMINAL_BRANCHES:
 			return getTerminalBranches().size();
 		case MultiTreeStatistics.N_TIPS:
 			return getTips().size();
 		case MultiTreeStatistics.PRIMARY_LENGTH:
 			return getPrimaryLength();
+		case MultiTreeStatistics.INNER_LENGTH:
+			return getInnerLength();
 		case MultiTreeStatistics.STRAHLER_NUMBER:
 			try {
 				return getStrahlerNumber();
@@ -390,6 +411,10 @@ public class TreeAnalyzer extends ContextCommand {
 		case MultiTreeStatistics.WIDTH:
 			return getWidth();
 		default:
+			if (metric.startsWith("Sholl: ")) {
+				final String fMetric = metric.substring(metric.indexOf("Sholl: ") + 6).trim();
+				return getShollAnalyzer().getSingleValueMetrics().getOrDefault(fMetric, Double.NaN);
+			}
 			throw new IllegalArgumentException("Unrecognizable measurement \"" + metric + "\". "
 					+ "Maybe you meant one of the following?: \"" + String.join(", ", getMetrics() + "\""));
 		}
@@ -558,11 +583,11 @@ public class TreeAnalyzer extends ContextCommand {
 	/**
 	 * Retrieves all the Paths in the analyzed Tree tagged as primary.
 	 *
-	 * @return the set of primary paths.
+	 * @return the list of primary paths.
 	 * @see #getPrimaryBranches()
 	 */
-	public Set<Path> getPrimaryPaths() {
-		final HashSet<Path> primaryPaths = new HashSet<>();
+	public List<Path> getPrimaryPaths() {
+		final List<Path> primaryPaths = new ArrayList<>();
 		for (final Path p : tree.list()) {
 			if (p.isPrimary()) primaryPaths.add(p);
 		}
@@ -570,36 +595,55 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
-	 * Retrieves the primary branches of the analyzed Tree. A primary branch
-	 * corresponds to the section of a primary Path between its origin and its
-	 * closest branch-point.
-	 *
-	 * @return the set containing the primary branches. Note that as per
-	 *         {@link Path#getSection(int, int)}, these branches will not carry any
-	 *         connectivity information.
+	 * Retrieves the branches of highest
+	 * {@link StrahlerAnalyzer#getHighestBranchOrder() Strahler order} in the Tree.
+	 * This typically correspond to the most 'internal' branches of the Tree in
+	 * direct sequence from the root.
+	 * 
+	 * @return the list containing the "inner" branches. Note that these branches
+	 *         (Path segments) will not carry any connectivity information.
 	 * @see #getPrimaryPaths()
-	 * @see #restrictToOrder(int...)
+	 * @see StrahlerAnalyzer#getBranches()
+	 * @see StrahlerAnalyzer#getHighestBranchOrder()
 	 */
-	public Set<Path> getPrimaryBranches() {
-		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
-		primaryBranches = new HashSet<>(sAnalyzer.getBranches(sAnalyzer.getRootNumber()));
+	public List<Path> getInnerBranches() {
+		if (sAnalyzer == null)
+			sAnalyzer = new StrahlerAnalyzer(tree);
+		innerBranches = sAnalyzer.getBranches(sAnalyzer.getHighestBranchOrder());
+		return innerBranches;
+	}
+
+	/**
+	 * Retrieves the primary branches of the analyzed Tree. Primary branches (or
+	 * root-associated) have origin in the Tree's root, extending to the closest
+	 * branch/end-point. Note that a primary branch can also be terminal.
+	 * 
+	 * @return the primary branches. Note that these branches (Path segments) will
+	 *         not carry any connectivity information.
+	 * @see #getPrimaryPaths()
+	 * @see StrahlerAnalyzer#getRootAssociatedBranches()
+	 */
+	public List<Path> getPrimaryBranches() {
+		if (sAnalyzer == null)
+			sAnalyzer = new StrahlerAnalyzer(tree);
+		primaryBranches = sAnalyzer.getRootAssociatedBranches();
 		return primaryBranches;
 	}
 
 	/**
 	 * Retrieves the terminal branches of the analyzed Tree. A terminal branch
 	 * corresponds to the section of a terminal Path between its last branch-point
-	 * and its terminal point (tip).
+	 * and its terminal point (tip). A terminal branch can also be primary.
 	 *
-	 * @return the set containing terminal branches. Note that as per
+	 * @return the terminal branches. Note that as per
 	 *         {@link Path#getSection(int, int)}, these branches will not carry any
 	 *         connectivity information.
 	 * @see #getPrimaryBranches
 	 * @see #restrictToOrder(int...)
 	 */
-	public Set<Path> getTerminalBranches() {
+	public List<Path> getTerminalBranches() {
 		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
-		terminalBranches = new HashSet<>(sAnalyzer.getBranches(1));
+		terminalBranches = sAnalyzer.getBranches(1);
 		return terminalBranches;
 	}
 
@@ -764,6 +808,17 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
+	 * Gets the cable length of inner branches
+	 *
+	 * @return the length sum of all inner branches
+	 * @see #getInnerBranches()
+	 */
+	public double getInnerLength() {
+		if (innerBranches == null) getInnerBranches();
+		return sumLength(innerBranches);
+	}
+
+	/**
 	 * Gets the cable length of terminal branches
 	 *
 	 * @return the length sum of all terminal branches
@@ -828,6 +883,16 @@ public class TreeAnalyzer extends ContextCommand {
 	public StrahlerAnalyzer getStrahlerAnalyzer() throws IllegalArgumentException {
 		if (sAnalyzer == null) sAnalyzer = new StrahlerAnalyzer(tree);
 		return sAnalyzer;
+	}
+
+	/**
+	 * Gets the {@link ShollAnalyzer} instance associated with this analyzer
+	 *
+	 * @return the ShollAnalyzer instance associated with this analyzer
+	 */
+	public ShollAnalyzer getShollAnalyzer() {
+		if (shllAnalyzer == null) shllAnalyzer = new ShollAnalyzer(tree);
+		return shllAnalyzer;
 	}
 
 	/**
@@ -902,15 +967,11 @@ public class TreeAnalyzer extends ContextCommand {
 	/* IDE debug method */
 	public static void main(final String[] args) throws InterruptedException {
 		final ImageJ ij = new ImageJ();
-		ij.ui().showUI();
 		final SNTService sntService = ij.context().getService(SNTService.class);
-		sntService.initialize(sntService.demoTreeImage(), true);
-		final Tree tree = sntService.demoTree();
-		sntService.loadTree(tree);
+		final Tree tree = sntService.demoTrees().get(0);
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-		for (Path p : analyzer.getPrimaryBranches()) {
-			sntService.getPlugin().getPathAndFillManager().addPath(p);
-		}
-		sntService.getPlugin().updateAllViewers();
+		TreeAnalyzer.getAllMetrics().forEach( m -> {
+			System.out.println(m + ": " + analyzer.getMetric(m));
+		});
 	}
 }

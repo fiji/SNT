@@ -51,14 +51,24 @@ import sc.fiji.snt.util.SWCPoint;
  */
 public class PersistenceAnalyzer {
 
-	private static final int FUNC_UNKNOWN = -1;
-	private static final int FUNC_GEODESIC = 0;
-	private static final int FUNC_RADIAL = 1;
-	private static final int FUNC_PATH_ORDER = 2;
-	private static final int FUNC_CENTRIFUGAL= 3;
-	private static final int FUNC_X = 4;
-	private static final int FUNC_Y = 5;
-	private static final int FUNC_Z = 6;
+	private static final int FUNC_UNKNOWN       = -1;
+	private static final int FUNC_0_GEODESIC    = 0;
+	private static final int FUNC_1_RADIAL      = 1;
+	private static final int FUNC_2_CENTRIFUGAL = 2;
+	private static final int FUNC_3_PATH_ORDER  = 3;
+	private static final int FUNC_4_X           = 4;
+	private static final int FUNC_5_Y           = 5;
+	private static final int FUNC_6_Z           = 6;
+	private static final String[] FUNC_STRINGS = new String[7];
+	static {
+		FUNC_STRINGS[FUNC_0_GEODESIC]    = "geodesic";
+		FUNC_STRINGS[FUNC_1_RADIAL]      = "radial";
+		FUNC_STRINGS[FUNC_2_CENTRIFUGAL] = "centrifugal";
+		FUNC_STRINGS[FUNC_3_PATH_ORDER]  = "path order";
+		FUNC_STRINGS[FUNC_4_X] = "x";
+		FUNC_STRINGS[FUNC_5_Y] = "y";
+		FUNC_STRINGS[FUNC_6_Z] = "z";
+	}
 
 	private final Tree tree;
 
@@ -156,13 +166,14 @@ public class PersistenceAnalyzer {
 		if (persistenceDiagramMap.get(descriptor) == null || persistenceDiagramMap.get(descriptor).isEmpty()) {
 			compute(descriptor);
 		}
-		Collections.sort(persistenceDiagramMap.get(descriptor), new Comparator<ArrayList<Double>>() {
+		final ArrayList<ArrayList<Double>> diagram = persistenceDiagramMap.get(descriptor);
+		Collections.sort(diagram, new Comparator<ArrayList<Double>>() {
 			@Override
 			public int compare(final ArrayList<Double> o1, final ArrayList<Double> o2) {
 				return o1.get(0).compareTo(o2.get(0));
 			}
 		});
-		return persistenceDiagramMap.get(descriptor);
+		return diagram;
 	}
 
 	/**
@@ -201,13 +212,31 @@ public class PersistenceAnalyzer {
 	public ArrayList<ArrayList<SWCPoint>> getPersistenceDiagramNodes(final String descriptor) {
 		if (persistenceNodesMap.get(descriptor) == null || persistenceNodesMap.get(descriptor).isEmpty())
 			compute(descriptor);
-		Collections.sort(persistenceNodesMap.get(descriptor), new Comparator<ArrayList<SWCPoint>>() {
+		final ArrayList<ArrayList<SWCPoint>> nodeDiagram = persistenceNodesMap.get(descriptor);
+		Collections.sort(nodeDiagram, new Comparator<ArrayList<SWCPoint>>() {
 			@Override
 			public int compare(final ArrayList<SWCPoint> o1, final ArrayList<SWCPoint> o2) {
 				return Double.compare(o1.get(0).v, o2.get(0).v);
 			}
 		});
-		return persistenceNodesMap.get(descriptor);
+		return nodeDiagram;
+	}
+	
+	/** Gets the persistence landscape.
+	 * @param descriptor A descriptor for the filter function as per
+	 *                   {@link #getDescriptors()} (case insensitive), such as
+	 *                   {@code radial}, {@code geodesic}, {@code centrifugal}
+	 *                   (reverse Strahler), etc.
+     * @param numLandscapes the number of piecewise-linear functions to output.
+     * @param resolution the number of samples for all piecewise-linear functions.
+	 */
+	public double[] getPersistenceLandscape(final String descriptor, final int numLandscapes, final int resolution) {
+		if (persistenceDiagramMap.get(descriptor) == null || persistenceDiagramMap.get(descriptor).isEmpty()) {
+			compute(descriptor);
+		}
+		final ArrayList<ArrayList<Double>> diagram = persistenceDiagramMap.get(descriptor);
+		final double[] landscape = landscapeTransform(diagram, numLandscapes, resolution);
+		return landscape;
 	}
 
 	/**
@@ -216,29 +245,28 @@ public class PersistenceAnalyzer {
 	 * @return the list of available descriptors.
 	 */
 	public static List<String> getDescriptors() {
-		return new ArrayList<String>(Arrays.asList("geodesic", "radial", "centrifugal (reverse Strahler)", "path order",
-				"x", "y", "z (depth)"));
+		return Arrays.asList(FUNC_STRINGS);
 	}
 
 	private double descriptorFunc(final DirectedWeightedGraph graph, final SWCPoint node, final int func) throws UnknownMetricException {
 		switch (func) {
-		case FUNC_CENTRIFUGAL:
+		case FUNC_0_GEODESIC:
+			return geodesicDistanceToRoot(graph, node);
+		case FUNC_1_RADIAL:
+			return radialDistanceToRoot(graph, node);
+		case FUNC_2_CENTRIFUGAL:
 			if (!nodeValuesAssigned) {
 				StrahlerAnalyzer.classify(graph, true);
 				nodeValuesAssigned = true;
 			}
 			return node.v;
-		case FUNC_GEODESIC:
-			return geodesicDistanceToRoot(graph, node);
-		case FUNC_PATH_ORDER:
+		case FUNC_3_PATH_ORDER:
 			return node.getPath().getOrder();
-		case FUNC_RADIAL:
-			return radialDistanceToRoot(graph, node);
-		case FUNC_X:
+		case FUNC_4_X:
 			return node.getX();
-		case FUNC_Y:
+		case FUNC_5_Y:
 			return node.getY();
-		case FUNC_Z:
+		case FUNC_6_Z:
 			return node.getZ();
 		default:
 			throw new UnknownMetricException("Unrecognized Descriptor");
@@ -247,25 +275,18 @@ public class PersistenceAnalyzer {
 
 	private int getNormFunction(final String func) {
 		if (func == null || func.trim().isEmpty()) return FUNC_UNKNOWN;
-		final String normFunc = func.toLowerCase();
-		if (normFunc.indexOf("geodesic") != -1) {
-			return FUNC_GEODESIC;
+		for (int i = 0; i < FUNC_STRINGS.length; i++) {
+			if (FUNC_STRINGS[i].equalsIgnoreCase(func)) return i; 
 		}
-		if (normFunc.indexOf("centrifugal") != -1
-				|| (normFunc.indexOf("reverse") != -1 && normFunc.indexOf("strahler") != -1)) {
-			return FUNC_CENTRIFUGAL;
+		final String normFunc = func.toLowerCase();
+		if ((normFunc.indexOf("reverse") != -1 && normFunc.indexOf("strahler") != -1)) {
+			return FUNC_2_CENTRIFUGAL;
 		}
 		if (normFunc.indexOf("path") != -1 && normFunc.indexOf("order") != -1) {
-			return FUNC_PATH_ORDER;
+			return FUNC_3_PATH_ORDER;
 		}
-		if (normFunc.indexOf("depth") == -1 || normFunc.matches(".*\\bz\\b.*")) {
-			return FUNC_Z;
-		}
-		if (normFunc.matches(".*\\bx\\b.*")) {
-			return FUNC_X;
-		}
-		if (normFunc.matches(".*\\by\\b.*")) {
-			return FUNC_Y;
+		if (normFunc.indexOf("depth") == -1) {
+			return FUNC_6_Z;
 		}
 		return FUNC_UNKNOWN;
 	}
@@ -287,6 +308,89 @@ public class PersistenceAnalyzer {
 	private double radialDistanceToRoot(final DirectedWeightedGraph graph, final SWCPoint node) {
 		return graph.getRoot().distanceTo(node);
 	}
+	
+	private class Linspace {
+	    private double current;
+	    private final double end;
+	    private final double step;
+	    public Linspace(double start, double end, double totalCount) {
+	        this.current=start;
+	        this.end=end;
+	        this.step=(end - start) / totalCount;
+	    }
+	    public boolean hasNext() {
+	        return current < (end + step/2); 
+	    }
+	    public double getNextDouble() {
+	        current+=step;
+	        return current;
+	    }
+	}
+	
+	private double[] getMinMax(ArrayList<ArrayList<Double>> diagram) {
+		double minX = Double.MAX_VALUE;
+		double maxY = -Double.MAX_VALUE;
+		for (ArrayList<Double> point : diagram) {
+			if (point.get(0) < minX) minX = point.get(0);
+			if (point.get(1) > maxY) maxY = point.get(1);
+		}
+		double[] sampleRange = {minX, maxY};
+		return sampleRange;
+	}
+	
+	private double[] landscapeTransform(ArrayList<ArrayList<Double>> diagram, int numLandscapes, int resolution) {
+		double[] sampleRange = getMinMax(diagram);
+		Linspace xValues = new Linspace(sampleRange[0], sampleRange[1], resolution);
+		double stepX = xValues.step;
+		
+		int numPointsInDiagram = diagram.size();
+
+		double[][] ls = new double[numLandscapes][resolution];
+		for (int i = 0 ; i < ls.length ; i++) {
+			for (int j = 0 ; j < ls[i].length ; j++) {
+				ls[i][j] = 0;
+			}
+		}
+		ArrayList<ArrayList<Double>> events = new ArrayList<ArrayList<Double>>();
+		for (int j = 0 ; j < resolution ; j++) {
+			events.add(new ArrayList<Double>());
+		}
+		for (int j = 0 ; j < numPointsInDiagram ; j++) {
+			double px = diagram.get(j).get(0);
+			double py = diagram.get(j).get(1);
+			int minIndex = Math.min( Math.max( (int)Math.ceil((px              - sampleRange[0]) / stepX), 0 ), resolution );
+			int midIndex = Math.min( Math.max( (int)Math.ceil((0.5 * (py + px) - sampleRange[0]) / stepX), 0 ), resolution );
+			int maxIndex = Math.min( Math.max( (int)Math.ceil((py              - sampleRange[0]) / stepX), 0 ), resolution );
+			if (minIndex < resolution && maxIndex > 0) {
+				
+				double landscapeValue = sampleRange[0] + minIndex * stepX - px;
+				for (int k = minIndex ; k < midIndex ; k++) {
+					events.get(k).add(landscapeValue);
+					landscapeValue += stepX;
+				}
+				
+				landscapeValue = py - sampleRange[0] - midIndex * stepX;
+				for (int k = midIndex ; k < maxIndex ; k++) {
+					events.get(k).add(landscapeValue);
+					landscapeValue -= stepX;
+				}
+			}
+		}
+		for (int j = 0 ; j < resolution ; j++) {
+			Collections.sort(events.get(j), Collections.reverseOrder());
+			int range = Math.min(numLandscapes, events.get(j).size());
+			for (int k = 0 ; k < range ; k++) {
+				ls[k][j] = events.get(j).get(k); 
+			}
+		}
+		double[] landscape = Arrays.stream(ls)
+		        .flatMapToDouble(Arrays::stream)
+		        .toArray();
+		for (int i = 0 ; i < landscape.length ; i++) {
+			landscape[i] *= Math.sqrt(2);
+		}
+		return landscape;
+	}
 
 	/* IDE debug method */
 	public static void main(final String[] args) throws InterruptedException {
@@ -294,10 +398,13 @@ public class PersistenceAnalyzer {
 		final SNTService sntService = ij.context().getService(SNTService.class);
 		final Tree tree = sntService.demoTree();
 		final PersistenceAnalyzer analyzer = new PersistenceAnalyzer(tree);
-		final ArrayList<ArrayList<Double>> diagram = analyzer.getPersistenceDiagram("centrifugal");
+		final ArrayList<ArrayList<Double>> diagram = analyzer.getPersistenceDiagram("radial");
 		for (final ArrayList<Double> point : diagram) {
 			System.out.println(point);
 		}
 		System.out.println(diagram.size());
+		double[] landscape = analyzer.getPersistenceLandscape("radial", 5, 100);
+		System.out.println(landscape.length);
+		
 	}
 }

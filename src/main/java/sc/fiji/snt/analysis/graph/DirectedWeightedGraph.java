@@ -257,6 +257,7 @@ public class DirectedWeightedGraph extends DefaultDirectedWeightedGraph<SWCPoint
 	 * @return the root node.
 	 */
 	public SWCPoint getRoot() {
+		if (vertexSet().isEmpty()) return null;
 		if (!GraphTests.isConnected(this)) {
 			throw new IllegalStateException("Graph has multiple connected components");
 		}

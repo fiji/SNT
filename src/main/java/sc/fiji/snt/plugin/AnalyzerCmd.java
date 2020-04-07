@@ -84,6 +84,9 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 	@Parameter(label = MultiTreeStatistics.PRIMARY_LENGTH)
 	private boolean primaryLength;
 
+	@Parameter(label = MultiTreeStatistics.INNER_LENGTH)
+	private boolean innerLength;
+
 	@Parameter(label = MultiTreeStatistics.AVG_BRANCH_LENGTH)
 	private boolean avgBranchLength;
 
@@ -101,6 +104,9 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 
 	@Parameter(label = MultiTreeStatistics.N_PRIMARY_BRANCHES)
 	private boolean nPrimaryBranches;
+
+	@Parameter(label = MultiTreeStatistics.N_INNER_BRANCHES)
+	private boolean nInnerBranches;
 
 	@Parameter(label = MultiTreeStatistics.N_TERMINAL_BRANCHES)
 	private boolean nTerminalBranches;
@@ -186,6 +192,7 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 		nTerminalBranches = enable;
 		nTips = enable;
 		primaryLength = enable;
+		innerLength = enable;
 		sNumber = enable;
 		sRatio = enable;
 		terminalLength = enable;
@@ -202,10 +209,12 @@ public class AnalyzerCmd extends CommonDynamicCmd {
 		if(cableLength) metrics.add(MultiTreeStatistics.LENGTH);
 		if(terminalLength) metrics.add(MultiTreeStatistics.TERMINAL_LENGTH);
 		if(primaryLength) metrics.add(MultiTreeStatistics.PRIMARY_LENGTH);
+		if(innerLength) metrics.add(MultiTreeStatistics.INNER_LENGTH);
 		if(nBPs) metrics.add(MultiTreeStatistics.N_BRANCH_POINTS);
 		if(nTips) metrics.add(MultiTreeStatistics.N_TIPS);
 		if(nBranches) metrics.add(MultiTreeStatistics.N_BRANCHES);
 		if(nPrimaryBranches) metrics.add(MultiTreeStatistics.N_PRIMARY_BRANCHES);
+		if(nInnerBranches) metrics.add(MultiTreeStatistics.N_INNER_BRANCHES);
 		if(nTerminalBranches) metrics.add(MultiTreeStatistics.N_TERMINAL_BRANCHES);
 		if(sNumber) metrics.add(MultiTreeStatistics.STRAHLER_NUMBER);
 		if(sRatio) metrics.add(MultiTreeStatistics.STRAHLER_RATIO);

@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.scijava.Context;
 import org.scijava.util.ColorRGB;
 
 import ij.IJ;
@@ -49,6 +48,7 @@ import sc.fiji.snt.io.MouseLightLoader;
 import sc.fiji.snt.util.BoundingBox;
 import sc.fiji.snt.util.PointInCanvas;
 import sc.fiji.snt.util.PointInImage;
+import sc.fiji.snt.util.SNTColor;
 import sc.fiji.snt.util.SWCPoint;
 import sc.fiji.snt.viewer.Viewer2D;
 import sc.fiji.snt.viewer.Viewer3D;
@@ -284,8 +284,9 @@ public class Tree {
 	}
 
 	/**
-	 * Checks if the nodes of this Tree have been assigned {@link BrainAnnotation}s
-	 * (neuropil labels).
+	 * Checks if the nodes of this Tree have been assigned
+	 * {@link sc.fiji.snt.annotation.BrainAnnotation BrainAnnotation}s (neuropil
+	 * labels).
 	 *
 	 * @return true if at least one node in the Tree has a valid annotation, false
 	 *         otherwise
@@ -584,7 +585,7 @@ public class Tree {
 	}
 
 	public Viewer2D show2D() {
-		final Viewer2D viewer = new Viewer2D(new Context());
+		final Viewer2D viewer = new Viewer2D();
 		viewer.add(this);
 		if (getLabel() != null) {
 			viewer.setTitle(getLabel());
@@ -866,7 +867,9 @@ public class Tree {
 	public List<PointInImage> getNodes() {
 		final List<PointInImage> list = new ArrayList<>();
 		for (final Path p : tree) {
-			for (int i = 0; i < p.size(); ++i) {
+			// The first node of a child path is the same as the forked point
+			// on its parent, so we'll skip it if this is a child path
+			for (int i =  (p.isPrimary()) ? 0 : 1; i < p.size(); ++i) {
 				list.add(p.getNodeWithoutChecks(i));
 			}
 		}
@@ -1123,6 +1126,7 @@ public class Tree {
 	}
 
 	public List<SWCPoint> getNodesAsSWCPoints() throws IllegalArgumentException {
+		if (isEmpty()) return new ArrayList<SWCPoint>();
 		initPathAndFillManager();
 		try {
 			return pafm.getSWCFor(tree);
@@ -1398,10 +1402,18 @@ public class Tree {
 		}
 	}
 
+	public static void assignUniqueColors(final Collection<Tree> trees) {
+		final ColorRGB[] colors = SNTColor.getDistinctColors(trees.size());
+		int i = 0;
+		for (Iterator<Tree> it = trees.iterator(); it.hasNext(); i++) {
+			it.next().setColor(colors[i]);
+		}
+	}
+
 	/* IDE debug method */
 	public static void main(final String[] args) {
 
-		final Tree tree = new Tree("/home/tferr/code/morphonets/SNT/clustering/zi/cells/AA0174.json");
+		final Tree tree = new Tree("/home/tferr/Downloads/test_swc.swc");
 		TreeAnalyzer analyzer = new TreeAnalyzer(tree);
 		System.out.println("Creating graph...");
 
@@ -1460,4 +1472,5 @@ public class Tree {
 		System.out.println("BPs:        \t\t" + analyzer.getBranchPoints().size() + "/" + bps);
 
 	}
+
 }

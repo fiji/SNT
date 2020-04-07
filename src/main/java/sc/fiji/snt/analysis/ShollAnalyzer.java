@@ -283,7 +283,7 @@ public class ShollAnalyzer {
 		final SNTService sntService = ij.context().getService(SNTService.class);
 		final Tree tree = sntService.demoTrees().get(0);
 		//final Tree tree = new Tree("/home/tferr/code/morphonets/SNT/clustering/zi/cells/AA0768.json", "axon");
-		final ShollAnalyzer analyzer = new 41ShollAnalyzer(tree);
+		final ShollAnalyzer analyzer = new ShollAnalyzer(tree);
 		analyzer.setPolynomialFitRange(2, 70);
 		Logger logger = new Logger(ij.context());
 		logger.setDebug(true);

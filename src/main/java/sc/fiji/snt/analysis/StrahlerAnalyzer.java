@@ -237,6 +237,29 @@ public class StrahlerAnalyzer {
 		return tLengthMap;
 	}
 
+	public Map<Integer, Double> getAvgFragmentation() {
+		final Map<Integer, Double> fragMap = new TreeMap<>();
+		getBranches().forEach( (order, branches) -> {
+			final double nNodes = branches.stream().mapToInt(branch -> branch.size()).sum();
+			fragMap.put(order, nNodes/branches.size());
+		});
+		return fragMap;
+	}
+
+	public Map<Integer, Double> getAvgContraction() {
+		final Map<Integer, Double> contractMap = new TreeMap<>();
+		getBranches().forEach((order, branches) -> {
+			double contraction = 0;
+			for (final Path branch : branches) {
+				final double pContraction = branch.getContraction();
+				if (!Double.isNaN(pContraction))
+					contraction += pContraction;
+			}
+			contractMap.put(order, contraction / branches.size());
+		});
+		return contractMap;
+	}
+
 	/**
 	 * @return the map containing the number of branches on each order
 	 *         (Horton-Strahler numbers as key and branch count as value).

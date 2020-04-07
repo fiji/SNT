@@ -1,0 +1,32 @@
+# Eclipse #
+/.classpath
+/.project
+/.settings/
+
+# IntelliJ #
+*.iml
+*.iws
+*.ipr
+\.idea/
+
+# Maven #
+/target/
+/doc/
+/natives/
+
+# Misc #
+.checksums
+
+# Binaries #
+*.jar
+*.class
+/bin/
+!jars/*
+
+# Notebooks #
+\.ipynb_checkpoints/
+__pycache__/
+*.py[cod]
+
+# Branch specific exclusions
+/clustering/

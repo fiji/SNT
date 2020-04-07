@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -350,6 +351,13 @@ public class TreeAnalyzer extends ContextCommand {
 		case MultiTreeStatistics.AVG_CONTRACTION:
 			try {
 				return getAvgContraction();
+			} catch (final IllegalArgumentException ignored) {
+				SNTUtils.log("Error: " + ignored.getMessage());
+				return Double.NaN;
+			}
+		case MultiTreeStatistics.AVG_FRAGMENTATION:
+			try {
+				return getAvgFragmentation();
 			} catch (final IllegalArgumentException ignored) {
 				SNTUtils.log("Error: " + ignored.getMessage());
 				return Double.NaN;
@@ -946,6 +954,11 @@ public class TreeAnalyzer extends ContextCommand {
 			if (!Double.isNaN(pContraction)) contraction += pContraction;
 		}
 		return contraction / branches.size();
+	}
+
+	public double getAvgFragmentation() {
+		final Map<Integer, Double> fragMap = getStrahlerAnalyzer().getAvgFragmentation();
+		return fragMap.values().stream().mapToDouble(f -> f.doubleValue()).sum() / fragMap.size();
 	}
 
 	/**

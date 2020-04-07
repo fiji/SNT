@@ -97,6 +97,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 	/** Flag for {@value #AVG_CONTRACTION} statistics */
 	public static final String AVG_CONTRACTION = "Average contraction";
 
+	/** Flag for {@value #AVG_FRAGMENTATION} statistics */
+	public static final String AVG_FRAGMENTATION = "Average fragmentation";
+
 	/** Flag for {@value #N_PATHS} statistics */
 	public static final String N_PATHS = "No. of paths";
 
@@ -125,6 +128,7 @@ public class MultiTreeStatistics extends TreeStatistics {
 			ASSIGNED_VALUE, //
 			AVG_BRANCH_LENGTH, //
 			AVG_CONTRACTION, //
+			AVG_FRAGMENTATION, //
 			DEPTH, //
 			HEIGHT, //
 			HIGHEST_PATH_ORDER, //
@@ -315,6 +319,9 @@ public class MultiTreeStatistics extends TreeStatistics {
 		}
 		if (normGuess.indexOf("contraction") != -1 && containsAvgReference(normGuess)) {
 			return AVG_CONTRACTION;
+		}
+		if (normGuess.indexOf("fragmentation") != -1 && containsAvgReference(normGuess)) {
+			return AVG_FRAGMENTATION;
 		}
 		return "unknown";
 	}

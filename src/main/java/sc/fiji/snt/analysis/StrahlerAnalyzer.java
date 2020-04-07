@@ -225,6 +225,7 @@ public class StrahlerAnalyzer {
 	 *         {@code getRootNumber()-1}.
 	 */
 	public int getHighestBranchOrder() {
+		if (branchesMap == null || branchesMap.isEmpty()) compute();
 		return (branchesMap.get(getRootNumber()).isEmpty()) ? maxOrder-1 : maxOrder;
 	}
 
@@ -316,10 +317,11 @@ public class StrahlerAnalyzer {
 	public Map<Integer, Double> getBifurcationRatios() {
 		if (bRatioMap == null || bRatioMap.isEmpty()) {
 			compute();
-			IntStream.rangeClosed(2, maxOrder).forEach(order -> {
+			int hbo = getHighestBranchOrder();
+			IntStream.rangeClosed(2, hbo).forEach(order -> {
 				bRatioMap.put(order - 1, nBranchesMap.get(order - 1) / nBranchesMap.get(order));
 			});
-			bRatioMap.put(maxOrder, Double.NaN);
+			bRatioMap.put(hbo, Double.NaN);
 		}
 		return bRatioMap;
 	}

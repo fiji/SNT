@@ -223,6 +223,7 @@ public class MultiTreeStatistics extends TreeStatistics {
 			// and lower case strings in scripts
 			return WordUtils.capitalize(measurement, new char[] { '-' }); // Horton-Strahler
 		}
+		if (measurement.startsWith("Sholl: ")) return measurement;
 		String normMeasurement = tryReallyHardToGuessMetric(measurement);
 		final boolean unknown = "unknown".equals(normMeasurement);
 		if (!unknown && !measurement.equals(normMeasurement)) {

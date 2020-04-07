@@ -72,6 +72,7 @@ public class TreeAnalyzer extends ContextCommand {
 	protected DefaultGenericTable table;
 	private String tableTitle;
 	private StrahlerAnalyzer sAnalyzer;
+	private ShollAnalyzer shllAnalyzer;
 
 	private int fittedPathsCounter = 0;
 	private int unfilteredPathsFittedPathsCounter = 0;
@@ -231,6 +232,7 @@ public class TreeAnalyzer extends ContextCommand {
 		terminalBranches = null;
 		tips = null;
 		sAnalyzer = null;
+		shllAnalyzer = null;
 		fittedPathsCounter = unfilteredPathsFittedPathsCounter;
 	}
 
@@ -287,7 +289,16 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see MultiTreeStatistics#getMetrics()
 	 */
 	public static List<String> getMetrics() {
-		return MultiTreeStatistics.getMetrics();
+		final ArrayList<String> metrics = new ArrayList<>(MultiTreeStatistics.getMetrics());
+		metrics.add("Sholl: "+ ShollAnalyzer.MEAN);
+		metrics.add("Sholl: "+ ShollAnalyzer.SUM);
+		metrics.add("Sholl: "+ ShollAnalyzer.N_MAX);
+		metrics.add("Sholl: "+ ShollAnalyzer.N_SECONDARY_MAX);
+		metrics.add("Sholl: "+ ShollAnalyzer.MAX_FITTED);
+		metrics.add("Sholl: "+ ShollAnalyzer.MAX_FITTED_RADIUS);
+		metrics.add("Sholl: "+ ShollAnalyzer.POLY_FIT_DEGREE);
+		metrics.add("Sholl: "+ ShollAnalyzer.DECAY);
+		return metrics;
 	}
 
 	/**
@@ -299,7 +310,11 @@ public class TreeAnalyzer extends ContextCommand {
 	 * @see MultiTreeStatistics#getAllMetrics()
 	 */
 	public static List<String> getAllMetrics() {
-		return MultiTreeStatistics.getAllMetrics();
+		final ArrayList<String> metrics = new ArrayList<>(MultiTreeStatistics.getAllMetrics());
+		for (final String sm : ShollAnalyzer.ALL_FLAGS) {
+			metrics.add("Sholl: "+ sm);
+		}
+		return metrics;
 	}
 
 	/**
@@ -396,6 +411,10 @@ public class TreeAnalyzer extends ContextCommand {
 		case MultiTreeStatistics.WIDTH:
 			return getWidth();
 		default:
+			if (metric.startsWith("Sholl: ")) {
+				final String fMetric = metric.substring(metric.indexOf("Sholl: ") + 6).trim();
+				return getShollAnalyzer().getSingleValueMetrics().getOrDefault(fMetric, Double.NaN);
+			}
 			throw new IllegalArgumentException("Unrecognizable measurement \"" + metric + "\". "
 					+ "Maybe you meant one of the following?: \"" + String.join(", ", getMetrics() + "\""));
 		}
@@ -867,6 +886,16 @@ public class TreeAnalyzer extends ContextCommand {
 	}
 
 	/**
+	 * Gets the {@link ShollAnalyzer} instance associated with this analyzer
+	 *
+	 * @return the ShollAnalyzer instance associated with this analyzer
+	 */
+	public ShollAnalyzer getShollAnalyzer() {
+		if (shllAnalyzer == null) shllAnalyzer = new ShollAnalyzer(tree);
+		return shllAnalyzer;
+	}
+
+	/**
 	 * Gets the average {@link StrahlerAnalyzer#getAvgBifurcationRatio() Strahler
 	 * bifurcation ratio} of the analyzed tree.
 	 *
@@ -938,15 +967,11 @@ public class TreeAnalyzer extends ContextCommand {
 	/* IDE debug method */
 	public static void main(final String[] args) throws InterruptedException {
 		final ImageJ ij = new ImageJ();
-		ij.ui().showUI();
 		final SNTService sntService = ij.context().getService(SNTService.class);
-		sntService.initialize(sntService.demoTreeImage(), true);
-		final Tree tree = sntService.demoTree();
-		sntService.loadTree(tree);
+		final Tree tree = sntService.demoTrees().get(0);
 		final TreeAnalyzer analyzer = new TreeAnalyzer(tree);
-		for (Path p : analyzer.getPrimaryBranches()) {
-			sntService.getPlugin().getPathAndFillManager().addPath(p);
-		}
-		sntService.getPlugin().updateAllViewers();
+		TreeAnalyzer.getAllMetrics().forEach( m -> {
+			System.out.println(m + ": " + analyzer.getMetric(m));
+		});
 	}
 }

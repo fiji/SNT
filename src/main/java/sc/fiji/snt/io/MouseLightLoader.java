@@ -187,26 +187,40 @@ public class MouseLightLoader {
 	 *                    nodes are retrieved if {@code compartment} is not
 	 *                    recognized
 	 * @return the map containing the reconstruction nodes as {@link SWCPoint}s 
+	 * @throws JSONException if file is malformed
 	 * @throws FileNotFoundException if file could not be retrieved
 	 * @see #extractTrees(File, String)
 	 */
-	public static Map<String, TreeSet<SWCPoint>> extractNodes(final File jsonFile, final String compartment) throws FileNotFoundException {
+	public static Map<String, TreeSet<SWCPoint>> extractNodes(final File jsonFile, final String compartment) throws JSONException, FileNotFoundException {
 		final JSONTokener tokener = new JSONTokener(new FileInputStream(jsonFile));
 		final JSONObject json = new JSONObject(tokener);
+		final String normCompartment = (compartment == null) ? "" : compartment.toLowerCase();
 		JSONArray neuronArray;
+		// There are 3 flavors of MLJSON files. We'll have to try all!
 		try {
 			neuronArray = json.getJSONArray("neurons");
-		} catch (final JSONException ex) {
-			neuronArray = json.getJSONObject("contents").getJSONArray("neurons");
+		} catch (final JSONException ignored1) {
+			try {
+				neuronArray = json.getJSONObject("contents").getJSONArray("neurons");
+			} catch (final JSONException ignored2) {
+				return extractNodes(json.getJSONObject("neuron"), normCompartment); // will throw JSONException if object not found
+			}
 		}
 		if (neuronArray == null) return null;
-		final String normCompartment = (compartment == null) ? "" : compartment.toLowerCase();
 		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
 		for (int i = 0; i < neuronArray.length(); i++) {
 			final JSONObject neuron = neuronArray.optJSONObject(i);
 			final String identifier = neuron.optString("idString", "Neuron "+ i);
 			map.put(identifier, extractNodesFromJSONObject(normCompartment, neuron));
 		}
+		return map;
+	}
+
+	private static Map<String, TreeSet<SWCPoint>> extractNodes(final JSONObject neuron, final String compartment) {
+		final String normCompartment = (compartment == null) ? "" : compartment.toLowerCase();
+		final Map<String, TreeSet<SWCPoint>> map = new HashMap<>();
+		final String identifier = neuron.optString("idString", "Neuron");
+		map.put(identifier, extractNodesFromJSONObject(normCompartment, neuron));
 		return map;
 	}
 

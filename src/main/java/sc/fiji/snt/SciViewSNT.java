@@ -26,6 +26,7 @@ import cleargl.GLVector;
 import graphics.scenery.*;
 import net.imagej.ImageJ;
 
+import org.joml.Vector3f;
 import org.scijava.Context;
 import org.scijava.NullContextException;
 import org.scijava.plugin.Parameter;
@@ -36,9 +37,9 @@ import sc.fiji.snt.util.SNTPoint;
 import sc.iview.SciView;
 import sc.iview.SciViewService;
 import sc.iview.node.Line3D;
-import sc.iview.vector.ClearGLVector3;
 import sc.iview.vector.DoubleVector3;
 import sc.iview.vector.FloatVector3;
+import sc.iview.vector.JOMLVector3;
 import sc.iview.vector.Vector3;
 
 import java.awt.Color;
@@ -358,11 +359,11 @@ public class SciViewSNT {
 				final float scaleFactor = 1f;
 				for (int i = 0; i < p.size(); ++i) {
 					final PointInImage pim = p.getNodeWithoutChecks(i);
-					final ClearGLVector3 coord = new ClearGLVector3((float)pim.x, (float)pim.y, (float)pim.z);
+					final JOMLVector3 coord = new JOMLVector3((float)pim.x, (float)pim.y, (float)pim.z);
 					final Material mat = new Material();
 					final Color c = p.hasNodeColors() ? p.getNodeColor(i) : p.getColor();
 					final ColorRGB color = c == null ? Colors.ANTIQUEWHITE : fromAWTColor(c);
-					mat.setDiffuse(new GLVector(color.getRed(),color.getGreen(),color.getBlue()));
+					mat.setDiffuse(new Vector3f(color.getRed(),color.getGreen(),color.getBlue()));
 					//final float width = Math.max((float) p.getNodeRadius(i), DEF_NODE_RADIUS);
 					//System.out.println( "(point " + i + " " + coord.source() + ")" );
 					points.add( new FloatVector3(coord.source().x()*scaleFactor,coord.source().y()*scaleFactor,coord.source().z()*scaleFactor) );
@@ -460,6 +461,8 @@ public class SciViewSNT {
 		ij.ui().showUI();
 		final SNTService sntService = ij.context().getService(SNTService.class);
 		final SciViewSNT sciViewSNT = sntService.getOrCreateSciViewSNT();
+
+
 		final Tree tree = sntService.demoTree();
 		tree.setColor(Colors.RED);
 //		final Tree tree2 = Tree.fromFile("/home/tferr/code/OP_1/OP_1.swc");

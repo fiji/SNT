@@ -127,6 +127,7 @@
 		<!-- Dependency versions for JitPack -->
 		<sciview.version>b66a543</sciview.version>
 		<scenery.version>c11cc04</scenery.version>
+		<kotlin.version>1.4-M1</kotlin.version>
 
 		<cleargl.version>2.2.10</cleargl.version>
 		<lwjgl.version>3.2.3</lwjgl.version>

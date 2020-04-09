@@ -79,7 +79,12 @@ public class SciViewSNT {
 		if (context == null) throw new NullContextException();
 		context.inject(this);
 		plottedTrees = new TreeMap<String,ShapeTree>();
-		snt = null;
+        try {
+            sciView = sciViewService.getOrCreateActiveSciView();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        snt = null;
 	}
 
 	/**
@@ -462,6 +467,7 @@ public class SciViewSNT {
 		final SNTService sntService = ij.context().getService(SNTService.class);
 		final SciViewSNT sciViewSNT = sntService.getOrCreateSciViewSNT();
 
+		sciViewSNT.sciView.waitForSceneInitialisation();
 
 		final Tree tree = sntService.demoTree();
 		tree.setColor(Colors.RED);

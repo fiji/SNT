@@ -1566,8 +1566,7 @@ public class PathManagerUI extends JDialog implements PathAndFillListener,
 			.getColumnCount() > 0;
 	}
 
-
-	protected void saveTable(final File outputFile) throws IOException {
+	private void saveTable(final File outputFile) throws IOException {
 		table.save(outputFile);
 	}
 

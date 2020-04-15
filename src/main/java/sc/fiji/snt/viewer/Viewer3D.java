@@ -165,7 +165,6 @@ import org.scijava.command.CommandService;
 import org.scijava.display.DisplayService;
 import org.scijava.plugin.Parameter;
 import org.scijava.prefs.PrefService;
-import org.scijava.table.DefaultGenericTable;
 import org.scijava.ui.UIService;
 import org.scijava.ui.awt.AWTWindows;
 import org.scijava.ui.swing.script.TextEditor;
@@ -173,6 +172,7 @@ import org.scijava.util.ColorRGB;
 import org.scijava.util.ColorRGBA;
 import org.scijava.util.Colors;
 import org.scijava.util.FileUtils;
+import org.scijava.widget.FileWidget;
 
 import com.jidesoft.swing.CheckBoxList;
 import com.jidesoft.swing.CheckBoxTree;
@@ -188,6 +188,7 @@ import net.imagej.ImageJ;
 import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
 import sc.fiji.snt.analysis.MultiTreeColorMapper;
+import sc.fiji.snt.analysis.SNTTable;
 import sc.fiji.snt.analysis.TreeAnalyzer;
 import sc.fiji.snt.analysis.TreeColorMapper;
 import sc.fiji.snt.Path;
@@ -2293,6 +2294,8 @@ public class Viewer3D {
 		private final MouseController mc;
 		private String storedSensitivity;
 		private String snapshotDir;
+		private File lastDir;
+
 
 		public Prefs(final Viewer3D tp) {
 			this.tp = tp;
@@ -2305,6 +2308,7 @@ public class Viewer3D {
 			retrieveAllIfNoneSelected = DEF_RETRIEVE_ALL_IF_NONE_SELECTED;
 			treeCompartmentChoice = DEF_TREE_COMPARTMENT_CHOICE;
 			setSnapshotDirectory();
+			lastDir = new File(System.getProperty("user.home"));
 			if (tp.prefService == null) {
 				kc.zoomStep = DEF_ZOOM_STEP;
 				kc.rotationStep = DEF_ROTATION_STEP;
@@ -2415,7 +2419,7 @@ public class Viewer3D {
 
 		private static final long serialVersionUID = 1L;
 		private final GuiUtils guiUtils;
-		private DefaultGenericTable table;
+		private SNTTable table;
 		private JCheckBoxMenuItem debugCheckBox;
 		private final JPanel barPanel;
 		private final SNTSearchableBar searchableBar;
@@ -3050,6 +3054,26 @@ public class Viewer3D {
 				});
 			});
 			measureMenu.add(mi);
+			mi = new JMenuItem("Save Table...", IconFactory.getMenuIcon(GLYPH.SAVE));
+			mi.addActionListener(e -> {
+				if (table == null || table.isEmpty() || table.getRowCount() == 0) {
+					guiUtils.error("No data in measurements table.");
+				} else {
+					final File file = context.getService(UIService.class)
+							.chooseFile(new File(prefs.lastDir, "SNT-Measurements.csv"), FileWidget.SAVE_STYLE);
+					if (file != null)
+						try {
+							table.save(file);
+							prefs.lastDir = file.getParentFile();
+						} catch (final IOException e1) {
+							guiUtils.error("An error occured while saving table. See Console for details and data.");
+							e1.printStackTrace();
+							System.out.println("###   ###   ###   Tabular Data:    ###   ###   ###");
+							System.out.println(table);
+						}
+				}
+			});
+			measureMenu.add(mi);
 			addSeparator(measureMenu, "Distribution Analysis:");
 			mi = new JMenuItem("Branch Properties...", IconFactory.getMenuIcon(GLYPH.CHART));
 			mi.setToolTipText("Computes metrics from all the branches of selected trees");
@@ -3115,7 +3139,7 @@ public class Viewer3D {
 		}
 
 		private void initTable() {
-			if (table == null) table =  new DefaultGenericTable();
+			if (table == null) table =  new SNTTable();
 		}
 
 		private void addCustomizeMeshCommands(final JPopupMenu menu) {

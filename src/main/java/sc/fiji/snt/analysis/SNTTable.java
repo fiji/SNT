@@ -27,7 +27,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.stream.IntStream;
 
+import org.scijava.Context;
+import org.scijava.io.IOService;
+import org.scijava.table.Column;
 import org.scijava.table.DefaultGenericTable;
+import org.scijava.table.DefaultTableIOPlugin;
 import org.scijava.table.GenericTable;
 
 import sc.fiji.snt.SNTUtils;
@@ -41,12 +45,29 @@ public class SNTTable extends DefaultGenericTable {
 
 	private static final long serialVersionUID = 1L;
 	private boolean hasUnsavedData;
+	private static DefaultTableIOPlugin tableIO;
+
+
+	public SNTTable() {
+		super();
+	}
+
+	public SNTTable(final String filePath) throws IOException {
+		super();
+		if (tableIO == null)
+			tableIO = new Context().getService(IOService.class).getInstance(DefaultTableIOPlugin.class);
+		final GenericTable openedTable = tableIO.open(filePath);
+		for (int col = 0; col < openedTable.getColumnCount(); ++col) {
+			add(openedTable.get(col));
+		}
+		hasUnsavedData = false;
+	}
 
 	public void fillEmptyCells(final Object value) {
 		for (int col = 0; col < getColumnCount(); ++col) {
 			for (int row = 0; row < getRowCount(); ++row) {
 				if (get(col, row) == null) {
-					super.set(col, row, value);
+					set(col, row, value);
 				}
 			}
 		}
@@ -85,13 +106,23 @@ public class SNTTable extends DefaultGenericTable {
 		return idx;
 	}
 
+	public Column<? extends Object> removeColumn(final String header) {
+		// do not throw exception if column not found
+		return (getColumnIndex(header) == -1) ? null : super.removeColumn(header);
+	}
+
 	public boolean save(final String filePath) {
 		if (filePath == null || filePath.trim().isEmpty()) {
 			throw new IllegalArgumentException("filePath is not valid");
 		}
 		try {
 			final String fPath = (filePath.toLowerCase().endsWith(".csv")) ? filePath : filePath + ".csv";
-			save(new File(fPath));
+			if (tableIO == null) {
+				save(new File(fPath));
+			} else {
+				tableIO.save(this, fPath);
+				hasUnsavedData = false;
+			}
 			return true;
 		} catch (final IOException ignored) {
 			return false;
@@ -105,10 +136,10 @@ public class SNTTable extends DefaultGenericTable {
 
 	@Override
 	public String toString() {
-		return tableToString(this, 0, getRowCount() - 1);
+		return toString(this, 0, getRowCount() - 1);
 	}
 
-	public static String tableToString(final GenericTable table, final int firstRow, final int lastRow) {
+	public static String toString(final GenericTable table, final int firstRow, final int lastRow) {
 		final int fRow = Math.max(0, firstRow);
 		final int lRow = Math.min(table.getRowCount() - 1, lastRow);
 		final String sep = "\t";

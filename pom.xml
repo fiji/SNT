@@ -125,8 +125,8 @@
 		<package-name>sciview</package-name>
 
 		<!-- Dependency versions for JitPack -->
-		<sciview.version>2a0b85e</sciview.version>
-		<scenery.version>2d3b088</scenery.version>
+		<sciview.version>f9f2f45</sciview.version>
+		<scenery.version>6a994af</scenery.version>
 		<kotlin.version>1.4-M1</kotlin.version>
 		<joml.version>1.9.22</joml.version>
 

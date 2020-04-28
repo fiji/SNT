@@ -205,9 +205,9 @@ public class AllenUtils {
 		// We need to use an affine transformation instead of linear
 		// since the plane of reflection does not go through the origin.
 		double[][] A = { {  1-2*a*a, -2*a*b,   -2*a*c,   -2*a*d },
-						 { -2*a*b,    1-2*b*b, -2*b*c,   -2*b*d },
-				         { -2*a*c,   -2*b*c,    1-2*c*c, -2*c*d }, 
-				         {  0,        0,        0,        1     } };
+				{ -2*a*b,    1-2*b*b, -2*b*c,   -2*b*d },
+				{ -2*a*c,   -2*b*c,    1-2*c*c, -2*c*d }, 
+				{  0,        0,        0,        1 } };
 		return A;
 	}
 

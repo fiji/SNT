@@ -308,25 +308,30 @@ public class PersistenceAnalyzer {
 	private double radialDistanceToRoot(final DirectedWeightedGraph graph, final SWCPoint node) {
 		return graph.getRoot().distanceTo(node);
 	}
-	
+
 	private class Linspace {
-	    private double current;
-	    private final double end;
-	    private final double step;
-	    public Linspace(double start, double end, double totalCount) {
-	        this.current=start;
-	        this.end=end;
-	        this.step=(end - start) / totalCount;
-	    }
-	    public boolean hasNext() {
-	        return current < (end + step/2); 
-	    }
-	    public double getNextDouble() {
-	        current+=step;
-	        return current;
-	    }
+		private double current;
+		private final double end;
+		private final double step;
+
+		Linspace(double start, double end, double totalCount) {
+			this.current = start;
+			this.end = end;
+			this.step = (end - start) / totalCount;
+		}
+
+		@SuppressWarnings("unused")
+		boolean hasNext() {
+			return current < (end + step / 2);
+		}
+
+		@SuppressWarnings("unused")
+		double getNextDouble() {
+			current += step;
+			return current;
+		}
 	}
-	
+
 	private double[] getMinMax(ArrayList<ArrayList<Double>> diagram) {
 		double minX = Double.MAX_VALUE;
 		double maxY = -Double.MAX_VALUE;

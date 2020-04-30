@@ -43,7 +43,6 @@ import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
-import org.scijava.util.Types;
 import org.scijava.widget.FileWidget;
 
 import ij.IJ;

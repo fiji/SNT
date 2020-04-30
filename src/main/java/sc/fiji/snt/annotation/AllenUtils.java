@@ -43,6 +43,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.scijava.util.ColorRGB;
 
+import sc.fiji.snt.Path;
 import sc.fiji.snt.Tree;
 import sc.fiji.snt.util.PointInImage;
 import sc.fiji.snt.util.SNTPoint;
@@ -136,16 +137,114 @@ public class AllenUtils {
 		return null;
 	}
 
+	/**
+	 * Given two points P and Q, return the vector PQ
+	 */
+	private static double[] pointsToVec(double[] p, double[] q) {
+		if (p.length != q.length) {
+			throw new IllegalArgumentException("Points p and q are not of equal length");
+		}
+		double[] pq = new double[p.length];
+		for (int i = 0; i < p.length; i++) {
+			pq[i] = q[i] - p[i];
+		}
+		return pq;
+	}
+
+	private static double[] crossProduct(double[] a, double[] b) {
+		if (a.length != b.length || a.length != 3 || b.length != 3) {
+			throw new IllegalArgumentException("Vectors a and b are not of equal length or are not 3-dimensional");
+		}
+		double[] c = new double[3];
+		c[0] = a[1] * b[2] - a[2] * b[1];
+		c[1] = a[2] * b[0] - a[0] * b[2];
+		c[2] = a[0] * b[1] - a[1] * b[0];
+		return c;
+	}
+
+	private static double dotProduct(double[] a, double[] b) {
+		if (a.length != b.length) {
+			throw new IllegalArgumentException("Vectors a and b are not of equal length");
+		}
+		double result = 0;
+		for (int i = 0; i < a.length; i++) {
+			result += a[i] * b[i];
+		}
+		return result;
+	}
+
+	private static double euclideanNorm(double[] v) {
+		return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+	}
+
+	private static double[] normalizeVec(double[] v) {
+		double norm = euclideanNorm(v);
+		double[] normalized = new double[v.length];
+		for (int i = 0; i < v.length; i++) {
+			normalized[i] = (double) v[i] / norm;
+		}
+		return normalized;
+	}
+
+	private static double[] matrixVectorProduct(double[][] A, double[] v) {
+		double[] b = new double[v.length];
+		for (int i = 0; i < v.length; i++) {
+			b[i] = dotProduct(A[i], v);
+		}
+		return b;
+	}
+
+	/**
+	 * Return the 4x4 Householder reflection matrix
+	 */
+	private static double[][] reflectionMatrix(double[] planePoint, double[] planeNormal) {
+		double a = planeNormal[0];
+		double b = planeNormal[1];
+		double c = planeNormal[2];
+		double d = -1 * a * planePoint[0] - b * planePoint[1] - c * planePoint[2];
+		// We need to use an affine transformation instead of linear
+		// since the plane of reflection does not go through the origin.
+		double[][] A = { {  1-2*a*a, -2*a*b,   -2*a*c,   -2*a*d },
+				{ -2*a*b,    1-2*b*b, -2*b*c,   -2*b*d },
+				{ -2*a*c,   -2*b*c,    1-2*c*c, -2*c*d }, 
+				{  0,        0,        0,        1 } };
+		return A;
+	}
+
+	/**
+	 * Reflect the Tree across the mid-sagittal plane passing through the brain
+	 * barycentre.
+	 */
+	private static void mirrorTree(final Tree tree) {
+		double[] p = new double[] { BRAIN_BARYCENTRE.getX(), BRAIN_BARYCENTRE.getY(), BRAIN_BARYCENTRE.getZ() };
+		double[] q = new double[] { p[0], p[1] + 100, p[2] };
+		double[] r = new double[] { p[0], p[1], p[2] + 100 };
+		double[] pq = pointsToVec(p, q);
+		double[] pr = pointsToVec(p, r);
+		double[] unitNormal = normalizeVec(crossProduct(pq, pr));
+		double[][] A = reflectionMatrix(p, unitNormal);
+		for (Path path : tree.list()) {
+			for (int i = 0; i < path.size(); i++) {
+				PointInImage node = path.getNode(i);
+				double[] oldCoords = new double[] { node.getX(), node.getY(), node.getZ(), 1 };
+				double[] newCoords = matrixVectorProduct(A, oldCoords);
+				path.moveNode(i, new PointInImage(newCoords[0], newCoords[1], newCoords[2]));
+			}
+		}
+	}
+
 	public static void assignToLeftHemisphere(final Tree tree) {
 		final PointInImage root = tree.getRoot();
-		if (root == null || isLeftHemisphere(root)) return;
-		tree.translate(-2 * (root.getX() - BRAIN_BARYCENTRE.x), 0, 0);
+		if (root == null || isLeftHemisphere(root))
+			return;
+		mirrorTree(tree);
 	}
 
 	public static void assignToRightHemisphere(final Tree tree) {
 		final PointInImage root = tree.getRoot();
-		if (root == null || !isLeftHemisphere(root)) return;
-		tree.translate(2 * (BRAIN_BARYCENTRE.x - root.getX()), 0, 0);
+		if (root == null || !isLeftHemisphere(root))
+			return;
+		mirrorTree(tree);
 	}
 
 	/**
@@ -204,7 +303,8 @@ public class AllenUtils {
 	/**
 	 * Retrieves the Allen CCF hierarchical tree data.
 	 *
-	 * @param meshesOnly Whether only compartments with known meshes should be included
+	 * @param meshesOnly Whether only compartments with known meshes should be
+	 *                   included
 	 * @return the Allen CCF tree data model
 	 */
 	public static DefaultTreeModel getTreeModel(final boolean meshesOnly) {
@@ -245,7 +345,8 @@ public class AllenUtils {
 		}
 
 		private DefaultTreeModel getTreeModel(final boolean meshesOnly) {
-			final TreeSet<AllenCompartment> all = new TreeSet<>((ac1, ac2)->ac1.getStructureIdPath().compareTo(ac2.getStructureIdPath()));
+			final TreeSet<AllenCompartment> all = new TreeSet<>(
+					(ac1, ac2) -> ac1.getStructureIdPath().compareTo(ac2.getStructureIdPath()));
 			final Map<Integer, AllenCompartment> idsMap = new HashMap<>();
 			final Set<Integer> visitedIds = new HashSet<>();
 			root = new DefaultMutableTreeNode();
@@ -270,17 +371,18 @@ public class AllenUtils {
 					if (visitedIds.contains(id))
 						continue;
 					final AllenCompartment c = idsMap.get(id);
-					if (meshesOnly && !c.isMeshAvailable()) continue;
+					if (meshesOnly && !c.isMeshAvailable())
+						continue;
 					final AllenCompartment pc = idsMap.get(c.getParentStructureId());
 					final DefaultMutableTreeNode parentNode = getParentNode(pc);
-					if (parentNode!=null) {
+					if (parentNode != null) {
 						node = parentNode;
 					}
 					node.add(new DefaultMutableTreeNode(c));
 					visitedIds.add(id);
 				}
 			}
-			assert(visitedIds.size()==idsMap.size()+1);
+			assert (visitedIds.size() == idsMap.size() + 1);
 			return new DefaultTreeModel(root);
 		}
 
@@ -289,7 +391,7 @@ public class AllenUtils {
 			final Enumeration<TreeNode> en = root.depthFirstEnumeration();
 			while (en.hasMoreElements()) {
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) en.nextElement();
-				final AllenCompartment structure = (AllenCompartment)node.getUserObject();
+				final AllenCompartment structure = (AllenCompartment) node.getUserObject();
 				if (structure.equals(parentStructure)) {
 					return node;
 				}

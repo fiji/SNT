@@ -120,9 +120,15 @@ public class GuiUtils {
 	final private Component parent;
 	private JidePopup popup;
 	protected static int timeOut = 2500;
+	private Color background = Color.WHITE;
+	private Color foreground = Color.BLACK;
 
 	public GuiUtils(final Component parent) {
 		this.parent = parent;
+		if (parent != null) {
+			background = parent.getBackground();
+			foreground = parent.getForeground();
+		}
 	}
 
 	public GuiUtils() {
@@ -195,10 +201,10 @@ public class GuiUtils {
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		final JidePopup popup = new JidePopup();
 		popup.getContentPane().add(label);
-		label.setBackground(Color.WHITE);
-		label.setForeground(Color.BLACK);
-		popup.getContentPane().setBackground(Color.WHITE);
-		popup.setBackground(Color.WHITE);
+		label.setBackground(background);
+		label.setForeground(foreground);
+		popup.getContentPane().setBackground(background);
+		popup.setBackground(foreground);
 		if (parent != null) {
 			popup.setOwner(parent);
 			popup.setMaximumSize(parent.getSize());
@@ -1028,12 +1034,13 @@ public class GuiUtils {
 			setResizable(false);
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			setAlwaysOnTop(true);
-			getContentPane().setBackground(Color.WHITE);
-			setBackground(Color.WHITE);
+			getContentPane().setBackground(background);
+			setBackground(background);
 			final JLabel label = getLabel(msg);
 			label.setHorizontalAlignment(SwingConstants.CENTER);
 			label.setBorder(new EmptyBorder(10, 10, 10, 10));
-			label.setBackground(Color.WHITE);
+			label.setBackground(background);
+			label.setForeground(foreground);
 			add(label);
 			pack();
 			centerOnParent();

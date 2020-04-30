@@ -346,6 +346,7 @@ public class Tree {
 			case "de":
 				types.add(Path.SWC_APICAL_DENDRITE);
 				types.add(Path.SWC_DENDRITE);
+				break;
 			default:
 				types.add(Path.SWC_UNDEFINED);
 				break;

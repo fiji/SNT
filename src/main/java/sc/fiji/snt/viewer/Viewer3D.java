@@ -2589,6 +2589,7 @@ public class Viewer3D {
 					if (tags == null)
 						return; // user pressed cancel
 					managerList.applyTagToSelectedItems(tags);
+					return;
 				default:
 					throw new IllegalArgumentException("Unrecognized action");
 				}
@@ -4897,6 +4898,7 @@ public class Viewer3D {
 							break;
 						case RELOAD_PREFS:
 							prefs.setPreferences();
+							break;
 						case DO_NOTHING:
 						default:
 							break;

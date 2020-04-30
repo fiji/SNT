@@ -164,6 +164,7 @@ public class PointInImage implements SNTPoint {
 			case MultiDThreePanes.ZY_PLANE:
 				point.x = z;
 				point.z = x;
+				break;
 			default:
 				throw new IllegalArgumentException("Unknown plane: " + view);
 		}

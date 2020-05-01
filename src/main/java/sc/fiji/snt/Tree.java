@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.util.ColorRGB;
 
 import ij.IJ;
@@ -1480,6 +1481,7 @@ public class Tree {
 		public String toString() {
 			return "[TreeBoundingBox: origin: " + this.origin + ", originOpposite: " + this.originOpposite + "]";
 		}
+
 	}
 
 	public static void assignUniqueColors(final Collection<Tree> trees) {

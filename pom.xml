@@ -102,6 +102,9 @@
 	</ciManagement>
 
 	<properties>
+		<package-name>tracing</package-name>
+		<automatic-module-name>sc.fiji.tracing</automatic-module-name>
+
 		<license.licenseName>gpl_v3</license.licenseName>
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>

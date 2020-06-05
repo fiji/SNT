@@ -15,7 +15,7 @@
 
 	<name>Simple Neurite Tracer</name>
 	<description>The ImageJ framework for semi-automated tracing of neurons and other tube-like structures.</description>
-	<url>https://imagej.net/Simple_Neurite_Tracer</url>
+	<url>https://imagej.net/SNT</url>
 	<inceptionYear>2010</inceptionYear>
 	<organization>
 		<name>Fiji</name>
@@ -87,18 +87,18 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/fiji/Simple_Neurite_Tracer</connection>
-		<developerConnection>scm:git:git@github.com:fiji/Simple_Neurite_Tracer</developerConnection>
+		<connection>scm:git:git://github.com/fiji/SNT</connection>
+		<developerConnection>scm:git:git@github.com:fiji/SNT</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/fiji/Simple_Neurite_Tracer</url>
+		<url>https://github.com/fiji/SNT</url>
 	</scm>
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>https://github.com/fiji/Simple_Neurite_Tracer/issues</url>
+		<url>https://github.com/fiji/SNT/issues</url>
 	</issueManagement>
 	<ciManagement>
 		<system>Travis CI</system>
-		<url>https://travis-ci.org/fiji/Simple_Neurite_Tracer</url>
+		<url>https://travis-ci.org/fiji/SNT</url>
 	</ciManagement>
 
 	<properties>

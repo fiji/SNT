@@ -72,8 +72,33 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 	protected boolean look4tubesFile;
 	protected boolean look4tracesFile;
 
+	private boolean sntAvailable() {
+		try {
+			IJ.getClassLoader().loadClass("sc.fiji.snt.SNT");
+			return true;
+		}
+		catch (final Throwable t) {
+			return false;
+		}
+	}
+
 	@Override
 	public void run(final String ignoredArguments) {
+
+		if (!IJ.altKeyDown()) {
+			if (sntAvailable()) {
+				IJ.showMessage("Deprecation Warning", "Please use Plugins>NeuroAnatomy>SNT... instead.");
+				IJ.doCommand("SNT...");
+			} else {
+				IJ.showMessage("Deprecation Warning",
+						"<HTML>Simple Neurite Tracer is now a legacy plugin and has been replaced by a much improved "
+						+ "version released through the Neuroanatomy update site. "
+						+ "See <a href='https://imagej.net/SNT#Installation'>documentation</a> for details.<br><br>"
+						+ "NB: If you really <i>must</i>, you can force the loading of the old plugin by holding the 'Alt' "
+						+ "key while clicking its menu entry.");
+			}
+			return;
+		}
 
 		/*
 		 * The useful macro options are:
@@ -81,7 +106,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 		 * imagefilename=<FILENAME> tracesfilename=<FILENAME> use_3d
 		 * use_three_pane
 		 */
-
 		final String macroOptions = Macro.getOptions();
 
 		String macroImageFilename = null;

@@ -83,9 +83,19 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 	}
 
 	@Override
-	public void run(final String ignoredArguments) {
+	public void run(final String arg) {
 
-		if (!IJ.altKeyDown()) {
+		/*
+		 * The useful macro options are:
+		 *
+		 * imagefilename=<FILENAME> tracesfilename=<FILENAME> use_3d
+		 * use_three_pane
+		 */
+		final String macroOptions = Macro.getOptions();
+
+		final boolean abort = (macroOptions == null || macroOptions.isEmpty())
+				&& (arg == null || !arg.toLowerCase().contains("skip"));
+		if (abort) {
 			if (sntAvailable()) {
 				IJ.showMessage("Deprecation Warning", "Please use Plugins>NeuroAnatomy>SNT... instead.");
 				IJ.doCommand("SNT...");
@@ -99,14 +109,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer implements PlugIn
 			}
 			return;
 		}
-
-		/*
-		 * The useful macro options are:
-		 *
-		 * imagefilename=<FILENAME> tracesfilename=<FILENAME> use_3d
-		 * use_three_pane
-		 */
-		final String macroOptions = Macro.getOptions();
 
 		String macroImageFilename = null;
 		String macroTracesFilename = null;

@@ -1,3 +1,5 @@
+[![](https://github.com/fiji/SNT/actions/workflows/build-main.yml/badge.svg)](https://github.com/fiji/SNT/actions/workflows/build-main.yml)
+
 [![Maintenance](https://img.shields.io/maintenance/no/2020)](https://github.com/morphonets/SNT)
 [![Maintenance](https://img.shields.io/badge/Legacy-Replaced%20by%20SNT-orange)](https://github.com/morphonets/SNT)
 
